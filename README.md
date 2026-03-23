@@ -2,6 +2,11 @@
 
 Resolve the best API specification source for the current service repository.
 
+This repository supports two execution modes:
+
+- GitHub Actions wrapper via `action.yml`
+- Portable Node CLI via `dist/cli.cjs` for GitLab or other CI systems
+
 By default (`mode=resolve-one`) the action is repo-first. It can also run in legacy bulk discovery mode (`mode=discover-many`).
 
 ## Auto-resolved values
@@ -41,6 +46,36 @@ When these inputs are omitted, the action auto-resolves them:
 | `output-dir` | no | `discovered-specs` | Output directory for generated specs |
 | `include-v2` | no | `true` | Include HTTP APIs (`apigatewayv2`) |
 
+## Platform support
+
+### GitHub
+
+Use the native GitHub Action entrypoint from `action.yml`.
+
+- Authentication: `aws-actions/configure-aws-credentials`
+- Outputs: GitHub Action outputs such as `resolution-json`, `resolution-status`, `service-name`, and `spec-path`
+- AWS CLI: not required
+
+### GitLab and other CI systems
+
+Use the portable CLI entrypoint:
+
+```bash
+node dist/cli.cjs \
+  --aws-region us-east-1 \
+  --repo-root "$CI_PROJECT_DIR" \
+  --result-json "$CI_PROJECT_DIR/postman-aws-spec-discovery-result.json" \
+  --dotenv-path "$CI_PROJECT_DIR/postman-aws-spec-discovery.env"
+```
+
+- Authentication: standard AWS SDK credential chain
+- GitLab repo context is auto-detected from `CI_PROJECT_URL`, `CI_PROJECT_PATH`, `CI_COMMIT_REF_NAME`, `CI_COMMIT_SHA`, and `CI_PROJECT_DIR`
+- Outputs:
+  - JSON file written to `--result-json`
+  - dotenv file written to `--dotenv-path`
+  - JSON payload also printed to stdout
+- AWS CLI: not required
+
 ## Outputs
 
 ### Resolve-one outputs
@@ -68,10 +103,26 @@ When these inputs are omitted, the action auto-resolves them:
 | `services-json` | JSON array of discovered services |
 | `service-count` | Number of exported services |
 
+### CLI dotenv outputs
+
+When `--dotenv-path` is supplied, the CLI writes:
+
+- `POSTMAN_AWS_SPEC_RESOLUTION_JSON`
+- `POSTMAN_AWS_SPEC_RESOLUTION_STATUS`
+- `POSTMAN_AWS_SPEC_SOURCE_TYPE`
+- `POSTMAN_AWS_SPEC_MAPPING_CONFIDENCE`
+- `POSTMAN_AWS_SPEC_PATH`
+- `POSTMAN_AWS_SPEC_GATEWAY_ID`
+- `POSTMAN_AWS_SPEC_SERVICE_NAME`
+- `POSTMAN_AWS_SPEC_SERVICES_JSON`
+- `POSTMAN_AWS_SPEC_SERVICE_COUNT`
+
 ## Required runner setup
 
-- AWS CLI available on runner
-- AWS credentials configured before this action (for example, via `aws-actions/configure-aws-credentials`)
+- Node.js 20 runtime
+- AWS credentials configured before this action
+- GitHub: `aws-actions/configure-aws-credentials` is recommended
+- GitLab or other CI: any AWS SDK-compatible auth mechanism works, including static env vars or OIDC/web identity
 
 ## Example (resolve-one default)
 
@@ -106,3 +157,12 @@ jobs:
           echo "service=${{ steps.resolve.outputs.service-name }}"
           echo "spec=${{ steps.resolve.outputs.spec-path }}"
 ```
+
+## GitLab example
+
+See [`gitlab-ci.example.yml`](gitlab-ci.example.yml) for a ready-to-adapt pipeline job that:
+
+- fetches a pinned release of this repo
+- runs `dist/cli.cjs`
+- publishes result JSON and generated specs as artifacts
+- exposes dotenv outputs for downstream jobs

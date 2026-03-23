@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { DiscoveredService } from '../src/contracts.js';
 import { readActionInputs, resolveInputs, runDiscovery, runAction } from '../src/index.js';
-import { AwsApiGatewayCliClient } from '../src/lib/aws/client.js';
+import type { AwsGatewayClient } from '../src/lib/aws/client.js';
+import { parseCliArgs, toDotenv } from '../src/cli.js';
 import { findExistingRepoSpec } from '../src/lib/repo/specs.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
@@ -40,6 +41,22 @@ function createCoreStub(values: Record<string, string> = {}) {
     outputs,
     infos,
     warnings
+  };
+}
+
+function createAwsClientStub(overrides: Partial<AwsGatewayClient> = {}): AwsGatewayClient {
+  return {
+    listRestApis: vi.fn().mockResolvedValue([]),
+    listHttpApis: vi.fn().mockResolvedValue([]),
+    getRestApi: vi.fn().mockResolvedValue(undefined),
+    getHttpApi: vi.fn().mockResolvedValue(undefined),
+    listRestStages: vi.fn().mockResolvedValue([]),
+    listHttpStages: vi.fn().mockResolvedValue([]),
+    getRestTags: vi.fn().mockResolvedValue({}),
+    getHttpTags: vi.fn().mockResolvedValue({}),
+    exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+    exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+    ...overrides
   };
 }
 
@@ -249,37 +266,20 @@ describe('runAction', () => {
       'expected-gateway-ids-json': '["rest-1"]'
     });
 
-    const execStub = {
-      getExecOutput: vi
-        .fn()
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({
-            id: 'rest-1',
-            name: 'billing'
-          }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({ tags: {} }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({
-            item: [{ stageName: 'prod' }]
-          }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: 'openapi: 3.0.1\ninfo:\n  title: billing',
-          stderr: ''
-        })
-    };
+    const written = new Map<string, string>();
+    const awsClient = createAwsClientStub({
+      getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'billing' }),
+      getRestTags: vi.fn().mockResolvedValue({}),
+      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: billing')
+    });
 
-    const result = await runAction(core, execStub);
+    const result = await runAction(core, {
+      createAwsClient: () => awsClient,
+      writeSpecFile: async (outputPath: string, content: string) => {
+        written.set(outputPath.replace(/\\/g, '/'), content);
+      }
+    });
 
     expect(result).toHaveLength(0);
     expect(outputs['resolution-status']).toBe('resolved');
@@ -287,6 +287,7 @@ describe('runAction', () => {
     expect(outputs['service-name']).toBe('billing');
     expect(outputs['gateway-id']).toBe('rest-1');
     expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
+    expect([...written.keys()].some((entry) => entry.endsWith('/discovered-specs/billing/index.yaml'))).toBe(true);
     expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
   });
 
@@ -298,41 +299,19 @@ describe('runAction', () => {
       'expected-gateway-ids-json': '["http-1"]'
     });
 
-    const execStub = {
-      getExecOutput: vi
+    const awsClient = createAwsClientStub({
+      getRestApi: vi.fn().mockResolvedValue(undefined),
+      getHttpApi: vi.fn().mockResolvedValue({ id: 'http-1', name: 'http-service', protocolType: 'HTTP' }),
+      getHttpTags: vi.fn().mockResolvedValue({}),
+      listHttpStages: vi.fn().mockResolvedValue([]),
+      exportHttpApi: vi
         .fn()
-        .mockResolvedValueOnce({
-          exitCode: 1,
-          stdout: '',
-          stderr: 'NotFoundException'
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({
-            ApiId: 'http-1',
-            Name: 'http-service',
-            ProtocolType: 'HTTP'
-          }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({ tags: {} }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({ Items: [] }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 1,
-          stdout: '',
-          stderr: 'BadRequestException: Unable to deploy API because no valid routes exist in this API'
-        })
-    };
+        .mockRejectedValue(new Error('BadRequestException: Unable to deploy API because no valid routes exist in this API'))
+    });
 
-    await runAction(core, execStub);
+    await runAction(core, {
+      createAwsClient: () => awsClient
+    });
 
     expect(outputs['resolution-status']).toBe('unresolved');
     expect(outputs['source-type']).toBe('manual-review');
@@ -405,22 +384,29 @@ describe('hardening helpers', () => {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
-});
 
-describe('AwsApiGatewayCliClient', () => {
-  it('decodes base64 output body when AWS CLI returns encoded text', async () => {
-    const encoded = Buffer.from('openapi: 3.0.1\ninfo:\n  title: rest', 'utf8').toString('base64');
-    const execStub = {
-      getExecOutput: vi.fn().mockResolvedValue({
-        exitCode: 0,
-        stdout: encoded,
-        stderr: ''
-      })
-    };
+  it('parses CLI flags into action-style input env', () => {
+    const parsed = parseCliArgs(['--aws-region', 'us-east-1', '--repo-root', '/tmp/repo', '--result-json', '/tmp/out.json']);
 
-    const client = new AwsApiGatewayCliClient(execStub, 'us-east-1');
-    const body = await client.exportRestApi('rest-1', 'prod');
+    expect(parsed.inputEnv.INPUT_AWS_REGION).toBe('us-east-1');
+    expect(parsed.inputEnv.INPUT_REPO_ROOT).toBe('/tmp/repo');
+    expect(parsed.resultJsonPath).toBe('/tmp/out.json');
+  });
 
-    expect(body).toContain('openapi: 3.0.1');
+  it('formats CLI dotenv output for downstream jobs', () => {
+    const dotenv = toDotenv({
+      'resolution-json': '{"status":"resolved"}',
+      'resolution-status': 'resolved',
+      'source-type': 'gateway-export',
+      'mapping-confidence': '100',
+      'spec-path': 'discovered-specs/payments/index.yaml',
+      'gateway-id': 'abc123def4',
+      'service-name': 'payments',
+      'services-json': '[]',
+      'service-count': '0'
+    });
+
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_RESOLUTION_STATUS=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_SERVICE_NAME=');
   });
 });

@@ -1,61 +1,20 @@
-import type { ExecOptions } from '@actions/exec';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-
-export interface ExecLike {
-  getExecOutput(
-    commandLine: string,
-    args?: string[],
-    options?: ExecOptions
-  ): Promise<{
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-  }>;
-}
-
-interface RestApisResponse {
-  items?: Array<{
-    id?: string;
-    name?: string;
-  }>;
-}
-
-interface HttpApisResponse {
-  Items?: Array<{
-    ApiId?: string;
-    Name?: string;
-    ProtocolType?: string;
-  }>;
-}
-
-interface RestApiDetailResponse {
-  id?: string;
-  name?: string;
-}
-
-interface HttpApiDetailResponse {
-  ApiId?: string;
-  Name?: string;
-  ProtocolType?: string;
-}
-
-interface RestStagesResponse {
-  item?: Array<{
-    stageName?: string;
-  }>;
-}
-
-interface HttpStagesResponse {
-  Items?: Array<{
-    StageName?: string;
-  }>;
-}
-
-interface TagsResponse {
-  tags?: Record<string, string>;
-}
+import {
+  APIGatewayClient,
+  GetExportCommand,
+  GetRestApiCommand,
+  GetRestApisCommand,
+  GetStagesCommand as GetRestStagesCommand,
+  GetTagsCommand as GetRestTagsCommand,
+  paginateGetRestApis
+} from '@aws-sdk/client-api-gateway';
+import {
+  ApiGatewayV2Client,
+  ExportApiCommand,
+  GetApiCommand,
+  GetApisCommand,
+  GetStagesCommand as GetHttpStagesCommand,
+  GetTagsCommand as GetHttpTagsCommand
+} from '@aws-sdk/client-apigatewayv2';
 
 export interface RestApiSummary {
   id: string;
@@ -85,32 +44,34 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function decodeMaybeBase64(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return raw;
+async function readExportBody(body: unknown): Promise<string> {
+  if (!body) {
+    return '';
   }
 
-  const base64Pattern = /^[A-Za-z0-9+/=\r\n]+$/;
-  if (!base64Pattern.test(trimmed) || trimmed.length % 4 !== 0) {
-    return raw;
+  if (typeof body === 'string') {
+    return body;
   }
 
-  try {
-    const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
-    const printableChars = [...decoded].filter((ch) => {
-      const code = ch.charCodeAt(0);
-      return code === 9 || code === 10 || code === 13 || (code >= 32 && code <= 126);
-    }).length;
-    const ratio = decoded.length === 0 ? 0 : printableChars / decoded.length;
-    if (ratio >= 0.85) {
-      return decoded;
+  if (body instanceof Uint8Array) {
+    return new TextDecoder().decode(body);
+  }
+
+  if (typeof body === 'object') {
+    const maybeTransformable = body as {
+      transformToString?: () => Promise<string>;
+      transformToByteArray?: () => Promise<Uint8Array>;
+    };
+    if (typeof maybeTransformable.transformToString === 'function') {
+      return await maybeTransformable.transformToString();
     }
-  } catch {
-    return raw;
+    if (typeof maybeTransformable.transformToByteArray === 'function') {
+      const bytes = await maybeTransformable.transformToByteArray();
+      return new TextDecoder().decode(bytes);
+    }
   }
 
-  return raw;
+  throw new Error('Unsupported AWS SDK export body type');
 }
 
 function isAwsNotFoundError(message: string): boolean {
@@ -118,55 +79,62 @@ function isAwsNotFoundError(message: string): boolean {
   return lowered.includes('notfoundexception') || lowered.includes('not found');
 }
 
-export class AwsApiGatewayCliClient implements AwsGatewayClient {
-  public constructor(
-    private readonly exec: ExecLike,
-    private readonly region: string
-  ) {}
+export class AwsApiGatewaySdkClient implements AwsGatewayClient {
+  private readonly restClient: APIGatewayClient;
+  private readonly httpClient: ApiGatewayV2Client;
+
+  public constructor(private readonly region: string) {
+    this.restClient = new APIGatewayClient({ region });
+    this.httpClient = new ApiGatewayV2Client({ region });
+  }
 
   public async listRestApis(): Promise<RestApiSummary[]> {
-    const response = await this.runJson<RestApisResponse>([
-      'apigateway',
-      'get-rest-apis',
-      '--region',
-      this.region
-    ]);
-
-    return (response.items ?? [])
-      .filter((item): item is { id: string; name?: string } => Boolean(item.id))
-      .map((item) => ({
-        id: item.id,
-        name: (item.name ?? '').trim() || item.id
-      }));
+    const items: RestApiSummary[] = [];
+    for await (const page of paginateGetRestApis({ client: this.restClient }, {})) {
+      for (const item of page.items ?? []) {
+        if (!item.id) {
+          continue;
+        }
+        items.push({
+          id: item.id,
+          name: (item.name ?? '').trim() || item.id
+        });
+      }
+    }
+    return items;
   }
 
   public async listHttpApis(): Promise<HttpApiSummary[]> {
-    const response = await this.runJson<HttpApisResponse>([
-      'apigatewayv2',
-      'get-apis',
-      '--region',
-      this.region
-    ]);
-
-    return (response.Items ?? [])
-      .filter((item): item is { ApiId: string; Name?: string; ProtocolType?: string } => Boolean(item.ApiId))
-      .map((item) => ({
-        id: item.ApiId,
-        name: (item.Name ?? '').trim() || item.ApiId,
-        protocolType: (item.ProtocolType ?? '').trim().toUpperCase()
-      }));
+    const items: HttpApiSummary[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetApisCommand({
+          NextToken: nextToken
+        })
+      );
+      for (const item of response.Items ?? []) {
+        if (!item.ApiId) {
+          continue;
+        }
+        items.push({
+          id: item.ApiId,
+          name: (item.Name ?? '').trim() || item.ApiId,
+          protocolType: (item.ProtocolType ?? '').trim().toUpperCase()
+        });
+      }
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return items;
   }
 
   public async getRestApi(apiId: string): Promise<RestApiSummary | undefined> {
     try {
-      const response = await this.runJson<RestApiDetailResponse>([
-        'apigateway',
-        'get-rest-api',
-        '--rest-api-id',
-        apiId,
-        '--region',
-        this.region
-      ]);
+      const response = await this.restClient.send(
+        new GetRestApiCommand({
+          restApiId: apiId
+        })
+      );
       if (!response.id) {
         return undefined;
       }
@@ -185,14 +153,11 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
 
   public async getHttpApi(apiId: string): Promise<HttpApiSummary | undefined> {
     try {
-      const response = await this.runJson<HttpApiDetailResponse>([
-        'apigatewayv2',
-        'get-api',
-        '--api-id',
-        apiId,
-        '--region',
-        this.region
-      ]);
+      const response = await this.httpClient.send(
+        new GetApiCommand({
+          ApiId: apiId
+        })
+      );
       if (!response.ApiId) {
         return undefined;
       }
@@ -211,28 +176,22 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
   }
 
   public async listRestStages(apiId: string): Promise<string[]> {
-    const response = await this.runJson<RestStagesResponse>([
-      'apigateway',
-      'get-stages',
-      '--rest-api-id',
-      apiId,
-      '--region',
-      this.region
-    ]);
+    const response = await this.restClient.send(
+      new GetRestStagesCommand({
+        restApiId: apiId
+      })
+    );
     return (response.item ?? [])
       .map((stage) => (stage.stageName ?? '').trim())
       .filter((stage) => stage.length > 0);
   }
 
   public async listHttpStages(apiId: string): Promise<string[]> {
-    const response = await this.runJson<HttpStagesResponse>([
-      'apigatewayv2',
-      'get-stages',
-      '--api-id',
-      apiId,
-      '--region',
-      this.region
-    ]);
+    const response = await this.httpClient.send(
+      new GetHttpStagesCommand({
+        ApiId: apiId
+      })
+    );
     return (response.Items ?? [])
       .map((stage) => (stage.StageName ?? '').trim())
       .filter((stage) => stage.length > 0);
@@ -240,124 +199,49 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
 
   public async getRestTags(apiId: string): Promise<Record<string, string>> {
     const resourceArn = `arn:aws:apigateway:${this.region}::/restapis/${apiId}`;
-    const response = await this.runJson<TagsResponse>([
-      'apigateway',
-      'get-tags',
-      '--resource-arn',
-      resourceArn,
-      '--region',
-      this.region
-    ]);
+    const response = await this.restClient.send(
+      new GetRestTagsCommand({
+        resourceArn
+      })
+    );
     return response.tags ?? {};
   }
 
   public async getHttpTags(apiId: string): Promise<Record<string, string>> {
     const resourceArn = `arn:aws:apigateway:${this.region}::/apis/${apiId}`;
-    const response = await this.runJson<TagsResponse>([
-      'apigatewayv2',
-      'get-tags',
-      '--resource-arn',
-      resourceArn,
-      '--region',
-      this.region
-    ]);
-    return response.tags ?? {};
+    const response = await this.httpClient.send(
+      new GetHttpTagsCommand({
+        ResourceArn: resourceArn
+      })
+    );
+    return response.Tags ?? {};
   }
 
   public async exportRestApi(apiId: string, stage: string): Promise<string> {
-    const body = await this.runTextToFile([
-      'apigateway',
-      'get-export',
-      '--rest-api-id',
-      apiId,
-      '--stage-name',
-      stage,
-      '--parameters',
-      "extensions='apigateway'",
-      '--export-type',
-      'oas30',
-      '--accepts',
-      'application/yaml',
-      '--region',
-      this.region
-    ]);
-    return decodeMaybeBase64(body);
+    const response = await this.restClient.send(
+      new GetExportCommand({
+        restApiId: apiId,
+        stageName: stage,
+        exportType: 'oas30',
+        accepts: 'application/yaml',
+        parameters: {
+          extensions: 'apigateway'
+        }
+      })
+    );
+    return await readExportBody(response.body);
   }
 
   public async exportHttpApi(apiId: string, stage?: string): Promise<string> {
-    const args = [
-      'apigatewayv2',
-      'export-api',
-      '--api-id',
-      apiId,
-      '--specification',
-      'OAS30',
-      '--output-type',
-      'YAML',
-      '--region',
-      this.region
-    ];
-    if (stage) {
-      args.push('--stage-name', stage);
-    } else {
-      args.push('--no-include-extensions');
-    }
-    const body = await this.runTextToFile(args);
-    return decodeMaybeBase64(body);
-  }
-
-  private async runJson<T>(args: string[]): Promise<T> {
-    const result = await this.exec.getExecOutput('aws', args, {
-      ignoreReturnCode: true,
-      silent: true
-    });
-
-    if (result.exitCode !== 0) {
-      throw new Error(`aws ${args.join(' ')} failed: ${result.stderr.trim() || result.stdout.trim()}`);
-    }
-
-    try {
-      return JSON.parse(result.stdout) as T;
-    } catch (error) {
-      throw new Error(`Failed to parse AWS CLI JSON output: ${toErrorMessage(error)}`);
-    }
-  }
-
-  private async runText(args: string[]): Promise<string> {
-    const result = await this.exec.getExecOutput('aws', args, {
-      ignoreReturnCode: true,
-      silent: true
-    });
-
-    if (result.exitCode !== 0) {
-      throw new Error(`aws ${args.join(' ')} failed: ${result.stderr.trim() || result.stdout.trim()}`);
-    }
-
-    return result.stdout;
-  }
-
-  private async runTextToFile(args: string[]): Promise<string> {
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-aws-spec-'));
-    const outFile = path.join(tempDir, 'spec.out');
-    try {
-      const result = await this.exec.getExecOutput('aws', [...args, outFile], {
-        ignoreReturnCode: true,
-        silent: true
-      });
-      if (result.exitCode !== 0) {
-        throw new Error(`aws ${args.join(' ')} failed: ${result.stderr.trim() || result.stdout.trim()}`);
-      }
-      try {
-        return await readFile(outFile, 'utf8');
-      } catch (error) {
-        // Test stubs and some CLI responses may surface content in stdout.
-        if (result.stdout.trim().length > 0) {
-          return result.stdout;
-        }
-        throw error;
-      }
-    } finally {
-      await rm(tempDir, { recursive: true, force: true });
-    }
+    const response = await this.httpClient.send(
+      new ExportApiCommand({
+        ApiId: apiId,
+        Specification: 'OAS30',
+        OutputType: 'YAML',
+        IncludeExtensions: stage ? true : false,
+        StageName: stage
+      })
+    );
+    return await readExportBody(response.body);
   }
 }
