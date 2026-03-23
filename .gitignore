@@ -1,4 +1,41 @@
 node_modules/
 coverage/
-.DS_Store
 discovered-specs/
+
+# Build and TypeScript artifacts
+*.tsbuildinfo
+*.tgz
+
+# Rust
+target/
+Cargo.lock
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# Editor and OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tooling / local state
+.omc/
+.cache/
+tmp/
+temp/
+.turbo/
+.parcel-cache/
+.next/
+.nuxt/
+.svelte-kit/
+.eslintcache

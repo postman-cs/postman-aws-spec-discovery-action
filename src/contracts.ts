@@ -27,9 +27,10 @@ export interface ResolvedServiceCandidate {
   serviceName: string;
   gatewayId: string;
   gatewayType: GatewayType;
-  stage: string;
+  stage?: string;
   confidence: number;
   evidence: string[];
+  ambiguous?: boolean;
 }
 
 export interface ResolutionResult {
@@ -93,7 +94,8 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       default: ''
     },
     'repo-root': {
-      description: 'Repository root path for local file inspection. Defaults to current workspace root when empty.',
+      description:
+        'Repository root path for local file inspection. Auto-detected from GITHUB_WORKSPACE or CI_PROJECT_DIR when empty, then falls back to .',
       required: false,
       default: '.'
     },
@@ -103,12 +105,14 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       default: ''
     },
     'expected-gateway-ids-json': {
-      description: 'Optional JSON array of expected API Gateway IDs.',
+      description:
+        'Optional JSON array of expected API Gateway IDs. When provided, resolve-one uses direct API lookup instead of broad account discovery.',
       required: false,
       default: '[]'
     },
     stage: {
-      description: 'API Gateway stage override (for example prod, staging). Auto-selects the first available stage when empty.',
+      description:
+        'API Gateway stage override (for example prod, staging). When empty, resolve-one prefers deterministic stages like prod or $default and falls back to manual review for ambiguous multi-stage APIs.',
       required: false,
       default: ''
     },

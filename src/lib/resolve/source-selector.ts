@@ -3,6 +3,7 @@ import type { ResolutionResult, ResolvedServiceCandidate } from '../../contracts
 export interface SourceSelectionInput {
   existingSpecPath?: string;
   candidate?: ResolvedServiceCandidate;
+  fallbackServiceName?: string;
 }
 
 export function chooseSource(input: SourceSelectionInput): ResolutionResult {
@@ -10,8 +11,8 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
     return {
       status: 'resolved',
       sourceType: 'repo-spec',
-      serviceName: input.candidate?.serviceName ?? 'unknown-service',
-      confidence: Math.max(90, input.candidate?.confidence ?? 90),
+      serviceName: input.candidate?.serviceName ?? input.fallbackServiceName ?? 'unknown-service',
+      confidence: input.candidate ? Math.max(80, input.candidate.confidence) : 70,
       specPath: input.existingSpecPath,
       gatewayId: input.candidate?.gatewayId,
       gatewayType: input.candidate?.gatewayType,
@@ -21,7 +22,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
     };
   }
 
-  if (input.candidate && input.candidate.confidence >= 40) {
+  if (input.candidate && !input.candidate.ambiguous && input.candidate.confidence >= 40) {
     return {
       status: 'resolved',
       sourceType: 'gateway-export',
@@ -38,7 +39,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
   return {
     status: 'unresolved',
     sourceType: 'manual-review',
-    serviceName: input.candidate?.serviceName ?? 'unknown-service',
+    serviceName: input.candidate?.serviceName ?? input.fallbackServiceName ?? 'unknown-service',
     confidence: input.candidate?.confidence ?? 0,
     gatewayId: input.candidate?.gatewayId,
     gatewayType: input.candidate?.gatewayType,

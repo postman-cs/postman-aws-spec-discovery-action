@@ -1,8 +1,15 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { DiscoveredService } from '../src/contracts.js';
 import { readActionInputs, resolveInputs, runDiscovery, runAction } from '../src/index.js';
 import { AwsApiGatewayCliClient } from '../src/lib/aws/client.js';
+import { findExistingRepoSpec } from '../src/lib/repo/specs.js';
+import { collectRepoSignals } from '../src/lib/repo/signals.js';
+import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
+import { chooseSource } from '../src/lib/resolve/source-selector.js';
 
 function createCoreStub(values: Record<string, string> = {}) {
   const outputs: Record<string, string> = {};
@@ -84,6 +91,16 @@ describe('input parsing', () => {
       })
     ).toThrow(/include-v2 must be a boolean-like value/);
   });
+
+  it('auto-resolves repo-root from CI workspace variables when omitted', () => {
+    const inputs = resolveInputs({
+      INPUT_MODE: 'resolve-one',
+      INPUT_AWS_REGION: 'us-east-1',
+      GITHUB_WORKSPACE: '/tmp/github-workspace'
+    });
+
+    expect(inputs.repoRoot).toBe('/tmp/github-workspace');
+  });
 });
 
 describe('runDiscovery', () => {
@@ -96,7 +113,9 @@ describe('runDiscovery', () => {
         { id: 'rest-1', name: 'rest-api-one' },
         { id: 'rest-2', name: 'legacy-name' }
       ]),
-      listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'checkout-http' }]),
+      listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'checkout-http', protocolType: 'HTTP' }]),
+      getRestApi: vi.fn(),
+      getHttpApi: vi.fn(),
       listRestStages: vi
         .fn()
         .mockImplementation(async (id: string) => (id === 'rest-2' ? ['staging'] : ['prod'])),
@@ -181,7 +200,9 @@ describe('runDiscovery', () => {
         { id: 'rest-a', name: 'payments-public' },
         { id: 'rest-b', name: 'internal-tools' }
       ]),
-      listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'payments-http' }]),
+      listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'payments-http', protocolType: 'HTTP' }]),
+      getRestApi: vi.fn(),
+      getHttpApi: vi.fn(),
       listRestStages: vi.fn().mockResolvedValue(['prod']),
       listHttpStages: vi.fn().mockResolvedValue(['prod']),
       getRestTags: vi.fn().mockResolvedValue({}),
@@ -234,21 +255,20 @@ describe('runAction', () => {
         .mockResolvedValueOnce({
           exitCode: 0,
           stdout: JSON.stringify({
-            items: [{ id: 'rest-1', name: 'billing' }]
+            id: 'rest-1',
+            name: 'billing'
           }),
+          stderr: ''
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: JSON.stringify({ tags: {} }),
           stderr: ''
         })
         .mockResolvedValueOnce({
           exitCode: 0,
           stdout: JSON.stringify({
             item: [{ stageName: 'prod' }]
-          }),
-          stderr: ''
-        })
-        .mockResolvedValueOnce({
-          exitCode: 0,
-          stdout: JSON.stringify({
-            tags: {}
           }),
           stderr: ''
         })
@@ -268,6 +288,122 @@ describe('runAction', () => {
     expect(outputs['gateway-id']).toBe('rest-1');
     expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
     expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
+  });
+
+  it('downgrades export bad request errors to manual review', async () => {
+    const { core, outputs } = createCoreStub({
+      'aws-region': 'us-east-1',
+      mode: 'resolve-one',
+      'repo-root': '.',
+      'expected-gateway-ids-json': '["http-1"]'
+    });
+
+    const execStub = {
+      getExecOutput: vi
+        .fn()
+        .mockResolvedValueOnce({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'NotFoundException'
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: JSON.stringify({
+            ApiId: 'http-1',
+            Name: 'http-service',
+            ProtocolType: 'HTTP'
+          }),
+          stderr: ''
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: JSON.stringify({ tags: {} }),
+          stderr: ''
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: JSON.stringify({ Items: [] }),
+          stderr: ''
+        })
+        .mockResolvedValueOnce({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'BadRequestException: Unable to deploy API because no valid routes exist in this API'
+        })
+    };
+
+    await runAction(core, execStub);
+
+    expect(outputs['resolution-status']).toBe('unresolved');
+    expect(outputs['source-type']).toBe('manual-review');
+  });
+});
+
+describe('hardening helpers', () => {
+  it('marks equal-confidence candidates as ambiguous', () => {
+    const candidate = resolveServiceCandidate(
+      [
+        { id: 'aaaaabbbbb', name: 'payments-api', gatewayType: 'REST', tags: {} },
+        { id: 'ccccdddddd', name: 'payments-api-copy', gatewayType: 'REST', tags: {} }
+      ],
+      {
+        serviceHints: ['payments'],
+        explicitGatewayIdHints: [],
+        inferredGatewayIdHints: [],
+        evidence: []
+      }
+    );
+
+    expect(candidate?.ambiguous).toBe(true);
+  });
+
+  it('routes ambiguous candidates to manual review', () => {
+    const result = chooseSource({
+      fallbackServiceName: 'payments',
+      candidate: {
+        serviceName: 'payments',
+        gatewayId: 'aaaaabbbbb',
+        gatewayType: 'REST',
+        confidence: 50,
+        ambiguous: true,
+        evidence: ['ambiguous']
+      }
+    });
+
+    expect(result.status).toBe('unresolved');
+    expect(result.sourceType).toBe('manual-review');
+  });
+
+  it('finds only valid OpenAPI repo specs', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-spec-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'swagger.yml'), 'not actually yaml for openapi', 'utf8');
+      await writeFile(path.join(tempDir, 'openapi.json'), JSON.stringify({ openapi: '3.0.0', info: { title: 'x', version: '1.0.0' } }), 'utf8');
+
+      const result = await findExistingRepoSpec(tempDir);
+
+      expect(result).toBe('openapi.json');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('extracts only contextual gateway IDs from repo files', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-signal-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'README.md'),
+        'URL https://abc123def4.execute-api.us-east-1.amazonaws.com/prod and random token qwerty1234',
+        'utf8'
+      );
+
+      const signals = await collectRepoSignals(tempDir, 'postman/payments', undefined, []);
+
+      expect(signals.inferredGatewayIdHints).toEqual(['abc123def4']);
+      expect(signals.inferredGatewayIdHints).not.toContain('qwerty1234');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 

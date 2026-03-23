@@ -8,7 +8,8 @@ import {
   contractOutputNames,
   type DiscoveredService,
   type ActionMode,
-  type GatewayType
+  type GatewayType,
+  type ResolutionResult
 } from './contracts.js';
 import {
   AwsApiGatewayCliClient,
@@ -50,6 +51,13 @@ interface GatewayCandidate {
   id: string;
   name: string;
   gatewayType: GatewayType;
+}
+
+interface ResolutionStageSelection {
+  stage?: string;
+  useLatestConfig?: boolean;
+  evidence: string[];
+  error?: string;
 }
 
 export interface DiscoveryDependencies {
@@ -144,7 +152,12 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     throw new Error('aws-region is required');
   }
 
-  const repoRoot = getInput('repo-root', env) ?? actionContract.inputs['repo-root'].default ?? '.';
+  const repoRoot =
+    getInput('repo-root', env) ??
+    normalizeInputValue(env.GITHUB_WORKSPACE) ??
+    normalizeInputValue(env.CI_PROJECT_DIR) ??
+    actionContract.inputs['repo-root'].default ??
+    '.';
   const expectedServiceName = getInput('expected-service-name', env);
   const expectedGatewayIdsRaw =
     getInput('expected-gateway-ids-json', env) ?? actionContract.inputs['expected-gateway-ids-json'].default ?? '[]';
@@ -278,7 +291,9 @@ function filterCandidates(
     gatewayType: 'REST'
   }));
   const http: GatewayCandidate[] = includeV2
-    ? httpApis.map((api) => ({
+    ? httpApis
+        .filter((api) => !api.protocolType || api.protocolType === 'HTTP')
+        .map((api) => ({
       id: api.id,
       name: api.name,
       gatewayType: 'HTTP'
@@ -291,6 +306,150 @@ function filterCandidates(
   }
 
   return all.filter((api) => apiFilter.test(api.name));
+}
+
+async function lookupCandidatesByIds(
+  inputs: ResolvedInputs,
+  awsClient: AwsGatewayClient,
+  actionCore: Pick<CoreLike, 'warning'>
+): Promise<GatewayCandidate[]> {
+  const candidates: GatewayCandidate[] = [];
+  for (const gatewayId of inputs.expectedGatewayIds) {
+    let found = false;
+    try {
+      const restApi = await awsClient.getRestApi(gatewayId);
+      if (restApi) {
+        candidates.push({
+          id: restApi.id,
+          name: restApi.name,
+          gatewayType: 'REST'
+        });
+        found = true;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      actionCore.warning(`Failed direct REST lookup for ${gatewayId}: ${message}`);
+    }
+
+    if (!found && inputs.includeV2) {
+      try {
+        const httpApi = await awsClient.getHttpApi(gatewayId);
+        if (httpApi && (!httpApi.protocolType || httpApi.protocolType === 'HTTP')) {
+          candidates.push({
+            id: httpApi.id,
+            name: httpApi.name,
+            gatewayType: 'HTTP'
+          });
+          found = true;
+        } else if (httpApi) {
+          actionCore.warning(`Skipping v2 API ${gatewayId} because protocol type ${httpApi.protocolType} is not supported`);
+          found = true;
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        actionCore.warning(`Failed direct HTTP lookup for ${gatewayId}: ${message}`);
+      }
+    }
+
+    if (!found) {
+      actionCore.warning(`Expected gateway ID ${gatewayId} was not found in ${inputs.awsRegion}`);
+    }
+  }
+
+  return candidates;
+}
+
+function inferFallbackServiceName(inputs: ResolvedInputs): string | undefined {
+  return (
+    inputs.expectedServiceName ??
+    inputs.repoContext.repoSlug?.split('/').pop()?.trim() ??
+    inputs.repoContext.repoUrl?.split('/').pop()?.trim()
+  );
+}
+
+function pickPreferredStage(stages: string[]): string | undefined {
+  const priority = ['prod', 'production', '$default', 'main', 'staging', 'stage', 'dev', 'development'];
+  const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
+  for (const preferred of priority) {
+    const match = lowered.get(preferred);
+    if (match) {
+      return match;
+    }
+  }
+  return undefined;
+}
+
+async function resolveStageSelection(
+  aws: AwsGatewayClient,
+  candidate: GatewayCandidate,
+  preferredStage: string | undefined
+): Promise<ResolutionStageSelection> {
+  const stages = candidate.gatewayType === 'REST' ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id);
+
+  if (preferredStage) {
+    if (stages.includes(preferredStage)) {
+      return {
+        stage: preferredStage,
+        evidence: [`Using explicitly requested stage ${preferredStage}`]
+      };
+    }
+    return {
+      evidence: [],
+      error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}`
+    };
+  }
+
+  if (stages.length === 0) {
+    if (candidate.gatewayType === 'HTTP') {
+      return {
+        useLatestConfig: true,
+        evidence: ['No deployed stage found; exporting latest HTTP API configuration without stage']
+      };
+    }
+    return {
+      evidence: [],
+      error: `No stages were found for REST API ${candidate.id}`
+    };
+  }
+
+  if (stages.length === 1) {
+    return {
+      stage: stages[0],
+      evidence: [`Auto-selected only available stage ${stages[0]}`]
+    };
+  }
+
+  const preferred = pickPreferredStage(stages);
+  if (preferred) {
+    return {
+      stage: preferred,
+      evidence: [`Auto-selected preferred stage ${preferred}`]
+    };
+  }
+
+  return {
+    evidence: [],
+    error: `Multiple stages found with no deterministic match: ${stages.join(', ')}`
+  };
+}
+
+function toManualReviewResult(base: ResolutionResult, extraEvidence: string[]): ResolutionResult {
+  return {
+    ...base,
+    status: 'unresolved',
+    sourceType: 'manual-review',
+    evidence: [...base.evidence, ...extraEvidence]
+  };
+}
+
+function isKnownRestExportLimitation(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return lowered.includes('non-json body models') || lowered.includes('json body models are not found');
+}
+
+function isManualReviewExportError(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return lowered.includes('badrequestexception') || isKnownRestExportLimitation(message);
 }
 
 export async function runDiscovery(
@@ -389,55 +548,92 @@ async function runResolution(
     inputs.expectedGatewayIds
   );
 
-  const restApis = await actionCore.group('Resolve REST API candidates', async () => awsClient.listRestApis());
-  const httpApis = await actionCore.group('Resolve HTTP API candidates', async () => {
-    if (!inputs.includeV2) {
-      return [] as HttpApiSummary[];
-    }
-    return awsClient.listHttpApis();
-  });
-  const selected = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
   const narrowedCandidates =
     inputs.expectedGatewayIds.length > 0
-      ? selected.filter((candidate) => inputs.expectedGatewayIds.includes(candidate.id))
-      : selected;
+      ? await actionCore.group('Resolve API candidates by explicit gateway ID', async () =>
+          lookupCandidatesByIds(inputs, awsClient, actionCore)
+        )
+      : filterCandidates(
+          await actionCore.group('Resolve REST API candidates', async () => awsClient.listRestApis()),
+          await actionCore.group('Resolve HTTP API candidates', async () => {
+            if (!inputs.includeV2) {
+              return [] as HttpApiSummary[];
+            }
+            return awsClient.listHttpApis();
+          }),
+          inputs.includeV2,
+          inputs.apiFilter
+        );
   const gateways = [];
   for (const candidate of narrowedCandidates) {
-    const stage = await selectStage(awsClient, candidate, inputs.stage);
-    if (!stage) {
-      continue;
+    const candidateEvidence: string[] = [];
+    let tags: Record<string, string> = {};
+    try {
+      tags =
+        candidate.gatewayType === 'REST'
+          ? await awsClient.getRestTags(candidate.id)
+          : await awsClient.getHttpTags(candidate.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      candidateEvidence.push(`Tag lookup failed for ${candidate.id}: ${message}`);
+      actionCore.warning(`Tag lookup failed for ${candidate.gatewayType} API ${candidate.id}: ${message}`);
     }
-    const tags =
-      candidate.gatewayType === 'REST'
-        ? await awsClient.getRestTags(candidate.id)
-        : await awsClient.getHttpTags(candidate.id);
     gateways.push({
       id: candidate.id,
       name: candidate.name,
       gatewayType: candidate.gatewayType,
-      stage,
-      tags
+      tags,
+      evidence: candidateEvidence
     });
   }
 
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
   const selectedSource = chooseSource({
     existingSpecPath,
-    candidate: resolvedCandidate
+    candidate: resolvedCandidate,
+    fallbackServiceName: inferFallbackServiceName(inputs)
   });
 
-  if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId && selectedSource.stage) {
+  if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId) {
+    const selectedGateway = narrowedCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
+    if (!selectedGateway) {
+      return toManualReviewResult(selectedSource, ['Selected gateway could not be reloaded for export']);
+    }
+    let stageSelection: ResolutionStageSelection;
+    try {
+      stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return toManualReviewResult(selectedSource, [`Stage lookup failed for ${selectedSource.gatewayId}: ${message}`]);
+    }
+    if (stageSelection.error) {
+      return toManualReviewResult(selectedSource, [stageSelection.error]);
+    }
+    selectedSource.stage = stageSelection.stage;
+    selectedSource.evidence = [...selectedSource.evidence, ...stageSelection.evidence];
+
     const relativeSpecPath = toRelativeSpecPath(
       inputs.outputDir,
       projectFolderName(selectedSource.serviceName || 'service')
     );
     const absoluteSpecPath = path.resolve(relativeSpecPath);
-    const body =
-      selectedSource.gatewayType === 'REST'
-        ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage)
-        : await awsClient.exportHttpApi(selectedSource.gatewayId, selectedSource.stage);
-    await writeSpecFile(absoluteSpecPath, body);
-    selectedSource.specPath = relativeSpecPath;
+    try {
+      const body =
+        selectedSource.gatewayType === 'REST'
+          ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? '')
+          : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage);
+      await writeSpecFile(absoluteSpecPath, body);
+      selectedSource.specPath = relativeSpecPath;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (isManualReviewExportError(message)) {
+        return toManualReviewResult(selectedSource, [
+          'API Gateway export could not produce a specification automatically; manual review required',
+          message
+        ]);
+      }
+      throw error;
+    }
   }
 
   return selectedSource;

@@ -5,8 +5,8 @@ export interface GatewayCandidateInput {
   id: string;
   name: string;
   gatewayType: GatewayType;
-  stage: string;
   tags: Record<string, string>;
+  evidence?: string[];
 }
 
 function includesIgnoreCase(value: string, candidates: string[]): boolean {
@@ -18,9 +18,12 @@ function scoreCandidate(candidate: GatewayCandidateInput, signals: RepoSignals):
   let score = 0;
   const evidence: string[] = [];
 
-  if (includesIgnoreCase(candidate.id, signals.gatewayIdHints)) {
-    score += 80;
-    evidence.push(`Matched expected gateway ID ${candidate.id}`);
+  if (includesIgnoreCase(candidate.id, signals.explicitGatewayIdHints)) {
+    score += 100;
+    evidence.push(`Matched explicit gateway ID ${candidate.id}`);
+  } else if (includesIgnoreCase(candidate.id, signals.inferredGatewayIdHints)) {
+    score += 25;
+    evidence.push(`Matched inferred gateway ID ${candidate.id}`);
   }
 
   const serviceHints = signals.serviceHints.map((hint) => hint.toLowerCase());
@@ -49,7 +52,7 @@ export function resolveServiceCandidate(
 
   for (const candidate of gateways) {
     const scored = scoreCandidate(candidate, signals);
-    const mergedEvidence = [...signals.evidence, ...scored.evidence];
+    const mergedEvidence = [...signals.evidence, ...(candidate.evidence ?? []), ...scored.evidence];
     const serviceName =
       (candidate.tags['postman:project-name'] ?? '').trim() ||
       (candidate.tags.Name ?? '').trim() ||
@@ -58,13 +61,17 @@ export function resolveServiceCandidate(
       serviceName,
       gatewayId: candidate.id,
       gatewayType: candidate.gatewayType,
-      stage: candidate.stage,
       confidence: scored.score,
       evidence: mergedEvidence.length > 0 ? mergedEvidence : ['No strong resolver evidence found']
     };
-
-    if (!best || resolved.confidence > best.confidence) {
+    if (!best || resolved.confidence > best.confidence || (resolved.confidence === best.confidence && resolved.gatewayId < best.gatewayId)) {
       best = resolved;
+    } else if (best && resolved.confidence === best.confidence && resolved.confidence > 0) {
+      best.ambiguous = true;
+      best.evidence = [
+        ...best.evidence,
+        `Ambiguous match: ${best.gatewayId} and ${resolved.gatewayId} have equal confidence ${resolved.confidence}`
+      ];
     }
   }
 

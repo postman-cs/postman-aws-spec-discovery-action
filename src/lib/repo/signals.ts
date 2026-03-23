@@ -3,7 +3,8 @@ import path from 'node:path';
 
 export interface RepoSignals {
   serviceHints: string[];
-  gatewayIdHints: string[];
+  explicitGatewayIdHints: string[];
+  inferredGatewayIdHints: string[];
   evidence: string[];
 }
 
@@ -12,8 +13,22 @@ function unique(values: string[]): string[] {
 }
 
 function extractGatewayIds(content: string): string[] {
-  const matches = content.match(/\b[a-z0-9]{10}\b/g) ?? [];
-  return unique(matches.map((value) => value.trim()));
+  const patterns = [
+    /https:\/\/([a-z0-9]{10})\.execute-api\.[a-z0-9-]+\.amazonaws\.com/gi,
+    /(?:--rest-api-id|--api-id)\s+([a-z0-9]{10})\b/gi,
+    /restapis\/([a-z0-9]{10})\b/gi,
+    /\b(?:REST_API_ID|HTTP_API_ID|API_GATEWAY_ID)\s*[:=]\s*["']?([a-z0-9]{10})\b/gi
+  ];
+  const matches: string[] = [];
+  for (const pattern of patterns) {
+    for (const match of content.matchAll(pattern)) {
+      const value = (match[1] ?? '').trim();
+      if (value) {
+        matches.push(value);
+      }
+    }
+  }
+  return unique(matches);
 }
 
 function inferServiceNameFromRepoSlug(repoSlug?: string): string | undefined {
@@ -34,7 +49,7 @@ export async function collectRepoSignals(
     expectedServiceName ?? '',
     inferServiceNameFromRepoSlug(repoSlug) ?? ''
   ]);
-  const gatewayHints = unique([...expectedGatewayIds]);
+  const inferredGatewayHints: string[] = [];
   const evidence: string[] = [];
 
   const inspectFiles = [
@@ -51,7 +66,7 @@ export async function collectRepoSignals(
       const content = await readFile(fullPath, 'utf8');
       const extracted = extractGatewayIds(content);
       if (extracted.length > 0) {
-        gatewayHints.push(...extracted);
+        inferredGatewayHints.push(...extracted);
         evidence.push(`Found gateway ID hints in ${file}`);
       }
     } catch {
@@ -61,7 +76,8 @@ export async function collectRepoSignals(
 
   return {
     serviceHints: unique(serviceHints),
-    gatewayIdHints: unique(gatewayHints),
+    explicitGatewayIdHints: unique(expectedGatewayIds),
+    inferredGatewayIdHints: unique(inferredGatewayHints),
     evidence: unique(evidence)
   };
 }

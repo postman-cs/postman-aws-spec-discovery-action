@@ -26,7 +26,19 @@ interface HttpApisResponse {
   Items?: Array<{
     ApiId?: string;
     Name?: string;
+    ProtocolType?: string;
   }>;
+}
+
+interface RestApiDetailResponse {
+  id?: string;
+  name?: string;
+}
+
+interface HttpApiDetailResponse {
+  ApiId?: string;
+  Name?: string;
+  ProtocolType?: string;
 }
 
 interface RestStagesResponse {
@@ -53,17 +65,20 @@ export interface RestApiSummary {
 export interface HttpApiSummary {
   id: string;
   name: string;
+  protocolType: string;
 }
 
 export interface AwsGatewayClient {
   listRestApis(): Promise<RestApiSummary[]>;
   listHttpApis(): Promise<HttpApiSummary[]>;
+  getRestApi(apiId: string): Promise<RestApiSummary | undefined>;
+  getHttpApi(apiId: string): Promise<HttpApiSummary | undefined>;
   listRestStages(apiId: string): Promise<string[]>;
   listHttpStages(apiId: string): Promise<string[]>;
   getRestTags(apiId: string): Promise<Record<string, string>>;
   getHttpTags(apiId: string): Promise<Record<string, string>>;
   exportRestApi(apiId: string, stage: string): Promise<string>;
-  exportHttpApi(apiId: string, stage: string): Promise<string>;
+  exportHttpApi(apiId: string, stage?: string): Promise<string>;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -98,6 +113,11 @@ function decodeMaybeBase64(raw: string): string {
   return raw;
 }
 
+function isAwsNotFoundError(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return lowered.includes('notfoundexception') || lowered.includes('not found');
+}
+
 export class AwsApiGatewayCliClient implements AwsGatewayClient {
   public constructor(
     private readonly exec: ExecLike,
@@ -129,11 +149,65 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
     ]);
 
     return (response.Items ?? [])
-      .filter((item): item is { ApiId: string; Name?: string } => Boolean(item.ApiId))
+      .filter((item): item is { ApiId: string; Name?: string; ProtocolType?: string } => Boolean(item.ApiId))
       .map((item) => ({
         id: item.ApiId,
-        name: (item.Name ?? '').trim() || item.ApiId
+        name: (item.Name ?? '').trim() || item.ApiId,
+        protocolType: (item.ProtocolType ?? '').trim().toUpperCase()
       }));
+  }
+
+  public async getRestApi(apiId: string): Promise<RestApiSummary | undefined> {
+    try {
+      const response = await this.runJson<RestApiDetailResponse>([
+        'apigateway',
+        'get-rest-api',
+        '--rest-api-id',
+        apiId,
+        '--region',
+        this.region
+      ]);
+      if (!response.id) {
+        return undefined;
+      }
+      return {
+        id: response.id,
+        name: (response.name ?? '').trim() || response.id
+      };
+    } catch (error) {
+      const message = toErrorMessage(error);
+      if (isAwsNotFoundError(message)) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  public async getHttpApi(apiId: string): Promise<HttpApiSummary | undefined> {
+    try {
+      const response = await this.runJson<HttpApiDetailResponse>([
+        'apigatewayv2',
+        'get-api',
+        '--api-id',
+        apiId,
+        '--region',
+        this.region
+      ]);
+      if (!response.ApiId) {
+        return undefined;
+      }
+      return {
+        id: response.ApiId,
+        name: (response.Name ?? '').trim() || response.ApiId,
+        protocolType: (response.ProtocolType ?? '').trim().toUpperCase()
+      };
+    } catch (error) {
+      const message = toErrorMessage(error);
+      if (isAwsNotFoundError(message)) {
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   public async listRestStages(apiId: string): Promise<string[]> {
@@ -210,21 +284,25 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
     return decodeMaybeBase64(body);
   }
 
-  public async exportHttpApi(apiId: string, stage: string): Promise<string> {
-    const body = await this.runTextToFile([
+  public async exportHttpApi(apiId: string, stage?: string): Promise<string> {
+    const args = [
       'apigatewayv2',
       'export-api',
       '--api-id',
       apiId,
-      '--stage-name',
-      stage,
       '--specification',
       'OAS30',
       '--output-type',
       'YAML',
       '--region',
       this.region
-    ]);
+    ];
+    if (stage) {
+      args.push('--stage-name', stage);
+    } else {
+      args.push('--no-include-extensions');
+    }
+    const body = await this.runTextToFile(args);
     return decodeMaybeBase64(body);
   }
 
