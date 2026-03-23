@@ -7,6 +7,7 @@ import {
   actionContract,
   contractOutputNames,
   type DiscoveredService,
+  type ActionMode,
   type GatewayType
 } from './contracts.js';
 import {
@@ -16,6 +17,11 @@ import {
   type HttpApiSummary,
   type RestApiSummary
 } from './lib/aws/client.js';
+import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
+import { findExistingRepoSpec } from './lib/repo/specs.js';
+import { collectRepoSignals } from './lib/repo/signals.js';
+import { chooseSource } from './lib/resolve/source-selector.js';
+import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
 
 export interface CoreLike {
   getInput(name: string, options?: { required?: boolean }): string;
@@ -27,7 +33,12 @@ export interface CoreLike {
 }
 
 export interface ResolvedInputs {
+  mode: ActionMode;
   awsRegion: string;
+  repoRoot: string;
+  repoContext: RepoContext;
+  expectedServiceName?: string;
+  expectedGatewayIds: string[];
   stage?: string;
   apiFilter?: RegExp;
   serviceMapping: Record<string, string>;
@@ -78,6 +89,17 @@ function parseBoolean(input: string | undefined, inputName: string): boolean {
   throw new Error(`${inputName} must be a boolean-like value, got: ${input}`);
 }
 
+function parseMode(input: string | undefined): ActionMode {
+  const value = (input ?? '').trim().toLowerCase();
+  if (!value) {
+    return 'resolve-one';
+  }
+  if (value === 'resolve-one' || value === 'discover-many') {
+    return value;
+  }
+  throw new Error(`mode must be resolve-one or discover-many, got: ${input}`);
+}
+
 function parseServiceMapping(raw: string): Record<string, string> {
   let parsed: unknown;
   try {
@@ -99,12 +121,33 @@ function parseServiceMapping(raw: string): Record<string, string> {
   );
 }
 
+function parseStringArrayJson(raw: string, inputName: string): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON for ${inputName}: ${detail}`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${inputName} must be a JSON array`);
+  }
+
+  return parsed.map((value) => String(value).trim()).filter((value) => value.length > 0);
+}
+
 export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInputs {
+  const mode = parseMode(getInput('mode', env) ?? actionContract.inputs.mode.default ?? 'resolve-one');
   const awsRegion = getInput('aws-region', env) ?? '';
   if (!awsRegion) {
     throw new Error('aws-region is required');
   }
 
+  const repoRoot = getInput('repo-root', env) ?? actionContract.inputs['repo-root'].default ?? '.';
+  const expectedServiceName = getInput('expected-service-name', env);
+  const expectedGatewayIdsRaw =
+    getInput('expected-gateway-ids-json', env) ?? actionContract.inputs['expected-gateway-ids-json'].default ?? '[]';
   const stage = getInput('stage', env);
   const apiFilterRaw = getInput('api-filter', env);
   const serviceMappingRaw =
@@ -113,6 +156,16 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     getInput('output-dir', env) ?? actionContract.inputs['output-dir'].default ?? 'discovered-specs';
   const includeV2Raw =
     getInput('include-v2', env) ?? actionContract.inputs['include-v2'].default ?? 'true';
+  const repoContext = detectRepoContext(
+    {
+      repoUrl: getInput('repo-url', env),
+      repoSlug: getInput('repo-slug', env),
+      gitProvider: getInput('git-provider', env),
+      ref: getInput('ref', env),
+      sha: getInput('sha', env)
+    },
+    env
+  );
 
   let apiFilter: RegExp | undefined;
   if (apiFilterRaw) {
@@ -125,7 +178,12 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
   }
 
   return {
+    mode,
     awsRegion,
+    repoRoot,
+    repoContext,
+    expectedServiceName,
+    expectedGatewayIds: parseStringArrayJson(expectedGatewayIdsRaw, 'expected-gateway-ids-json'),
     stage,
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
@@ -138,7 +196,18 @@ export function readActionInputs(actionCore: Pick<CoreLike, 'getInput'>): Resolv
   const requiredRegion = actionCore.getInput('aws-region', { required: true }).trim();
 
   return resolveInputs({
+    INPUT_MODE: normalizeInputValue(actionCore.getInput('mode')) ?? actionContract.inputs.mode.default,
     INPUT_AWS_REGION: requiredRegion,
+    INPUT_REPO_ROOT: normalizeInputValue(actionCore.getInput('repo-root')) ?? actionContract.inputs['repo-root'].default,
+    INPUT_REPO_URL: normalizeInputValue(actionCore.getInput('repo-url')),
+    INPUT_REPO_SLUG: normalizeInputValue(actionCore.getInput('repo-slug')),
+    INPUT_GIT_PROVIDER: normalizeInputValue(actionCore.getInput('git-provider')),
+    INPUT_REF: normalizeInputValue(actionCore.getInput('ref')),
+    INPUT_SHA: normalizeInputValue(actionCore.getInput('sha')),
+    INPUT_EXPECTED_SERVICE_NAME: normalizeInputValue(actionCore.getInput('expected-service-name')),
+    INPUT_EXPECTED_GATEWAY_IDS_JSON:
+      normalizeInputValue(actionCore.getInput('expected-gateway-ids-json')) ??
+      actionContract.inputs['expected-gateway-ids-json'].default,
     INPUT_STAGE: normalizeInputValue(actionCore.getInput('stage')),
     INPUT_API_FILTER: normalizeInputValue(actionCore.getInput('api-filter')),
     INPUT_SERVICE_MAPPING_JSON:
@@ -151,27 +220,13 @@ export function readActionInputs(actionCore: Pick<CoreLike, 'getInput'>): Resolv
   });
 }
 
-function resolveProjectName(
-  gatewayId: string,
-  gatewayName: string,
-  tags: Record<string, string>,
-  serviceMapping: Record<string, string>
-): string {
+function resolveLegacyServiceName(gatewayId: string, gatewayName: string, tags: Record<string, string>, serviceMapping: Record<string, string>): string {
   const tagProjectName = (tags['postman:project-name'] ?? '').trim();
-  if (tagProjectName) {
-    return tagProjectName;
-  }
-
+  if (tagProjectName) return tagProjectName;
   const tagName = (tags.Name ?? '').trim();
-  if (tagName) {
-    return tagName;
-  }
-
+  if (tagName) return tagName;
   const mapped = (serviceMapping[gatewayId] ?? '').trim();
-  if (mapped) {
-    return mapped;
-  }
-
+  if (mapped) return mapped;
   return gatewayName;
 }
 
@@ -281,8 +336,8 @@ export async function runDiscovery(
             ? await dependencies.aws.getRestTags(candidate.id)
             : await dependencies.aws.getHttpTags(candidate.id);
 
-        const projectName = resolveProjectName(candidate.id, candidate.name, tags, inputs.serviceMapping);
-        const baseFolder = projectFolderName(projectName);
+        const serviceName = resolveLegacyServiceName(candidate.id, candidate.name, tags, inputs.serviceMapping);
+        const baseFolder = projectFolderName(serviceName);
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
@@ -298,7 +353,7 @@ export async function runDiscovery(
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
 
         discovered.push({
-          projectName,
+          serviceName,
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
@@ -320,6 +375,74 @@ export async function runDiscovery(
   return discovered;
 }
 
+async function runResolution(
+  inputs: ResolvedInputs,
+  awsClient: AwsGatewayClient,
+  actionCore: Pick<CoreLike, 'group' | 'info' | 'warning'>,
+  writeSpecFile: (outputPath: string, content: string) => Promise<void>
+) {
+  const existingSpecPath = await findExistingRepoSpec(inputs.repoRoot);
+  const signals = await collectRepoSignals(
+    inputs.repoRoot,
+    inputs.repoContext.repoSlug,
+    inputs.expectedServiceName,
+    inputs.expectedGatewayIds
+  );
+
+  const restApis = await actionCore.group('Resolve REST API candidates', async () => awsClient.listRestApis());
+  const httpApis = await actionCore.group('Resolve HTTP API candidates', async () => {
+    if (!inputs.includeV2) {
+      return [] as HttpApiSummary[];
+    }
+    return awsClient.listHttpApis();
+  });
+  const selected = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
+  const narrowedCandidates =
+    inputs.expectedGatewayIds.length > 0
+      ? selected.filter((candidate) => inputs.expectedGatewayIds.includes(candidate.id))
+      : selected;
+  const gateways = [];
+  for (const candidate of narrowedCandidates) {
+    const stage = await selectStage(awsClient, candidate, inputs.stage);
+    if (!stage) {
+      continue;
+    }
+    const tags =
+      candidate.gatewayType === 'REST'
+        ? await awsClient.getRestTags(candidate.id)
+        : await awsClient.getHttpTags(candidate.id);
+    gateways.push({
+      id: candidate.id,
+      name: candidate.name,
+      gatewayType: candidate.gatewayType,
+      stage,
+      tags
+    });
+  }
+
+  const resolvedCandidate = resolveServiceCandidate(gateways, signals);
+  const selectedSource = chooseSource({
+    existingSpecPath,
+    candidate: resolvedCandidate
+  });
+
+  if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId && selectedSource.stage) {
+    const relativeSpecPath = toRelativeSpecPath(
+      inputs.outputDir,
+      projectFolderName(selectedSource.serviceName || 'service')
+    );
+    const absoluteSpecPath = path.resolve(relativeSpecPath);
+    const body =
+      selectedSource.gatewayType === 'REST'
+        ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage)
+        : await awsClient.exportHttpApi(selectedSource.gatewayId, selectedSource.stage);
+    await writeSpecFile(absoluteSpecPath, body);
+    selectedSource.specPath = relativeSpecPath;
+  }
+
+  return selectedSource;
+}
+
 export async function runAction(
   actionCore: CoreLike = core,
   actionExec: AwsExecLike = exec
@@ -327,18 +450,35 @@ export async function runAction(
   const inputs = readActionInputs(actionCore);
   const awsClient = new AwsApiGatewayCliClient(actionExec, inputs.awsRegion);
 
-  const discovered = await runDiscovery(inputs, {
-    core: actionCore,
-    aws: awsClient,
-    writeSpecFile: defaultWriteSpecFile
-  });
+  if (inputs.mode === 'discover-many') {
+    const discovered = await runDiscovery(inputs, {
+      core: actionCore,
+      aws: awsClient,
+      writeSpecFile: defaultWriteSpecFile
+    });
+    const servicesJson = JSON.stringify(discovered);
+    actionCore.setOutput('services-json', servicesJson);
+    actionCore.setOutput('service-count', String(discovered.length));
+    actionCore.setOutput('resolution-status', 'resolved');
+    actionCore.setOutput('source-type', 'discover-many');
+    actionCore.setOutput('mapping-confidence', discovered.length > 0 ? '100' : '0');
+    actionCore.setOutput('resolution-json', JSON.stringify({ status: 'resolved', sourceType: 'discover-many', count: discovered.length }));
+    actionCore.info(`Discovered ${discovered.length} service(s)`);
+    return discovered;
+  }
 
-  const servicesJson = JSON.stringify(discovered);
-  actionCore.setOutput('services-json', servicesJson);
-  actionCore.setOutput('service-count', String(discovered.length));
-
-  actionCore.info(`Discovered ${discovered.length} service(s)`);
-  return discovered;
+  const resolution = await runResolution(inputs, awsClient, actionCore, defaultWriteSpecFile);
+  actionCore.setOutput('resolution-json', JSON.stringify(resolution));
+  actionCore.setOutput('resolution-status', resolution.status);
+  actionCore.setOutput('source-type', resolution.sourceType);
+  actionCore.setOutput('mapping-confidence', String(resolution.confidence));
+  actionCore.setOutput('service-name', resolution.serviceName);
+  actionCore.setOutput('gateway-id', resolution.gatewayId ?? '');
+  actionCore.setOutput('spec-path', resolution.specPath ?? '');
+  actionCore.setOutput('services-json', '[]');
+  actionCore.setOutput('service-count', '0');
+  actionCore.info(`Resolution status: ${resolution.status} (${resolution.sourceType})`);
+  return [];
 }
 
 const currentModulePath = typeof __filename === 'string' ? __filename : '';

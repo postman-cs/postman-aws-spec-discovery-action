@@ -1,4 +1,7 @@
 import type { ExecOptions } from '@actions/exec';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 export interface ExecLike {
   getExecOutput(
@@ -188,7 +191,7 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
   }
 
   public async exportRestApi(apiId: string, stage: string): Promise<string> {
-    const body = await this.runText([
+    const body = await this.runTextToFile([
       'apigateway',
       'get-export',
       '--rest-api-id',
@@ -202,17 +205,13 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
       '--accepts',
       'application/yaml',
       '--region',
-      this.region,
-      '--query',
-      'body',
-      '--output',
-      'text'
+      this.region
     ]);
     return decodeMaybeBase64(body);
   }
 
   public async exportHttpApi(apiId: string, stage: string): Promise<string> {
-    const body = await this.runText([
+    const body = await this.runTextToFile([
       'apigatewayv2',
       'export-api',
       '--api-id',
@@ -224,11 +223,7 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
       '--output-type',
       'YAML',
       '--region',
-      this.region,
-      '--query',
-      'body',
-      '--output',
-      'text'
+      this.region
     ]);
     return decodeMaybeBase64(body);
   }
@@ -261,5 +256,30 @@ export class AwsApiGatewayCliClient implements AwsGatewayClient {
     }
 
     return result.stdout;
+  }
+
+  private async runTextToFile(args: string[]): Promise<string> {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-aws-spec-'));
+    const outFile = path.join(tempDir, 'spec.out');
+    try {
+      const result = await this.exec.getExecOutput('aws', [...args, outFile], {
+        ignoreReturnCode: true,
+        silent: true
+      });
+      if (result.exitCode !== 0) {
+        throw new Error(`aws ${args.join(' ')} failed: ${result.stderr.trim() || result.stdout.trim()}`);
+      }
+      try {
+        return await readFile(outFile, 'utf8');
+      } catch (error) {
+        // Test stubs and some CLI responses may surface content in stdout.
+        if (result.stdout.trim().length > 0) {
+          return result.stdout;
+        }
+        throw error;
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   }
 }

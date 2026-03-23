@@ -39,7 +39,16 @@ function createCoreStub(values: Record<string, string> = {}) {
 describe('input parsing', () => {
   it('reads required and optional action inputs', () => {
     const { core } = createCoreStub({
+      mode: 'resolve-one',
       'aws-region': 'us-west-2',
+      'repo-url': 'git@github.com:postman/payments.git',
+      'repo-slug': 'postman/payments',
+      'git-provider': 'github',
+      ref: 'main',
+      sha: 'abc123',
+      'repo-root': '.',
+      'expected-service-name': 'payments',
+      'expected-gateway-ids-json': '["rest-1"]',
       stage: 'prod',
       'api-filter': '^payments',
       'service-mapping-json': '{"abc":"payments-service"}',
@@ -49,7 +58,16 @@ describe('input parsing', () => {
 
     const inputs = readActionInputs(core);
 
+    expect(inputs.mode).toBe('resolve-one');
     expect(inputs.awsRegion).toBe('us-west-2');
+    expect(inputs.repoContext.provider).toBe('github');
+    expect(inputs.repoContext.repoUrl).toBe('https://github.com/postman/payments');
+    expect(inputs.repoContext.repoSlug).toBe('postman/payments');
+    expect(inputs.repoContext.ref).toBe('main');
+    expect(inputs.repoContext.sha).toBe('abc123');
+    expect(inputs.repoRoot).toBe('.');
+    expect(inputs.expectedServiceName).toBe('payments');
+    expect(inputs.expectedGatewayIds).toEqual(['rest-1']);
     expect(inputs.stage).toBe('prod');
     expect(inputs.apiFilter?.test('payments-api')).toBe(true);
     expect(inputs.serviceMapping).toEqual({ abc: 'payments-service' });
@@ -60,6 +78,7 @@ describe('input parsing', () => {
   it('fails fast on invalid include-v2 values', () => {
     expect(() =>
       resolveInputs({
+        INPUT_MODE: 'resolve-one',
         INPUT_AWS_REGION: 'us-east-1',
         INPUT_INCLUDE_V2: 'sometimes'
       })
@@ -106,7 +125,11 @@ describe('runDiscovery', () => {
 
     const discovered = await runDiscovery(
       {
+        mode: 'discover-many',
         awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
         stage: undefined,
         apiFilter: undefined,
         serviceMapping: {
@@ -126,14 +149,14 @@ describe('runDiscovery', () => {
 
     expect(discovered).toEqual<DiscoveredService[]>([
       {
-        projectName: 'payments-core',
+        serviceName: 'payments-core',
         specPath: 'discovered-specs/payments-core/index.yaml',
         gatewayId: 'rest-1',
         gatewayType: 'REST',
         stage: 'prod'
       },
       {
-        projectName: 'checkout-service',
+        serviceName: 'checkout-service',
         specPath: 'discovered-specs/checkout-service/index.yaml',
         gatewayId: 'http-1',
         gatewayType: 'HTTP',
@@ -169,7 +192,11 @@ describe('runDiscovery', () => {
 
     const discovered = await runDiscovery(
       {
+        mode: 'discover-many',
         awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
         stage: 'prod',
         apiFilter: /^payments/,
         serviceMapping: {},
@@ -191,10 +218,14 @@ describe('runDiscovery', () => {
 });
 
 describe('runAction', () => {
-  it('emits services-json and service-count outputs', async () => {
+  it('emits resolution outputs in resolve-one mode', async () => {
     const { core, outputs } = createCoreStub({
       'aws-region': 'us-east-1',
-      'include-v2': 'false'
+      mode: 'resolve-one',
+      'include-v2': 'false',
+      'repo-root': '.',
+      'repo-slug': 'postman/billing',
+      'expected-gateway-ids-json': '["rest-1"]'
     });
 
     const execStub = {
@@ -230,9 +261,13 @@ describe('runAction', () => {
 
     const result = await runAction(core, execStub);
 
-    expect(result).toHaveLength(1);
-    expect(outputs['service-count']).toBe('1');
-    expect(() => JSON.parse(outputs['services-json'] ?? '[]')).not.toThrow();
+    expect(result).toHaveLength(0);
+    expect(outputs['resolution-status']).toBe('resolved');
+    expect(outputs['source-type']).toBe('gateway-export');
+    expect(outputs['service-name']).toBe('billing');
+    expect(outputs['gateway-id']).toBe('rest-1');
+    expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
+    expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
   });
 });
 

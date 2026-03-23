@@ -95,11 +95,11 @@ var require_command = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.issue = exports2.issueCommand = void 0;
-    var os = __importStar(require("os"));
+    var os2 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueCommand(command, properties, message) {
       const cmd = new Command(command, properties, message);
-      process.stdout.write(cmd.toString() + os.EOL);
+      process.stdout.write(cmd.toString() + os2.EOL);
     }
     exports2.issueCommand = issueCommand;
     function issue(name, message = "") {
@@ -183,7 +183,7 @@ var require_file_command = __commonJS({
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
     var crypto = __importStar(require("crypto"));
     var fs = __importStar(require("fs"));
-    var os = __importStar(require("os"));
+    var os2 = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
       const filePath = process.env[`GITHUB_${command}`];
@@ -193,7 +193,7 @@ var require_file_command = __commonJS({
       if (!fs.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
+      fs.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os2.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -207,7 +207,7 @@ var require_file_command = __commonJS({
       if (convertedValue.includes(delimiter)) {
         throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
       }
-      return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+      return `${key}<<${delimiter}${os2.EOL}${convertedValue}${os2.EOL}${delimiter}`;
     }
     exports2.prepareKeyValueMessage = prepareKeyValueMessage;
   }
@@ -1334,14 +1334,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path2 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path5 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path2 && path2[0] !== "/") {
-          path2 = `/${path2}`;
+        if (path5 && path5[0] !== "/") {
+          path5 = `/${path5}`;
         }
-        return new URL(`${origin}${path2}`);
+        return new URL(`${origin}${path5}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1792,39 +1792,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin }
+          request: { method, path: path5, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path2);
+        debuglog("sending request to %s %s/%s", method, origin, path5);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin },
+          request: { method, path: path5, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path2,
+          path5,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin }
+          request: { method, path: path5, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path2);
+        debuglog("trailers received from %s %s/%s", method, origin, path5);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path2, origin },
+          request: { method, path: path5, origin },
           error
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path2,
+          path5,
           error.message
         );
       });
@@ -1873,9 +1873,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path2, origin }
+            request: { method, path: path5, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path2);
+          debuglog("sending request to %s %s/%s", method, origin, path5);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1938,7 +1938,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
       constructor(origin, {
-        path: path2,
+        path: path5,
         method,
         body,
         headers,
@@ -1953,11 +1953,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler) {
-        if (typeof path2 !== "string") {
+        if (typeof path5 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path2[0] !== "/" && !(path2.startsWith("http://") || path2.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path5[0] !== "/" && !(path5.startsWith("http://") || path5.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path2)) {
+        } else if (invalidPathRegex.test(path5)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -2023,7 +2023,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path2, query) : path2;
+        this.path = query ? buildURL(path5, query) : path5;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6542,7 +6542,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request) {
-      const { method, path: path2, host, upgrade, blocking, reset } = request;
+      const { method, path: path5, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util.isFormDataLike(body)) {
@@ -6608,7 +6608,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path2} HTTP/1.1\r
+      let header = `${method} ${path5} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -7134,7 +7134,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
-      const { method, path: path2, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { method, path: path5, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
         util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
@@ -7201,7 +7201,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path2;
+      headers[HTTP2_HEADER_PATH] = path5;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7554,9 +7554,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path2 = search ? `${pathname}${search}` : pathname;
+        const path5 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path2;
+        this.opts.path = path5;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8790,10 +8790,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path2 = "/",
+          path: path5 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path2;
+        opts.path = origin + path5;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -10714,20 +10714,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path2) {
-      if (typeof path2 !== "string") {
-        return path2;
+    function safeUrl(path5) {
+      if (typeof path5 !== "string") {
+        return path5;
       }
-      const pathSegments = path2.split("?");
+      const pathSegments = path5.split("?");
       if (pathSegments.length !== 2) {
-        return path2;
+        return path5;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path2, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path2);
+    function matchKey(mockDispatch2, { path: path5, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path5);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10749,7 +10749,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path2 }) => matchValue(safeUrl(path2), resolvedPath));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path5 }) => matchValue(safeUrl(path5), resolvedPath));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath}'`);
       }
@@ -10787,9 +10787,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path2, method, body, headers, query } = opts;
+      const { path: path5, method, body, headers, query } = opts;
       return {
-        path: path2,
+        path: path5,
         method,
         body,
         headers,
@@ -11252,10 +11252,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path2, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path5, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path2,
+            Path: path5,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -16136,9 +16136,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path2) {
-      for (let i = 0; i < path2.length; ++i) {
-        const code = path2.charCodeAt(i);
+    function validateCookiePath(path5) {
+      for (let i = 0; i < path5.length; ++i) {
+        const code = path5.charCodeAt(i);
         if (code < 32 || // exclude CTLs (0-31)
         code === 127 || // DEL
         code === 59) {
@@ -18778,11 +18778,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path2 = opts.path;
+          let path5 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path2 = `/${path2}`;
+            path5 = `/${path5}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path2);
+          url = new URL(util.parseOrigin(url).origin + path5);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -19709,7 +19709,7 @@ var require_summary = __commonJS({
     exports2.summary = exports2.markdownSummary = exports2.SUMMARY_DOCS_URL = exports2.SUMMARY_ENV_VAR = void 0;
     var os_1 = require("os");
     var fs_1 = require("fs");
-    var { access, appendFile, writeFile: writeFile2 } = fs_1.promises;
+    var { access: access2, appendFile, writeFile: writeFile2 } = fs_1.promises;
     exports2.SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
     exports2.SUMMARY_DOCS_URL = "https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary";
     var Summary = class {
@@ -19732,7 +19732,7 @@ var require_summary = __commonJS({
             throw new Error(`Unable to find environment variable for $${exports2.SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`);
           }
           try {
-            yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
+            yield access2(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
           } catch (_a) {
             throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
           }
@@ -20001,7 +20001,7 @@ var require_path_utils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.toPlatformPath = exports2.toWin32Path = exports2.toPosixPath = void 0;
-    var path2 = __importStar(require("path"));
+    var path5 = __importStar(require("path"));
     function toPosixPath(pth) {
       return pth.replace(/[\\]/g, "/");
     }
@@ -20011,7 +20011,7 @@ var require_path_utils = __commonJS({
     }
     exports2.toWin32Path = toWin32Path;
     function toPlatformPath(pth) {
-      return pth.replace(/[/\\]/g, path2.sep);
+      return pth.replace(/[/\\]/g, path5.sep);
     }
     exports2.toPlatformPath = toPlatformPath;
   }
@@ -20075,7 +20075,7 @@ var require_io_util = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
     var fs = __importStar(require("fs"));
-    var path2 = __importStar(require("path"));
+    var path5 = __importStar(require("path"));
     _a = fs.promises, exports2.chmod = _a.chmod, exports2.copyFile = _a.copyFile, exports2.lstat = _a.lstat, exports2.mkdir = _a.mkdir, exports2.open = _a.open, exports2.readdir = _a.readdir, exports2.readlink = _a.readlink, exports2.rename = _a.rename, exports2.rm = _a.rm, exports2.rmdir = _a.rmdir, exports2.stat = _a.stat, exports2.symlink = _a.symlink, exports2.unlink = _a.unlink;
     exports2.IS_WINDOWS = process.platform === "win32";
     exports2.UV_FS_O_EXLOCK = 268435456;
@@ -20124,7 +20124,7 @@ var require_io_util = __commonJS({
         }
         if (stats && stats.isFile()) {
           if (exports2.IS_WINDOWS) {
-            const upperExt = path2.extname(filePath).toUpperCase();
+            const upperExt = path5.extname(filePath).toUpperCase();
             if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) {
               return filePath;
             }
@@ -20148,11 +20148,11 @@ var require_io_util = __commonJS({
           if (stats && stats.isFile()) {
             if (exports2.IS_WINDOWS) {
               try {
-                const directory = path2.dirname(filePath);
-                const upperName = path2.basename(filePath).toUpperCase();
+                const directory = path5.dirname(filePath);
+                const upperName = path5.basename(filePath).toUpperCase();
                 for (const actualName of yield exports2.readdir(directory)) {
                   if (upperName === actualName.toUpperCase()) {
-                    filePath = path2.join(directory, actualName);
+                    filePath = path5.join(directory, actualName);
                     break;
                   }
                 }
@@ -20247,7 +20247,7 @@ var require_io = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.findInPath = exports2.which = exports2.mkdirP = exports2.rmRF = exports2.mv = exports2.cp = void 0;
     var assert_1 = require("assert");
-    var path2 = __importStar(require("path"));
+    var path5 = __importStar(require("path"));
     var ioUtil = __importStar(require_io_util());
     function cp(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
@@ -20256,7 +20256,7 @@ var require_io = __commonJS({
         if (destStat && destStat.isFile() && !force) {
           return;
         }
-        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path2.join(dest, path2.basename(source)) : dest;
+        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path5.join(dest, path5.basename(source)) : dest;
         if (!(yield ioUtil.exists(source))) {
           throw new Error(`no such file or directory: ${source}`);
         }
@@ -20268,7 +20268,7 @@ var require_io = __commonJS({
             yield cpDirRecursive(source, newDest, 0, force);
           }
         } else {
-          if (path2.relative(source, newDest) === "") {
+          if (path5.relative(source, newDest) === "") {
             throw new Error(`'${newDest}' and '${source}' are the same file`);
           }
           yield copyFile(source, newDest, force);
@@ -20281,7 +20281,7 @@ var require_io = __commonJS({
         if (yield ioUtil.exists(dest)) {
           let destExists = true;
           if (yield ioUtil.isDirectory(dest)) {
-            dest = path2.join(dest, path2.basename(source));
+            dest = path5.join(dest, path5.basename(source));
             destExists = yield ioUtil.exists(dest);
           }
           if (destExists) {
@@ -20292,7 +20292,7 @@ var require_io = __commonJS({
             }
           }
         }
-        yield mkdirP(path2.dirname(dest));
+        yield mkdirP(path5.dirname(dest));
         yield ioUtil.rename(source, dest);
       });
     }
@@ -20355,7 +20355,7 @@ var require_io = __commonJS({
         }
         const extensions = [];
         if (ioUtil.IS_WINDOWS && process.env["PATHEXT"]) {
-          for (const extension of process.env["PATHEXT"].split(path2.delimiter)) {
+          for (const extension of process.env["PATHEXT"].split(path5.delimiter)) {
             if (extension) {
               extensions.push(extension);
             }
@@ -20368,12 +20368,12 @@ var require_io = __commonJS({
           }
           return [];
         }
-        if (tool.includes(path2.sep)) {
+        if (tool.includes(path5.sep)) {
           return [];
         }
         const directories = [];
         if (process.env.PATH) {
-          for (const p of process.env.PATH.split(path2.delimiter)) {
+          for (const p of process.env.PATH.split(path5.delimiter)) {
             if (p) {
               directories.push(p);
             }
@@ -20381,7 +20381,7 @@ var require_io = __commonJS({
         }
         const matches = [];
         for (const directory of directories) {
-          const filePath = yield ioUtil.tryGetExecutablePath(path2.join(directory, tool), extensions);
+          const filePath = yield ioUtil.tryGetExecutablePath(path5.join(directory, tool), extensions);
           if (filePath) {
             matches.push(filePath);
           }
@@ -20494,10 +20494,10 @@ var require_toolrunner = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.argStringToArray = exports2.ToolRunner = void 0;
-    var os = __importStar(require("os"));
+    var os2 = __importStar(require("os"));
     var events = __importStar(require("events"));
     var child = __importStar(require("child_process"));
-    var path2 = __importStar(require("path"));
+    var path5 = __importStar(require("path"));
     var io = __importStar(require_io());
     var ioUtil = __importStar(require_io_util());
     var timers_1 = require("timers");
@@ -20549,12 +20549,12 @@ var require_toolrunner = __commonJS({
       _processLineBuffer(data, strBuffer, onLine) {
         try {
           let s = strBuffer + data.toString();
-          let n = s.indexOf(os.EOL);
+          let n = s.indexOf(os2.EOL);
           while (n > -1) {
             const line = s.substring(0, n);
             onLine(line);
-            s = s.substring(n + os.EOL.length);
-            n = s.indexOf(os.EOL);
+            s = s.substring(n + os2.EOL.length);
+            n = s.indexOf(os2.EOL);
           }
           return s;
         } catch (err) {
@@ -20712,7 +20712,7 @@ var require_toolrunner = __commonJS({
       exec() {
         return __awaiter(this, void 0, void 0, function* () {
           if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
-            this.toolPath = path2.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
+            this.toolPath = path5.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
           }
           this.toolPath = yield io.which(this.toolPath, true);
           return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -20723,7 +20723,7 @@ var require_toolrunner = __commonJS({
             }
             const optionsNonNull = this._cloneExecOptions(this.options);
             if (!optionsNonNull.silent && optionsNonNull.outStream) {
-              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os.EOL);
+              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os2.EOL);
             }
             const state = new ExecState(optionsNonNull, this.toolPath);
             state.on("debug", (message) => {
@@ -21211,8 +21211,8 @@ var require_core = __commonJS({
     var command_1 = require_command();
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
-    var os = __importStar(require("os"));
-    var path2 = __importStar(require("path"));
+    var os2 = __importStar(require("os"));
+    var path5 = __importStar(require("path"));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
     (function(ExitCode2) {
@@ -21240,7 +21240,7 @@ var require_core = __commonJS({
       } else {
         (0, command_1.issueCommand)("add-path", {}, inputPath);
       }
-      process.env["PATH"] = `${inputPath}${path2.delimiter}${process.env["PATH"]}`;
+      process.env["PATH"] = `${inputPath}${path5.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
     function getInput2(name, options) {
@@ -21279,7 +21279,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
       }
-      process.stdout.write(os.EOL);
+      process.stdout.write(os2.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
     exports2.setOutput = setOutput;
@@ -21313,7 +21313,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
     exports2.notice = notice;
     function info(message) {
-      process.stdout.write(message + os.EOL);
+      process.stdout.write(message + os2.EOL);
     }
     exports2.info = info;
     function startGroup(name) {
@@ -21390,20 +21390,65 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 var core = __toESM(require_core(), 1);
 var exec = __toESM(require_exec(), 1);
-var import_promises = require("node:fs/promises");
-var import_node_path = __toESM(require("node:path"), 1);
+var import_promises4 = require("node:fs/promises");
+var import_node_path4 = __toESM(require("node:path"), 1);
 
 // src/contracts.ts
 var actionContract = {
   name: "postman-aws-spec-discovery-action",
-  description: "Discover API Gateway APIs and export OpenAPI 3.0 specs for downstream onboarding.",
+  description: "Resolve the best API spec source for the current service repository.",
   inputs: {
+    mode: {
+      description: "Execution mode. Auto-defaults to resolve-one when empty; discover-many preserves legacy bulk export behavior.",
+      required: false,
+      default: "resolve-one"
+    },
     "aws-region": {
-      description: "AWS region to scan for API Gateway instances",
+      description: "AWS region used to resolve API Gateway resources",
       required: true
     },
+    "repo-url": {
+      description: "Repository URL override (HTTPS or SSH). Auto-detected from CI metadata when empty.",
+      required: false,
+      default: ""
+    },
+    "repo-slug": {
+      description: "Repository slug override (for example org/repo or group/project). Auto-detected from CI metadata when empty.",
+      required: false,
+      default: ""
+    },
+    "git-provider": {
+      description: "Git provider override (github or gitlab). Auto-detected from CI when empty.",
+      required: false,
+      default: ""
+    },
+    ref: {
+      description: "Git ref override. Auto-detected from CI when empty.",
+      required: false,
+      default: ""
+    },
+    sha: {
+      description: "Git commit SHA override. Auto-detected from CI when empty.",
+      required: false,
+      default: ""
+    },
+    "repo-root": {
+      description: "Repository root path for local file inspection. Defaults to current workspace root when empty.",
+      required: false,
+      default: "."
+    },
+    "expected-service-name": {
+      description: "Optional expected service name hint for resolver scoring.",
+      required: false,
+      default: ""
+    },
+    "expected-gateway-ids-json": {
+      description: "Optional JSON array of expected API Gateway IDs.",
+      required: false,
+      default: "[]"
+    },
     stage: {
-      description: "API Gateway stage to export (e.g., prod, staging). When empty, exports the first available stage.",
+      description: "API Gateway stage override (for example prod, staging). Auto-selects the first available stage when empty.",
       required: false,
       default: ""
     },
@@ -21413,7 +21458,7 @@ var actionContract = {
       default: ""
     },
     "service-mapping-json": {
-      description: "JSON map of API Gateway ID to project-name for explicit naming override.",
+      description: "Legacy discover-many mode only: JSON map of API Gateway ID to service name.",
       required: false,
       default: "{}"
     },
@@ -21429,11 +21474,32 @@ var actionContract = {
     }
   },
   outputs: {
+    "resolution-json": {
+      description: "JSON resolution result describing status, source type, confidence, and evidence."
+    },
+    "resolution-status": {
+      description: "Resolution status: resolved or unresolved."
+    },
+    "source-type": {
+      description: "Resolved source type: repo-spec, gateway-export, manual-review, or discover-many."
+    },
+    "mapping-confidence": {
+      description: "Numeric confidence score for selected service candidate."
+    },
+    "spec-path": {
+      description: "Path to resolved or generated specification when available."
+    },
+    "gateway-id": {
+      description: "Resolved API Gateway ID when available."
+    },
+    "service-name": {
+      description: "Resolved service name."
+    },
     "services-json": {
-      description: "JSON array of discovered services with projectName, specPath, gatewayId, gatewayType, and stage."
+      description: "Legacy discover-many output: JSON array of exported services."
     },
     "service-count": {
-      description: "Total number of discovered and exported services."
+      description: "Legacy discover-many output: number of exported services."
     }
   }
 };
@@ -21441,6 +21507,9 @@ var contractInputNames = Object.keys(actionContract.inputs);
 var contractOutputNames = Object.keys(actionContract.outputs);
 
 // src/lib/aws/client.ts
+var import_promises = require("node:fs/promises");
+var import_node_os = __toESM(require("node:os"), 1);
+var import_node_path = __toESM(require("node:path"), 1);
 function toErrorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -21544,7 +21613,7 @@ var AwsApiGatewayCliClient = class {
     return response.tags ?? {};
   }
   async exportRestApi(apiId, stage) {
-    const body = await this.runText([
+    const body = await this.runTextToFile([
       "apigateway",
       "get-export",
       "--rest-api-id",
@@ -21558,16 +21627,12 @@ var AwsApiGatewayCliClient = class {
       "--accepts",
       "application/yaml",
       "--region",
-      this.region,
-      "--query",
-      "body",
-      "--output",
-      "text"
+      this.region
     ]);
     return decodeMaybeBase64(body);
   }
   async exportHttpApi(apiId, stage) {
-    const body = await this.runText([
+    const body = await this.runTextToFile([
       "apigatewayv2",
       "export-api",
       "--api-id",
@@ -21579,11 +21644,7 @@ var AwsApiGatewayCliClient = class {
       "--output-type",
       "YAML",
       "--region",
-      this.region,
-      "--query",
-      "body",
-      "--output",
-      "text"
+      this.region
     ]);
     return decodeMaybeBase64(body);
   }
@@ -21611,7 +21672,248 @@ var AwsApiGatewayCliClient = class {
     }
     return result.stdout;
   }
+  async runTextToFile(args) {
+    const tempDir = await (0, import_promises.mkdtemp)(import_node_path.default.join(import_node_os.default.tmpdir(), "pm-aws-spec-"));
+    const outFile = import_node_path.default.join(tempDir, "spec.out");
+    try {
+      const result = await this.exec.getExecOutput("aws", [...args, outFile], {
+        ignoreReturnCode: true,
+        silent: true
+      });
+      if (result.exitCode !== 0) {
+        throw new Error(`aws ${args.join(" ")} failed: ${result.stderr.trim() || result.stdout.trim()}`);
+      }
+      try {
+        return await (0, import_promises.readFile)(outFile, "utf8");
+      } catch (error) {
+        if (result.stdout.trim().length > 0) {
+          return result.stdout;
+        }
+        throw error;
+      }
+    } finally {
+      await (0, import_promises.rm)(tempDir, { recursive: true, force: true });
+    }
+  }
 };
+
+// src/lib/repo/context.ts
+function normalize(value) {
+  const trimmed = (value ?? "").trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+}
+function normalizeRepoUrl(url) {
+  const raw = normalize(url);
+  if (!raw) {
+    return void 0;
+  }
+  const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
+  if (sshMatch) {
+    const host = sshMatch[1];
+    const path5 = sshMatch[2];
+    return `https://${host}/${path5}`;
+  }
+  return raw.replace(/\.git$/, "");
+}
+function parseProvider(explicitProvider, repoUrl, env) {
+  const explicit = normalize(explicitProvider)?.toLowerCase();
+  if (explicit === "github" || explicit === "gitlab") {
+    return explicit;
+  }
+  const url = (repoUrl ?? "").toLowerCase();
+  if (url.includes("github")) {
+    return "github";
+  }
+  if (url.includes("gitlab")) {
+    return "gitlab";
+  }
+  if (normalize(env.GITHUB_REPOSITORY)) {
+    return "github";
+  }
+  if (normalize(env.CI_PROJECT_PATH) || normalize(env.GITLAB_CI)) {
+    return "gitlab";
+  }
+  return "unknown";
+}
+function detectRepoContext(input, env = process.env) {
+  const repoUrl = normalizeRepoUrl(input.repoUrl) ?? normalizeRepoUrl(env.GITHUB_SERVER_URL && env.GITHUB_REPOSITORY ? `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}` : void 0) ?? normalizeRepoUrl(env.CI_PROJECT_URL);
+  const repoSlug = normalize(input.repoSlug) ?? normalize(env.GITHUB_REPOSITORY) ?? normalize(env.CI_PROJECT_PATH);
+  const ref = normalize(input.ref) ?? normalize(env.GITHUB_REF_NAME) ?? normalize(env.CI_COMMIT_REF_NAME);
+  const sha = normalize(input.sha) ?? normalize(env.GITHUB_SHA) ?? normalize(env.CI_COMMIT_SHA);
+  const provider = parseProvider(input.gitProvider, repoUrl, env);
+  return {
+    provider,
+    repoUrl,
+    repoSlug,
+    ref,
+    sha
+  };
+}
+
+// src/lib/repo/specs.ts
+var import_promises2 = require("node:fs/promises");
+var import_node_path2 = __toESM(require("node:path"), 1);
+var SPEC_CANDIDATES = [
+  "openapi.yaml",
+  "openapi.yml",
+  "swagger.yaml",
+  "swagger.yml",
+  "spec/openapi.yaml",
+  "spec/openapi.yml",
+  "api/openapi.yaml",
+  "api/openapi.yml"
+];
+async function findExistingRepoSpec(repoRoot) {
+  for (const candidate of SPEC_CANDIDATES) {
+    const fullPath = import_node_path2.default.resolve(repoRoot, candidate);
+    try {
+      await (0, import_promises2.access)(fullPath);
+      return candidate.replace(/\\/g, "/");
+    } catch {
+    }
+  }
+  return void 0;
+}
+
+// src/lib/repo/signals.ts
+var import_promises3 = require("node:fs/promises");
+var import_node_path3 = __toESM(require("node:path"), 1);
+function unique(values) {
+  return [...new Set(values.filter((value) => value.trim().length > 0))];
+}
+function extractGatewayIds(content) {
+  const matches = content.match(/\b[a-z0-9]{10}\b/g) ?? [];
+  return unique(matches.map((value) => value.trim()));
+}
+function inferServiceNameFromRepoSlug(repoSlug) {
+  if (!repoSlug) {
+    return void 0;
+  }
+  const parts = repoSlug.split("/");
+  return parts[parts.length - 1]?.trim();
+}
+async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expectedGatewayIds = []) {
+  const serviceHints = unique([
+    expectedServiceName ?? "",
+    inferServiceNameFromRepoSlug(repoSlug) ?? ""
+  ]);
+  const gatewayHints = unique([...expectedGatewayIds]);
+  const evidence = [];
+  const inspectFiles = [
+    ".github/workflows/deploy.yml",
+    ".gitlab-ci.yml",
+    "template.yaml",
+    "serverless.yml",
+    "README.md"
+  ];
+  for (const file of inspectFiles) {
+    const fullPath = import_node_path3.default.resolve(repoRoot, file);
+    try {
+      const content = await (0, import_promises3.readFile)(fullPath, "utf8");
+      const extracted = extractGatewayIds(content);
+      if (extracted.length > 0) {
+        gatewayHints.push(...extracted);
+        evidence.push(`Found gateway ID hints in ${file}`);
+      }
+    } catch {
+    }
+  }
+  return {
+    serviceHints: unique(serviceHints),
+    gatewayIdHints: unique(gatewayHints),
+    evidence: unique(evidence)
+  };
+}
+
+// src/lib/resolve/source-selector.ts
+function chooseSource(input) {
+  if (input.existingSpecPath) {
+    return {
+      status: "resolved",
+      sourceType: "repo-spec",
+      serviceName: input.candidate?.serviceName ?? "unknown-service",
+      confidence: Math.max(90, input.candidate?.confidence ?? 90),
+      specPath: input.existingSpecPath,
+      gatewayId: input.candidate?.gatewayId,
+      gatewayType: input.candidate?.gatewayType,
+      stage: input.candidate?.stage,
+      evidence: ["Resolved from existing repository specification", ...input.candidate?.evidence ?? []],
+      driftStatus: "not-checked"
+    };
+  }
+  if (input.candidate && input.candidate.confidence >= 40) {
+    return {
+      status: "resolved",
+      sourceType: "gateway-export",
+      serviceName: input.candidate.serviceName,
+      confidence: input.candidate.confidence,
+      gatewayId: input.candidate.gatewayId,
+      gatewayType: input.candidate.gatewayType,
+      stage: input.candidate.stage,
+      evidence: input.candidate.evidence,
+      driftStatus: "not-checked"
+    };
+  }
+  return {
+    status: "unresolved",
+    sourceType: "manual-review",
+    serviceName: input.candidate?.serviceName ?? "unknown-service",
+    confidence: input.candidate?.confidence ?? 0,
+    gatewayId: input.candidate?.gatewayId,
+    gatewayType: input.candidate?.gatewayType,
+    stage: input.candidate?.stage,
+    evidence: input.candidate?.evidence ?? ["No matching source found"],
+    driftStatus: "not-checked"
+  };
+}
+
+// src/lib/resolve/service-resolver.ts
+function includesIgnoreCase(value, candidates) {
+  const v = value.toLowerCase();
+  return candidates.some((candidate) => candidate.toLowerCase() === v);
+}
+function scoreCandidate(candidate, signals) {
+  let score = 0;
+  const evidence = [];
+  if (includesIgnoreCase(candidate.id, signals.gatewayIdHints)) {
+    score += 80;
+    evidence.push(`Matched expected gateway ID ${candidate.id}`);
+  }
+  const serviceHints = signals.serviceHints.map((hint) => hint.toLowerCase());
+  if (serviceHints.some((hint) => hint && candidate.name.toLowerCase().includes(hint))) {
+    score += 30;
+    evidence.push(`Gateway name "${candidate.name}" matches service hint`);
+  }
+  const tagValues = Object.values(candidate.tags).map((value) => value.toLowerCase());
+  if (serviceHints.some((hint) => hint && tagValues.some((tag) => tag.includes(hint)))) {
+    score += 40;
+    evidence.push("Gateway tags match service hint");
+  }
+  return {
+    score,
+    evidence
+  };
+}
+function resolveServiceCandidate(gateways, signals) {
+  let best;
+  for (const candidate of gateways) {
+    const scored = scoreCandidate(candidate, signals);
+    const mergedEvidence = [...signals.evidence, ...scored.evidence];
+    const serviceName = (candidate.tags["postman:project-name"] ?? "").trim() || (candidate.tags.Name ?? "").trim() || candidate.name;
+    const resolved = {
+      serviceName,
+      gatewayId: candidate.id,
+      gatewayType: candidate.gatewayType,
+      stage: candidate.stage,
+      confidence: scored.score,
+      evidence: mergedEvidence.length > 0 ? mergedEvidence : ["No strong resolver evidence found"]
+    };
+    if (!best || resolved.confidence > best.confidence) {
+      best = resolved;
+    }
+  }
+  return best;
+}
 
 // src/index.ts
 function normalizeInputValue(value) {
@@ -21638,6 +21940,16 @@ function parseBoolean(input, inputName) {
   }
   throw new Error(`${inputName} must be a boolean-like value, got: ${input}`);
 }
+function parseMode(input) {
+  const value = (input ?? "").trim().toLowerCase();
+  if (!value) {
+    return "resolve-one";
+  }
+  if (value === "resolve-one" || value === "discover-many") {
+    return value;
+  }
+  throw new Error(`mode must be resolve-one or discover-many, got: ${input}`);
+}
 function parseServiceMapping(raw) {
   let parsed;
   try {
@@ -21656,16 +21968,43 @@ function parseServiceMapping(raw) {
     ])
   );
 }
+function parseStringArrayJson(raw, inputName) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON for ${inputName}: ${detail}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${inputName} must be a JSON array`);
+  }
+  return parsed.map((value) => String(value).trim()).filter((value) => value.length > 0);
+}
 function resolveInputs(env = process.env) {
+  const mode = parseMode(getInput("mode", env) ?? actionContract.inputs.mode.default ?? "resolve-one");
   const awsRegion = getInput("aws-region", env) ?? "";
   if (!awsRegion) {
     throw new Error("aws-region is required");
   }
+  const repoRoot = getInput("repo-root", env) ?? actionContract.inputs["repo-root"].default ?? ".";
+  const expectedServiceName = getInput("expected-service-name", env);
+  const expectedGatewayIdsRaw = getInput("expected-gateway-ids-json", env) ?? actionContract.inputs["expected-gateway-ids-json"].default ?? "[]";
   const stage = getInput("stage", env);
   const apiFilterRaw = getInput("api-filter", env);
   const serviceMappingRaw = getInput("service-mapping-json", env) ?? actionContract.inputs["service-mapping-json"].default ?? "{}";
   const outputDir = getInput("output-dir", env) ?? actionContract.inputs["output-dir"].default ?? "discovered-specs";
   const includeV2Raw = getInput("include-v2", env) ?? actionContract.inputs["include-v2"].default ?? "true";
+  const repoContext = detectRepoContext(
+    {
+      repoUrl: getInput("repo-url", env),
+      repoSlug: getInput("repo-slug", env),
+      gitProvider: getInput("git-provider", env),
+      ref: getInput("ref", env),
+      sha: getInput("sha", env)
+    },
+    env
+  );
   let apiFilter;
   if (apiFilterRaw) {
     try {
@@ -21676,7 +22015,12 @@ function resolveInputs(env = process.env) {
     }
   }
   return {
+    mode,
     awsRegion,
+    repoRoot,
+    repoContext,
+    expectedServiceName,
+    expectedGatewayIds: parseStringArrayJson(expectedGatewayIdsRaw, "expected-gateway-ids-json"),
     stage,
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
@@ -21687,7 +22031,16 @@ function resolveInputs(env = process.env) {
 function readActionInputs(actionCore) {
   const requiredRegion = actionCore.getInput("aws-region", { required: true }).trim();
   return resolveInputs({
+    INPUT_MODE: normalizeInputValue(actionCore.getInput("mode")) ?? actionContract.inputs.mode.default,
     INPUT_AWS_REGION: requiredRegion,
+    INPUT_REPO_ROOT: normalizeInputValue(actionCore.getInput("repo-root")) ?? actionContract.inputs["repo-root"].default,
+    INPUT_REPO_URL: normalizeInputValue(actionCore.getInput("repo-url")),
+    INPUT_REPO_SLUG: normalizeInputValue(actionCore.getInput("repo-slug")),
+    INPUT_GIT_PROVIDER: normalizeInputValue(actionCore.getInput("git-provider")),
+    INPUT_REF: normalizeInputValue(actionCore.getInput("ref")),
+    INPUT_SHA: normalizeInputValue(actionCore.getInput("sha")),
+    INPUT_EXPECTED_SERVICE_NAME: normalizeInputValue(actionCore.getInput("expected-service-name")),
+    INPUT_EXPECTED_GATEWAY_IDS_JSON: normalizeInputValue(actionCore.getInput("expected-gateway-ids-json")) ?? actionContract.inputs["expected-gateway-ids-json"].default,
     INPUT_STAGE: normalizeInputValue(actionCore.getInput("stage")),
     INPUT_API_FILTER: normalizeInputValue(actionCore.getInput("api-filter")),
     INPUT_SERVICE_MAPPING_JSON: normalizeInputValue(actionCore.getInput("service-mapping-json")) ?? actionContract.inputs["service-mapping-json"].default,
@@ -21695,19 +22048,13 @@ function readActionInputs(actionCore) {
     INPUT_INCLUDE_V2: normalizeInputValue(actionCore.getInput("include-v2")) ?? actionContract.inputs["include-v2"].default
   });
 }
-function resolveProjectName(gatewayId, gatewayName, tags, serviceMapping) {
+function resolveLegacyServiceName(gatewayId, gatewayName, tags, serviceMapping) {
   const tagProjectName = (tags["postman:project-name"] ?? "").trim();
-  if (tagProjectName) {
-    return tagProjectName;
-  }
+  if (tagProjectName) return tagProjectName;
   const tagName = (tags.Name ?? "").trim();
-  if (tagName) {
-    return tagName;
-  }
+  if (tagName) return tagName;
   const mapped = (serviceMapping[gatewayId] ?? "").trim();
-  if (mapped) {
-    return mapped;
-  }
+  if (mapped) return mapped;
   return gatewayName;
 }
 function projectFolderName(projectName) {
@@ -21715,11 +22062,11 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path4.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises.mkdir)(import_node_path.default.dirname(outputPath), { recursive: true });
-  await (0, import_promises.writeFile)(outputPath, content, "utf8");
+  await (0, import_promises4.mkdir)(import_node_path4.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises4.writeFile)(outputPath, content, "utf8");
 }
 async function selectStage(aws, candidate, preferredStage) {
   if (preferredStage) {
@@ -21779,17 +22126,17 @@ async function runDiscovery(inputs, dependencies) {
           continue;
         }
         const tags = candidate.gatewayType === "REST" ? await dependencies.aws.getRestTags(candidate.id) : await dependencies.aws.getHttpTags(candidate.id);
-        const projectName = resolveProjectName(candidate.id, candidate.name, tags, inputs.serviceMapping);
-        const baseFolder = projectFolderName(projectName);
+        const serviceName = resolveLegacyServiceName(candidate.id, candidate.name, tags, inputs.serviceMapping);
+        const baseFolder = projectFolderName(serviceName);
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
         const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, folderName);
-        const absoluteSpecPath = import_node_path.default.resolve(relativeSpecPath);
+        const absoluteSpecPath = import_node_path4.default.resolve(relativeSpecPath);
         const specBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         discovered.push({
-          projectName,
+          serviceName,
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
@@ -21808,19 +22155,86 @@ async function runDiscovery(inputs, dependencies) {
   });
   return discovered;
 }
+async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
+  const existingSpecPath = await findExistingRepoSpec(inputs.repoRoot);
+  const signals = await collectRepoSignals(
+    inputs.repoRoot,
+    inputs.repoContext.repoSlug,
+    inputs.expectedServiceName,
+    inputs.expectedGatewayIds
+  );
+  const restApis = await actionCore.group("Resolve REST API candidates", async () => awsClient.listRestApis());
+  const httpApis = await actionCore.group("Resolve HTTP API candidates", async () => {
+    if (!inputs.includeV2) {
+      return [];
+    }
+    return awsClient.listHttpApis();
+  });
+  const selected = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
+  const narrowedCandidates = inputs.expectedGatewayIds.length > 0 ? selected.filter((candidate) => inputs.expectedGatewayIds.includes(candidate.id)) : selected;
+  const gateways = [];
+  for (const candidate of narrowedCandidates) {
+    const stage = await selectStage(awsClient, candidate, inputs.stage);
+    if (!stage) {
+      continue;
+    }
+    const tags = candidate.gatewayType === "REST" ? await awsClient.getRestTags(candidate.id) : await awsClient.getHttpTags(candidate.id);
+    gateways.push({
+      id: candidate.id,
+      name: candidate.name,
+      gatewayType: candidate.gatewayType,
+      stage,
+      tags
+    });
+  }
+  const resolvedCandidate = resolveServiceCandidate(gateways, signals);
+  const selectedSource = chooseSource({
+    existingSpecPath,
+    candidate: resolvedCandidate
+  });
+  if (selectedSource.sourceType === "gateway-export" && selectedSource.gatewayId && selectedSource.stage) {
+    const relativeSpecPath = toRelativeSpecPath(
+      inputs.outputDir,
+      projectFolderName(selectedSource.serviceName || "service")
+    );
+    const absoluteSpecPath = import_node_path4.default.resolve(relativeSpecPath);
+    const body = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage) : await awsClient.exportHttpApi(selectedSource.gatewayId, selectedSource.stage);
+    await writeSpecFile(absoluteSpecPath, body);
+    selectedSource.specPath = relativeSpecPath;
+  }
+  return selectedSource;
+}
 async function runAction(actionCore = core, actionExec = exec) {
   const inputs = readActionInputs(actionCore);
   const awsClient = new AwsApiGatewayCliClient(actionExec, inputs.awsRegion);
-  const discovered = await runDiscovery(inputs, {
-    core: actionCore,
-    aws: awsClient,
-    writeSpecFile: defaultWriteSpecFile
-  });
-  const servicesJson = JSON.stringify(discovered);
-  actionCore.setOutput("services-json", servicesJson);
-  actionCore.setOutput("service-count", String(discovered.length));
-  actionCore.info(`Discovered ${discovered.length} service(s)`);
-  return discovered;
+  if (inputs.mode === "discover-many") {
+    const discovered = await runDiscovery(inputs, {
+      core: actionCore,
+      aws: awsClient,
+      writeSpecFile: defaultWriteSpecFile
+    });
+    const servicesJson = JSON.stringify(discovered);
+    actionCore.setOutput("services-json", servicesJson);
+    actionCore.setOutput("service-count", String(discovered.length));
+    actionCore.setOutput("resolution-status", "resolved");
+    actionCore.setOutput("source-type", "discover-many");
+    actionCore.setOutput("mapping-confidence", discovered.length > 0 ? "100" : "0");
+    actionCore.setOutput("resolution-json", JSON.stringify({ status: "resolved", sourceType: "discover-many", count: discovered.length }));
+    actionCore.info(`Discovered ${discovered.length} service(s)`);
+    return discovered;
+  }
+  const resolution = await runResolution(inputs, awsClient, actionCore, defaultWriteSpecFile);
+  actionCore.setOutput("resolution-json", JSON.stringify(resolution));
+  actionCore.setOutput("resolution-status", resolution.status);
+  actionCore.setOutput("source-type", resolution.sourceType);
+  actionCore.setOutput("mapping-confidence", String(resolution.confidence));
+  actionCore.setOutput("service-name", resolution.serviceName);
+  actionCore.setOutput("gateway-id", resolution.gatewayId ?? "");
+  actionCore.setOutput("spec-path", resolution.specPath ?? "");
+  actionCore.setOutput("services-json", "[]");
+  actionCore.setOutput("service-count", "0");
+  actionCore.info(`Resolution status: ${resolution.status} (${resolution.sourceType})`);
+  return [];
 }
 var currentModulePath = typeof __filename === "string" ? __filename : "";
 var entrypoint = process.argv[1];

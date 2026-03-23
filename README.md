@@ -1,66 +1,83 @@
 # postman-aws-spec-discovery-action
 
-Discover AWS API Gateway APIs and export OpenAPI 3.0 specs for downstream Postman onboarding workflows.
+Resolve the best API specification source for the current service repository.
 
-This action is intended to run before `postman-api-onboarding-action` and produce a matrix-friendly service manifest.
+By default (`mode=resolve-one`) the action is repo-first. It can also run in legacy bulk discovery mode (`mode=discover-many`).
 
-## What this action does
+## Auto-resolved values
 
-1. Enumerates REST APIs with `aws apigateway get-rest-apis`
-2. Optionally enumerates HTTP APIs with `aws apigatewayv2 get-apis`
-3. Resolves the target project name per gateway using this order:
-   1. `postman:project-name` tag
-   2. `Name` tag
-   3. `service-mapping-json[gatewayId]`
-   4. API Gateway name
-4. Exports specs:
-   - REST: `aws apigateway get-export --parameters extensions='apigateway' --export-type oas30 --accepts application/yaml`
-   - HTTP: `aws apigatewayv2 export-api --specification OAS30 --output-type YAML`
-5. Writes each spec to `{output-dir}/{project-name}/index.yaml`
-6. Emits `services-json` manifest for downstream matrix jobs
+When these inputs are omitted, the action auto-resolves them:
 
-If one gateway export fails, the action logs a warning and continues.
+- `mode`: defaults to `resolve-one`
+- `repo-url`: from CI metadata (`GITHUB_SERVER_URL` + `GITHUB_REPOSITORY`, or `CI_PROJECT_URL`)
+- `repo-slug`: from CI metadata (`GITHUB_REPOSITORY` or `CI_PROJECT_PATH`)
+- `git-provider`: inferred from explicit input, repo URL, or CI context
+- `ref`: from CI metadata (`GITHUB_REF_NAME` or `CI_COMMIT_REF_NAME`)
+- `sha`: from CI metadata (`GITHUB_SHA` or `CI_COMMIT_SHA`)
+- `repo-root`: defaults to `.`
+- `stage`: first available stage for the selected API when omitted
+- `include-v2`: defaults to `true`
+- `output-dir`: defaults to `discovered-specs`
+- `expected-gateway-ids-json`: defaults to `[]`
+- `service-mapping-json` (legacy discover-many mode): defaults to `{}`
 
 ## Inputs
 
-| Input | Required | Default | Description |
+| Input | Required | Default | Notes |
 | --- | --- | --- | --- |
-| `aws-region` | yes | n/a | AWS region to scan for API Gateway instances |
-| `stage` | no | `''` | Stage to export. If empty, first available stage is used |
-| `api-filter` | no | `''` | Regex pattern to filter API Gateway names |
-| `service-mapping-json` | no | `{}` | JSON map of gateway ID to project name override |
-| `output-dir` | no | `discovered-specs` | Output directory for spec files |
+| `aws-region` | yes | n/a | Region used for API Gateway resolution/export |
+| `mode` | no | `resolve-one` | `resolve-one` (default) or `discover-many` |
+| `repo-url` | no | `''` | Auto-resolved from CI when empty |
+| `repo-slug` | no | `''` | Auto-resolved from CI when empty |
+| `git-provider` | no | `''` | Auto-inferred as `github`, `gitlab`, or `unknown` |
+| `ref` | no | `''` | Auto-resolved from CI when empty |
+| `sha` | no | `''` | Auto-resolved from CI when empty |
+| `repo-root` | no | `.` | Local path used for repo file inspection |
+| `expected-service-name` | no | `''` | Optional resolver hint |
+| `expected-gateway-ids-json` | no | `[]` | Optional JSON array of API Gateway IDs |
+| `stage` | no | `''` | Auto-selects first available stage when empty |
+| `api-filter` | no | `''` | Regex filter for gateway names |
+| `service-mapping-json` | no | `{}` | Legacy `discover-many` gateway ID to service name mapping |
+| `output-dir` | no | `discovered-specs` | Output directory for generated specs |
 | `include-v2` | no | `true` | Include HTTP APIs (`apigatewayv2`) |
 
 ## Outputs
 
+### Resolve-one outputs
+
 | Output | Description |
 | --- | --- |
-| `services-json` | JSON array of `{ projectName, specPath, gatewayId, gatewayType, stage }` |
-| `service-count` | Number of successfully exported services |
+| `resolution-json` | Full resolution payload |
+| `resolution-status` | `resolved` or `unresolved` |
+| `source-type` | `repo-spec`, `gateway-export`, or `manual-review` |
+| `mapping-confidence` | Numeric confidence score |
+| `spec-path` | Resolved/generated spec path when available |
+| `gateway-id` | Selected gateway ID when available |
+| `service-name` | Resolved service name |
+
+### Discover-many (legacy) outputs
+
+| Output | Description |
+| --- | --- |
+| `services-json` | JSON array of discovered services |
+| `service-count` | Number of exported services |
 
 ## Required runner setup
 
 - AWS CLI available on runner
-- AWS credentials configured before this action, for example with `aws-actions/configure-aws-credentials`
+- AWS credentials configured before this action (for example, via `aws-actions/configure-aws-credentials`)
 
-## Example workflow with matrix chaining to postman-api-onboarding-action
-
-This example commits discovered specs to the repository, then builds raw GitHub URLs used by `postman-api-onboarding-action`.
+## Example (resolve-one default)
 
 ```yaml
-name: Discover and onboard APIs
+name: Resolve service spec
 
 on:
   workflow_dispatch:
 
 jobs:
-  discover:
+  resolve:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      services-json: ${{ steps.with-urls.outputs.services-json }}
     steps:
       - uses: actions/checkout@v4
 
@@ -69,78 +86,17 @@ jobs:
           role-to-assume: arn:aws:iam::123456789012:role/github-actions-apigateway-read
           aws-region: us-east-1
 
-      - id: discovery
+      - id: resolve
         uses: ./.github/actions/postman-aws-spec-discovery-action
         with:
           aws-region: us-east-1
-          stage: prod
-          output-dir: discovered-specs
-          include-v2: true
-          service-mapping-json: '{"a1b2c3":"payments-service"}'
+          # mode omitted -> resolve-one
+          # repo-url, repo-slug, git-provider, ref, sha omitted -> CI auto-resolution
 
-      - name: Commit discovered specs
+      - name: Show result
         run: |
-          if [ -n "$(git status --porcelain discovered-specs)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add discovered-specs
-            git commit -m "chore: refresh discovered API specs"
-            git push
-          fi
-
-      - id: with-urls
-        uses: actions/github-script@v7
-        env:
-          SERVICES_JSON: ${{ steps.discovery.outputs.services-json }}
-          REPOSITORY: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-        with:
-          script: |
-            const services = JSON.parse(process.env.SERVICES_JSON || '[]');
-            const [owner, repo] = process.env.REPOSITORY.split('/');
-            const sha = process.env.SHA;
-
-            const matrix = services.map((service) => ({
-              projectName: service.projectName,
-              specUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${service.specPath}`,
-              gatewayId: service.gatewayId,
-              gatewayType: service.gatewayType,
-              stage: service.stage
-            }));
-
-            core.setOutput('services-json', JSON.stringify(matrix));
-
-  onboard:
-    needs: discover
-    if: ${{ needs.discover.outputs.services-json != '[]' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJson(needs.discover.outputs.services-json) }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Onboard ${{ matrix.service.projectName }}
-        uses: ./.github/actions/postman-api-onboarding-action
-        with:
-          project-name: ${{ matrix.service.projectName }}
-          spec-url: ${{ matrix.service.specUrl }}
-          postman-api-key: ${{ secrets.POSTMAN_API_KEY }}
-```
-
-## Manifest format
-
-`services-json` example:
-
-```json
-[
-  {
-    "projectName": "payments-service",
-    "specPath": "discovered-specs/payments-service/index.yaml",
-    "gatewayId": "a1b2c3",
-    "gatewayType": "REST",
-    "stage": "prod"
-  }
-]
+          echo "status=${{ steps.resolve.outputs.resolution-status }}"
+          echo "source=${{ steps.resolve.outputs.source-type }}"
+          echo "service=${{ steps.resolve.outputs.service-name }}"
+          echo "spec=${{ steps.resolve.outputs.spec-path }}"
 ```
