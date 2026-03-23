@@ -17,8 +17,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       gatewayId: input.candidate?.gatewayId,
       gatewayType: input.candidate?.gatewayType,
       stage: input.candidate?.stage,
-      evidence: ['Resolved from existing repository specification', ...(input.candidate?.evidence ?? [])],
-      driftStatus: 'not-checked'
+      evidence: ['Resolved from existing repository specification', ...(input.candidate?.evidence ?? [])]
     };
   }
 
@@ -31,8 +30,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       gatewayId: input.candidate.gatewayId,
       gatewayType: input.candidate.gatewayType,
       stage: input.candidate.stage,
-      evidence: input.candidate.evidence,
-      driftStatus: 'not-checked'
+      evidence: input.candidate.evidence
     };
   }
 
@@ -44,7 +42,6 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
     gatewayId: input.candidate?.gatewayId,
     gatewayType: input.candidate?.gatewayType,
     stage: input.candidate?.stage,
-    evidence: input.candidate?.evidence ?? ['No matching source found'],
-    driftStatus: 'not-checked'
+    evidence: input.candidate?.evidence ?? ['No matching source found']
   };
 }

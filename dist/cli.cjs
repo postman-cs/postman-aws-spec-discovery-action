@@ -1784,7 +1784,7 @@ var require_dist_cjs14 = __commonJS({
     var DEFAULT_REQUEST_TIMEOUT = 0;
     var hAgent = void 0;
     var hRequest = void 0;
-    var NodeHttpHandler = class _NodeHttpHandler {
+    var NodeHttpHandler2 = class _NodeHttpHandler {
       config;
       configProvider;
       socketWarningTimestamp = 0;
@@ -2314,7 +2314,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
     }
     exports2.DEFAULT_REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT;
     exports2.NodeHttp2Handler = NodeHttp2Handler;
-    exports2.NodeHttpHandler = NodeHttpHandler;
+    exports2.NodeHttpHandler = NodeHttpHandler2;
     exports2.streamCollector = streamCollector5;
   }
 });
@@ -13973,7 +13973,7 @@ var require_dist_cjs29 = __commonJS({
       RETRY_MODES["STANDARD"] = "standard";
       RETRY_MODES["ADAPTIVE"] = "adaptive";
     })(exports2.RETRY_MODES || (exports2.RETRY_MODES = {}));
-    var DEFAULT_MAX_ATTEMPTS = 3;
+    var DEFAULT_MAX_ATTEMPTS2 = 3;
     var DEFAULT_RETRY_MODE5 = exports2.RETRY_MODES.STANDARD;
     var DefaultRateLimiter = class _DefaultRateLimiter {
       static setTimeoutFn = setTimeout;
@@ -14157,8 +14157,8 @@ var require_dist_cjs29 = __commonJS({
         try {
           return await this.maxAttemptsProvider();
         } catch (error2) {
-          console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS}`);
-          return DEFAULT_MAX_ATTEMPTS;
+          console.warn(`Max attempts provider could not resolve. Using default of ${DEFAULT_MAX_ATTEMPTS2}`);
+          return DEFAULT_MAX_ATTEMPTS2;
         }
       }
       shouldRetry(tokenToRenew, errorInfo, maxAttempts) {
@@ -14214,7 +14214,7 @@ var require_dist_cjs29 = __commonJS({
     };
     exports2.AdaptiveRetryStrategy = AdaptiveRetryStrategy;
     exports2.ConfiguredRetryStrategy = ConfiguredRetryStrategy;
-    exports2.DEFAULT_MAX_ATTEMPTS = DEFAULT_MAX_ATTEMPTS;
+    exports2.DEFAULT_MAX_ATTEMPTS = DEFAULT_MAX_ATTEMPTS2;
     exports2.DEFAULT_RETRY_DELAY_BASE = DEFAULT_RETRY_DELAY_BASE;
     exports2.DEFAULT_RETRY_MODE = DEFAULT_RETRY_MODE5;
     exports2.DefaultRateLimiter = DefaultRateLimiter;
@@ -20939,7 +20939,7 @@ var init_defaultStsRoleAssumers = __esm({
       credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region} (credential provider clientConfig)`, `${parentRegion} (contextual client)`, `${stsDefaultRegion} (STS default: AWS_REGION, profile region, or us-east-1)`);
       return resolvedRegion;
     };
-    getDefaultRoleAssumer = (stsOptions, STSClient2) => {
+    getDefaultRoleAssumer = (stsOptions, STSClient3) => {
       let stsClient;
       let closureSourceCreds;
       return async (sourceCreds, params) => {
@@ -20951,7 +20951,7 @@ var init_defaultStsRoleAssumers = __esm({
             profile
           });
           const isCompatibleRequestHandler = !isH2(requestHandler);
-          stsClient = new STSClient2({
+          stsClient = new STSClient3({
             ...stsOptions,
             userAgentAppId,
             profile,
@@ -20978,7 +20978,7 @@ var init_defaultStsRoleAssumers = __esm({
         return credentials;
       };
     };
-    getDefaultRoleAssumerWithWebIdentity = (stsOptions, STSClient2) => {
+    getDefaultRoleAssumerWithWebIdentity = (stsOptions, STSClient3) => {
       let stsClient;
       return async (params) => {
         if (!stsClient) {
@@ -20988,7 +20988,7 @@ var init_defaultStsRoleAssumers = __esm({
             profile
           });
           const isCompatibleRequestHandler = !isH2(requestHandler);
-          stsClient = new STSClient2({
+          stsClient = new STSClient3({
             ...stsOptions,
             userAgentAppId,
             profile,
@@ -31889,6 +31889,1559 @@ var require_dist_cjs55 = __commonJS({
   }
 });
 
+// node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthSchemeProvider.js
+var require_httpAuthSchemeProvider3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthSchemeProvider.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.resolveHttpAuthSchemeConfig = exports2.resolveStsAuthConfig = exports2.defaultSTSHttpAuthSchemeProvider = exports2.defaultSTSHttpAuthSchemeParametersProvider = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var util_middleware_1 = require_dist_cjs7();
+    var STSClient_1 = require_STSClient();
+    var defaultSTSHttpAuthSchemeParametersProvider2 = async (config, context, input) => {
+      return {
+        operation: (0, util_middleware_1.getSmithyContext)(context).operation,
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
+          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })()
+      };
+    };
+    exports2.defaultSTSHttpAuthSchemeParametersProvider = defaultSTSHttpAuthSchemeParametersProvider2;
+    function createAwsAuthSigv4HttpAuthOption5(authParameters) {
+      return {
+        schemeId: "aws.auth#sigv4",
+        signingProperties: {
+          name: "sts",
+          region: authParameters.region
+        },
+        propertiesExtractor: (config, context) => ({
+          signingProperties: {
+            config,
+            context
+          }
+        })
+      };
+    }
+    function createSmithyApiNoAuthHttpAuthOption5(authParameters) {
+      return {
+        schemeId: "smithy.api#noAuth"
+      };
+    }
+    var defaultSTSHttpAuthSchemeProvider2 = (authParameters) => {
+      const options = [];
+      switch (authParameters.operation) {
+        case "AssumeRoleWithSAML":
+          {
+            options.push(createSmithyApiNoAuthHttpAuthOption5(authParameters));
+            break;
+          }
+          ;
+        case "AssumeRoleWithWebIdentity":
+          {
+            options.push(createSmithyApiNoAuthHttpAuthOption5(authParameters));
+            break;
+          }
+          ;
+        default: {
+          options.push(createAwsAuthSigv4HttpAuthOption5(authParameters));
+        }
+      }
+      return options;
+    };
+    exports2.defaultSTSHttpAuthSchemeProvider = defaultSTSHttpAuthSchemeProvider2;
+    var resolveStsAuthConfig2 = (input) => Object.assign(input, {
+      stsClientCtor: STSClient_1.STSClient
+    });
+    exports2.resolveStsAuthConfig = resolveStsAuthConfig2;
+    var resolveHttpAuthSchemeConfig5 = (config) => {
+      const config_0 = (0, exports2.resolveStsAuthConfig)(config);
+      const config_1 = (0, core_1.resolveAwsSdkSigV4Config)(config_0);
+      return Object.assign(config_1, {
+        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config.authSchemePreference ?? [])
+      });
+    };
+    exports2.resolveHttpAuthSchemeConfig = resolveHttpAuthSchemeConfig5;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/EndpointParameters.js
+var require_EndpointParameters = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/EndpointParameters.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.commonParams = exports2.resolveClientEndpointParameters = void 0;
+    var resolveClientEndpointParameters5 = (options) => {
+      return Object.assign(options, {
+        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
+        useFipsEndpoint: options.useFipsEndpoint ?? false,
+        useGlobalEndpoint: options.useGlobalEndpoint ?? false,
+        defaultSigningName: "sts"
+      });
+    };
+    exports2.resolveClientEndpointParameters = resolveClientEndpointParameters5;
+    exports2.commonParams = {
+      UseGlobalEndpoint: { type: "builtInParams", name: "useGlobalEndpoint" },
+      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
+      Endpoint: { type: "builtInParams", name: "endpoint" },
+      Region: { type: "builtInParams", name: "region" },
+      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/package.json
+var require_package3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/package.json"(exports2, module2) {
+    module2.exports = {
+      name: "@aws-sdk/client-sts",
+      description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
+      version: "3.1014.0",
+      scripts: {
+        build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
+        "build:cjs": "node ../../scripts/compilation/inline client-sts",
+        "build:es": "tsc -p tsconfig.es.json",
+        "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
+        "build:types": "premove ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json",
+        "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
+        clean: "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
+        "extract:docs": "api-extractor run --local",
+        "generate:client": "node ../../scripts/generate-clients/single-service --solo sts",
+        test: "yarn g:vitest run",
+        "test:e2e": "yarn g:vitest run -c vitest.config.e2e.mts --mode development",
+        "test:e2e:watch": "yarn g:vitest watch -c vitest.config.e2e.mts",
+        "test:index": "tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs",
+        "test:integration": "yarn g:vitest run --passWithNoTests -c vitest.config.integ.mts",
+        "test:integration:watch": "yarn g:vitest run --passWithNoTests -c vitest.config.integ.mts",
+        "test:watch": "yarn g:vitest watch"
+      },
+      main: "./dist-cjs/index.js",
+      types: "./dist-types/index.d.ts",
+      module: "./dist-es/index.js",
+      sideEffects: false,
+      dependencies: {
+        "@aws-crypto/sha256-browser": "5.2.0",
+        "@aws-crypto/sha256-js": "5.2.0",
+        "@aws-sdk/core": "^3.973.23",
+        "@aws-sdk/credential-provider-node": "^3.972.24",
+        "@aws-sdk/middleware-host-header": "^3.972.8",
+        "@aws-sdk/middleware-logger": "^3.972.8",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.24",
+        "@aws-sdk/region-config-resolver": "^3.972.9",
+        "@aws-sdk/types": "^3.973.6",
+        "@aws-sdk/util-endpoints": "^3.996.5",
+        "@aws-sdk/util-user-agent-browser": "^3.972.8",
+        "@aws-sdk/util-user-agent-node": "^3.973.10",
+        "@smithy/config-resolver": "^4.4.13",
+        "@smithy/core": "^3.23.12",
+        "@smithy/fetch-http-handler": "^5.3.15",
+        "@smithy/hash-node": "^4.2.12",
+        "@smithy/invalid-dependency": "^4.2.12",
+        "@smithy/middleware-content-length": "^4.2.12",
+        "@smithy/middleware-endpoint": "^4.4.27",
+        "@smithy/middleware-retry": "^4.4.44",
+        "@smithy/middleware-serde": "^4.2.15",
+        "@smithy/middleware-stack": "^4.2.12",
+        "@smithy/node-config-provider": "^4.3.12",
+        "@smithy/node-http-handler": "^4.5.0",
+        "@smithy/protocol-http": "^5.3.12",
+        "@smithy/smithy-client": "^4.12.7",
+        "@smithy/types": "^4.13.1",
+        "@smithy/url-parser": "^4.2.12",
+        "@smithy/util-base64": "^4.3.2",
+        "@smithy/util-body-length-browser": "^4.2.2",
+        "@smithy/util-body-length-node": "^4.2.3",
+        "@smithy/util-defaults-mode-browser": "^4.3.43",
+        "@smithy/util-defaults-mode-node": "^4.2.47",
+        "@smithy/util-endpoints": "^3.3.3",
+        "@smithy/util-middleware": "^4.2.12",
+        "@smithy/util-retry": "^4.2.12",
+        "@smithy/util-utf8": "^4.2.2",
+        tslib: "^2.6.2"
+      },
+      devDependencies: {
+        "@smithy/snapshot-testing": "^2.0.3",
+        "@tsconfig/node20": "20.1.8",
+        "@types/node": "^20.14.8",
+        concurrently: "7.0.0",
+        "downlevel-dts": "0.10.1",
+        premove: "4.0.0",
+        typescript: "~5.8.3",
+        vitest: "^4.0.17"
+      },
+      engines: {
+        node: ">=20.0.0"
+      },
+      typesVersions: {
+        "<4.5": {
+          "dist-types/*": [
+            "dist-types/ts3.4/*"
+          ]
+        }
+      },
+      files: [
+        "dist-*/**"
+      ],
+      author: {
+        name: "AWS SDK for JavaScript Team",
+        url: "https://aws.amazon.com/javascript/"
+      },
+      license: "Apache-2.0",
+      browser: {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.browser"
+      },
+      "react-native": {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.native"
+      },
+      homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts",
+      repository: {
+        type: "git",
+        url: "https://github.com/aws/aws-sdk-js-v3.git",
+        directory: "clients/client-sts"
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/ruleset.js
+var require_ruleset3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/ruleset.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ruleSet = void 0;
+    var F2 = "required";
+    var G2 = "type";
+    var H2 = "fn";
+    var I2 = "argv";
+    var J2 = "ref";
+    var a5 = false;
+    var b5 = true;
+    var c5 = "booleanEquals";
+    var d5 = "stringEquals";
+    var e5 = "sigv4";
+    var f5 = "sts";
+    var g5 = "us-east-1";
+    var h5 = "endpoint";
+    var i5 = "https://sts.{Region}.{PartitionResult#dnsSuffix}";
+    var j5 = "tree";
+    var k5 = "error";
+    var l5 = "getAttr";
+    var m5 = { [F2]: false, [G2]: "string" };
+    var n5 = { [F2]: true, "default": false, [G2]: "boolean" };
+    var o5 = { [J2]: "Endpoint" };
+    var p5 = { [H2]: "isSet", [I2]: [{ [J2]: "Region" }] };
+    var q5 = { [J2]: "Region" };
+    var r5 = { [H2]: "aws.partition", [I2]: [q5], "assign": "PartitionResult" };
+    var s5 = { [J2]: "UseFIPS" };
+    var t5 = { [J2]: "UseDualStack" };
+    var u5 = { "url": "https://sts.amazonaws.com", "properties": { "authSchemes": [{ "name": e5, "signingName": f5, "signingRegion": g5 }] }, "headers": {} };
+    var v5 = {};
+    var w5 = { "conditions": [{ [H2]: d5, [I2]: [q5, "aws-global"] }], [h5]: u5, [G2]: h5 };
+    var x5 = { [H2]: c5, [I2]: [s5, true] };
+    var y2 = { [H2]: c5, [I2]: [t5, true] };
+    var z2 = { [H2]: l5, [I2]: [{ [J2]: "PartitionResult" }, "supportsFIPS"] };
+    var A2 = { [J2]: "PartitionResult" };
+    var B2 = { [H2]: c5, [I2]: [true, { [H2]: l5, [I2]: [A2, "supportsDualStack"] }] };
+    var C2 = [{ [H2]: "isSet", [I2]: [o5] }];
+    var D2 = [x5];
+    var E2 = [y2];
+    var _data5 = { version: "1.0", parameters: { Region: m5, UseDualStack: n5, UseFIPS: n5, Endpoint: m5, UseGlobalEndpoint: n5 }, rules: [{ conditions: [{ [H2]: c5, [I2]: [{ [J2]: "UseGlobalEndpoint" }, b5] }, { [H2]: "not", [I2]: C2 }, p5, r5, { [H2]: c5, [I2]: [s5, a5] }, { [H2]: c5, [I2]: [t5, a5] }], rules: [{ conditions: [{ [H2]: d5, [I2]: [q5, "ap-northeast-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "ap-south-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "ap-southeast-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "ap-southeast-2"] }], endpoint: u5, [G2]: h5 }, w5, { conditions: [{ [H2]: d5, [I2]: [q5, "ca-central-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "eu-central-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "eu-north-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "eu-west-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "eu-west-2"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "eu-west-3"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "sa-east-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, g5] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "us-east-2"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "us-west-1"] }], endpoint: u5, [G2]: h5 }, { conditions: [{ [H2]: d5, [I2]: [q5, "us-west-2"] }], endpoint: u5, [G2]: h5 }, { endpoint: { url: i5, properties: { authSchemes: [{ name: e5, signingName: f5, signingRegion: "{Region}" }] }, headers: v5 }, [G2]: h5 }], [G2]: j5 }, { conditions: C2, rules: [{ conditions: D2, error: "Invalid Configuration: FIPS and custom endpoint are not supported", [G2]: k5 }, { conditions: E2, error: "Invalid Configuration: Dualstack and custom endpoint are not supported", [G2]: k5 }, { endpoint: { url: o5, properties: v5, headers: v5 }, [G2]: h5 }], [G2]: j5 }, { conditions: [p5], rules: [{ conditions: [r5], rules: [{ conditions: [x5, y2], rules: [{ conditions: [{ [H2]: c5, [I2]: [b5, z2] }, B2], rules: [{ endpoint: { url: "https://sts-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: v5, headers: v5 }, [G2]: h5 }], [G2]: j5 }, { error: "FIPS and DualStack are enabled, but this partition does not support one or both", [G2]: k5 }], [G2]: j5 }, { conditions: D2, rules: [{ conditions: [{ [H2]: c5, [I2]: [z2, b5] }], rules: [{ conditions: [{ [H2]: d5, [I2]: [{ [H2]: l5, [I2]: [A2, "name"] }, "aws-us-gov"] }], endpoint: { url: "https://sts.{Region}.amazonaws.com", properties: v5, headers: v5 }, [G2]: h5 }, { endpoint: { url: "https://sts-fips.{Region}.{PartitionResult#dnsSuffix}", properties: v5, headers: v5 }, [G2]: h5 }], [G2]: j5 }, { error: "FIPS is enabled but this partition does not support FIPS", [G2]: k5 }], [G2]: j5 }, { conditions: E2, rules: [{ conditions: [B2], rules: [{ endpoint: { url: "https://sts.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: v5, headers: v5 }, [G2]: h5 }], [G2]: j5 }, { error: "DualStack is enabled but this partition does not support DualStack", [G2]: k5 }], [G2]: j5 }, w5, { endpoint: { url: i5, properties: v5, headers: v5 }, [G2]: h5 }], [G2]: j5 }], [G2]: j5 }, { error: "Invalid Configuration: Missing Region", [G2]: k5 }] };
+    exports2.ruleSet = _data5;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/endpointResolver.js
+var require_endpointResolver3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/endpoint/endpointResolver.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.defaultEndpointResolver = void 0;
+    var util_endpoints_1 = require_dist_cjs22();
+    var util_endpoints_2 = require_dist_cjs21();
+    var ruleset_1 = require_ruleset3();
+    var cache5 = new util_endpoints_2.EndpointCache({
+      size: 50,
+      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS", "UseGlobalEndpoint"]
+    });
+    var defaultEndpointResolver5 = (endpointParams, context = {}) => {
+      return cache5.get(endpointParams, () => (0, util_endpoints_2.resolveEndpoint)(ruleset_1.ruleSet, {
+        endpointParams,
+        logger: context.logger
+      }));
+    };
+    exports2.defaultEndpointResolver = defaultEndpointResolver5;
+    util_endpoints_2.customEndpointFunctions.aws = util_endpoints_1.awsEndpointFunctions;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/models/STSServiceException.js
+var require_STSServiceException = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/models/STSServiceException.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.STSServiceException = exports2.__ServiceException = void 0;
+    var smithy_client_1 = require_dist_cjs26();
+    Object.defineProperty(exports2, "__ServiceException", { enumerable: true, get: function() {
+      return smithy_client_1.ServiceException;
+    } });
+    var STSServiceException2 = class _STSServiceException extends smithy_client_1.ServiceException {
+      constructor(options) {
+        super(options);
+        Object.setPrototypeOf(this, _STSServiceException.prototype);
+      }
+    };
+    exports2.STSServiceException = STSServiceException2;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/models/errors.js
+var require_errors3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/models/errors.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.SessionDurationEscalationException = exports2.OutboundWebIdentityFederationDisabledException = exports2.JWTPayloadSizeExceededException = exports2.ExpiredTradeInTokenException = exports2.InvalidAuthorizationMessageException = exports2.IDPCommunicationErrorException = exports2.InvalidIdentityTokenException = exports2.IDPRejectedClaimException = exports2.RegionDisabledException = exports2.PackedPolicyTooLargeException = exports2.MalformedPolicyDocumentException = exports2.ExpiredTokenException = void 0;
+    var STSServiceException_1 = require_STSServiceException();
+    var ExpiredTokenException3 = class _ExpiredTokenException extends STSServiceException_1.STSServiceException {
+      name = "ExpiredTokenException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ExpiredTokenException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ExpiredTokenException.prototype);
+      }
+    };
+    exports2.ExpiredTokenException = ExpiredTokenException3;
+    var MalformedPolicyDocumentException2 = class _MalformedPolicyDocumentException extends STSServiceException_1.STSServiceException {
+      name = "MalformedPolicyDocumentException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "MalformedPolicyDocumentException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _MalformedPolicyDocumentException.prototype);
+      }
+    };
+    exports2.MalformedPolicyDocumentException = MalformedPolicyDocumentException2;
+    var PackedPolicyTooLargeException2 = class _PackedPolicyTooLargeException extends STSServiceException_1.STSServiceException {
+      name = "PackedPolicyTooLargeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "PackedPolicyTooLargeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _PackedPolicyTooLargeException.prototype);
+      }
+    };
+    exports2.PackedPolicyTooLargeException = PackedPolicyTooLargeException2;
+    var RegionDisabledException2 = class _RegionDisabledException extends STSServiceException_1.STSServiceException {
+      name = "RegionDisabledException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "RegionDisabledException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _RegionDisabledException.prototype);
+      }
+    };
+    exports2.RegionDisabledException = RegionDisabledException2;
+    var IDPRejectedClaimException2 = class _IDPRejectedClaimException extends STSServiceException_1.STSServiceException {
+      name = "IDPRejectedClaimException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "IDPRejectedClaimException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IDPRejectedClaimException.prototype);
+      }
+    };
+    exports2.IDPRejectedClaimException = IDPRejectedClaimException2;
+    var InvalidIdentityTokenException2 = class _InvalidIdentityTokenException extends STSServiceException_1.STSServiceException {
+      name = "InvalidIdentityTokenException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidIdentityTokenException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidIdentityTokenException.prototype);
+      }
+    };
+    exports2.InvalidIdentityTokenException = InvalidIdentityTokenException2;
+    var IDPCommunicationErrorException2 = class _IDPCommunicationErrorException extends STSServiceException_1.STSServiceException {
+      name = "IDPCommunicationErrorException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "IDPCommunicationErrorException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IDPCommunicationErrorException.prototype);
+      }
+    };
+    exports2.IDPCommunicationErrorException = IDPCommunicationErrorException2;
+    var InvalidAuthorizationMessageException = class _InvalidAuthorizationMessageException extends STSServiceException_1.STSServiceException {
+      name = "InvalidAuthorizationMessageException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidAuthorizationMessageException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAuthorizationMessageException.prototype);
+      }
+    };
+    exports2.InvalidAuthorizationMessageException = InvalidAuthorizationMessageException;
+    var ExpiredTradeInTokenException = class _ExpiredTradeInTokenException extends STSServiceException_1.STSServiceException {
+      name = "ExpiredTradeInTokenException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ExpiredTradeInTokenException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ExpiredTradeInTokenException.prototype);
+      }
+    };
+    exports2.ExpiredTradeInTokenException = ExpiredTradeInTokenException;
+    var JWTPayloadSizeExceededException = class _JWTPayloadSizeExceededException extends STSServiceException_1.STSServiceException {
+      name = "JWTPayloadSizeExceededException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "JWTPayloadSizeExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _JWTPayloadSizeExceededException.prototype);
+      }
+    };
+    exports2.JWTPayloadSizeExceededException = JWTPayloadSizeExceededException;
+    var OutboundWebIdentityFederationDisabledException = class _OutboundWebIdentityFederationDisabledException extends STSServiceException_1.STSServiceException {
+      name = "OutboundWebIdentityFederationDisabledException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OutboundWebIdentityFederationDisabledException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OutboundWebIdentityFederationDisabledException.prototype);
+      }
+    };
+    exports2.OutboundWebIdentityFederationDisabledException = OutboundWebIdentityFederationDisabledException;
+    var SessionDurationEscalationException = class _SessionDurationEscalationException extends STSServiceException_1.STSServiceException {
+      name = "SessionDurationEscalationException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "SessionDurationEscalationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _SessionDurationEscalationException.prototype);
+      }
+    };
+    exports2.SessionDurationEscalationException = SessionDurationEscalationException;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/schemas/schemas_0.js
+var require_schemas_03 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/schemas/schemas_0.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.GetDelegatedAccessToken$ = exports2.GetCallerIdentity$ = exports2.GetAccessKeyInfo$ = exports2.DecodeAuthorizationMessage$ = exports2.AssumeRoot$ = exports2.AssumeRoleWithWebIdentity$ = exports2.AssumeRoleWithSAML$ = exports2.AssumeRole$ = exports2.Tag$ = exports2.ProvidedContext$ = exports2.PolicyDescriptorType$ = exports2.GetWebIdentityTokenResponse$ = exports2.GetWebIdentityTokenRequest$ = exports2.GetSessionTokenResponse$ = exports2.GetSessionTokenRequest$ = exports2.GetFederationTokenResponse$ = exports2.GetFederationTokenRequest$ = exports2.GetDelegatedAccessTokenResponse$ = exports2.GetDelegatedAccessTokenRequest$ = exports2.GetCallerIdentityResponse$ = exports2.GetCallerIdentityRequest$ = exports2.GetAccessKeyInfoResponse$ = exports2.GetAccessKeyInfoRequest$ = exports2.FederatedUser$ = exports2.DecodeAuthorizationMessageResponse$ = exports2.DecodeAuthorizationMessageRequest$ = exports2.Credentials$ = exports2.AssumeRootResponse$ = exports2.AssumeRootRequest$ = exports2.AssumeRoleWithWebIdentityResponse$ = exports2.AssumeRoleWithWebIdentityRequest$ = exports2.AssumeRoleWithSAMLResponse$ = exports2.AssumeRoleWithSAMLRequest$ = exports2.AssumeRoleResponse$ = exports2.AssumeRoleRequest$ = exports2.AssumedRoleUser$ = exports2.errorTypeRegistries = exports2.SessionDurationEscalationException$ = exports2.RegionDisabledException$ = exports2.PackedPolicyTooLargeException$ = exports2.OutboundWebIdentityFederationDisabledException$ = exports2.MalformedPolicyDocumentException$ = exports2.JWTPayloadSizeExceededException$ = exports2.InvalidIdentityTokenException$ = exports2.InvalidAuthorizationMessageException$ = exports2.IDPRejectedClaimException$ = exports2.IDPCommunicationErrorException$ = exports2.ExpiredTradeInTokenException$ = exports2.ExpiredTokenException$ = exports2.STSServiceException$ = void 0;
+    exports2.GetWebIdentityToken$ = exports2.GetSessionToken$ = exports2.GetFederationToken$ = void 0;
+    var _A2 = "Arn";
+    var _AKI2 = "AccessKeyId";
+    var _AP = "AssumedPrincipal";
+    var _AR2 = "AssumeRole";
+    var _ARI2 = "AssumedRoleId";
+    var _ARR2 = "AssumeRoleRequest";
+    var _ARRs2 = "AssumeRoleResponse";
+    var _ARRss = "AssumeRootRequest";
+    var _ARRssu = "AssumeRootResponse";
+    var _ARU2 = "AssumedRoleUser";
+    var _ARWSAML = "AssumeRoleWithSAML";
+    var _ARWSAMLR = "AssumeRoleWithSAMLRequest";
+    var _ARWSAMLRs = "AssumeRoleWithSAMLResponse";
+    var _ARWWI2 = "AssumeRoleWithWebIdentity";
+    var _ARWWIR2 = "AssumeRoleWithWebIdentityRequest";
+    var _ARWWIRs2 = "AssumeRoleWithWebIdentityResponse";
+    var _ARs = "AssumeRoot";
+    var _Ac = "Account";
+    var _Au2 = "Audience";
+    var _C2 = "Credentials";
+    var _CA2 = "ContextAssertion";
+    var _DAM = "DecodeAuthorizationMessage";
+    var _DAMR = "DecodeAuthorizationMessageRequest";
+    var _DAMRe = "DecodeAuthorizationMessageResponse";
+    var _DM = "DecodedMessage";
+    var _DS2 = "DurationSeconds";
+    var _E2 = "Expiration";
+    var _EI2 = "ExternalId";
+    var _EM = "EncodedMessage";
+    var _ETE3 = "ExpiredTokenException";
+    var _ETITE = "ExpiredTradeInTokenException";
+    var _FU = "FederatedUser";
+    var _FUI = "FederatedUserId";
+    var _GAKI = "GetAccessKeyInfo";
+    var _GAKIR = "GetAccessKeyInfoRequest";
+    var _GAKIRe = "GetAccessKeyInfoResponse";
+    var _GCI = "GetCallerIdentity";
+    var _GCIR = "GetCallerIdentityRequest";
+    var _GCIRe = "GetCallerIdentityResponse";
+    var _GDAT = "GetDelegatedAccessToken";
+    var _GDATR = "GetDelegatedAccessTokenRequest";
+    var _GDATRe = "GetDelegatedAccessTokenResponse";
+    var _GFT = "GetFederationToken";
+    var _GFTR = "GetFederationTokenRequest";
+    var _GFTRe = "GetFederationTokenResponse";
+    var _GST = "GetSessionToken";
+    var _GSTR = "GetSessionTokenRequest";
+    var _GSTRe = "GetSessionTokenResponse";
+    var _GWIT = "GetWebIdentityToken";
+    var _GWITR = "GetWebIdentityTokenRequest";
+    var _GWITRe = "GetWebIdentityTokenResponse";
+    var _I = "Issuer";
+    var _IAME = "InvalidAuthorizationMessageException";
+    var _IDPCEE2 = "IDPCommunicationErrorException";
+    var _IDPRCE2 = "IDPRejectedClaimException";
+    var _IITE2 = "InvalidIdentityTokenException";
+    var _JWTPSEE = "JWTPayloadSizeExceededException";
+    var _K2 = "Key";
+    var _MPDE2 = "MalformedPolicyDocumentException";
+    var _N = "Name";
+    var _NQ = "NameQualifier";
+    var _OWIFDE = "OutboundWebIdentityFederationDisabledException";
+    var _P2 = "Policy";
+    var _PA2 = "PolicyArns";
+    var _PAr2 = "PrincipalArn";
+    var _PAro = "ProviderArn";
+    var _PC2 = "ProvidedContexts";
+    var _PCLT2 = "ProvidedContextsListType";
+    var _PCr2 = "ProvidedContext";
+    var _PDT2 = "PolicyDescriptorType";
+    var _PI2 = "ProviderId";
+    var _PPS2 = "PackedPolicySize";
+    var _PPTLE2 = "PackedPolicyTooLargeException";
+    var _Pr2 = "Provider";
+    var _RA2 = "RoleArn";
+    var _RDE2 = "RegionDisabledException";
+    var _RSN2 = "RoleSessionName";
+    var _S = "Subject";
+    var _SA = "SigningAlgorithm";
+    var _SAK2 = "SecretAccessKey";
+    var _SAMLA = "SAMLAssertion";
+    var _SAMLAT = "SAMLAssertionType";
+    var _SDEE = "SessionDurationEscalationException";
+    var _SFWIT2 = "SubjectFromWebIdentityToken";
+    var _SI2 = "SourceIdentity";
+    var _SN2 = "SerialNumber";
+    var _ST2 = "SubjectType";
+    var _STe = "SessionToken";
+    var _T2 = "Tags";
+    var _TC2 = "TokenCode";
+    var _TIT = "TradeInToken";
+    var _TP = "TargetPrincipal";
+    var _TPA = "TaskPolicyArn";
+    var _TTK2 = "TransitiveTagKeys";
+    var _Ta2 = "Tag";
+    var _UI = "UserId";
+    var _V2 = "Value";
+    var _WIT2 = "WebIdentityToken";
+    var _a2 = "arn";
+    var _aKST2 = "accessKeySecretType";
+    var _aQE2 = "awsQueryError";
+    var _c5 = "client";
+    var _cTT2 = "clientTokenType";
+    var _e5 = "error";
+    var _hE5 = "httpError";
+    var _m4 = "message";
+    var _pDLT2 = "policyDescriptorListType";
+    var _s5 = "smithy.ts.sdk.synthetic.com.amazonaws.sts";
+    var _tITT = "tradeInTokenType";
+    var _tLT2 = "tagListType";
+    var _wITT = "webIdentityTokenType";
+    var n05 = "com.amazonaws.sts";
+    var schema_1 = (init_schema(), __toCommonJS(schema_exports));
+    var errors_1 = require_errors3();
+    var STSServiceException_1 = require_STSServiceException();
+    var _s_registry5 = schema_1.TypeRegistry.for(_s5);
+    exports2.STSServiceException$ = [-3, _s5, "STSServiceException", 0, [], []];
+    _s_registry5.registerError(exports2.STSServiceException$, STSServiceException_1.STSServiceException);
+    var n0_registry5 = schema_1.TypeRegistry.for(n05);
+    exports2.ExpiredTokenException$ = [
+      -3,
+      n05,
+      _ETE3,
+      { [_aQE2]: [`ExpiredTokenException`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ExpiredTokenException$, errors_1.ExpiredTokenException);
+    exports2.ExpiredTradeInTokenException$ = [
+      -3,
+      n05,
+      _ETITE,
+      { [_aQE2]: [`ExpiredTradeInTokenException`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ExpiredTradeInTokenException$, errors_1.ExpiredTradeInTokenException);
+    exports2.IDPCommunicationErrorException$ = [
+      -3,
+      n05,
+      _IDPCEE2,
+      { [_aQE2]: [`IDPCommunicationError`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.IDPCommunicationErrorException$, errors_1.IDPCommunicationErrorException);
+    exports2.IDPRejectedClaimException$ = [
+      -3,
+      n05,
+      _IDPRCE2,
+      { [_aQE2]: [`IDPRejectedClaim`, 403], [_e5]: _c5, [_hE5]: 403 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.IDPRejectedClaimException$, errors_1.IDPRejectedClaimException);
+    exports2.InvalidAuthorizationMessageException$ = [
+      -3,
+      n05,
+      _IAME,
+      { [_aQE2]: [`InvalidAuthorizationMessageException`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAuthorizationMessageException$, errors_1.InvalidAuthorizationMessageException);
+    exports2.InvalidIdentityTokenException$ = [
+      -3,
+      n05,
+      _IITE2,
+      { [_aQE2]: [`InvalidIdentityToken`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidIdentityTokenException$, errors_1.InvalidIdentityTokenException);
+    exports2.JWTPayloadSizeExceededException$ = [
+      -3,
+      n05,
+      _JWTPSEE,
+      { [_aQE2]: [`JWTPayloadSizeExceededException`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.JWTPayloadSizeExceededException$, errors_1.JWTPayloadSizeExceededException);
+    exports2.MalformedPolicyDocumentException$ = [
+      -3,
+      n05,
+      _MPDE2,
+      { [_aQE2]: [`MalformedPolicyDocument`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.MalformedPolicyDocumentException$, errors_1.MalformedPolicyDocumentException);
+    exports2.OutboundWebIdentityFederationDisabledException$ = [
+      -3,
+      n05,
+      _OWIFDE,
+      { [_aQE2]: [`OutboundWebIdentityFederationDisabledException`, 403], [_e5]: _c5, [_hE5]: 403 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OutboundWebIdentityFederationDisabledException$, errors_1.OutboundWebIdentityFederationDisabledException);
+    exports2.PackedPolicyTooLargeException$ = [
+      -3,
+      n05,
+      _PPTLE2,
+      { [_aQE2]: [`PackedPolicyTooLarge`, 400], [_e5]: _c5, [_hE5]: 400 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.PackedPolicyTooLargeException$, errors_1.PackedPolicyTooLargeException);
+    exports2.RegionDisabledException$ = [
+      -3,
+      n05,
+      _RDE2,
+      { [_aQE2]: [`RegionDisabledException`, 403], [_e5]: _c5, [_hE5]: 403 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.RegionDisabledException$, errors_1.RegionDisabledException);
+    exports2.SessionDurationEscalationException$ = [
+      -3,
+      n05,
+      _SDEE,
+      { [_aQE2]: [`SessionDurationEscalationException`, 403], [_e5]: _c5, [_hE5]: 403 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.SessionDurationEscalationException$, errors_1.SessionDurationEscalationException);
+    exports2.errorTypeRegistries = [
+      _s_registry5,
+      n0_registry5
+    ];
+    var accessKeySecretType2 = [0, n05, _aKST2, 8, 0];
+    var clientTokenType2 = [0, n05, _cTT2, 8, 0];
+    var SAMLAssertionType = [0, n05, _SAMLAT, 8, 0];
+    var tradeInTokenType = [0, n05, _tITT, 8, 0];
+    var webIdentityTokenType = [0, n05, _wITT, 8, 0];
+    exports2.AssumedRoleUser$ = [
+      3,
+      n05,
+      _ARU2,
+      0,
+      [_ARI2, _A2],
+      [0, 0],
+      2
+    ];
+    exports2.AssumeRoleRequest$ = [
+      3,
+      n05,
+      _ARR2,
+      0,
+      [_RA2, _RSN2, _PA2, _P2, _DS2, _T2, _TTK2, _EI2, _SN2, _TC2, _SI2, _PC2],
+      [0, 0, () => policyDescriptorListType2, 0, 1, () => tagListType2, 64 | 0, 0, 0, 0, 0, () => ProvidedContextsListType2],
+      2
+    ];
+    exports2.AssumeRoleResponse$ = [
+      3,
+      n05,
+      _ARRs2,
+      0,
+      [_C2, _ARU2, _PPS2, _SI2],
+      [[() => exports2.Credentials$, 0], () => exports2.AssumedRoleUser$, 1, 0]
+    ];
+    exports2.AssumeRoleWithSAMLRequest$ = [
+      3,
+      n05,
+      _ARWSAMLR,
+      0,
+      [_RA2, _PAr2, _SAMLA, _PA2, _P2, _DS2],
+      [0, 0, [() => SAMLAssertionType, 0], () => policyDescriptorListType2, 0, 1],
+      3
+    ];
+    exports2.AssumeRoleWithSAMLResponse$ = [
+      3,
+      n05,
+      _ARWSAMLRs,
+      0,
+      [_C2, _ARU2, _PPS2, _S, _ST2, _I, _Au2, _NQ, _SI2],
+      [[() => exports2.Credentials$, 0], () => exports2.AssumedRoleUser$, 1, 0, 0, 0, 0, 0, 0]
+    ];
+    exports2.AssumeRoleWithWebIdentityRequest$ = [
+      3,
+      n05,
+      _ARWWIR2,
+      0,
+      [_RA2, _RSN2, _WIT2, _PI2, _PA2, _P2, _DS2],
+      [0, 0, [() => clientTokenType2, 0], 0, () => policyDescriptorListType2, 0, 1],
+      3
+    ];
+    exports2.AssumeRoleWithWebIdentityResponse$ = [
+      3,
+      n05,
+      _ARWWIRs2,
+      0,
+      [_C2, _SFWIT2, _ARU2, _PPS2, _Pr2, _Au2, _SI2],
+      [[() => exports2.Credentials$, 0], 0, () => exports2.AssumedRoleUser$, 1, 0, 0, 0]
+    ];
+    exports2.AssumeRootRequest$ = [
+      3,
+      n05,
+      _ARRss,
+      0,
+      [_TP, _TPA, _DS2],
+      [0, () => exports2.PolicyDescriptorType$, 1],
+      2
+    ];
+    exports2.AssumeRootResponse$ = [
+      3,
+      n05,
+      _ARRssu,
+      0,
+      [_C2, _SI2],
+      [[() => exports2.Credentials$, 0], 0]
+    ];
+    exports2.Credentials$ = [
+      3,
+      n05,
+      _C2,
+      0,
+      [_AKI2, _SAK2, _STe, _E2],
+      [0, [() => accessKeySecretType2, 0], 0, 4],
+      4
+    ];
+    exports2.DecodeAuthorizationMessageRequest$ = [
+      3,
+      n05,
+      _DAMR,
+      0,
+      [_EM],
+      [0],
+      1
+    ];
+    exports2.DecodeAuthorizationMessageResponse$ = [
+      3,
+      n05,
+      _DAMRe,
+      0,
+      [_DM],
+      [0]
+    ];
+    exports2.FederatedUser$ = [
+      3,
+      n05,
+      _FU,
+      0,
+      [_FUI, _A2],
+      [0, 0],
+      2
+    ];
+    exports2.GetAccessKeyInfoRequest$ = [
+      3,
+      n05,
+      _GAKIR,
+      0,
+      [_AKI2],
+      [0],
+      1
+    ];
+    exports2.GetAccessKeyInfoResponse$ = [
+      3,
+      n05,
+      _GAKIRe,
+      0,
+      [_Ac],
+      [0]
+    ];
+    exports2.GetCallerIdentityRequest$ = [
+      3,
+      n05,
+      _GCIR,
+      0,
+      [],
+      []
+    ];
+    exports2.GetCallerIdentityResponse$ = [
+      3,
+      n05,
+      _GCIRe,
+      0,
+      [_UI, _Ac, _A2],
+      [0, 0, 0]
+    ];
+    exports2.GetDelegatedAccessTokenRequest$ = [
+      3,
+      n05,
+      _GDATR,
+      0,
+      [_TIT],
+      [[() => tradeInTokenType, 0]],
+      1
+    ];
+    exports2.GetDelegatedAccessTokenResponse$ = [
+      3,
+      n05,
+      _GDATRe,
+      0,
+      [_C2, _PPS2, _AP],
+      [[() => exports2.Credentials$, 0], 1, 0]
+    ];
+    exports2.GetFederationTokenRequest$ = [
+      3,
+      n05,
+      _GFTR,
+      0,
+      [_N, _P2, _PA2, _DS2, _T2],
+      [0, 0, () => policyDescriptorListType2, 1, () => tagListType2],
+      1
+    ];
+    exports2.GetFederationTokenResponse$ = [
+      3,
+      n05,
+      _GFTRe,
+      0,
+      [_C2, _FU, _PPS2],
+      [[() => exports2.Credentials$, 0], () => exports2.FederatedUser$, 1]
+    ];
+    exports2.GetSessionTokenRequest$ = [
+      3,
+      n05,
+      _GSTR,
+      0,
+      [_DS2, _SN2, _TC2],
+      [1, 0, 0]
+    ];
+    exports2.GetSessionTokenResponse$ = [
+      3,
+      n05,
+      _GSTRe,
+      0,
+      [_C2],
+      [[() => exports2.Credentials$, 0]]
+    ];
+    exports2.GetWebIdentityTokenRequest$ = [
+      3,
+      n05,
+      _GWITR,
+      0,
+      [_Au2, _SA, _DS2, _T2],
+      [64 | 0, 0, 1, () => tagListType2],
+      2
+    ];
+    exports2.GetWebIdentityTokenResponse$ = [
+      3,
+      n05,
+      _GWITRe,
+      0,
+      [_WIT2, _E2],
+      [[() => webIdentityTokenType, 0], 4]
+    ];
+    exports2.PolicyDescriptorType$ = [
+      3,
+      n05,
+      _PDT2,
+      0,
+      [_a2],
+      [0]
+    ];
+    exports2.ProvidedContext$ = [
+      3,
+      n05,
+      _PCr2,
+      0,
+      [_PAro, _CA2],
+      [0, 0]
+    ];
+    exports2.Tag$ = [
+      3,
+      n05,
+      _Ta2,
+      0,
+      [_K2, _V2],
+      [0, 0],
+      2
+    ];
+    var policyDescriptorListType2 = [
+      1,
+      n05,
+      _pDLT2,
+      0,
+      () => exports2.PolicyDescriptorType$
+    ];
+    var ProvidedContextsListType2 = [
+      1,
+      n05,
+      _PCLT2,
+      0,
+      () => exports2.ProvidedContext$
+    ];
+    var tagKeyListType2 = 64 | 0;
+    var tagListType2 = [
+      1,
+      n05,
+      _tLT2,
+      0,
+      () => exports2.Tag$
+    ];
+    var webIdentityTokenAudienceListType = 64 | 0;
+    exports2.AssumeRole$ = [
+      9,
+      n05,
+      _AR2,
+      0,
+      () => exports2.AssumeRoleRequest$,
+      () => exports2.AssumeRoleResponse$
+    ];
+    exports2.AssumeRoleWithSAML$ = [
+      9,
+      n05,
+      _ARWSAML,
+      0,
+      () => exports2.AssumeRoleWithSAMLRequest$,
+      () => exports2.AssumeRoleWithSAMLResponse$
+    ];
+    exports2.AssumeRoleWithWebIdentity$ = [
+      9,
+      n05,
+      _ARWWI2,
+      0,
+      () => exports2.AssumeRoleWithWebIdentityRequest$,
+      () => exports2.AssumeRoleWithWebIdentityResponse$
+    ];
+    exports2.AssumeRoot$ = [
+      9,
+      n05,
+      _ARs,
+      0,
+      () => exports2.AssumeRootRequest$,
+      () => exports2.AssumeRootResponse$
+    ];
+    exports2.DecodeAuthorizationMessage$ = [
+      9,
+      n05,
+      _DAM,
+      0,
+      () => exports2.DecodeAuthorizationMessageRequest$,
+      () => exports2.DecodeAuthorizationMessageResponse$
+    ];
+    exports2.GetAccessKeyInfo$ = [
+      9,
+      n05,
+      _GAKI,
+      0,
+      () => exports2.GetAccessKeyInfoRequest$,
+      () => exports2.GetAccessKeyInfoResponse$
+    ];
+    exports2.GetCallerIdentity$ = [
+      9,
+      n05,
+      _GCI,
+      0,
+      () => exports2.GetCallerIdentityRequest$,
+      () => exports2.GetCallerIdentityResponse$
+    ];
+    exports2.GetDelegatedAccessToken$ = [
+      9,
+      n05,
+      _GDAT,
+      0,
+      () => exports2.GetDelegatedAccessTokenRequest$,
+      () => exports2.GetDelegatedAccessTokenResponse$
+    ];
+    exports2.GetFederationToken$ = [
+      9,
+      n05,
+      _GFT,
+      0,
+      () => exports2.GetFederationTokenRequest$,
+      () => exports2.GetFederationTokenResponse$
+    ];
+    exports2.GetSessionToken$ = [
+      9,
+      n05,
+      _GST,
+      0,
+      () => exports2.GetSessionTokenRequest$,
+      () => exports2.GetSessionTokenResponse$
+    ];
+    exports2.GetWebIdentityToken$ = [
+      9,
+      n05,
+      _GWIT,
+      0,
+      () => exports2.GetWebIdentityTokenRequest$,
+      () => exports2.GetWebIdentityTokenResponse$
+    ];
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.shared.js
+var require_runtimeConfig_shared3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.shared.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var protocols_1 = (init_protocols2(), __toCommonJS(protocols_exports2));
+    var core_2 = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var smithy_client_1 = require_dist_cjs26();
+    var url_parser_1 = require_dist_cjs19();
+    var util_base64_1 = require_dist_cjs11();
+    var util_utf8_1 = require_dist_cjs10();
+    var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider3();
+    var endpointResolver_1 = require_endpointResolver3();
+    var schemas_0_1 = require_schemas_03();
+    var getRuntimeConfig9 = (config) => {
+      return {
+        apiVersion: "2011-06-15",
+        base64Decoder: config?.base64Decoder ?? util_base64_1.fromBase64,
+        base64Encoder: config?.base64Encoder ?? util_base64_1.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultSTSHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
+            signer: new core_1.AwsSdkSigV4Signer()
+          },
+          {
+            schemeId: "smithy.api#noAuth",
+            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
+            signer: new core_2.NoAuthSigner()
+          }
+        ],
+        logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        protocol: config?.protocol ?? protocols_1.AwsQueryProtocol,
+        protocolSettings: config?.protocolSettings ?? {
+          defaultNamespace: "com.amazonaws.sts",
+          errorTypeRegistries: schemas_0_1.errorTypeRegistries,
+          xmlNamespace: "https://sts.amazonaws.com/doc/2011-06-15/",
+          version: "2011-06-15",
+          serviceTarget: "AWSSecurityTokenServiceV20110615"
+        },
+        serviceId: config?.serviceId ?? "STS",
+        urlParser: config?.urlParser ?? url_parser_1.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? util_utf8_1.toUtf8
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.js
+var require_runtimeConfig3 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeConfig.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var package_json_1 = tslib_1.__importDefault(require_package3());
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var credential_provider_node_1 = require_dist_cjs53();
+    var util_user_agent_node_1 = require_dist_cjs42();
+    var config_resolver_1 = require_dist_cjs32();
+    var core_2 = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var hash_node_1 = require_dist_cjs43();
+    var middleware_retry_1 = require_dist_cjs38();
+    var node_config_provider_1 = require_dist_cjs35();
+    var node_http_handler_1 = require_dist_cjs14();
+    var smithy_client_1 = require_dist_cjs26();
+    var util_body_length_node_1 = require_dist_cjs44();
+    var util_defaults_mode_node_1 = require_dist_cjs45();
+    var util_retry_1 = require_dist_cjs29();
+    var runtimeConfig_shared_1 = require_runtimeConfig_shared3();
+    var getRuntimeConfig9 = (config) => {
+      (0, smithy_client_1.emitWarningIfUnsupportedVersion)(process.version);
+      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
+      const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
+      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
+      (0, core_1.emitWarningIfUnsupportedVersion)(process.version);
+      const loaderConfig = {
+        profile: config?.profile,
+        logger: clientSharedValues.logger
+      };
+      return {
+        ...clientSharedValues,
+        ...config,
+        runtime: "node",
+        defaultsMode,
+        authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await (0, credential_provider_node_1.defaultProvider)(idProps?.__config || {})()),
+            signer: new core_1.AwsSdkSigV4Signer()
+          },
+          {
+            schemeId: "smithy.api#noAuth",
+            identityProvider: (ipc) => ipc.getIdentityProvider("smithy.api#noAuth") || (async () => ({})),
+            signer: new core_2.NoAuthSigner()
+          }
+        ],
+        maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, node_config_provider_1.loadConfig)({
+          ...middleware_retry_1.NODE_RETRY_MODE_CONFIG_OPTIONS,
+          default: async () => (await defaultConfigProvider()).retryMode || util_retry_1.DEFAULT_RETRY_MODE
+        }, config),
+        sha256: config?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthExtensionConfiguration.js
+var require_httpAuthExtensionConfiguration = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/auth/httpAuthExtensionConfiguration.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.resolveHttpAuthRuntimeConfig = exports2.getHttpAuthExtensionConfiguration = void 0;
+    var getHttpAuthExtensionConfiguration5 = (runtimeConfig) => {
+      const _httpAuthSchemes = runtimeConfig.httpAuthSchemes;
+      let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider;
+      let _credentials = runtimeConfig.credentials;
+      return {
+        setHttpAuthScheme(httpAuthScheme) {
+          const index = _httpAuthSchemes.findIndex((scheme) => scheme.schemeId === httpAuthScheme.schemeId);
+          if (index === -1) {
+            _httpAuthSchemes.push(httpAuthScheme);
+          } else {
+            _httpAuthSchemes.splice(index, 1, httpAuthScheme);
+          }
+        },
+        httpAuthSchemes() {
+          return _httpAuthSchemes;
+        },
+        setHttpAuthSchemeProvider(httpAuthSchemeProvider) {
+          _httpAuthSchemeProvider = httpAuthSchemeProvider;
+        },
+        httpAuthSchemeProvider() {
+          return _httpAuthSchemeProvider;
+        },
+        setCredentials(credentials) {
+          _credentials = credentials;
+        },
+        credentials() {
+          return _credentials;
+        }
+      };
+    };
+    exports2.getHttpAuthExtensionConfiguration = getHttpAuthExtensionConfiguration5;
+    var resolveHttpAuthRuntimeConfig5 = (config) => {
+      return {
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
+      };
+    };
+    exports2.resolveHttpAuthRuntimeConfig = resolveHttpAuthRuntimeConfig5;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/runtimeExtensions.js
+var require_runtimeExtensions = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/runtimeExtensions.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.resolveRuntimeExtensions = void 0;
+    var region_config_resolver_1 = require_dist_cjs46();
+    var protocol_http_1 = require_dist_cjs2();
+    var smithy_client_1 = require_dist_cjs26();
+    var httpAuthExtensionConfiguration_1 = require_httpAuthExtensionConfiguration();
+    var resolveRuntimeExtensions5 = (runtimeConfig, extensions) => {
+      const extensionConfiguration = Object.assign((0, region_config_resolver_1.getAwsRegionExtensionConfiguration)(runtimeConfig), (0, smithy_client_1.getDefaultExtensionConfiguration)(runtimeConfig), (0, protocol_http_1.getHttpHandlerExtensionConfiguration)(runtimeConfig), (0, httpAuthExtensionConfiguration_1.getHttpAuthExtensionConfiguration)(runtimeConfig));
+      extensions.forEach((extension) => extension.configure(extensionConfiguration));
+      return Object.assign(runtimeConfig, (0, region_config_resolver_1.resolveAwsRegionExtensionConfiguration)(extensionConfiguration), (0, smithy_client_1.resolveDefaultRuntimeConfig)(extensionConfiguration), (0, protocol_http_1.resolveHttpHandlerRuntimeConfig)(extensionConfiguration), (0, httpAuthExtensionConfiguration_1.resolveHttpAuthRuntimeConfig)(extensionConfiguration));
+    };
+    exports2.resolveRuntimeExtensions = resolveRuntimeExtensions5;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/STSClient.js
+var require_STSClient = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/STSClient.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.STSClient = exports2.__Client = void 0;
+    var middleware_host_header_1 = require_dist_cjs3();
+    var middleware_logger_1 = require_dist_cjs4();
+    var middleware_recursion_detection_1 = require_dist_cjs5();
+    var middleware_user_agent_1 = require_dist_cjs30();
+    var config_resolver_1 = require_dist_cjs32();
+    var core_1 = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var schema_1 = (init_schema(), __toCommonJS(schema_exports));
+    var middleware_content_length_1 = require_dist_cjs33();
+    var middleware_endpoint_1 = require_dist_cjs37();
+    var middleware_retry_1 = require_dist_cjs38();
+    var smithy_client_1 = require_dist_cjs26();
+    Object.defineProperty(exports2, "__Client", { enumerable: true, get: function() {
+      return smithy_client_1.Client;
+    } });
+    var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider3();
+    var EndpointParameters_1 = require_EndpointParameters();
+    var runtimeConfig_1 = require_runtimeConfig3();
+    var runtimeExtensions_1 = require_runtimeExtensions();
+    var STSClient3 = class extends smithy_client_1.Client {
+      config;
+      constructor(...[configuration]) {
+        const _config_0 = (0, runtimeConfig_1.getRuntimeConfig)(configuration || {});
+        super(_config_0);
+        this.initConfig = _config_0;
+        const _config_1 = (0, EndpointParameters_1.resolveClientEndpointParameters)(_config_0);
+        const _config_2 = (0, middleware_user_agent_1.resolveUserAgentConfig)(_config_1);
+        const _config_3 = (0, middleware_retry_1.resolveRetryConfig)(_config_2);
+        const _config_4 = (0, config_resolver_1.resolveRegionConfig)(_config_3);
+        const _config_5 = (0, middleware_host_header_1.resolveHostHeaderConfig)(_config_4);
+        const _config_6 = (0, middleware_endpoint_1.resolveEndpointConfig)(_config_5);
+        const _config_7 = (0, httpAuthSchemeProvider_1.resolveHttpAuthSchemeConfig)(_config_6);
+        const _config_8 = (0, runtimeExtensions_1.resolveRuntimeExtensions)(_config_7, configuration?.extensions || []);
+        this.config = _config_8;
+        this.middlewareStack.use((0, schema_1.getSchemaSerdePlugin)(this.config));
+        this.middlewareStack.use((0, middleware_user_agent_1.getUserAgentPlugin)(this.config));
+        this.middlewareStack.use((0, middleware_retry_1.getRetryPlugin)(this.config));
+        this.middlewareStack.use((0, middleware_content_length_1.getContentLengthPlugin)(this.config));
+        this.middlewareStack.use((0, middleware_host_header_1.getHostHeaderPlugin)(this.config));
+        this.middlewareStack.use((0, middleware_logger_1.getLoggerPlugin)(this.config));
+        this.middlewareStack.use((0, middleware_recursion_detection_1.getRecursionDetectionPlugin)(this.config));
+        this.middlewareStack.use((0, core_1.getHttpAuthSchemeEndpointRuleSetPlugin)(this.config, {
+          httpAuthSchemeParametersProvider: httpAuthSchemeProvider_1.defaultSTSHttpAuthSchemeParametersProvider,
+          identityProviderConfigProvider: async (config) => new core_1.DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials
+          })
+        }));
+        this.middlewareStack.use((0, core_1.getHttpSigningPlugin)(this.config));
+      }
+      destroy() {
+        super.destroy();
+      }
+    };
+    exports2.STSClient = STSClient3;
+  }
+});
+
+// node_modules/@aws-sdk/client-sts/dist-cjs/index.js
+var require_dist_cjs56 = __commonJS({
+  "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var STSClient3 = require_STSClient();
+    var smithyClient = require_dist_cjs26();
+    var middlewareEndpoint = require_dist_cjs37();
+    var EndpointParameters = require_EndpointParameters();
+    var schemas_0 = require_schemas_03();
+    var errors = require_errors3();
+    var client = (init_client(), __toCommonJS(client_exports));
+    var regionConfigResolver = require_dist_cjs46();
+    var STSServiceException2 = require_STSServiceException();
+    var AssumeRoleCommand2 = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(schemas_0.AssumeRole$).build() {
+    };
+    var AssumeRoleWithSAMLCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithSAML", {}).n("STSClient", "AssumeRoleWithSAMLCommand").sc(schemas_0.AssumeRoleWithSAML$).build() {
+    };
+    var AssumeRoleWithWebIdentityCommand2 = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(schemas_0.AssumeRoleWithWebIdentity$).build() {
+    };
+    var AssumeRootCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoot", {}).n("STSClient", "AssumeRootCommand").sc(schemas_0.AssumeRoot$).build() {
+    };
+    var DecodeAuthorizationMessageCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "DecodeAuthorizationMessage", {}).n("STSClient", "DecodeAuthorizationMessageCommand").sc(schemas_0.DecodeAuthorizationMessage$).build() {
+    };
+    var GetAccessKeyInfoCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetAccessKeyInfo", {}).n("STSClient", "GetAccessKeyInfoCommand").sc(schemas_0.GetAccessKeyInfo$).build() {
+    };
+    var GetCallerIdentityCommand2 = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetCallerIdentity", {}).n("STSClient", "GetCallerIdentityCommand").sc(schemas_0.GetCallerIdentity$).build() {
+    };
+    var GetDelegatedAccessTokenCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetDelegatedAccessToken", {}).n("STSClient", "GetDelegatedAccessTokenCommand").sc(schemas_0.GetDelegatedAccessToken$).build() {
+    };
+    var GetFederationTokenCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetFederationToken", {}).n("STSClient", "GetFederationTokenCommand").sc(schemas_0.GetFederationToken$).build() {
+    };
+    var GetSessionTokenCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetSessionToken", {}).n("STSClient", "GetSessionTokenCommand").sc(schemas_0.GetSessionToken$).build() {
+    };
+    var GetWebIdentityTokenCommand = class extends smithyClient.Command.classBuilder().ep(EndpointParameters.commonParams).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {}).n("STSClient", "GetWebIdentityTokenCommand").sc(schemas_0.GetWebIdentityToken$).build() {
+    };
+    var commands5 = {
+      AssumeRoleCommand: AssumeRoleCommand2,
+      AssumeRoleWithSAMLCommand,
+      AssumeRoleWithWebIdentityCommand: AssumeRoleWithWebIdentityCommand2,
+      AssumeRootCommand,
+      DecodeAuthorizationMessageCommand,
+      GetAccessKeyInfoCommand,
+      GetCallerIdentityCommand: GetCallerIdentityCommand2,
+      GetDelegatedAccessTokenCommand,
+      GetFederationTokenCommand,
+      GetSessionTokenCommand,
+      GetWebIdentityTokenCommand
+    };
+    var STS2 = class extends STSClient3.STSClient {
+    };
+    smithyClient.createAggregatedClient(commands5, STS2);
+    var getAccountIdFromAssumedRoleUser2 = (assumedRoleUser) => {
+      if (typeof assumedRoleUser?.Arn === "string") {
+        const arnComponents = assumedRoleUser.Arn.split(":");
+        if (arnComponents.length > 4 && arnComponents[4] !== "") {
+          return arnComponents[4];
+        }
+      }
+      return void 0;
+    };
+    var resolveRegion2 = async (_region, _parentRegion, credentialProviderLogger, loaderConfig = {}) => {
+      const region = typeof _region === "function" ? await _region() : _region;
+      const parentRegion = typeof _parentRegion === "function" ? await _parentRegion() : _parentRegion;
+      let stsDefaultRegion = "";
+      const resolvedRegion = region ?? parentRegion ?? (stsDefaultRegion = await regionConfigResolver.stsRegionDefaultResolver(loaderConfig)());
+      credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region} (credential provider clientConfig)`, `${parentRegion} (contextual client)`, `${stsDefaultRegion} (STS default: AWS_REGION, profile region, or us-east-1)`);
+      return resolvedRegion;
+    };
+    var getDefaultRoleAssumer$1 = (stsOptions, STSClient4) => {
+      let stsClient;
+      let closureSourceCreds;
+      return async (sourceCreds, params) => {
+        closureSourceCreds = sourceCreds;
+        if (!stsClient) {
+          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
+          const resolvedRegion = await resolveRegion2(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
+            logger: logger2,
+            profile
+          });
+          const isCompatibleRequestHandler = !isH22(requestHandler);
+          stsClient = new STSClient4({
+            ...stsOptions,
+            userAgentAppId,
+            profile,
+            credentialDefaultProvider: () => async () => closureSourceCreds,
+            region: resolvedRegion,
+            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
+            logger: logger2
+          });
+        }
+        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleCommand2(params));
+        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
+          throw new Error(`Invalid response from STS.assumeRole call with role ${params.RoleArn}`);
+        }
+        const accountId = getAccountIdFromAssumedRoleUser2(AssumedRoleUser);
+        const credentials = {
+          accessKeyId: Credentials.AccessKeyId,
+          secretAccessKey: Credentials.SecretAccessKey,
+          sessionToken: Credentials.SessionToken,
+          expiration: Credentials.Expiration,
+          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
+          ...accountId && { accountId }
+        };
+        client.setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE", "i");
+        return credentials;
+      };
+    };
+    var getDefaultRoleAssumerWithWebIdentity$1 = (stsOptions, STSClient4) => {
+      let stsClient;
+      return async (params) => {
+        if (!stsClient) {
+          const { logger: logger2 = stsOptions?.parentClientConfig?.logger, profile = stsOptions?.parentClientConfig?.profile, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger, userAgentAppId = stsOptions?.parentClientConfig?.userAgentAppId } = stsOptions;
+          const resolvedRegion = await resolveRegion2(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger, {
+            logger: logger2,
+            profile
+          });
+          const isCompatibleRequestHandler = !isH22(requestHandler);
+          stsClient = new STSClient4({
+            ...stsOptions,
+            userAgentAppId,
+            profile,
+            region: resolvedRegion,
+            requestHandler: isCompatibleRequestHandler ? requestHandler : void 0,
+            logger: logger2
+          });
+        }
+        const { Credentials, AssumedRoleUser } = await stsClient.send(new AssumeRoleWithWebIdentityCommand2(params));
+        if (!Credentials || !Credentials.AccessKeyId || !Credentials.SecretAccessKey) {
+          throw new Error(`Invalid response from STS.assumeRoleWithWebIdentity call with role ${params.RoleArn}`);
+        }
+        const accountId = getAccountIdFromAssumedRoleUser2(AssumedRoleUser);
+        const credentials = {
+          accessKeyId: Credentials.AccessKeyId,
+          secretAccessKey: Credentials.SecretAccessKey,
+          sessionToken: Credentials.SessionToken,
+          expiration: Credentials.Expiration,
+          ...Credentials.CredentialScope && { credentialScope: Credentials.CredentialScope },
+          ...accountId && { accountId }
+        };
+        if (accountId) {
+          client.setCredentialFeature(credentials, "RESOLVED_ACCOUNT_ID", "T");
+        }
+        client.setCredentialFeature(credentials, "CREDENTIALS_STS_ASSUME_ROLE_WEB_ID", "k");
+        return credentials;
+      };
+    };
+    var isH22 = (requestHandler) => {
+      return requestHandler?.metadata?.handlerProtocol === "h2";
+    };
+    var getCustomizableStsClientCtor2 = (baseCtor, customizations) => {
+      if (!customizations)
+        return baseCtor;
+      else
+        return class CustomizableSTSClient extends baseCtor {
+          constructor(config) {
+            super(config);
+            for (const customization of customizations) {
+              this.middlewareStack.use(customization);
+            }
+          }
+        };
+    };
+    var getDefaultRoleAssumer3 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumer$1(stsOptions, getCustomizableStsClientCtor2(STSClient3.STSClient, stsPlugins));
+    var getDefaultRoleAssumerWithWebIdentity3 = (stsOptions = {}, stsPlugins) => getDefaultRoleAssumerWithWebIdentity$1(stsOptions, getCustomizableStsClientCtor2(STSClient3.STSClient, stsPlugins));
+    var decorateDefaultCredentialProvider2 = (provider) => (input) => provider({
+      roleAssumer: getDefaultRoleAssumer3(input),
+      roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity3(input),
+      ...input
+    });
+    exports2.$Command = smithyClient.Command;
+    exports2.STSServiceException = STSServiceException2.STSServiceException;
+    exports2.AssumeRoleCommand = AssumeRoleCommand2;
+    exports2.AssumeRoleWithSAMLCommand = AssumeRoleWithSAMLCommand;
+    exports2.AssumeRoleWithWebIdentityCommand = AssumeRoleWithWebIdentityCommand2;
+    exports2.AssumeRootCommand = AssumeRootCommand;
+    exports2.DecodeAuthorizationMessageCommand = DecodeAuthorizationMessageCommand;
+    exports2.GetAccessKeyInfoCommand = GetAccessKeyInfoCommand;
+    exports2.GetCallerIdentityCommand = GetCallerIdentityCommand2;
+    exports2.GetDelegatedAccessTokenCommand = GetDelegatedAccessTokenCommand;
+    exports2.GetFederationTokenCommand = GetFederationTokenCommand;
+    exports2.GetSessionTokenCommand = GetSessionTokenCommand;
+    exports2.GetWebIdentityTokenCommand = GetWebIdentityTokenCommand;
+    exports2.STS = STS2;
+    exports2.decorateDefaultCredentialProvider = decorateDefaultCredentialProvider2;
+    exports2.getDefaultRoleAssumer = getDefaultRoleAssumer3;
+    exports2.getDefaultRoleAssumerWithWebIdentity = getDefaultRoleAssumerWithWebIdentity3;
+    Object.prototype.hasOwnProperty.call(STSClient3, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: STSClient3["__proto__"]
+    });
+    Object.keys(STSClient3).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = STSClient3[k5];
+    });
+    Object.prototype.hasOwnProperty.call(schemas_0, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: schemas_0["__proto__"]
+    });
+    Object.keys(schemas_0).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = schemas_0[k5];
+    });
+    Object.prototype.hasOwnProperty.call(errors, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: errors["__proto__"]
+    });
+    Object.keys(errors).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = errors[k5];
+    });
+  }
+});
+
 // node_modules/yaml/dist/nodes/identity.js
 var require_identity = __commonJS({
   "node_modules/yaml/dist/nodes/identity.js"(exports2) {
@@ -35552,7 +37105,7 @@ var require_Document = __commonJS({
 });
 
 // node_modules/yaml/dist/errors.js
-var require_errors3 = __commonJS({
+var require_errors4 = __commonJS({
   "node_modules/yaml/dist/errors.js"(exports2) {
     "use strict";
     var YAMLError = class extends Error {
@@ -36956,7 +38509,7 @@ var require_composer = __commonJS({
     var node_process = require("process");
     var directives = require_directives();
     var Document = require_Document();
-    var errors = require_errors3();
+    var errors = require_errors4();
     var identity = require_identity();
     var composeDoc = require_compose_doc();
     var resolveEnd = require_resolve_end();
@@ -37161,7 +38714,7 @@ var require_cst_scalar = __commonJS({
     "use strict";
     var resolveBlockScalar = require_resolve_block_scalar();
     var resolveFlowScalar = require_resolve_flow_scalar();
-    var errors = require_errors3();
+    var errors = require_errors4();
     var stringifyString = require_stringifyString();
     function resolveAsScalar(token, strict = true, onError) {
       if (token) {
@@ -39048,7 +40601,7 @@ var require_public_api = __commonJS({
     "use strict";
     var composer = require_composer();
     var Document = require_Document();
-    var errors = require_errors3();
+    var errors = require_errors4();
     var log = require_log();
     var identity = require_identity();
     var lineCounter = require_line_counter();
@@ -39146,7 +40699,7 @@ var require_dist = __commonJS({
     var composer = require_composer();
     var Document = require_Document();
     var Schema2 = require_Schema();
-    var errors = require_errors3();
+    var errors = require_errors4();
     var Alias = require_Alias();
     var identity = require_identity();
     var Pair = require_Pair();
@@ -39205,8 +40758,23 @@ var import_node_path4 = __toESM(require("node:path"), 1);
 // src/lib/aws/client.ts
 var import_client_api_gateway = __toESM(require_dist_cjs54(), 1);
 var import_client_apigatewayv2 = __toESM(require_dist_cjs55(), 1);
+var import_node_http_handler5 = __toESM(require_dist_cjs14(), 1);
+var import_client_sts = __toESM(require_dist_cjs56(), 1);
 function toErrorMessage(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
+}
+function parseAwsError(error2) {
+  if (error2 && typeof error2 === "object") {
+    const maybe = error2;
+    return {
+      name: maybe.name,
+      message: maybe.message ?? toErrorMessage(error2),
+      httpStatusCode: maybe.$metadata?.httpStatusCode
+    };
+  }
+  return {
+    message: toErrorMessage(error2)
+  };
 }
 async function readExportBody(body) {
   if (!body) {
@@ -39235,13 +40803,22 @@ function isAwsNotFoundError(message) {
   return lowered.includes("notfoundexception") || lowered.includes("not found");
 }
 var AwsApiGatewaySdkClient = class {
-  constructor(region) {
+  constructor(region, options = {}) {
     this.region = region;
-    this.restClient = new import_client_api_gateway.APIGatewayClient({ region });
-    this.httpClient = new import_client_apigatewayv2.ApiGatewayV2Client({ region });
+    const requestTimeoutMs = options.requestTimeoutMs ?? 3e4;
+    const maxAttempts = options.maxAttempts ?? 3;
+    const requestHandler = new import_node_http_handler5.NodeHttpHandler({
+      connectionTimeout: requestTimeoutMs,
+      socketTimeout: requestTimeoutMs
+    });
+    const shared = { region, maxAttempts, requestHandler };
+    this.restClient = new import_client_api_gateway.APIGatewayClient(shared);
+    this.httpClient = new import_client_apigatewayv2.ApiGatewayV2Client(shared);
+    this.stsClient = new import_client_sts.STSClient(shared);
   }
   restClient;
   httpClient;
+  stsClient;
   async listRestApis() {
     const items = [];
     for await (const page of (0, import_client_api_gateway.paginateGetRestApis)({ client: this.restClient }, {})) {
@@ -39295,7 +40872,7 @@ var AwsApiGatewaySdkClient = class {
         name: (response.name ?? "").trim() || response.id
       };
     } catch (error2) {
-      const message = toErrorMessage(error2);
+      const message = parseAwsError(error2).message;
       if (isAwsNotFoundError(message)) {
         return void 0;
       }
@@ -39318,7 +40895,7 @@ var AwsApiGatewaySdkClient = class {
         protocolType: (response.ProtocolType ?? "").trim().toUpperCase()
       };
     } catch (error2) {
-      const message = toErrorMessage(error2);
+      const message = parseAwsError(error2).message;
       if (isAwsNotFoundError(message)) {
         return void 0;
       }
@@ -39385,7 +40962,44 @@ var AwsApiGatewaySdkClient = class {
     );
     return await readExportBody(response.body);
   }
+  async getCallerIdentity() {
+    const response = await this.stsClient.send(new import_client_sts.GetCallerIdentityCommand({}));
+    return {
+      accountId: response.Account,
+      arn: response.Arn
+    };
+  }
+  async probeApiGatewayReadAccess() {
+    await this.restClient.send(
+      new import_client_api_gateway.GetRestApisCommand({
+        limit: 1
+      })
+    );
+  }
 };
+
+// src/lib/logging/sanitize.ts
+var ACCOUNT_ID_RE = /\b\d{12}\b/g;
+var ARN_RE = /\barn:aws[a-z-]*:[^\s'"]+/gi;
+var ACCESS_KEY_RE = /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g;
+var SECRET_KEY_RE = /\b(?:(?:aws_)?secret(?:_access)?_key)\b\s*[:=]\s*["']?([A-Za-z0-9/+_=.-]{16,})/gi;
+var ABS_PATH_RE = /(?:[A-Za-z]:\\|\/)[^\s'"]+/g;
+function isDebugLoggingEnabled(env = process.env) {
+  return String(env.ACTIONS_STEP_DEBUG || "").toLowerCase() === "true";
+}
+function sanitizeLogMessage(message) {
+  return message.replace(ARN_RE, "[redacted-arn]").replace(ACCOUNT_ID_RE, "[redacted-account-id]").replace(ACCESS_KEY_RE, "[redacted-access-key]").replace(SECRET_KEY_RE, (_full, value) => `[redacted-secret-key:${"*".repeat(Math.min(value.length, 8))}]`).replace(ABS_PATH_RE, "[redacted-path]");
+}
+function errorMessage(error2) {
+  return error2 instanceof Error ? error2.message : String(error2);
+}
+function formatUserSafeError(error2, env = process.env) {
+  const message = errorMessage(error2);
+  if (isDebugLoggingEnabled(env)) {
+    return message;
+  }
+  return sanitizeLogMessage(message);
+}
 
 // src/runtime.ts
 var import_promises3 = require("node:fs/promises");
@@ -39396,79 +41010,24 @@ var actionContract = {
   name: "postman-aws-spec-discovery-action",
   description: "Resolve the best API spec source for the current service repository.",
   inputs: {
-    mode: {
-      description: "Execution mode. Auto-defaults to resolve-one when empty; discover-many preserves legacy bulk export behavior.",
-      required: false,
-      default: "resolve-one"
-    },
     "aws-region": {
       description: "AWS region used to resolve API Gateway resources",
       required: true
     },
-    "repo-url": {
-      description: "Repository URL override (HTTPS or SSH). Auto-detected from CI metadata when empty.",
+    "gateway-id": {
+      description: "Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery.",
       required: false,
       default: ""
-    },
-    "repo-slug": {
-      description: "Repository slug override (for example org/repo or group/project). Auto-detected from CI metadata when empty.",
-      required: false,
-      default: ""
-    },
-    "git-provider": {
-      description: "Git provider override (github or gitlab). Auto-detected from CI when empty.",
-      required: false,
-      default: ""
-    },
-    ref: {
-      description: "Git ref override. Auto-detected from CI when empty.",
-      required: false,
-      default: ""
-    },
-    sha: {
-      description: "Git commit SHA override. Auto-detected from CI when empty.",
-      required: false,
-      default: ""
-    },
-    "repo-root": {
-      description: "Repository root path for local file inspection. Auto-detected from GITHUB_WORKSPACE or CI_PROJECT_DIR when empty, then falls back to .",
-      required: false,
-      default: "."
-    },
-    "expected-service-name": {
-      description: "Optional expected service name hint for resolver scoring.",
-      required: false,
-      default: ""
-    },
-    "expected-gateway-ids-json": {
-      description: "Optional JSON array of expected API Gateway IDs. When provided, resolve-one uses direct API lookup instead of broad account discovery.",
-      required: false,
-      default: "[]"
     },
     stage: {
-      description: "API Gateway stage override (for example prod, staging). When empty, resolve-one prefers deterministic stages like prod or $default and falls back to manual review for ambiguous multi-stage APIs.",
+      description: "Optional API Gateway stage override (for example prod or staging).",
       required: false,
       default: ""
-    },
-    "api-filter": {
-      description: "Regex pattern to filter API Gateway names. Only matching APIs are exported.",
-      required: false,
-      default: ""
-    },
-    "service-mapping-json": {
-      description: "Legacy discover-many mode only: JSON map of API Gateway ID to service name.",
-      required: false,
-      default: "{}"
     },
     "output-dir": {
-      description: "Directory to write discovered spec files.",
+      description: "Directory under the repository root where generated specs are written.",
       required: false,
       default: "discovered-specs"
-    },
-    "include-v2": {
-      description: "Whether to include HTTP API (v2) gateways in addition to REST APIs.",
-      required: false,
-      default: "true"
     }
   },
   outputs: {
@@ -39498,6 +41057,9 @@ var actionContract = {
     },
     "service-count": {
       description: "Legacy discover-many output: number of exported services."
+    },
+    "export-summary-json": {
+      description: "discover-many summary JSON containing attempted, exported, failed, and skipped counts."
     }
   }
 };
@@ -39684,8 +41246,7 @@ function chooseSource(input) {
       gatewayId: input.candidate?.gatewayId,
       gatewayType: input.candidate?.gatewayType,
       stage: input.candidate?.stage,
-      evidence: ["Resolved from existing repository specification", ...input.candidate?.evidence ?? []],
-      driftStatus: "not-checked"
+      evidence: ["Resolved from existing repository specification", ...input.candidate?.evidence ?? []]
     };
   }
   if (input.candidate && !input.candidate.ambiguous && input.candidate.confidence >= 40) {
@@ -39697,8 +41258,7 @@ function chooseSource(input) {
       gatewayId: input.candidate.gatewayId,
       gatewayType: input.candidate.gatewayType,
       stage: input.candidate.stage,
-      evidence: input.candidate.evidence,
-      driftStatus: "not-checked"
+      evidence: input.candidate.evidence
     };
   }
   return {
@@ -39709,8 +41269,7 @@ function chooseSource(input) {
     gatewayId: input.candidate?.gatewayId,
     gatewayType: input.candidate?.gatewayType,
     stage: input.candidate?.stage,
-    evidence: input.candidate?.evidence ?? ["No matching source found"],
-    driftStatus: "not-checked"
+    evidence: input.candidate?.evidence ?? ["No matching source found"]
   };
 }
 
@@ -39771,6 +41330,18 @@ function resolveServiceCandidate(gateways, signals) {
 }
 
 // src/runtime.ts
+var DEFAULT_MODE = "resolve-one";
+var DEFAULT_REPO_ROOT = ".";
+var DEFAULT_EXPECTED_GATEWAY_IDS_JSON = "[]";
+var DEFAULT_SERVICE_MAPPING_JSON = "{}";
+var DEFAULT_OUTPUT_DIR = "discovered-specs";
+var DEFAULT_INCLUDE_V2 = "true";
+var DEFAULT_MAX_CANDIDATES = "50";
+var DEFAULT_DRY_RUN = "false";
+var DEFAULT_PREFLIGHT_CHECKS = "true";
+var DEFAULT_PREFLIGHT_PERMISSION_PROBE = "true";
+var DEFAULT_REQUEST_TIMEOUT_MS = "30000";
+var DEFAULT_MAX_ATTEMPTS = "3";
 function normalizeInputValue(value) {
   if (value === void 0) {
     return void 0;
@@ -39782,9 +41353,9 @@ function getInput(name, env = process.env) {
   const envName = `INPUT_${name.replace(/-/g, "_").toUpperCase()}`;
   return normalizeInputValue(env[envName]);
 }
-function parseBoolean2(input, inputName) {
+function parseBoolean2(input, inputName, fallback = true) {
   if (!input) {
-    return true;
+    return fallback;
   }
   const value = input.toLowerCase();
   if (["true", "1", "yes", "y", "on"].includes(value)) {
@@ -39794,6 +41365,16 @@ function parseBoolean2(input, inputName) {
     return false;
   }
   throw new Error(`${inputName} must be a boolean-like value, got: ${input}`);
+}
+function parsePositiveInteger(input, inputName, fallback) {
+  if (!input) {
+    return fallback;
+  }
+  const value = Number.parseInt(input, 10);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${inputName} must be a non-negative integer, got: ${input}`);
+  }
+  return value;
 }
 function parseMode(input) {
   const value = (input ?? "").trim().toLowerCase();
@@ -39816,12 +41397,7 @@ function parseServiceMapping(raw) {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("service-mapping-json must be a JSON object keyed by gateway id");
   }
-  return Object.fromEntries(
-    Object.entries(parsed).map(([key, value]) => [
-      key,
-      String(value).trim()
-    ])
-  );
+  return Object.fromEntries(Object.entries(parsed).map(([k5, v5]) => [k5, String(v5).trim()]));
 }
 function parseStringArrayJson(raw, inputName) {
   let parsed;
@@ -39837,19 +41413,26 @@ function parseStringArrayJson(raw, inputName) {
   return parsed.map((value) => String(value).trim()).filter((value) => value.length > 0);
 }
 function resolveInputs(env = process.env) {
-  const mode = parseMode(getInput("mode", env) ?? actionContract.inputs.mode.default ?? "resolve-one");
+  const mode = parseMode(getInput("mode", env) ?? DEFAULT_MODE);
   const awsRegion = getInput("aws-region", env) ?? "";
   if (!awsRegion) {
     throw new Error("aws-region is required");
   }
-  const repoRoot = getInput("repo-root", env) ?? normalizeInputValue(env.GITHUB_WORKSPACE) ?? normalizeInputValue(env.CI_PROJECT_DIR) ?? actionContract.inputs["repo-root"].default ?? ".";
+  const repoRoot = getInput("repo-root", env) ?? normalizeInputValue(env.GITHUB_WORKSPACE) ?? normalizeInputValue(env.CI_PROJECT_DIR) ?? DEFAULT_REPO_ROOT;
+  const gatewayId = getInput("gateway-id", env);
   const expectedServiceName = getInput("expected-service-name", env);
-  const expectedGatewayIdsRaw = getInput("expected-gateway-ids-json", env) ?? actionContract.inputs["expected-gateway-ids-json"].default ?? "[]";
+  const expectedGatewayIdsRaw = getInput("expected-gateway-ids-json", env) ?? DEFAULT_EXPECTED_GATEWAY_IDS_JSON;
   const stage = getInput("stage", env);
   const apiFilterRaw = getInput("api-filter", env);
-  const serviceMappingRaw = getInput("service-mapping-json", env) ?? actionContract.inputs["service-mapping-json"].default ?? "{}";
-  const outputDir = getInput("output-dir", env) ?? actionContract.inputs["output-dir"].default ?? "discovered-specs";
-  const includeV2Raw = getInput("include-v2", env) ?? actionContract.inputs["include-v2"].default ?? "true";
+  const serviceMappingRaw = getInput("service-mapping-json", env) ?? DEFAULT_SERVICE_MAPPING_JSON;
+  const outputDir = getInput("output-dir", env) ?? DEFAULT_OUTPUT_DIR;
+  const includeV2Raw = getInput("include-v2", env) ?? DEFAULT_INCLUDE_V2;
+  const maxCandidatesRaw = getInput("max-candidates", env) ?? DEFAULT_MAX_CANDIDATES;
+  const dryRunRaw = getInput("dry-run", env) ?? DEFAULT_DRY_RUN;
+  const preflightChecksRaw = getInput("preflight-checks", env) ?? DEFAULT_PREFLIGHT_CHECKS;
+  const preflightPermissionProbeRaw = getInput("preflight-permission-probe", env) ?? DEFAULT_PREFLIGHT_PERMISSION_PROBE;
+  const requestTimeoutMsRaw = getInput("request-timeout-ms", env) ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const maxAttemptsRaw = getInput("max-attempts", env) ?? DEFAULT_MAX_ATTEMPTS;
   const repoContext = detectRepoContext(
     {
       repoUrl: getInput("repo-url", env),
@@ -39869,18 +41452,27 @@ function resolveInputs(env = process.env) {
       throw new Error(`Invalid regex for api-filter: ${detail}`);
     }
   }
+  const expectedGatewayIds = [gatewayId, ...parseStringArrayJson(expectedGatewayIdsRaw, "expected-gateway-ids-json")].filter(
+    (value) => Boolean(value)
+  );
   return {
     mode,
     awsRegion,
     repoRoot,
     repoContext,
     expectedServiceName,
-    expectedGatewayIds: parseStringArrayJson(expectedGatewayIdsRaw, "expected-gateway-ids-json"),
+    expectedGatewayIds: [...new Set(expectedGatewayIds)],
     stage,
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
-    includeV2: parseBoolean2(includeV2Raw, "include-v2")
+    maxCandidates: parsePositiveInteger(maxCandidatesRaw, "max-candidates", 50),
+    dryRun: parseBoolean2(dryRunRaw, "dry-run", false),
+    preflightChecks: parseBoolean2(preflightChecksRaw, "preflight-checks", true),
+    preflightPermissionProbe: parseBoolean2(preflightPermissionProbeRaw, "preflight-permission-probe", true),
+    requestTimeoutMs: parsePositiveInteger(requestTimeoutMsRaw, "request-timeout-ms", 3e4),
+    maxAttempts: parsePositiveInteger(maxAttemptsRaw, "max-attempts", 3),
+    includeV2: parseBoolean2(includeV2Raw, "include-v2", true)
   };
 }
 function resolveLegacyServiceName(gatewayId, gatewayName, tags, serviceMapping) {
@@ -39899,6 +41491,18 @@ function projectFolderName(projectName) {
 function toRelativeSpecPath(outputDir, folderName) {
   return import_node_path3.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
+function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
+  const base = import_node_path3.default.resolve(rootPath);
+  const resolved = import_node_path3.default.resolve(base, targetPath);
+  const relative = import_node_path3.default.relative(base, resolved);
+  if (relative.startsWith("..") || import_node_path3.default.isAbsolute(relative)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
+  }
+  return resolved;
+}
+function userSafeWarning(message) {
+  return sanitizeLogMessage(message);
+}
 async function defaultWriteSpecFile(outputPath, content) {
   await (0, import_promises3.mkdir)(import_node_path3.default.dirname(outputPath), { recursive: true });
   await (0, import_promises3.writeFile)(outputPath, content, "utf8");
@@ -39915,21 +41519,10 @@ async function selectStage(aws, candidate, preferredStage) {
   return stages[0];
 }
 function filterCandidates(restApis, httpApis, includeV2, apiFilter) {
-  const rest = restApis.map((api) => ({
-    id: api.id,
-    name: api.name,
-    gatewayType: "REST"
-  }));
-  const http = includeV2 ? httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP").map((api) => ({
-    id: api.id,
-    name: api.name,
-    gatewayType: "HTTP"
-  })) : [];
+  const rest = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: "REST" }));
+  const http = includeV2 ? httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP").map((api) => ({ id: api.id, name: api.name, gatewayType: "HTTP" })) : [];
   const all = [...rest, ...http];
-  if (!apiFilter) {
-    return all;
-  }
-  return all.filter((api) => apiFilter.test(api.name));
+  return apiFilter ? all.filter((api) => apiFilter.test(api.name)) : all;
 }
 async function lookupCandidatesByIds(inputs, awsClient, actionCore) {
   const candidates = [];
@@ -39938,40 +41531,28 @@ async function lookupCandidatesByIds(inputs, awsClient, actionCore) {
     try {
       const restApi = await awsClient.getRestApi(gatewayId);
       if (restApi) {
-        candidates.push({
-          id: restApi.id,
-          name: restApi.name,
-          gatewayType: "REST"
-        });
+        candidates.push({ id: restApi.id, name: restApi.name, gatewayType: "REST" });
         found = true;
       }
     } catch (error2) {
-      const message = error2 instanceof Error ? error2.message : String(error2);
-      actionCore.warning(`Failed direct REST lookup for ${gatewayId}: ${message}`);
+      actionCore.warning(userSafeWarning(`Failed direct REST lookup for ${gatewayId}: ${formatUserSafeError(error2)}`));
     }
     if (!found && inputs.includeV2) {
       try {
         const httpApi = await awsClient.getHttpApi(gatewayId);
         if (httpApi && (!httpApi.protocolType || httpApi.protocolType === "HTTP")) {
-          candidates.push({
-            id: httpApi.id,
-            name: httpApi.name,
-            gatewayType: "HTTP"
-          });
+          candidates.push({ id: httpApi.id, name: httpApi.name, gatewayType: "HTTP" });
           found = true;
         } else if (httpApi) {
-          actionCore.warning(
-            `Skipping v2 API ${gatewayId} because protocol type ${httpApi.protocolType} is not supported`
-          );
+          actionCore.warning(userSafeWarning(`Skipping v2 API ${gatewayId} because protocol type ${httpApi.protocolType} is not supported`));
           found = true;
         }
       } catch (error2) {
-        const message = error2 instanceof Error ? error2.message : String(error2);
-        actionCore.warning(`Failed direct HTTP lookup for ${gatewayId}: ${message}`);
+        actionCore.warning(userSafeWarning(`Failed direct HTTP lookup for ${gatewayId}: ${formatUserSafeError(error2)}`));
       }
     }
     if (!found) {
-      actionCore.warning(`Expected gateway ID ${gatewayId} was not found in ${inputs.awsRegion}`);
+      actionCore.warning(userSafeWarning(`Expected gateway ID ${gatewayId} was not found in ${inputs.awsRegion}`));
     }
   }
   return candidates;
@@ -39994,89 +41575,85 @@ async function resolveStageSelection(aws, candidate, preferredStage) {
   const stages = candidate.gatewayType === "REST" ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id);
   if (preferredStage) {
     if (stages.includes(preferredStage)) {
-      return {
-        stage: preferredStage,
-        evidence: [`Using explicitly requested stage ${preferredStage}`]
-      };
+      return { stage: preferredStage, evidence: [`Using explicitly requested stage ${preferredStage}`] };
     }
-    return {
-      evidence: [],
-      error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}`
-    };
+    return { evidence: [], error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}` };
   }
   if (stages.length === 0) {
     if (candidate.gatewayType === "HTTP") {
-      return {
-        useLatestConfig: true,
-        evidence: ["No deployed stage found; exporting latest HTTP API configuration without stage"]
-      };
+      return { useLatestConfig: true, evidence: ["No deployed stage found; exporting latest HTTP API configuration without stage"] };
     }
-    return {
-      evidence: [],
-      error: `No stages were found for REST API ${candidate.id}`
-    };
+    return { evidence: [], error: `No stages were found for REST API ${candidate.id}` };
   }
   if (stages.length === 1) {
-    return {
-      stage: stages[0],
-      evidence: [`Auto-selected only available stage ${stages[0]}`]
-    };
+    return { stage: stages[0], evidence: [`Auto-selected only available stage ${stages[0]}`] };
   }
   const preferred = pickPreferredStage(stages);
   if (preferred) {
-    return {
-      stage: preferred,
-      evidence: [`Auto-selected preferred stage ${preferred}`]
-    };
+    return { stage: preferred, evidence: [`Auto-selected preferred stage ${preferred}`] };
   }
-  return {
-    evidence: [],
-    error: `Multiple stages found with no deterministic match: ${stages.join(", ")}`
-  };
+  return { evidence: [], error: `Multiple stages found with no deterministic match: ${stages.join(", ")}` };
 }
 function toManualReviewResult(base, extraEvidence) {
-  return {
-    ...base,
-    status: "unresolved",
-    sourceType: "manual-review",
-    evidence: [...base.evidence, ...extraEvidence]
-  };
+  return { ...base, status: "unresolved", sourceType: "manual-review", evidence: [...base.evidence, ...extraEvidence] };
 }
 function isKnownRestExportLimitation(message) {
   const lowered = message.toLowerCase();
   return lowered.includes("non-json body models") || lowered.includes("json body models are not found");
 }
-function isManualReviewExportError(message) {
-  const lowered = message.toLowerCase();
-  return lowered.includes("badrequestexception") || isKnownRestExportLimitation(message);
+function isManualReviewExportError(error2) {
+  return error2.name === "BadRequestException" || isKnownRestExportLimitation(error2.message);
+}
+async function runPreflight(inputs, dependencies) {
+  if (!inputs.preflightChecks) {
+    dependencies.core.info("Preflight checks skipped by configuration");
+    return;
+  }
+  const identity = await dependencies.aws.getCallerIdentity();
+  if (inputs.preflightPermissionProbe) {
+    await dependencies.aws.probeApiGatewayReadAccess();
+  }
+  const accountSuffix = identity.accountId ? identity.accountId.slice(-4) : "unknown";
+  dependencies.core.info(
+    `Preflight OK: region=${inputs.awsRegion}, account=***${accountSuffix}, identity=${identity.arn ? "available" : "unknown"}`
+  );
 }
 async function runDiscovery(inputs, dependencies) {
+  const restStart = Date.now();
   const restApis = await dependencies.core.group("Discover REST APIs", async () => {
     const items = await dependencies.aws.listRestApis();
-    dependencies.core.info(`Found ${items.length} REST API(s)`);
+    dependencies.core.info(`Found ${items.length} REST API(s) in ${Date.now() - restStart}ms`);
     return items;
   });
+  const httpStart = Date.now();
   const httpApis = await dependencies.core.group("Discover HTTP APIs", async () => {
     if (!inputs.includeV2) {
       dependencies.core.info("Skipping HTTP API discovery because include-v2=false");
       return [];
     }
     const items = await dependencies.aws.listHttpApis();
-    dependencies.core.info(`Found ${items.length} HTTP API(s)`);
+    dependencies.core.info(`Found ${items.length} HTTP API(s) in ${Date.now() - httpStart}ms`);
     return items;
   });
   const selectedCandidates = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
+  if (inputs.maxCandidates > 0 && selectedCandidates.length > inputs.maxCandidates) {
+    throw new Error(
+      `Candidate count ${selectedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
+    );
+  }
   dependencies.core.info(`Export candidate count after filters: ${selectedCandidates.length}`);
   const discovered = [];
+  const summary = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
+  const resolvedRoot = import_node_path3.default.resolve(inputs.repoRoot);
+  const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, "output-dir");
   await dependencies.core.group("Export OpenAPI specs", async () => {
     for (const candidate of selectedCandidates) {
       try {
         const stage = await selectStage(dependencies.aws, candidate, inputs.stage);
         if (!stage) {
-          dependencies.core.warning(
-            `Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`
-          );
+          summary.skipped += 1;
+          dependencies.core.warning(userSafeWarning(`Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`));
           continue;
         }
         const tags = candidate.gatewayType === "REST" ? await dependencies.aws.getRestTags(candidate.id) : await dependencies.aws.getHttpTags(candidate.id);
@@ -40085,52 +41662,45 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, folderName);
-        const absoluteSpecPath = import_node_path3.default.resolve(relativeSpecPath);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path3.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        if (inputs.dryRun) {
+          summary.skipped += 1;
+          dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
+          continue;
+        }
+        const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
         const specBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
-        discovered.push({
-          serviceName,
-          specPath: relativeSpecPath,
-          gatewayId: candidate.id,
-          gatewayType: candidate.gatewayType,
-          stage
-        });
-        dependencies.core.info(
-          `Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`
-        );
+        summary.exported += 1;
+        discovered.push({ serviceName, specPath: relativeSpecPath, gatewayId: candidate.id, gatewayType: candidate.gatewayType, stage });
+        dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
       } catch (error2) {
-        const message = error2 instanceof Error ? error2.message : String(error2);
+        summary.failed += 1;
         dependencies.core.warning(
-          `Failed exporting ${candidate.gatewayType} API ${candidate.id} (${candidate.name}): ${message}`
+          userSafeWarning(`Failed exporting ${candidate.gatewayType} API ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`)
         );
       }
     }
   });
-  return discovered;
+  return { discovered, summary };
 }
 async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
   const existingSpecPath = await findExistingRepoSpec(inputs.repoRoot);
-  const signals = await collectRepoSignals(
-    inputs.repoRoot,
-    inputs.repoContext.repoSlug,
-    inputs.expectedServiceName,
-    inputs.expectedGatewayIds
-  );
+  const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const narrowedCandidates = inputs.expectedGatewayIds.length > 0 ? await actionCore.group(
     "Resolve API candidates by explicit gateway ID",
     async () => lookupCandidatesByIds(inputs, awsClient, actionCore)
   ) : filterCandidates(
     await actionCore.group("Resolve REST API candidates", async () => awsClient.listRestApis()),
-    await actionCore.group("Resolve HTTP API candidates", async () => {
-      if (!inputs.includeV2) {
-        return [];
-      }
-      return awsClient.listHttpApis();
-    }),
+    await actionCore.group("Resolve HTTP API candidates", async () => inputs.includeV2 ? awsClient.listHttpApis() : []),
     inputs.includeV2,
     inputs.apiFilter
   );
+  if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
+    throw new Error(
+      `Candidate count ${narrowedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
+    );
+  }
   const gateways = [];
   for (const candidate of narrowedCandidates) {
     const candidateEvidence = [];
@@ -40138,24 +41708,13 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
     try {
       tags = candidate.gatewayType === "REST" ? await awsClient.getRestTags(candidate.id) : await awsClient.getHttpTags(candidate.id);
     } catch (error2) {
-      const message = error2 instanceof Error ? error2.message : String(error2);
-      candidateEvidence.push(`Tag lookup failed for ${candidate.id}: ${message}`);
-      actionCore.warning(`Tag lookup failed for ${candidate.gatewayType} API ${candidate.id}: ${message}`);
+      candidateEvidence.push(`Tag lookup failed for ${candidate.id}: ${formatUserSafeError(error2)}`);
+      actionCore.warning(userSafeWarning(`Tag lookup failed for ${candidate.gatewayType} API ${candidate.id}: ${formatUserSafeError(error2)}`));
     }
-    gateways.push({
-      id: candidate.id,
-      name: candidate.name,
-      gatewayType: candidate.gatewayType,
-      tags,
-      evidence: candidateEvidence
-    });
+    gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
-  const selectedSource = chooseSource({
-    existingSpecPath,
-    candidate: resolvedCandidate,
-    fallbackServiceName: inferFallbackServiceName(inputs)
-  });
+  const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
   if (selectedSource.sourceType === "gateway-export" && selectedSource.gatewayId) {
     const selectedGateway = narrowedCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
     if (!selectedGateway) {
@@ -40165,32 +41724,30 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
     try {
       stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
     } catch (error2) {
-      const message = error2 instanceof Error ? error2.message : String(error2);
-      return toManualReviewResult(selectedSource, [`Stage lookup failed for ${selectedSource.gatewayId}: ${message}`]);
+      return toManualReviewResult(selectedSource, [`Stage lookup failed for ${selectedSource.gatewayId}: ${formatUserSafeError(error2)}`]);
     }
     if (stageSelection.error) {
       return toManualReviewResult(selectedSource, [stageSelection.error]);
     }
     selectedSource.stage = stageSelection.stage;
     selectedSource.evidence = [...selectedSource.evidence, ...stageSelection.evidence];
-    const relativeSpecPath = toRelativeSpecPath(
-      inputs.outputDir,
-      projectFolderName(selectedSource.serviceName || "service")
-    );
-    const absoluteSpecPath = import_node_path3.default.resolve(relativeSpecPath);
+    const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"));
+    if (inputs.dryRun) {
+      selectedSource.specPath = relativeSpecPath;
+      selectedSource.evidence = [...selectedSource.evidence, "Dry run enabled; skipped export and file write"];
+      return selectedSource;
+    }
+    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, "output-dir");
     try {
-      const body = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : await awsClient.exportHttpApi(
-        selectedSource.gatewayId,
-        stageSelection.useLatestConfig ? void 0 : selectedSource.stage
-      );
+      const body = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
       await writeSpecFile(absoluteSpecPath, body);
       selectedSource.specPath = relativeSpecPath;
     } catch (error2) {
-      const message = error2 instanceof Error ? error2.message : String(error2);
-      if (isManualReviewExportError(message)) {
+      const parsed = parseAwsError(error2);
+      if (isManualReviewExportError(parsed)) {
         return toManualReviewResult(selectedSource, [
           "API Gateway export could not produce a specification automatically; manual review required",
-          message
+          formatUserSafeError(error2)
         ]);
       }
       throw error2;
@@ -40201,16 +41758,20 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
 function buildExecutionOutputs(result) {
   if (result.mode === "discover-many") {
     const discovered = result.discovered;
+    const summary = result.exportSummary ?? { attempted: discovered.length, exported: discovered.length, failed: 0, skipped: 0 };
+    const unresolved = summary.failed > 0;
     return {
       "services-json": JSON.stringify(discovered),
       "service-count": String(discovered.length),
-      "resolution-status": "resolved",
+      "resolution-status": unresolved ? "unresolved" : "resolved",
       "source-type": "discover-many",
-      "mapping-confidence": discovered.length > 0 ? "100" : "0",
+      "mapping-confidence": unresolved ? "0" : discovered.length > 0 ? "100" : "0",
+      "export-summary-json": JSON.stringify(summary),
       "resolution-json": JSON.stringify({
-        status: "resolved",
+        status: unresolved ? "unresolved" : "resolved",
         sourceType: "discover-many",
-        count: discovered.length
+        count: discovered.length,
+        summary
       }),
       "service-name": "",
       "gateway-id": "",
@@ -40222,8 +41783,7 @@ function buildExecutionOutputs(result) {
     sourceType: "manual-review",
     serviceName: "unknown-service",
     confidence: 0,
-    evidence: ["No resolution result produced"],
-    driftStatus: "not-checked"
+    evidence: ["No resolution result produced"]
   };
   return {
     "resolution-json": JSON.stringify(resolution),
@@ -40234,19 +41794,24 @@ function buildExecutionOutputs(result) {
     "gateway-id": resolution.gatewayId ?? "",
     "spec-path": resolution.specPath ?? "",
     "services-json": "[]",
-    "service-count": "0"
+    "service-count": "0",
+    "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 })
   };
 }
 async function execute(inputs, dependencies) {
+  await runPreflight(inputs, dependencies);
   if (inputs.mode === "discover-many") {
-    const discovered = await runDiscovery(inputs, dependencies);
+    const { discovered, summary } = await runDiscovery(inputs, dependencies);
+    if (summary.failed > 0) {
+      dependencies.core.warning(
+        userSafeWarning(`discover-many encountered ${summary.failed} export failure(s); strict mode marks resolution as unresolved`)
+      );
+    }
     return {
       mode: inputs.mode,
       discovered,
-      outputs: buildExecutionOutputs({
-        mode: inputs.mode,
-        discovered
-      })
+      exportSummary: summary,
+      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary })
     };
   }
   const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile);
@@ -40254,11 +41819,7 @@ async function execute(inputs, dependencies) {
     mode: inputs.mode,
     discovered: [],
     resolution,
-    outputs: buildExecutionOutputs({
-      mode: inputs.mode,
-      discovered: [],
-      resolution
-    })
+    outputs: buildExecutionOutputs({ mode: inputs.mode, discovered: [], resolution })
   };
 }
 
@@ -40272,7 +41833,7 @@ var ConsoleReporter = class {
     console.error(message);
   }
   warning(message) {
-    console.error(`warning: ${message}`);
+    console.error(`warning: ${sanitizeLogMessage(message)}`);
   }
 };
 function readFlag(argv, name) {
@@ -40295,6 +41856,7 @@ function parseCliArgs(argv, env = process.env) {
   const inputNames = [
     "mode",
     "aws-region",
+    "gateway-id",
     "repo-url",
     "repo-slug",
     "git-provider",
@@ -40307,6 +41869,12 @@ function parseCliArgs(argv, env = process.env) {
     "api-filter",
     "service-mapping-json",
     "output-dir",
+    "max-candidates",
+    "dry-run",
+    "preflight-checks",
+    "preflight-permission-probe",
+    "request-timeout-ms",
+    "max-attempts",
     "include-v2"
   ];
   const inputEnv = { ...env };
@@ -40331,6 +41899,7 @@ function toDotenv(outputs) {
     POSTMAN_AWS_SPEC_PATH: outputs["spec-path"] ?? "",
     POSTMAN_AWS_SPEC_GATEWAY_ID: outputs["gateway-id"] ?? "",
     POSTMAN_AWS_SPEC_SERVICE_NAME: outputs["service-name"] ?? "",
+    POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON: outputs["export-summary-json"] ?? "",
     POSTMAN_AWS_SPEC_SERVICES_JSON: outputs["services-json"] ?? "",
     POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs["service-count"] ?? ""
   };
@@ -40340,15 +41909,24 @@ async function writeOptionalFile(filePath, content) {
   if (!filePath) {
     return;
   }
-  await (0, import_promises4.mkdir)(import_node_path4.default.dirname(import_node_path4.default.resolve(filePath)), { recursive: true });
-  await (0, import_promises4.writeFile)(import_node_path4.default.resolve(filePath), content, "utf8");
+  const workspaceRoot = import_node_path4.default.resolve(process.cwd());
+  const resolved = import_node_path4.default.resolve(workspaceRoot, filePath);
+  const relative = import_node_path4.default.relative(workspaceRoot, resolved);
+  if (relative.startsWith("..") || import_node_path4.default.isAbsolute(relative)) {
+    throw new Error(`Output path must stay within workspace: ${filePath}`);
+  }
+  await (0, import_promises4.mkdir)(import_node_path4.default.dirname(resolved), { recursive: true });
+  await (0, import_promises4.writeFile)(resolved, content, "utf8");
 }
 async function runCli(argv = process.argv.slice(2)) {
   const config = parseCliArgs(argv, process.env);
   const inputs = resolveInputs(config.inputEnv);
   const result = await execute(inputs, {
     core: new ConsoleReporter(),
-    aws: new AwsApiGatewaySdkClient(inputs.awsRegion),
+    aws: new AwsApiGatewaySdkClient(inputs.awsRegion, {
+      requestTimeoutMs: inputs.requestTimeoutMs,
+      maxAttempts: inputs.maxAttempts
+    }),
     writeSpecFile: defaultWriteSpecFile
   });
   await writeOptionalFile(config.resultJsonPath, JSON.stringify(result, null, 2));
@@ -40360,7 +41938,7 @@ var currentModulePath = typeof __filename === "string" ? __filename : "";
 var entrypoint = process.argv[1];
 if (entrypoint && currentModulePath === entrypoint) {
   runCli().catch((error2) => {
-    const message = error2 instanceof Error ? error2.message : String(error2);
+    const message = formatUserSafeError(error2);
     process.stderr.write(`${message}
 `);
     process.exitCode = 1;

@@ -21,28 +21,21 @@ describe('action contract', () => {
   });
 
   it('keeps expected defaults for optional inputs', () => {
-    expect(actionContract.inputs.mode.default).toBe('resolve-one');
-    expect(actionContract.inputs['expected-gateway-ids-json'].default).toBe('[]');
-    expect(actionContract.inputs['repo-root'].default).toBe('.');
-    expect(actionContract.inputs['service-mapping-json'].default).toBe('{}');
+    expect(actionContract.inputs['gateway-id'].default).toBe('');
     expect(actionContract.inputs['output-dir'].default).toBe('discovered-specs');
-    expect(actionContract.inputs['include-v2'].default).toBe('true');
-    expect(actionManifest.inputs.mode.default).toBe('resolve-one');
-    expect(actionManifest.inputs['expected-gateway-ids-json'].default).toBe('[]');
-    expect(actionManifest.inputs['repo-root'].default).toBe('.');
-    expect(actionManifest.inputs['service-mapping-json'].default).toBe('{}');
+    expect(actionManifest.inputs['gateway-id'].default).toBe('');
     expect(actionManifest.inputs['output-dir'].default).toBe('discovered-specs');
-    expect(actionManifest.inputs['include-v2'].default).toBe('true');
   });
 
-  it('parses include-v2 and service mapping values from inputs', () => {
+  it('parses simple and advanced env-driven values', () => {
     const parsed = resolveInputs({
       INPUT_AWS_REGION: 'us-east-1',
       INPUT_MODE: 'discover-many',
+      INPUT_GATEWAY_ID: 'abc123def0',
       INPUT_INCLUDE_V2: 'false',
       INPUT_SERVICE_MAPPING_JSON: '{"a1":"payments"}',
       INPUT_OUTPUT_DIR: 'custom-dir',
-      INPUT_EXPECTED_GATEWAY_IDS_JSON: '["abc123def0"]',
+      INPUT_EXPECTED_GATEWAY_IDS_JSON: '["def456ghi7"]',
       INPUT_REPO_ROOT: '.'
     });
 
@@ -50,7 +43,7 @@ describe('action contract', () => {
     expect(parsed.mode).toBe('discover-many');
     expect(parsed.includeV2).toBe(false);
     expect(parsed.serviceMapping).toEqual({ a1: 'payments' });
-    expect(parsed.expectedGatewayIds).toEqual(['abc123def0']);
+    expect(parsed.expectedGatewayIds).toEqual(['abc123def0', 'def456ghi7']);
     expect(parsed.outputDir).toBe('custom-dir');
   });
 });

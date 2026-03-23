@@ -2,7 +2,7 @@ stages:
   - resolve
 
 variables:
-  POSTMAN_AWS_SPEC_DISCOVERY_REF: "v0.2.1"
+  POSTMAN_AWS_SPEC_DISCOVERY_REF: "v0.3.0"
   POSTMAN_AWS_SPEC_DISCOVERY_DIR: ".tools/postman-aws-spec-discovery-action"
 
 resolve_api_spec:

@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
+import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
 
 interface CliConfig {
@@ -21,7 +22,7 @@ class ConsoleReporter implements ReporterLike {
   }
 
   public warning(message: string): void {
-    console.error(`warning: ${message}`);
+    console.error(`warning: ${sanitizeLogMessage(message)}`);
   }
 }
 
@@ -47,6 +48,7 @@ export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.en
   const inputNames = [
     'mode',
     'aws-region',
+    'gateway-id',
     'repo-url',
     'repo-slug',
     'git-provider',
@@ -59,6 +61,12 @@ export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.en
     'api-filter',
     'service-mapping-json',
     'output-dir',
+    'max-candidates',
+    'dry-run',
+    'preflight-checks',
+    'preflight-permission-probe',
+    'request-timeout-ms',
+    'max-attempts',
     'include-v2'
   ];
 
@@ -86,6 +94,7 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_PATH: outputs['spec-path'] ?? '',
     POSTMAN_AWS_SPEC_GATEWAY_ID: outputs['gateway-id'] ?? '',
     POSTMAN_AWS_SPEC_SERVICE_NAME: outputs['service-name'] ?? '',
+    POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON: outputs['export-summary-json'] ?? '',
     POSTMAN_AWS_SPEC_SERVICES_JSON: outputs['services-json'] ?? '',
     POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs['service-count'] ?? ''
   };
@@ -99,8 +108,14 @@ async function writeOptionalFile(filePath: string | undefined, content: string):
   if (!filePath) {
     return;
   }
-  await mkdir(path.dirname(path.resolve(filePath)), { recursive: true });
-  await writeFile(path.resolve(filePath), content, 'utf8');
+  const workspaceRoot = path.resolve(process.cwd());
+  const resolved = path.resolve(workspaceRoot, filePath);
+  const relative = path.relative(workspaceRoot, resolved);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Output path must stay within workspace: ${filePath}`);
+  }
+  await mkdir(path.dirname(resolved), { recursive: true });
+  await writeFile(resolved, content, 'utf8');
 }
 
 export async function runCli(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -108,7 +123,10 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
   const inputs = resolveInputs(config.inputEnv);
   const result = await execute(inputs, {
     core: new ConsoleReporter(),
-    aws: new AwsApiGatewaySdkClient(inputs.awsRegion),
+    aws: new AwsApiGatewaySdkClient(inputs.awsRegion, {
+      requestTimeoutMs: inputs.requestTimeoutMs,
+      maxAttempts: inputs.maxAttempts
+    }),
     writeSpecFile: defaultWriteSpecFile
   });
 
@@ -123,7 +141,7 @@ const entrypoint = process.argv[1];
 
 if (entrypoint && currentModulePath === entrypoint) {
   runCli().catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatUserSafeError(error);
     process.stderr.write(`${message}\n`);
     process.exitCode = 1;
   });

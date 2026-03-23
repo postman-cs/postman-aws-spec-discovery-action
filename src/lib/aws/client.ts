@@ -15,6 +15,8 @@ import {
   GetStagesCommand as GetHttpStagesCommand,
   GetTagsCommand as GetHttpTagsCommand
 } from '@aws-sdk/client-apigatewayv2';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 
 export interface RestApiSummary {
   id: string;
@@ -38,10 +40,37 @@ export interface AwsGatewayClient {
   getHttpTags(apiId: string): Promise<Record<string, string>>;
   exportRestApi(apiId: string, stage: string): Promise<string>;
   exportHttpApi(apiId: string, stage?: string): Promise<string>;
+  getCallerIdentity(): Promise<{ accountId?: string; arn?: string }>;
+  probeApiGatewayReadAccess(): Promise<void>;
+}
+
+export interface AwsClientOptions {
+  requestTimeoutMs?: number;
+  maxAttempts?: number;
+}
+
+export interface AwsErrorInfo {
+  name?: string;
+  message: string;
+  httpStatusCode?: number;
 }
 
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+export function parseAwsError(error: unknown): AwsErrorInfo {
+  if (error && typeof error === 'object') {
+    const maybe = error as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+    return {
+      name: maybe.name,
+      message: maybe.message ?? toErrorMessage(error),
+      httpStatusCode: maybe.$metadata?.httpStatusCode
+    };
+  }
+  return {
+    message: toErrorMessage(error)
+  };
 }
 
 async function readExportBody(body: unknown): Promise<string> {
@@ -82,10 +111,19 @@ function isAwsNotFoundError(message: string): boolean {
 export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private readonly restClient: APIGatewayClient;
   private readonly httpClient: ApiGatewayV2Client;
+  private readonly stsClient: STSClient;
 
-  public constructor(private readonly region: string) {
-    this.restClient = new APIGatewayClient({ region });
-    this.httpClient = new ApiGatewayV2Client({ region });
+  public constructor(private readonly region: string, options: AwsClientOptions = {}) {
+    const requestTimeoutMs = options.requestTimeoutMs ?? 30000;
+    const maxAttempts = options.maxAttempts ?? 3;
+    const requestHandler = new NodeHttpHandler({
+      connectionTimeout: requestTimeoutMs,
+      socketTimeout: requestTimeoutMs
+    });
+    const shared = { region, maxAttempts, requestHandler };
+    this.restClient = new APIGatewayClient(shared);
+    this.httpClient = new ApiGatewayV2Client(shared);
+    this.stsClient = new STSClient(shared);
   }
 
   public async listRestApis(): Promise<RestApiSummary[]> {
@@ -143,7 +181,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         name: (response.name ?? '').trim() || response.id
       };
     } catch (error) {
-      const message = toErrorMessage(error);
+      const message = parseAwsError(error).message;
       if (isAwsNotFoundError(message)) {
         return undefined;
       }
@@ -167,7 +205,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         protocolType: (response.ProtocolType ?? '').trim().toUpperCase()
       };
     } catch (error) {
-      const message = toErrorMessage(error);
+      const message = parseAwsError(error).message;
       if (isAwsNotFoundError(message)) {
         return undefined;
       }
@@ -243,5 +281,21 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       })
     );
     return await readExportBody(response.body);
+  }
+
+  public async getCallerIdentity(): Promise<{ accountId?: string; arn?: string }> {
+    const response = await this.stsClient.send(new GetCallerIdentityCommand({}));
+    return {
+      accountId: response.Account,
+      arn: response.Arn
+    };
+  }
+
+  public async probeApiGatewayReadAccess(): Promise<void> {
+    await this.restClient.send(
+      new GetRestApisCommand({
+        limit: 1
+      })
+    );
   }
 }

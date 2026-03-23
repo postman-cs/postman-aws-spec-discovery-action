@@ -1,6 +1,6 @@
 {
   "name": "postman-aws-spec-discovery-action",
-  "version": "0.1.0-alpha.0",
+  "version": "0.3.0",
   "description": "Public open-alpha Postman AWS API Gateway spec discovery for GitHub and GitLab workflows.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -24,7 +24,9 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@aws-sdk/client-api-gateway": "^3.1014.0",
-    "@aws-sdk/client-apigatewayv2": "^3.1014.0"
+    "@aws-sdk/client-apigatewayv2": "^3.1014.0",
+    "@aws-sdk/client-sts": "^3.1014.0",
+    "@smithy/node-http-handler": "^4.4.5"
   },
   "overrides": {
     "undici": "^6.24.0"

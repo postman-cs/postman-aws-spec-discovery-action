@@ -56,45 +56,31 @@ function createAwsClientStub(overrides: Partial<AwsGatewayClient> = {}): AwsGate
     getHttpTags: vi.fn().mockResolvedValue({}),
     exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
     exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+    getCallerIdentity: vi.fn().mockResolvedValue({
+      accountId: '123456789012',
+      arn: 'arn:aws:iam::123456789012:role/test'
+    }),
+    probeApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
     ...overrides
   };
 }
 
 describe('input parsing', () => {
-  it('reads required and optional action inputs', () => {
+  it('reads the simplified public action inputs', () => {
     const { core } = createCoreStub({
-      mode: 'resolve-one',
       'aws-region': 'us-west-2',
-      'repo-url': 'git@github.com:postman/payments.git',
-      'repo-slug': 'postman/payments',
-      'git-provider': 'github',
-      ref: 'main',
-      sha: 'abc123',
-      'repo-root': '.',
-      'expected-service-name': 'payments',
-      'expected-gateway-ids-json': '["rest-1"]',
+      'gateway-id': 'rest-1',
       stage: 'prod',
-      'api-filter': '^payments',
-      'service-mapping-json': '{"abc":"payments-service"}',
-      'output-dir': 'out/specs',
-      'include-v2': 'true'
+      'output-dir': 'out/specs'
     });
 
     const inputs = readActionInputs(core);
 
     expect(inputs.mode).toBe('resolve-one');
     expect(inputs.awsRegion).toBe('us-west-2');
-    expect(inputs.repoContext.provider).toBe('github');
-    expect(inputs.repoContext.repoUrl).toBe('https://github.com/postman/payments');
-    expect(inputs.repoContext.repoSlug).toBe('postman/payments');
-    expect(inputs.repoContext.ref).toBe('main');
-    expect(inputs.repoContext.sha).toBe('abc123');
     expect(inputs.repoRoot).toBe('.');
-    expect(inputs.expectedServiceName).toBe('payments');
     expect(inputs.expectedGatewayIds).toEqual(['rest-1']);
     expect(inputs.stage).toBe('prod');
-    expect(inputs.apiFilter?.test('payments-api')).toBe(true);
-    expect(inputs.serviceMapping).toEqual({ abc: 'payments-service' });
     expect(inputs.outputDir).toBe('out/specs');
     expect(inputs.includeV2).toBe(true);
   });
@@ -150,6 +136,11 @@ describe('runDiscovery', () => {
         };
       }),
       getHttpTags: vi.fn().mockResolvedValue({}),
+      getCallerIdentity: vi.fn().mockResolvedValue({
+        accountId: '123456789012',
+        arn: 'arn:aws:iam::123456789012:role/test'
+      }),
+      probeApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
       exportRestApi: vi.fn().mockImplementation(async (id: string) => {
         if (id === 'rest-2') {
           throw new Error('simulated export failure');
@@ -159,7 +150,7 @@ describe('runDiscovery', () => {
       exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: http')
     };
 
-    const discovered = await runDiscovery(
+    const result = await runDiscovery(
       {
         mode: 'discover-many',
         awsRegion: 'us-east-1',
@@ -172,6 +163,12 @@ describe('runDiscovery', () => {
           'http-1': 'checkout-service'
         },
         outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: true,
+        preflightPermissionProbe: true,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
         includeV2: true
       },
       {
@@ -182,6 +179,7 @@ describe('runDiscovery', () => {
         }
       }
     );
+    const discovered = result.discovered;
 
     expect(discovered).toEqual<DiscoveredService[]>([
       {
@@ -207,6 +205,7 @@ describe('runDiscovery', () => {
       [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/checkout-service/index.yaml'))
     ).toBe(true);
     expect(warnings.some((message) => message.includes('simulated export failure'))).toBe(true);
+    expect(result.summary.failed).toBe(1);
   });
 
   it('skips HTTP discovery when include-v2=false and applies API filter', async () => {
@@ -224,11 +223,16 @@ describe('runDiscovery', () => {
       listHttpStages: vi.fn().mockResolvedValue(['prod']),
       getRestTags: vi.fn().mockResolvedValue({}),
       getHttpTags: vi.fn().mockResolvedValue({}),
+      getCallerIdentity: vi.fn().mockResolvedValue({
+        accountId: '123456789012',
+        arn: 'arn:aws:iam::123456789012:role/test'
+      }),
+      probeApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
       exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
       exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
     };
 
-    const discovered = await runDiscovery(
+    const result = await runDiscovery(
       {
         mode: 'discover-many',
         awsRegion: 'us-east-1',
@@ -239,6 +243,12 @@ describe('runDiscovery', () => {
         apiFilter: /^payments/,
         serviceMapping: {},
         outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: true,
+        preflightPermissionProbe: true,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
         includeV2: false
       },
       {
@@ -247,11 +257,48 @@ describe('runDiscovery', () => {
         writeSpecFile: async () => undefined
       }
     );
+    const discovered = result.discovered;
 
     expect(discovered).toHaveLength(1);
     expect(discovered[0]?.gatewayId).toBe('rest-a');
     expect(aws.listHttpApis).not.toHaveBeenCalled();
     expect(aws.exportHttpApi).not.toHaveBeenCalled();
+  });
+
+  it('supports dry-run without exporting any specs', async () => {
+    const { core } = createCoreStub();
+    const aws = createAwsClientStub({
+      listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-a', name: 'payments-public' }]),
+      listRestStages: vi.fn().mockResolvedValue(['prod'])
+    });
+    const result = await runDiscovery(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: true,
+        preflightChecks: true,
+        preflightPermissionProbe: true,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws,
+        writeSpecFile: async () => undefined
+      }
+    );
+    expect(result.discovered).toHaveLength(0);
+    expect(result.summary.skipped).toBeGreaterThan(0);
+    expect(aws.exportRestApi).not.toHaveBeenCalled();
   });
 });
 
@@ -259,11 +306,7 @@ describe('runAction', () => {
   it('emits resolution outputs in resolve-one mode', async () => {
     const { core, outputs } = createCoreStub({
       'aws-region': 'us-east-1',
-      mode: 'resolve-one',
-      'include-v2': 'false',
-      'repo-root': '.',
-      'repo-slug': 'postman/billing',
-      'expected-gateway-ids-json': '["rest-1"]'
+      'gateway-id': 'rest-1'
     });
 
     const written = new Map<string, string>();
@@ -287,6 +330,7 @@ describe('runAction', () => {
     expect(outputs['service-name']).toBe('billing');
     expect(outputs['gateway-id']).toBe('rest-1');
     expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
+    expect(outputs['export-summary-json']).toContain('"attempted":0');
     expect([...written.keys()].some((entry) => entry.endsWith('/discovered-specs/billing/index.yaml'))).toBe(true);
     expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
   });
@@ -294,9 +338,7 @@ describe('runAction', () => {
   it('downgrades export bad request errors to manual review', async () => {
     const { core, outputs } = createCoreStub({
       'aws-region': 'us-east-1',
-      mode: 'resolve-one',
-      'repo-root': '.',
-      'expected-gateway-ids-json': '["http-1"]'
+      'gateway-id': 'http-1'
     });
 
     const awsClient = createAwsClientStub({
@@ -304,9 +346,11 @@ describe('runAction', () => {
       getHttpApi: vi.fn().mockResolvedValue({ id: 'http-1', name: 'http-service', protocolType: 'HTTP' }),
       getHttpTags: vi.fn().mockResolvedValue({}),
       listHttpStages: vi.fn().mockResolvedValue([]),
-      exportHttpApi: vi
-        .fn()
-        .mockRejectedValue(new Error('BadRequestException: Unable to deploy API because no valid routes exist in this API'))
+      exportHttpApi: vi.fn().mockRejectedValue(
+        Object.assign(new Error('Unable to deploy API because no valid routes exist in this API'), {
+          name: 'BadRequestException'
+        })
+      )
     });
 
     await runAction(core, {
@@ -315,6 +359,32 @@ describe('runAction', () => {
 
     expect(outputs['resolution-status']).toBe('unresolved');
     expect(outputs['source-type']).toBe('manual-review');
+  });
+
+  it('marks discover-many unresolved on export failures by default', async () => {
+    const previousMode = process.env.INPUT_MODE;
+    process.env.INPUT_MODE = 'discover-many';
+    const { core, outputs } = createCoreStub({
+      'aws-region': 'us-east-1'
+    });
+    const awsClient = createAwsClientStub({
+      listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'billing' }]),
+      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      exportRestApi: vi.fn().mockRejectedValue(new Error('exploded'))
+    });
+    try {
+      await runAction(core, {
+        createAwsClient: () => awsClient
+      });
+      expect(outputs['resolution-status']).toBe('unresolved');
+      expect(outputs['export-summary-json']).toContain('"failed":1');
+    } finally {
+      if (previousMode === undefined) {
+        delete process.env.INPUT_MODE;
+      } else {
+        process.env.INPUT_MODE = previousMode;
+      }
+    }
   });
 });
 

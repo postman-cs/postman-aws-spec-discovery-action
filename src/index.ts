@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 
 import { contractOutputNames, type DiscoveredService } from './contracts.js';
 import { AwsApiGatewaySdkClient, type AwsGatewayClient } from './lib/aws/client.js';
+import { formatUserSafeError } from './lib/logging/sanitize.js';
 import {
   defaultWriteSpecFile,
   execute,
@@ -25,7 +26,12 @@ export async function runAction(
   dependencies: GitHubActionDependencies = {}
 ): Promise<DiscoveredService[]> {
   const inputs = readActionInputs(actionCore);
-  const awsClient = dependencies.createAwsClient?.(inputs.awsRegion) ?? new AwsApiGatewaySdkClient(inputs.awsRegion);
+  const awsClient =
+    dependencies.createAwsClient?.(inputs.awsRegion) ??
+    new AwsApiGatewaySdkClient(inputs.awsRegion, {
+      requestTimeoutMs: inputs.requestTimeoutMs,
+      maxAttempts: inputs.maxAttempts
+    });
   const result = await execute(inputs, {
     core: actionCore,
     aws: awsClient,
@@ -50,7 +56,7 @@ const entrypoint = process.argv[1];
 
 if (entrypoint && currentModulePath === entrypoint) {
   runAction().catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatUserSafeError(error);
     core.setFailed(message);
   });
 }

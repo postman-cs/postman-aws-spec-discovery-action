@@ -43,7 +43,6 @@ export interface ResolutionResult {
   gatewayType?: GatewayType;
   stage?: string;
   evidence: string[];
-  driftStatus: 'not-checked' | 'clean' | 'drift-detected';
 }
 
 export interface DiscoveredService {
@@ -58,83 +57,24 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
   name: 'postman-aws-spec-discovery-action',
   description: 'Resolve the best API spec source for the current service repository.',
   inputs: {
-    mode: {
-      description:
-        'Execution mode. Auto-defaults to resolve-one when empty; discover-many preserves legacy bulk export behavior.',
-      required: false,
-      default: 'resolve-one'
-    },
     'aws-region': {
       description: 'AWS region used to resolve API Gateway resources',
       required: true
     },
-    'repo-url': {
-      description: 'Repository URL override (HTTPS or SSH). Auto-detected from CI metadata when empty.',
+    'gateway-id': {
+      description: 'Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery.',
       required: false,
       default: ''
-    },
-    'repo-slug': {
-      description: 'Repository slug override (for example org/repo or group/project). Auto-detected from CI metadata when empty.',
-      required: false,
-      default: ''
-    },
-    'git-provider': {
-      description: 'Git provider override (github or gitlab). Auto-detected from CI when empty.',
-      required: false,
-      default: ''
-    },
-    ref: {
-      description: 'Git ref override. Auto-detected from CI when empty.',
-      required: false,
-      default: ''
-    },
-    sha: {
-      description: 'Git commit SHA override. Auto-detected from CI when empty.',
-      required: false,
-      default: ''
-    },
-    'repo-root': {
-      description:
-        'Repository root path for local file inspection. Auto-detected from GITHUB_WORKSPACE or CI_PROJECT_DIR when empty, then falls back to .',
-      required: false,
-      default: '.'
-    },
-    'expected-service-name': {
-      description: 'Optional expected service name hint for resolver scoring.',
-      required: false,
-      default: ''
-    },
-    'expected-gateway-ids-json': {
-      description:
-        'Optional JSON array of expected API Gateway IDs. When provided, resolve-one uses direct API lookup instead of broad account discovery.',
-      required: false,
-      default: '[]'
     },
     stage: {
-      description:
-        'API Gateway stage override (for example prod, staging). When empty, resolve-one prefers deterministic stages like prod or $default and falls back to manual review for ambiguous multi-stage APIs.',
+      description: 'Optional API Gateway stage override (for example prod or staging).',
       required: false,
       default: ''
-    },
-    'api-filter': {
-      description: 'Regex pattern to filter API Gateway names. Only matching APIs are exported.',
-      required: false,
-      default: ''
-    },
-    'service-mapping-json': {
-      description: 'Legacy discover-many mode only: JSON map of API Gateway ID to service name.',
-      required: false,
-      default: '{}'
     },
     'output-dir': {
-      description: 'Directory to write discovered spec files.',
+      description: 'Directory under the repository root where generated specs are written.',
       required: false,
       default: 'discovered-specs'
-    },
-    'include-v2': {
-      description: 'Whether to include HTTP API (v2) gateways in addition to REST APIs.',
-      required: false,
-      default: 'true'
     }
   },
   outputs: {
@@ -164,6 +104,10 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'service-count': {
       description: 'Legacy discover-many output: number of exported services.'
+    },
+    'export-summary-json': {
+      description:
+        'discover-many summary JSON containing attempted, exported, failed, and skipped counts.'
     }
   }
 };
