@@ -1,0 +1,35 @@
+{
+  "name": "postman-aws-spec-discovery-action",
+  "version": "0.1.0-alpha.0",
+  "description": "Public open-alpha Postman AWS API Gateway discovery GitHub Action.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "scripts": {
+    "build": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+    "check:dist": "npm run build && git diff --exit-code -- dist/index.cjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "keywords": [
+    "github-action",
+    "postman",
+    "aws",
+    "apigateway",
+    "openapi"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1"
+  },
+  "overrides": {
+    "undici": "^6.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18",
+    "yaml": "^2.8.2"
+  }
+}

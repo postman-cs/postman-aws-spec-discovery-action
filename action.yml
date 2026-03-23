@@ -1,0 +1,34 @@
+name: postman-aws-spec-discovery-action
+description: Discover API Gateway APIs and export OpenAPI 3.0 specs for downstream onboarding.
+inputs:
+  aws-region:
+    description: AWS region to scan for API Gateway instances
+    required: true
+  stage:
+    description: API Gateway stage to export (e.g., prod, staging). When empty, exports the first available stage.
+    required: false
+    default: ''
+  api-filter:
+    description: Regex pattern to filter API Gateway names. Only matching APIs are exported.
+    required: false
+    default: ''
+  service-mapping-json:
+    description: JSON map of API Gateway ID to project-name for explicit naming override.
+    required: false
+    default: '{}'
+  output-dir:
+    description: Directory to write discovered spec files.
+    required: false
+    default: discovered-specs
+  include-v2:
+    description: Whether to include HTTP API (v2) gateways in addition to REST APIs.
+    required: false
+    default: 'true'
+outputs:
+  services-json:
+    description: JSON array of discovered services with projectName, specPath, gatewayId, gatewayType, and stage.
+  service-count:
+    description: Total number of discovered and exported services.
+runs:
+  using: node20
+  main: dist/index.cjs
