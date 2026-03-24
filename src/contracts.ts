@@ -29,6 +29,7 @@ export type SourceType =
   | 'cfn-embedded'
   | 's3-spec'
   | 'glue-schema'
+  | 'ssm-registry'
   | 'manual-review'
   | 'discover-many';
 
@@ -38,7 +39,8 @@ export type ProviderType =
   | 'eventbridge-schemas'
   | 'cloudformation'
   | 's3'
-  | 'glue';
+  | 'glue'
+  | 'ssm';
 
 export type SpecFormat =
   | 'openapi-yaml'
@@ -137,9 +139,13 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       description:
         'discover-many summary JSON containing attempted, exported, failed, and skipped counts.'
     },
+    'candidates-json': {
+      description:
+        'JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering.'
+    },
     'provider-type': {
       description:
-        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, or glue.'
+        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm.'
     },
     'spec-format': {
       description:

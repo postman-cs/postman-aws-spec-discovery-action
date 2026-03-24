@@ -16,7 +16,7 @@ import { CloudFormationSdkClient } from './lib/aws/cloudformation-client.js';
 import { GlueSchemaSdkClient } from './lib/aws/glue-client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
-import { findExistingRepoSpec, findExistingRepoSpecTyped } from './lib/repo/specs.js';
+import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
@@ -26,6 +26,11 @@ import { AppSyncProvider } from './lib/providers/appsync.js';
 import { EventBridgeSchemasProvider } from './lib/providers/eventbridge-schemas.js';
 import { CloudFormationProvider } from './lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from './lib/providers/glue.js';
+import { SsmProvider } from './lib/providers/ssm.js';
+import { SsmSdkClient } from './lib/aws/ssm-client.js';
+import { TaggingSdkClient } from './lib/aws/tagging-client.js';
+import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
+import { detectCatalogApis } from './lib/repo/catalog.js';
 import type { SpecProvider, SpecCandidate } from './lib/providers/types.js';
 
 export interface InputReaderLike {
@@ -452,11 +457,12 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
     return items;
   });
 
-  const selectedCandidates = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
+  let selectedCandidates = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
   if (inputs.maxCandidates > 0 && selectedCandidates.length > inputs.maxCandidates) {
-    throw new Error(
-      `Candidate count ${selectedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
+    dependencies.core.warning(
+      userSafeWarning(`${selectedCandidates.length} API Gateway candidates exceed limit (${inputs.maxCandidates}). Truncating to first ${inputs.maxCandidates}. Use api-filter or gateway-id to narrow.`)
     );
+    selectedCandidates = selectedCandidates.slice(0, inputs.maxCandidates);
   }
   dependencies.core.info(`Export candidate count after filters: ${selectedCandidates.length}`);
 
@@ -517,7 +523,13 @@ export async function runResolution(
   actionCore: Pick<ReporterLike, 'group' | 'info' | 'warning'>,
   writeSpecFile: (outputPath: string, content: string) => Promise<void>
 ): Promise<ResolutionResult> {
-  const existingSpecPath = await findExistingRepoSpec(inputs.repoRoot);
+  // Check for Backstage catalog-info.yaml first -- it may reference a spec path
+  const catalogApis = await detectCatalogApis(inputs.repoRoot);
+  const catalogSpecPath = catalogApis?.[0]?.specPath;
+
+  const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
+  const existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const narrowedCandidates =
     inputs.expectedGatewayIds.length > 0
@@ -531,14 +543,39 @@ export async function runResolution(
           inputs.apiFilter
         );
 
+  // If too many candidates, try progressive narrowing before failing
+  let finalCandidates = narrowedCandidates;
   if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
-    throw new Error(
-      `Candidate count ${narrowedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
-    );
+    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
+      let cfnClient;
+      let taggingClient;
+      try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+      try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+
+      return runNarrowingPipeline(
+        { repoSlug: inputs.repoContext.repoSlug, serviceHints: signals.serviceHints, signals, cfnClient, taggingClient },
+        narrowedCandidates.map((c) => ({ id: c.id, name: c.name }))
+      );
+    });
+
+    if (narrowingResult) {
+      const narrowedIds = new Set(narrowingResult.gatewayIds);
+      finalCandidates = narrowedCandidates.filter((c) => narrowedIds.has(c.id));
+      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${narrowedCandidates.length} candidates to ${finalCandidates.length}`);
+    }
+
+    // If still over limit after narrowing, warn instead of hard-fail
+    if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
+      actionCore.warning(
+        userSafeWarning(`${finalCandidates.length} candidates after narrowing still exceeds limit (${inputs.maxCandidates}). Using top ${inputs.maxCandidates} by name relevance.`)
+      );
+      finalCandidates = finalCandidates.slice(0, inputs.maxCandidates);
+    }
   }
 
   const gateways = [];
-  for (const candidate of narrowedCandidates) {
+  for (const candidate of finalCandidates) {
     const candidateEvidence: string[] = [];
     let tags: Record<string, string> = {};
     try {
@@ -553,7 +590,7 @@ export async function runResolution(
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
   const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
   if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId) {
-    const selectedGateway = narrowedCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
+    const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
     if (!selectedGateway) {
       return toManualReviewResult(selectedSource, ['Selected gateway could not be reloaded for export']);
     }
@@ -605,6 +642,7 @@ function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClie
   registry.register(new EventBridgeSchemasProvider(new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
 
   return registry;
 }
@@ -708,6 +746,7 @@ function buildExecutionOutputs(result: {
       'service-name': '',
       'gateway-id': '',
       'spec-path': '',
+      'candidates-json': '',
       'provider-type': '',
       'spec-format': ''
     };
@@ -731,6 +770,7 @@ function buildExecutionOutputs(result: {
     'services-json': '[]',
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
+    'candidates-json': '',
     'provider-type': '',
     'spec-format': ''
   };

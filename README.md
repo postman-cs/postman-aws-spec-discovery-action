@@ -24,8 +24,11 @@ The action is intentionally zero-config:
 | EventBridge Schema Registry | JSON Schema / OpenAPI | IAM probe + IaC references |
 | CloudFormation (embedded specs) | OpenAPI JSON | IAM probe |
 | Glue Schema Registry | Avro / JSON Schema / Protobuf | IAM probe + IaC references |
+| SSM Parameter Store | Any (spec content or URL pointer) | IAM probe for `/postman/specs/` path |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
+
+The action also detects Backstage `catalog-info.yaml` files in the repo root and extracts API spec references automatically.
 
 ## Security
 
@@ -76,7 +79,9 @@ Full IAM policy (all providers):
         "glue:ListRegistries",
         "glue:ListSchemas",
         "glue:GetSchemaVersion",
-        "glue:GetTags"
+        "glue:GetTags",
+        "ssm:GetParametersByPath",
+        "tag:GetResources"
       ],
       "Resource": "*"
     }
@@ -108,13 +113,14 @@ Everything else is auto-resolved:
 | --- | --- |
 | `resolution-json` | Full resolution payload |
 | `resolution-status` | `resolved` or `unresolved` |
-| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `manual-review`, or `discover-many` |
+| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `manual-review`, or `discover-many` |
 | `mapping-confidence` | Numeric confidence score |
 | `spec-path` | Resolved/generated spec path when available |
 | `gateway-id` | Selected gateway ID when available |
 | `service-name` | Resolved service name |
 | `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`) |
 | `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`) |
+| `candidates-json` | JSON array of top candidates when resolution is ambiguous |
 | `services-json` | discover-many mode: JSON array of all discovered services |
 | `service-count` | discover-many mode: number of discovered services |
 | `export-summary-json` | discover-many summary: attempted/exported/failed/skipped |
@@ -130,6 +136,7 @@ Everything else is auto-resolved:
 | Glue (Avro) | `schema.avsc` | Avro |
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
+| SSM Parameter Store | auto-detected | Any (spec content or URL pointer) |
 
 ## Usage
 
@@ -179,6 +186,14 @@ node dist/cli.cjs \
 
 **IAM probing**: At startup, the action probes each provider with a lightweight read call. If the call succeeds, that provider is included. If it fails (access denied, service not available), it is silently skipped.
 
+**Progressive narrowing**: When an AWS account has many API Gateway APIs, the action narrows candidates automatically instead of failing:
+
+1. **IaC fingerprinting** -- extract gateway IDs from `template.yaml`, `serverless.yml`, and similar files already in the repo
+2. **CloudFormation stack correlation** -- find stacks named after the repo, extract API resource physical IDs
+3. **Tag-based pre-filtering** -- query the Resource Groups Tagging API for resources tagged `postman:repo`, `repository`, or similar
+4. **Naming heuristic** -- match the slugified repo name against API names
+5. **Full enumeration** -- only as a last resort, with soft truncation instead of hard failure
+
 **Repository signals**: The action scans IaC files for references to AWS services:
 - `template.yaml`, `serverless.yml`, `cdk.json` for CloudFormation resource types
 - `.graphql` / `.gql` files for AppSync hints
@@ -186,6 +201,32 @@ node dist/cli.cjs \
 - `AWS::Glue::Schema` references for Glue
 
 **Existing specs**: If the repo already has `openapi.yaml`, `swagger.json`, `schema.graphql`, or similar files, the action uses them directly without calling AWS.
+
+**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` is present in the repo root with `kind: API` entities, the action extracts spec path or URL references from it automatically.
+
+**SSM Parameter Store**: If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. This is the recommended way to register specs for services that run on EKS, ECS, or behind ALBs.
+
+### SSM spec registry convention
+
+Store your spec reference in SSM Parameter Store:
+
+```
+/postman/specs/{service-name}/url       -> https://api.example.com/openapi.json
+/postman/specs/{service-name}/content   -> {"openapi":"3.0.0",...}
+/postman/specs/{service-name}/format    -> openapi-json
+```
+
+The action discovers these automatically. No action configuration needed.
+
+### Tag convention
+
+Tag your AWS resources for instant narrowing in broad accounts:
+
+```
+postman:repo = org/repo-name
+```
+
+The action checks this tag via the Resource Groups Tagging API before enumerating all APIs.
 
 ## Troubleshooting
 

@@ -1,7 +1,7 @@
 {
   "name": "postman-aws-spec-discovery-action",
-  "version": "0.4.0",
-  "description": "Discover and export API specs from AWS services (API Gateway, AppSync, EventBridge, CloudFormation, Glue).",
+  "version": "0.5.0",
+  "description": "Discover and export API specs from AWS services with zero-config auto-detection.",
   "type": "module",
   "main": "dist/index.cjs",
   "bin": {
@@ -28,7 +28,9 @@
     "@aws-sdk/client-appsync": "^3.1015.0",
     "@aws-sdk/client-cloudformation": "^3.1015.0",
     "@aws-sdk/client-glue": "^3.1015.0",
+    "@aws-sdk/client-resource-groups-tagging-api": "^3.1015.0",
     "@aws-sdk/client-schemas": "^3.1015.0",
+    "@aws-sdk/client-ssm": "^3.1015.0",
     "@aws-sdk/client-sts": "^3.1014.0",
     "@smithy/node-http-handler": "^4.4.5"
   },

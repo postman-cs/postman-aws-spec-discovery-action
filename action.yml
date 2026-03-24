@@ -37,8 +37,10 @@ outputs:
     description: "Legacy discover-many output: number of exported services."
   export-summary-json:
     description: "discover-many summary JSON with attempted/exported/failed/skipped counts."
+  candidates-json:
+    description: "JSON array of top candidates when resolution is ambiguous."
   provider-type:
-    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, or glue."
+    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm."
   spec-format:
     description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
 runs:

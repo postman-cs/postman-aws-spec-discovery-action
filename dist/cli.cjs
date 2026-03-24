@@ -860,9 +860,9 @@ var init_createPaginator = __esm({
       command = withCommand(command) ?? command;
       return await client.send(command, ...args);
     };
-    get = (fromObject, path5) => {
+    get = (fromObject, path6) => {
       let cursor2 = fromObject;
-      const pathComponents = path5.split(".");
+      const pathComponents = path6.split(".");
       for (const step of pathComponents) {
         if (!cursor2 || typeof cursor2 !== "object") {
           return void 0;
@@ -1784,7 +1784,7 @@ var require_dist_cjs14 = __commonJS({
     var DEFAULT_REQUEST_TIMEOUT = 0;
     var hAgent = void 0;
     var hRequest = void 0;
-    var NodeHttpHandler6 = class _NodeHttpHandler {
+    var NodeHttpHandler8 = class _NodeHttpHandler {
       config;
       configProvider;
       socketWarningTimestamp = 0;
@@ -1880,12 +1880,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             const password = request.password ?? "";
             auth = `${username}:${password}`;
           }
-          let path5 = request.path;
+          let path6 = request.path;
           if (queryString) {
-            path5 += `?${queryString}`;
+            path6 += `?${queryString}`;
           }
           if (request.fragment) {
-            path5 += `#${request.fragment}`;
+            path6 += `#${request.fragment}`;
           }
           let hostname = request.hostname ?? "";
           if (hostname[0] === "[" && hostname.endsWith("]")) {
@@ -1897,7 +1897,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             headers: request.headers,
             host: hostname,
             method: request.method,
-            path: path5,
+            path: path6,
             port: request.port,
             agent,
             auth
@@ -2180,16 +2180,16 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(err);
           };
           const queryString = querystringBuilder.buildQueryString(query || {});
-          let path5 = request.path;
+          let path6 = request.path;
           if (queryString) {
-            path5 += `?${queryString}`;
+            path6 += `?${queryString}`;
           }
           if (request.fragment) {
-            path5 += `#${request.fragment}`;
+            path6 += `#${request.fragment}`;
           }
           const req = session.request({
             ...request.headers,
-            [http2.constants.HTTP2_HEADER_PATH]: path5,
+            [http2.constants.HTTP2_HEADER_PATH]: path6,
             [http2.constants.HTTP2_HEADER_METHOD]: method
           });
           session.ref();
@@ -2314,7 +2314,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
     }
     exports2.DEFAULT_REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT;
     exports2.NodeHttp2Handler = NodeHttp2Handler;
-    exports2.NodeHttpHandler = NodeHttpHandler6;
+    exports2.NodeHttpHandler = NodeHttpHandler8;
     exports2.streamCollector = streamCollector5;
   }
 });
@@ -2376,13 +2376,13 @@ var require_dist_cjs15 = __commonJS({
           const abortError = buildAbortError(abortSignal);
           return Promise.reject(abortError);
         }
-        let path5 = request.path;
+        let path6 = request.path;
         const queryString = querystringBuilder.buildQueryString(request.query || {});
         if (queryString) {
-          path5 += `?${queryString}`;
+          path6 += `?${queryString}`;
         }
         if (request.fragment) {
-          path5 += `#${request.fragment}`;
+          path6 += `#${request.fragment}`;
         }
         let auth = "";
         if (request.username != null || request.password != null) {
@@ -2391,7 +2391,7 @@ var require_dist_cjs15 = __commonJS({
           auth = `${username}:${password}@`;
         }
         const { port, method } = request;
-        const url = `${request.protocol}//${auth}${request.hostname}${port ? `:${port}` : ""}${path5}`;
+        const url = `${request.protocol}//${auth}${request.hostname}${port ? `:${port}` : ""}${path6}`;
         const body = method === "GET" || method === "HEAD" ? void 0 : request.body;
         const requestOptions = {
           body,
@@ -4623,13 +4623,13 @@ function __disposeResources(env) {
   }
   return next();
 }
-function __rewriteRelativeImportExtension(path5, preserveJsx) {
-  if (typeof path5 === "string" && /^\.\.?\//.test(path5)) {
-    return path5.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m5, tsx, d5, ext, cm) {
+function __rewriteRelativeImportExtension(path6, preserveJsx) {
+  if (typeof path6 === "string" && /^\.\.?\//.test(path6)) {
+    return path6.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m5, tsx, d5, ext, cm) {
       return tsx ? preserveJsx ? ".jsx" : ".js" : d5 && (!ext || !cm) ? m5 : d5 + ext + "." + cm.toLowerCase() + "js";
     });
   }
-  return path5;
+  return path6;
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
@@ -5527,11 +5527,11 @@ var init_HttpBindingProtocol = __esm({
           const opTraits = translateTraits(operationSchema.traits);
           if (opTraits.http) {
             request.method = opTraits.http[0];
-            const [path5, search] = opTraits.http[1].split("?");
+            const [path6, search] = opTraits.http[1].split("?");
             if (request.path == "/") {
-              request.path = path5;
+              request.path = path6;
             } else {
-              request.path += path5;
+              request.path += path6;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
             Object.assign(query, Object.fromEntries(traitSearchParams));
@@ -5934,8 +5934,8 @@ var init_requestBuilder = __esm({
         return this;
       }
       p(memberName, labelValueProvider, uriLabel, isGreedyLabel) {
-        this.resolvePathStack.push((path5) => {
-          this.path = resolvedPath(path5, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
+        this.resolvePathStack.push((path6) => {
+          this.path = resolvedPath(path6, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
         });
         return this;
       }
@@ -6585,18 +6585,18 @@ var require_dist_cjs21 = __commonJS({
       }
     };
     var booleanEquals = (value1, value2) => value1 === value2;
-    var getAttrPathList = (path5) => {
-      const parts = path5.split(".");
+    var getAttrPathList = (path6) => {
+      const parts = path6.split(".");
       const pathList = [];
       for (const part of parts) {
         const squareBracketIndex = part.indexOf("[");
         if (squareBracketIndex !== -1) {
           if (part.indexOf("]") !== part.length - 1) {
-            throw new EndpointError(`Path: '${path5}' does not end with ']'`);
+            throw new EndpointError(`Path: '${path6}' does not end with ']'`);
           }
           const arrayIndex = part.slice(squareBracketIndex + 1, -1);
           if (Number.isNaN(parseInt(arrayIndex))) {
-            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path5}'`);
+            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path6}'`);
           }
           if (squareBracketIndex !== 0) {
             pathList.push(part.slice(0, squareBracketIndex));
@@ -6608,9 +6608,9 @@ var require_dist_cjs21 = __commonJS({
       }
       return pathList;
     };
-    var getAttr = (value, path5) => getAttrPathList(path5).reduce((acc, index) => {
+    var getAttr = (value, path6) => getAttrPathList(path6).reduce((acc, index) => {
       if (typeof acc !== "object") {
-        throw new EndpointError(`Index '${index}' in '${path5}' not found in '${JSON.stringify(value)}'`);
+        throw new EndpointError(`Index '${index}' in '${path6}' not found in '${JSON.stringify(value)}'`);
       } else if (Array.isArray(acc)) {
         return acc[parseInt(index)];
       }
@@ -6629,8 +6629,8 @@ var require_dist_cjs21 = __commonJS({
             return value;
           }
           if (typeof value === "object" && "hostname" in value) {
-            const { hostname: hostname2, port, protocol: protocol2 = "", path: path5 = "", query = {} } = value;
-            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path5}`);
+            const { hostname: hostname2, port, protocol: protocol2 = "", path: path6 = "", query = {} } = value;
+            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path6}`);
             url.search = Object.entries(query).map(([k5, v5]) => `${k5}=${v5}`).join("&");
             return url;
           }
@@ -8075,10 +8075,10 @@ ${longDate}
 ${credentialScope}
 ${utilHexEncoding.toHex(hashedRequest)}`;
       }
-      getCanonicalPath({ path: path5 }) {
+      getCanonicalPath({ path: path6 }) {
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
-          for (const pathSegment of path5.split("/")) {
+          for (const pathSegment of path6.split("/")) {
             if (pathSegment?.length === 0)
               continue;
             if (pathSegment === ".")
@@ -8089,11 +8089,11 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
               normalizedPathSegments.push(pathSegment);
             }
           }
-          const normalizedPath = `${path5?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path5?.endsWith("/") ? "/" : ""}`;
+          const normalizedPath = `${path6?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path6?.endsWith("/") ? "/" : ""}`;
           const doubleEncoded = utilUriEscape.escapeUri(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
-        return path5;
+        return path6;
       }
       validateResolvedCredentials(credentials) {
         if (typeof credentials !== "object" || typeof credentials.accessKeyId !== "string" || typeof credentials.secretAccessKey !== "string") {
@@ -9397,11 +9397,11 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = (0, import_util_middleware5.getSmithyContext)(context);
-        const path5 = `/service/${service}/operation/${operation2}`;
+        const path6 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
-          request.path += path5.slice(1);
+          request.path += path6.slice(1);
         } else {
-          request.path += path5;
+          request.path += path6;
         }
         return request;
       }
@@ -14770,16 +14770,16 @@ var require_readFile = __commonJS({
     var promises_1 = require("node:fs/promises");
     exports2.filePromises = {};
     exports2.fileIntercept = {};
-    var readFile3 = (path5, options) => {
-      if (exports2.fileIntercept[path5] !== void 0) {
-        return exports2.fileIntercept[path5];
+    var readFile4 = (path6, options) => {
+      if (exports2.fileIntercept[path6] !== void 0) {
+        return exports2.fileIntercept[path6];
       }
-      if (!exports2.filePromises[path5] || options?.ignoreCache) {
-        exports2.filePromises[path5] = (0, promises_1.readFile)(path5, "utf8");
+      if (!exports2.filePromises[path6] || options?.ignoreCache) {
+        exports2.filePromises[path6] = (0, promises_1.readFile)(path6, "utf8");
       }
-      return exports2.filePromises[path5];
+      return exports2.filePromises[path6];
     };
-    exports2.readFile = readFile3;
+    exports2.readFile = readFile4;
   }
 });
 
@@ -14790,9 +14790,9 @@ var require_dist_cjs34 = __commonJS({
     var getHomeDir = require_getHomeDir();
     var getSSOTokenFilepath = require_getSSOTokenFilepath();
     var getSSOTokenFromFile = require_getSSOTokenFromFile();
-    var path5 = require("path");
+    var path6 = require("path");
     var types = require_dist_cjs();
-    var readFile3 = require_readFile();
+    var readFile4 = require_readFile();
     var ENV_PROFILE = "AWS_PROFILE";
     var DEFAULT_PROFILE = "default";
     var getProfileName = (init) => init.profile || process.env[ENV_PROFILE] || DEFAULT_PROFILE;
@@ -14812,9 +14812,9 @@ var require_dist_cjs34 = __commonJS({
       ...data2.default && { default: data2.default }
     });
     var ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
-    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path5.join(getHomeDir.getHomeDir(), ".aws", "config");
+    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path6.join(getHomeDir.getHomeDir(), ".aws", "config");
     var ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
-    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path5.join(getHomeDir.getHomeDir(), ".aws", "credentials");
+    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path6.join(getHomeDir.getHomeDir(), ".aws", "credentials");
     var prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@\+\.%:/]+)\2$/;
     var profileNameBlockList = ["__proto__", "profile __proto__"];
     var parseIni = (iniData) => {
@@ -14869,17 +14869,17 @@ var require_dist_cjs34 = __commonJS({
       const relativeHomeDirPrefix = "~/";
       let resolvedFilepath = filepath;
       if (filepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedFilepath = path5.join(homeDir, filepath.slice(2));
+        resolvedFilepath = path6.join(homeDir, filepath.slice(2));
       }
       let resolvedConfigFilepath = configFilepath;
       if (configFilepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedConfigFilepath = path5.join(homeDir, configFilepath.slice(2));
+        resolvedConfigFilepath = path6.join(homeDir, configFilepath.slice(2));
       }
       const parsedFiles = await Promise.all([
-        readFile3.readFile(resolvedConfigFilepath, {
+        readFile4.readFile(resolvedConfigFilepath, {
           ignoreCache: init.ignoreCache
         }).then(parseIni).then(getConfigData).catch(swallowError$1),
-        readFile3.readFile(resolvedFilepath, {
+        readFile4.readFile(resolvedFilepath, {
           ignoreCache: init.ignoreCache
         }).then(parseIni).catch(swallowError$1)
       ]);
@@ -14890,7 +14890,7 @@ var require_dist_cjs34 = __commonJS({
     };
     var getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(types.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
     var swallowError = () => ({});
-    var loadSsoSessionData = async (init = {}) => readFile3.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
+    var loadSsoSessionData = async (init = {}) => readFile4.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
     var mergeConfigFiles = (...files) => {
       const merged = {};
       for (const file of files) {
@@ -14910,10 +14910,10 @@ var require_dist_cjs34 = __commonJS({
     };
     var externalDataInterceptor = {
       getFileRecord() {
-        return readFile3.fileIntercept;
+        return readFile4.fileIntercept;
       },
-      interceptFile(path6, contents) {
-        readFile3.fileIntercept[path6] = Promise.resolve(contents);
+      interceptFile(path7, contents) {
+        readFile4.fileIntercept[path7] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return getSSOTokenFromFile.tokenIntercept;
@@ -14923,7 +14923,7 @@ var require_dist_cjs34 = __commonJS({
       }
     };
     exports2.getSSOTokenFromFile = getSSOTokenFromFile.getSSOTokenFromFile;
-    exports2.readFile = readFile3.readFile;
+    exports2.readFile = readFile4.readFile;
     exports2.CONFIG_PREFIX_SEPARATOR = CONFIG_PREFIX_SEPARATOR;
     exports2.DEFAULT_PROFILE = DEFAULT_PROFILE;
     exports2.ENV_PROFILE = ENV_PROFILE;
@@ -15238,8 +15238,8 @@ var require_dist_cjs37 = __commonJS({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path5 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path5}`;
+              const { protocol, hostname, port, path: path6 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path6}`;
             }
           }
           return endpoint;
@@ -25936,7 +25936,7 @@ var require_dist_cjs54 = __commonJS({
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetResource", {}).n("APIGatewayClient", "GetResourceCommand").sc(schemas_0.GetResource$).build() {
     };
-    var GetResourcesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+    var GetResourcesCommand2 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetResources", {}).n("APIGatewayClient", "GetResourcesCommand").sc(schemas_0.GetResources$).build() {
     };
@@ -26150,7 +26150,7 @@ var require_dist_cjs54 = __commonJS({
     var paginateGetDeployments = core.createPaginator(APIGatewayClient2, GetDeploymentsCommand, "position", "position", "limit");
     var paginateGetDomainNames = core.createPaginator(APIGatewayClient2, GetDomainNamesCommand, "position", "position", "limit");
     var paginateGetModels = core.createPaginator(APIGatewayClient2, GetModelsCommand, "position", "position", "limit");
-    var paginateGetResources = core.createPaginator(APIGatewayClient2, GetResourcesCommand, "position", "position", "limit");
+    var paginateGetResources = core.createPaginator(APIGatewayClient2, GetResourcesCommand2, "position", "position", "limit");
     var paginateGetRestApis2 = core.createPaginator(APIGatewayClient2, GetRestApisCommand2, "position", "position", "limit");
     var paginateGetUsage = core.createPaginator(APIGatewayClient2, GetUsageCommand, "position", "position", "limit");
     var paginateGetUsagePlanKeys = core.createPaginator(APIGatewayClient2, GetUsagePlanKeysCommand, "position", "position", "limit");
@@ -26229,7 +26229,7 @@ var require_dist_cjs54 = __commonJS({
       GetRequestValidatorCommand,
       GetRequestValidatorsCommand,
       GetResourceCommand,
-      GetResourcesCommand,
+      GetResourcesCommand: GetResourcesCommand2,
       GetRestApiCommand: GetRestApiCommand2,
       GetRestApisCommand: GetRestApisCommand2,
       GetSdkCommand,
@@ -26560,7 +26560,7 @@ var require_dist_cjs54 = __commonJS({
     exports2.GetRequestValidatorCommand = GetRequestValidatorCommand;
     exports2.GetRequestValidatorsCommand = GetRequestValidatorsCommand;
     exports2.GetResourceCommand = GetResourceCommand;
-    exports2.GetResourcesCommand = GetResourcesCommand;
+    exports2.GetResourcesCommand = GetResourcesCommand2;
     exports2.GetRestApiCommand = GetRestApiCommand2;
     exports2.GetRestApisCommand = GetRestApisCommand2;
     exports2.GetSdkCommand = GetSdkCommand;
@@ -66049,17 +66049,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path5) {
-      const ctrl = callVisitor(key, node, visitor, path5);
+    function visit_(key, node, visitor, path6) {
+      const ctrl = callVisitor(key, node, visitor, path6);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path5, ctrl);
-        return visit_(key, ctrl, visitor, path5);
+        replaceNode(key, path6, ctrl);
+        return visit_(key, ctrl, visitor, path6);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path5 = Object.freeze(path5.concat(node));
+          path6 = Object.freeze(path6.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = visit_(i5, node.items[i5], visitor, path5);
+            const ci = visit_(i5, node.items[i5], visitor, path6);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -66070,13 +66070,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path5 = Object.freeze(path5.concat(node));
-          const ck = visit_("key", node.key, visitor, path5);
+          path6 = Object.freeze(path6.concat(node));
+          const ck = visit_("key", node.key, visitor, path6);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path5);
+          const cv = visit_("value", node.value, visitor, path6);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -66097,17 +66097,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path5) {
-      const ctrl = await callVisitor(key, node, visitor, path5);
+    async function visitAsync_(key, node, visitor, path6) {
+      const ctrl = await callVisitor(key, node, visitor, path6);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path5, ctrl);
-        return visitAsync_(key, ctrl, visitor, path5);
+        replaceNode(key, path6, ctrl);
+        return visitAsync_(key, ctrl, visitor, path6);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path5 = Object.freeze(path5.concat(node));
+          path6 = Object.freeze(path6.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = await visitAsync_(i5, node.items[i5], visitor, path5);
+            const ci = await visitAsync_(i5, node.items[i5], visitor, path6);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -66118,13 +66118,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path5 = Object.freeze(path5.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path5);
+          path6 = Object.freeze(path6.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path6);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path5);
+          const cv = await visitAsync_("value", node.value, visitor, path6);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -66151,23 +66151,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path5) {
+    function callVisitor(key, node, visitor, path6) {
       if (typeof visitor === "function")
-        return visitor(key, node, path5);
+        return visitor(key, node, path6);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path5);
+        return visitor.Map?.(key, node, path6);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path5);
+        return visitor.Seq?.(key, node, path6);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path5);
+        return visitor.Pair?.(key, node, path6);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path5);
+        return visitor.Scalar?.(key, node, path6);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path5);
+        return visitor.Alias?.(key, node, path6);
       return void 0;
     }
-    function replaceNode(key, path5, node) {
-      const parent = path5[path5.length - 1];
+    function replaceNode(key, path6, node) {
+      const parent = path6[path6.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -66775,10 +66775,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path5, value) {
+    function collectionFromPath(schema, path6, value) {
       let v5 = value;
-      for (let i5 = path5.length - 1; i5 >= 0; --i5) {
-        const k5 = path5[i5];
+      for (let i5 = path6.length - 1; i5 >= 0; --i5) {
+        const k5 = path6[i5];
         if (typeof k5 === "number" && Number.isInteger(k5) && k5 >= 0) {
           const a5 = [];
           a5[k5] = v5;
@@ -66797,7 +66797,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path5) => path5 == null || typeof path5 === "object" && !!path5[Symbol.iterator]().next().done;
+    var isEmptyPath = (path6) => path6 == null || typeof path6 === "object" && !!path6[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -66827,11 +66827,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path5, value) {
-        if (isEmptyPath(path5))
+      addIn(path6, value) {
+        if (isEmptyPath(path6))
           this.add(value);
         else {
-          const [key, ...rest] = path5;
+          const [key, ...rest] = path6;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -66845,8 +66845,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path5) {
-        const [key, ...rest] = path5;
+      deleteIn(path6) {
+        const [key, ...rest] = path6;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -66860,8 +66860,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path5, keepScalar) {
-        const [key, ...rest] = path5;
+      getIn(path6, keepScalar) {
+        const [key, ...rest] = path6;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -66879,8 +66879,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path5) {
-        const [key, ...rest] = path5;
+      hasIn(path6) {
+        const [key, ...rest] = path6;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -66890,8 +66890,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path5, value) {
-        const [key, ...rest] = path5;
+      setIn(path6, value) {
+        const [key, ...rest] = path6;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -69403,9 +69403,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path5, value) {
+      addIn(path6, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path5, value);
+          this.contents.addIn(path6, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -69480,14 +69480,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path5) {
-        if (Collection.isEmptyPath(path5)) {
+      deleteIn(path6) {
+        if (Collection.isEmptyPath(path6)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path5) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path6) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -69502,10 +69502,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path5, keepScalar) {
-        if (Collection.isEmptyPath(path5))
+      getIn(path6, keepScalar) {
+        if (Collection.isEmptyPath(path6))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path5, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path6, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -69516,10 +69516,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path5) {
-        if (Collection.isEmptyPath(path5))
+      hasIn(path6) {
+        if (Collection.isEmptyPath(path6))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path5) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path6) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -69536,13 +69536,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path5, value) {
-        if (Collection.isEmptyPath(path5)) {
+      setIn(path6, value) {
+        if (Collection.isEmptyPath(path6)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path5), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path6), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path5, value);
+          this.contents.setIn(path6, value);
         }
       }
       /**
@@ -71499,9 +71499,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path5) => {
+    visit.itemAtPath = (cst, path6) => {
       let item = cst;
-      for (const [field, index] of path5) {
+      for (const [field, index] of path6) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -71510,23 +71510,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path5) => {
-      const parent = visit.itemAtPath(cst, path5.slice(0, -1));
-      const field = path5[path5.length - 1][0];
+    visit.parentCollection = (cst, path6) => {
+      const parent = visit.itemAtPath(cst, path6.slice(0, -1));
+      const field = path6[path6.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path5, item, visitor) {
-      let ctrl = visitor(item, path5);
+    function _visit(path6, item, visitor) {
+      let ctrl = visitor(item, path6);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i5 = 0; i5 < token.items.length; ++i5) {
-            const ci = _visit(Object.freeze(path5.concat([[field, i5]])), token.items[i5], visitor);
+            const ci = _visit(Object.freeze(path6.concat([[field, i5]])), token.items[i5], visitor);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -71537,10 +71537,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path5);
+            ctrl = ctrl(item, path6);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path5) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path6) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -73174,7 +73174,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse3(src, reviver, options) {
+    function parse4(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -73215,7 +73215,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports2.parse = parse3;
+    exports2.parse = parse4;
     exports2.parseAllDocuments = parseAllDocuments;
     exports2.parseDocument = parseDocument;
     exports2.stringify = stringify;
@@ -73274,6 +73274,14636 @@ var require_dist = __commonJS({
   }
 });
 
+// node_modules/@aws-sdk/client-ssm/dist-cjs/auth/httpAuthSchemeProvider.js
+var require_httpAuthSchemeProvider8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/auth/httpAuthSchemeProvider.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.resolveHttpAuthSchemeConfig = exports2.defaultSSMHttpAuthSchemeProvider = exports2.defaultSSMHttpAuthSchemeParametersProvider = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var util_middleware_1 = require_dist_cjs7();
+    var defaultSSMHttpAuthSchemeParametersProvider = async (config, context, input) => {
+      return {
+        operation: (0, util_middleware_1.getSmithyContext)(context).operation,
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
+          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })()
+      };
+    };
+    exports2.defaultSSMHttpAuthSchemeParametersProvider = defaultSSMHttpAuthSchemeParametersProvider;
+    function createAwsAuthSigv4HttpAuthOption5(authParameters) {
+      return {
+        schemeId: "aws.auth#sigv4",
+        signingProperties: {
+          name: "ssm",
+          region: authParameters.region
+        },
+        propertiesExtractor: (config, context) => ({
+          signingProperties: {
+            config,
+            context
+          }
+        })
+      };
+    }
+    var defaultSSMHttpAuthSchemeProvider = (authParameters) => {
+      const options = [];
+      switch (authParameters.operation) {
+        default: {
+          options.push(createAwsAuthSigv4HttpAuthOption5(authParameters));
+        }
+      }
+      return options;
+    };
+    exports2.defaultSSMHttpAuthSchemeProvider = defaultSSMHttpAuthSchemeProvider;
+    var resolveHttpAuthSchemeConfig5 = (config) => {
+      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config);
+      return Object.assign(config_0, {
+        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config.authSchemePreference ?? [])
+      });
+    };
+    exports2.resolveHttpAuthSchemeConfig = resolveHttpAuthSchemeConfig5;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/package.json
+var require_package8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/package.json"(exports2, module2) {
+    module2.exports = {
+      name: "@aws-sdk/client-ssm",
+      description: "AWS SDK for JavaScript Ssm Client for Node.js, Browser and React Native",
+      version: "3.1015.0",
+      scripts: {
+        build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
+        "build:cjs": "node ../../scripts/compilation/inline client-ssm",
+        "build:es": "tsc -p tsconfig.es.json",
+        "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
+        "build:types": "tsc -p tsconfig.types.json",
+        "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
+        clean: "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
+        "extract:docs": "api-extractor run --local",
+        "generate:client": "node ../../scripts/generate-clients/single-service --solo ssm",
+        "test:e2e": "yarn g:vitest run -c vitest.config.e2e.mts --mode development",
+        "test:e2e:watch": "yarn g:vitest watch -c vitest.config.e2e.mts",
+        "test:index": "tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs"
+      },
+      main: "./dist-cjs/index.js",
+      types: "./dist-types/index.d.ts",
+      module: "./dist-es/index.js",
+      sideEffects: false,
+      dependencies: {
+        "@aws-crypto/sha256-browser": "5.2.0",
+        "@aws-crypto/sha256-js": "5.2.0",
+        "@aws-sdk/core": "^3.973.24",
+        "@aws-sdk/credential-provider-node": "^3.972.25",
+        "@aws-sdk/middleware-host-header": "^3.972.8",
+        "@aws-sdk/middleware-logger": "^3.972.8",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.25",
+        "@aws-sdk/region-config-resolver": "^3.972.9",
+        "@aws-sdk/types": "^3.973.6",
+        "@aws-sdk/util-endpoints": "^3.996.5",
+        "@aws-sdk/util-user-agent-browser": "^3.972.8",
+        "@aws-sdk/util-user-agent-node": "^3.973.11",
+        "@smithy/config-resolver": "^4.4.13",
+        "@smithy/core": "^3.23.12",
+        "@smithy/fetch-http-handler": "^5.3.15",
+        "@smithy/hash-node": "^4.2.12",
+        "@smithy/invalid-dependency": "^4.2.12",
+        "@smithy/middleware-content-length": "^4.2.12",
+        "@smithy/middleware-endpoint": "^4.4.27",
+        "@smithy/middleware-retry": "^4.4.44",
+        "@smithy/middleware-serde": "^4.2.15",
+        "@smithy/middleware-stack": "^4.2.12",
+        "@smithy/node-config-provider": "^4.3.12",
+        "@smithy/node-http-handler": "^4.5.0",
+        "@smithy/protocol-http": "^5.3.12",
+        "@smithy/smithy-client": "^4.12.7",
+        "@smithy/types": "^4.13.1",
+        "@smithy/url-parser": "^4.2.12",
+        "@smithy/util-base64": "^4.3.2",
+        "@smithy/util-body-length-browser": "^4.2.2",
+        "@smithy/util-body-length-node": "^4.2.3",
+        "@smithy/util-defaults-mode-browser": "^4.3.43",
+        "@smithy/util-defaults-mode-node": "^4.2.47",
+        "@smithy/util-endpoints": "^3.3.3",
+        "@smithy/util-middleware": "^4.2.12",
+        "@smithy/util-retry": "^4.2.12",
+        "@smithy/util-utf8": "^4.2.2",
+        "@smithy/util-waiter": "^4.2.13",
+        tslib: "^2.6.2"
+      },
+      devDependencies: {
+        "@tsconfig/node20": "20.1.8",
+        "@types/node": "^20.14.8",
+        concurrently: "7.0.0",
+        "downlevel-dts": "0.10.1",
+        premove: "4.0.0",
+        typescript: "~5.8.3"
+      },
+      engines: {
+        node: ">=20.0.0"
+      },
+      typesVersions: {
+        "<4.5": {
+          "dist-types/*": [
+            "dist-types/ts3.4/*"
+          ]
+        }
+      },
+      files: [
+        "dist-*/**"
+      ],
+      author: {
+        name: "AWS SDK for JavaScript Team",
+        url: "https://aws.amazon.com/javascript/"
+      },
+      license: "Apache-2.0",
+      browser: {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.browser"
+      },
+      "react-native": {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.native"
+      },
+      homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ssm",
+      repository: {
+        type: "git",
+        url: "https://github.com/aws/aws-sdk-js-v3.git",
+        directory: "clients/client-ssm"
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/endpoint/ruleset.js
+var require_ruleset8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/endpoint/ruleset.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ruleSet = void 0;
+    var u5 = "required";
+    var v5 = "fn";
+    var w5 = "argv";
+    var x5 = "ref";
+    var a5 = true;
+    var b5 = "isSet";
+    var c5 = "booleanEquals";
+    var d5 = "error";
+    var e5 = "endpoint";
+    var f5 = "tree";
+    var g5 = "PartitionResult";
+    var h5 = "getAttr";
+    var i5 = { [u5]: false, "type": "string" };
+    var j5 = { [u5]: true, "default": false, "type": "boolean" };
+    var k5 = { [x5]: "Endpoint" };
+    var l5 = { [v5]: c5, [w5]: [{ [x5]: "UseFIPS" }, true] };
+    var m5 = { [v5]: c5, [w5]: [{ [x5]: "UseDualStack" }, true] };
+    var n5 = {};
+    var o5 = { [v5]: h5, [w5]: [{ [x5]: g5 }, "supportsFIPS"] };
+    var p5 = { [x5]: g5 };
+    var q5 = { [v5]: c5, [w5]: [true, { [v5]: h5, [w5]: [p5, "supportsDualStack"] }] };
+    var r5 = [l5];
+    var s5 = [m5];
+    var t5 = [{ [x5]: "Region" }];
+    var _data5 = { version: "1.0", parameters: { Region: i5, UseDualStack: j5, UseFIPS: j5, Endpoint: i5 }, rules: [{ conditions: [{ [v5]: b5, [w5]: [k5] }], rules: [{ conditions: r5, error: "Invalid Configuration: FIPS and custom endpoint are not supported", type: d5 }, { conditions: s5, error: "Invalid Configuration: Dualstack and custom endpoint are not supported", type: d5 }, { endpoint: { url: k5, properties: n5, headers: n5 }, type: e5 }], type: f5 }, { conditions: [{ [v5]: b5, [w5]: t5 }], rules: [{ conditions: [{ [v5]: "aws.partition", [w5]: t5, assign: g5 }], rules: [{ conditions: [l5, m5], rules: [{ conditions: [{ [v5]: c5, [w5]: [a5, o5] }, q5], rules: [{ endpoint: { url: "https://ssm-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: n5, headers: n5 }, type: e5 }], type: f5 }, { error: "FIPS and DualStack are enabled, but this partition does not support one or both", type: d5 }], type: f5 }, { conditions: r5, rules: [{ conditions: [{ [v5]: c5, [w5]: [o5, a5] }], rules: [{ conditions: [{ [v5]: "stringEquals", [w5]: [{ [v5]: h5, [w5]: [p5, "name"] }, "aws-us-gov"] }], endpoint: { url: "https://ssm.{Region}.amazonaws.com", properties: n5, headers: n5 }, type: e5 }, { endpoint: { url: "https://ssm-fips.{Region}.{PartitionResult#dnsSuffix}", properties: n5, headers: n5 }, type: e5 }], type: f5 }, { error: "FIPS is enabled but this partition does not support FIPS", type: d5 }], type: f5 }, { conditions: s5, rules: [{ conditions: [q5], rules: [{ endpoint: { url: "https://ssm.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: n5, headers: n5 }, type: e5 }], type: f5 }, { error: "DualStack is enabled but this partition does not support DualStack", type: d5 }], type: f5 }, { endpoint: { url: "https://ssm.{Region}.{PartitionResult#dnsSuffix}", properties: n5, headers: n5 }, type: e5 }], type: f5 }], type: f5 }, { error: "Invalid Configuration: Missing Region", type: d5 }] };
+    exports2.ruleSet = _data5;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/endpoint/endpointResolver.js
+var require_endpointResolver8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/endpoint/endpointResolver.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.defaultEndpointResolver = void 0;
+    var util_endpoints_1 = require_dist_cjs22();
+    var util_endpoints_2 = require_dist_cjs21();
+    var ruleset_1 = require_ruleset8();
+    var cache5 = new util_endpoints_2.EndpointCache({
+      size: 50,
+      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS"]
+    });
+    var defaultEndpointResolver5 = (endpointParams, context = {}) => {
+      return cache5.get(endpointParams, () => (0, util_endpoints_2.resolveEndpoint)(ruleset_1.ruleSet, {
+        endpointParams,
+        logger: context.logger
+      }));
+    };
+    exports2.defaultEndpointResolver = defaultEndpointResolver5;
+    util_endpoints_2.customEndpointFunctions.aws = util_endpoints_1.awsEndpointFunctions;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/models/SSMServiceException.js
+var require_SSMServiceException = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/models/SSMServiceException.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.SSMServiceException = exports2.__ServiceException = void 0;
+    var smithy_client_1 = require_dist_cjs26();
+    Object.defineProperty(exports2, "__ServiceException", { enumerable: true, get: function() {
+      return smithy_client_1.ServiceException;
+    } });
+    var SSMServiceException = class _SSMServiceException extends smithy_client_1.ServiceException {
+      constructor(options) {
+        super(options);
+        Object.setPrototypeOf(this, _SSMServiceException.prototype);
+      }
+    };
+    exports2.SSMServiceException = SSMServiceException;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/models/errors.js
+var require_errors9 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/models/errors.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.InvalidDeleteInventoryParametersException = exports2.InvalidDocumentOperation = exports2.AssociatedInstances = exports2.AssociationDoesNotExist = exports2.InvalidActivationId = exports2.InvalidActivation = exports2.ResourceDataSyncInvalidConfigurationException = exports2.ResourceDataSyncCountExceededException = exports2.ResourceDataSyncAlreadyExistsException = exports2.OpsMetadataTooManyUpdatesException = exports2.OpsMetadataLimitExceededException = exports2.OpsMetadataInvalidArgumentException = exports2.OpsMetadataAlreadyExistsException = exports2.OpsItemAlreadyExistsException = exports2.OpsItemAccessDeniedException = exports2.ResourceLimitExceededException = exports2.IdempotentParameterMismatch = exports2.NoLongerSupportedException = exports2.MaxDocumentSizeExceeded = exports2.InvalidDocumentSchemaVersion = exports2.InvalidDocumentContent = exports2.DocumentLimitExceeded = exports2.DocumentAlreadyExists = exports2.UnsupportedPlatformType = exports2.InvalidTargetMaps = exports2.InvalidTarget = exports2.InvalidTag = exports2.InvalidSchedule = exports2.InvalidOutputLocation = exports2.InvalidDocumentVersion = exports2.InvalidDocument = exports2.AssociationLimitExceeded = exports2.AssociationAlreadyExists = exports2.InvalidParameters = exports2.DoesNotExistException = exports2.InvalidInstanceId = exports2.InvalidCommandId = exports2.DuplicateInstanceId = exports2.OpsItemRelatedItemAlreadyExistsException = exports2.OpsItemNotFoundException = exports2.OpsItemLimitExceededException = exports2.OpsItemInvalidParameterException = exports2.OpsItemConflictException = exports2.AlreadyExistsException = exports2.TooManyUpdates = exports2.TooManyTagsError = exports2.InvalidResourceType = exports2.InvalidResourceId = exports2.InternalServerError = exports2.AccessDeniedException = void 0;
+    exports2.ItemContentMismatchException = exports2.InvalidInventoryItemContextException = exports2.CustomSchemaCountLimitExceededException = exports2.TotalSizeLimitExceededException = exports2.ItemSizeLimitExceededException = exports2.InvalidItemContentException = exports2.ComplianceTypeCountLimitExceededException = exports2.DocumentPermissionLimit = exports2.UnsupportedOperationException = exports2.ParameterVersionLabelLimitExceeded = exports2.ServiceSettingNotFound = exports2.ParameterVersionNotFound = exports2.InvalidKeyId = exports2.InvalidResultAttributeException = exports2.InvalidInventoryGroupException = exports2.InvalidAggregatorException = exports2.UnsupportedFeatureRequiredException = exports2.InvocationDoesNotExist = exports2.InvalidPluginName = exports2.UnsupportedCalendarException = exports2.InvalidDocumentType = exports2.ValidationException = exports2.ThrottlingException = exports2.OpsItemRelatedItemAssociationNotFoundException = exports2.InvalidFilterOption = exports2.InvalidDeletionIdException = exports2.InvalidInstancePropertyFilterValue = exports2.InvalidInstanceInformationFilterValue = exports2.UnsupportedOperatingSystem = exports2.InvalidPermissionType = exports2.AutomationExecutionNotFoundException = exports2.InvalidFilterValue = exports2.InvalidFilterKey = exports2.AssociationExecutionDoesNotExist = exports2.InvalidAssociationVersion = exports2.InvalidNextToken = exports2.InvalidFilter = exports2.TargetInUseException = exports2.ResourcePolicyNotFoundException = exports2.ResourcePolicyInvalidParameterException = exports2.ResourcePolicyConflictException = exports2.ResourceNotFoundException = exports2.MalformedResourcePolicyDocumentException = exports2.ResourceDataSyncNotFoundException = exports2.ResourceInUseException = exports2.ParameterNotFound = exports2.OpsMetadataNotFoundException = exports2.InvalidTypeNameException = exports2.InvalidOptionException = exports2.InvalidInventoryRequestException = void 0;
+    exports2.ResourceDataSyncConflictException = exports2.OpsMetadataKeyLimitExceededException = exports2.DuplicateDocumentVersionName = exports2.DuplicateDocumentContent = exports2.DocumentVersionLimitExceeded = exports2.StatusUnchanged = exports2.InvalidUpdate = exports2.AssociationVersionLimitExceeded = exports2.InvalidAutomationStatusUpdateException = exports2.TargetNotConnected = exports2.AutomationDefinitionNotApprovedException = exports2.InvalidAutomationExecutionParametersException = exports2.AutomationExecutionLimitExceededException = exports2.AutomationDefinitionVersionNotFoundException = exports2.AutomationDefinitionNotFoundException = exports2.InvalidAssociation = exports2.ServiceQuotaExceededException = exports2.InvalidRole = exports2.InvalidOutputFolder = exports2.InvalidNotificationConfig = exports2.InvalidAutomationSignalException = exports2.AutomationStepNotFoundException = exports2.FeatureNotAvailableException = exports2.ResourcePolicyLimitExceededException = exports2.UnsupportedParameterType = exports2.PoliciesLimitExceededException = exports2.ParameterPatternMismatchException = exports2.ParameterMaxVersionLimitExceeded = exports2.ParameterLimitExceeded = exports2.ParameterAlreadyExists = exports2.InvalidPolicyTypeException = exports2.InvalidPolicyAttributeException = exports2.InvalidAllowedPatternException = exports2.IncompatiblePolicyException = exports2.HierarchyTypeMismatchException = exports2.HierarchyLevelLimitExceededException = exports2.UnsupportedInventorySchemaVersionException = exports2.UnsupportedInventoryItemContextException = exports2.SubTypeCountLimitExceededException = void 0;
+    var SSMServiceException_1 = require_SSMServiceException();
+    var AccessDeniedException3 = class _AccessDeniedException extends SSMServiceException_1.SSMServiceException {
+      name = "AccessDeniedException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AccessDeniedException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AccessDeniedException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AccessDeniedException = AccessDeniedException3;
+    var InternalServerError = class _InternalServerError extends SSMServiceException_1.SSMServiceException {
+      name = "InternalServerError";
+      $fault = "server";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InternalServerError",
+          $fault: "server",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InternalServerError.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InternalServerError = InternalServerError;
+    var InvalidResourceId = class _InvalidResourceId extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidResourceId";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidResourceId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidResourceId.prototype);
+      }
+    };
+    exports2.InvalidResourceId = InvalidResourceId;
+    var InvalidResourceType = class _InvalidResourceType extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidResourceType";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidResourceType",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidResourceType.prototype);
+      }
+    };
+    exports2.InvalidResourceType = InvalidResourceType;
+    var TooManyTagsError = class _TooManyTagsError extends SSMServiceException_1.SSMServiceException {
+      name = "TooManyTagsError";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "TooManyTagsError",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _TooManyTagsError.prototype);
+      }
+    };
+    exports2.TooManyTagsError = TooManyTagsError;
+    var TooManyUpdates = class _TooManyUpdates extends SSMServiceException_1.SSMServiceException {
+      name = "TooManyUpdates";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "TooManyUpdates",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _TooManyUpdates.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.TooManyUpdates = TooManyUpdates;
+    var AlreadyExistsException = class _AlreadyExistsException extends SSMServiceException_1.SSMServiceException {
+      name = "AlreadyExistsException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AlreadyExistsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AlreadyExistsException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AlreadyExistsException = AlreadyExistsException;
+    var OpsItemConflictException = class _OpsItemConflictException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemConflictException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemConflictException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemConflictException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemConflictException = OpsItemConflictException;
+    var OpsItemInvalidParameterException = class _OpsItemInvalidParameterException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemInvalidParameterException";
+      $fault = "client";
+      ParameterNames;
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemInvalidParameterException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemInvalidParameterException.prototype);
+        this.ParameterNames = opts.ParameterNames;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemInvalidParameterException = OpsItemInvalidParameterException;
+    var OpsItemLimitExceededException = class _OpsItemLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemLimitExceededException";
+      $fault = "client";
+      ResourceTypes;
+      Limit;
+      LimitType;
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemLimitExceededException.prototype);
+        this.ResourceTypes = opts.ResourceTypes;
+        this.Limit = opts.Limit;
+        this.LimitType = opts.LimitType;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemLimitExceededException = OpsItemLimitExceededException;
+    var OpsItemNotFoundException = class _OpsItemNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemNotFoundException = OpsItemNotFoundException;
+    var OpsItemRelatedItemAlreadyExistsException = class _OpsItemRelatedItemAlreadyExistsException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemRelatedItemAlreadyExistsException";
+      $fault = "client";
+      Message;
+      ResourceUri;
+      OpsItemId;
+      constructor(opts) {
+        super({
+          name: "OpsItemRelatedItemAlreadyExistsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemRelatedItemAlreadyExistsException.prototype);
+        this.Message = opts.Message;
+        this.ResourceUri = opts.ResourceUri;
+        this.OpsItemId = opts.OpsItemId;
+      }
+    };
+    exports2.OpsItemRelatedItemAlreadyExistsException = OpsItemRelatedItemAlreadyExistsException;
+    var DuplicateInstanceId = class _DuplicateInstanceId extends SSMServiceException_1.SSMServiceException {
+      name = "DuplicateInstanceId";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "DuplicateInstanceId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DuplicateInstanceId.prototype);
+      }
+    };
+    exports2.DuplicateInstanceId = DuplicateInstanceId;
+    var InvalidCommandId = class _InvalidCommandId extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidCommandId";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidCommandId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidCommandId.prototype);
+      }
+    };
+    exports2.InvalidCommandId = InvalidCommandId;
+    var InvalidInstanceId = class _InvalidInstanceId extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInstanceId";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidInstanceId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInstanceId.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidInstanceId = InvalidInstanceId;
+    var DoesNotExistException = class _DoesNotExistException extends SSMServiceException_1.SSMServiceException {
+      name = "DoesNotExistException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DoesNotExistException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DoesNotExistException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DoesNotExistException = DoesNotExistException;
+    var InvalidParameters = class _InvalidParameters extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidParameters";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidParameters",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidParameters.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidParameters = InvalidParameters;
+    var AssociationAlreadyExists = class _AssociationAlreadyExists extends SSMServiceException_1.SSMServiceException {
+      name = "AssociationAlreadyExists";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "AssociationAlreadyExists",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociationAlreadyExists.prototype);
+      }
+    };
+    exports2.AssociationAlreadyExists = AssociationAlreadyExists;
+    var AssociationLimitExceeded = class _AssociationLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "AssociationLimitExceeded";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "AssociationLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociationLimitExceeded.prototype);
+      }
+    };
+    exports2.AssociationLimitExceeded = AssociationLimitExceeded;
+    var InvalidDocument = class _InvalidDocument extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocument";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocument",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocument.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocument = InvalidDocument;
+    var InvalidDocumentVersion = class _InvalidDocumentVersion extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocumentVersion";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocumentVersion",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocumentVersion.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocumentVersion = InvalidDocumentVersion;
+    var InvalidOutputLocation = class _InvalidOutputLocation extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidOutputLocation";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidOutputLocation",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidOutputLocation.prototype);
+      }
+    };
+    exports2.InvalidOutputLocation = InvalidOutputLocation;
+    var InvalidSchedule = class _InvalidSchedule extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidSchedule";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidSchedule",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidSchedule.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidSchedule = InvalidSchedule;
+    var InvalidTag = class _InvalidTag extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidTag";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidTag",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidTag.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidTag = InvalidTag;
+    var InvalidTarget = class _InvalidTarget extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidTarget";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidTarget",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidTarget.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidTarget = InvalidTarget;
+    var InvalidTargetMaps = class _InvalidTargetMaps extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidTargetMaps";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidTargetMaps",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidTargetMaps.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidTargetMaps = InvalidTargetMaps;
+    var UnsupportedPlatformType = class _UnsupportedPlatformType extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedPlatformType";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedPlatformType",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedPlatformType.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedPlatformType = UnsupportedPlatformType;
+    var DocumentAlreadyExists = class _DocumentAlreadyExists extends SSMServiceException_1.SSMServiceException {
+      name = "DocumentAlreadyExists";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DocumentAlreadyExists",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DocumentAlreadyExists.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DocumentAlreadyExists = DocumentAlreadyExists;
+    var DocumentLimitExceeded = class _DocumentLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "DocumentLimitExceeded";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DocumentLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DocumentLimitExceeded.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DocumentLimitExceeded = DocumentLimitExceeded;
+    var InvalidDocumentContent = class _InvalidDocumentContent extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocumentContent";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocumentContent",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocumentContent.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocumentContent = InvalidDocumentContent;
+    var InvalidDocumentSchemaVersion = class _InvalidDocumentSchemaVersion extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocumentSchemaVersion";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocumentSchemaVersion",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocumentSchemaVersion.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocumentSchemaVersion = InvalidDocumentSchemaVersion;
+    var MaxDocumentSizeExceeded = class _MaxDocumentSizeExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "MaxDocumentSizeExceeded";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "MaxDocumentSizeExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _MaxDocumentSizeExceeded.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.MaxDocumentSizeExceeded = MaxDocumentSizeExceeded;
+    var NoLongerSupportedException = class _NoLongerSupportedException extends SSMServiceException_1.SSMServiceException {
+      name = "NoLongerSupportedException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "NoLongerSupportedException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _NoLongerSupportedException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.NoLongerSupportedException = NoLongerSupportedException;
+    var IdempotentParameterMismatch = class _IdempotentParameterMismatch extends SSMServiceException_1.SSMServiceException {
+      name = "IdempotentParameterMismatch";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "IdempotentParameterMismatch",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IdempotentParameterMismatch.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.IdempotentParameterMismatch = IdempotentParameterMismatch;
+    var ResourceLimitExceededException = class _ResourceLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceLimitExceededException = ResourceLimitExceededException;
+    var OpsItemAccessDeniedException = class _OpsItemAccessDeniedException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemAccessDeniedException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemAccessDeniedException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemAccessDeniedException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemAccessDeniedException = OpsItemAccessDeniedException;
+    var OpsItemAlreadyExistsException = class _OpsItemAlreadyExistsException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemAlreadyExistsException";
+      $fault = "client";
+      Message;
+      OpsItemId;
+      constructor(opts) {
+        super({
+          name: "OpsItemAlreadyExistsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemAlreadyExistsException.prototype);
+        this.Message = opts.Message;
+        this.OpsItemId = opts.OpsItemId;
+      }
+    };
+    exports2.OpsItemAlreadyExistsException = OpsItemAlreadyExistsException;
+    var OpsMetadataAlreadyExistsException = class _OpsMetadataAlreadyExistsException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataAlreadyExistsException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataAlreadyExistsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataAlreadyExistsException.prototype);
+      }
+    };
+    exports2.OpsMetadataAlreadyExistsException = OpsMetadataAlreadyExistsException;
+    var OpsMetadataInvalidArgumentException = class _OpsMetadataInvalidArgumentException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataInvalidArgumentException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataInvalidArgumentException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataInvalidArgumentException.prototype);
+      }
+    };
+    exports2.OpsMetadataInvalidArgumentException = OpsMetadataInvalidArgumentException;
+    var OpsMetadataLimitExceededException = class _OpsMetadataLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataLimitExceededException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataLimitExceededException.prototype);
+      }
+    };
+    exports2.OpsMetadataLimitExceededException = OpsMetadataLimitExceededException;
+    var OpsMetadataTooManyUpdatesException = class _OpsMetadataTooManyUpdatesException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataTooManyUpdatesException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataTooManyUpdatesException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataTooManyUpdatesException.prototype);
+      }
+    };
+    exports2.OpsMetadataTooManyUpdatesException = OpsMetadataTooManyUpdatesException;
+    var ResourceDataSyncAlreadyExistsException = class _ResourceDataSyncAlreadyExistsException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceDataSyncAlreadyExistsException";
+      $fault = "client";
+      SyncName;
+      constructor(opts) {
+        super({
+          name: "ResourceDataSyncAlreadyExistsException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceDataSyncAlreadyExistsException.prototype);
+        this.SyncName = opts.SyncName;
+      }
+    };
+    exports2.ResourceDataSyncAlreadyExistsException = ResourceDataSyncAlreadyExistsException;
+    var ResourceDataSyncCountExceededException = class _ResourceDataSyncCountExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceDataSyncCountExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceDataSyncCountExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceDataSyncCountExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceDataSyncCountExceededException = ResourceDataSyncCountExceededException;
+    var ResourceDataSyncInvalidConfigurationException = class _ResourceDataSyncInvalidConfigurationException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceDataSyncInvalidConfigurationException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceDataSyncInvalidConfigurationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceDataSyncInvalidConfigurationException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceDataSyncInvalidConfigurationException = ResourceDataSyncInvalidConfigurationException;
+    var InvalidActivation = class _InvalidActivation extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidActivation";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidActivation",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidActivation.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidActivation = InvalidActivation;
+    var InvalidActivationId = class _InvalidActivationId extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidActivationId";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidActivationId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidActivationId.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidActivationId = InvalidActivationId;
+    var AssociationDoesNotExist = class _AssociationDoesNotExist extends SSMServiceException_1.SSMServiceException {
+      name = "AssociationDoesNotExist";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AssociationDoesNotExist",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociationDoesNotExist.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AssociationDoesNotExist = AssociationDoesNotExist;
+    var AssociatedInstances = class _AssociatedInstances extends SSMServiceException_1.SSMServiceException {
+      name = "AssociatedInstances";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "AssociatedInstances",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociatedInstances.prototype);
+      }
+    };
+    exports2.AssociatedInstances = AssociatedInstances;
+    var InvalidDocumentOperation = class _InvalidDocumentOperation extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocumentOperation";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocumentOperation",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocumentOperation.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocumentOperation = InvalidDocumentOperation;
+    var InvalidDeleteInventoryParametersException = class _InvalidDeleteInventoryParametersException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDeleteInventoryParametersException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDeleteInventoryParametersException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDeleteInventoryParametersException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDeleteInventoryParametersException = InvalidDeleteInventoryParametersException;
+    var InvalidInventoryRequestException = class _InvalidInventoryRequestException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInventoryRequestException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidInventoryRequestException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInventoryRequestException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidInventoryRequestException = InvalidInventoryRequestException;
+    var InvalidOptionException = class _InvalidOptionException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidOptionException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidOptionException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidOptionException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidOptionException = InvalidOptionException;
+    var InvalidTypeNameException = class _InvalidTypeNameException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidTypeNameException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidTypeNameException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidTypeNameException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidTypeNameException = InvalidTypeNameException;
+    var OpsMetadataNotFoundException = class _OpsMetadataNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataNotFoundException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataNotFoundException.prototype);
+      }
+    };
+    exports2.OpsMetadataNotFoundException = OpsMetadataNotFoundException;
+    var ParameterNotFound = class _ParameterNotFound extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterNotFound";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterNotFound",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterNotFound.prototype);
+      }
+    };
+    exports2.ParameterNotFound = ParameterNotFound;
+    var ResourceInUseException = class _ResourceInUseException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceInUseException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceInUseException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceInUseException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceInUseException = ResourceInUseException;
+    var ResourceDataSyncNotFoundException = class _ResourceDataSyncNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceDataSyncNotFoundException";
+      $fault = "client";
+      SyncName;
+      SyncType;
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceDataSyncNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceDataSyncNotFoundException.prototype);
+        this.SyncName = opts.SyncName;
+        this.SyncType = opts.SyncType;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceDataSyncNotFoundException = ResourceDataSyncNotFoundException;
+    var MalformedResourcePolicyDocumentException = class _MalformedResourcePolicyDocumentException extends SSMServiceException_1.SSMServiceException {
+      name = "MalformedResourcePolicyDocumentException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "MalformedResourcePolicyDocumentException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _MalformedResourcePolicyDocumentException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.MalformedResourcePolicyDocumentException = MalformedResourcePolicyDocumentException;
+    var ResourceNotFoundException2 = class _ResourceNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceNotFoundException = ResourceNotFoundException2;
+    var ResourcePolicyConflictException = class _ResourcePolicyConflictException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourcePolicyConflictException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourcePolicyConflictException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourcePolicyConflictException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourcePolicyConflictException = ResourcePolicyConflictException;
+    var ResourcePolicyInvalidParameterException = class _ResourcePolicyInvalidParameterException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourcePolicyInvalidParameterException";
+      $fault = "client";
+      ParameterNames;
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourcePolicyInvalidParameterException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourcePolicyInvalidParameterException.prototype);
+        this.ParameterNames = opts.ParameterNames;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourcePolicyInvalidParameterException = ResourcePolicyInvalidParameterException;
+    var ResourcePolicyNotFoundException = class _ResourcePolicyNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourcePolicyNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourcePolicyNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourcePolicyNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourcePolicyNotFoundException = ResourcePolicyNotFoundException;
+    var TargetInUseException = class _TargetInUseException extends SSMServiceException_1.SSMServiceException {
+      name = "TargetInUseException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "TargetInUseException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _TargetInUseException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.TargetInUseException = TargetInUseException;
+    var InvalidFilter = class _InvalidFilter extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidFilter";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidFilter",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidFilter.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidFilter = InvalidFilter;
+    var InvalidNextToken = class _InvalidNextToken extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidNextToken";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidNextToken",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidNextToken.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidNextToken = InvalidNextToken;
+    var InvalidAssociationVersion = class _InvalidAssociationVersion extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAssociationVersion";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAssociationVersion",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAssociationVersion.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAssociationVersion = InvalidAssociationVersion;
+    var AssociationExecutionDoesNotExist = class _AssociationExecutionDoesNotExist extends SSMServiceException_1.SSMServiceException {
+      name = "AssociationExecutionDoesNotExist";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AssociationExecutionDoesNotExist",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociationExecutionDoesNotExist.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AssociationExecutionDoesNotExist = AssociationExecutionDoesNotExist;
+    var InvalidFilterKey = class _InvalidFilterKey extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidFilterKey";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidFilterKey",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidFilterKey.prototype);
+      }
+    };
+    exports2.InvalidFilterKey = InvalidFilterKey;
+    var InvalidFilterValue = class _InvalidFilterValue extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidFilterValue";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidFilterValue",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidFilterValue.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidFilterValue = InvalidFilterValue;
+    var AutomationExecutionNotFoundException = class _AutomationExecutionNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationExecutionNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationExecutionNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationExecutionNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationExecutionNotFoundException = AutomationExecutionNotFoundException;
+    var InvalidPermissionType = class _InvalidPermissionType extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidPermissionType";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidPermissionType",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidPermissionType.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidPermissionType = InvalidPermissionType;
+    var UnsupportedOperatingSystem = class _UnsupportedOperatingSystem extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedOperatingSystem";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedOperatingSystem",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedOperatingSystem.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedOperatingSystem = UnsupportedOperatingSystem;
+    var InvalidInstanceInformationFilterValue = class _InvalidInstanceInformationFilterValue extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInstanceInformationFilterValue";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidInstanceInformationFilterValue",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInstanceInformationFilterValue.prototype);
+      }
+    };
+    exports2.InvalidInstanceInformationFilterValue = InvalidInstanceInformationFilterValue;
+    var InvalidInstancePropertyFilterValue = class _InvalidInstancePropertyFilterValue extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInstancePropertyFilterValue";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidInstancePropertyFilterValue",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInstancePropertyFilterValue.prototype);
+      }
+    };
+    exports2.InvalidInstancePropertyFilterValue = InvalidInstancePropertyFilterValue;
+    var InvalidDeletionIdException = class _InvalidDeletionIdException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDeletionIdException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDeletionIdException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDeletionIdException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDeletionIdException = InvalidDeletionIdException;
+    var InvalidFilterOption = class _InvalidFilterOption extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidFilterOption";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidFilterOption",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidFilterOption.prototype);
+      }
+    };
+    exports2.InvalidFilterOption = InvalidFilterOption;
+    var OpsItemRelatedItemAssociationNotFoundException = class _OpsItemRelatedItemAssociationNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsItemRelatedItemAssociationNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "OpsItemRelatedItemAssociationNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsItemRelatedItemAssociationNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.OpsItemRelatedItemAssociationNotFoundException = OpsItemRelatedItemAssociationNotFoundException;
+    var ThrottlingException = class _ThrottlingException extends SSMServiceException_1.SSMServiceException {
+      name = "ThrottlingException";
+      $fault = "client";
+      Message;
+      QuotaCode;
+      ServiceCode;
+      constructor(opts) {
+        super({
+          name: "ThrottlingException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ThrottlingException.prototype);
+        this.Message = opts.Message;
+        this.QuotaCode = opts.QuotaCode;
+        this.ServiceCode = opts.ServiceCode;
+      }
+    };
+    exports2.ThrottlingException = ThrottlingException;
+    var ValidationException2 = class _ValidationException extends SSMServiceException_1.SSMServiceException {
+      name = "ValidationException";
+      $fault = "client";
+      Message;
+      ReasonCode;
+      constructor(opts) {
+        super({
+          name: "ValidationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ValidationException.prototype);
+        this.Message = opts.Message;
+        this.ReasonCode = opts.ReasonCode;
+      }
+    };
+    exports2.ValidationException = ValidationException2;
+    var InvalidDocumentType = class _InvalidDocumentType extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidDocumentType";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidDocumentType",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidDocumentType.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidDocumentType = InvalidDocumentType;
+    var UnsupportedCalendarException = class _UnsupportedCalendarException extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedCalendarException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedCalendarException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedCalendarException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedCalendarException = UnsupportedCalendarException;
+    var InvalidPluginName = class _InvalidPluginName extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidPluginName";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidPluginName",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidPluginName.prototype);
+      }
+    };
+    exports2.InvalidPluginName = InvalidPluginName;
+    var InvocationDoesNotExist = class _InvocationDoesNotExist extends SSMServiceException_1.SSMServiceException {
+      name = "InvocationDoesNotExist";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvocationDoesNotExist",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvocationDoesNotExist.prototype);
+      }
+    };
+    exports2.InvocationDoesNotExist = InvocationDoesNotExist;
+    var UnsupportedFeatureRequiredException = class _UnsupportedFeatureRequiredException extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedFeatureRequiredException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedFeatureRequiredException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedFeatureRequiredException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedFeatureRequiredException = UnsupportedFeatureRequiredException;
+    var InvalidAggregatorException = class _InvalidAggregatorException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAggregatorException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAggregatorException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAggregatorException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAggregatorException = InvalidAggregatorException;
+    var InvalidInventoryGroupException = class _InvalidInventoryGroupException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInventoryGroupException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidInventoryGroupException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInventoryGroupException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidInventoryGroupException = InvalidInventoryGroupException;
+    var InvalidResultAttributeException = class _InvalidResultAttributeException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidResultAttributeException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidResultAttributeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidResultAttributeException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidResultAttributeException = InvalidResultAttributeException;
+    var InvalidKeyId = class _InvalidKeyId extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidKeyId";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidKeyId",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidKeyId.prototype);
+      }
+    };
+    exports2.InvalidKeyId = InvalidKeyId;
+    var ParameterVersionNotFound = class _ParameterVersionNotFound extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterVersionNotFound";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterVersionNotFound",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterVersionNotFound.prototype);
+      }
+    };
+    exports2.ParameterVersionNotFound = ParameterVersionNotFound;
+    var ServiceSettingNotFound = class _ServiceSettingNotFound extends SSMServiceException_1.SSMServiceException {
+      name = "ServiceSettingNotFound";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ServiceSettingNotFound",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ServiceSettingNotFound.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ServiceSettingNotFound = ServiceSettingNotFound;
+    var ParameterVersionLabelLimitExceeded = class _ParameterVersionLabelLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterVersionLabelLimitExceeded";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterVersionLabelLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterVersionLabelLimitExceeded.prototype);
+      }
+    };
+    exports2.ParameterVersionLabelLimitExceeded = ParameterVersionLabelLimitExceeded;
+    var UnsupportedOperationException = class _UnsupportedOperationException extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedOperationException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedOperationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedOperationException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedOperationException = UnsupportedOperationException;
+    var DocumentPermissionLimit = class _DocumentPermissionLimit extends SSMServiceException_1.SSMServiceException {
+      name = "DocumentPermissionLimit";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DocumentPermissionLimit",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DocumentPermissionLimit.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DocumentPermissionLimit = DocumentPermissionLimit;
+    var ComplianceTypeCountLimitExceededException = class _ComplianceTypeCountLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ComplianceTypeCountLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ComplianceTypeCountLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ComplianceTypeCountLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ComplianceTypeCountLimitExceededException = ComplianceTypeCountLimitExceededException;
+    var InvalidItemContentException = class _InvalidItemContentException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidItemContentException";
+      $fault = "client";
+      TypeName;
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidItemContentException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidItemContentException.prototype);
+        this.TypeName = opts.TypeName;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidItemContentException = InvalidItemContentException;
+    var ItemSizeLimitExceededException = class _ItemSizeLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ItemSizeLimitExceededException";
+      $fault = "client";
+      TypeName;
+      Message;
+      constructor(opts) {
+        super({
+          name: "ItemSizeLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ItemSizeLimitExceededException.prototype);
+        this.TypeName = opts.TypeName;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ItemSizeLimitExceededException = ItemSizeLimitExceededException;
+    var TotalSizeLimitExceededException = class _TotalSizeLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "TotalSizeLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "TotalSizeLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _TotalSizeLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.TotalSizeLimitExceededException = TotalSizeLimitExceededException;
+    var CustomSchemaCountLimitExceededException = class _CustomSchemaCountLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "CustomSchemaCountLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "CustomSchemaCountLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _CustomSchemaCountLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.CustomSchemaCountLimitExceededException = CustomSchemaCountLimitExceededException;
+    var InvalidInventoryItemContextException = class _InvalidInventoryItemContextException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidInventoryItemContextException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidInventoryItemContextException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidInventoryItemContextException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidInventoryItemContextException = InvalidInventoryItemContextException;
+    var ItemContentMismatchException = class _ItemContentMismatchException extends SSMServiceException_1.SSMServiceException {
+      name = "ItemContentMismatchException";
+      $fault = "client";
+      TypeName;
+      Message;
+      constructor(opts) {
+        super({
+          name: "ItemContentMismatchException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ItemContentMismatchException.prototype);
+        this.TypeName = opts.TypeName;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ItemContentMismatchException = ItemContentMismatchException;
+    var SubTypeCountLimitExceededException = class _SubTypeCountLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "SubTypeCountLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "SubTypeCountLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _SubTypeCountLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.SubTypeCountLimitExceededException = SubTypeCountLimitExceededException;
+    var UnsupportedInventoryItemContextException = class _UnsupportedInventoryItemContextException extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedInventoryItemContextException";
+      $fault = "client";
+      TypeName;
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedInventoryItemContextException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedInventoryItemContextException.prototype);
+        this.TypeName = opts.TypeName;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedInventoryItemContextException = UnsupportedInventoryItemContextException;
+    var UnsupportedInventorySchemaVersionException = class _UnsupportedInventorySchemaVersionException extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedInventorySchemaVersionException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "UnsupportedInventorySchemaVersionException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedInventorySchemaVersionException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.UnsupportedInventorySchemaVersionException = UnsupportedInventorySchemaVersionException;
+    var HierarchyLevelLimitExceededException = class _HierarchyLevelLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "HierarchyLevelLimitExceededException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "HierarchyLevelLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _HierarchyLevelLimitExceededException.prototype);
+      }
+    };
+    exports2.HierarchyLevelLimitExceededException = HierarchyLevelLimitExceededException;
+    var HierarchyTypeMismatchException = class _HierarchyTypeMismatchException extends SSMServiceException_1.SSMServiceException {
+      name = "HierarchyTypeMismatchException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "HierarchyTypeMismatchException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _HierarchyTypeMismatchException.prototype);
+      }
+    };
+    exports2.HierarchyTypeMismatchException = HierarchyTypeMismatchException;
+    var IncompatiblePolicyException = class _IncompatiblePolicyException extends SSMServiceException_1.SSMServiceException {
+      name = "IncompatiblePolicyException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "IncompatiblePolicyException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _IncompatiblePolicyException.prototype);
+      }
+    };
+    exports2.IncompatiblePolicyException = IncompatiblePolicyException;
+    var InvalidAllowedPatternException = class _InvalidAllowedPatternException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAllowedPatternException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidAllowedPatternException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAllowedPatternException.prototype);
+      }
+    };
+    exports2.InvalidAllowedPatternException = InvalidAllowedPatternException;
+    var InvalidPolicyAttributeException = class _InvalidPolicyAttributeException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidPolicyAttributeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidPolicyAttributeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidPolicyAttributeException.prototype);
+      }
+    };
+    exports2.InvalidPolicyAttributeException = InvalidPolicyAttributeException;
+    var InvalidPolicyTypeException = class _InvalidPolicyTypeException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidPolicyTypeException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidPolicyTypeException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidPolicyTypeException.prototype);
+      }
+    };
+    exports2.InvalidPolicyTypeException = InvalidPolicyTypeException;
+    var ParameterAlreadyExists = class _ParameterAlreadyExists extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterAlreadyExists";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterAlreadyExists",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterAlreadyExists.prototype);
+      }
+    };
+    exports2.ParameterAlreadyExists = ParameterAlreadyExists;
+    var ParameterLimitExceeded = class _ParameterLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterLimitExceeded";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterLimitExceeded.prototype);
+      }
+    };
+    exports2.ParameterLimitExceeded = ParameterLimitExceeded;
+    var ParameterMaxVersionLimitExceeded = class _ParameterMaxVersionLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterMaxVersionLimitExceeded";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterMaxVersionLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterMaxVersionLimitExceeded.prototype);
+      }
+    };
+    exports2.ParameterMaxVersionLimitExceeded = ParameterMaxVersionLimitExceeded;
+    var ParameterPatternMismatchException = class _ParameterPatternMismatchException extends SSMServiceException_1.SSMServiceException {
+      name = "ParameterPatternMismatchException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "ParameterPatternMismatchException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ParameterPatternMismatchException.prototype);
+      }
+    };
+    exports2.ParameterPatternMismatchException = ParameterPatternMismatchException;
+    var PoliciesLimitExceededException = class _PoliciesLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "PoliciesLimitExceededException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "PoliciesLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _PoliciesLimitExceededException.prototype);
+      }
+    };
+    exports2.PoliciesLimitExceededException = PoliciesLimitExceededException;
+    var UnsupportedParameterType = class _UnsupportedParameterType extends SSMServiceException_1.SSMServiceException {
+      name = "UnsupportedParameterType";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "UnsupportedParameterType",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _UnsupportedParameterType.prototype);
+      }
+    };
+    exports2.UnsupportedParameterType = UnsupportedParameterType;
+    var ResourcePolicyLimitExceededException = class _ResourcePolicyLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourcePolicyLimitExceededException";
+      $fault = "client";
+      Limit;
+      LimitType;
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourcePolicyLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourcePolicyLimitExceededException.prototype);
+        this.Limit = opts.Limit;
+        this.LimitType = opts.LimitType;
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourcePolicyLimitExceededException = ResourcePolicyLimitExceededException;
+    var FeatureNotAvailableException = class _FeatureNotAvailableException extends SSMServiceException_1.SSMServiceException {
+      name = "FeatureNotAvailableException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "FeatureNotAvailableException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _FeatureNotAvailableException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.FeatureNotAvailableException = FeatureNotAvailableException;
+    var AutomationStepNotFoundException = class _AutomationStepNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationStepNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationStepNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationStepNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationStepNotFoundException = AutomationStepNotFoundException;
+    var InvalidAutomationSignalException = class _InvalidAutomationSignalException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAutomationSignalException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAutomationSignalException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAutomationSignalException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAutomationSignalException = InvalidAutomationSignalException;
+    var InvalidNotificationConfig = class _InvalidNotificationConfig extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidNotificationConfig";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidNotificationConfig",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidNotificationConfig.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidNotificationConfig = InvalidNotificationConfig;
+    var InvalidOutputFolder = class _InvalidOutputFolder extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidOutputFolder";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "InvalidOutputFolder",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidOutputFolder.prototype);
+      }
+    };
+    exports2.InvalidOutputFolder = InvalidOutputFolder;
+    var InvalidRole = class _InvalidRole extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidRole";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidRole",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidRole.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidRole = InvalidRole;
+    var ServiceQuotaExceededException = class _ServiceQuotaExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "ServiceQuotaExceededException";
+      $fault = "client";
+      Message;
+      ResourceId;
+      ResourceType;
+      QuotaCode;
+      ServiceCode;
+      constructor(opts) {
+        super({
+          name: "ServiceQuotaExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ServiceQuotaExceededException.prototype);
+        this.Message = opts.Message;
+        this.ResourceId = opts.ResourceId;
+        this.ResourceType = opts.ResourceType;
+        this.QuotaCode = opts.QuotaCode;
+        this.ServiceCode = opts.ServiceCode;
+      }
+    };
+    exports2.ServiceQuotaExceededException = ServiceQuotaExceededException;
+    var InvalidAssociation = class _InvalidAssociation extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAssociation";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAssociation",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAssociation.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAssociation = InvalidAssociation;
+    var AutomationDefinitionNotFoundException = class _AutomationDefinitionNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationDefinitionNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationDefinitionNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationDefinitionNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationDefinitionNotFoundException = AutomationDefinitionNotFoundException;
+    var AutomationDefinitionVersionNotFoundException = class _AutomationDefinitionVersionNotFoundException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationDefinitionVersionNotFoundException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationDefinitionVersionNotFoundException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationDefinitionVersionNotFoundException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationDefinitionVersionNotFoundException = AutomationDefinitionVersionNotFoundException;
+    var AutomationExecutionLimitExceededException = class _AutomationExecutionLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationExecutionLimitExceededException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationExecutionLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationExecutionLimitExceededException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationExecutionLimitExceededException = AutomationExecutionLimitExceededException;
+    var InvalidAutomationExecutionParametersException = class _InvalidAutomationExecutionParametersException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAutomationExecutionParametersException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAutomationExecutionParametersException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAutomationExecutionParametersException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAutomationExecutionParametersException = InvalidAutomationExecutionParametersException;
+    var AutomationDefinitionNotApprovedException = class _AutomationDefinitionNotApprovedException extends SSMServiceException_1.SSMServiceException {
+      name = "AutomationDefinitionNotApprovedException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AutomationDefinitionNotApprovedException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AutomationDefinitionNotApprovedException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AutomationDefinitionNotApprovedException = AutomationDefinitionNotApprovedException;
+    var TargetNotConnected = class _TargetNotConnected extends SSMServiceException_1.SSMServiceException {
+      name = "TargetNotConnected";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "TargetNotConnected",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _TargetNotConnected.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.TargetNotConnected = TargetNotConnected;
+    var InvalidAutomationStatusUpdateException = class _InvalidAutomationStatusUpdateException extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidAutomationStatusUpdateException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidAutomationStatusUpdateException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidAutomationStatusUpdateException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidAutomationStatusUpdateException = InvalidAutomationStatusUpdateException;
+    var AssociationVersionLimitExceeded = class _AssociationVersionLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "AssociationVersionLimitExceeded";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "AssociationVersionLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _AssociationVersionLimitExceeded.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.AssociationVersionLimitExceeded = AssociationVersionLimitExceeded;
+    var InvalidUpdate = class _InvalidUpdate extends SSMServiceException_1.SSMServiceException {
+      name = "InvalidUpdate";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidUpdate",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidUpdate.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidUpdate = InvalidUpdate;
+    var StatusUnchanged = class _StatusUnchanged extends SSMServiceException_1.SSMServiceException {
+      name = "StatusUnchanged";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "StatusUnchanged",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _StatusUnchanged.prototype);
+      }
+    };
+    exports2.StatusUnchanged = StatusUnchanged;
+    var DocumentVersionLimitExceeded = class _DocumentVersionLimitExceeded extends SSMServiceException_1.SSMServiceException {
+      name = "DocumentVersionLimitExceeded";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DocumentVersionLimitExceeded",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DocumentVersionLimitExceeded.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DocumentVersionLimitExceeded = DocumentVersionLimitExceeded;
+    var DuplicateDocumentContent = class _DuplicateDocumentContent extends SSMServiceException_1.SSMServiceException {
+      name = "DuplicateDocumentContent";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DuplicateDocumentContent",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DuplicateDocumentContent.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DuplicateDocumentContent = DuplicateDocumentContent;
+    var DuplicateDocumentVersionName = class _DuplicateDocumentVersionName extends SSMServiceException_1.SSMServiceException {
+      name = "DuplicateDocumentVersionName";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "DuplicateDocumentVersionName",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _DuplicateDocumentVersionName.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.DuplicateDocumentVersionName = DuplicateDocumentVersionName;
+    var OpsMetadataKeyLimitExceededException = class _OpsMetadataKeyLimitExceededException extends SSMServiceException_1.SSMServiceException {
+      name = "OpsMetadataKeyLimitExceededException";
+      $fault = "client";
+      constructor(opts) {
+        super({
+          name: "OpsMetadataKeyLimitExceededException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _OpsMetadataKeyLimitExceededException.prototype);
+      }
+    };
+    exports2.OpsMetadataKeyLimitExceededException = OpsMetadataKeyLimitExceededException;
+    var ResourceDataSyncConflictException = class _ResourceDataSyncConflictException extends SSMServiceException_1.SSMServiceException {
+      name = "ResourceDataSyncConflictException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ResourceDataSyncConflictException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ResourceDataSyncConflictException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ResourceDataSyncConflictException = ResourceDataSyncConflictException;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/schemas/schemas_0.js
+var require_schemas_08 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/schemas/schemas_0.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.InvalidFilter$ = exports2.InvalidDocumentVersion$ = exports2.InvalidDocumentType$ = exports2.InvalidDocumentSchemaVersion$ = exports2.InvalidDocumentOperation$ = exports2.InvalidDocumentContent$ = exports2.InvalidDocument$ = exports2.InvalidDeletionIdException$ = exports2.InvalidDeleteInventoryParametersException$ = exports2.InvalidCommandId$ = exports2.InvalidAutomationStatusUpdateException$ = exports2.InvalidAutomationSignalException$ = exports2.InvalidAutomationExecutionParametersException$ = exports2.InvalidAssociationVersion$ = exports2.InvalidAssociation$ = exports2.InvalidAllowedPatternException$ = exports2.InvalidAggregatorException$ = exports2.InvalidActivationId$ = exports2.InvalidActivation$ = exports2.InternalServerError$ = exports2.IncompatiblePolicyException$ = exports2.IdempotentParameterMismatch$ = exports2.HierarchyTypeMismatchException$ = exports2.HierarchyLevelLimitExceededException$ = exports2.FeatureNotAvailableException$ = exports2.DuplicateInstanceId$ = exports2.DuplicateDocumentVersionName$ = exports2.DuplicateDocumentContent$ = exports2.DoesNotExistException$ = exports2.DocumentVersionLimitExceeded$ = exports2.DocumentPermissionLimit$ = exports2.DocumentLimitExceeded$ = exports2.DocumentAlreadyExists$ = exports2.CustomSchemaCountLimitExceededException$ = exports2.ComplianceTypeCountLimitExceededException$ = exports2.AutomationStepNotFoundException$ = exports2.AutomationExecutionNotFoundException$ = exports2.AutomationExecutionLimitExceededException$ = exports2.AutomationDefinitionVersionNotFoundException$ = exports2.AutomationDefinitionNotFoundException$ = exports2.AutomationDefinitionNotApprovedException$ = exports2.AssociationVersionLimitExceeded$ = exports2.AssociationLimitExceeded$ = exports2.AssociationExecutionDoesNotExist$ = exports2.AssociationDoesNotExist$ = exports2.AssociationAlreadyExists$ = exports2.AssociatedInstances$ = exports2.AlreadyExistsException$ = exports2.AccessDeniedException$ = exports2.SSMServiceException$ = void 0;
+    exports2.OpsMetadataNotFoundException$ = exports2.OpsMetadataLimitExceededException$ = exports2.OpsMetadataKeyLimitExceededException$ = exports2.OpsMetadataInvalidArgumentException$ = exports2.OpsMetadataAlreadyExistsException$ = exports2.OpsItemRelatedItemAssociationNotFoundException$ = exports2.OpsItemRelatedItemAlreadyExistsException$ = exports2.OpsItemNotFoundException$ = exports2.OpsItemLimitExceededException$ = exports2.OpsItemInvalidParameterException$ = exports2.OpsItemConflictException$ = exports2.OpsItemAlreadyExistsException$ = exports2.OpsItemAccessDeniedException$ = exports2.NoLongerSupportedException$ = exports2.MaxDocumentSizeExceeded$ = exports2.MalformedResourcePolicyDocumentException$ = exports2.ItemSizeLimitExceededException$ = exports2.ItemContentMismatchException$ = exports2.InvocationDoesNotExist$ = exports2.InvalidUpdate$ = exports2.InvalidTypeNameException$ = exports2.InvalidTargetMaps$ = exports2.InvalidTarget$ = exports2.InvalidTag$ = exports2.InvalidSchedule$ = exports2.InvalidRole$ = exports2.InvalidResultAttributeException$ = exports2.InvalidResourceType$ = exports2.InvalidResourceId$ = exports2.InvalidPolicyTypeException$ = exports2.InvalidPolicyAttributeException$ = exports2.InvalidPluginName$ = exports2.InvalidPermissionType$ = exports2.InvalidParameters$ = exports2.InvalidOutputLocation$ = exports2.InvalidOutputFolder$ = exports2.InvalidOptionException$ = exports2.InvalidNotificationConfig$ = exports2.InvalidNextToken$ = exports2.InvalidKeyId$ = exports2.InvalidItemContentException$ = exports2.InvalidInventoryRequestException$ = exports2.InvalidInventoryItemContextException$ = exports2.InvalidInventoryGroupException$ = exports2.InvalidInstancePropertyFilterValue$ = exports2.InvalidInstanceInformationFilterValue$ = exports2.InvalidInstanceId$ = exports2.InvalidFilterValue$ = exports2.InvalidFilterOption$ = exports2.InvalidFilterKey$ = void 0;
+    exports2.AssociateOpsItemRelatedItemResponse$ = exports2.AssociateOpsItemRelatedItemRequest$ = exports2.AlarmStateInformation$ = exports2.AlarmConfiguration$ = exports2.Alarm$ = exports2.AddTagsToResourceResult$ = exports2.AddTagsToResourceRequest$ = exports2.Activation$ = exports2.AccountSharingInfo$ = exports2.errorTypeRegistries = exports2.ValidationException$ = exports2.UnsupportedPlatformType$ = exports2.UnsupportedParameterType$ = exports2.UnsupportedOperationException$ = exports2.UnsupportedOperatingSystem$ = exports2.UnsupportedInventorySchemaVersionException$ = exports2.UnsupportedInventoryItemContextException$ = exports2.UnsupportedFeatureRequiredException$ = exports2.UnsupportedCalendarException$ = exports2.TotalSizeLimitExceededException$ = exports2.TooManyUpdates$ = exports2.TooManyTagsError$ = exports2.ThrottlingException$ = exports2.TargetNotConnected$ = exports2.TargetInUseException$ = exports2.SubTypeCountLimitExceededException$ = exports2.StatusUnchanged$ = exports2.ServiceSettingNotFound$ = exports2.ServiceQuotaExceededException$ = exports2.ResourcePolicyNotFoundException$ = exports2.ResourcePolicyLimitExceededException$ = exports2.ResourcePolicyInvalidParameterException$ = exports2.ResourcePolicyConflictException$ = exports2.ResourceNotFoundException$ = exports2.ResourceLimitExceededException$ = exports2.ResourceInUseException$ = exports2.ResourceDataSyncNotFoundException$ = exports2.ResourceDataSyncInvalidConfigurationException$ = exports2.ResourceDataSyncCountExceededException$ = exports2.ResourceDataSyncConflictException$ = exports2.ResourceDataSyncAlreadyExistsException$ = exports2.PoliciesLimitExceededException$ = exports2.ParameterVersionNotFound$ = exports2.ParameterVersionLabelLimitExceeded$ = exports2.ParameterPatternMismatchException$ = exports2.ParameterNotFound$ = exports2.ParameterMaxVersionLimitExceeded$ = exports2.ParameterLimitExceeded$ = exports2.ParameterAlreadyExists$ = exports2.OpsMetadataTooManyUpdatesException$ = void 0;
+    exports2.CreatePatchBaselineRequest$ = exports2.CreateOpsMetadataResult$ = exports2.CreateOpsMetadataRequest$ = exports2.CreateOpsItemResponse$ = exports2.CreateOpsItemRequest$ = exports2.CreateMaintenanceWindowResult$ = exports2.CreateMaintenanceWindowRequest$ = exports2.CreateDocumentResult$ = exports2.CreateDocumentRequest$ = exports2.CreateAssociationResult$ = exports2.CreateAssociationRequest$ = exports2.CreateAssociationBatchResult$ = exports2.CreateAssociationBatchRequestEntry$ = exports2.CreateAssociationBatchRequest$ = exports2.CreateActivationResult$ = exports2.CreateActivationRequest$ = exports2.CompliantSummary$ = exports2.ComplianceSummaryItem$ = exports2.ComplianceStringFilter$ = exports2.ComplianceItemEntry$ = exports2.ComplianceItem$ = exports2.ComplianceExecutionSummary$ = exports2.CommandPlugin$ = exports2.CommandInvocation$ = exports2.CommandFilter$ = exports2.Command$ = exports2.CloudWatchOutputConfig$ = exports2.CancelMaintenanceWindowExecutionResult$ = exports2.CancelMaintenanceWindowExecutionRequest$ = exports2.CancelCommandResult$ = exports2.CancelCommandRequest$ = exports2.BaselineOverride$ = exports2.AutomationExecutionPreview$ = exports2.AutomationExecutionMetadata$ = exports2.AutomationExecutionInputs$ = exports2.AutomationExecutionFilter$ = exports2.AutomationExecution$ = exports2.AttachmentsSource$ = exports2.AttachmentInformation$ = exports2.AttachmentContent$ = exports2.AssociationVersionInfo$ = exports2.AssociationStatus$ = exports2.AssociationOverview$ = exports2.AssociationFilter$ = exports2.AssociationExecutionTargetsFilter$ = exports2.AssociationExecutionTarget$ = exports2.AssociationExecutionFilter$ = exports2.AssociationExecution$ = exports2.AssociationDescription$ = exports2.Association$ = void 0;
+    exports2.DescribeAvailablePatchesRequest$ = exports2.DescribeAutomationStepExecutionsResult$ = exports2.DescribeAutomationStepExecutionsRequest$ = exports2.DescribeAutomationExecutionsResult$ = exports2.DescribeAutomationExecutionsRequest$ = exports2.DescribeAssociationResult$ = exports2.DescribeAssociationRequest$ = exports2.DescribeAssociationExecutionTargetsResult$ = exports2.DescribeAssociationExecutionTargetsRequest$ = exports2.DescribeAssociationExecutionsResult$ = exports2.DescribeAssociationExecutionsRequest$ = exports2.DescribeActivationsResult$ = exports2.DescribeActivationsRequest$ = exports2.DescribeActivationsFilter$ = exports2.DeregisterTaskFromMaintenanceWindowResult$ = exports2.DeregisterTaskFromMaintenanceWindowRequest$ = exports2.DeregisterTargetFromMaintenanceWindowResult$ = exports2.DeregisterTargetFromMaintenanceWindowRequest$ = exports2.DeregisterPatchBaselineForPatchGroupResult$ = exports2.DeregisterPatchBaselineForPatchGroupRequest$ = exports2.DeregisterManagedInstanceResult$ = exports2.DeregisterManagedInstanceRequest$ = exports2.DeleteResourcePolicyResponse$ = exports2.DeleteResourcePolicyRequest$ = exports2.DeleteResourceDataSyncResult$ = exports2.DeleteResourceDataSyncRequest$ = exports2.DeletePatchBaselineResult$ = exports2.DeletePatchBaselineRequest$ = exports2.DeleteParametersResult$ = exports2.DeleteParametersRequest$ = exports2.DeleteParameterResult$ = exports2.DeleteParameterRequest$ = exports2.DeleteOpsMetadataResult$ = exports2.DeleteOpsMetadataRequest$ = exports2.DeleteOpsItemResponse$ = exports2.DeleteOpsItemRequest$ = exports2.DeleteMaintenanceWindowResult$ = exports2.DeleteMaintenanceWindowRequest$ = exports2.DeleteInventoryResult$ = exports2.DeleteInventoryRequest$ = exports2.DeleteDocumentResult$ = exports2.DeleteDocumentRequest$ = exports2.DeleteAssociationResult$ = exports2.DeleteAssociationRequest$ = exports2.DeleteActivationResult$ = exports2.DeleteActivationRequest$ = exports2.Credentials$ = exports2.CreateResourceDataSyncResult$ = exports2.CreateResourceDataSyncRequest$ = exports2.CreatePatchBaselineResult$ = void 0;
+    exports2.DescribePatchPropertiesRequest$ = exports2.DescribePatchGroupStateResult$ = exports2.DescribePatchGroupStateRequest$ = exports2.DescribePatchGroupsResult$ = exports2.DescribePatchGroupsRequest$ = exports2.DescribePatchBaselinesResult$ = exports2.DescribePatchBaselinesRequest$ = exports2.DescribeParametersResult$ = exports2.DescribeParametersRequest$ = exports2.DescribeOpsItemsResponse$ = exports2.DescribeOpsItemsRequest$ = exports2.DescribeMaintenanceWindowTasksResult$ = exports2.DescribeMaintenanceWindowTasksRequest$ = exports2.DescribeMaintenanceWindowTargetsResult$ = exports2.DescribeMaintenanceWindowTargetsRequest$ = exports2.DescribeMaintenanceWindowsResult$ = exports2.DescribeMaintenanceWindowsRequest$ = exports2.DescribeMaintenanceWindowsForTargetResult$ = exports2.DescribeMaintenanceWindowsForTargetRequest$ = exports2.DescribeMaintenanceWindowScheduleResult$ = exports2.DescribeMaintenanceWindowScheduleRequest$ = exports2.DescribeMaintenanceWindowExecutionTasksResult$ = exports2.DescribeMaintenanceWindowExecutionTasksRequest$ = exports2.DescribeMaintenanceWindowExecutionTaskInvocationsResult$ = exports2.DescribeMaintenanceWindowExecutionTaskInvocationsRequest$ = exports2.DescribeMaintenanceWindowExecutionsResult$ = exports2.DescribeMaintenanceWindowExecutionsRequest$ = exports2.DescribeInventoryDeletionsResult$ = exports2.DescribeInventoryDeletionsRequest$ = exports2.DescribeInstancePropertiesResult$ = exports2.DescribeInstancePropertiesRequest$ = exports2.DescribeInstancePatchStatesResult$ = exports2.DescribeInstancePatchStatesRequest$ = exports2.DescribeInstancePatchStatesForPatchGroupResult$ = exports2.DescribeInstancePatchStatesForPatchGroupRequest$ = exports2.DescribeInstancePatchesResult$ = exports2.DescribeInstancePatchesRequest$ = exports2.DescribeInstanceInformationResult$ = exports2.DescribeInstanceInformationRequest$ = exports2.DescribeInstanceAssociationsStatusResult$ = exports2.DescribeInstanceAssociationsStatusRequest$ = exports2.DescribeEffectivePatchesForPatchBaselineResult$ = exports2.DescribeEffectivePatchesForPatchBaselineRequest$ = exports2.DescribeEffectiveInstanceAssociationsResult$ = exports2.DescribeEffectiveInstanceAssociationsRequest$ = exports2.DescribeDocumentResult$ = exports2.DescribeDocumentRequest$ = exports2.DescribeDocumentPermissionResponse$ = exports2.DescribeDocumentPermissionRequest$ = exports2.DescribeAvailablePatchesResult$ = void 0;
+    exports2.GetMaintenanceWindowResult$ = exports2.GetMaintenanceWindowRequest$ = exports2.GetMaintenanceWindowExecutionTaskResult$ = exports2.GetMaintenanceWindowExecutionTaskRequest$ = exports2.GetMaintenanceWindowExecutionTaskInvocationResult$ = exports2.GetMaintenanceWindowExecutionTaskInvocationRequest$ = exports2.GetMaintenanceWindowExecutionResult$ = exports2.GetMaintenanceWindowExecutionRequest$ = exports2.GetInventorySchemaResult$ = exports2.GetInventorySchemaRequest$ = exports2.GetInventoryResult$ = exports2.GetInventoryRequest$ = exports2.GetExecutionPreviewResponse$ = exports2.GetExecutionPreviewRequest$ = exports2.GetDocumentResult$ = exports2.GetDocumentRequest$ = exports2.GetDeployablePatchSnapshotForInstanceResult$ = exports2.GetDeployablePatchSnapshotForInstanceRequest$ = exports2.GetDefaultPatchBaselineResult$ = exports2.GetDefaultPatchBaselineRequest$ = exports2.GetConnectionStatusResponse$ = exports2.GetConnectionStatusRequest$ = exports2.GetCommandInvocationResult$ = exports2.GetCommandInvocationRequest$ = exports2.GetCalendarStateResponse$ = exports2.GetCalendarStateRequest$ = exports2.GetAutomationExecutionResult$ = exports2.GetAutomationExecutionRequest$ = exports2.GetAccessTokenResponse$ = exports2.GetAccessTokenRequest$ = exports2.FailureDetails$ = exports2.FailedCreateAssociation$ = exports2.EffectivePatch$ = exports2.DocumentVersionInfo$ = exports2.DocumentReviews$ = exports2.DocumentReviewerResponseSource$ = exports2.DocumentReviewCommentSource$ = exports2.DocumentRequires$ = exports2.DocumentParameter$ = exports2.DocumentMetadataResponseInfo$ = exports2.DocumentKeyValuesFilter$ = exports2.DocumentIdentifier$ = exports2.DocumentFilter$ = exports2.DocumentDescription$ = exports2.DocumentDefaultVersionDescription$ = exports2.DisassociateOpsItemRelatedItemResponse$ = exports2.DisassociateOpsItemRelatedItemRequest$ = exports2.DescribeSessionsResponse$ = exports2.DescribeSessionsRequest$ = exports2.DescribePatchPropertiesResult$ = void 0;
+    exports2.InventoryResultItem$ = exports2.InventoryResultEntity$ = exports2.InventoryItemSchema$ = exports2.InventoryItemAttribute$ = exports2.InventoryItem$ = exports2.InventoryGroup$ = exports2.InventoryFilter$ = exports2.InventoryDeletionSummaryItem$ = exports2.InventoryDeletionSummary$ = exports2.InventoryDeletionStatusItem$ = exports2.InventoryAggregator$ = exports2.InstancePropertyStringFilter$ = exports2.InstancePropertyFilter$ = exports2.InstanceProperty$ = exports2.InstancePatchStateFilter$ = exports2.InstancePatchState$ = exports2.InstanceInformationStringFilter$ = exports2.InstanceInformationFilter$ = exports2.InstanceInformation$ = exports2.InstanceInfo$ = exports2.InstanceAssociationStatusInfo$ = exports2.InstanceAssociationOutputUrl$ = exports2.InstanceAssociationOutputLocation$ = exports2.InstanceAssociation$ = exports2.InstanceAggregatedAssociationOverview$ = exports2.GetServiceSettingResult$ = exports2.GetServiceSettingRequest$ = exports2.GetResourcePoliciesResponseEntry$ = exports2.GetResourcePoliciesResponse$ = exports2.GetResourcePoliciesRequest$ = exports2.GetPatchBaselineResult$ = exports2.GetPatchBaselineRequest$ = exports2.GetPatchBaselineForPatchGroupResult$ = exports2.GetPatchBaselineForPatchGroupRequest$ = exports2.GetParametersResult$ = exports2.GetParametersRequest$ = exports2.GetParametersByPathResult$ = exports2.GetParametersByPathRequest$ = exports2.GetParameterResult$ = exports2.GetParameterRequest$ = exports2.GetParameterHistoryResult$ = exports2.GetParameterHistoryRequest$ = exports2.GetOpsSummaryResult$ = exports2.GetOpsSummaryRequest$ = exports2.GetOpsMetadataResult$ = exports2.GetOpsMetadataRequest$ = exports2.GetOpsItemResponse$ = exports2.GetOpsItemRequest$ = exports2.GetMaintenanceWindowTaskResult$ = exports2.GetMaintenanceWindowTaskRequest$ = void 0;
+    exports2.MaintenanceWindowTarget$ = exports2.MaintenanceWindowStepFunctionsParameters$ = exports2.MaintenanceWindowRunCommandParameters$ = exports2.MaintenanceWindowLambdaParameters$ = exports2.MaintenanceWindowIdentityForTarget$ = exports2.MaintenanceWindowIdentity$ = exports2.MaintenanceWindowFilter$ = exports2.MaintenanceWindowExecutionTaskInvocationIdentity$ = exports2.MaintenanceWindowExecutionTaskIdentity$ = exports2.MaintenanceWindowExecution$ = exports2.MaintenanceWindowAutomationParameters$ = exports2.LoggingInfo$ = exports2.ListTagsForResourceResult$ = exports2.ListTagsForResourceRequest$ = exports2.ListResourceDataSyncResult$ = exports2.ListResourceDataSyncRequest$ = exports2.ListResourceComplianceSummariesResult$ = exports2.ListResourceComplianceSummariesRequest$ = exports2.ListOpsMetadataResult$ = exports2.ListOpsMetadataRequest$ = exports2.ListOpsItemRelatedItemsResponse$ = exports2.ListOpsItemRelatedItemsRequest$ = exports2.ListOpsItemEventsResponse$ = exports2.ListOpsItemEventsRequest$ = exports2.ListNodesSummaryResult$ = exports2.ListNodesSummaryRequest$ = exports2.ListNodesResult$ = exports2.ListNodesRequest$ = exports2.ListInventoryEntriesResult$ = exports2.ListInventoryEntriesRequest$ = exports2.ListDocumentVersionsResult$ = exports2.ListDocumentVersionsRequest$ = exports2.ListDocumentsResult$ = exports2.ListDocumentsRequest$ = exports2.ListDocumentMetadataHistoryResponse$ = exports2.ListDocumentMetadataHistoryRequest$ = exports2.ListComplianceSummariesResult$ = exports2.ListComplianceSummariesRequest$ = exports2.ListComplianceItemsResult$ = exports2.ListComplianceItemsRequest$ = exports2.ListCommandsResult$ = exports2.ListCommandsRequest$ = exports2.ListCommandInvocationsResult$ = exports2.ListCommandInvocationsRequest$ = exports2.ListAssociationVersionsResult$ = exports2.ListAssociationVersionsRequest$ = exports2.ListAssociationsResult$ = exports2.ListAssociationsRequest$ = exports2.LabelParameterVersionResult$ = exports2.LabelParameterVersionRequest$ = void 0;
+    exports2.PutComplianceItemsRequest$ = exports2.ProgressCounters$ = exports2.PatchStatus$ = exports2.PatchSource$ = exports2.PatchRuleGroup$ = exports2.PatchRule$ = exports2.PatchOrchestratorFilter$ = exports2.PatchGroupPatchBaselineMapping$ = exports2.PatchFilterGroup$ = exports2.PatchFilter$ = exports2.PatchComplianceData$ = exports2.PatchBaselineIdentity$ = exports2.Patch$ = exports2.ParentStepDetails$ = exports2.ParameterStringFilter$ = exports2.ParametersFilter$ = exports2.ParameterMetadata$ = exports2.ParameterInlinePolicy$ = exports2.ParameterHistory$ = exports2.Parameter$ = exports2.OutputSource$ = exports2.OpsResultAttribute$ = exports2.OpsMetadataFilter$ = exports2.OpsMetadata$ = exports2.OpsItemSummary$ = exports2.OpsItemRelatedItemSummary$ = exports2.OpsItemRelatedItemsFilter$ = exports2.OpsItemNotification$ = exports2.OpsItemIdentity$ = exports2.OpsItemFilter$ = exports2.OpsItemEventSummary$ = exports2.OpsItemEventFilter$ = exports2.OpsItemDataValue$ = exports2.OpsItem$ = exports2.OpsFilter$ = exports2.OpsEntityItem$ = exports2.OpsEntity$ = exports2.OpsAggregator$ = exports2.NotificationConfig$ = exports2.NonCompliantSummary$ = exports2.NodeOwnerInfo$ = exports2.NodeFilter$ = exports2.NodeAggregator$ = exports2.Node$ = exports2.ModifyDocumentPermissionResponse$ = exports2.ModifyDocumentPermissionRequest$ = exports2.MetadataValue$ = exports2.MaintenanceWindowTaskParameterValueExpression$ = exports2.MaintenanceWindowTaskInvocationParameters$ = exports2.MaintenanceWindowTask$ = void 0;
+    exports2.StartAssociationsOnceRequest$ = exports2.StartAccessRequestResponse$ = exports2.StartAccessRequestRequest$ = exports2.SeveritySummary$ = exports2.SessionManagerOutputUrl$ = exports2.SessionFilter$ = exports2.Session$ = exports2.ServiceSetting$ = exports2.SendCommandResult$ = exports2.SendCommandRequest$ = exports2.SendAutomationSignalResult$ = exports2.SendAutomationSignalRequest$ = exports2.ScheduledWindowExecution$ = exports2.S3OutputUrl$ = exports2.S3OutputLocation$ = exports2.Runbook$ = exports2.ReviewInformation$ = exports2.ResumeSessionResponse$ = exports2.ResumeSessionRequest$ = exports2.ResultAttribute$ = exports2.ResourceDataSyncSourceWithState$ = exports2.ResourceDataSyncSource$ = exports2.ResourceDataSyncS3Destination$ = exports2.ResourceDataSyncOrganizationalUnit$ = exports2.ResourceDataSyncItem$ = exports2.ResourceDataSyncDestinationDataSharing$ = exports2.ResourceDataSyncAwsOrganizationsSource$ = exports2.ResourceComplianceSummaryItem$ = exports2.ResolvedTargets$ = exports2.ResetServiceSettingResult$ = exports2.ResetServiceSettingRequest$ = exports2.RemoveTagsFromResourceResult$ = exports2.RemoveTagsFromResourceRequest$ = exports2.RelatedOpsItem$ = exports2.RegistrationMetadataItem$ = exports2.RegisterTaskWithMaintenanceWindowResult$ = exports2.RegisterTaskWithMaintenanceWindowRequest$ = exports2.RegisterTargetWithMaintenanceWindowResult$ = exports2.RegisterTargetWithMaintenanceWindowRequest$ = exports2.RegisterPatchBaselineForPatchGroupResult$ = exports2.RegisterPatchBaselineForPatchGroupRequest$ = exports2.RegisterDefaultPatchBaselineResult$ = exports2.RegisterDefaultPatchBaselineRequest$ = exports2.PutResourcePolicyResponse$ = exports2.PutResourcePolicyRequest$ = exports2.PutParameterResult$ = exports2.PutParameterRequest$ = exports2.PutInventoryResult$ = exports2.PutInventoryRequest$ = exports2.PutComplianceItemsResult$ = void 0;
+    exports2.ExecutionInputs$ = exports2.UpdateServiceSettingResult$ = exports2.UpdateServiceSettingRequest$ = exports2.UpdateResourceDataSyncResult$ = exports2.UpdateResourceDataSyncRequest$ = exports2.UpdatePatchBaselineResult$ = exports2.UpdatePatchBaselineRequest$ = exports2.UpdateOpsMetadataResult$ = exports2.UpdateOpsMetadataRequest$ = exports2.UpdateOpsItemResponse$ = exports2.UpdateOpsItemRequest$ = exports2.UpdateManagedInstanceRoleResult$ = exports2.UpdateManagedInstanceRoleRequest$ = exports2.UpdateMaintenanceWindowTaskResult$ = exports2.UpdateMaintenanceWindowTaskRequest$ = exports2.UpdateMaintenanceWindowTargetResult$ = exports2.UpdateMaintenanceWindowTargetRequest$ = exports2.UpdateMaintenanceWindowResult$ = exports2.UpdateMaintenanceWindowRequest$ = exports2.UpdateDocumentResult$ = exports2.UpdateDocumentRequest$ = exports2.UpdateDocumentMetadataResponse$ = exports2.UpdateDocumentMetadataRequest$ = exports2.UpdateDocumentDefaultVersionResult$ = exports2.UpdateDocumentDefaultVersionRequest$ = exports2.UpdateAssociationStatusResult$ = exports2.UpdateAssociationStatusRequest$ = exports2.UpdateAssociationResult$ = exports2.UpdateAssociationRequest$ = exports2.UnlabelParameterVersionResult$ = exports2.UnlabelParameterVersionRequest$ = exports2.TerminateSessionResponse$ = exports2.TerminateSessionRequest$ = exports2.TargetPreview$ = exports2.TargetLocation$ = exports2.Target$ = exports2.Tag$ = exports2.StopAutomationExecutionResult$ = exports2.StopAutomationExecutionRequest$ = exports2.StepExecutionFilter$ = exports2.StepExecution$ = exports2.StartSessionResponse$ = exports2.StartSessionRequest$ = exports2.StartExecutionPreviewResponse$ = exports2.StartExecutionPreviewRequest$ = exports2.StartChangeRequestExecutionResult$ = exports2.StartChangeRequestExecutionRequest$ = exports2.StartAutomationExecutionResult$ = exports2.StartAutomationExecutionRequest$ = exports2.StartAssociationsOnceResult$ = void 0;
+    exports2.DescribeMaintenanceWindowExecutions$ = exports2.DescribeInventoryDeletions$ = exports2.DescribeInstanceProperties$ = exports2.DescribeInstancePatchStatesForPatchGroup$ = exports2.DescribeInstancePatchStates$ = exports2.DescribeInstancePatches$ = exports2.DescribeInstanceInformation$ = exports2.DescribeInstanceAssociationsStatus$ = exports2.DescribeEffectivePatchesForPatchBaseline$ = exports2.DescribeEffectiveInstanceAssociations$ = exports2.DescribeDocumentPermission$ = exports2.DescribeDocument$ = exports2.DescribeAvailablePatches$ = exports2.DescribeAutomationStepExecutions$ = exports2.DescribeAutomationExecutions$ = exports2.DescribeAssociationExecutionTargets$ = exports2.DescribeAssociationExecutions$ = exports2.DescribeAssociation$ = exports2.DescribeActivations$ = exports2.DeregisterTaskFromMaintenanceWindow$ = exports2.DeregisterTargetFromMaintenanceWindow$ = exports2.DeregisterPatchBaselineForPatchGroup$ = exports2.DeregisterManagedInstance$ = exports2.DeleteResourcePolicy$ = exports2.DeleteResourceDataSync$ = exports2.DeletePatchBaseline$ = exports2.DeleteParameters$ = exports2.DeleteParameter$ = exports2.DeleteOpsMetadata$ = exports2.DeleteOpsItem$ = exports2.DeleteMaintenanceWindow$ = exports2.DeleteInventory$ = exports2.DeleteDocument$ = exports2.DeleteAssociation$ = exports2.DeleteActivation$ = exports2.CreateResourceDataSync$ = exports2.CreatePatchBaseline$ = exports2.CreateOpsMetadata$ = exports2.CreateOpsItem$ = exports2.CreateMaintenanceWindow$ = exports2.CreateDocument$ = exports2.CreateAssociationBatch$ = exports2.CreateAssociation$ = exports2.CreateActivation$ = exports2.CancelMaintenanceWindowExecution$ = exports2.CancelCommand$ = exports2.AssociateOpsItemRelatedItem$ = exports2.AddTagsToResource$ = exports2.NodeType$ = exports2.ExecutionPreview$ = void 0;
+    exports2.ListDocumentMetadataHistory$ = exports2.ListComplianceSummaries$ = exports2.ListComplianceItems$ = exports2.ListCommands$ = exports2.ListCommandInvocations$ = exports2.ListAssociationVersions$ = exports2.ListAssociations$ = exports2.LabelParameterVersion$ = exports2.GetServiceSetting$ = exports2.GetResourcePolicies$ = exports2.GetPatchBaselineForPatchGroup$ = exports2.GetPatchBaseline$ = exports2.GetParametersByPath$ = exports2.GetParameters$ = exports2.GetParameterHistory$ = exports2.GetParameter$ = exports2.GetOpsSummary$ = exports2.GetOpsMetadata$ = exports2.GetOpsItem$ = exports2.GetMaintenanceWindowTask$ = exports2.GetMaintenanceWindowExecutionTaskInvocation$ = exports2.GetMaintenanceWindowExecutionTask$ = exports2.GetMaintenanceWindowExecution$ = exports2.GetMaintenanceWindow$ = exports2.GetInventorySchema$ = exports2.GetInventory$ = exports2.GetExecutionPreview$ = exports2.GetDocument$ = exports2.GetDeployablePatchSnapshotForInstance$ = exports2.GetDefaultPatchBaseline$ = exports2.GetConnectionStatus$ = exports2.GetCommandInvocation$ = exports2.GetCalendarState$ = exports2.GetAutomationExecution$ = exports2.GetAccessToken$ = exports2.DisassociateOpsItemRelatedItem$ = exports2.DescribeSessions$ = exports2.DescribePatchProperties$ = exports2.DescribePatchGroupState$ = exports2.DescribePatchGroups$ = exports2.DescribePatchBaselines$ = exports2.DescribeParameters$ = exports2.DescribeOpsItems$ = exports2.DescribeMaintenanceWindowTasks$ = exports2.DescribeMaintenanceWindowTargets$ = exports2.DescribeMaintenanceWindowsForTarget$ = exports2.DescribeMaintenanceWindowSchedule$ = exports2.DescribeMaintenanceWindows$ = exports2.DescribeMaintenanceWindowExecutionTasks$ = exports2.DescribeMaintenanceWindowExecutionTaskInvocations$ = void 0;
+    exports2.UpdateServiceSetting$ = exports2.UpdateResourceDataSync$ = exports2.UpdatePatchBaseline$ = exports2.UpdateOpsMetadata$ = exports2.UpdateOpsItem$ = exports2.UpdateManagedInstanceRole$ = exports2.UpdateMaintenanceWindowTask$ = exports2.UpdateMaintenanceWindowTarget$ = exports2.UpdateMaintenanceWindow$ = exports2.UpdateDocumentMetadata$ = exports2.UpdateDocumentDefaultVersion$ = exports2.UpdateDocument$ = exports2.UpdateAssociationStatus$ = exports2.UpdateAssociation$ = exports2.UnlabelParameterVersion$ = exports2.TerminateSession$ = exports2.StopAutomationExecution$ = exports2.StartSession$ = exports2.StartExecutionPreview$ = exports2.StartChangeRequestExecution$ = exports2.StartAutomationExecution$ = exports2.StartAssociationsOnce$ = exports2.StartAccessRequest$ = exports2.SendCommand$ = exports2.SendAutomationSignal$ = exports2.ResumeSession$ = exports2.ResetServiceSetting$ = exports2.RemoveTagsFromResource$ = exports2.RegisterTaskWithMaintenanceWindow$ = exports2.RegisterTargetWithMaintenanceWindow$ = exports2.RegisterPatchBaselineForPatchGroup$ = exports2.RegisterDefaultPatchBaseline$ = exports2.PutResourcePolicy$ = exports2.PutParameter$ = exports2.PutInventory$ = exports2.PutComplianceItems$ = exports2.ModifyDocumentPermission$ = exports2.ListTagsForResource$ = exports2.ListResourceDataSync$ = exports2.ListResourceComplianceSummaries$ = exports2.ListOpsMetadata$ = exports2.ListOpsItemRelatedItems$ = exports2.ListOpsItemEvents$ = exports2.ListNodesSummary$ = exports2.ListNodes$ = exports2.ListInventoryEntries$ = exports2.ListDocumentVersions$ = exports2.ListDocuments$ = void 0;
+    var _A2 = "Activation";
+    var _AA = "AutoApprove";
+    var _AAD = "ApproveAfterDays";
+    var _AAE = "AssociationAlreadyExists";
+    var _AC = "AlarmConfiguration";
+    var _ACL = "AttachmentContentList";
+    var _ACc = "ActivationCode";
+    var _ACt = "AttachmentContent";
+    var _ACtt = "AttachmentsContent";
+    var _AD = "AssociationDescription";
+    var _ADAR = "AssociationDispatchAssumeRole";
+    var _ADE3 = "AccessDeniedException";
+    var _ADL = "AssociationDescriptionList";
+    var _ADNAE = "AutomationDefinitionNotApprovedException";
+    var _ADNE = "AssociationDoesNotExist";
+    var _ADNFE = "AutomationDefinitionNotFoundException";
+    var _ADVNFE = "AutomationDefinitionVersionNotFoundException";
+    var _ADp = "ApprovalDate";
+    var _AE = "AssociationExecution";
+    var _AEDNE = "AssociationExecutionDoesNotExist";
+    var _AEE = "AlreadyExistsException";
+    var _AEF = "AssociationExecutionFilter";
+    var _AEFL = "AssociationExecutionFilterList";
+    var _AEFLu = "AutomationExecutionFilterList";
+    var _AEFu = "AutomationExecutionFilter";
+    var _AEI = "AutomationExecutionId";
+    var _AEIu = "AutomationExecutionInputs";
+    var _AEL = "AssociationExecutionsList";
+    var _AELEE = "AutomationExecutionLimitExceededException";
+    var _AEM = "AutomationExecutionMetadata";
+    var _AEML = "AutomationExecutionMetadataList";
+    var _AENFE = "AutomationExecutionNotFoundException";
+    var _AEP = "AutomationExecutionPreview";
+    var _AES = "AutomationExecutionStatus";
+    var _AET = "AssociationExecutionTarget";
+    var _AETF = "AssociationExecutionTargetsFilter";
+    var _AETFL = "AssociationExecutionTargetsFilterList";
+    var _AETL = "AssociationExecutionTargetsList";
+    var _AETc = "ActualEndTime";
+    var _AETs = "AssociationExecutionTargets";
+    var _AEs = "AssociationExecutions";
+    var _AEu = "AutomationExecution";
+    var _AF = "AssociationFilter";
+    var _AFL = "AssociationFilterList";
+    var _AI = "AssociatedInstances";
+    var _AIL = "AccountIdList";
+    var _AILt = "AttachmentInformationList";
+    var _AITA = "AccountIdsToAdd";
+    var _AITR = "AccountIdsToRemove";
+    var _AIc = "AccountId";
+    var _AIcc = "AccountIds";
+    var _AIct = "ActivationId";
+    var _AId = "AdditionalInfo";
+    var _AIdv = "AdvisoryIds";
+    var _AIs = "AssociationId";
+    var _AIss = "AssociationIds";
+    var _AIt = "AttachmentInformation";
+    var _AItt = "AttachmentsInformation";
+    var _AKI2 = "AccessKeyId";
+    var _AKST = "AccessKeySecretType";
+    var _AL = "ActivationList";
+    var _ALE = "AssociationLimitExceeded";
+    var _ALl = "AlarmList";
+    var _ALs = "AssociationList";
+    var _AN = "AssociationName";
+    var _ANt = "AttributeName";
+    var _AO = "AssociationOverview";
+    var _AOACI = "ApplyOnlyAtCronInterval";
+    var _AOIRI = "AssociateOpsItemRelatedItem";
+    var _AOIRIR = "AssociateOpsItemRelatedItemRequest";
+    var _AOIRIRs = "AssociateOpsItemRelatedItemResponse";
+    var _AOS = "AwsOrganizationsSource";
+    var _AP = "ApprovedPatches";
+    var _APCL = "ApprovedPatchesComplianceLevel";
+    var _APENS = "ApprovedPatchesEnableNonSecurity";
+    var _APM = "AutomationParameterMap";
+    var _APl = "AllowedPattern";
+    var _AR2 = "ApprovalRules";
+    var _ARI2 = "AccessRequestId";
+    var _ARN = "ARN";
+    var _ARS = "AccessRequestStatus";
+    var _AS = "AssociationStatus";
+    var _ASAC = "AssociationStatusAggregatedCount";
+    var _ASI = "AccountSharingInfo";
+    var _ASIL = "AccountSharingInfoList";
+    var _ASILl = "AlarmStateInformationList";
+    var _ASIl = "AlarmStateInformation";
+    var _ASL = "AttachmentsSourceList";
+    var _ASNFE = "AutomationStepNotFoundException";
+    var _AST = "ActualStartTime";
+    var _ASUC = "AvailableSecurityUpdateCount";
+    var _ASUCS = "AvailableSecurityUpdatesComplianceStatus";
+    var _ASt = "AttachmentsSource";
+    var _ASu = "AutomationSubtype";
+    var _AT3 = "AssociationType";
+    var _ATPN = "AutomationTargetParameterName";
+    var _ATTR = "AddTagsToResource";
+    var _ATTRR = "AddTagsToResourceRequest";
+    var _ATTRRd = "AddTagsToResourceResult";
+    var _ATc = "AccessType";
+    var _ATg = "AgentType";
+    var _ATgg = "AggregatorType";
+    var _ATt = "AtTime";
+    var _ATu = "AutomationType";
+    var _AUD = "ApproveUntilDate";
+    var _AUT = "AllowUnassociatedTargets";
+    var _AV = "AssociationVersion";
+    var _AVI = "AssociationVersionInfo";
+    var _AVL = "AssociationVersionList";
+    var _AVLE = "AssociationVersionLimitExceeded";
+    var _AVg = "AgentVersion";
+    var _AVp = "ApprovedVersion";
+    var _AVs = "AssociationVersions";
+    var _AWSKMSKARN = "AWSKMSKeyARN";
+    var _Ac = "Action";
+    var _Acc = "Accounts";
+    var _Ag = "Aggregators";
+    var _Agg = "Aggregator";
+    var _Al = "Alarm";
+    var _Ala = "Alarms";
+    var _Ar = "Architecture";
+    var _Arc = "Arch";
+    var _Arn = "Arn";
+    var _As = "Association";
+    var _Ass = "Associations";
+    var _At = "Attachments";
+    var _Att = "Attributes";
+    var _Attr = "Attribute";
+    var _Au2 = "Author";
+    var _Aut = "Automation";
+    var _BD = "BaselineDescription";
+    var _BI = "BaselineId";
+    var _BIa = "BaselineIdentities";
+    var _BIas = "BaselineIdentity";
+    var _BIu = "BugzillaIds";
+    var _BN = "BaselineName";
+    var _BNu = "BucketName";
+    var _BO = "BaselineOverride";
+    var _C2 = "Command";
+    var _CA2 = "CurrentAction";
+    var _CAB = "CreateAssociationBatch";
+    var _CABR = "CreateAssociationBatchRequest";
+    var _CABRE = "CreateAssociationBatchRequestEntry";
+    var _CABREr = "CreateAssociationBatchRequestEntries";
+    var _CABRr = "CreateAssociationBatchResult";
+    var _CAR = "CreateActivationRequest";
+    var _CARr = "CreateActivationResult";
+    var _CARre = "CreateAssociationRequest";
+    var _CARrea = "CreateAssociationResult";
+    var _CAr = "CreateActivation";
+    var _CAre = "CreateAssociation";
+    var _CB = "CutoffBehavior";
+    var _CBr = "CreatedBy";
+    var _CC = "CompletedCount";
+    var _CCR = "CancelCommandRequest";
+    var _CCRa = "CancelCommandResult";
+    var _CCa = "CancelCommand";
+    var _CCl = "ClientContext";
+    var _CCo = "CompliantCount";
+    var _CCr = "CriticalCount";
+    var _CD = "CreatedDate";
+    var _CDR = "CreateDocumentRequest";
+    var _CDRr = "CreateDocumentResult";
+    var _CDh = "ChangeDetails";
+    var _CDr = "CreationDate";
+    var _CDre = "CreateDocument";
+    var _CE = "CategoryEnum";
+    var _CES = "ComplianceExecutionSummary";
+    var _CF = "CommandFilter";
+    var _CFL = "CommandFilterList";
+    var _CFo = "ComplianceFilter";
+    var _CH = "ContentHash";
+    var _CI = "CommandId";
+    var _CIE = "ComplianceItemEntry";
+    var _CIEL = "ComplianceItemEntryList";
+    var _CIL = "CommandInvocationList";
+    var _CILo = "ComplianceItemList";
+    var _CIo = "CommandInvocation";
+    var _CIom = "ComplianceItem";
+    var _CIomm = "CommandInvocations";
+    var _CIomp = "ComplianceItems";
+    var _CL = "ComplianceLevel";
+    var _CLo = "CommandList";
+    var _CMW = "CreateMaintenanceWindow";
+    var _CMWE = "CancelMaintenanceWindowExecution";
+    var _CMWER = "CancelMaintenanceWindowExecutionRequest";
+    var _CMWERa = "CancelMaintenanceWindowExecutionResult";
+    var _CMWR = "CreateMaintenanceWindowRequest";
+    var _CMWRr = "CreateMaintenanceWindowResult";
+    var _CN = "CalendarNames";
+    var _CNCC = "CriticalNonCompliantCount";
+    var _CNo = "ComputerName";
+    var _COI = "CreateOpsItem";
+    var _COIR = "CreateOpsItemRequest";
+    var _COIRr = "CreateOpsItemResponse";
+    var _COM = "CreateOpsMetadata";
+    var _COMR = "CreateOpsMetadataRequest";
+    var _COMRr = "CreateOpsMetadataResult";
+    var _CP = "CommandPlugins";
+    var _CPB = "CreatePatchBaseline";
+    var _CPBR = "CreatePatchBaselineRequest";
+    var _CPBRr = "CreatePatchBaselineResult";
+    var _CPL = "CommandPluginList";
+    var _CPo = "CommandPlugin";
+    var _CRDS = "CreateResourceDataSync";
+    var _CRDSR = "CreateResourceDataSyncRequest";
+    var _CRDSRr = "CreateResourceDataSyncResult";
+    var _CRN = "ChangeRequestName";
+    var _CS2 = "ComplianceSeverity";
+    var _CSCLEE = "CustomSchemaCountLimitExceededException";
+    var _CSF = "ComplianceStringFilter";
+    var _CSFL = "ComplianceStringFilterList";
+    var _CSFVL = "ComplianceStringFilterValueList";
+    var _CSI = "ComplianceSummaryItem";
+    var _CSIL = "ComplianceSummaryItemList";
+    var _CSIo = "ComplianceSummaryItems";
+    var _CSN = "CurrentStepName";
+    var _CSa = "CancelledSteps";
+    var _CSo = "CompliantSummary";
+    var _CT2 = "CreatedTime";
+    var _CTCLEE = "ComplianceTypeCountLimitExceededException";
+    var _CTa = "CaptureTime";
+    var _CTl = "ClientToken";
+    var _CTo = "ComplianceType";
+    var _CTr = "CreateTime";
+    var _CU = "ContentUrl";
+    var _CVEI = "CVEIds";
+    var _CWLGN = "CloudWatchLogGroupName";
+    var _CWOC = "CloudWatchOutputConfig";
+    var _CWOE = "CloudWatchOutputEnabled";
+    var _CWOU = "CloudWatchOutputUrl";
+    var _Ca = "Category";
+    var _Cl = "Classification";
+    var _Co = "Comment";
+    var _Com = "Commands";
+    var _Con = "Content";
+    var _Conf = "Configuration";
+    var _Cont = "Context";
+    var _Cou = "Count";
+    var _Cr = "Credentials";
+    var _Cu = "Cutoff";
+    var _D = "Description";
+    var _DA = "DeleteActivation";
+    var _DAE = "DocumentAlreadyExists";
+    var _DAER = "DescribeAssociationExecutionsRequest";
+    var _DAERe = "DescribeAssociationExecutionsResult";
+    var _DAERes = "DescribeAutomationExecutionsRequest";
+    var _DAEResc = "DescribeAutomationExecutionsResult";
+    var _DAET = "DescribeAssociationExecutionTargets";
+    var _DAETR = "DescribeAssociationExecutionTargetsRequest";
+    var _DAETRe = "DescribeAssociationExecutionTargetsResult";
+    var _DAEe = "DescribeAssociationExecutions";
+    var _DAEes = "DescribeAutomationExecutions";
+    var _DAF = "DescribeActivationsFilter";
+    var _DAFL = "DescribeActivationsFilterList";
+    var _DAP = "DescribeAvailablePatches";
+    var _DAPR = "DescribeAvailablePatchesRequest";
+    var _DAPRe = "DescribeAvailablePatchesResult";
+    var _DAR = "DeleteActivationRequest";
+    var _DARe = "DeleteActivationResult";
+    var _DARel = "DeleteAssociationRequest";
+    var _DARele = "DeleteAssociationResult";
+    var _DARes = "DescribeActivationsRequest";
+    var _DAResc = "DescribeActivationsResult";
+    var _DARescr = "DescribeAssociationRequest";
+    var _DARescri = "DescribeAssociationResult";
+    var _DASE = "DescribeAutomationStepExecutions";
+    var _DASER = "DescribeAutomationStepExecutionsRequest";
+    var _DASERe = "DescribeAutomationStepExecutionsResult";
+    var _DAe = "DeleteAssociation";
+    var _DAes = "DescribeActivations";
+    var _DAesc = "DescribeAssociation";
+    var _DB = "DefaultBaseline";
+    var _DD = "DocumentDescription";
+    var _DDC = "DuplicateDocumentContent";
+    var _DDP = "DescribeDocumentPermission";
+    var _DDPR = "DescribeDocumentPermissionRequest";
+    var _DDPRe = "DescribeDocumentPermissionResponse";
+    var _DDR = "DeleteDocumentRequest";
+    var _DDRe = "DeleteDocumentResult";
+    var _DDRes = "DescribeDocumentRequest";
+    var _DDResc = "DescribeDocumentResult";
+    var _DDS = "DestinationDataSharing";
+    var _DDST = "DestinationDataSharingType";
+    var _DDVD = "DocumentDefaultVersionDescription";
+    var _DDVN = "DuplicateDocumentVersionName";
+    var _DDe = "DeleteDocument";
+    var _DDes = "DescribeDocument";
+    var _DEIA = "DescribeEffectiveInstanceAssociations";
+    var _DEIAR = "DescribeEffectiveInstanceAssociationsRequest";
+    var _DEIARe = "DescribeEffectiveInstanceAssociationsResult";
+    var _DEPFPB = "DescribeEffectivePatchesForPatchBaseline";
+    var _DEPFPBR = "DescribeEffectivePatchesForPatchBaselineRequest";
+    var _DEPFPBRe = "DescribeEffectivePatchesForPatchBaselineResult";
+    var _DF = "DocumentFormat";
+    var _DFL = "DocumentFilterList";
+    var _DFo = "DocumentFilter";
+    var _DH = "DocumentHash";
+    var _DHT = "DocumentHashType";
+    var _DI = "DeletionId";
+    var _DIAS = "DescribeInstanceAssociationsStatus";
+    var _DIASR = "DescribeInstanceAssociationsStatusRequest";
+    var _DIASRe = "DescribeInstanceAssociationsStatusResult";
+    var _DID = "DescribeInventoryDeletions";
+    var _DIDR = "DescribeInventoryDeletionsRequest";
+    var _DIDRe = "DescribeInventoryDeletionsResult";
+    var _DII = "DuplicateInstanceId";
+    var _DIIR = "DescribeInstanceInformationRequest";
+    var _DIIRe = "DescribeInstanceInformationResult";
+    var _DIIe = "DescribeInstanceInformation";
+    var _DIL = "DocumentIdentifierList";
+    var _DIN = "DefaultInstanceName";
+    var _DIP = "DescribeInstancePatches";
+    var _DIPR = "DescribeInstancePatchesRequest";
+    var _DIPRe = "DescribeInstancePatchesResult";
+    var _DIPRes = "DescribeInstancePropertiesRequest";
+    var _DIPResc = "DescribeInstancePropertiesResult";
+    var _DIPS = "DescribeInstancePatchStates";
+    var _DIPSFPG = "DescribeInstancePatchStatesForPatchGroup";
+    var _DIPSFPGR = "DescribeInstancePatchStatesForPatchGroupRequest";
+    var _DIPSFPGRe = "DescribeInstancePatchStatesForPatchGroupResult";
+    var _DIPSR = "DescribeInstancePatchStatesRequest";
+    var _DIPSRe = "DescribeInstancePatchStatesResult";
+    var _DIPe = "DescribeInstanceProperties";
+    var _DIR = "DeleteInventoryRequest";
+    var _DIRe = "DeleteInventoryResult";
+    var _DIe = "DeleteInventory";
+    var _DIo = "DocumentIdentifier";
+    var _DIoc = "DocumentIdentifiers";
+    var _DKVF = "DocumentKeyValuesFilter";
+    var _DKVFL = "DocumentKeyValuesFilterList";
+    var _DLE = "DocumentLimitExceeded";
+    var _DMI = "DeregisterManagedInstance";
+    var _DMIR = "DeregisterManagedInstanceRequest";
+    var _DMIRe = "DeregisterManagedInstanceResult";
+    var _DMRI = "DocumentMetadataResponseInfo";
+    var _DMW = "DeleteMaintenanceWindow";
+    var _DMWE = "DescribeMaintenanceWindowExecutions";
+    var _DMWER = "DescribeMaintenanceWindowExecutionsRequest";
+    var _DMWERe = "DescribeMaintenanceWindowExecutionsResult";
+    var _DMWET = "DescribeMaintenanceWindowExecutionTasks";
+    var _DMWETI = "DescribeMaintenanceWindowExecutionTaskInvocations";
+    var _DMWETIR = "DescribeMaintenanceWindowExecutionTaskInvocationsRequest";
+    var _DMWETIRe = "DescribeMaintenanceWindowExecutionTaskInvocationsResult";
+    var _DMWETR = "DescribeMaintenanceWindowExecutionTasksRequest";
+    var _DMWETRe = "DescribeMaintenanceWindowExecutionTasksResult";
+    var _DMWFT = "DescribeMaintenanceWindowsForTarget";
+    var _DMWFTR = "DescribeMaintenanceWindowsForTargetRequest";
+    var _DMWFTRe = "DescribeMaintenanceWindowsForTargetResult";
+    var _DMWR = "DeleteMaintenanceWindowRequest";
+    var _DMWRe = "DeleteMaintenanceWindowResult";
+    var _DMWRes = "DescribeMaintenanceWindowsRequest";
+    var _DMWResc = "DescribeMaintenanceWindowsResult";
+    var _DMWS = "DescribeMaintenanceWindowSchedule";
+    var _DMWSR = "DescribeMaintenanceWindowScheduleRequest";
+    var _DMWSRe = "DescribeMaintenanceWindowScheduleResult";
+    var _DMWT = "DescribeMaintenanceWindowTargets";
+    var _DMWTR = "DescribeMaintenanceWindowTargetsRequest";
+    var _DMWTRe = "DescribeMaintenanceWindowTargetsResult";
+    var _DMWTRes = "DescribeMaintenanceWindowTasksRequest";
+    var _DMWTResc = "DescribeMaintenanceWindowTasksResult";
+    var _DMWTe = "DescribeMaintenanceWindowTasks";
+    var _DMWe = "DescribeMaintenanceWindows";
+    var _DN = "DocumentName";
+    var _DNEE = "DoesNotExistException";
+    var _DNi = "DisplayName";
+    var _DOI = "DeleteOpsItem";
+    var _DOIR = "DeleteOpsItemRequest";
+    var _DOIRI = "DisassociateOpsItemRelatedItem";
+    var _DOIRIR = "DisassociateOpsItemRelatedItemRequest";
+    var _DOIRIRi = "DisassociateOpsItemRelatedItemResponse";
+    var _DOIRe = "DeleteOpsItemResponse";
+    var _DOIRes = "DescribeOpsItemsRequest";
+    var _DOIResc = "DescribeOpsItemsResponse";
+    var _DOIe = "DescribeOpsItems";
+    var _DOM = "DeleteOpsMetadata";
+    var _DOMR = "DeleteOpsMetadataRequest";
+    var _DOMRe = "DeleteOpsMetadataResult";
+    var _DP = "DeletedParameters";
+    var _DPB = "DeletePatchBaseline";
+    var _DPBFPG = "DeregisterPatchBaselineForPatchGroup";
+    var _DPBFPGR = "DeregisterPatchBaselineForPatchGroupRequest";
+    var _DPBFPGRe = "DeregisterPatchBaselineForPatchGroupResult";
+    var _DPBR = "DeletePatchBaselineRequest";
+    var _DPBRe = "DeletePatchBaselineResult";
+    var _DPBRes = "DescribePatchBaselinesRequest";
+    var _DPBResc = "DescribePatchBaselinesResult";
+    var _DPBe = "DescribePatchBaselines";
+    var _DPG = "DescribePatchGroups";
+    var _DPGR = "DescribePatchGroupsRequest";
+    var _DPGRe = "DescribePatchGroupsResult";
+    var _DPGS = "DescribePatchGroupState";
+    var _DPGSR = "DescribePatchGroupStateRequest";
+    var _DPGSRe = "DescribePatchGroupStateResult";
+    var _DPL = "DocumentPermissionLimit";
+    var _DPLo = "DocumentParameterList";
+    var _DPP = "DescribePatchProperties";
+    var _DPPR = "DescribePatchPropertiesRequest";
+    var _DPPRe = "DescribePatchPropertiesResult";
+    var _DPR = "DeleteParameterRequest";
+    var _DPRe = "DeleteParameterResult";
+    var _DPRel = "DeleteParametersRequest";
+    var _DPRele = "DeleteParametersResult";
+    var _DPRes = "DescribeParametersRequest";
+    var _DPResc = "DescribeParametersResult";
+    var _DPe = "DeleteParameter";
+    var _DPel = "DeleteParameters";
+    var _DPes = "DescribeParameters";
+    var _DPo = "DocumentParameter";
+    var _DR = "DryRun";
+    var _DRCL = "DocumentReviewCommentList";
+    var _DRCS = "DocumentReviewCommentSource";
+    var _DRDS = "DeleteResourceDataSync";
+    var _DRDSR = "DeleteResourceDataSyncRequest";
+    var _DRDSRe = "DeleteResourceDataSyncResult";
+    var _DRL = "DocumentRequiresList";
+    var _DRP = "DeleteResourcePolicy";
+    var _DRPR = "DeleteResourcePolicyRequest";
+    var _DRPRe = "DeleteResourcePolicyResponse";
+    var _DRRL = "DocumentReviewerResponseList";
+    var _DRRS = "DocumentReviewerResponseSource";
+    var _DRo = "DocumentRequires";
+    var _DRoc = "DocumentReviews";
+    var _DS2 = "DetailedStatus";
+    var _DSR = "DescribeSessionsRequest";
+    var _DSRe = "DescribeSessionsResponse";
+    var _DST = "DeletionStartTime";
+    var _DSe = "DeletionSummary";
+    var _DSep = "DeploymentStatus";
+    var _DSes = "DescribeSessions";
+    var _DT = "DocumentType";
+    var _DTFMW = "DeregisterTargetFromMaintenanceWindow";
+    var _DTFMWR = "DeregisterTargetFromMaintenanceWindowRequest";
+    var _DTFMWRe = "DeregisterTargetFromMaintenanceWindowResult";
+    var _DTFMWRer = "DeregisterTaskFromMaintenanceWindowRequest";
+    var _DTFMWRere = "DeregisterTaskFromMaintenanceWindowResult";
+    var _DTFMWe = "DeregisterTaskFromMaintenanceWindow";
+    var _DTOC = "DeliveryTimedOutCount";
+    var _DTa = "DataType";
+    var _DTe = "DetailType";
+    var _DV = "DocumentVersion";
+    var _DVI = "DocumentVersionInfo";
+    var _DVL = "DocumentVersionList";
+    var _DVLE = "DocumentVersionLimitExceeded";
+    var _DVN = "DefaultVersionName";
+    var _DVe = "DefaultVersion";
+    var _DVef = "DefaultValue";
+    var _DVo = "DocumentVersions";
+    var _Da = "Date";
+    var _Dat = "Data";
+    var _De = "Details";
+    var _Det = "Detail";
+    var _Do = "Document";
+    var _Du = "Duration";
+    var _E2 = "Expired";
+    var _EA = "ExpiresAfter";
+    var _EAODS = "EnableAllOpsDataSources";
+    var _EAn = "EndedAt";
+    var _EAx = "ExcludeAccounts";
+    var _EB = "ExecutedBy";
+    var _EC = "ErrorCount";
+    var _ECr = "ErrorCode";
+    var _ED = "ExpirationDate";
+    var _EDn = "EndDate";
+    var _EDx = "ExecutionDate";
+    var _EEDT = "ExecutionEndDateTime";
+    var _EET = "ExecutionEndTime";
+    var _EETx = "ExecutionElapsedTime";
+    var _EI2 = "ExecutionId";
+    var _EIv = "EventId";
+    var _EIx = "ExecutionInputs";
+    var _ENS = "EnableNonSecurity";
+    var _EP = "EffectivePatches";
+    var _EPI = "ExecutionPreviewId";
+    var _EPL = "EffectivePatchList";
+    var _EPf = "EffectivePatch";
+    var _EPx = "ExecutionPreview";
+    var _ERN = "ExecutionRoleName";
+    var _ES = "ExecutionSummary";
+    var _ESDT = "ExecutionStartDateTime";
+    var _EST = "ExecutionStartTime";
+    var _ET = "ExecutionTime";
+    var _ETn = "EndTime";
+    var _ETx = "ExecutionType";
+    var _ETxp = "ExpirationTime";
+    var _En = "Entries";
+    var _Ena = "Enabled";
+    var _Ent = "Entry";
+    var _Enti = "Entities";
+    var _Entit = "Entity";
+    var _Ep = "Epoch";
+    var _Ex = "Expression";
+    var _F = "Failed";
+    var _FC = "FailedCount";
+    var _FCA = "FailedCreateAssociation";
+    var _FCAE = "FailedCreateAssociationEntry";
+    var _FCAL = "FailedCreateAssociationList";
+    var _FD = "FailureDetails";
+    var _FK = "FilterKey";
+    var _FM = "FailureMessage";
+    var _FNAE = "FeatureNotAvailableException";
+    var _FS = "FailureStage";
+    var _FSa = "FailedSteps";
+    var _FT = "FailureType";
+    var _FV = "FilterValues";
+    var _FVi = "FilterValue";
+    var _FWO = "FiltersWithOperator";
+    var _Fa = "Fault";
+    var _Fi = "Filters";
+    var _Fo = "Force";
+    var _G = "Groups";
+    var _GAE = "GetAutomationExecution";
+    var _GAER = "GetAutomationExecutionRequest";
+    var _GAERe = "GetAutomationExecutionResult";
+    var _GAT = "GetAccessToken";
+    var _GATR = "GetAccessTokenRequest";
+    var _GATRe = "GetAccessTokenResponse";
+    var _GCI = "GetCommandInvocation";
+    var _GCIR = "GetCommandInvocationRequest";
+    var _GCIRe = "GetCommandInvocationResult";
+    var _GCS = "GetCalendarState";
+    var _GCSR = "GetCalendarStateRequest";
+    var _GCSRe = "GetCalendarStateResponse";
+    var _GCSRet = "GetConnectionStatusRequest";
+    var _GCSReto = "GetConnectionStatusResponse";
+    var _GCSe = "GetConnectionStatus";
+    var _GD = "GetDocument";
+    var _GDPB = "GetDefaultPatchBaseline";
+    var _GDPBR = "GetDefaultPatchBaselineRequest";
+    var _GDPBRe = "GetDefaultPatchBaselineResult";
+    var _GDPSFI = "GetDeployablePatchSnapshotForInstance";
+    var _GDPSFIR = "GetDeployablePatchSnapshotForInstanceRequest";
+    var _GDPSFIRe = "GetDeployablePatchSnapshotForInstanceResult";
+    var _GDR = "GetDocumentRequest";
+    var _GDRe = "GetDocumentResult";
+    var _GEP = "GetExecutionPreview";
+    var _GEPR = "GetExecutionPreviewRequest";
+    var _GEPRe = "GetExecutionPreviewResponse";
+    var _GF = "GlobalFilters";
+    var _GI = "GetInventory";
+    var _GIR = "GetInventoryRequest";
+    var _GIRe = "GetInventoryResult";
+    var _GIS = "GetInventorySchema";
+    var _GISR = "GetInventorySchemaRequest";
+    var _GISRe = "GetInventorySchemaResult";
+    var _GMW = "GetMaintenanceWindow";
+    var _GMWE = "GetMaintenanceWindowExecution";
+    var _GMWER = "GetMaintenanceWindowExecutionRequest";
+    var _GMWERe = "GetMaintenanceWindowExecutionResult";
+    var _GMWET = "GetMaintenanceWindowExecutionTask";
+    var _GMWETI = "GetMaintenanceWindowExecutionTaskInvocation";
+    var _GMWETIR = "GetMaintenanceWindowExecutionTaskInvocationRequest";
+    var _GMWETIRe = "GetMaintenanceWindowExecutionTaskInvocationResult";
+    var _GMWETR = "GetMaintenanceWindowExecutionTaskRequest";
+    var _GMWETRe = "GetMaintenanceWindowExecutionTaskResult";
+    var _GMWR = "GetMaintenanceWindowRequest";
+    var _GMWRe = "GetMaintenanceWindowResult";
+    var _GMWT = "GetMaintenanceWindowTask";
+    var _GMWTR = "GetMaintenanceWindowTaskRequest";
+    var _GMWTRe = "GetMaintenanceWindowTaskResult";
+    var _GOI = "GetOpsItem";
+    var _GOIR = "GetOpsItemRequest";
+    var _GOIRe = "GetOpsItemResponse";
+    var _GOM = "GetOpsMetadata";
+    var _GOMR = "GetOpsMetadataRequest";
+    var _GOMRe = "GetOpsMetadataResult";
+    var _GOS = "GetOpsSummary";
+    var _GOSR = "GetOpsSummaryRequest";
+    var _GOSRe = "GetOpsSummaryResult";
+    var _GP = "GetParameter";
+    var _GPB = "GetPatchBaseline";
+    var _GPBFPG = "GetPatchBaselineForPatchGroup";
+    var _GPBFPGR = "GetPatchBaselineForPatchGroupRequest";
+    var _GPBFPGRe = "GetPatchBaselineForPatchGroupResult";
+    var _GPBP = "GetParametersByPath";
+    var _GPBPR = "GetParametersByPathRequest";
+    var _GPBPRe = "GetParametersByPathResult";
+    var _GPBR = "GetPatchBaselineRequest";
+    var _GPBRe = "GetPatchBaselineResult";
+    var _GPH = "GetParameterHistory";
+    var _GPHR = "GetParameterHistoryRequest";
+    var _GPHRe = "GetParameterHistoryResult";
+    var _GPR = "GetParameterRequest";
+    var _GPRe = "GetParameterResult";
+    var _GPRet = "GetParametersRequest";
+    var _GPReta = "GetParametersResult";
+    var _GPe = "GetParameters";
+    var _GRP = "GetResourcePolicies";
+    var _GRPR = "GetResourcePoliciesRequest";
+    var _GRPRE = "GetResourcePoliciesResponseEntry";
+    var _GRPREe = "GetResourcePoliciesResponseEntries";
+    var _GRPRe = "GetResourcePoliciesResponse";
+    var _GSS = "GetServiceSetting";
+    var _GSSR = "GetServiceSettingRequest";
+    var _GSSRe = "GetServiceSettingResult";
+    var _H = "Hash";
+    var _HC = "HighCount";
+    var _HLLEE = "HierarchyLevelLimitExceededException";
+    var _HT = "HashType";
+    var _HTME = "HierarchyTypeMismatchException";
+    var _I = "Id";
+    var _IA = "InvalidActivation";
+    var _IAAO = "InstanceAggregatedAssociationOverview";
+    var _IAE = "InvalidAggregatorException";
+    var _IAEPE = "InvalidAutomationExecutionParametersException";
+    var _IAI = "InvalidActivationId";
+    var _IAL = "InstanceAssociationList";
+    var _IALn = "InventoryAggregatorList";
+    var _IAOL = "InstanceAssociationOutputLocation";
+    var _IAOU = "InstanceAssociationOutputUrl";
+    var _IAPE = "InvalidAllowedPatternException";
+    var _IASAC = "InstanceAssociationStatusAggregatedCount";
+    var _IASE = "InvalidAutomationSignalException";
+    var _IASI = "InstanceAssociationStatusInfos";
+    var _IASIn = "InstanceAssociationStatusInfo";
+    var _IASUE = "InvalidAutomationStatusUpdateException";
+    var _IAV = "InvalidAssociationVersion";
+    var _IAn = "InvalidAssociation";
+    var _IAns = "InstanceAssociation";
+    var _IAnv = "InventoryAggregator";
+    var _IAp = "IpAddress";
+    var _IC = "InstalledCount";
+    var _ICH = "ItemContentHash";
+    var _ICI = "InvalidCommandId";
+    var _ICME = "ItemContentMismatchException";
+    var _ICOU = "IncludeChildOrganizationUnits";
+    var _ICn = "InformationalCount";
+    var _ICs = "IsCritical";
+    var _ID = "InvalidDocument";
+    var _IDC = "InvalidDocumentContent";
+    var _IDIE = "InvalidDeletionIdException";
+    var _IDIPE = "InvalidDeleteInventoryParametersException";
+    var _IDL = "InventoryDeletionsList";
+    var _IDNE = "InvocationDoesNotExist";
+    var _IDO = "InvalidDocumentOperation";
+    var _IDS = "InventoryDeletionSummary";
+    var _IDSI = "InventoryDeletionStatusItem";
+    var _IDSIn = "InventoryDeletionSummaryItem";
+    var _IDSInv = "InventoryDeletionSummaryItems";
+    var _IDSV = "InvalidDocumentSchemaVersion";
+    var _IDT = "InvalidDocumentType";
+    var _IDV = "InvalidDocumentVersion";
+    var _IDVs = "IsDefaultVersion";
+    var _IDn = "InventoryDeletions";
+    var _IE = "IsEnd";
+    var _IF = "InvalidFilter";
+    var _IFK = "InvalidFilterKey";
+    var _IFL = "InventoryFilterList";
+    var _IFO = "InvalidFilterOption";
+    var _IFR = "IncludeFutureRegions";
+    var _IFV = "InvalidFilterValue";
+    var _IFVL = "InventoryFilterValueList";
+    var _IFn = "InventoryFilter";
+    var _IG = "InventoryGroup";
+    var _IGL = "InventoryGroupList";
+    var _II = "InstanceId";
+    var _IIA = "InventoryItemAttribute";
+    var _IIAL = "InventoryItemAttributeList";
+    var _IICE = "InvalidItemContentException";
+    var _IIEL = "InventoryItemEntryList";
+    var _IIF = "InstanceInformationFilter";
+    var _IIFL = "InstanceInformationFilterList";
+    var _IIFV = "InstanceInformationFilterValue";
+    var _IIFVS = "InstanceInformationFilterValueSet";
+    var _IIGE = "InvalidInventoryGroupException";
+    var _III = "InvalidInstanceId";
+    var _IIICE = "InvalidInventoryItemContextException";
+    var _IIIFV = "InvalidInstanceInformationFilterValue";
+    var _IIL = "InstanceInformationList";
+    var _IILn = "InventoryItemList";
+    var _IIPFV = "InvalidInstancePropertyFilterValue";
+    var _IIRE = "InvalidInventoryRequestException";
+    var _IIS = "InventoryItemSchema";
+    var _IISF = "InstanceInformationStringFilter";
+    var _IISFL = "InstanceInformationStringFilterList";
+    var _IISRL = "InventoryItemSchemaResultList";
+    var _IIn = "InstanceIds";
+    var _IIns = "InstanceInfo";
+    var _IInst = "InstanceInformation";
+    var _IInv = "InvocationId";
+    var _IInve = "InventoryItem";
+    var _IKI = "InvalidKeyId";
+    var _IL = "InvalidLabels";
+    var _ILV = "IsLatestVersion";
+    var _IN = "InstanceName";
+    var _INC = "InvalidNotificationConfig";
+    var _INT = "InvalidNextToken";
+    var _IOC = "InstalledOtherCount";
+    var _IOE = "InvalidOptionException";
+    var _IOF = "InvalidOutputFolder";
+    var _IOL = "InvalidOutputLocation";
+    var _IOLn = "InstallOverrideList";
+    var _IP = "InvalidParameters";
+    var _IPA = "IPAddress";
+    var _IPAE = "InvalidPolicyAttributeException";
+    var _IPAF = "IgnorePollAlarmFailure";
+    var _IPE = "IncompatiblePolicyException";
+    var _IPF = "InstancePropertyFilter";
+    var _IPFL = "InstancePropertyFilterList";
+    var _IPFV = "InstancePropertyFilterValue";
+    var _IPFVS = "InstancePropertyFilterValueSet";
+    var _IPM = "IdempotentParameterMismatch";
+    var _IPN = "InvalidPluginName";
+    var _IPRC = "InstalledPendingRebootCount";
+    var _IPS = "InstancePatchStates";
+    var _IPSF = "InstancePatchStateFilter";
+    var _IPSFL = "InstancePatchStateFilterList";
+    var _IPSFLn = "InstancePropertyStringFilterList";
+    var _IPSFn = "InstancePropertyStringFilter";
+    var _IPSL = "InstancePatchStateList";
+    var _IPSLn = "InstancePatchStatesList";
+    var _IPSn = "InstancePatchState";
+    var _IPT = "InvalidPermissionType";
+    var _IPTE = "InvalidPolicyTypeException";
+    var _IPn = "InstanceProperties";
+    var _IPns = "InstanceProperty";
+    var _IR = "InvalidRole";
+    var _IRAE = "InvalidResultAttributeException";
+    var _IRC = "InstalledRejectedCount";
+    var _IRE3 = "InventoryResultEntity";
+    var _IREL = "InventoryResultEntityList";
+    var _IRI = "InvalidResourceId";
+    var _IRIM = "InventoryResultItemMap";
+    var _IRIn = "InventoryResultItem";
+    var _IRT = "InvalidResourceType";
+    var _IRa = "IamRole";
+    var _IRn = "InstanceRole";
+    var _IS = "InvalidSchedule";
+    var _ISE3 = "InternalServerError";
+    var _ISLEE = "ItemSizeLimitExceededException";
+    var _ISn = "InstanceStatus";
+    var _ISns = "InstanceState";
+    var _IT2 = "InvalidTag";
+    var _ITM = "InvalidTargetMaps";
+    var _ITNE = "InvalidTypeNameException";
+    var _ITn = "InvalidTarget";
+    var _ITns = "InstanceType";
+    var _ITnst = "InstalledTime";
+    var _IU = "InvalidUpdate";
+    var _IV = "IteratorValue";
+    var _IWASU = "InstancesWithAvailableSecurityUpdates";
+    var _IWCNCP = "InstancesWithCriticalNonCompliantPatches";
+    var _IWFP = "InstancesWithFailedPatches";
+    var _IWIOP = "InstancesWithInstalledOtherPatches";
+    var _IWIP = "InstancesWithInstalledPatches";
+    var _IWIPRP = "InstancesWithInstalledPendingRebootPatches";
+    var _IWIRP = "InstancesWithInstalledRejectedPatches";
+    var _IWMP = "InstancesWithMissingPatches";
+    var _IWNAP = "InstancesWithNotApplicablePatches";
+    var _IWONCP = "InstancesWithOtherNonCompliantPatches";
+    var _IWSNCP = "InstancesWithSecurityNonCompliantPatches";
+    var _IWUNAP = "InstancesWithUnreportedNotApplicablePatches";
+    var _In = "Instances";
+    var _Inp = "Input";
+    var _Inpu = "Inputs";
+    var _Ins = "Instance";
+    var _It = "Iteration";
+    var _Ite = "Items";
+    var _Item = "Item";
+    var _K2 = "Key";
+    var _KBI = "KBId";
+    var _KI = "KeyId";
+    var _KN = "KeyName";
+    var _KNb = "KbNumber";
+    var _KTD = "KeysToDelete";
+    var _L = "Limit";
+    var _LA = "ListAssociations";
+    var _LAED = "LastAssociationExecutionDate";
+    var _LAR = "ListAssociationsRequest";
+    var _LARi = "ListAssociationsResult";
+    var _LAV = "ListAssociationVersions";
+    var _LAVR = "ListAssociationVersionsRequest";
+    var _LAVRi = "ListAssociationVersionsResult";
+    var _LC = "LowCount";
+    var _LCI = "ListCommandInvocations";
+    var _LCIR = "ListCommandInvocationsRequest";
+    var _LCIRi = "ListCommandInvocationsResult";
+    var _LCIRis = "ListComplianceItemsRequest";
+    var _LCIRist = "ListComplianceItemsResult";
+    var _LCIi = "ListComplianceItems";
+    var _LCR = "ListCommandsRequest";
+    var _LCRi = "ListCommandsResult";
+    var _LCS = "ListComplianceSummaries";
+    var _LCSR = "ListComplianceSummariesRequest";
+    var _LCSRi = "ListComplianceSummariesResult";
+    var _LCi = "ListCommands";
+    var _LD = "ListDocuments";
+    var _LDMH = "ListDocumentMetadataHistory";
+    var _LDMHR = "ListDocumentMetadataHistoryRequest";
+    var _LDMHRi = "ListDocumentMetadataHistoryResponse";
+    var _LDR = "ListDocumentsRequest";
+    var _LDRi = "ListDocumentsResult";
+    var _LDV = "ListDocumentVersions";
+    var _LDVR = "ListDocumentVersionsRequest";
+    var _LDVRi = "ListDocumentVersionsResult";
+    var _LED = "LastExecutionDate";
+    var _LF = "LogFile";
+    var _LI = "LoggingInfo";
+    var _LIE = "ListInventoryEntries";
+    var _LIER = "ListInventoryEntriesRequest";
+    var _LIERi = "ListInventoryEntriesResult";
+    var _LMB = "LastModifiedBy";
+    var _LMD = "LastModifiedDate";
+    var _LMT = "LastModifiedTime";
+    var _LMU = "LastModifiedUser";
+    var _LN = "ListNodes";
+    var _LNR = "ListNodesRequest";
+    var _LNRIOT = "LastNoRebootInstallOperationTime";
+    var _LNRi = "ListNodesResult";
+    var _LNS = "ListNodesSummary";
+    var _LNSR = "ListNodesSummaryRequest";
+    var _LNSRi = "ListNodesSummaryResult";
+    var _LOIE = "ListOpsItemEvents";
+    var _LOIER = "ListOpsItemEventsRequest";
+    var _LOIERi = "ListOpsItemEventsResponse";
+    var _LOIRI = "ListOpsItemRelatedItems";
+    var _LOIRIR = "ListOpsItemRelatedItemsRequest";
+    var _LOIRIRi = "ListOpsItemRelatedItemsResponse";
+    var _LOM = "ListOpsMetadata";
+    var _LOMR = "ListOpsMetadataRequest";
+    var _LOMRi = "ListOpsMetadataResult";
+    var _LPDT = "LastPingDateTime";
+    var _LPV = "LabelParameterVersion";
+    var _LPVR = "LabelParameterVersionRequest";
+    var _LPVRa = "LabelParameterVersionResult";
+    var _LRCS = "ListResourceComplianceSummaries";
+    var _LRCSR = "ListResourceComplianceSummariesRequest";
+    var _LRCSRi = "ListResourceComplianceSummariesResult";
+    var _LRDS = "ListResourceDataSync";
+    var _LRDSR = "ListResourceDataSyncRequest";
+    var _LRDSRi = "ListResourceDataSyncResult";
+    var _LS = "LastStatus";
+    var _LSAED = "LastSuccessfulAssociationExecutionDate";
+    var _LSED = "LastSuccessfulExecutionDate";
+    var _LSM = "LastStatusMessage";
+    var _LSSM = "LastSyncStatusMessage";
+    var _LSST = "LastSuccessfulSyncTime";
+    var _LST = "LastSyncTime";
+    var _LSUT = "LastStatusUpdateTime";
+    var _LT = "LimitType";
+    var _LTFR = "ListTagsForResource";
+    var _LTFRR = "ListTagsForResourceRequest";
+    var _LTFRRi = "ListTagsForResourceResult";
+    var _LTa = "LaunchTime";
+    var _LUAD = "LastUpdateAssociationDate";
+    var _LV = "LatestVersion";
+    var _La = "Labels";
+    var _Lam = "Lambda";
+    var _Lan = "Language";
+    var _M = "Message";
+    var _MA = "MaxAttempts";
+    var _MC = "MaxConcurrency";
+    var _MCe = "MediumCount";
+    var _MCi = "MissingCount";
+    var _MD = "ModifiedDate";
+    var _MDP = "ModifyDocumentPermission";
+    var _MDPR = "ModifyDocumentPermissionRequest";
+    var _MDPRo = "ModifyDocumentPermissionResponse";
+    var _MDSE = "MaxDocumentSizeExceeded";
+    var _ME = "MaxErrors";
+    var _MM = "MetadataMap";
+    var _MN = "MsrcNumber";
+    var _MR = "MaxResults";
+    var _MRPDE = "MalformedResourcePolicyDocumentException";
+    var _MS = "ManagedStatus";
+    var _MSD = "MaxSessionDuration";
+    var _MSs = "MsrcSeverity";
+    var _MTU = "MetadataToUpdate";
+    var _MV = "MetadataValue";
+    var _MWAP = "MaintenanceWindowAutomationParameters";
+    var _MWD = "MaintenanceWindowDescription";
+    var _MWE = "MaintenanceWindowExecution";
+    var _MWEL = "MaintenanceWindowExecutionList";
+    var _MWETI = "MaintenanceWindowExecutionTaskIdentity";
+    var _MWETII = "MaintenanceWindowExecutionTaskInvocationIdentity";
+    var _MWETIIL = "MaintenanceWindowExecutionTaskInvocationIdentityList";
+    var _MWETIL = "MaintenanceWindowExecutionTaskIdentityList";
+    var _MWETIP = "MaintenanceWindowExecutionTaskInvocationParameters";
+    var _MWF = "MaintenanceWindowFilter";
+    var _MWFL = "MaintenanceWindowFilterList";
+    var _MWFTL = "MaintenanceWindowsForTargetList";
+    var _MWI = "MaintenanceWindowIdentity";
+    var _MWIFT = "MaintenanceWindowIdentityForTarget";
+    var _MWIL = "MaintenanceWindowIdentityList";
+    var _MWLP = "MaintenanceWindowLambdaPayload";
+    var _MWLPa = "MaintenanceWindowLambdaParameters";
+    var _MWRCP = "MaintenanceWindowRunCommandParameters";
+    var _MWSFI = "MaintenanceWindowStepFunctionsInput";
+    var _MWSFP = "MaintenanceWindowStepFunctionsParameters";
+    var _MWT = "MaintenanceWindowTarget";
+    var _MWTIP = "MaintenanceWindowTaskInvocationParameters";
+    var _MWTL = "MaintenanceWindowTargetList";
+    var _MWTLa = "MaintenanceWindowTaskList";
+    var _MWTP = "MaintenanceWindowTaskParameters";
+    var _MWTPL = "MaintenanceWindowTaskParametersList";
+    var _MWTPV = "MaintenanceWindowTaskParameterValue";
+    var _MWTPVE = "MaintenanceWindowTaskParameterValueExpression";
+    var _MWTPVL = "MaintenanceWindowTaskParameterValueList";
+    var _MWTa = "MaintenanceWindowTask";
+    var _Ma = "Mappings";
+    var _Me = "Metadata";
+    var _Mo = "Mode";
+    var _N = "Name";
+    var _NA = "NodeAggregator";
+    var _NAC = "NotApplicableCount";
+    var _NAL = "NodeAggregatorList";
+    var _NAo = "NotificationArn";
+    var _NC = "NotificationConfig";
+    var _NCC = "NonCompliantCount";
+    var _NCS = "NonCompliantSummary";
+    var _NE = "NotificationEvents";
+    var _NET = "NextExecutionTime";
+    var _NF = "NodeFilter";
+    var _NFL = "NodeFilterList";
+    var _NFVL = "NodeFilterValueList";
+    var _NL = "NodeList";
+    var _NLSE = "NoLongerSupportedException";
+    var _NOI = "NodeOwnerInfo";
+    var _NS = "NextStep";
+    var _NSL = "NodeSummaryList";
+    var _NT = "NextToken";
+    var _NTT = "NextTransitionTime";
+    var _NTo = "NodeType";
+    var _NTot = "NotificationType";
+    var _Na = "Names";
+    var _No = "Notifications";
+    var _Nod = "Nodes";
+    var _Node = "Node";
+    var _O = "Overview";
+    var _OA = "OpsAggregator";
+    var _OAL = "OpsAggregatorList";
+    var _OD = "OperationalData";
+    var _ODTD = "OperationalDataToDelete";
+    var _OE = "OpsEntity";
+    var _OEI = "OpsEntityItem";
+    var _OEIEL = "OpsEntityItemEntryList";
+    var _OEIM = "OpsEntityItemMap";
+    var _OEL = "OpsEntityList";
+    var _OET = "OperationEndTime";
+    var _OF = "OpsFilter";
+    var _OFL = "OpsFilterList";
+    var _OFVL = "OpsFilterValueList";
+    var _OFn = "OnFailure";
+    var _OI = "OwnerInformation";
+    var _OIA = "OpsItemArn";
+    var _OIADE = "OpsItemAccessDeniedException";
+    var _OIAEE = "OpsItemAlreadyExistsException";
+    var _OICE = "OpsItemConflictException";
+    var _OIDV = "OpsItemDataValue";
+    var _OIEF = "OpsItemEventFilter";
+    var _OIEFp = "OpsItemEventFilters";
+    var _OIES = "OpsItemEventSummary";
+    var _OIESp = "OpsItemEventSummaries";
+    var _OIF = "OpsItemFilters";
+    var _OIFp = "OpsItemFilter";
+    var _OII = "OpsItemId";
+    var _OIIPE = "OpsItemInvalidParameterException";
+    var _OIIp = "OpsItemIdentity";
+    var _OILEE = "OpsItemLimitExceededException";
+    var _OIN = "OpsItemNotification";
+    var _OINFE = "OpsItemNotFoundException";
+    var _OINp = "OpsItemNotifications";
+    var _OIOD = "OpsItemOperationalData";
+    var _OIRIAEE = "OpsItemRelatedItemAlreadyExistsException";
+    var _OIRIANFE = "OpsItemRelatedItemAssociationNotFoundException";
+    var _OIRIF = "OpsItemRelatedItemsFilter";
+    var _OIRIFp = "OpsItemRelatedItemsFilters";
+    var _OIRIS = "OpsItemRelatedItemSummary";
+    var _OIRISp = "OpsItemRelatedItemSummaries";
+    var _OIS = "OpsItemSummaries";
+    var _OISp = "OpsItemSummary";
+    var _OIT = "OpsItemType";
+    var _OIp = "OpsItem";
+    var _OL = "OutputLocation";
+    var _OM = "OpsMetadata";
+    var _OMA = "OpsMetadataArn";
+    var _OMAEE = "OpsMetadataAlreadyExistsException";
+    var _OMF = "OpsMetadataFilter";
+    var _OMFL = "OpsMetadataFilterList";
+    var _OMIAE = "OpsMetadataInvalidArgumentException";
+    var _OMKLEE = "OpsMetadataKeyLimitExceededException";
+    var _OML = "OpsMetadataList";
+    var _OMLEE = "OpsMetadataLimitExceededException";
+    var _OMNFE = "OpsMetadataNotFoundException";
+    var _OMTMUE = "OpsMetadataTooManyUpdatesException";
+    var _ONCC = "OtherNonCompliantCount";
+    var _OP = "OverriddenParameters";
+    var _ORA = "OpsResultAttribute";
+    var _ORAL = "OpsResultAttributeList";
+    var _OS = "OutputSource";
+    var _OSBN = "OutputS3BucketName";
+    var _OSI = "OutputSourceId";
+    var _OSKP = "OutputS3KeyPrefix";
+    var _OSR = "OutputS3Region";
+    var _OST = "OperationStartTime";
+    var _OSTr = "OrganizationSourceType";
+    var _OSTu = "OutputSourceType";
+    var _OSp = "OperatingSystem";
+    var _OSv = "OverallSeverity";
+    var _OU = "OutputUrl";
+    var _OUI = "OrganizationalUnitId";
+    var _OUP = "OrganizationalUnitPath";
+    var _OUr = "OrganizationalUnits";
+    var _Op = "Operation";
+    var _Ope = "Operator";
+    var _Opt = "Option";
+    var _Ou = "Outputs";
+    var _Out = "Output";
+    var _Ov = "Overwrite";
+    var _Ow = "Owner";
+    var _P2 = "Parameters";
+    var _PAE = "ParameterAlreadyExists";
+    var _PAEI = "ParentAutomationExecutionId";
+    var _PBI = "PatchBaselineIdentity";
+    var _PBIL = "PatchBaselineIdentityList";
+    var _PC2 = "ProgressCounters";
+    var _PCD = "PatchComplianceData";
+    var _PCDL = "PatchComplianceDataList";
+    var _PCI = "PutComplianceItems";
+    var _PCIR = "PutComplianceItemsRequest";
+    var _PCIRu = "PutComplianceItemsResult";
+    var _PET = "PlannedEndTime";
+    var _PF = "ParameterFilters";
+    var _PFG = "PatchFilterGroup";
+    var _PFL = "ParametersFilterList";
+    var _PFLa = "PatchFilterList";
+    var _PFa = "ParametersFilter";
+    var _PFat = "PatchFilter";
+    var _PFatc = "PatchFilters";
+    var _PFr = "ProductFamily";
+    var _PG = "PatchGroup";
+    var _PGPBM = "PatchGroupPatchBaselineMapping";
+    var _PGPBML = "PatchGroupPatchBaselineMappingList";
+    var _PGa = "PatchGroups";
+    var _PH = "PolicyHash";
+    var _PHL = "ParameterHistoryList";
+    var _PHa = "ParameterHistory";
+    var _PI2 = "PolicyId";
+    var _PIP = "ParameterInlinePolicy";
+    var _PIR = "PutInventoryRequest";
+    var _PIRu = "PutInventoryResult";
+    var _PIu = "PutInventory";
+    var _PL = "ParameterList";
+    var _PLE = "ParameterLimitExceeded";
+    var _PLEE = "PoliciesLimitExceededException";
+    var _PLa = "PatchList";
+    var _PM = "ParameterMetadata";
+    var _PML = "ParameterMetadataList";
+    var _PMVLE = "ParameterMaxVersionLimitExceeded";
+    var _PN = "ParameterNames";
+    var _PNF = "ParameterNotFound";
+    var _PNl = "PluginName";
+    var _PNla = "PlatformName";
+    var _POF = "PatchOrchestratorFilter";
+    var _POFL = "PatchOrchestratorFilterList";
+    var _PP = "PutParameter";
+    var _PPL = "PatchPropertiesList";
+    var _PPLa = "ParameterPolicyList";
+    var _PPME = "ParameterPatternMismatchException";
+    var _PPR = "PutParameterRequest";
+    var _PPRu = "PutParameterResult";
+    var _PR = "PatchRule";
+    var _PRG = "PatchRuleGroup";
+    var _PRL = "PatchRuleList";
+    var _PRP = "PutResourcePolicy";
+    var _PRPR = "PutResourcePolicyRequest";
+    var _PRPRu = "PutResourcePolicyResponse";
+    var _PRV = "PendingReviewVersion";
+    var _PRa = "PatchRules";
+    var _PS = "PatchSet";
+    var _PSC = "PatchSourceConfiguration";
+    var _PSD = "ParentStepDetails";
+    var _PSF = "ParameterStringFilter";
+    var _PSFL = "ParameterStringFilterList";
+    var _PSL = "PatchSourceList";
+    var _PSPV = "PSParameterValue";
+    var _PST = "PlannedStartTime";
+    var _PSa = "PatchStatus";
+    var _PSat = "PatchSource";
+    var _PSi = "PingStatus";
+    var _PSo = "PolicyStatus";
+    var _PT = "PermissionType";
+    var _PTL = "PlatformTypeList";
+    var _PTl = "PlatformTypes";
+    var _PTla = "PlatformType";
+    var _PTo = "PolicyText";
+    var _PTol = "PolicyType";
+    var _PV = "PlatformVersion";
+    var _PVLLE = "ParameterVersionLabelLimitExceeded";
+    var _PVNF = "ParameterVersionNotFound";
+    var _PVa = "ParameterVersion";
+    var _PVar = "ParameterValues";
+    var _Pa = "Patches";
+    var _Par = "Parameter";
+    var _Pat = "Patch";
+    var _Path = "Path";
+    var _Pay = "Payload";
+    var _Po = "Policies";
+    var _Pol = "Policy";
+    var _Pr2 = "Priority";
+    var _Pre = "Prefix";
+    var _Pro = "Property";
+    var _Prod = "Product";
+    var _Produ = "Products";
+    var _Prop = "Properties";
+    var _Q = "Qualifier";
+    var _QC = "QuotaCode";
+    var _R = "Runbooks";
+    var _RA2 = "ResourceArn";
+    var _RAL = "ResultAttributeList";
+    var _RAe = "ResultAttributes";
+    var _RAes = "ResultAttribute";
+    var _RC2 = "ReasonCode";
+    var _RCBS = "ResourceCountByStatus";
+    var _RCSI = "ResourceComplianceSummaryItems";
+    var _RCSIL = "ResourceComplianceSummaryItemList";
+    var _RCSIe = "ResourceComplianceSummaryItem";
+    var _RCe = "RegistrationsCount";
+    var _RCem = "RemainingCount";
+    var _RCes = "ResponseCode";
+    var _RCu = "RunCommand";
+    var _RD = "RegistrationDate";
+    var _RDPB = "RegisterDefaultPatchBaseline";
+    var _RDPBR = "RegisterDefaultPatchBaselineRequest";
+    var _RDPBRe = "RegisterDefaultPatchBaselineResult";
+    var _RDSAEE = "ResourceDataSyncAlreadyExistsException";
+    var _RDSAOS = "ResourceDataSyncAwsOrganizationsSource";
+    var _RDSCE = "ResourceDataSyncConflictException";
+    var _RDSCEE = "ResourceDataSyncCountExceededException";
+    var _RDSDDS = "ResourceDataSyncDestinationDataSharing";
+    var _RDSI = "ResourceDataSyncItems";
+    var _RDSICE = "ResourceDataSyncInvalidConfigurationException";
+    var _RDSIL = "ResourceDataSyncItemList";
+    var _RDSIe = "ResourceDataSyncItem";
+    var _RDSNFE = "ResourceDataSyncNotFoundException";
+    var _RDSOU = "ResourceDataSyncOrganizationalUnit";
+    var _RDSOUL = "ResourceDataSyncOrganizationalUnitList";
+    var _RDSS = "ResourceDataSyncSource";
+    var _RDSSD = "ResourceDataSyncS3Destination";
+    var _RDSSWS = "ResourceDataSyncSourceWithState";
+    var _RDT = "RequestedDateTime";
+    var _RDe = "ReleaseDate";
+    var _RFDT = "ResponseFinishDateTime";
+    var _RI = "ResourceId";
+    var _RIL = "ReviewInformationList";
+    var _RIUE = "ResourceInUseException";
+    var _RIe = "ReviewInformation";
+    var _RIes = "ResourceIds";
+    var _RL = "RegistrationLimit";
+    var _RLEE = "ResourceLimitExceededException";
+    var _RLe = "RemovedLabels";
+    var _RM = "RegistrationMetadata";
+    var _RMI = "RegistrationMetadataItem";
+    var _RML = "RegistrationMetadataList";
+    var _RNFE2 = "ResourceNotFoundException";
+    var _RO = "ReverseOrder";
+    var _ROI = "RelatedOpsItems";
+    var _ROIe = "RelatedOpsItem";
+    var _ROe = "RebootOption";
+    var _RP = "RejectedPatches";
+    var _RPA = "RejectedPatchesAction";
+    var _RPBFPG = "RegisterPatchBaselineForPatchGroup";
+    var _RPBFPGR = "RegisterPatchBaselineForPatchGroupRequest";
+    var _RPBFPGRe = "RegisterPatchBaselineForPatchGroupResult";
+    var _RPCE = "ResourcePolicyConflictException";
+    var _RPIPE = "ResourcePolicyInvalidParameterException";
+    var _RPLEE = "ResourcePolicyLimitExceededException";
+    var _RPNFE = "ResourcePolicyNotFoundException";
+    var _RR = "ReviewerResponse";
+    var _RS = "ReviewStatus";
+    var _RSDT = "ResponseStartDateTime";
+    var _RSR = "ResumeSessionRequest";
+    var _RSRe = "ResumeSessionResponse";
+    var _RSS = "ResetServiceSetting";
+    var _RSSR = "ResetServiceSettingRequest";
+    var _RSSRe = "ResetServiceSettingResult";
+    var _RSe = "ResumeSession";
+    var _RT3 = "ResourceTypes";
+    var _RTFR = "RemoveTagsFromResource";
+    var _RTFRR = "RemoveTagsFromResourceRequest";
+    var _RTFRRe = "RemoveTagsFromResourceResult";
+    var _RTWMW = "RegisterTargetWithMaintenanceWindow";
+    var _RTWMWR = "RegisterTargetWithMaintenanceWindowRequest";
+    var _RTWMWRe = "RegisterTargetWithMaintenanceWindowResult";
+    var _RTWMWReg = "RegisterTaskWithMaintenanceWindowRequest";
+    var _RTWMWRegi = "RegisterTaskWithMaintenanceWindowResult";
+    var _RTWMWe = "RegisterTaskWithMaintenanceWindow";
+    var _RTe = "ResourceType";
+    var _RTeq = "RequireType";
+    var _RTes = "ResolvedTargets";
+    var _RTev = "ReviewedTime";
+    var _RU = "ResourceUri";
+    var _Re = "Regions";
+    var _Rea = "Reason";
+    var _Rec = "Recursive";
+    var _Reg = "Region";
+    var _Rel = "Release";
+    var _Rep = "Repository";
+    var _Repl = "Replace";
+    var _Req = "Requires";
+    var _Res = "Response";
+    var _Rev = "Reviewer";
+    var _Ru = "Runbook";
+    var _S = "State";
+    var _SAE = "StartAutomationExecution";
+    var _SAER = "StartAutomationExecutionRequest";
+    var _SAERt = "StartAutomationExecutionResult";
+    var _SAERto = "StopAutomationExecutionRequest";
+    var _SAERtop = "StopAutomationExecutionResult";
+    var _SAEt = "StopAutomationExecution";
+    var _SAK2 = "SecretAccessKey";
+    var _SAO = "StartAssociationsOnce";
+    var _SAOR = "StartAssociationsOnceRequest";
+    var _SAORt = "StartAssociationsOnceResult";
+    var _SAR = "StartAccessRequest";
+    var _SARR = "StartAccessRequestRequest";
+    var _SARRt = "StartAccessRequestResponse";
+    var _SAS = "SendAutomationSignal";
+    var _SASR = "SendAutomationSignalRequest";
+    var _SASRe = "SendAutomationSignalResult";
+    var _SBN = "S3BucketName";
+    var _SC = "ServiceCode";
+    var _SCR = "SendCommandRequest";
+    var _SCRE = "StartChangeRequestExecution";
+    var _SCRER = "StartChangeRequestExecutionRequest";
+    var _SCRERt = "StartChangeRequestExecutionResult";
+    var _SCRe = "SendCommandResult";
+    var _SCT = "SyncCreatedTime";
+    var _SCe = "SendCommand";
+    var _SCy = "SyncCompliance";
+    var _SD = "StatusDetails";
+    var _SDO = "SchemaDeleteOption";
+    var _SDU = "SnapshotDownloadUrl";
+    var _SDV = "SharedDocumentVersion";
+    var _SDe = "S3Destination";
+    var _SDt = "StartDate";
+    var _SE = "ScheduleExpression";
+    var _SEC = "StandardErrorContent";
+    var _SEF = "StepExecutionFilter";
+    var _SEFL = "StepExecutionFilterList";
+    var _SEI = "StepExecutionId";
+    var _SEL = "StepExecutionList";
+    var _SEP = "StartExecutionPreview";
+    var _SEPR = "StartExecutionPreviewRequest";
+    var _SEPRt = "StartExecutionPreviewResponse";
+    var _SET = "StepExecutionsTruncated";
+    var _SETc = "ScheduledEndTime";
+    var _SEU = "StandardErrorUrl";
+    var _SEt = "StepExecutions";
+    var _SEte = "StepExecution";
+    var _SF = "StepFunctions";
+    var _SFL = "SessionFilterList";
+    var _SFe = "SessionFilter";
+    var _SFy = "SyncFormat";
+    var _SI2 = "StatusInformation";
+    var _SIe = "SettingId";
+    var _SIes = "SessionId";
+    var _SIn = "SnapshotId";
+    var _SIo = "SourceId";
+    var _SIu = "SummaryItems";
+    var _SKP = "S3KeyPrefix";
+    var _SL = "S3Location";
+    var _SLMT = "SyncLastModifiedTime";
+    var _SLe = "SessionList";
+    var _SM = "StatusMessage";
+    var _SMOU = "SessionManagerOutputUrl";
+    var _SMP = "SessionManagerParameters";
+    var _SN2 = "SyncName";
+    var _SNCC = "SecurityNonCompliantCount";
+    var _SNt = "StepName";
+    var _SO = "ScheduleOffset";
+    var _SOC = "StandardOutputContent";
+    var _SOL = "S3OutputLocation";
+    var _SOU = "StandardOutputUrl";
+    var _SOUu = "S3OutputUrl";
+    var _SP = "StepPreviews";
+    var _SQEE = "ServiceQuotaExceededException";
+    var _SR = "ServiceRole";
+    var _SRA = "ServiceRoleArn";
+    var _SRe = "S3Region";
+    var _SRo = "SourceResult";
+    var _SRou = "SourceRegions";
+    var _SS = "SeveritySummary";
+    var _SSNF = "ServiceSettingNotFound";
+    var _SSR = "StartSessionRequest";
+    var _SSRt = "StartSessionResponse";
+    var _SSe = "ServiceSetting";
+    var _SSt = "StepStatus";
+    var _SSta = "StartSession";
+    var _SSu = "SuccessSteps";
+    var _SSy = "SyncSource";
+    var _ST2 = "SyncType";
+    var _STCLEE = "SubTypeCountLimitExceededException";
+    var _STT2 = "SessionTokenType";
+    var _STc = "ScheduledTime";
+    var _STch = "ScheduleTimezone";
+    var _STe = "SessionToken";
+    var _STi = "SignalType";
+    var _STo = "SourceType";
+    var _STt = "StartTime";
+    var _STu = "SubType";
+    var _SU = "StatusUnchanged";
+    var _SUt = "StreamUrl";
+    var _SV = "SchemaVersion";
+    var _SVe = "SettingValue";
+    var _SWE = "ScheduledWindowExecutions";
+    var _SWEL = "ScheduledWindowExecutionList";
+    var _SWEc = "ScheduledWindowExecution";
+    var _Sa = "Safe";
+    var _Sc = "Schedule";
+    var _Sch = "Schemas";
+    var _Se = "Severity";
+    var _Sel = "Selector";
+    var _Ses = "Sessions";
+    var _Sess = "Session";
+    var _Sh = "Shared";
+    var _Sha = "Sha1";
+    var _Si = "Size";
+    var _So = "Sources";
+    var _Sou = "Source";
+    var _St = "Status";
+    var _Su = "Successful";
+    var _Sum = "Summary";
+    var _Summ = "Summaries";
+    var _T2 = "Tags";
+    var _TA = "TriggeredAlarms";
+    var _TAa = "TaskArn";
+    var _TAo = "TotalAccounts";
+    var _TC2 = "TargetCount";
+    var _TCo = "TotalCount";
+    var _TE = "ThrottlingException";
+    var _TEI = "TaskExecutionId";
+    var _TI = "TaskId";
+    var _TIP = "TaskInvocationParameters";
+    var _TIUE = "TargetInUseException";
+    var _TIa = "TaskIds";
+    var _TK = "TagKeys";
+    var _TL = "TargetLocations";
+    var _TLAC = "TargetLocationAlarmConfiguration";
+    var _TLMC = "TargetLocationMaxConcurrency";
+    var _TLME = "TargetLocationMaxErrors";
+    var _TLURL = "TargetLocationsURL";
+    var _TLa = "TagList";
+    var _TLar = "TargetLocation";
+    var _TM = "TargetMaps";
+    var _TMC = "TargetsMaxConcurrency";
+    var _TME = "TargetsMaxErrors";
+    var _TMTE = "TooManyTagsError";
+    var _TMU = "TooManyUpdates";
+    var _TMa = "TargetMap";
+    var _TN = "TypeName";
+    var _TNC = "TargetNotConnected";
+    var _TO = "TraceOutput";
+    var _TOS = "TimedOutSteps";
+    var _TP = "TargetPreviews";
+    var _TPL = "TargetPreviewList";
+    var _TPN = "TargetParameterName";
+    var _TPa = "TaskParameters";
+    var _TPar = "TargetPreview";
+    var _TS = "TimeoutSeconds";
+    var _TSLEE = "TotalSizeLimitExceededException";
+    var _TSR = "TerminateSessionRequest";
+    var _TSRe = "TerminateSessionResponse";
+    var _TSe = "TerminateSession";
+    var _TSo = "TotalSteps";
+    var _TT = "TargetType";
+    var _TTa = "TaskType";
+    var _TV = "TokenValue";
+    var _Ta2 = "Targets";
+    var _Tag = "Tag";
+    var _Tar = "Target";
+    var _Tas = "Tasks";
+    var _Ti = "Title";
+    var _Tie = "Tier";
+    var _Tr = "Truncated";
+    var _Ty = "Type";
+    var _U = "Url";
+    var _UA = "UpdateAssociation";
+    var _UAR = "UpdateAssociationRequest";
+    var _UARp = "UpdateAssociationResult";
+    var _UAS = "UpdateAssociationStatus";
+    var _UASR = "UpdateAssociationStatusRequest";
+    var _UASRp = "UpdateAssociationStatusResult";
+    var _UC = "UnspecifiedCount";
+    var _UCE2 = "UnsupportedCalendarException";
+    var _UD = "UpdateDocument";
+    var _UDDV = "UpdateDocumentDefaultVersion";
+    var _UDDVR = "UpdateDocumentDefaultVersionRequest";
+    var _UDDVRp = "UpdateDocumentDefaultVersionResult";
+    var _UDM = "UpdateDocumentMetadata";
+    var _UDMR = "UpdateDocumentMetadataRequest";
+    var _UDMRp = "UpdateDocumentMetadataResponse";
+    var _UDR = "UpdateDocumentRequest";
+    var _UDRp = "UpdateDocumentResult";
+    var _UFRE = "UnsupportedFeatureRequiredException";
+    var _UIICE = "UnsupportedInventoryItemContextException";
+    var _UISVE = "UnsupportedInventorySchemaVersionException";
+    var _UMIR = "UpdateManagedInstanceRole";
+    var _UMIRR = "UpdateManagedInstanceRoleRequest";
+    var _UMIRRp = "UpdateManagedInstanceRoleResult";
+    var _UMW = "UpdateMaintenanceWindow";
+    var _UMWR = "UpdateMaintenanceWindowRequest";
+    var _UMWRp = "UpdateMaintenanceWindowResult";
+    var _UMWT = "UpdateMaintenanceWindowTarget";
+    var _UMWTR = "UpdateMaintenanceWindowTargetRequest";
+    var _UMWTRp = "UpdateMaintenanceWindowTargetResult";
+    var _UMWTRpd = "UpdateMaintenanceWindowTaskRequest";
+    var _UMWTRpda = "UpdateMaintenanceWindowTaskResult";
+    var _UMWTp = "UpdateMaintenanceWindowTask";
+    var _UNAC = "UnreportedNotApplicableCount";
+    var _UOE = "UnsupportedOperationException";
+    var _UOI = "UpdateOpsItem";
+    var _UOIR = "UpdateOpsItemRequest";
+    var _UOIRp = "UpdateOpsItemResponse";
+    var _UOM = "UpdateOpsMetadata";
+    var _UOMR = "UpdateOpsMetadataRequest";
+    var _UOMRp = "UpdateOpsMetadataResult";
+    var _UOS = "UnsupportedOperatingSystem";
+    var _UPB = "UpdatePatchBaseline";
+    var _UPBR = "UpdatePatchBaselineRequest";
+    var _UPBRp = "UpdatePatchBaselineResult";
+    var _UPT = "UnsupportedParameterType";
+    var _UPTn = "UnsupportedPlatformType";
+    var _UPV = "UnlabelParameterVersion";
+    var _UPVR = "UnlabelParameterVersionRequest";
+    var _UPVRn = "UnlabelParameterVersionResult";
+    var _URDS = "UpdateResourceDataSync";
+    var _URDSR = "UpdateResourceDataSyncRequest";
+    var _URDSRp = "UpdateResourceDataSyncResult";
+    var _USDSE = "UseS3DualStackEndpoint";
+    var _USS = "UpdateServiceSetting";
+    var _USSR = "UpdateServiceSettingRequest";
+    var _USSRp = "UpdateServiceSettingResult";
+    var _UT = "UpdatedTime";
+    var _UTp = "UploadType";
+    var _V2 = "Value";
+    var _VE2 = "ValidationException";
+    var _VN = "VersionName";
+    var _VNS = "ValidNextSteps";
+    var _Va = "Values";
+    var _Var = "Variables";
+    var _Ve = "Version";
+    var _Ven = "Vendor";
+    var _WD = "WithDecryption";
+    var _WE = "WindowExecutions";
+    var _WEI = "WindowExecutionId";
+    var _WETI = "WindowExecutionTaskIdentities";
+    var _WETII = "WindowExecutionTaskInvocationIdentities";
+    var _WI = "WindowId";
+    var _WIi = "WindowIdentities";
+    var _WTI = "WindowTargetId";
+    var _WTIi = "WindowTaskId";
+    var _aQE2 = "awsQueryError";
+    var _c5 = "client";
+    var _e5 = "error";
+    var _en = "entries";
+    var _k = "key";
+    var _m4 = "message";
+    var _s5 = "smithy.ts.sdk.synthetic.com.amazonaws.ssm";
+    var _se3 = "server";
+    var _v = "value";
+    var _vS = "valueSet";
+    var _xN = "xmlName";
+    var n05 = "com.amazonaws.ssm";
+    var schema_1 = (init_schema(), __toCommonJS(schema_exports));
+    var errors_1 = require_errors9();
+    var SSMServiceException_1 = require_SSMServiceException();
+    var _s_registry5 = schema_1.TypeRegistry.for(_s5);
+    exports2.SSMServiceException$ = [-3, _s5, "SSMServiceException", 0, [], []];
+    _s_registry5.registerError(exports2.SSMServiceException$, SSMServiceException_1.SSMServiceException);
+    var n0_registry5 = schema_1.TypeRegistry.for(n05);
+    exports2.AccessDeniedException$ = [
+      -3,
+      n05,
+      _ADE3,
+      { [_e5]: _c5 },
+      [_M],
+      [0],
+      1
+    ];
+    n0_registry5.registerError(exports2.AccessDeniedException$, errors_1.AccessDeniedException);
+    exports2.AlreadyExistsException$ = [
+      -3,
+      n05,
+      _AEE,
+      { [_aQE2]: [`AlreadyExistsException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AlreadyExistsException$, errors_1.AlreadyExistsException);
+    exports2.AssociatedInstances$ = [
+      -3,
+      n05,
+      _AI,
+      { [_aQE2]: [`AssociatedInstances`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.AssociatedInstances$, errors_1.AssociatedInstances);
+    exports2.AssociationAlreadyExists$ = [
+      -3,
+      n05,
+      _AAE,
+      { [_aQE2]: [`AssociationAlreadyExists`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.AssociationAlreadyExists$, errors_1.AssociationAlreadyExists);
+    exports2.AssociationDoesNotExist$ = [
+      -3,
+      n05,
+      _ADNE,
+      { [_aQE2]: [`AssociationDoesNotExist`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AssociationDoesNotExist$, errors_1.AssociationDoesNotExist);
+    exports2.AssociationExecutionDoesNotExist$ = [
+      -3,
+      n05,
+      _AEDNE,
+      { [_aQE2]: [`AssociationExecutionDoesNotExist`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AssociationExecutionDoesNotExist$, errors_1.AssociationExecutionDoesNotExist);
+    exports2.AssociationLimitExceeded$ = [
+      -3,
+      n05,
+      _ALE,
+      { [_aQE2]: [`AssociationLimitExceeded`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.AssociationLimitExceeded$, errors_1.AssociationLimitExceeded);
+    exports2.AssociationVersionLimitExceeded$ = [
+      -3,
+      n05,
+      _AVLE,
+      { [_aQE2]: [`AssociationVersionLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AssociationVersionLimitExceeded$, errors_1.AssociationVersionLimitExceeded);
+    exports2.AutomationDefinitionNotApprovedException$ = [
+      -3,
+      n05,
+      _ADNAE,
+      { [_aQE2]: [`AutomationDefinitionNotApproved`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationDefinitionNotApprovedException$, errors_1.AutomationDefinitionNotApprovedException);
+    exports2.AutomationDefinitionNotFoundException$ = [
+      -3,
+      n05,
+      _ADNFE,
+      { [_aQE2]: [`AutomationDefinitionNotFound`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationDefinitionNotFoundException$, errors_1.AutomationDefinitionNotFoundException);
+    exports2.AutomationDefinitionVersionNotFoundException$ = [
+      -3,
+      n05,
+      _ADVNFE,
+      { [_aQE2]: [`AutomationDefinitionVersionNotFound`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationDefinitionVersionNotFoundException$, errors_1.AutomationDefinitionVersionNotFoundException);
+    exports2.AutomationExecutionLimitExceededException$ = [
+      -3,
+      n05,
+      _AELEE,
+      { [_aQE2]: [`AutomationExecutionLimitExceeded`, 429], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationExecutionLimitExceededException$, errors_1.AutomationExecutionLimitExceededException);
+    exports2.AutomationExecutionNotFoundException$ = [
+      -3,
+      n05,
+      _AENFE,
+      { [_aQE2]: [`AutomationExecutionNotFound`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationExecutionNotFoundException$, errors_1.AutomationExecutionNotFoundException);
+    exports2.AutomationStepNotFoundException$ = [
+      -3,
+      n05,
+      _ASNFE,
+      { [_aQE2]: [`AutomationStepNotFoundException`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.AutomationStepNotFoundException$, errors_1.AutomationStepNotFoundException);
+    exports2.ComplianceTypeCountLimitExceededException$ = [
+      -3,
+      n05,
+      _CTCLEE,
+      { [_aQE2]: [`ComplianceTypeCountLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ComplianceTypeCountLimitExceededException$, errors_1.ComplianceTypeCountLimitExceededException);
+    exports2.CustomSchemaCountLimitExceededException$ = [
+      -3,
+      n05,
+      _CSCLEE,
+      { [_aQE2]: [`CustomSchemaCountLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.CustomSchemaCountLimitExceededException$, errors_1.CustomSchemaCountLimitExceededException);
+    exports2.DocumentAlreadyExists$ = [
+      -3,
+      n05,
+      _DAE,
+      { [_aQE2]: [`DocumentAlreadyExists`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DocumentAlreadyExists$, errors_1.DocumentAlreadyExists);
+    exports2.DocumentLimitExceeded$ = [
+      -3,
+      n05,
+      _DLE,
+      { [_aQE2]: [`DocumentLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DocumentLimitExceeded$, errors_1.DocumentLimitExceeded);
+    exports2.DocumentPermissionLimit$ = [
+      -3,
+      n05,
+      _DPL,
+      { [_aQE2]: [`DocumentPermissionLimit`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DocumentPermissionLimit$, errors_1.DocumentPermissionLimit);
+    exports2.DocumentVersionLimitExceeded$ = [
+      -3,
+      n05,
+      _DVLE,
+      { [_aQE2]: [`DocumentVersionLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DocumentVersionLimitExceeded$, errors_1.DocumentVersionLimitExceeded);
+    exports2.DoesNotExistException$ = [
+      -3,
+      n05,
+      _DNEE,
+      { [_aQE2]: [`DoesNotExistException`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DoesNotExistException$, errors_1.DoesNotExistException);
+    exports2.DuplicateDocumentContent$ = [
+      -3,
+      n05,
+      _DDC,
+      { [_aQE2]: [`DuplicateDocumentContent`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DuplicateDocumentContent$, errors_1.DuplicateDocumentContent);
+    exports2.DuplicateDocumentVersionName$ = [
+      -3,
+      n05,
+      _DDVN,
+      { [_aQE2]: [`DuplicateDocumentVersionName`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.DuplicateDocumentVersionName$, errors_1.DuplicateDocumentVersionName);
+    exports2.DuplicateInstanceId$ = [
+      -3,
+      n05,
+      _DII,
+      { [_aQE2]: [`DuplicateInstanceId`, 404], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.DuplicateInstanceId$, errors_1.DuplicateInstanceId);
+    exports2.FeatureNotAvailableException$ = [
+      -3,
+      n05,
+      _FNAE,
+      { [_aQE2]: [`FeatureNotAvailableException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.FeatureNotAvailableException$, errors_1.FeatureNotAvailableException);
+    exports2.HierarchyLevelLimitExceededException$ = [
+      -3,
+      n05,
+      _HLLEE,
+      { [_aQE2]: [`HierarchyLevelLimitExceededException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.HierarchyLevelLimitExceededException$, errors_1.HierarchyLevelLimitExceededException);
+    exports2.HierarchyTypeMismatchException$ = [
+      -3,
+      n05,
+      _HTME,
+      { [_aQE2]: [`HierarchyTypeMismatchException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.HierarchyTypeMismatchException$, errors_1.HierarchyTypeMismatchException);
+    exports2.IdempotentParameterMismatch$ = [
+      -3,
+      n05,
+      _IPM,
+      { [_aQE2]: [`IdempotentParameterMismatch`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.IdempotentParameterMismatch$, errors_1.IdempotentParameterMismatch);
+    exports2.IncompatiblePolicyException$ = [
+      -3,
+      n05,
+      _IPE,
+      { [_aQE2]: [`IncompatiblePolicyException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.IncompatiblePolicyException$, errors_1.IncompatiblePolicyException);
+    exports2.InternalServerError$ = [
+      -3,
+      n05,
+      _ISE3,
+      { [_aQE2]: [`InternalServerError`, 500], [_e5]: _se3 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InternalServerError$, errors_1.InternalServerError);
+    exports2.InvalidActivation$ = [
+      -3,
+      n05,
+      _IA,
+      { [_aQE2]: [`InvalidActivation`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidActivation$, errors_1.InvalidActivation);
+    exports2.InvalidActivationId$ = [
+      -3,
+      n05,
+      _IAI,
+      { [_aQE2]: [`InvalidActivationId`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidActivationId$, errors_1.InvalidActivationId);
+    exports2.InvalidAggregatorException$ = [
+      -3,
+      n05,
+      _IAE,
+      { [_aQE2]: [`InvalidAggregator`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAggregatorException$, errors_1.InvalidAggregatorException);
+    exports2.InvalidAllowedPatternException$ = [
+      -3,
+      n05,
+      _IAPE,
+      { [_aQE2]: [`InvalidAllowedPatternException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAllowedPatternException$, errors_1.InvalidAllowedPatternException);
+    exports2.InvalidAssociation$ = [
+      -3,
+      n05,
+      _IAn,
+      { [_aQE2]: [`InvalidAssociation`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAssociation$, errors_1.InvalidAssociation);
+    exports2.InvalidAssociationVersion$ = [
+      -3,
+      n05,
+      _IAV,
+      { [_aQE2]: [`InvalidAssociationVersion`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAssociationVersion$, errors_1.InvalidAssociationVersion);
+    exports2.InvalidAutomationExecutionParametersException$ = [
+      -3,
+      n05,
+      _IAEPE,
+      { [_aQE2]: [`InvalidAutomationExecutionParameters`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAutomationExecutionParametersException$, errors_1.InvalidAutomationExecutionParametersException);
+    exports2.InvalidAutomationSignalException$ = [
+      -3,
+      n05,
+      _IASE,
+      { [_aQE2]: [`InvalidAutomationSignalException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAutomationSignalException$, errors_1.InvalidAutomationSignalException);
+    exports2.InvalidAutomationStatusUpdateException$ = [
+      -3,
+      n05,
+      _IASUE,
+      { [_aQE2]: [`InvalidAutomationStatusUpdateException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidAutomationStatusUpdateException$, errors_1.InvalidAutomationStatusUpdateException);
+    exports2.InvalidCommandId$ = [
+      -3,
+      n05,
+      _ICI,
+      { [_aQE2]: [`InvalidCommandId`, 404], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidCommandId$, errors_1.InvalidCommandId);
+    exports2.InvalidDeleteInventoryParametersException$ = [
+      -3,
+      n05,
+      _IDIPE,
+      { [_aQE2]: [`InvalidDeleteInventoryParameters`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDeleteInventoryParametersException$, errors_1.InvalidDeleteInventoryParametersException);
+    exports2.InvalidDeletionIdException$ = [
+      -3,
+      n05,
+      _IDIE,
+      { [_aQE2]: [`InvalidDeletionId`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDeletionIdException$, errors_1.InvalidDeletionIdException);
+    exports2.InvalidDocument$ = [
+      -3,
+      n05,
+      _ID,
+      { [_aQE2]: [`InvalidDocument`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocument$, errors_1.InvalidDocument);
+    exports2.InvalidDocumentContent$ = [
+      -3,
+      n05,
+      _IDC,
+      { [_aQE2]: [`InvalidDocumentContent`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocumentContent$, errors_1.InvalidDocumentContent);
+    exports2.InvalidDocumentOperation$ = [
+      -3,
+      n05,
+      _IDO,
+      { [_aQE2]: [`InvalidDocumentOperation`, 403], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocumentOperation$, errors_1.InvalidDocumentOperation);
+    exports2.InvalidDocumentSchemaVersion$ = [
+      -3,
+      n05,
+      _IDSV,
+      { [_aQE2]: [`InvalidDocumentSchemaVersion`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocumentSchemaVersion$, errors_1.InvalidDocumentSchemaVersion);
+    exports2.InvalidDocumentType$ = [
+      -3,
+      n05,
+      _IDT,
+      { [_aQE2]: [`InvalidDocumentType`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocumentType$, errors_1.InvalidDocumentType);
+    exports2.InvalidDocumentVersion$ = [
+      -3,
+      n05,
+      _IDV,
+      { [_aQE2]: [`InvalidDocumentVersion`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidDocumentVersion$, errors_1.InvalidDocumentVersion);
+    exports2.InvalidFilter$ = [
+      -3,
+      n05,
+      _IF,
+      { [_aQE2]: [`InvalidFilter`, 441], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidFilter$, errors_1.InvalidFilter);
+    exports2.InvalidFilterKey$ = [
+      -3,
+      n05,
+      _IFK,
+      { [_aQE2]: [`InvalidFilterKey`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidFilterKey$, errors_1.InvalidFilterKey);
+    exports2.InvalidFilterOption$ = [
+      -3,
+      n05,
+      _IFO,
+      { [_aQE2]: [`InvalidFilterOption`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidFilterOption$, errors_1.InvalidFilterOption);
+    exports2.InvalidFilterValue$ = [
+      -3,
+      n05,
+      _IFV,
+      { [_aQE2]: [`InvalidFilterValue`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidFilterValue$, errors_1.InvalidFilterValue);
+    exports2.InvalidInstanceId$ = [
+      -3,
+      n05,
+      _III,
+      { [_aQE2]: [`InvalidInstanceId`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInstanceId$, errors_1.InvalidInstanceId);
+    exports2.InvalidInstanceInformationFilterValue$ = [
+      -3,
+      n05,
+      _IIIFV,
+      { [_aQE2]: [`InvalidInstanceInformationFilterValue`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInstanceInformationFilterValue$, errors_1.InvalidInstanceInformationFilterValue);
+    exports2.InvalidInstancePropertyFilterValue$ = [
+      -3,
+      n05,
+      _IIPFV,
+      { [_aQE2]: [`InvalidInstancePropertyFilterValue`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInstancePropertyFilterValue$, errors_1.InvalidInstancePropertyFilterValue);
+    exports2.InvalidInventoryGroupException$ = [
+      -3,
+      n05,
+      _IIGE,
+      { [_aQE2]: [`InvalidInventoryGroup`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInventoryGroupException$, errors_1.InvalidInventoryGroupException);
+    exports2.InvalidInventoryItemContextException$ = [
+      -3,
+      n05,
+      _IIICE,
+      { [_aQE2]: [`InvalidInventoryItemContext`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInventoryItemContextException$, errors_1.InvalidInventoryItemContextException);
+    exports2.InvalidInventoryRequestException$ = [
+      -3,
+      n05,
+      _IIRE,
+      { [_aQE2]: [`InvalidInventoryRequest`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidInventoryRequestException$, errors_1.InvalidInventoryRequestException);
+    exports2.InvalidItemContentException$ = [
+      -3,
+      n05,
+      _IICE,
+      { [_aQE2]: [`InvalidItemContent`, 400], [_e5]: _c5 },
+      [_TN, _M],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.InvalidItemContentException$, errors_1.InvalidItemContentException);
+    exports2.InvalidKeyId$ = [
+      -3,
+      n05,
+      _IKI,
+      { [_aQE2]: [`InvalidKeyId`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidKeyId$, errors_1.InvalidKeyId);
+    exports2.InvalidNextToken$ = [
+      -3,
+      n05,
+      _INT,
+      { [_aQE2]: [`InvalidNextToken`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidNextToken$, errors_1.InvalidNextToken);
+    exports2.InvalidNotificationConfig$ = [
+      -3,
+      n05,
+      _INC,
+      { [_aQE2]: [`InvalidNotificationConfig`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidNotificationConfig$, errors_1.InvalidNotificationConfig);
+    exports2.InvalidOptionException$ = [
+      -3,
+      n05,
+      _IOE,
+      { [_aQE2]: [`InvalidOption`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidOptionException$, errors_1.InvalidOptionException);
+    exports2.InvalidOutputFolder$ = [
+      -3,
+      n05,
+      _IOF,
+      { [_aQE2]: [`InvalidOutputFolder`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidOutputFolder$, errors_1.InvalidOutputFolder);
+    exports2.InvalidOutputLocation$ = [
+      -3,
+      n05,
+      _IOL,
+      { [_aQE2]: [`InvalidOutputLocation`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidOutputLocation$, errors_1.InvalidOutputLocation);
+    exports2.InvalidParameters$ = [
+      -3,
+      n05,
+      _IP,
+      { [_aQE2]: [`InvalidParameters`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidParameters$, errors_1.InvalidParameters);
+    exports2.InvalidPermissionType$ = [
+      -3,
+      n05,
+      _IPT,
+      { [_aQE2]: [`InvalidPermissionType`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidPermissionType$, errors_1.InvalidPermissionType);
+    exports2.InvalidPluginName$ = [
+      -3,
+      n05,
+      _IPN,
+      { [_aQE2]: [`InvalidPluginName`, 404], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidPluginName$, errors_1.InvalidPluginName);
+    exports2.InvalidPolicyAttributeException$ = [
+      -3,
+      n05,
+      _IPAE,
+      { [_aQE2]: [`InvalidPolicyAttributeException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidPolicyAttributeException$, errors_1.InvalidPolicyAttributeException);
+    exports2.InvalidPolicyTypeException$ = [
+      -3,
+      n05,
+      _IPTE,
+      { [_aQE2]: [`InvalidPolicyTypeException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidPolicyTypeException$, errors_1.InvalidPolicyTypeException);
+    exports2.InvalidResourceId$ = [
+      -3,
+      n05,
+      _IRI,
+      { [_aQE2]: [`InvalidResourceId`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidResourceId$, errors_1.InvalidResourceId);
+    exports2.InvalidResourceType$ = [
+      -3,
+      n05,
+      _IRT,
+      { [_aQE2]: [`InvalidResourceType`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvalidResourceType$, errors_1.InvalidResourceType);
+    exports2.InvalidResultAttributeException$ = [
+      -3,
+      n05,
+      _IRAE,
+      { [_aQE2]: [`InvalidResultAttribute`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidResultAttributeException$, errors_1.InvalidResultAttributeException);
+    exports2.InvalidRole$ = [
+      -3,
+      n05,
+      _IR,
+      { [_aQE2]: [`InvalidRole`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidRole$, errors_1.InvalidRole);
+    exports2.InvalidSchedule$ = [
+      -3,
+      n05,
+      _IS,
+      { [_aQE2]: [`InvalidSchedule`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidSchedule$, errors_1.InvalidSchedule);
+    exports2.InvalidTag$ = [
+      -3,
+      n05,
+      _IT2,
+      { [_aQE2]: [`InvalidTag`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidTag$, errors_1.InvalidTag);
+    exports2.InvalidTarget$ = [
+      -3,
+      n05,
+      _ITn,
+      { [_aQE2]: [`InvalidTarget`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidTarget$, errors_1.InvalidTarget);
+    exports2.InvalidTargetMaps$ = [
+      -3,
+      n05,
+      _ITM,
+      { [_aQE2]: [`InvalidTargetMaps`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidTargetMaps$, errors_1.InvalidTargetMaps);
+    exports2.InvalidTypeNameException$ = [
+      -3,
+      n05,
+      _ITNE,
+      { [_aQE2]: [`InvalidTypeName`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidTypeNameException$, errors_1.InvalidTypeNameException);
+    exports2.InvalidUpdate$ = [
+      -3,
+      n05,
+      _IU,
+      { [_aQE2]: [`InvalidUpdate`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidUpdate$, errors_1.InvalidUpdate);
+    exports2.InvocationDoesNotExist$ = [
+      -3,
+      n05,
+      _IDNE,
+      { [_aQE2]: [`InvocationDoesNotExist`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.InvocationDoesNotExist$, errors_1.InvocationDoesNotExist);
+    exports2.ItemContentMismatchException$ = [
+      -3,
+      n05,
+      _ICME,
+      { [_aQE2]: [`ItemContentMismatch`, 400], [_e5]: _c5 },
+      [_TN, _M],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.ItemContentMismatchException$, errors_1.ItemContentMismatchException);
+    exports2.ItemSizeLimitExceededException$ = [
+      -3,
+      n05,
+      _ISLEE,
+      { [_aQE2]: [`ItemSizeLimitExceeded`, 400], [_e5]: _c5 },
+      [_TN, _M],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.ItemSizeLimitExceededException$, errors_1.ItemSizeLimitExceededException);
+    exports2.MalformedResourcePolicyDocumentException$ = [
+      -3,
+      n05,
+      _MRPDE,
+      { [_aQE2]: [`MalformedResourcePolicyDocumentException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.MalformedResourcePolicyDocumentException$, errors_1.MalformedResourcePolicyDocumentException);
+    exports2.MaxDocumentSizeExceeded$ = [
+      -3,
+      n05,
+      _MDSE,
+      { [_aQE2]: [`MaxDocumentSizeExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.MaxDocumentSizeExceeded$, errors_1.MaxDocumentSizeExceeded);
+    exports2.NoLongerSupportedException$ = [
+      -3,
+      n05,
+      _NLSE,
+      { [_aQE2]: [`NoLongerSupported`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.NoLongerSupportedException$, errors_1.NoLongerSupportedException);
+    exports2.OpsItemAccessDeniedException$ = [
+      -3,
+      n05,
+      _OIADE,
+      { [_aQE2]: [`OpsItemAccessDeniedException`, 403], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemAccessDeniedException$, errors_1.OpsItemAccessDeniedException);
+    exports2.OpsItemAlreadyExistsException$ = [
+      -3,
+      n05,
+      _OIAEE,
+      { [_aQE2]: [`OpsItemAlreadyExistsException`, 400], [_e5]: _c5 },
+      [_M, _OII],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemAlreadyExistsException$, errors_1.OpsItemAlreadyExistsException);
+    exports2.OpsItemConflictException$ = [
+      -3,
+      n05,
+      _OICE,
+      { [_aQE2]: [`OpsItemConflictException`, 409], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemConflictException$, errors_1.OpsItemConflictException);
+    exports2.OpsItemInvalidParameterException$ = [
+      -3,
+      n05,
+      _OIIPE,
+      { [_aQE2]: [`OpsItemInvalidParameterException`, 400], [_e5]: _c5 },
+      [_PN, _M],
+      [64 | 0, 0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemInvalidParameterException$, errors_1.OpsItemInvalidParameterException);
+    exports2.OpsItemLimitExceededException$ = [
+      -3,
+      n05,
+      _OILEE,
+      { [_aQE2]: [`OpsItemLimitExceededException`, 400], [_e5]: _c5 },
+      [_RT3, _L, _LT, _M],
+      [64 | 0, 1, 0, 0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemLimitExceededException$, errors_1.OpsItemLimitExceededException);
+    exports2.OpsItemNotFoundException$ = [
+      -3,
+      n05,
+      _OINFE,
+      { [_aQE2]: [`OpsItemNotFoundException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemNotFoundException$, errors_1.OpsItemNotFoundException);
+    exports2.OpsItemRelatedItemAlreadyExistsException$ = [
+      -3,
+      n05,
+      _OIRIAEE,
+      { [_aQE2]: [`OpsItemRelatedItemAlreadyExistsException`, 400], [_e5]: _c5 },
+      [_M, _RU, _OII],
+      [0, 0, 0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemRelatedItemAlreadyExistsException$, errors_1.OpsItemRelatedItemAlreadyExistsException);
+    exports2.OpsItemRelatedItemAssociationNotFoundException$ = [
+      -3,
+      n05,
+      _OIRIANFE,
+      { [_aQE2]: [`OpsItemRelatedItemAssociationNotFoundException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsItemRelatedItemAssociationNotFoundException$, errors_1.OpsItemRelatedItemAssociationNotFoundException);
+    exports2.OpsMetadataAlreadyExistsException$ = [
+      -3,
+      n05,
+      _OMAEE,
+      { [_aQE2]: [`OpsMetadataAlreadyExistsException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataAlreadyExistsException$, errors_1.OpsMetadataAlreadyExistsException);
+    exports2.OpsMetadataInvalidArgumentException$ = [
+      -3,
+      n05,
+      _OMIAE,
+      { [_aQE2]: [`OpsMetadataInvalidArgumentException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataInvalidArgumentException$, errors_1.OpsMetadataInvalidArgumentException);
+    exports2.OpsMetadataKeyLimitExceededException$ = [
+      -3,
+      n05,
+      _OMKLEE,
+      { [_aQE2]: [`OpsMetadataKeyLimitExceededException`, 429], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataKeyLimitExceededException$, errors_1.OpsMetadataKeyLimitExceededException);
+    exports2.OpsMetadataLimitExceededException$ = [
+      -3,
+      n05,
+      _OMLEE,
+      { [_aQE2]: [`OpsMetadataLimitExceededException`, 429], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataLimitExceededException$, errors_1.OpsMetadataLimitExceededException);
+    exports2.OpsMetadataNotFoundException$ = [
+      -3,
+      n05,
+      _OMNFE,
+      { [_aQE2]: [`OpsMetadataNotFoundException`, 404], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataNotFoundException$, errors_1.OpsMetadataNotFoundException);
+    exports2.OpsMetadataTooManyUpdatesException$ = [
+      -3,
+      n05,
+      _OMTMUE,
+      { [_aQE2]: [`OpsMetadataTooManyUpdatesException`, 429], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.OpsMetadataTooManyUpdatesException$, errors_1.OpsMetadataTooManyUpdatesException);
+    exports2.ParameterAlreadyExists$ = [
+      -3,
+      n05,
+      _PAE,
+      { [_aQE2]: [`ParameterAlreadyExists`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterAlreadyExists$, errors_1.ParameterAlreadyExists);
+    exports2.ParameterLimitExceeded$ = [
+      -3,
+      n05,
+      _PLE,
+      { [_aQE2]: [`ParameterLimitExceeded`, 429], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterLimitExceeded$, errors_1.ParameterLimitExceeded);
+    exports2.ParameterMaxVersionLimitExceeded$ = [
+      -3,
+      n05,
+      _PMVLE,
+      { [_aQE2]: [`ParameterMaxVersionLimitExceeded`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterMaxVersionLimitExceeded$, errors_1.ParameterMaxVersionLimitExceeded);
+    exports2.ParameterNotFound$ = [
+      -3,
+      n05,
+      _PNF,
+      { [_aQE2]: [`ParameterNotFound`, 404], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterNotFound$, errors_1.ParameterNotFound);
+    exports2.ParameterPatternMismatchException$ = [
+      -3,
+      n05,
+      _PPME,
+      { [_aQE2]: [`ParameterPatternMismatchException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterPatternMismatchException$, errors_1.ParameterPatternMismatchException);
+    exports2.ParameterVersionLabelLimitExceeded$ = [
+      -3,
+      n05,
+      _PVLLE,
+      { [_aQE2]: [`ParameterVersionLabelLimitExceeded`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterVersionLabelLimitExceeded$, errors_1.ParameterVersionLabelLimitExceeded);
+    exports2.ParameterVersionNotFound$ = [
+      -3,
+      n05,
+      _PVNF,
+      { [_aQE2]: [`ParameterVersionNotFound`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ParameterVersionNotFound$, errors_1.ParameterVersionNotFound);
+    exports2.PoliciesLimitExceededException$ = [
+      -3,
+      n05,
+      _PLEE,
+      { [_aQE2]: [`PoliciesLimitExceededException`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.PoliciesLimitExceededException$, errors_1.PoliciesLimitExceededException);
+    exports2.ResourceDataSyncAlreadyExistsException$ = [
+      -3,
+      n05,
+      _RDSAEE,
+      { [_aQE2]: [`ResourceDataSyncAlreadyExists`, 400], [_e5]: _c5 },
+      [_SN2],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceDataSyncAlreadyExistsException$, errors_1.ResourceDataSyncAlreadyExistsException);
+    exports2.ResourceDataSyncConflictException$ = [
+      -3,
+      n05,
+      _RDSCE,
+      { [_aQE2]: [`ResourceDataSyncConflictException`, 409], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceDataSyncConflictException$, errors_1.ResourceDataSyncConflictException);
+    exports2.ResourceDataSyncCountExceededException$ = [
+      -3,
+      n05,
+      _RDSCEE,
+      { [_aQE2]: [`ResourceDataSyncCountExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceDataSyncCountExceededException$, errors_1.ResourceDataSyncCountExceededException);
+    exports2.ResourceDataSyncInvalidConfigurationException$ = [
+      -3,
+      n05,
+      _RDSICE,
+      { [_aQE2]: [`ResourceDataSyncInvalidConfiguration`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceDataSyncInvalidConfigurationException$, errors_1.ResourceDataSyncInvalidConfigurationException);
+    exports2.ResourceDataSyncNotFoundException$ = [
+      -3,
+      n05,
+      _RDSNFE,
+      { [_aQE2]: [`ResourceDataSyncNotFound`, 404], [_e5]: _c5 },
+      [_SN2, _ST2, _M],
+      [0, 0, 0]
+    ];
+    n0_registry5.registerError(exports2.ResourceDataSyncNotFoundException$, errors_1.ResourceDataSyncNotFoundException);
+    exports2.ResourceInUseException$ = [
+      -3,
+      n05,
+      _RIUE,
+      { [_aQE2]: [`ResourceInUseException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceInUseException$, errors_1.ResourceInUseException);
+    exports2.ResourceLimitExceededException$ = [
+      -3,
+      n05,
+      _RLEE,
+      { [_aQE2]: [`ResourceLimitExceededException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceLimitExceededException$, errors_1.ResourceLimitExceededException);
+    exports2.ResourceNotFoundException$ = [
+      -3,
+      n05,
+      _RNFE2,
+      { [_aQE2]: [`ResourceNotFoundException`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourceNotFoundException$, errors_1.ResourceNotFoundException);
+    exports2.ResourcePolicyConflictException$ = [
+      -3,
+      n05,
+      _RPCE,
+      { [_aQE2]: [`ResourcePolicyConflictException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourcePolicyConflictException$, errors_1.ResourcePolicyConflictException);
+    exports2.ResourcePolicyInvalidParameterException$ = [
+      -3,
+      n05,
+      _RPIPE,
+      { [_aQE2]: [`ResourcePolicyInvalidParameterException`, 400], [_e5]: _c5 },
+      [_PN, _M],
+      [64 | 0, 0]
+    ];
+    n0_registry5.registerError(exports2.ResourcePolicyInvalidParameterException$, errors_1.ResourcePolicyInvalidParameterException);
+    exports2.ResourcePolicyLimitExceededException$ = [
+      -3,
+      n05,
+      _RPLEE,
+      { [_aQE2]: [`ResourcePolicyLimitExceededException`, 400], [_e5]: _c5 },
+      [_L, _LT, _M],
+      [1, 0, 0]
+    ];
+    n0_registry5.registerError(exports2.ResourcePolicyLimitExceededException$, errors_1.ResourcePolicyLimitExceededException);
+    exports2.ResourcePolicyNotFoundException$ = [
+      -3,
+      n05,
+      _RPNFE,
+      { [_aQE2]: [`ResourcePolicyNotFoundException`, 404], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ResourcePolicyNotFoundException$, errors_1.ResourcePolicyNotFoundException);
+    exports2.ServiceQuotaExceededException$ = [
+      -3,
+      n05,
+      _SQEE,
+      { [_e5]: _c5 },
+      [_M, _QC, _SC, _RI, _RTe],
+      [0, 0, 0, 0, 0],
+      3
+    ];
+    n0_registry5.registerError(exports2.ServiceQuotaExceededException$, errors_1.ServiceQuotaExceededException);
+    exports2.ServiceSettingNotFound$ = [
+      -3,
+      n05,
+      _SSNF,
+      { [_aQE2]: [`ServiceSettingNotFound`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ServiceSettingNotFound$, errors_1.ServiceSettingNotFound);
+    exports2.StatusUnchanged$ = [
+      -3,
+      n05,
+      _SU,
+      { [_aQE2]: [`StatusUnchanged`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.StatusUnchanged$, errors_1.StatusUnchanged);
+    exports2.SubTypeCountLimitExceededException$ = [
+      -3,
+      n05,
+      _STCLEE,
+      { [_aQE2]: [`SubTypeCountLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.SubTypeCountLimitExceededException$, errors_1.SubTypeCountLimitExceededException);
+    exports2.TargetInUseException$ = [
+      -3,
+      n05,
+      _TIUE,
+      { [_aQE2]: [`TargetInUseException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.TargetInUseException$, errors_1.TargetInUseException);
+    exports2.TargetNotConnected$ = [
+      -3,
+      n05,
+      _TNC,
+      { [_aQE2]: [`TargetNotConnected`, 430], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.TargetNotConnected$, errors_1.TargetNotConnected);
+    exports2.ThrottlingException$ = [
+      -3,
+      n05,
+      _TE,
+      { [_e5]: _c5 },
+      [_M, _QC, _SC],
+      [0, 0, 0],
+      1
+    ];
+    n0_registry5.registerError(exports2.ThrottlingException$, errors_1.ThrottlingException);
+    exports2.TooManyTagsError$ = [
+      -3,
+      n05,
+      _TMTE,
+      { [_aQE2]: [`TooManyTagsError`, 400], [_e5]: _c5 },
+      [],
+      []
+    ];
+    n0_registry5.registerError(exports2.TooManyTagsError$, errors_1.TooManyTagsError);
+    exports2.TooManyUpdates$ = [
+      -3,
+      n05,
+      _TMU,
+      { [_aQE2]: [`TooManyUpdates`, 429], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.TooManyUpdates$, errors_1.TooManyUpdates);
+    exports2.TotalSizeLimitExceededException$ = [
+      -3,
+      n05,
+      _TSLEE,
+      { [_aQE2]: [`TotalSizeLimitExceeded`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.TotalSizeLimitExceededException$, errors_1.TotalSizeLimitExceededException);
+    exports2.UnsupportedCalendarException$ = [
+      -3,
+      n05,
+      _UCE2,
+      { [_aQE2]: [`UnsupportedCalendarException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedCalendarException$, errors_1.UnsupportedCalendarException);
+    exports2.UnsupportedFeatureRequiredException$ = [
+      -3,
+      n05,
+      _UFRE,
+      { [_aQE2]: [`UnsupportedFeatureRequiredException`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedFeatureRequiredException$, errors_1.UnsupportedFeatureRequiredException);
+    exports2.UnsupportedInventoryItemContextException$ = [
+      -3,
+      n05,
+      _UIICE,
+      { [_aQE2]: [`UnsupportedInventoryItemContext`, 400], [_e5]: _c5 },
+      [_TN, _M],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedInventoryItemContextException$, errors_1.UnsupportedInventoryItemContextException);
+    exports2.UnsupportedInventorySchemaVersionException$ = [
+      -3,
+      n05,
+      _UISVE,
+      { [_aQE2]: [`UnsupportedInventorySchemaVersion`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedInventorySchemaVersionException$, errors_1.UnsupportedInventorySchemaVersionException);
+    exports2.UnsupportedOperatingSystem$ = [
+      -3,
+      n05,
+      _UOS,
+      { [_aQE2]: [`UnsupportedOperatingSystem`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedOperatingSystem$, errors_1.UnsupportedOperatingSystem);
+    exports2.UnsupportedOperationException$ = [
+      -3,
+      n05,
+      _UOE,
+      { [_aQE2]: [`UnsupportedOperation`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedOperationException$, errors_1.UnsupportedOperationException);
+    exports2.UnsupportedParameterType$ = [
+      -3,
+      n05,
+      _UPT,
+      { [_aQE2]: [`UnsupportedParameterType`, 400], [_e5]: _c5 },
+      [_m4],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedParameterType$, errors_1.UnsupportedParameterType);
+    exports2.UnsupportedPlatformType$ = [
+      -3,
+      n05,
+      _UPTn,
+      { [_aQE2]: [`UnsupportedPlatformType`, 400], [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.UnsupportedPlatformType$, errors_1.UnsupportedPlatformType);
+    exports2.ValidationException$ = [
+      -3,
+      n05,
+      _VE2,
+      { [_aQE2]: [`ValidationException`, 400], [_e5]: _c5 },
+      [_M, _RC2],
+      [0, 0]
+    ];
+    n0_registry5.registerError(exports2.ValidationException$, errors_1.ValidationException);
+    exports2.errorTypeRegistries = [
+      _s_registry5,
+      n0_registry5
+    ];
+    var AccessKeySecretType = [0, n05, _AKST, 8, 0];
+    var IPAddress = [0, n05, _IPA, 8, 0];
+    var MaintenanceWindowDescription = [0, n05, _MWD, 8, 0];
+    var MaintenanceWindowExecutionTaskInvocationParameters = [0, n05, _MWETIP, 8, 0];
+    var MaintenanceWindowLambdaPayload = [0, n05, _MWLP, 8, 21];
+    var MaintenanceWindowStepFunctionsInput = [0, n05, _MWSFI, 8, 0];
+    var MaintenanceWindowTaskParameterValue = [0, n05, _MWTPV, 8, 0];
+    var OwnerInformation = [0, n05, _OI, 8, 0];
+    var PatchSourceConfiguration = [0, n05, _PSC, 8, 0];
+    var PSParameterValue = [0, n05, _PSPV, 8, 0];
+    var SessionTokenType2 = [0, n05, _STT2, 8, 0];
+    exports2.AccountSharingInfo$ = [
+      3,
+      n05,
+      _ASI,
+      0,
+      [_AIc, _SDV],
+      [0, 0]
+    ];
+    exports2.Activation$ = [
+      3,
+      n05,
+      _A2,
+      0,
+      [_AIct, _D, _DIN, _IRa, _RL, _RCe, _ED, _E2, _CD, _T2],
+      [0, 0, 0, 0, 1, 1, 4, 2, 4, () => TagList]
+    ];
+    exports2.AddTagsToResourceRequest$ = [
+      3,
+      n05,
+      _ATTRR,
+      0,
+      [_RTe, _RI, _T2],
+      [0, 0, () => TagList],
+      3
+    ];
+    exports2.AddTagsToResourceResult$ = [
+      3,
+      n05,
+      _ATTRRd,
+      0,
+      [],
+      []
+    ];
+    exports2.Alarm$ = [
+      3,
+      n05,
+      _Al,
+      0,
+      [_N],
+      [0],
+      1
+    ];
+    exports2.AlarmConfiguration$ = [
+      3,
+      n05,
+      _AC,
+      0,
+      [_Ala, _IPAF],
+      [() => AlarmList, 2],
+      1
+    ];
+    exports2.AlarmStateInformation$ = [
+      3,
+      n05,
+      _ASIl,
+      0,
+      [_N, _S],
+      [0, 0],
+      2
+    ];
+    exports2.AssociateOpsItemRelatedItemRequest$ = [
+      3,
+      n05,
+      _AOIRIR,
+      0,
+      [_OII, _AT3, _RTe, _RU],
+      [0, 0, 0, 0],
+      4
+    ];
+    exports2.AssociateOpsItemRelatedItemResponse$ = [
+      3,
+      n05,
+      _AOIRIRs,
+      0,
+      [_AIs],
+      [0]
+    ];
+    exports2.Association$ = [
+      3,
+      n05,
+      _As,
+      0,
+      [_N, _II, _AIs, _AV, _DV, _Ta2, _LED, _O, _SE, _AN, _SO, _Du, _TM],
+      [0, 0, 0, 0, 0, () => Targets, 4, () => exports2.AssociationOverview$, 0, 0, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]]]
+    ];
+    exports2.AssociationDescription$ = [
+      3,
+      n05,
+      _AD,
+      0,
+      [_N, _II, _AV, _Da, _LUAD, _St, _O, _DV, _ATPN, _P2, _AIs, _Ta2, _SE, _OL, _LED, _LSED, _AN, _ME, _MC, _CS2, _SCy, _AOACI, _CN, _TL, _SO, _Du, _TM, _AC, _TA, _ADAR],
+      [0, 0, 0, 4, 4, () => exports2.AssociationStatus$, () => exports2.AssociationOverview$, 0, 0, [() => _Parameters, 0], 0, () => Targets, 0, () => exports2.InstanceAssociationOutputLocation$, 4, 4, 0, 0, 0, 0, 0, 2, 64 | 0, () => TargetLocations, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => exports2.AlarmConfiguration$, () => AlarmStateInformationList, 0]
+    ];
+    exports2.AssociationExecution$ = [
+      3,
+      n05,
+      _AE,
+      0,
+      [_AIs, _AV, _EI2, _St, _DS2, _CT2, _LED, _RCBS, _AC, _TA],
+      [0, 0, 0, 0, 0, 4, 4, 0, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList]
+    ];
+    exports2.AssociationExecutionFilter$ = [
+      3,
+      n05,
+      _AEF,
+      0,
+      [_K2, _V2, _Ty],
+      [0, 0, 0],
+      3
+    ];
+    exports2.AssociationExecutionTarget$ = [
+      3,
+      n05,
+      _AET,
+      0,
+      [_AIs, _AV, _EI2, _RI, _RTe, _St, _DS2, _LED, _OS],
+      [0, 0, 0, 0, 0, 0, 0, 4, () => exports2.OutputSource$]
+    ];
+    exports2.AssociationExecutionTargetsFilter$ = [
+      3,
+      n05,
+      _AETF,
+      0,
+      [_K2, _V2],
+      [0, 0],
+      2
+    ];
+    exports2.AssociationFilter$ = [
+      3,
+      n05,
+      _AF,
+      0,
+      [_k, _v],
+      [0, 0],
+      2
+    ];
+    exports2.AssociationOverview$ = [
+      3,
+      n05,
+      _AO,
+      0,
+      [_St, _DS2, _ASAC],
+      [0, 0, 128 | 1]
+    ];
+    exports2.AssociationStatus$ = [
+      3,
+      n05,
+      _AS,
+      0,
+      [_Da, _N, _M, _AId],
+      [4, 0, 0, 0],
+      3
+    ];
+    exports2.AssociationVersionInfo$ = [
+      3,
+      n05,
+      _AVI,
+      0,
+      [_AIs, _AV, _CD, _N, _DV, _P2, _Ta2, _SE, _OL, _AN, _ME, _MC, _CS2, _SCy, _AOACI, _CN, _TL, _SO, _Du, _TM, _ADAR],
+      [0, 0, 4, 0, 0, [() => _Parameters, 0], () => Targets, 0, () => exports2.InstanceAssociationOutputLocation$, 0, 0, 0, 0, 0, 2, 64 | 0, () => TargetLocations, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], 0]
+    ];
+    exports2.AttachmentContent$ = [
+      3,
+      n05,
+      _ACt,
+      0,
+      [_N, _Si, _H, _HT, _U],
+      [0, 1, 0, 0, 0]
+    ];
+    exports2.AttachmentInformation$ = [
+      3,
+      n05,
+      _AIt,
+      0,
+      [_N],
+      [0]
+    ];
+    exports2.AttachmentsSource$ = [
+      3,
+      n05,
+      _ASt,
+      0,
+      [_K2, _Va, _N],
+      [0, 64 | 0, 0]
+    ];
+    exports2.AutomationExecution$ = [
+      3,
+      n05,
+      _AEu,
+      0,
+      [_AEI, _DN, _DV, _EST, _EET, _AES, _SEt, _SET, _P2, _Ou, _FM, _Mo, _PAEI, _EB, _CSN, _CA2, _TPN, _Ta2, _TM, _RTes, _MC, _ME, _Tar, _TL, _PC2, _AC, _TA, _TLURL, _ASu, _STc, _R, _OII, _AIs, _CRN, _Var],
+      [0, 0, 0, 4, 4, 0, () => StepExecutionList, 2, [2, n05, _APM, 0, 0, 64 | 0], [2, n05, _APM, 0, 0, 64 | 0], 0, 0, 0, 0, 0, 0, 0, () => Targets, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => exports2.ResolvedTargets$, 0, 0, 0, () => TargetLocations, () => exports2.ProgressCounters$, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList, 0, 0, 4, () => Runbooks, 0, 0, 0, [2, n05, _APM, 0, 0, 64 | 0]]
+    ];
+    exports2.AutomationExecutionFilter$ = [
+      3,
+      n05,
+      _AEFu,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0],
+      2
+    ];
+    exports2.AutomationExecutionInputs$ = [
+      3,
+      n05,
+      _AEIu,
+      0,
+      [_P2, _TPN, _Ta2, _TM, _TL, _TLURL],
+      [[2, n05, _APM, 0, 0, 64 | 0], 0, () => Targets, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => TargetLocations, 0]
+    ];
+    exports2.AutomationExecutionMetadata$ = [
+      3,
+      n05,
+      _AEM,
+      0,
+      [_AEI, _DN, _DV, _AES, _EST, _EET, _EB, _LF, _Ou, _Mo, _PAEI, _CSN, _CA2, _FM, _TPN, _Ta2, _TM, _RTes, _MC, _ME, _Tar, _ATu, _AC, _TA, _TLURL, _ASu, _STc, _R, _OII, _AIs, _CRN],
+      [0, 0, 0, 0, 4, 4, 0, 0, [2, n05, _APM, 0, 0, 64 | 0], 0, 0, 0, 0, 0, 0, () => Targets, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => exports2.ResolvedTargets$, 0, 0, 0, 0, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList, 0, 0, 4, () => Runbooks, 0, 0, 0]
+    ];
+    exports2.AutomationExecutionPreview$ = [
+      3,
+      n05,
+      _AEP,
+      0,
+      [_SP, _Re, _TP, _TAo],
+      [128 | 1, 64 | 0, () => TargetPreviewList, 1]
+    ];
+    exports2.BaselineOverride$ = [
+      3,
+      n05,
+      _BO,
+      0,
+      [_OSp, _GF, _AR2, _AP, _APCL, _RP, _RPA, _APENS, _So, _ASUCS],
+      [0, () => exports2.PatchFilterGroup$, () => exports2.PatchRuleGroup$, 64 | 0, 0, 64 | 0, 0, 2, [() => PatchSourceList, 0], 0]
+    ];
+    exports2.CancelCommandRequest$ = [
+      3,
+      n05,
+      _CCR,
+      0,
+      [_CI, _IIn],
+      [0, 64 | 0],
+      1
+    ];
+    exports2.CancelCommandResult$ = [
+      3,
+      n05,
+      _CCRa,
+      0,
+      [],
+      []
+    ];
+    exports2.CancelMaintenanceWindowExecutionRequest$ = [
+      3,
+      n05,
+      _CMWER,
+      0,
+      [_WEI],
+      [0],
+      1
+    ];
+    exports2.CancelMaintenanceWindowExecutionResult$ = [
+      3,
+      n05,
+      _CMWERa,
+      0,
+      [_WEI],
+      [0]
+    ];
+    exports2.CloudWatchOutputConfig$ = [
+      3,
+      n05,
+      _CWOC,
+      0,
+      [_CWLGN, _CWOE],
+      [0, 2]
+    ];
+    exports2.Command$ = [
+      3,
+      n05,
+      _C2,
+      0,
+      [_CI, _DN, _DV, _Co, _EA, _P2, _IIn, _Ta2, _RDT, _St, _SD, _OSR, _OSBN, _OSKP, _MC, _ME, _TC2, _CC, _EC, _DTOC, _SR, _NC, _CWOC, _TS, _AC, _TA],
+      [0, 0, 0, 0, 4, [() => _Parameters, 0], 64 | 0, () => Targets, 4, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, () => exports2.NotificationConfig$, () => exports2.CloudWatchOutputConfig$, 1, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList]
+    ];
+    exports2.CommandFilter$ = [
+      3,
+      n05,
+      _CF,
+      0,
+      [_k, _v],
+      [0, 0],
+      2
+    ];
+    exports2.CommandInvocation$ = [
+      3,
+      n05,
+      _CIo,
+      0,
+      [_CI, _II, _IN, _Co, _DN, _DV, _RDT, _St, _SD, _TO, _SOU, _SEU, _CP, _SR, _NC, _CWOC],
+      [0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, () => CommandPluginList, 0, () => exports2.NotificationConfig$, () => exports2.CloudWatchOutputConfig$]
+    ];
+    exports2.CommandPlugin$ = [
+      3,
+      n05,
+      _CPo,
+      0,
+      [_N, _St, _SD, _RCes, _RSDT, _RFDT, _Out, _SOU, _SEU, _OSR, _OSBN, _OSKP],
+      [0, 0, 0, 1, 4, 4, 0, 0, 0, 0, 0, 0]
+    ];
+    exports2.ComplianceExecutionSummary$ = [
+      3,
+      n05,
+      _CES,
+      0,
+      [_ET, _EI2, _ETx],
+      [4, 0, 0],
+      1
+    ];
+    exports2.ComplianceItem$ = [
+      3,
+      n05,
+      _CIom,
+      0,
+      [_CTo, _RTe, _RI, _I, _Ti, _St, _Se, _ES, _De],
+      [0, 0, 0, 0, 0, 0, 0, () => exports2.ComplianceExecutionSummary$, 128 | 0]
+    ];
+    exports2.ComplianceItemEntry$ = [
+      3,
+      n05,
+      _CIE,
+      0,
+      [_Se, _St, _I, _Ti, _De],
+      [0, 0, 0, 0, 128 | 0],
+      2
+    ];
+    exports2.ComplianceStringFilter$ = [
+      3,
+      n05,
+      _CSF,
+      0,
+      [_K2, _Va, _Ty],
+      [0, [() => ComplianceStringFilterValueList, 0], 0]
+    ];
+    exports2.ComplianceSummaryItem$ = [
+      3,
+      n05,
+      _CSI,
+      0,
+      [_CTo, _CSo, _NCS],
+      [0, () => exports2.CompliantSummary$, () => exports2.NonCompliantSummary$]
+    ];
+    exports2.CompliantSummary$ = [
+      3,
+      n05,
+      _CSo,
+      0,
+      [_CCo, _SS],
+      [1, () => exports2.SeveritySummary$]
+    ];
+    exports2.CreateActivationRequest$ = [
+      3,
+      n05,
+      _CAR,
+      0,
+      [_IRa, _D, _DIN, _RL, _ED, _T2, _RM],
+      [0, 0, 0, 1, 4, () => TagList, () => RegistrationMetadataList],
+      1
+    ];
+    exports2.CreateActivationResult$ = [
+      3,
+      n05,
+      _CARr,
+      0,
+      [_AIct, _ACc],
+      [0, 0]
+    ];
+    exports2.CreateAssociationBatchRequest$ = [
+      3,
+      n05,
+      _CABR,
+      0,
+      [_En, _ADAR],
+      [[() => CreateAssociationBatchRequestEntries, 0], 0],
+      1
+    ];
+    exports2.CreateAssociationBatchRequestEntry$ = [
+      3,
+      n05,
+      _CABRE,
+      0,
+      [_N, _II, _P2, _ATPN, _DV, _Ta2, _SE, _OL, _AN, _ME, _MC, _CS2, _SCy, _AOACI, _CN, _TL, _SO, _Du, _TM, _AC],
+      [0, 0, [() => _Parameters, 0], 0, 0, () => Targets, 0, () => exports2.InstanceAssociationOutputLocation$, 0, 0, 0, 0, 0, 2, 64 | 0, () => TargetLocations, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => exports2.AlarmConfiguration$],
+      1
+    ];
+    exports2.CreateAssociationBatchResult$ = [
+      3,
+      n05,
+      _CABRr,
+      0,
+      [_Su, _F],
+      [[() => AssociationDescriptionList, 0], [() => FailedCreateAssociationList, 0]]
+    ];
+    exports2.CreateAssociationRequest$ = [
+      3,
+      n05,
+      _CARre,
+      0,
+      [_N, _DV, _II, _P2, _Ta2, _SE, _OL, _AN, _ATPN, _ME, _MC, _CS2, _SCy, _AOACI, _CN, _TL, _SO, _Du, _TM, _T2, _AC, _ADAR],
+      [0, 0, 0, [() => _Parameters, 0], () => Targets, 0, () => exports2.InstanceAssociationOutputLocation$, 0, 0, 0, 0, 0, 0, 2, 64 | 0, () => TargetLocations, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => TagList, () => exports2.AlarmConfiguration$, 0],
+      1
+    ];
+    exports2.CreateAssociationResult$ = [
+      3,
+      n05,
+      _CARrea,
+      0,
+      [_AD],
+      [[() => exports2.AssociationDescription$, 0]]
+    ];
+    exports2.CreateDocumentRequest$ = [
+      3,
+      n05,
+      _CDR,
+      0,
+      [_Con, _N, _Req, _At, _DNi, _VN, _DT, _DF, _TT, _T2],
+      [0, 0, () => DocumentRequiresList, () => AttachmentsSourceList, 0, 0, 0, 0, 0, () => TagList],
+      2
+    ];
+    exports2.CreateDocumentResult$ = [
+      3,
+      n05,
+      _CDRr,
+      0,
+      [_DD],
+      [[() => exports2.DocumentDescription$, 0]]
+    ];
+    exports2.CreateMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _CMWR,
+      0,
+      [_N, _Sc, _Du, _Cu, _AUT, _D, _SDt, _EDn, _STch, _SO, _CTl, _T2],
+      [0, 0, 1, 1, 2, [() => MaintenanceWindowDescription, 0], 0, 0, 0, 1, [0, 4], () => TagList],
+      5
+    ];
+    exports2.CreateMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _CMWRr,
+      0,
+      [_WI],
+      [0]
+    ];
+    exports2.CreateOpsItemRequest$ = [
+      3,
+      n05,
+      _COIR,
+      0,
+      [_D, _Sou, _Ti, _OIT, _OD, _No, _Pr2, _ROI, _T2, _Ca, _Se, _AST, _AETc, _PST, _PET, _AIc],
+      [0, 0, 0, 0, () => OpsItemOperationalData, () => OpsItemNotifications, 1, () => RelatedOpsItems, () => TagList, 0, 0, 4, 4, 4, 4, 0],
+      3
+    ];
+    exports2.CreateOpsItemResponse$ = [
+      3,
+      n05,
+      _COIRr,
+      0,
+      [_OII, _OIA],
+      [0, 0]
+    ];
+    exports2.CreateOpsMetadataRequest$ = [
+      3,
+      n05,
+      _COMR,
+      0,
+      [_RI, _Me, _T2],
+      [0, () => MetadataMap, () => TagList],
+      1
+    ];
+    exports2.CreateOpsMetadataResult$ = [
+      3,
+      n05,
+      _COMRr,
+      0,
+      [_OMA],
+      [0]
+    ];
+    exports2.CreatePatchBaselineRequest$ = [
+      3,
+      n05,
+      _CPBR,
+      0,
+      [_N, _OSp, _GF, _AR2, _AP, _APCL, _APENS, _RP, _RPA, _D, _So, _ASUCS, _CTl, _T2],
+      [0, 0, () => exports2.PatchFilterGroup$, () => exports2.PatchRuleGroup$, 64 | 0, 0, 2, 64 | 0, 0, 0, [() => PatchSourceList, 0], 0, [0, 4], () => TagList],
+      1
+    ];
+    exports2.CreatePatchBaselineResult$ = [
+      3,
+      n05,
+      _CPBRr,
+      0,
+      [_BI],
+      [0]
+    ];
+    exports2.CreateResourceDataSyncRequest$ = [
+      3,
+      n05,
+      _CRDSR,
+      0,
+      [_SN2, _SDe, _ST2, _SSy],
+      [0, () => exports2.ResourceDataSyncS3Destination$, 0, () => exports2.ResourceDataSyncSource$],
+      1
+    ];
+    exports2.CreateResourceDataSyncResult$ = [
+      3,
+      n05,
+      _CRDSRr,
+      0,
+      [],
+      []
+    ];
+    exports2.Credentials$ = [
+      3,
+      n05,
+      _Cr,
+      0,
+      [_AKI2, _SAK2, _STe, _ETxp],
+      [0, [() => AccessKeySecretType, 0], [() => SessionTokenType2, 0], 4],
+      4
+    ];
+    exports2.DeleteActivationRequest$ = [
+      3,
+      n05,
+      _DAR,
+      0,
+      [_AIct],
+      [0],
+      1
+    ];
+    exports2.DeleteActivationResult$ = [
+      3,
+      n05,
+      _DARe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteAssociationRequest$ = [
+      3,
+      n05,
+      _DARel,
+      0,
+      [_N, _II, _AIs],
+      [0, 0, 0]
+    ];
+    exports2.DeleteAssociationResult$ = [
+      3,
+      n05,
+      _DARele,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteDocumentRequest$ = [
+      3,
+      n05,
+      _DDR,
+      0,
+      [_N, _DV, _VN, _Fo],
+      [0, 0, 0, 2],
+      1
+    ];
+    exports2.DeleteDocumentResult$ = [
+      3,
+      n05,
+      _DDRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteInventoryRequest$ = [
+      3,
+      n05,
+      _DIR,
+      0,
+      [_TN, _SDO, _DR, _CTl],
+      [0, 0, 2, [0, 4]],
+      1
+    ];
+    exports2.DeleteInventoryResult$ = [
+      3,
+      n05,
+      _DIRe,
+      0,
+      [_DI, _TN, _DSe],
+      [0, 0, () => exports2.InventoryDeletionSummary$]
+    ];
+    exports2.DeleteMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _DMWR,
+      0,
+      [_WI],
+      [0],
+      1
+    ];
+    exports2.DeleteMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _DMWRe,
+      0,
+      [_WI],
+      [0]
+    ];
+    exports2.DeleteOpsItemRequest$ = [
+      3,
+      n05,
+      _DOIR,
+      0,
+      [_OII],
+      [0],
+      1
+    ];
+    exports2.DeleteOpsItemResponse$ = [
+      3,
+      n05,
+      _DOIRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteOpsMetadataRequest$ = [
+      3,
+      n05,
+      _DOMR,
+      0,
+      [_OMA],
+      [0],
+      1
+    ];
+    exports2.DeleteOpsMetadataResult$ = [
+      3,
+      n05,
+      _DOMRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteParameterRequest$ = [
+      3,
+      n05,
+      _DPR,
+      0,
+      [_N],
+      [0],
+      1
+    ];
+    exports2.DeleteParameterResult$ = [
+      3,
+      n05,
+      _DPRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteParametersRequest$ = [
+      3,
+      n05,
+      _DPRel,
+      0,
+      [_Na],
+      [64 | 0],
+      1
+    ];
+    exports2.DeleteParametersResult$ = [
+      3,
+      n05,
+      _DPRele,
+      0,
+      [_DP, _IP],
+      [64 | 0, 64 | 0]
+    ];
+    exports2.DeletePatchBaselineRequest$ = [
+      3,
+      n05,
+      _DPBR,
+      0,
+      [_BI],
+      [0],
+      1
+    ];
+    exports2.DeletePatchBaselineResult$ = [
+      3,
+      n05,
+      _DPBRe,
+      0,
+      [_BI],
+      [0]
+    ];
+    exports2.DeleteResourceDataSyncRequest$ = [
+      3,
+      n05,
+      _DRDSR,
+      0,
+      [_SN2, _ST2],
+      [0, 0],
+      1
+    ];
+    exports2.DeleteResourceDataSyncResult$ = [
+      3,
+      n05,
+      _DRDSRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeleteResourcePolicyRequest$ = [
+      3,
+      n05,
+      _DRPR,
+      0,
+      [_RA2, _PI2, _PH],
+      [0, 0, 0],
+      3
+    ];
+    exports2.DeleteResourcePolicyResponse$ = [
+      3,
+      n05,
+      _DRPRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeregisterManagedInstanceRequest$ = [
+      3,
+      n05,
+      _DMIR,
+      0,
+      [_II],
+      [0],
+      1
+    ];
+    exports2.DeregisterManagedInstanceResult$ = [
+      3,
+      n05,
+      _DMIRe,
+      0,
+      [],
+      []
+    ];
+    exports2.DeregisterPatchBaselineForPatchGroupRequest$ = [
+      3,
+      n05,
+      _DPBFPGR,
+      0,
+      [_BI, _PG],
+      [0, 0],
+      2
+    ];
+    exports2.DeregisterPatchBaselineForPatchGroupResult$ = [
+      3,
+      n05,
+      _DPBFPGRe,
+      0,
+      [_BI, _PG],
+      [0, 0]
+    ];
+    exports2.DeregisterTargetFromMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _DTFMWR,
+      0,
+      [_WI, _WTI, _Sa],
+      [0, 0, 2],
+      2
+    ];
+    exports2.DeregisterTargetFromMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _DTFMWRe,
+      0,
+      [_WI, _WTI],
+      [0, 0]
+    ];
+    exports2.DeregisterTaskFromMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _DTFMWRer,
+      0,
+      [_WI, _WTIi],
+      [0, 0],
+      2
+    ];
+    exports2.DeregisterTaskFromMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _DTFMWRere,
+      0,
+      [_WI, _WTIi],
+      [0, 0]
+    ];
+    exports2.DescribeActivationsFilter$ = [
+      3,
+      n05,
+      _DAF,
+      0,
+      [_FK, _FV],
+      [0, 64 | 0]
+    ];
+    exports2.DescribeActivationsRequest$ = [
+      3,
+      n05,
+      _DARes,
+      0,
+      [_Fi, _MR, _NT],
+      [() => DescribeActivationsFilterList, 1, 0]
+    ];
+    exports2.DescribeActivationsResult$ = [
+      3,
+      n05,
+      _DAResc,
+      0,
+      [_AL, _NT],
+      [() => ActivationList, 0]
+    ];
+    exports2.DescribeAssociationExecutionsRequest$ = [
+      3,
+      n05,
+      _DAER,
+      0,
+      [_AIs, _Fi, _MR, _NT],
+      [0, [() => AssociationExecutionFilterList, 0], 1, 0],
+      1
+    ];
+    exports2.DescribeAssociationExecutionsResult$ = [
+      3,
+      n05,
+      _DAERe,
+      0,
+      [_AEs, _NT],
+      [[() => AssociationExecutionsList, 0], 0]
+    ];
+    exports2.DescribeAssociationExecutionTargetsRequest$ = [
+      3,
+      n05,
+      _DAETR,
+      0,
+      [_AIs, _EI2, _Fi, _MR, _NT],
+      [0, 0, [() => AssociationExecutionTargetsFilterList, 0], 1, 0],
+      2
+    ];
+    exports2.DescribeAssociationExecutionTargetsResult$ = [
+      3,
+      n05,
+      _DAETRe,
+      0,
+      [_AETs, _NT],
+      [[() => AssociationExecutionTargetsList, 0], 0]
+    ];
+    exports2.DescribeAssociationRequest$ = [
+      3,
+      n05,
+      _DARescr,
+      0,
+      [_N, _II, _AIs, _AV],
+      [0, 0, 0, 0]
+    ];
+    exports2.DescribeAssociationResult$ = [
+      3,
+      n05,
+      _DARescri,
+      0,
+      [_AD],
+      [[() => exports2.AssociationDescription$, 0]]
+    ];
+    exports2.DescribeAutomationExecutionsRequest$ = [
+      3,
+      n05,
+      _DAERes,
+      0,
+      [_Fi, _MR, _NT],
+      [() => AutomationExecutionFilterList, 1, 0]
+    ];
+    exports2.DescribeAutomationExecutionsResult$ = [
+      3,
+      n05,
+      _DAEResc,
+      0,
+      [_AEML, _NT],
+      [() => AutomationExecutionMetadataList, 0]
+    ];
+    exports2.DescribeAutomationStepExecutionsRequest$ = [
+      3,
+      n05,
+      _DASER,
+      0,
+      [_AEI, _Fi, _NT, _MR, _RO],
+      [0, () => StepExecutionFilterList, 0, 1, 2],
+      1
+    ];
+    exports2.DescribeAutomationStepExecutionsResult$ = [
+      3,
+      n05,
+      _DASERe,
+      0,
+      [_SEt, _NT],
+      [() => StepExecutionList, 0]
+    ];
+    exports2.DescribeAvailablePatchesRequest$ = [
+      3,
+      n05,
+      _DAPR,
+      0,
+      [_Fi, _MR, _NT],
+      [() => PatchOrchestratorFilterList, 1, 0]
+    ];
+    exports2.DescribeAvailablePatchesResult$ = [
+      3,
+      n05,
+      _DAPRe,
+      0,
+      [_Pa, _NT],
+      [() => PatchList, 0]
+    ];
+    exports2.DescribeDocumentPermissionRequest$ = [
+      3,
+      n05,
+      _DDPR,
+      0,
+      [_N, _PT, _MR, _NT],
+      [0, 0, 1, 0],
+      2
+    ];
+    exports2.DescribeDocumentPermissionResponse$ = [
+      3,
+      n05,
+      _DDPRe,
+      0,
+      [_AIcc, _ASIL, _NT],
+      [[() => AccountIdList, 0], [() => AccountSharingInfoList, 0], 0]
+    ];
+    exports2.DescribeDocumentRequest$ = [
+      3,
+      n05,
+      _DDRes,
+      0,
+      [_N, _DV, _VN],
+      [0, 0, 0],
+      1
+    ];
+    exports2.DescribeDocumentResult$ = [
+      3,
+      n05,
+      _DDResc,
+      0,
+      [_Do],
+      [[() => exports2.DocumentDescription$, 0]]
+    ];
+    exports2.DescribeEffectiveInstanceAssociationsRequest$ = [
+      3,
+      n05,
+      _DEIAR,
+      0,
+      [_II, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.DescribeEffectiveInstanceAssociationsResult$ = [
+      3,
+      n05,
+      _DEIARe,
+      0,
+      [_Ass, _NT],
+      [() => InstanceAssociationList, 0]
+    ];
+    exports2.DescribeEffectivePatchesForPatchBaselineRequest$ = [
+      3,
+      n05,
+      _DEPFPBR,
+      0,
+      [_BI, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.DescribeEffectivePatchesForPatchBaselineResult$ = [
+      3,
+      n05,
+      _DEPFPBRe,
+      0,
+      [_EP, _NT],
+      [() => EffectivePatchList, 0]
+    ];
+    exports2.DescribeInstanceAssociationsStatusRequest$ = [
+      3,
+      n05,
+      _DIASR,
+      0,
+      [_II, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.DescribeInstanceAssociationsStatusResult$ = [
+      3,
+      n05,
+      _DIASRe,
+      0,
+      [_IASI, _NT],
+      [() => InstanceAssociationStatusInfos, 0]
+    ];
+    exports2.DescribeInstanceInformationRequest$ = [
+      3,
+      n05,
+      _DIIR,
+      0,
+      [_IIFL, _Fi, _MR, _NT],
+      [[() => InstanceInformationFilterList, 0], [() => InstanceInformationStringFilterList, 0], 1, 0]
+    ];
+    exports2.DescribeInstanceInformationResult$ = [
+      3,
+      n05,
+      _DIIRe,
+      0,
+      [_IIL, _NT],
+      [[() => InstanceInformationList, 0], 0]
+    ];
+    exports2.DescribeInstancePatchesRequest$ = [
+      3,
+      n05,
+      _DIPR,
+      0,
+      [_II, _Fi, _NT, _MR],
+      [0, () => PatchOrchestratorFilterList, 0, 1],
+      1
+    ];
+    exports2.DescribeInstancePatchesResult$ = [
+      3,
+      n05,
+      _DIPRe,
+      0,
+      [_Pa, _NT],
+      [() => PatchComplianceDataList, 0]
+    ];
+    exports2.DescribeInstancePatchStatesForPatchGroupRequest$ = [
+      3,
+      n05,
+      _DIPSFPGR,
+      0,
+      [_PG, _Fi, _NT, _MR],
+      [0, () => InstancePatchStateFilterList, 0, 1],
+      1
+    ];
+    exports2.DescribeInstancePatchStatesForPatchGroupResult$ = [
+      3,
+      n05,
+      _DIPSFPGRe,
+      0,
+      [_IPS, _NT],
+      [[() => InstancePatchStatesList, 0], 0]
+    ];
+    exports2.DescribeInstancePatchStatesRequest$ = [
+      3,
+      n05,
+      _DIPSR,
+      0,
+      [_IIn, _NT, _MR],
+      [64 | 0, 0, 1],
+      1
+    ];
+    exports2.DescribeInstancePatchStatesResult$ = [
+      3,
+      n05,
+      _DIPSRe,
+      0,
+      [_IPS, _NT],
+      [[() => InstancePatchStateList, 0], 0]
+    ];
+    exports2.DescribeInstancePropertiesRequest$ = [
+      3,
+      n05,
+      _DIPRes,
+      0,
+      [_IPFL, _FWO, _MR, _NT],
+      [[() => InstancePropertyFilterList, 0], [() => InstancePropertyStringFilterList, 0], 1, 0]
+    ];
+    exports2.DescribeInstancePropertiesResult$ = [
+      3,
+      n05,
+      _DIPResc,
+      0,
+      [_IPn, _NT],
+      [[() => InstanceProperties, 0], 0]
+    ];
+    exports2.DescribeInventoryDeletionsRequest$ = [
+      3,
+      n05,
+      _DIDR,
+      0,
+      [_DI, _NT, _MR],
+      [0, 0, 1]
+    ];
+    exports2.DescribeInventoryDeletionsResult$ = [
+      3,
+      n05,
+      _DIDRe,
+      0,
+      [_IDn, _NT],
+      [() => InventoryDeletionsList, 0]
+    ];
+    exports2.DescribeMaintenanceWindowExecutionsRequest$ = [
+      3,
+      n05,
+      _DMWER,
+      0,
+      [_WI, _Fi, _MR, _NT],
+      [0, () => MaintenanceWindowFilterList, 1, 0],
+      1
+    ];
+    exports2.DescribeMaintenanceWindowExecutionsResult$ = [
+      3,
+      n05,
+      _DMWERe,
+      0,
+      [_WE, _NT],
+      [() => MaintenanceWindowExecutionList, 0]
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTaskInvocationsRequest$ = [
+      3,
+      n05,
+      _DMWETIR,
+      0,
+      [_WEI, _TI, _Fi, _MR, _NT],
+      [0, 0, () => MaintenanceWindowFilterList, 1, 0],
+      2
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTaskInvocationsResult$ = [
+      3,
+      n05,
+      _DMWETIRe,
+      0,
+      [_WETII, _NT],
+      [[() => MaintenanceWindowExecutionTaskInvocationIdentityList, 0], 0]
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTasksRequest$ = [
+      3,
+      n05,
+      _DMWETR,
+      0,
+      [_WEI, _Fi, _MR, _NT],
+      [0, () => MaintenanceWindowFilterList, 1, 0],
+      1
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTasksResult$ = [
+      3,
+      n05,
+      _DMWETRe,
+      0,
+      [_WETI, _NT],
+      [() => MaintenanceWindowExecutionTaskIdentityList, 0]
+    ];
+    exports2.DescribeMaintenanceWindowScheduleRequest$ = [
+      3,
+      n05,
+      _DMWSR,
+      0,
+      [_WI, _Ta2, _RTe, _Fi, _MR, _NT],
+      [0, () => Targets, 0, () => PatchOrchestratorFilterList, 1, 0]
+    ];
+    exports2.DescribeMaintenanceWindowScheduleResult$ = [
+      3,
+      n05,
+      _DMWSRe,
+      0,
+      [_SWE, _NT],
+      [() => ScheduledWindowExecutionList, 0]
+    ];
+    exports2.DescribeMaintenanceWindowsForTargetRequest$ = [
+      3,
+      n05,
+      _DMWFTR,
+      0,
+      [_Ta2, _RTe, _MR, _NT],
+      [() => Targets, 0, 1, 0],
+      2
+    ];
+    exports2.DescribeMaintenanceWindowsForTargetResult$ = [
+      3,
+      n05,
+      _DMWFTRe,
+      0,
+      [_WIi, _NT],
+      [() => MaintenanceWindowsForTargetList, 0]
+    ];
+    exports2.DescribeMaintenanceWindowsRequest$ = [
+      3,
+      n05,
+      _DMWRes,
+      0,
+      [_Fi, _MR, _NT],
+      [() => MaintenanceWindowFilterList, 1, 0]
+    ];
+    exports2.DescribeMaintenanceWindowsResult$ = [
+      3,
+      n05,
+      _DMWResc,
+      0,
+      [_WIi, _NT],
+      [[() => MaintenanceWindowIdentityList, 0], 0]
+    ];
+    exports2.DescribeMaintenanceWindowTargetsRequest$ = [
+      3,
+      n05,
+      _DMWTR,
+      0,
+      [_WI, _Fi, _MR, _NT],
+      [0, () => MaintenanceWindowFilterList, 1, 0],
+      1
+    ];
+    exports2.DescribeMaintenanceWindowTargetsResult$ = [
+      3,
+      n05,
+      _DMWTRe,
+      0,
+      [_Ta2, _NT],
+      [[() => MaintenanceWindowTargetList, 0], 0]
+    ];
+    exports2.DescribeMaintenanceWindowTasksRequest$ = [
+      3,
+      n05,
+      _DMWTRes,
+      0,
+      [_WI, _Fi, _MR, _NT],
+      [0, () => MaintenanceWindowFilterList, 1, 0],
+      1
+    ];
+    exports2.DescribeMaintenanceWindowTasksResult$ = [
+      3,
+      n05,
+      _DMWTResc,
+      0,
+      [_Tas, _NT],
+      [[() => MaintenanceWindowTaskList, 0], 0]
+    ];
+    exports2.DescribeOpsItemsRequest$ = [
+      3,
+      n05,
+      _DOIRes,
+      0,
+      [_OIF, _MR, _NT],
+      [() => OpsItemFilters, 1, 0]
+    ];
+    exports2.DescribeOpsItemsResponse$ = [
+      3,
+      n05,
+      _DOIResc,
+      0,
+      [_NT, _OIS],
+      [0, () => OpsItemSummaries]
+    ];
+    exports2.DescribeParametersRequest$ = [
+      3,
+      n05,
+      _DPRes,
+      0,
+      [_Fi, _PF, _MR, _NT, _Sh],
+      [() => ParametersFilterList, () => ParameterStringFilterList, 1, 0, 2]
+    ];
+    exports2.DescribeParametersResult$ = [
+      3,
+      n05,
+      _DPResc,
+      0,
+      [_P2, _NT],
+      [() => ParameterMetadataList, 0]
+    ];
+    exports2.DescribePatchBaselinesRequest$ = [
+      3,
+      n05,
+      _DPBRes,
+      0,
+      [_Fi, _MR, _NT],
+      [() => PatchOrchestratorFilterList, 1, 0]
+    ];
+    exports2.DescribePatchBaselinesResult$ = [
+      3,
+      n05,
+      _DPBResc,
+      0,
+      [_BIa, _NT],
+      [() => PatchBaselineIdentityList, 0]
+    ];
+    exports2.DescribePatchGroupsRequest$ = [
+      3,
+      n05,
+      _DPGR,
+      0,
+      [_MR, _Fi, _NT],
+      [1, () => PatchOrchestratorFilterList, 0]
+    ];
+    exports2.DescribePatchGroupsResult$ = [
+      3,
+      n05,
+      _DPGRe,
+      0,
+      [_Ma, _NT],
+      [() => PatchGroupPatchBaselineMappingList, 0]
+    ];
+    exports2.DescribePatchGroupStateRequest$ = [
+      3,
+      n05,
+      _DPGSR,
+      0,
+      [_PG],
+      [0],
+      1
+    ];
+    exports2.DescribePatchGroupStateResult$ = [
+      3,
+      n05,
+      _DPGSRe,
+      0,
+      [_In, _IWIP, _IWIOP, _IWIPRP, _IWIRP, _IWMP, _IWFP, _IWNAP, _IWUNAP, _IWCNCP, _IWSNCP, _IWONCP, _IWASU],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ];
+    exports2.DescribePatchPropertiesRequest$ = [
+      3,
+      n05,
+      _DPPR,
+      0,
+      [_OSp, _Pro, _PS, _MR, _NT],
+      [0, 0, 0, 1, 0],
+      2
+    ];
+    exports2.DescribePatchPropertiesResult$ = [
+      3,
+      n05,
+      _DPPRe,
+      0,
+      [_Prop, _NT],
+      [[1, n05, _PPL, 0, 128 | 0], 0]
+    ];
+    exports2.DescribeSessionsRequest$ = [
+      3,
+      n05,
+      _DSR,
+      0,
+      [_S, _MR, _NT, _Fi],
+      [0, 1, 0, () => SessionFilterList],
+      1
+    ];
+    exports2.DescribeSessionsResponse$ = [
+      3,
+      n05,
+      _DSRe,
+      0,
+      [_Ses, _NT],
+      [() => SessionList, 0]
+    ];
+    exports2.DisassociateOpsItemRelatedItemRequest$ = [
+      3,
+      n05,
+      _DOIRIR,
+      0,
+      [_OII, _AIs],
+      [0, 0],
+      2
+    ];
+    exports2.DisassociateOpsItemRelatedItemResponse$ = [
+      3,
+      n05,
+      _DOIRIRi,
+      0,
+      [],
+      []
+    ];
+    exports2.DocumentDefaultVersionDescription$ = [
+      3,
+      n05,
+      _DDVD,
+      0,
+      [_N, _DVe, _DVN],
+      [0, 0, 0]
+    ];
+    exports2.DocumentDescription$ = [
+      3,
+      n05,
+      _DD,
+      0,
+      [_Sha, _H, _HT, _N, _DNi, _VN, _Ow, _CD, _St, _SI2, _DV, _D, _P2, _PTl, _DT, _SV, _LV, _DVe, _DF, _TT, _T2, _AItt, _Req, _Au2, _RIe, _AVp, _PRV, _RS, _Ca, _CE],
+      [0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, [() => DocumentParameterList, 0], [() => PlatformTypeList, 0], 0, 0, 0, 0, 0, 0, () => TagList, [() => AttachmentInformationList, 0], () => DocumentRequiresList, 0, [() => ReviewInformationList, 0], 0, 0, 0, 64 | 0, 64 | 0]
+    ];
+    exports2.DocumentFilter$ = [
+      3,
+      n05,
+      _DFo,
+      0,
+      [_k, _v],
+      [0, 0],
+      2
+    ];
+    exports2.DocumentIdentifier$ = [
+      3,
+      n05,
+      _DIo,
+      0,
+      [_N, _CD, _DNi, _Ow, _VN, _PTl, _DV, _DT, _SV, _DF, _TT, _T2, _Req, _RS, _Au2],
+      [0, 4, 0, 0, 0, [() => PlatformTypeList, 0], 0, 0, 0, 0, 0, () => TagList, () => DocumentRequiresList, 0, 0]
+    ];
+    exports2.DocumentKeyValuesFilter$ = [
+      3,
+      n05,
+      _DKVF,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0]
+    ];
+    exports2.DocumentMetadataResponseInfo$ = [
+      3,
+      n05,
+      _DMRI,
+      0,
+      [_RR],
+      [() => DocumentReviewerResponseList]
+    ];
+    exports2.DocumentParameter$ = [
+      3,
+      n05,
+      _DPo,
+      0,
+      [_N, _Ty, _D, _DVef],
+      [0, 0, 0, 0]
+    ];
+    exports2.DocumentRequires$ = [
+      3,
+      n05,
+      _DRo,
+      0,
+      [_N, _Ve, _RTeq, _VN],
+      [0, 0, 0, 0],
+      1
+    ];
+    exports2.DocumentReviewCommentSource$ = [
+      3,
+      n05,
+      _DRCS,
+      0,
+      [_Ty, _Con],
+      [0, 0]
+    ];
+    exports2.DocumentReviewerResponseSource$ = [
+      3,
+      n05,
+      _DRRS,
+      0,
+      [_CTr, _UT, _RS, _Co, _Rev],
+      [4, 4, 0, () => DocumentReviewCommentList, 0]
+    ];
+    exports2.DocumentReviews$ = [
+      3,
+      n05,
+      _DRoc,
+      0,
+      [_Ac, _Co],
+      [0, () => DocumentReviewCommentList],
+      1
+    ];
+    exports2.DocumentVersionInfo$ = [
+      3,
+      n05,
+      _DVI,
+      0,
+      [_N, _DNi, _DV, _VN, _CD, _IDVs, _DF, _St, _SI2, _RS],
+      [0, 0, 0, 0, 4, 2, 0, 0, 0, 0]
+    ];
+    exports2.EffectivePatch$ = [
+      3,
+      n05,
+      _EPf,
+      0,
+      [_Pat, _PSa],
+      [() => exports2.Patch$, () => exports2.PatchStatus$]
+    ];
+    exports2.FailedCreateAssociation$ = [
+      3,
+      n05,
+      _FCA,
+      0,
+      [_Ent, _M, _Fa],
+      [[() => exports2.CreateAssociationBatchRequestEntry$, 0], 0, 0]
+    ];
+    exports2.FailureDetails$ = [
+      3,
+      n05,
+      _FD,
+      0,
+      [_FS, _FT, _De],
+      [0, 0, [2, n05, _APM, 0, 0, 64 | 0]]
+    ];
+    exports2.GetAccessTokenRequest$ = [
+      3,
+      n05,
+      _GATR,
+      0,
+      [_ARI2],
+      [0],
+      1
+    ];
+    exports2.GetAccessTokenResponse$ = [
+      3,
+      n05,
+      _GATRe,
+      0,
+      [_Cr, _ARS],
+      [[() => exports2.Credentials$, 0], 0]
+    ];
+    exports2.GetAutomationExecutionRequest$ = [
+      3,
+      n05,
+      _GAER,
+      0,
+      [_AEI],
+      [0],
+      1
+    ];
+    exports2.GetAutomationExecutionResult$ = [
+      3,
+      n05,
+      _GAERe,
+      0,
+      [_AEu],
+      [() => exports2.AutomationExecution$]
+    ];
+    exports2.GetCalendarStateRequest$ = [
+      3,
+      n05,
+      _GCSR,
+      0,
+      [_CN, _ATt],
+      [64 | 0, 0],
+      1
+    ];
+    exports2.GetCalendarStateResponse$ = [
+      3,
+      n05,
+      _GCSRe,
+      0,
+      [_S, _ATt, _NTT],
+      [0, 0, 0]
+    ];
+    exports2.GetCommandInvocationRequest$ = [
+      3,
+      n05,
+      _GCIR,
+      0,
+      [_CI, _II, _PNl],
+      [0, 0, 0],
+      2
+    ];
+    exports2.GetCommandInvocationResult$ = [
+      3,
+      n05,
+      _GCIRe,
+      0,
+      [_CI, _II, _Co, _DN, _DV, _PNl, _RCes, _ESDT, _EETx, _EEDT, _St, _SD, _SOC, _SOU, _SEC, _SEU, _CWOC],
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, () => exports2.CloudWatchOutputConfig$]
+    ];
+    exports2.GetConnectionStatusRequest$ = [
+      3,
+      n05,
+      _GCSRet,
+      0,
+      [_Tar],
+      [0],
+      1
+    ];
+    exports2.GetConnectionStatusResponse$ = [
+      3,
+      n05,
+      _GCSReto,
+      0,
+      [_Tar, _St],
+      [0, 0]
+    ];
+    exports2.GetDefaultPatchBaselineRequest$ = [
+      3,
+      n05,
+      _GDPBR,
+      0,
+      [_OSp],
+      [0]
+    ];
+    exports2.GetDefaultPatchBaselineResult$ = [
+      3,
+      n05,
+      _GDPBRe,
+      0,
+      [_BI, _OSp],
+      [0, 0]
+    ];
+    exports2.GetDeployablePatchSnapshotForInstanceRequest$ = [
+      3,
+      n05,
+      _GDPSFIR,
+      0,
+      [_II, _SIn, _BO, _USDSE],
+      [0, 0, [() => exports2.BaselineOverride$, 0], 2],
+      2
+    ];
+    exports2.GetDeployablePatchSnapshotForInstanceResult$ = [
+      3,
+      n05,
+      _GDPSFIRe,
+      0,
+      [_II, _SIn, _SDU, _Prod],
+      [0, 0, 0, 0]
+    ];
+    exports2.GetDocumentRequest$ = [
+      3,
+      n05,
+      _GDR,
+      0,
+      [_N, _VN, _DV, _DF],
+      [0, 0, 0, 0],
+      1
+    ];
+    exports2.GetDocumentResult$ = [
+      3,
+      n05,
+      _GDRe,
+      0,
+      [_N, _CD, _DNi, _VN, _DV, _St, _SI2, _Con, _DT, _DF, _Req, _ACtt, _RS],
+      [0, 4, 0, 0, 0, 0, 0, 0, 0, 0, () => DocumentRequiresList, [() => AttachmentContentList, 0], 0]
+    ];
+    exports2.GetExecutionPreviewRequest$ = [
+      3,
+      n05,
+      _GEPR,
+      0,
+      [_EPI],
+      [0],
+      1
+    ];
+    exports2.GetExecutionPreviewResponse$ = [
+      3,
+      n05,
+      _GEPRe,
+      0,
+      [_EPI, _EAn, _St, _SM, _EPx],
+      [0, 4, 0, 0, () => exports2.ExecutionPreview$]
+    ];
+    exports2.GetInventoryRequest$ = [
+      3,
+      n05,
+      _GIR,
+      0,
+      [_Fi, _Ag, _RAe, _NT, _MR],
+      [[() => InventoryFilterList, 0], [() => InventoryAggregatorList, 0], [() => ResultAttributeList, 0], 0, 1]
+    ];
+    exports2.GetInventoryResult$ = [
+      3,
+      n05,
+      _GIRe,
+      0,
+      [_Enti, _NT],
+      [[() => InventoryResultEntityList, 0], 0]
+    ];
+    exports2.GetInventorySchemaRequest$ = [
+      3,
+      n05,
+      _GISR,
+      0,
+      [_TN, _NT, _MR, _Agg, _STu],
+      [0, 0, 1, 2, 2]
+    ];
+    exports2.GetInventorySchemaResult$ = [
+      3,
+      n05,
+      _GISRe,
+      0,
+      [_Sch, _NT],
+      [[() => InventoryItemSchemaResultList, 0], 0]
+    ];
+    exports2.GetMaintenanceWindowExecutionRequest$ = [
+      3,
+      n05,
+      _GMWER,
+      0,
+      [_WEI],
+      [0],
+      1
+    ];
+    exports2.GetMaintenanceWindowExecutionResult$ = [
+      3,
+      n05,
+      _GMWERe,
+      0,
+      [_WEI, _TIa, _St, _SD, _STt, _ETn],
+      [0, 64 | 0, 0, 0, 4, 4]
+    ];
+    exports2.GetMaintenanceWindowExecutionTaskInvocationRequest$ = [
+      3,
+      n05,
+      _GMWETIR,
+      0,
+      [_WEI, _TI, _IInv],
+      [0, 0, 0],
+      3
+    ];
+    exports2.GetMaintenanceWindowExecutionTaskInvocationResult$ = [
+      3,
+      n05,
+      _GMWETIRe,
+      0,
+      [_WEI, _TEI, _IInv, _EI2, _TTa, _P2, _St, _SD, _STt, _ETn, _OI, _WTI],
+      [0, 0, 0, 0, 0, [() => MaintenanceWindowExecutionTaskInvocationParameters, 0], 0, 0, 4, 4, [() => OwnerInformation, 0], 0]
+    ];
+    exports2.GetMaintenanceWindowExecutionTaskRequest$ = [
+      3,
+      n05,
+      _GMWETR,
+      0,
+      [_WEI, _TI],
+      [0, 0],
+      2
+    ];
+    exports2.GetMaintenanceWindowExecutionTaskResult$ = [
+      3,
+      n05,
+      _GMWETRe,
+      0,
+      [_WEI, _TEI, _TAa, _SR, _Ty, _TPa, _Pr2, _MC, _ME, _St, _SD, _STt, _ETn, _AC, _TA],
+      [0, 0, 0, 0, 0, [() => MaintenanceWindowTaskParametersList, 0], 1, 0, 0, 0, 0, 4, 4, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList]
+    ];
+    exports2.GetMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _GMWR,
+      0,
+      [_WI],
+      [0],
+      1
+    ];
+    exports2.GetMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _GMWRe,
+      0,
+      [_WI, _N, _D, _SDt, _EDn, _Sc, _STch, _SO, _NET, _Du, _Cu, _AUT, _Ena, _CD, _MD],
+      [0, 0, [() => MaintenanceWindowDescription, 0], 0, 0, 0, 0, 1, 0, 1, 1, 2, 2, 4, 4]
+    ];
+    exports2.GetMaintenanceWindowTaskRequest$ = [
+      3,
+      n05,
+      _GMWTR,
+      0,
+      [_WI, _WTIi],
+      [0, 0],
+      2
+    ];
+    exports2.GetMaintenanceWindowTaskResult$ = [
+      3,
+      n05,
+      _GMWTRe,
+      0,
+      [_WI, _WTIi, _Ta2, _TAa, _SRA, _TTa, _TPa, _TIP, _Pr2, _MC, _ME, _LI, _N, _D, _CB, _AC],
+      [0, 0, () => Targets, 0, 0, 0, [() => MaintenanceWindowTaskParameters, 0], [() => exports2.MaintenanceWindowTaskInvocationParameters$, 0], 1, 0, 0, () => exports2.LoggingInfo$, 0, [() => MaintenanceWindowDescription, 0], 0, () => exports2.AlarmConfiguration$]
+    ];
+    exports2.GetOpsItemRequest$ = [
+      3,
+      n05,
+      _GOIR,
+      0,
+      [_OII, _OIA],
+      [0, 0],
+      1
+    ];
+    exports2.GetOpsItemResponse$ = [
+      3,
+      n05,
+      _GOIRe,
+      0,
+      [_OIp],
+      [() => exports2.OpsItem$]
+    ];
+    exports2.GetOpsMetadataRequest$ = [
+      3,
+      n05,
+      _GOMR,
+      0,
+      [_OMA, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.GetOpsMetadataResult$ = [
+      3,
+      n05,
+      _GOMRe,
+      0,
+      [_RI, _Me, _NT],
+      [0, () => MetadataMap, 0]
+    ];
+    exports2.GetOpsSummaryRequest$ = [
+      3,
+      n05,
+      _GOSR,
+      0,
+      [_SN2, _Fi, _Ag, _RAe, _NT, _MR],
+      [0, [() => OpsFilterList, 0], [() => OpsAggregatorList, 0], [() => OpsResultAttributeList, 0], 0, 1]
+    ];
+    exports2.GetOpsSummaryResult$ = [
+      3,
+      n05,
+      _GOSRe,
+      0,
+      [_Enti, _NT],
+      [[() => OpsEntityList, 0], 0]
+    ];
+    exports2.GetParameterHistoryRequest$ = [
+      3,
+      n05,
+      _GPHR,
+      0,
+      [_N, _WD, _MR, _NT],
+      [0, 2, 1, 0],
+      1
+    ];
+    exports2.GetParameterHistoryResult$ = [
+      3,
+      n05,
+      _GPHRe,
+      0,
+      [_P2, _NT],
+      [[() => ParameterHistoryList, 0], 0]
+    ];
+    exports2.GetParameterRequest$ = [
+      3,
+      n05,
+      _GPR,
+      0,
+      [_N, _WD],
+      [0, 2],
+      1
+    ];
+    exports2.GetParameterResult$ = [
+      3,
+      n05,
+      _GPRe,
+      0,
+      [_Par],
+      [[() => exports2.Parameter$, 0]]
+    ];
+    exports2.GetParametersByPathRequest$ = [
+      3,
+      n05,
+      _GPBPR,
+      0,
+      [_Path, _Rec, _PF, _WD, _MR, _NT],
+      [0, 2, () => ParameterStringFilterList, 2, 1, 0],
+      1
+    ];
+    exports2.GetParametersByPathResult$ = [
+      3,
+      n05,
+      _GPBPRe,
+      0,
+      [_P2, _NT],
+      [[() => ParameterList, 0], 0]
+    ];
+    exports2.GetParametersRequest$ = [
+      3,
+      n05,
+      _GPRet,
+      0,
+      [_Na, _WD],
+      [64 | 0, 2],
+      1
+    ];
+    exports2.GetParametersResult$ = [
+      3,
+      n05,
+      _GPReta,
+      0,
+      [_P2, _IP],
+      [[() => ParameterList, 0], 64 | 0]
+    ];
+    exports2.GetPatchBaselineForPatchGroupRequest$ = [
+      3,
+      n05,
+      _GPBFPGR,
+      0,
+      [_PG, _OSp],
+      [0, 0],
+      1
+    ];
+    exports2.GetPatchBaselineForPatchGroupResult$ = [
+      3,
+      n05,
+      _GPBFPGRe,
+      0,
+      [_BI, _PG, _OSp],
+      [0, 0, 0]
+    ];
+    exports2.GetPatchBaselineRequest$ = [
+      3,
+      n05,
+      _GPBR,
+      0,
+      [_BI],
+      [0],
+      1
+    ];
+    exports2.GetPatchBaselineResult$ = [
+      3,
+      n05,
+      _GPBRe,
+      0,
+      [_BI, _N, _OSp, _GF, _AR2, _AP, _APCL, _APENS, _RP, _RPA, _PGa, _CD, _MD, _D, _So, _ASUCS],
+      [0, 0, 0, () => exports2.PatchFilterGroup$, () => exports2.PatchRuleGroup$, 64 | 0, 0, 2, 64 | 0, 0, 64 | 0, 4, 4, 0, [() => PatchSourceList, 0], 0]
+    ];
+    exports2.GetResourcePoliciesRequest$ = [
+      3,
+      n05,
+      _GRPR,
+      0,
+      [_RA2, _NT, _MR],
+      [0, 0, 1],
+      1
+    ];
+    exports2.GetResourcePoliciesResponse$ = [
+      3,
+      n05,
+      _GRPRe,
+      0,
+      [_NT, _Po],
+      [0, () => GetResourcePoliciesResponseEntries]
+    ];
+    exports2.GetResourcePoliciesResponseEntry$ = [
+      3,
+      n05,
+      _GRPRE,
+      0,
+      [_PI2, _PH, _Pol],
+      [0, 0, 0]
+    ];
+    exports2.GetServiceSettingRequest$ = [
+      3,
+      n05,
+      _GSSR,
+      0,
+      [_SIe],
+      [0],
+      1
+    ];
+    exports2.GetServiceSettingResult$ = [
+      3,
+      n05,
+      _GSSRe,
+      0,
+      [_SSe],
+      [() => exports2.ServiceSetting$]
+    ];
+    exports2.InstanceAggregatedAssociationOverview$ = [
+      3,
+      n05,
+      _IAAO,
+      0,
+      [_DS2, _IASAC],
+      [0, 128 | 1]
+    ];
+    exports2.InstanceAssociation$ = [
+      3,
+      n05,
+      _IAns,
+      0,
+      [_AIs, _II, _Con, _AV],
+      [0, 0, 0, 0]
+    ];
+    exports2.InstanceAssociationOutputLocation$ = [
+      3,
+      n05,
+      _IAOL,
+      0,
+      [_SL],
+      [() => exports2.S3OutputLocation$]
+    ];
+    exports2.InstanceAssociationOutputUrl$ = [
+      3,
+      n05,
+      _IAOU,
+      0,
+      [_SOUu],
+      [() => exports2.S3OutputUrl$]
+    ];
+    exports2.InstanceAssociationStatusInfo$ = [
+      3,
+      n05,
+      _IASIn,
+      0,
+      [_AIs, _N, _DV, _AV, _II, _EDx, _St, _DS2, _ES, _ECr, _OU, _AN],
+      [0, 0, 0, 0, 0, 4, 0, 0, 0, 0, () => exports2.InstanceAssociationOutputUrl$, 0]
+    ];
+    exports2.InstanceInfo$ = [
+      3,
+      n05,
+      _IIns,
+      0,
+      [_ATg, _AVg, _CNo, _ISn, _IAp, _MS, _PTla, _PNla, _PV, _RTe],
+      [0, 0, 0, 0, [() => IPAddress, 0], 0, 0, 0, 0, 0]
+    ];
+    exports2.InstanceInformation$ = [
+      3,
+      n05,
+      _IInst,
+      0,
+      [_II, _PSi, _LPDT, _AVg, _ILV, _PTla, _PNla, _PV, _AIct, _IRa, _RD, _RTe, _N, _IPA, _CNo, _AS, _LAED, _LSAED, _AO, _SIo, _STo],
+      [0, 0, 4, 0, 2, 0, 0, 0, 0, 0, 4, 0, 0, [() => IPAddress, 0], 0, 0, 4, 4, () => exports2.InstanceAggregatedAssociationOverview$, 0, 0]
+    ];
+    exports2.InstanceInformationFilter$ = [
+      3,
+      n05,
+      _IIF,
+      0,
+      [_k, _vS],
+      [0, [() => InstanceInformationFilterValueSet, 0]],
+      2
+    ];
+    exports2.InstanceInformationStringFilter$ = [
+      3,
+      n05,
+      _IISF,
+      0,
+      [_K2, _Va],
+      [0, [() => InstanceInformationFilterValueSet, 0]],
+      2
+    ];
+    exports2.InstancePatchState$ = [
+      3,
+      n05,
+      _IPSn,
+      0,
+      [_II, _PG, _BI, _OST, _OET, _Op, _SIn, _IOLn, _OI, _IC, _IOC, _IPRC, _IRC, _MCi, _FC, _UNAC, _NAC, _ASUC, _LNRIOT, _ROe, _CNCC, _SNCC, _ONCC],
+      [0, 0, 0, 4, 4, 0, 0, 0, [() => OwnerInformation, 0], 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 0, 1, 1, 1],
+      6
+    ];
+    exports2.InstancePatchStateFilter$ = [
+      3,
+      n05,
+      _IPSF,
+      0,
+      [_K2, _Va, _Ty],
+      [0, 64 | 0, 0],
+      3
+    ];
+    exports2.InstanceProperty$ = [
+      3,
+      n05,
+      _IPns,
+      0,
+      [_N, _II, _ITns, _IRn, _KN, _ISns, _Ar, _IPA, _LTa, _PSi, _LPDT, _AVg, _PTla, _PNla, _PV, _AIct, _IRa, _RD, _RTe, _CNo, _AS, _LAED, _LSAED, _AO, _SIo, _STo],
+      [0, 0, 0, 0, 0, 0, 0, [() => IPAddress, 0], 4, 0, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 4, () => exports2.InstanceAggregatedAssociationOverview$, 0, 0]
+    ];
+    exports2.InstancePropertyFilter$ = [
+      3,
+      n05,
+      _IPF,
+      0,
+      [_k, _vS],
+      [0, [() => InstancePropertyFilterValueSet, 0]],
+      2
+    ];
+    exports2.InstancePropertyStringFilter$ = [
+      3,
+      n05,
+      _IPSFn,
+      0,
+      [_K2, _Va, _Ope],
+      [0, [() => InstancePropertyFilterValueSet, 0], 0],
+      2
+    ];
+    exports2.InventoryAggregator$ = [
+      3,
+      n05,
+      _IAnv,
+      0,
+      [_Ex, _Ag, _G],
+      [0, [() => InventoryAggregatorList, 0], [() => InventoryGroupList, 0]]
+    ];
+    exports2.InventoryDeletionStatusItem$ = [
+      3,
+      n05,
+      _IDSI,
+      0,
+      [_DI, _TN, _DST, _LS, _LSM, _DSe, _LSUT],
+      [0, 0, 4, 0, 0, () => exports2.InventoryDeletionSummary$, 4]
+    ];
+    exports2.InventoryDeletionSummary$ = [
+      3,
+      n05,
+      _IDS,
+      0,
+      [_TCo, _RCem, _SIu],
+      [1, 1, () => InventoryDeletionSummaryItems]
+    ];
+    exports2.InventoryDeletionSummaryItem$ = [
+      3,
+      n05,
+      _IDSIn,
+      0,
+      [_Ve, _Cou, _RCem],
+      [0, 1, 1]
+    ];
+    exports2.InventoryFilter$ = [
+      3,
+      n05,
+      _IFn,
+      0,
+      [_K2, _Va, _Ty],
+      [0, [() => InventoryFilterValueList, 0], 0],
+      2
+    ];
+    exports2.InventoryGroup$ = [
+      3,
+      n05,
+      _IG,
+      0,
+      [_N, _Fi],
+      [0, [() => InventoryFilterList, 0]],
+      2
+    ];
+    exports2.InventoryItem$ = [
+      3,
+      n05,
+      _IInve,
+      0,
+      [_TN, _SV, _CTa, _CH, _Con, _Cont],
+      [0, 0, 0, 0, [1, n05, _IIEL, 0, 128 | 0], 128 | 0],
+      3
+    ];
+    exports2.InventoryItemAttribute$ = [
+      3,
+      n05,
+      _IIA,
+      0,
+      [_N, _DTa],
+      [0, 0],
+      2
+    ];
+    exports2.InventoryItemSchema$ = [
+      3,
+      n05,
+      _IIS,
+      0,
+      [_TN, _Att, _Ve, _DNi],
+      [0, [() => InventoryItemAttributeList, 0], 0, 0],
+      2
+    ];
+    exports2.InventoryResultEntity$ = [
+      3,
+      n05,
+      _IRE3,
+      0,
+      [_I, _Dat],
+      [0, () => InventoryResultItemMap]
+    ];
+    exports2.InventoryResultItem$ = [
+      3,
+      n05,
+      _IRIn,
+      0,
+      [_TN, _SV, _Con, _CTa, _CH],
+      [0, 0, [1, n05, _IIEL, 0, 128 | 0], 0, 0],
+      3
+    ];
+    exports2.LabelParameterVersionRequest$ = [
+      3,
+      n05,
+      _LPVR,
+      0,
+      [_N, _La, _PVa],
+      [0, 64 | 0, 1],
+      2
+    ];
+    exports2.LabelParameterVersionResult$ = [
+      3,
+      n05,
+      _LPVRa,
+      0,
+      [_IL, _PVa],
+      [64 | 0, 1]
+    ];
+    exports2.ListAssociationsRequest$ = [
+      3,
+      n05,
+      _LAR,
+      0,
+      [_AFL, _MR, _NT],
+      [[() => AssociationFilterList, 0], 1, 0]
+    ];
+    exports2.ListAssociationsResult$ = [
+      3,
+      n05,
+      _LARi,
+      0,
+      [_Ass, _NT],
+      [[() => AssociationList, 0], 0]
+    ];
+    exports2.ListAssociationVersionsRequest$ = [
+      3,
+      n05,
+      _LAVR,
+      0,
+      [_AIs, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.ListAssociationVersionsResult$ = [
+      3,
+      n05,
+      _LAVRi,
+      0,
+      [_AVs, _NT],
+      [[() => AssociationVersionList, 0], 0]
+    ];
+    exports2.ListCommandInvocationsRequest$ = [
+      3,
+      n05,
+      _LCIR,
+      0,
+      [_CI, _II, _MR, _NT, _Fi, _De],
+      [0, 0, 1, 0, () => CommandFilterList, 2]
+    ];
+    exports2.ListCommandInvocationsResult$ = [
+      3,
+      n05,
+      _LCIRi,
+      0,
+      [_CIomm, _NT],
+      [() => CommandInvocationList, 0]
+    ];
+    exports2.ListCommandsRequest$ = [
+      3,
+      n05,
+      _LCR,
+      0,
+      [_CI, _II, _MR, _NT, _Fi],
+      [0, 0, 1, 0, () => CommandFilterList]
+    ];
+    exports2.ListCommandsResult$ = [
+      3,
+      n05,
+      _LCRi,
+      0,
+      [_Com, _NT],
+      [[() => CommandList, 0], 0]
+    ];
+    exports2.ListComplianceItemsRequest$ = [
+      3,
+      n05,
+      _LCIRis,
+      0,
+      [_Fi, _RIes, _RT3, _NT, _MR],
+      [[() => ComplianceStringFilterList, 0], 64 | 0, 64 | 0, 0, 1]
+    ];
+    exports2.ListComplianceItemsResult$ = [
+      3,
+      n05,
+      _LCIRist,
+      0,
+      [_CIomp, _NT],
+      [[() => ComplianceItemList, 0], 0]
+    ];
+    exports2.ListComplianceSummariesRequest$ = [
+      3,
+      n05,
+      _LCSR,
+      0,
+      [_Fi, _NT, _MR],
+      [[() => ComplianceStringFilterList, 0], 0, 1]
+    ];
+    exports2.ListComplianceSummariesResult$ = [
+      3,
+      n05,
+      _LCSRi,
+      0,
+      [_CSIo, _NT],
+      [[() => ComplianceSummaryItemList, 0], 0]
+    ];
+    exports2.ListDocumentMetadataHistoryRequest$ = [
+      3,
+      n05,
+      _LDMHR,
+      0,
+      [_N, _Me, _DV, _NT, _MR],
+      [0, 0, 0, 0, 1],
+      2
+    ];
+    exports2.ListDocumentMetadataHistoryResponse$ = [
+      3,
+      n05,
+      _LDMHRi,
+      0,
+      [_N, _DV, _Au2, _Me, _NT],
+      [0, 0, 0, () => exports2.DocumentMetadataResponseInfo$, 0]
+    ];
+    exports2.ListDocumentsRequest$ = [
+      3,
+      n05,
+      _LDR,
+      0,
+      [_DFL, _Fi, _MR, _NT],
+      [[() => DocumentFilterList, 0], () => DocumentKeyValuesFilterList, 1, 0]
+    ];
+    exports2.ListDocumentsResult$ = [
+      3,
+      n05,
+      _LDRi,
+      0,
+      [_DIoc, _NT],
+      [[() => DocumentIdentifierList, 0], 0]
+    ];
+    exports2.ListDocumentVersionsRequest$ = [
+      3,
+      n05,
+      _LDVR,
+      0,
+      [_N, _MR, _NT],
+      [0, 1, 0],
+      1
+    ];
+    exports2.ListDocumentVersionsResult$ = [
+      3,
+      n05,
+      _LDVRi,
+      0,
+      [_DVo, _NT],
+      [() => DocumentVersionList, 0]
+    ];
+    exports2.ListInventoryEntriesRequest$ = [
+      3,
+      n05,
+      _LIER,
+      0,
+      [_II, _TN, _Fi, _NT, _MR],
+      [0, 0, [() => InventoryFilterList, 0], 0, 1],
+      2
+    ];
+    exports2.ListInventoryEntriesResult$ = [
+      3,
+      n05,
+      _LIERi,
+      0,
+      [_TN, _II, _SV, _CTa, _En, _NT],
+      [0, 0, 0, 0, [1, n05, _IIEL, 0, 128 | 0], 0]
+    ];
+    exports2.ListNodesRequest$ = [
+      3,
+      n05,
+      _LNR,
+      0,
+      [_SN2, _Fi, _NT, _MR],
+      [0, [() => NodeFilterList, 0], 0, 1]
+    ];
+    exports2.ListNodesResult$ = [
+      3,
+      n05,
+      _LNRi,
+      0,
+      [_Nod, _NT],
+      [[() => NodeList, 0], 0]
+    ];
+    exports2.ListNodesSummaryRequest$ = [
+      3,
+      n05,
+      _LNSR,
+      0,
+      [_Ag, _SN2, _Fi, _NT, _MR],
+      [[() => NodeAggregatorList, 0], 0, [() => NodeFilterList, 0], 0, 1],
+      1
+    ];
+    exports2.ListNodesSummaryResult$ = [
+      3,
+      n05,
+      _LNSRi,
+      0,
+      [_Sum, _NT],
+      [[1, n05, _NSL, 0, 128 | 0], 0]
+    ];
+    exports2.ListOpsItemEventsRequest$ = [
+      3,
+      n05,
+      _LOIER,
+      0,
+      [_Fi, _MR, _NT],
+      [() => OpsItemEventFilters, 1, 0]
+    ];
+    exports2.ListOpsItemEventsResponse$ = [
+      3,
+      n05,
+      _LOIERi,
+      0,
+      [_NT, _Summ],
+      [0, () => OpsItemEventSummaries]
+    ];
+    exports2.ListOpsItemRelatedItemsRequest$ = [
+      3,
+      n05,
+      _LOIRIR,
+      0,
+      [_OII, _Fi, _MR, _NT],
+      [0, () => OpsItemRelatedItemsFilters, 1, 0]
+    ];
+    exports2.ListOpsItemRelatedItemsResponse$ = [
+      3,
+      n05,
+      _LOIRIRi,
+      0,
+      [_NT, _Summ],
+      [0, () => OpsItemRelatedItemSummaries]
+    ];
+    exports2.ListOpsMetadataRequest$ = [
+      3,
+      n05,
+      _LOMR,
+      0,
+      [_Fi, _MR, _NT],
+      [() => OpsMetadataFilterList, 1, 0]
+    ];
+    exports2.ListOpsMetadataResult$ = [
+      3,
+      n05,
+      _LOMRi,
+      0,
+      [_OML, _NT],
+      [() => OpsMetadataList, 0]
+    ];
+    exports2.ListResourceComplianceSummariesRequest$ = [
+      3,
+      n05,
+      _LRCSR,
+      0,
+      [_Fi, _NT, _MR],
+      [[() => ComplianceStringFilterList, 0], 0, 1]
+    ];
+    exports2.ListResourceComplianceSummariesResult$ = [
+      3,
+      n05,
+      _LRCSRi,
+      0,
+      [_RCSI, _NT],
+      [[() => ResourceComplianceSummaryItemList, 0], 0]
+    ];
+    exports2.ListResourceDataSyncRequest$ = [
+      3,
+      n05,
+      _LRDSR,
+      0,
+      [_ST2, _NT, _MR],
+      [0, 0, 1]
+    ];
+    exports2.ListResourceDataSyncResult$ = [
+      3,
+      n05,
+      _LRDSRi,
+      0,
+      [_RDSI, _NT],
+      [() => ResourceDataSyncItemList, 0]
+    ];
+    exports2.ListTagsForResourceRequest$ = [
+      3,
+      n05,
+      _LTFRR,
+      0,
+      [_RTe, _RI],
+      [0, 0],
+      2
+    ];
+    exports2.ListTagsForResourceResult$ = [
+      3,
+      n05,
+      _LTFRRi,
+      0,
+      [_TLa],
+      [() => TagList]
+    ];
+    exports2.LoggingInfo$ = [
+      3,
+      n05,
+      _LI,
+      0,
+      [_SBN, _SRe, _SKP],
+      [0, 0, 0],
+      2
+    ];
+    exports2.MaintenanceWindowAutomationParameters$ = [
+      3,
+      n05,
+      _MWAP,
+      0,
+      [_DV, _P2],
+      [0, [2, n05, _APM, 0, 0, 64 | 0]]
+    ];
+    exports2.MaintenanceWindowExecution$ = [
+      3,
+      n05,
+      _MWE,
+      0,
+      [_WI, _WEI, _St, _SD, _STt, _ETn],
+      [0, 0, 0, 0, 4, 4]
+    ];
+    exports2.MaintenanceWindowExecutionTaskIdentity$ = [
+      3,
+      n05,
+      _MWETI,
+      0,
+      [_WEI, _TEI, _St, _SD, _STt, _ETn, _TAa, _TTa, _AC, _TA],
+      [0, 0, 0, 0, 4, 4, 0, 0, () => exports2.AlarmConfiguration$, () => AlarmStateInformationList]
+    ];
+    exports2.MaintenanceWindowExecutionTaskInvocationIdentity$ = [
+      3,
+      n05,
+      _MWETII,
+      0,
+      [_WEI, _TEI, _IInv, _EI2, _TTa, _P2, _St, _SD, _STt, _ETn, _OI, _WTI],
+      [0, 0, 0, 0, 0, [() => MaintenanceWindowExecutionTaskInvocationParameters, 0], 0, 0, 4, 4, [() => OwnerInformation, 0], 0]
+    ];
+    exports2.MaintenanceWindowFilter$ = [
+      3,
+      n05,
+      _MWF,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0]
+    ];
+    exports2.MaintenanceWindowIdentity$ = [
+      3,
+      n05,
+      _MWI,
+      0,
+      [_WI, _N, _D, _Ena, _Du, _Cu, _Sc, _STch, _SO, _EDn, _SDt, _NET],
+      [0, 0, [() => MaintenanceWindowDescription, 0], 2, 1, 1, 0, 0, 1, 0, 0, 0]
+    ];
+    exports2.MaintenanceWindowIdentityForTarget$ = [
+      3,
+      n05,
+      _MWIFT,
+      0,
+      [_WI, _N],
+      [0, 0]
+    ];
+    exports2.MaintenanceWindowLambdaParameters$ = [
+      3,
+      n05,
+      _MWLPa,
+      0,
+      [_CCl, _Q, _Pay],
+      [0, 0, [() => MaintenanceWindowLambdaPayload, 0]]
+    ];
+    exports2.MaintenanceWindowRunCommandParameters$ = [
+      3,
+      n05,
+      _MWRCP,
+      0,
+      [_Co, _CWOC, _DH, _DHT, _DV, _NC, _OSBN, _OSKP, _P2, _SRA, _TS],
+      [0, () => exports2.CloudWatchOutputConfig$, 0, 0, 0, () => exports2.NotificationConfig$, 0, 0, [() => _Parameters, 0], 0, 1]
+    ];
+    exports2.MaintenanceWindowStepFunctionsParameters$ = [
+      3,
+      n05,
+      _MWSFP,
+      0,
+      [_Inp, _N],
+      [[() => MaintenanceWindowStepFunctionsInput, 0], 0]
+    ];
+    exports2.MaintenanceWindowTarget$ = [
+      3,
+      n05,
+      _MWT,
+      0,
+      [_WI, _WTI, _RTe, _Ta2, _OI, _N, _D],
+      [0, 0, 0, () => Targets, [() => OwnerInformation, 0], 0, [() => MaintenanceWindowDescription, 0]]
+    ];
+    exports2.MaintenanceWindowTask$ = [
+      3,
+      n05,
+      _MWTa,
+      0,
+      [_WI, _WTIi, _TAa, _Ty, _Ta2, _TPa, _Pr2, _LI, _SRA, _MC, _ME, _N, _D, _CB, _AC],
+      [0, 0, 0, 0, () => Targets, [() => MaintenanceWindowTaskParameters, 0], 1, () => exports2.LoggingInfo$, 0, 0, 0, 0, [() => MaintenanceWindowDescription, 0], 0, () => exports2.AlarmConfiguration$]
+    ];
+    exports2.MaintenanceWindowTaskInvocationParameters$ = [
+      3,
+      n05,
+      _MWTIP,
+      0,
+      [_RCu, _Aut, _SF, _Lam],
+      [[() => exports2.MaintenanceWindowRunCommandParameters$, 0], () => exports2.MaintenanceWindowAutomationParameters$, [() => exports2.MaintenanceWindowStepFunctionsParameters$, 0], [() => exports2.MaintenanceWindowLambdaParameters$, 0]]
+    ];
+    exports2.MaintenanceWindowTaskParameterValueExpression$ = [
+      3,
+      n05,
+      _MWTPVE,
+      8,
+      [_Va],
+      [[() => MaintenanceWindowTaskParameterValueList, 0]]
+    ];
+    exports2.MetadataValue$ = [
+      3,
+      n05,
+      _MV,
+      0,
+      [_V2],
+      [0]
+    ];
+    exports2.ModifyDocumentPermissionRequest$ = [
+      3,
+      n05,
+      _MDPR,
+      0,
+      [_N, _PT, _AITA, _AITR, _SDV],
+      [0, 0, [() => AccountIdList, 0], [() => AccountIdList, 0], 0],
+      2
+    ];
+    exports2.ModifyDocumentPermissionResponse$ = [
+      3,
+      n05,
+      _MDPRo,
+      0,
+      [],
+      []
+    ];
+    exports2.Node$ = [
+      3,
+      n05,
+      _Node,
+      0,
+      [_CTa, _I, _Ow, _Reg, _NTo],
+      [4, 0, () => exports2.NodeOwnerInfo$, 0, [() => exports2.NodeType$, 0]]
+    ];
+    exports2.NodeAggregator$ = [
+      3,
+      n05,
+      _NA,
+      0,
+      [_ATgg, _TN, _ANt, _Ag],
+      [0, 0, 0, [() => NodeAggregatorList, 0]],
+      3
+    ];
+    exports2.NodeFilter$ = [
+      3,
+      n05,
+      _NF,
+      0,
+      [_K2, _Va, _Ty],
+      [0, [() => NodeFilterValueList, 0], 0],
+      2
+    ];
+    exports2.NodeOwnerInfo$ = [
+      3,
+      n05,
+      _NOI,
+      0,
+      [_AIc, _OUI, _OUP],
+      [0, 0, 0]
+    ];
+    exports2.NonCompliantSummary$ = [
+      3,
+      n05,
+      _NCS,
+      0,
+      [_NCC, _SS],
+      [1, () => exports2.SeveritySummary$]
+    ];
+    exports2.NotificationConfig$ = [
+      3,
+      n05,
+      _NC,
+      0,
+      [_NAo, _NE, _NTot],
+      [0, 64 | 0, 0]
+    ];
+    exports2.OpsAggregator$ = [
+      3,
+      n05,
+      _OA,
+      0,
+      [_ATgg, _TN, _ANt, _Va, _Fi, _Ag],
+      [0, 0, 0, 128 | 0, [() => OpsFilterList, 0], [() => OpsAggregatorList, 0]]
+    ];
+    exports2.OpsEntity$ = [
+      3,
+      n05,
+      _OE,
+      0,
+      [_I, _Dat],
+      [0, () => OpsEntityItemMap]
+    ];
+    exports2.OpsEntityItem$ = [
+      3,
+      n05,
+      _OEI,
+      0,
+      [_CTa, _Con],
+      [0, [1, n05, _OEIEL, 0, 128 | 0]]
+    ];
+    exports2.OpsFilter$ = [
+      3,
+      n05,
+      _OF,
+      0,
+      [_K2, _Va, _Ty],
+      [0, [() => OpsFilterValueList, 0], 0],
+      2
+    ];
+    exports2.OpsItem$ = [
+      3,
+      n05,
+      _OIp,
+      0,
+      [_CBr, _OIT, _CT2, _D, _LMB, _LMT, _No, _Pr2, _ROI, _St, _OII, _Ve, _Ti, _Sou, _OD, _Ca, _Se, _AST, _AETc, _PST, _PET, _OIA],
+      [0, 0, 4, 0, 0, 4, () => OpsItemNotifications, 1, () => RelatedOpsItems, 0, 0, 0, 0, 0, () => OpsItemOperationalData, 0, 0, 4, 4, 4, 4, 0]
+    ];
+    exports2.OpsItemDataValue$ = [
+      3,
+      n05,
+      _OIDV,
+      0,
+      [_V2, _Ty],
+      [0, 0]
+    ];
+    exports2.OpsItemEventFilter$ = [
+      3,
+      n05,
+      _OIEF,
+      0,
+      [_K2, _Va, _Ope],
+      [0, 64 | 0, 0],
+      3
+    ];
+    exports2.OpsItemEventSummary$ = [
+      3,
+      n05,
+      _OIES,
+      0,
+      [_OII, _EIv, _Sou, _DTe, _Det, _CBr, _CT2],
+      [0, 0, 0, 0, 0, () => exports2.OpsItemIdentity$, 4]
+    ];
+    exports2.OpsItemFilter$ = [
+      3,
+      n05,
+      _OIFp,
+      0,
+      [_K2, _Va, _Ope],
+      [0, 64 | 0, 0],
+      3
+    ];
+    exports2.OpsItemIdentity$ = [
+      3,
+      n05,
+      _OIIp,
+      0,
+      [_Arn],
+      [0]
+    ];
+    exports2.OpsItemNotification$ = [
+      3,
+      n05,
+      _OIN,
+      0,
+      [_Arn],
+      [0]
+    ];
+    exports2.OpsItemRelatedItemsFilter$ = [
+      3,
+      n05,
+      _OIRIF,
+      0,
+      [_K2, _Va, _Ope],
+      [0, 64 | 0, 0],
+      3
+    ];
+    exports2.OpsItemRelatedItemSummary$ = [
+      3,
+      n05,
+      _OIRIS,
+      0,
+      [_OII, _AIs, _RTe, _AT3, _RU, _CBr, _CT2, _LMB, _LMT],
+      [0, 0, 0, 0, 0, () => exports2.OpsItemIdentity$, 4, () => exports2.OpsItemIdentity$, 4]
+    ];
+    exports2.OpsItemSummary$ = [
+      3,
+      n05,
+      _OISp,
+      0,
+      [_CBr, _CT2, _LMB, _LMT, _Pr2, _Sou, _St, _OII, _Ti, _OD, _Ca, _Se, _OIT, _AST, _AETc, _PST, _PET],
+      [0, 4, 0, 4, 1, 0, 0, 0, 0, () => OpsItemOperationalData, 0, 0, 0, 4, 4, 4, 4]
+    ];
+    exports2.OpsMetadata$ = [
+      3,
+      n05,
+      _OM,
+      0,
+      [_RI, _OMA, _LMD, _LMU, _CDr],
+      [0, 0, 4, 0, 4]
+    ];
+    exports2.OpsMetadataFilter$ = [
+      3,
+      n05,
+      _OMF,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0],
+      2
+    ];
+    exports2.OpsResultAttribute$ = [
+      3,
+      n05,
+      _ORA,
+      0,
+      [_TN],
+      [0],
+      1
+    ];
+    exports2.OutputSource$ = [
+      3,
+      n05,
+      _OS,
+      0,
+      [_OSI, _OSTu],
+      [0, 0]
+    ];
+    exports2.Parameter$ = [
+      3,
+      n05,
+      _Par,
+      0,
+      [_N, _Ty, _V2, _Ve, _Sel, _SRo, _LMD, _ARN, _DTa],
+      [0, 0, [() => PSParameterValue, 0], 1, 0, 0, 4, 0, 0]
+    ];
+    exports2.ParameterHistory$ = [
+      3,
+      n05,
+      _PHa,
+      0,
+      [_N, _Ty, _KI, _LMD, _LMU, _D, _V2, _APl, _Ve, _La, _Tie, _Po, _DTa],
+      [0, 0, 0, 4, 0, 0, [() => PSParameterValue, 0], 0, 1, 64 | 0, 0, () => ParameterPolicyList, 0]
+    ];
+    exports2.ParameterInlinePolicy$ = [
+      3,
+      n05,
+      _PIP,
+      0,
+      [_PTo, _PTol, _PSo],
+      [0, 0, 0]
+    ];
+    exports2.ParameterMetadata$ = [
+      3,
+      n05,
+      _PM,
+      0,
+      [_N, _ARN, _Ty, _KI, _LMD, _LMU, _D, _APl, _Ve, _Tie, _Po, _DTa],
+      [0, 0, 0, 0, 4, 0, 0, 0, 1, 0, () => ParameterPolicyList, 0]
+    ];
+    exports2.ParametersFilter$ = [
+      3,
+      n05,
+      _PFa,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0],
+      2
+    ];
+    exports2.ParameterStringFilter$ = [
+      3,
+      n05,
+      _PSF,
+      0,
+      [_K2, _Opt, _Va],
+      [0, 0, 64 | 0],
+      1
+    ];
+    exports2.ParentStepDetails$ = [
+      3,
+      n05,
+      _PSD,
+      0,
+      [_SEI, _SNt, _Ac, _It, _IV],
+      [0, 0, 0, 1, 0]
+    ];
+    exports2.Patch$ = [
+      3,
+      n05,
+      _Pat,
+      0,
+      [_I, _RDe, _Ti, _D, _CU, _Ven, _PFr, _Prod, _Cl, _MSs, _KNb, _MN, _Lan, _AIdv, _BIu, _CVEI, _N, _Ep, _Ve, _Rel, _Arc, _Se, _Rep],
+      [0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64 | 0, 64 | 0, 64 | 0, 0, 1, 0, 0, 0, 0, 0]
+    ];
+    exports2.PatchBaselineIdentity$ = [
+      3,
+      n05,
+      _PBI,
+      0,
+      [_BI, _BN, _OSp, _BD, _DB],
+      [0, 0, 0, 0, 2]
+    ];
+    exports2.PatchComplianceData$ = [
+      3,
+      n05,
+      _PCD,
+      0,
+      [_Ti, _KBI, _Cl, _Se, _S, _ITnst, _CVEI],
+      [0, 0, 0, 0, 0, 4, 0],
+      6
+    ];
+    exports2.PatchFilter$ = [
+      3,
+      n05,
+      _PFat,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0],
+      2
+    ];
+    exports2.PatchFilterGroup$ = [
+      3,
+      n05,
+      _PFG,
+      0,
+      [_PFatc],
+      [() => PatchFilterList],
+      1
+    ];
+    exports2.PatchGroupPatchBaselineMapping$ = [
+      3,
+      n05,
+      _PGPBM,
+      0,
+      [_PG, _BIas],
+      [0, () => exports2.PatchBaselineIdentity$]
+    ];
+    exports2.PatchOrchestratorFilter$ = [
+      3,
+      n05,
+      _POF,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0]
+    ];
+    exports2.PatchRule$ = [
+      3,
+      n05,
+      _PR,
+      0,
+      [_PFG, _CL, _AAD, _AUD, _ENS],
+      [() => exports2.PatchFilterGroup$, 0, 1, 0, 2],
+      1
+    ];
+    exports2.PatchRuleGroup$ = [
+      3,
+      n05,
+      _PRG,
+      0,
+      [_PRa],
+      [() => PatchRuleList],
+      1
+    ];
+    exports2.PatchSource$ = [
+      3,
+      n05,
+      _PSat,
+      0,
+      [_N, _Produ, _Conf],
+      [0, 64 | 0, [() => PatchSourceConfiguration, 0]],
+      3
+    ];
+    exports2.PatchStatus$ = [
+      3,
+      n05,
+      _PSa,
+      0,
+      [_DSep, _CL, _ADp],
+      [0, 0, 4]
+    ];
+    exports2.ProgressCounters$ = [
+      3,
+      n05,
+      _PC2,
+      0,
+      [_TSo, _SSu, _FSa, _CSa, _TOS],
+      [1, 1, 1, 1, 1]
+    ];
+    exports2.PutComplianceItemsRequest$ = [
+      3,
+      n05,
+      _PCIR,
+      0,
+      [_RI, _RTe, _CTo, _ES, _Ite, _ICH, _UTp],
+      [0, 0, 0, () => exports2.ComplianceExecutionSummary$, () => ComplianceItemEntryList, 0, 0],
+      5
+    ];
+    exports2.PutComplianceItemsResult$ = [
+      3,
+      n05,
+      _PCIRu,
+      0,
+      [],
+      []
+    ];
+    exports2.PutInventoryRequest$ = [
+      3,
+      n05,
+      _PIR,
+      0,
+      [_II, _Ite],
+      [0, [() => InventoryItemList, 0]],
+      2
+    ];
+    exports2.PutInventoryResult$ = [
+      3,
+      n05,
+      _PIRu,
+      0,
+      [_M],
+      [0]
+    ];
+    exports2.PutParameterRequest$ = [
+      3,
+      n05,
+      _PPR,
+      0,
+      [_N, _V2, _D, _Ty, _KI, _Ov, _APl, _T2, _Tie, _Po, _DTa],
+      [0, [() => PSParameterValue, 0], 0, 0, 0, 2, 0, () => TagList, 0, 0, 0],
+      2
+    ];
+    exports2.PutParameterResult$ = [
+      3,
+      n05,
+      _PPRu,
+      0,
+      [_Ve, _Tie],
+      [1, 0]
+    ];
+    exports2.PutResourcePolicyRequest$ = [
+      3,
+      n05,
+      _PRPR,
+      0,
+      [_RA2, _Pol, _PI2, _PH],
+      [0, 0, 0, 0],
+      2
+    ];
+    exports2.PutResourcePolicyResponse$ = [
+      3,
+      n05,
+      _PRPRu,
+      0,
+      [_PI2, _PH],
+      [0, 0]
+    ];
+    exports2.RegisterDefaultPatchBaselineRequest$ = [
+      3,
+      n05,
+      _RDPBR,
+      0,
+      [_BI],
+      [0],
+      1
+    ];
+    exports2.RegisterDefaultPatchBaselineResult$ = [
+      3,
+      n05,
+      _RDPBRe,
+      0,
+      [_BI],
+      [0]
+    ];
+    exports2.RegisterPatchBaselineForPatchGroupRequest$ = [
+      3,
+      n05,
+      _RPBFPGR,
+      0,
+      [_BI, _PG],
+      [0, 0],
+      2
+    ];
+    exports2.RegisterPatchBaselineForPatchGroupResult$ = [
+      3,
+      n05,
+      _RPBFPGRe,
+      0,
+      [_BI, _PG],
+      [0, 0]
+    ];
+    exports2.RegisterTargetWithMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _RTWMWR,
+      0,
+      [_WI, _RTe, _Ta2, _OI, _N, _D, _CTl],
+      [0, 0, () => Targets, [() => OwnerInformation, 0], 0, [() => MaintenanceWindowDescription, 0], [0, 4]],
+      3
+    ];
+    exports2.RegisterTargetWithMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _RTWMWRe,
+      0,
+      [_WTI],
+      [0]
+    ];
+    exports2.RegisterTaskWithMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _RTWMWReg,
+      0,
+      [_WI, _TAa, _TTa, _Ta2, _SRA, _TPa, _TIP, _Pr2, _MC, _ME, _LI, _N, _D, _CTl, _CB, _AC],
+      [0, 0, 0, () => Targets, 0, [() => MaintenanceWindowTaskParameters, 0], [() => exports2.MaintenanceWindowTaskInvocationParameters$, 0], 1, 0, 0, () => exports2.LoggingInfo$, 0, [() => MaintenanceWindowDescription, 0], [0, 4], 0, () => exports2.AlarmConfiguration$],
+      3
+    ];
+    exports2.RegisterTaskWithMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _RTWMWRegi,
+      0,
+      [_WTIi],
+      [0]
+    ];
+    exports2.RegistrationMetadataItem$ = [
+      3,
+      n05,
+      _RMI,
+      0,
+      [_K2, _V2],
+      [0, 0],
+      2
+    ];
+    exports2.RelatedOpsItem$ = [
+      3,
+      n05,
+      _ROIe,
+      0,
+      [_OII],
+      [0],
+      1
+    ];
+    exports2.RemoveTagsFromResourceRequest$ = [
+      3,
+      n05,
+      _RTFRR,
+      0,
+      [_RTe, _RI, _TK],
+      [0, 0, 64 | 0],
+      3
+    ];
+    exports2.RemoveTagsFromResourceResult$ = [
+      3,
+      n05,
+      _RTFRRe,
+      0,
+      [],
+      []
+    ];
+    exports2.ResetServiceSettingRequest$ = [
+      3,
+      n05,
+      _RSSR,
+      0,
+      [_SIe],
+      [0],
+      1
+    ];
+    exports2.ResetServiceSettingResult$ = [
+      3,
+      n05,
+      _RSSRe,
+      0,
+      [_SSe],
+      [() => exports2.ServiceSetting$]
+    ];
+    exports2.ResolvedTargets$ = [
+      3,
+      n05,
+      _RTes,
+      0,
+      [_PVar, _Tr],
+      [64 | 0, 2]
+    ];
+    exports2.ResourceComplianceSummaryItem$ = [
+      3,
+      n05,
+      _RCSIe,
+      0,
+      [_CTo, _RTe, _RI, _St, _OSv, _ES, _CSo, _NCS],
+      [0, 0, 0, 0, 0, () => exports2.ComplianceExecutionSummary$, () => exports2.CompliantSummary$, () => exports2.NonCompliantSummary$]
+    ];
+    exports2.ResourceDataSyncAwsOrganizationsSource$ = [
+      3,
+      n05,
+      _RDSAOS,
+      0,
+      [_OSTr, _OUr],
+      [0, () => ResourceDataSyncOrganizationalUnitList],
+      1
+    ];
+    exports2.ResourceDataSyncDestinationDataSharing$ = [
+      3,
+      n05,
+      _RDSDDS,
+      0,
+      [_DDST],
+      [0]
+    ];
+    exports2.ResourceDataSyncItem$ = [
+      3,
+      n05,
+      _RDSIe,
+      0,
+      [_SN2, _ST2, _SSy, _SDe, _LST, _LSST, _SLMT, _LS, _SCT, _LSSM],
+      [0, 0, () => exports2.ResourceDataSyncSourceWithState$, () => exports2.ResourceDataSyncS3Destination$, 4, 4, 4, 0, 4, 0]
+    ];
+    exports2.ResourceDataSyncOrganizationalUnit$ = [
+      3,
+      n05,
+      _RDSOU,
+      0,
+      [_OUI],
+      [0]
+    ];
+    exports2.ResourceDataSyncS3Destination$ = [
+      3,
+      n05,
+      _RDSSD,
+      0,
+      [_BNu, _SFy, _Reg, _Pre, _AWSKMSKARN, _DDS],
+      [0, 0, 0, 0, 0, () => exports2.ResourceDataSyncDestinationDataSharing$],
+      3
+    ];
+    exports2.ResourceDataSyncSource$ = [
+      3,
+      n05,
+      _RDSS,
+      0,
+      [_STo, _SRou, _AOS, _IFR, _EAODS],
+      [0, 64 | 0, () => exports2.ResourceDataSyncAwsOrganizationsSource$, 2, 2],
+      2
+    ];
+    exports2.ResourceDataSyncSourceWithState$ = [
+      3,
+      n05,
+      _RDSSWS,
+      0,
+      [_STo, _AOS, _SRou, _IFR, _S, _EAODS],
+      [0, () => exports2.ResourceDataSyncAwsOrganizationsSource$, 64 | 0, 2, 0, 2]
+    ];
+    exports2.ResultAttribute$ = [
+      3,
+      n05,
+      _RAes,
+      0,
+      [_TN],
+      [0],
+      1
+    ];
+    exports2.ResumeSessionRequest$ = [
+      3,
+      n05,
+      _RSR,
+      0,
+      [_SIes],
+      [0],
+      1
+    ];
+    exports2.ResumeSessionResponse$ = [
+      3,
+      n05,
+      _RSRe,
+      0,
+      [_SIes, _TV, _SUt],
+      [0, 0, 0]
+    ];
+    exports2.ReviewInformation$ = [
+      3,
+      n05,
+      _RIe,
+      0,
+      [_RTev, _St, _Rev],
+      [4, 0, 0]
+    ];
+    exports2.Runbook$ = [
+      3,
+      n05,
+      _Ru,
+      0,
+      [_DN, _DV, _P2, _TPN, _Ta2, _TM, _MC, _ME, _TL],
+      [0, 0, [2, n05, _APM, 0, 0, 64 | 0], 0, () => Targets, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], 0, 0, () => TargetLocations],
+      1
+    ];
+    exports2.S3OutputLocation$ = [
+      3,
+      n05,
+      _SOL,
+      0,
+      [_OSR, _OSBN, _OSKP],
+      [0, 0, 0]
+    ];
+    exports2.S3OutputUrl$ = [
+      3,
+      n05,
+      _SOUu,
+      0,
+      [_OU],
+      [0]
+    ];
+    exports2.ScheduledWindowExecution$ = [
+      3,
+      n05,
+      _SWEc,
+      0,
+      [_WI, _N, _ET],
+      [0, 0, 0]
+    ];
+    exports2.SendAutomationSignalRequest$ = [
+      3,
+      n05,
+      _SASR,
+      0,
+      [_AEI, _STi, _Pay],
+      [0, 0, [2, n05, _APM, 0, 0, 64 | 0]],
+      2
+    ];
+    exports2.SendAutomationSignalResult$ = [
+      3,
+      n05,
+      _SASRe,
+      0,
+      [],
+      []
+    ];
+    exports2.SendCommandRequest$ = [
+      3,
+      n05,
+      _SCR,
+      0,
+      [_DN, _IIn, _Ta2, _DV, _DH, _DHT, _TS, _Co, _P2, _OSR, _OSBN, _OSKP, _MC, _ME, _SRA, _NC, _CWOC, _AC],
+      [0, 64 | 0, () => Targets, 0, 0, 0, 1, 0, [() => _Parameters, 0], 0, 0, 0, 0, 0, 0, () => exports2.NotificationConfig$, () => exports2.CloudWatchOutputConfig$, () => exports2.AlarmConfiguration$],
+      1
+    ];
+    exports2.SendCommandResult$ = [
+      3,
+      n05,
+      _SCRe,
+      0,
+      [_C2],
+      [[() => exports2.Command$, 0]]
+    ];
+    exports2.ServiceSetting$ = [
+      3,
+      n05,
+      _SSe,
+      0,
+      [_SIe, _SVe, _LMD, _LMU, _ARN, _St],
+      [0, 0, 4, 0, 0, 0]
+    ];
+    exports2.Session$ = [
+      3,
+      n05,
+      _Sess,
+      0,
+      [_SIes, _Tar, _St, _SDt, _EDn, _DN, _Ow, _Rea, _De, _OU, _MSD, _ATc],
+      [0, 0, 0, 4, 4, 0, 0, 0, 0, () => exports2.SessionManagerOutputUrl$, 0, 0]
+    ];
+    exports2.SessionFilter$ = [
+      3,
+      n05,
+      _SFe,
+      0,
+      [_k, _v],
+      [0, 0],
+      2
+    ];
+    exports2.SessionManagerOutputUrl$ = [
+      3,
+      n05,
+      _SMOU,
+      0,
+      [_SOUu, _CWOU],
+      [0, 0]
+    ];
+    exports2.SeveritySummary$ = [
+      3,
+      n05,
+      _SS,
+      0,
+      [_CCr, _HC, _MCe, _LC, _ICn, _UC],
+      [1, 1, 1, 1, 1, 1]
+    ];
+    exports2.StartAccessRequestRequest$ = [
+      3,
+      n05,
+      _SARR,
+      0,
+      [_Rea, _Ta2, _T2],
+      [0, () => Targets, () => TagList],
+      2
+    ];
+    exports2.StartAccessRequestResponse$ = [
+      3,
+      n05,
+      _SARRt,
+      0,
+      [_ARI2],
+      [0]
+    ];
+    exports2.StartAssociationsOnceRequest$ = [
+      3,
+      n05,
+      _SAOR,
+      0,
+      [_AIss],
+      [64 | 0],
+      1
+    ];
+    exports2.StartAssociationsOnceResult$ = [
+      3,
+      n05,
+      _SAORt,
+      0,
+      [],
+      []
+    ];
+    exports2.StartAutomationExecutionRequest$ = [
+      3,
+      n05,
+      _SAER,
+      0,
+      [_DN, _DV, _P2, _CTl, _Mo, _TPN, _Ta2, _TM, _MC, _ME, _TL, _T2, _AC, _TLURL],
+      [0, 0, [2, n05, _APM, 0, 0, 64 | 0], 0, 0, 0, () => Targets, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], 0, 0, () => TargetLocations, () => TagList, () => exports2.AlarmConfiguration$, 0],
+      1
+    ];
+    exports2.StartAutomationExecutionResult$ = [
+      3,
+      n05,
+      _SAERt,
+      0,
+      [_AEI],
+      [0]
+    ];
+    exports2.StartChangeRequestExecutionRequest$ = [
+      3,
+      n05,
+      _SCRER,
+      0,
+      [_DN, _R, _STc, _DV, _P2, _CRN, _CTl, _AA, _T2, _SETc, _CDh],
+      [0, () => Runbooks, 4, 0, [2, n05, _APM, 0, 0, 64 | 0], 0, 0, 2, () => TagList, 4, 0],
+      2
+    ];
+    exports2.StartChangeRequestExecutionResult$ = [
+      3,
+      n05,
+      _SCRERt,
+      0,
+      [_AEI],
+      [0]
+    ];
+    exports2.StartExecutionPreviewRequest$ = [
+      3,
+      n05,
+      _SEPR,
+      0,
+      [_DN, _DV, _EIx],
+      [0, 0, () => exports2.ExecutionInputs$],
+      1
+    ];
+    exports2.StartExecutionPreviewResponse$ = [
+      3,
+      n05,
+      _SEPRt,
+      0,
+      [_EPI],
+      [0]
+    ];
+    exports2.StartSessionRequest$ = [
+      3,
+      n05,
+      _SSR,
+      0,
+      [_Tar, _DN, _Rea, _P2],
+      [0, 0, 0, [2, n05, _SMP, 0, 0, 64 | 0]],
+      1
+    ];
+    exports2.StartSessionResponse$ = [
+      3,
+      n05,
+      _SSRt,
+      0,
+      [_SIes, _TV, _SUt],
+      [0, 0, 0]
+    ];
+    exports2.StepExecution$ = [
+      3,
+      n05,
+      _SEte,
+      0,
+      [_SNt, _Ac, _TS, _OFn, _MA, _EST, _EET, _SSt, _RCes, _Inpu, _Ou, _Res, _FM, _FD, _SEI, _OP, _IE, _NS, _ICs, _VNS, _Ta2, _TLar, _TA, _PSD],
+      [0, 0, 1, 0, 1, 4, 4, 0, 0, 128 | 0, [2, n05, _APM, 0, 0, 64 | 0], 0, 0, () => exports2.FailureDetails$, 0, [2, n05, _APM, 0, 0, 64 | 0], 2, 0, 2, 64 | 0, () => Targets, () => exports2.TargetLocation$, () => AlarmStateInformationList, () => exports2.ParentStepDetails$]
+    ];
+    exports2.StepExecutionFilter$ = [
+      3,
+      n05,
+      _SEF,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0],
+      2
+    ];
+    exports2.StopAutomationExecutionRequest$ = [
+      3,
+      n05,
+      _SAERto,
+      0,
+      [_AEI, _Ty],
+      [0, 0],
+      1
+    ];
+    exports2.StopAutomationExecutionResult$ = [
+      3,
+      n05,
+      _SAERtop,
+      0,
+      [],
+      []
+    ];
+    exports2.Tag$ = [
+      3,
+      n05,
+      _Tag,
+      0,
+      [_K2, _V2],
+      [0, 0],
+      2
+    ];
+    exports2.Target$ = [
+      3,
+      n05,
+      _Tar,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0]
+    ];
+    exports2.TargetLocation$ = [
+      3,
+      n05,
+      _TLar,
+      0,
+      [_Acc, _Re, _TLMC, _TLME, _ERN, _TLAC, _ICOU, _EAx, _Ta2, _TMC, _TME],
+      [64 | 0, 64 | 0, 0, 0, 0, () => exports2.AlarmConfiguration$, 2, 64 | 0, () => Targets, 0, 0]
+    ];
+    exports2.TargetPreview$ = [
+      3,
+      n05,
+      _TPar,
+      0,
+      [_Cou, _TT],
+      [1, 0]
+    ];
+    exports2.TerminateSessionRequest$ = [
+      3,
+      n05,
+      _TSR,
+      0,
+      [_SIes],
+      [0],
+      1
+    ];
+    exports2.TerminateSessionResponse$ = [
+      3,
+      n05,
+      _TSRe,
+      0,
+      [_SIes],
+      [0]
+    ];
+    exports2.UnlabelParameterVersionRequest$ = [
+      3,
+      n05,
+      _UPVR,
+      0,
+      [_N, _PVa, _La],
+      [0, 1, 64 | 0],
+      3
+    ];
+    exports2.UnlabelParameterVersionResult$ = [
+      3,
+      n05,
+      _UPVRn,
+      0,
+      [_RLe, _IL],
+      [64 | 0, 64 | 0]
+    ];
+    exports2.UpdateAssociationRequest$ = [
+      3,
+      n05,
+      _UAR,
+      0,
+      [_AIs, _P2, _DV, _SE, _OL, _N, _Ta2, _AN, _AV, _ATPN, _ME, _MC, _CS2, _SCy, _AOACI, _CN, _TL, _SO, _Du, _TM, _AC, _ADAR],
+      [0, [() => _Parameters, 0], 0, 0, () => exports2.InstanceAssociationOutputLocation$, 0, () => Targets, 0, 0, 0, 0, 0, 0, 0, 2, 64 | 0, () => TargetLocations, 1, 1, [1, n05, _TM, 0, [2, n05, _TMa, 0, 0, 64 | 0]], () => exports2.AlarmConfiguration$, 0],
+      1
+    ];
+    exports2.UpdateAssociationResult$ = [
+      3,
+      n05,
+      _UARp,
+      0,
+      [_AD],
+      [[() => exports2.AssociationDescription$, 0]]
+    ];
+    exports2.UpdateAssociationStatusRequest$ = [
+      3,
+      n05,
+      _UASR,
+      0,
+      [_N, _II, _AS],
+      [0, 0, () => exports2.AssociationStatus$],
+      3
+    ];
+    exports2.UpdateAssociationStatusResult$ = [
+      3,
+      n05,
+      _UASRp,
+      0,
+      [_AD],
+      [[() => exports2.AssociationDescription$, 0]]
+    ];
+    exports2.UpdateDocumentDefaultVersionRequest$ = [
+      3,
+      n05,
+      _UDDVR,
+      0,
+      [_N, _DV],
+      [0, 0],
+      2
+    ];
+    exports2.UpdateDocumentDefaultVersionResult$ = [
+      3,
+      n05,
+      _UDDVRp,
+      0,
+      [_D],
+      [() => exports2.DocumentDefaultVersionDescription$]
+    ];
+    exports2.UpdateDocumentMetadataRequest$ = [
+      3,
+      n05,
+      _UDMR,
+      0,
+      [_N, _DRoc, _DV],
+      [0, () => exports2.DocumentReviews$, 0],
+      2
+    ];
+    exports2.UpdateDocumentMetadataResponse$ = [
+      3,
+      n05,
+      _UDMRp,
+      0,
+      [],
+      []
+    ];
+    exports2.UpdateDocumentRequest$ = [
+      3,
+      n05,
+      _UDR,
+      0,
+      [_Con, _N, _At, _DNi, _VN, _DV, _DF, _TT],
+      [0, 0, () => AttachmentsSourceList, 0, 0, 0, 0, 0],
+      2
+    ];
+    exports2.UpdateDocumentResult$ = [
+      3,
+      n05,
+      _UDRp,
+      0,
+      [_DD],
+      [[() => exports2.DocumentDescription$, 0]]
+    ];
+    exports2.UpdateMaintenanceWindowRequest$ = [
+      3,
+      n05,
+      _UMWR,
+      0,
+      [_WI, _N, _D, _SDt, _EDn, _Sc, _STch, _SO, _Du, _Cu, _AUT, _Ena, _Repl],
+      [0, 0, [() => MaintenanceWindowDescription, 0], 0, 0, 0, 0, 1, 1, 1, 2, 2, 2],
+      1
+    ];
+    exports2.UpdateMaintenanceWindowResult$ = [
+      3,
+      n05,
+      _UMWRp,
+      0,
+      [_WI, _N, _D, _SDt, _EDn, _Sc, _STch, _SO, _Du, _Cu, _AUT, _Ena],
+      [0, 0, [() => MaintenanceWindowDescription, 0], 0, 0, 0, 0, 1, 1, 1, 2, 2]
+    ];
+    exports2.UpdateMaintenanceWindowTargetRequest$ = [
+      3,
+      n05,
+      _UMWTR,
+      0,
+      [_WI, _WTI, _Ta2, _OI, _N, _D, _Repl],
+      [0, 0, () => Targets, [() => OwnerInformation, 0], 0, [() => MaintenanceWindowDescription, 0], 2],
+      2
+    ];
+    exports2.UpdateMaintenanceWindowTargetResult$ = [
+      3,
+      n05,
+      _UMWTRp,
+      0,
+      [_WI, _WTI, _Ta2, _OI, _N, _D],
+      [0, 0, () => Targets, [() => OwnerInformation, 0], 0, [() => MaintenanceWindowDescription, 0]]
+    ];
+    exports2.UpdateMaintenanceWindowTaskRequest$ = [
+      3,
+      n05,
+      _UMWTRpd,
+      0,
+      [_WI, _WTIi, _Ta2, _TAa, _SRA, _TPa, _TIP, _Pr2, _MC, _ME, _LI, _N, _D, _Repl, _CB, _AC],
+      [0, 0, () => Targets, 0, 0, [() => MaintenanceWindowTaskParameters, 0], [() => exports2.MaintenanceWindowTaskInvocationParameters$, 0], 1, 0, 0, () => exports2.LoggingInfo$, 0, [() => MaintenanceWindowDescription, 0], 2, 0, () => exports2.AlarmConfiguration$],
+      2
+    ];
+    exports2.UpdateMaintenanceWindowTaskResult$ = [
+      3,
+      n05,
+      _UMWTRpda,
+      0,
+      [_WI, _WTIi, _Ta2, _TAa, _SRA, _TPa, _TIP, _Pr2, _MC, _ME, _LI, _N, _D, _CB, _AC],
+      [0, 0, () => Targets, 0, 0, [() => MaintenanceWindowTaskParameters, 0], [() => exports2.MaintenanceWindowTaskInvocationParameters$, 0], 1, 0, 0, () => exports2.LoggingInfo$, 0, [() => MaintenanceWindowDescription, 0], 0, () => exports2.AlarmConfiguration$]
+    ];
+    exports2.UpdateManagedInstanceRoleRequest$ = [
+      3,
+      n05,
+      _UMIRR,
+      0,
+      [_II, _IRa],
+      [0, 0],
+      2
+    ];
+    exports2.UpdateManagedInstanceRoleResult$ = [
+      3,
+      n05,
+      _UMIRRp,
+      0,
+      [],
+      []
+    ];
+    exports2.UpdateOpsItemRequest$ = [
+      3,
+      n05,
+      _UOIR,
+      0,
+      [_OII, _D, _OD, _ODTD, _No, _Pr2, _ROI, _St, _Ti, _Ca, _Se, _AST, _AETc, _PST, _PET, _OIA],
+      [0, 0, () => OpsItemOperationalData, 64 | 0, () => OpsItemNotifications, 1, () => RelatedOpsItems, 0, 0, 0, 0, 4, 4, 4, 4, 0],
+      1
+    ];
+    exports2.UpdateOpsItemResponse$ = [
+      3,
+      n05,
+      _UOIRp,
+      0,
+      [],
+      []
+    ];
+    exports2.UpdateOpsMetadataRequest$ = [
+      3,
+      n05,
+      _UOMR,
+      0,
+      [_OMA, _MTU, _KTD],
+      [0, () => MetadataMap, 64 | 0],
+      1
+    ];
+    exports2.UpdateOpsMetadataResult$ = [
+      3,
+      n05,
+      _UOMRp,
+      0,
+      [_OMA],
+      [0]
+    ];
+    exports2.UpdatePatchBaselineRequest$ = [
+      3,
+      n05,
+      _UPBR,
+      0,
+      [_BI, _N, _GF, _AR2, _AP, _APCL, _APENS, _RP, _RPA, _D, _So, _ASUCS, _Repl],
+      [0, 0, () => exports2.PatchFilterGroup$, () => exports2.PatchRuleGroup$, 64 | 0, 0, 2, 64 | 0, 0, 0, [() => PatchSourceList, 0], 0, 2],
+      1
+    ];
+    exports2.UpdatePatchBaselineResult$ = [
+      3,
+      n05,
+      _UPBRp,
+      0,
+      [_BI, _N, _OSp, _GF, _AR2, _AP, _APCL, _APENS, _RP, _RPA, _CD, _MD, _D, _So, _ASUCS],
+      [0, 0, 0, () => exports2.PatchFilterGroup$, () => exports2.PatchRuleGroup$, 64 | 0, 0, 2, 64 | 0, 0, 4, 4, 0, [() => PatchSourceList, 0], 0]
+    ];
+    exports2.UpdateResourceDataSyncRequest$ = [
+      3,
+      n05,
+      _URDSR,
+      0,
+      [_SN2, _ST2, _SSy],
+      [0, 0, () => exports2.ResourceDataSyncSource$],
+      3
+    ];
+    exports2.UpdateResourceDataSyncResult$ = [
+      3,
+      n05,
+      _URDSRp,
+      0,
+      [],
+      []
+    ];
+    exports2.UpdateServiceSettingRequest$ = [
+      3,
+      n05,
+      _USSR,
+      0,
+      [_SIe, _SVe],
+      [0, 0],
+      2
+    ];
+    exports2.UpdateServiceSettingResult$ = [
+      3,
+      n05,
+      _USSRp,
+      0,
+      [],
+      []
+    ];
+    var AccountIdList = [
+      1,
+      n05,
+      _AIL,
+      0,
+      [
+        0,
+        { [_xN]: _AIc }
+      ]
+    ];
+    var Accounts = 64 | 0;
+    var AccountSharingInfoList = [
+      1,
+      n05,
+      _ASIL,
+      0,
+      [
+        () => exports2.AccountSharingInfo$,
+        { [_xN]: _ASI }
+      ]
+    ];
+    var ActivationList = [
+      1,
+      n05,
+      _AL,
+      0,
+      () => exports2.Activation$
+    ];
+    var AlarmList = [
+      1,
+      n05,
+      _ALl,
+      0,
+      () => exports2.Alarm$
+    ];
+    var AlarmStateInformationList = [
+      1,
+      n05,
+      _ASILl,
+      0,
+      () => exports2.AlarmStateInformation$
+    ];
+    var AssociationDescriptionList = [
+      1,
+      n05,
+      _ADL,
+      0,
+      [
+        () => exports2.AssociationDescription$,
+        { [_xN]: _AD }
+      ]
+    ];
+    var AssociationExecutionFilterList = [
+      1,
+      n05,
+      _AEFL,
+      0,
+      [
+        () => exports2.AssociationExecutionFilter$,
+        { [_xN]: _AEF }
+      ]
+    ];
+    var AssociationExecutionsList = [
+      1,
+      n05,
+      _AEL,
+      0,
+      [
+        () => exports2.AssociationExecution$,
+        { [_xN]: _AE }
+      ]
+    ];
+    var AssociationExecutionTargetsFilterList = [
+      1,
+      n05,
+      _AETFL,
+      0,
+      [
+        () => exports2.AssociationExecutionTargetsFilter$,
+        { [_xN]: _AETF }
+      ]
+    ];
+    var AssociationExecutionTargetsList = [
+      1,
+      n05,
+      _AETL,
+      0,
+      [
+        () => exports2.AssociationExecutionTarget$,
+        { [_xN]: _AET }
+      ]
+    ];
+    var AssociationFilterList = [
+      1,
+      n05,
+      _AFL,
+      0,
+      [
+        () => exports2.AssociationFilter$,
+        { [_xN]: _AF }
+      ]
+    ];
+    var AssociationIdList = 64 | 0;
+    var AssociationList = [
+      1,
+      n05,
+      _ALs,
+      0,
+      [
+        () => exports2.Association$,
+        { [_xN]: _As }
+      ]
+    ];
+    var AssociationVersionList = [
+      1,
+      n05,
+      _AVL,
+      0,
+      [
+        () => exports2.AssociationVersionInfo$,
+        0
+      ]
+    ];
+    var AttachmentContentList = [
+      1,
+      n05,
+      _ACL,
+      0,
+      [
+        () => exports2.AttachmentContent$,
+        { [_xN]: _ACt }
+      ]
+    ];
+    var AttachmentInformationList = [
+      1,
+      n05,
+      _AILt,
+      0,
+      [
+        () => exports2.AttachmentInformation$,
+        { [_xN]: _AIt }
+      ]
+    ];
+    var AttachmentsSourceList = [
+      1,
+      n05,
+      _ASL,
+      0,
+      () => exports2.AttachmentsSource$
+    ];
+    var AttachmentsSourceValues = 64 | 0;
+    var AutomationExecutionFilterList = [
+      1,
+      n05,
+      _AEFLu,
+      0,
+      () => exports2.AutomationExecutionFilter$
+    ];
+    var AutomationExecutionFilterValueList = 64 | 0;
+    var AutomationExecutionMetadataList = [
+      1,
+      n05,
+      _AEML,
+      0,
+      () => exports2.AutomationExecutionMetadata$
+    ];
+    var AutomationParameterValueList = 64 | 0;
+    var CalendarNameOrARNList = 64 | 0;
+    var CategoryEnumList = 64 | 0;
+    var CategoryList = 64 | 0;
+    var CommandFilterList = [
+      1,
+      n05,
+      _CFL,
+      0,
+      () => exports2.CommandFilter$
+    ];
+    var CommandInvocationList = [
+      1,
+      n05,
+      _CIL,
+      0,
+      () => exports2.CommandInvocation$
+    ];
+    var CommandList = [
+      1,
+      n05,
+      _CLo,
+      0,
+      [
+        () => exports2.Command$,
+        0
+      ]
+    ];
+    var CommandPluginList = [
+      1,
+      n05,
+      _CPL,
+      0,
+      () => exports2.CommandPlugin$
+    ];
+    var ComplianceItemEntryList = [
+      1,
+      n05,
+      _CIEL,
+      0,
+      () => exports2.ComplianceItemEntry$
+    ];
+    var ComplianceItemList = [
+      1,
+      n05,
+      _CILo,
+      0,
+      [
+        () => exports2.ComplianceItem$,
+        { [_xN]: _Item }
+      ]
+    ];
+    var ComplianceResourceIdList = 64 | 0;
+    var ComplianceResourceTypeList = 64 | 0;
+    var ComplianceStringFilterList = [
+      1,
+      n05,
+      _CSFL,
+      0,
+      [
+        () => exports2.ComplianceStringFilter$,
+        { [_xN]: _CFo }
+      ]
+    ];
+    var ComplianceStringFilterValueList = [
+      1,
+      n05,
+      _CSFVL,
+      0,
+      [
+        0,
+        { [_xN]: _FVi }
+      ]
+    ];
+    var ComplianceSummaryItemList = [
+      1,
+      n05,
+      _CSIL,
+      0,
+      [
+        () => exports2.ComplianceSummaryItem$,
+        { [_xN]: _Item }
+      ]
+    ];
+    var CreateAssociationBatchRequestEntries = [
+      1,
+      n05,
+      _CABREr,
+      0,
+      [
+        () => exports2.CreateAssociationBatchRequestEntry$,
+        { [_xN]: _en }
+      ]
+    ];
+    var DescribeActivationsFilterList = [
+      1,
+      n05,
+      _DAFL,
+      0,
+      () => exports2.DescribeActivationsFilter$
+    ];
+    var DocumentFilterList = [
+      1,
+      n05,
+      _DFL,
+      0,
+      [
+        () => exports2.DocumentFilter$,
+        { [_xN]: _DFo }
+      ]
+    ];
+    var DocumentIdentifierList = [
+      1,
+      n05,
+      _DIL,
+      0,
+      [
+        () => exports2.DocumentIdentifier$,
+        { [_xN]: _DIo }
+      ]
+    ];
+    var DocumentKeyValuesFilterList = [
+      1,
+      n05,
+      _DKVFL,
+      0,
+      () => exports2.DocumentKeyValuesFilter$
+    ];
+    var DocumentKeyValuesFilterValues = 64 | 0;
+    var DocumentParameterList = [
+      1,
+      n05,
+      _DPLo,
+      0,
+      [
+        () => exports2.DocumentParameter$,
+        { [_xN]: _DPo }
+      ]
+    ];
+    var DocumentRequiresList = [
+      1,
+      n05,
+      _DRL,
+      0,
+      () => exports2.DocumentRequires$
+    ];
+    var DocumentReviewCommentList = [
+      1,
+      n05,
+      _DRCL,
+      0,
+      () => exports2.DocumentReviewCommentSource$
+    ];
+    var DocumentReviewerResponseList = [
+      1,
+      n05,
+      _DRRL,
+      0,
+      () => exports2.DocumentReviewerResponseSource$
+    ];
+    var DocumentVersionList = [
+      1,
+      n05,
+      _DVL,
+      0,
+      () => exports2.DocumentVersionInfo$
+    ];
+    var EffectivePatchList = [
+      1,
+      n05,
+      _EPL,
+      0,
+      () => exports2.EffectivePatch$
+    ];
+    var ExcludeAccounts = 64 | 0;
+    var FailedCreateAssociationList = [
+      1,
+      n05,
+      _FCAL,
+      0,
+      [
+        () => exports2.FailedCreateAssociation$,
+        { [_xN]: _FCAE }
+      ]
+    ];
+    var GetResourcePoliciesResponseEntries = [
+      1,
+      n05,
+      _GRPREe,
+      0,
+      () => exports2.GetResourcePoliciesResponseEntry$
+    ];
+    var InstanceAssociationList = [
+      1,
+      n05,
+      _IAL,
+      0,
+      () => exports2.InstanceAssociation$
+    ];
+    var InstanceAssociationStatusInfos = [
+      1,
+      n05,
+      _IASI,
+      0,
+      () => exports2.InstanceAssociationStatusInfo$
+    ];
+    var InstanceIdList = 64 | 0;
+    var InstanceInformationFilterList = [
+      1,
+      n05,
+      _IIFL,
+      0,
+      [
+        () => exports2.InstanceInformationFilter$,
+        { [_xN]: _IIF }
+      ]
+    ];
+    var InstanceInformationFilterValueSet = [
+      1,
+      n05,
+      _IIFVS,
+      0,
+      [
+        0,
+        { [_xN]: _IIFV }
+      ]
+    ];
+    var InstanceInformationList = [
+      1,
+      n05,
+      _IIL,
+      0,
+      [
+        () => exports2.InstanceInformation$,
+        { [_xN]: _IInst }
+      ]
+    ];
+    var InstanceInformationStringFilterList = [
+      1,
+      n05,
+      _IISFL,
+      0,
+      [
+        () => exports2.InstanceInformationStringFilter$,
+        { [_xN]: _IISF }
+      ]
+    ];
+    var InstancePatchStateFilterList = [
+      1,
+      n05,
+      _IPSFL,
+      0,
+      () => exports2.InstancePatchStateFilter$
+    ];
+    var InstancePatchStateFilterValues = 64 | 0;
+    var InstancePatchStateList = [
+      1,
+      n05,
+      _IPSL,
+      0,
+      [
+        () => exports2.InstancePatchState$,
+        0
+      ]
+    ];
+    var InstancePatchStatesList = [
+      1,
+      n05,
+      _IPSLn,
+      0,
+      [
+        () => exports2.InstancePatchState$,
+        0
+      ]
+    ];
+    var InstanceProperties = [
+      1,
+      n05,
+      _IPn,
+      0,
+      [
+        () => exports2.InstanceProperty$,
+        { [_xN]: _IPns }
+      ]
+    ];
+    var InstancePropertyFilterList = [
+      1,
+      n05,
+      _IPFL,
+      0,
+      [
+        () => exports2.InstancePropertyFilter$,
+        { [_xN]: _IPF }
+      ]
+    ];
+    var InstancePropertyFilterValueSet = [
+      1,
+      n05,
+      _IPFVS,
+      0,
+      [
+        0,
+        { [_xN]: _IPFV }
+      ]
+    ];
+    var InstancePropertyStringFilterList = [
+      1,
+      n05,
+      _IPSFLn,
+      0,
+      [
+        () => exports2.InstancePropertyStringFilter$,
+        { [_xN]: _IPSFn }
+      ]
+    ];
+    var InventoryAggregatorList = [
+      1,
+      n05,
+      _IALn,
+      0,
+      [
+        () => exports2.InventoryAggregator$,
+        { [_xN]: _Agg }
+      ]
+    ];
+    var InventoryDeletionsList = [
+      1,
+      n05,
+      _IDL,
+      0,
+      () => exports2.InventoryDeletionStatusItem$
+    ];
+    var InventoryDeletionSummaryItems = [
+      1,
+      n05,
+      _IDSInv,
+      0,
+      () => exports2.InventoryDeletionSummaryItem$
+    ];
+    var InventoryFilterList = [
+      1,
+      n05,
+      _IFL,
+      0,
+      [
+        () => exports2.InventoryFilter$,
+        { [_xN]: _IFn }
+      ]
+    ];
+    var InventoryFilterValueList = [
+      1,
+      n05,
+      _IFVL,
+      0,
+      [
+        0,
+        { [_xN]: _FVi }
+      ]
+    ];
+    var InventoryGroupList = [
+      1,
+      n05,
+      _IGL,
+      0,
+      [
+        () => exports2.InventoryGroup$,
+        { [_xN]: _IG }
+      ]
+    ];
+    var InventoryItemAttributeList = [
+      1,
+      n05,
+      _IIAL,
+      0,
+      [
+        () => exports2.InventoryItemAttribute$,
+        { [_xN]: _Attr }
+      ]
+    ];
+    var InventoryItemEntryList = [
+      1,
+      n05,
+      _IIEL,
+      0,
+      128 | 0
+    ];
+    var InventoryItemList = [
+      1,
+      n05,
+      _IILn,
+      0,
+      [
+        () => exports2.InventoryItem$,
+        { [_xN]: _Item }
+      ]
+    ];
+    var InventoryItemSchemaResultList = [
+      1,
+      n05,
+      _IISRL,
+      0,
+      [
+        () => exports2.InventoryItemSchema$,
+        0
+      ]
+    ];
+    var InventoryResultEntityList = [
+      1,
+      n05,
+      _IREL,
+      0,
+      [
+        () => exports2.InventoryResultEntity$,
+        { [_xN]: _Entit }
+      ]
+    ];
+    var KeyList = 64 | 0;
+    var MaintenanceWindowExecutionList = [
+      1,
+      n05,
+      _MWEL,
+      0,
+      () => exports2.MaintenanceWindowExecution$
+    ];
+    var MaintenanceWindowExecutionTaskIdentityList = [
+      1,
+      n05,
+      _MWETIL,
+      0,
+      () => exports2.MaintenanceWindowExecutionTaskIdentity$
+    ];
+    var MaintenanceWindowExecutionTaskIdList = 64 | 0;
+    var MaintenanceWindowExecutionTaskInvocationIdentityList = [
+      1,
+      n05,
+      _MWETIIL,
+      0,
+      [
+        () => exports2.MaintenanceWindowExecutionTaskInvocationIdentity$,
+        0
+      ]
+    ];
+    var MaintenanceWindowFilterList = [
+      1,
+      n05,
+      _MWFL,
+      0,
+      () => exports2.MaintenanceWindowFilter$
+    ];
+    var MaintenanceWindowFilterValues = 64 | 0;
+    var MaintenanceWindowIdentityList = [
+      1,
+      n05,
+      _MWIL,
+      0,
+      [
+        () => exports2.MaintenanceWindowIdentity$,
+        0
+      ]
+    ];
+    var MaintenanceWindowsForTargetList = [
+      1,
+      n05,
+      _MWFTL,
+      0,
+      () => exports2.MaintenanceWindowIdentityForTarget$
+    ];
+    var MaintenanceWindowTargetList = [
+      1,
+      n05,
+      _MWTL,
+      0,
+      [
+        () => exports2.MaintenanceWindowTarget$,
+        0
+      ]
+    ];
+    var MaintenanceWindowTaskList = [
+      1,
+      n05,
+      _MWTLa,
+      0,
+      [
+        () => exports2.MaintenanceWindowTask$,
+        0
+      ]
+    ];
+    var MaintenanceWindowTaskParametersList = [
+      1,
+      n05,
+      _MWTPL,
+      8,
+      [
+        () => MaintenanceWindowTaskParameters,
+        0
+      ]
+    ];
+    var MaintenanceWindowTaskParameterValueList = [
+      1,
+      n05,
+      _MWTPVL,
+      8,
+      [
+        () => MaintenanceWindowTaskParameterValue,
+        0
+      ]
+    ];
+    var MetadataKeysToDeleteList = 64 | 0;
+    var NodeAggregatorList = [
+      1,
+      n05,
+      _NAL,
+      0,
+      [
+        () => exports2.NodeAggregator$,
+        { [_xN]: _NA }
+      ]
+    ];
+    var NodeFilterList = [
+      1,
+      n05,
+      _NFL,
+      0,
+      [
+        () => exports2.NodeFilter$,
+        { [_xN]: _NF }
+      ]
+    ];
+    var NodeFilterValueList = [
+      1,
+      n05,
+      _NFVL,
+      0,
+      [
+        0,
+        { [_xN]: _FVi }
+      ]
+    ];
+    var NodeList = [
+      1,
+      n05,
+      _NL,
+      0,
+      [
+        () => exports2.Node$,
+        0
+      ]
+    ];
+    var NodeSummaryList = [
+      1,
+      n05,
+      _NSL,
+      0,
+      128 | 0
+    ];
+    var NotificationEventList = 64 | 0;
+    var OpsAggregatorList = [
+      1,
+      n05,
+      _OAL,
+      0,
+      [
+        () => exports2.OpsAggregator$,
+        { [_xN]: _Agg }
+      ]
+    ];
+    var OpsEntityItemEntryList = [
+      1,
+      n05,
+      _OEIEL,
+      0,
+      128 | 0
+    ];
+    var OpsEntityList = [
+      1,
+      n05,
+      _OEL,
+      0,
+      [
+        () => exports2.OpsEntity$,
+        { [_xN]: _Entit }
+      ]
+    ];
+    var OpsFilterList = [
+      1,
+      n05,
+      _OFL,
+      0,
+      [
+        () => exports2.OpsFilter$,
+        { [_xN]: _OF }
+      ]
+    ];
+    var OpsFilterValueList = [
+      1,
+      n05,
+      _OFVL,
+      0,
+      [
+        0,
+        { [_xN]: _FVi }
+      ]
+    ];
+    var OpsItemEventFilters = [
+      1,
+      n05,
+      _OIEFp,
+      0,
+      () => exports2.OpsItemEventFilter$
+    ];
+    var OpsItemEventFilterValues = 64 | 0;
+    var OpsItemEventSummaries = [
+      1,
+      n05,
+      _OIESp,
+      0,
+      () => exports2.OpsItemEventSummary$
+    ];
+    var OpsItemFilters = [
+      1,
+      n05,
+      _OIF,
+      0,
+      () => exports2.OpsItemFilter$
+    ];
+    var OpsItemFilterValues = 64 | 0;
+    var OpsItemNotifications = [
+      1,
+      n05,
+      _OINp,
+      0,
+      () => exports2.OpsItemNotification$
+    ];
+    var OpsItemOpsDataKeysList = 64 | 0;
+    var OpsItemParameterNamesList = 64 | 0;
+    var OpsItemRelatedItemsFilters = [
+      1,
+      n05,
+      _OIRIFp,
+      0,
+      () => exports2.OpsItemRelatedItemsFilter$
+    ];
+    var OpsItemRelatedItemsFilterValues = 64 | 0;
+    var OpsItemRelatedItemSummaries = [
+      1,
+      n05,
+      _OIRISp,
+      0,
+      () => exports2.OpsItemRelatedItemSummary$
+    ];
+    var OpsItemSummaries = [
+      1,
+      n05,
+      _OIS,
+      0,
+      () => exports2.OpsItemSummary$
+    ];
+    var OpsMetadataFilterList = [
+      1,
+      n05,
+      _OMFL,
+      0,
+      () => exports2.OpsMetadataFilter$
+    ];
+    var OpsMetadataFilterValueList = 64 | 0;
+    var OpsMetadataList = [
+      1,
+      n05,
+      _OML,
+      0,
+      () => exports2.OpsMetadata$
+    ];
+    var OpsResultAttributeList = [
+      1,
+      n05,
+      _ORAL,
+      0,
+      [
+        () => exports2.OpsResultAttribute$,
+        { [_xN]: _ORA }
+      ]
+    ];
+    var ParameterHistoryList = [
+      1,
+      n05,
+      _PHL,
+      0,
+      [
+        () => exports2.ParameterHistory$,
+        0
+      ]
+    ];
+    var ParameterLabelList = 64 | 0;
+    var ParameterList = [
+      1,
+      n05,
+      _PL,
+      0,
+      [
+        () => exports2.Parameter$,
+        0
+      ]
+    ];
+    var ParameterMetadataList = [
+      1,
+      n05,
+      _PML,
+      0,
+      () => exports2.ParameterMetadata$
+    ];
+    var ParameterNameList = 64 | 0;
+    var ParameterPolicyList = [
+      1,
+      n05,
+      _PPLa,
+      0,
+      () => exports2.ParameterInlinePolicy$
+    ];
+    var ParametersFilterList = [
+      1,
+      n05,
+      _PFL,
+      0,
+      () => exports2.ParametersFilter$
+    ];
+    var ParametersFilterValueList = 64 | 0;
+    var ParameterStringFilterList = [
+      1,
+      n05,
+      _PSFL,
+      0,
+      () => exports2.ParameterStringFilter$
+    ];
+    var ParameterStringFilterValueList = 64 | 0;
+    var ParameterValueList = 64 | 0;
+    var PatchAdvisoryIdList = 64 | 0;
+    var PatchBaselineIdentityList = [
+      1,
+      n05,
+      _PBIL,
+      0,
+      () => exports2.PatchBaselineIdentity$
+    ];
+    var PatchBugzillaIdList = 64 | 0;
+    var PatchComplianceDataList = [
+      1,
+      n05,
+      _PCDL,
+      0,
+      () => exports2.PatchComplianceData$
+    ];
+    var PatchCVEIdList = 64 | 0;
+    var PatchFilterList = [
+      1,
+      n05,
+      _PFLa,
+      0,
+      () => exports2.PatchFilter$
+    ];
+    var PatchFilterValueList = 64 | 0;
+    var PatchGroupList = 64 | 0;
+    var PatchGroupPatchBaselineMappingList = [
+      1,
+      n05,
+      _PGPBML,
+      0,
+      () => exports2.PatchGroupPatchBaselineMapping$
+    ];
+    var PatchIdList = 64 | 0;
+    var PatchList = [
+      1,
+      n05,
+      _PLa,
+      0,
+      () => exports2.Patch$
+    ];
+    var PatchOrchestratorFilterList = [
+      1,
+      n05,
+      _POFL,
+      0,
+      () => exports2.PatchOrchestratorFilter$
+    ];
+    var PatchOrchestratorFilterValues = 64 | 0;
+    var PatchPropertiesList = [
+      1,
+      n05,
+      _PPL,
+      0,
+      128 | 0
+    ];
+    var PatchRuleList = [
+      1,
+      n05,
+      _PRL,
+      0,
+      () => exports2.PatchRule$
+    ];
+    var PatchSourceList = [
+      1,
+      n05,
+      _PSL,
+      0,
+      [
+        () => exports2.PatchSource$,
+        0
+      ]
+    ];
+    var PatchSourceProductList = 64 | 0;
+    var PlatformTypeList = [
+      1,
+      n05,
+      _PTL,
+      0,
+      [
+        0,
+        { [_xN]: _PTla }
+      ]
+    ];
+    var RegionList = 64 | 0;
+    var Regions = 64 | 0;
+    var RegistrationMetadataList = [
+      1,
+      n05,
+      _RML,
+      0,
+      () => exports2.RegistrationMetadataItem$
+    ];
+    var RelatedOpsItems = [
+      1,
+      n05,
+      _ROI,
+      0,
+      () => exports2.RelatedOpsItem$
+    ];
+    var ResourceComplianceSummaryItemList = [
+      1,
+      n05,
+      _RCSIL,
+      0,
+      [
+        () => exports2.ResourceComplianceSummaryItem$,
+        { [_xN]: _Item }
+      ]
+    ];
+    var ResourceDataSyncItemList = [
+      1,
+      n05,
+      _RDSIL,
+      0,
+      () => exports2.ResourceDataSyncItem$
+    ];
+    var ResourceDataSyncOrganizationalUnitList = [
+      1,
+      n05,
+      _RDSOUL,
+      0,
+      () => exports2.ResourceDataSyncOrganizationalUnit$
+    ];
+    var ResourceDataSyncSourceRegionList = 64 | 0;
+    var ResourcePolicyParameterNamesList = 64 | 0;
+    var ResultAttributeList = [
+      1,
+      n05,
+      _RAL,
+      0,
+      [
+        () => exports2.ResultAttribute$,
+        { [_xN]: _RAes }
+      ]
+    ];
+    var ReviewInformationList = [
+      1,
+      n05,
+      _RIL,
+      0,
+      [
+        () => exports2.ReviewInformation$,
+        { [_xN]: _RIe }
+      ]
+    ];
+    var Runbooks = [
+      1,
+      n05,
+      _R,
+      0,
+      () => exports2.Runbook$
+    ];
+    var ScheduledWindowExecutionList = [
+      1,
+      n05,
+      _SWEL,
+      0,
+      () => exports2.ScheduledWindowExecution$
+    ];
+    var SessionFilterList = [
+      1,
+      n05,
+      _SFL,
+      0,
+      () => exports2.SessionFilter$
+    ];
+    var SessionList = [
+      1,
+      n05,
+      _SLe,
+      0,
+      () => exports2.Session$
+    ];
+    var SessionManagerParameterValueList = 64 | 0;
+    var StepExecutionFilterList = [
+      1,
+      n05,
+      _SEFL,
+      0,
+      () => exports2.StepExecutionFilter$
+    ];
+    var StepExecutionFilterValueList = 64 | 0;
+    var StepExecutionList = [
+      1,
+      n05,
+      _SEL,
+      0,
+      () => exports2.StepExecution$
+    ];
+    var StringList = 64 | 0;
+    var TagList = [
+      1,
+      n05,
+      _TLa,
+      0,
+      () => exports2.Tag$
+    ];
+    var TargetLocations = [
+      1,
+      n05,
+      _TL,
+      0,
+      () => exports2.TargetLocation$
+    ];
+    var TargetMaps = [
+      1,
+      n05,
+      _TM,
+      0,
+      [2, n05, _TMa, 0, 0, 64 | 0]
+    ];
+    var TargetMapValueList = 64 | 0;
+    var TargetParameterList = 64 | 0;
+    var TargetPreviewList = [
+      1,
+      n05,
+      _TPL,
+      0,
+      () => exports2.TargetPreview$
+    ];
+    var Targets = [
+      1,
+      n05,
+      _Ta2,
+      0,
+      () => exports2.Target$
+    ];
+    var TargetValues = 64 | 0;
+    var ValidNextStepList = 64 | 0;
+    var AssociationStatusAggregatedCount = 128 | 1;
+    var AutomationParameterMap = [
+      2,
+      n05,
+      _APM,
+      0,
+      0,
+      64 | 0
+    ];
+    var ComplianceItemDetails = 128 | 0;
+    var InstanceAssociationStatusAggregatedCount = 128 | 1;
+    var InventoryItemContentContext = 128 | 0;
+    var InventoryItemEntry = 128 | 0;
+    var InventoryResultItemMap = [
+      2,
+      n05,
+      _IRIM,
+      0,
+      0,
+      () => exports2.InventoryResultItem$
+    ];
+    var MaintenanceWindowTaskParameters = [
+      2,
+      n05,
+      _MWTP,
+      8,
+      [
+        0,
+        0
+      ],
+      [
+        () => exports2.MaintenanceWindowTaskParameterValueExpression$,
+        0
+      ]
+    ];
+    var MetadataMap = [
+      2,
+      n05,
+      _MM,
+      0,
+      0,
+      () => exports2.MetadataValue$
+    ];
+    var NodeSummary = 128 | 0;
+    var NormalStringMap = 128 | 0;
+    var OpsAggregatorValueMap = 128 | 0;
+    var OpsEntityItemEntry = 128 | 0;
+    var OpsEntityItemMap = [
+      2,
+      n05,
+      _OEIM,
+      0,
+      0,
+      () => exports2.OpsEntityItem$
+    ];
+    var OpsItemOperationalData = [
+      2,
+      n05,
+      _OIOD,
+      0,
+      0,
+      () => exports2.OpsItemDataValue$
+    ];
+    var _Parameters = [
+      2,
+      n05,
+      _P2,
+      8,
+      0,
+      64 | 0
+    ];
+    var PatchPropertyEntry = 128 | 0;
+    var SessionManagerParameters = [
+      2,
+      n05,
+      _SMP,
+      0,
+      0,
+      64 | 0
+    ];
+    var StepPreviewMap = 128 | 1;
+    var TargetMap = [
+      2,
+      n05,
+      _TMa,
+      0,
+      0,
+      64 | 0
+    ];
+    exports2.ExecutionInputs$ = [
+      4,
+      n05,
+      _EIx,
+      0,
+      [_Aut],
+      [() => exports2.AutomationExecutionInputs$]
+    ];
+    exports2.ExecutionPreview$ = [
+      4,
+      n05,
+      _EPx,
+      0,
+      [_Aut],
+      [() => exports2.AutomationExecutionPreview$]
+    ];
+    exports2.NodeType$ = [
+      4,
+      n05,
+      _NTo,
+      0,
+      [_Ins],
+      [[() => exports2.InstanceInfo$, 0]]
+    ];
+    exports2.AddTagsToResource$ = [
+      9,
+      n05,
+      _ATTR,
+      0,
+      () => exports2.AddTagsToResourceRequest$,
+      () => exports2.AddTagsToResourceResult$
+    ];
+    exports2.AssociateOpsItemRelatedItem$ = [
+      9,
+      n05,
+      _AOIRI,
+      0,
+      () => exports2.AssociateOpsItemRelatedItemRequest$,
+      () => exports2.AssociateOpsItemRelatedItemResponse$
+    ];
+    exports2.CancelCommand$ = [
+      9,
+      n05,
+      _CCa,
+      0,
+      () => exports2.CancelCommandRequest$,
+      () => exports2.CancelCommandResult$
+    ];
+    exports2.CancelMaintenanceWindowExecution$ = [
+      9,
+      n05,
+      _CMWE,
+      0,
+      () => exports2.CancelMaintenanceWindowExecutionRequest$,
+      () => exports2.CancelMaintenanceWindowExecutionResult$
+    ];
+    exports2.CreateActivation$ = [
+      9,
+      n05,
+      _CAr,
+      0,
+      () => exports2.CreateActivationRequest$,
+      () => exports2.CreateActivationResult$
+    ];
+    exports2.CreateAssociation$ = [
+      9,
+      n05,
+      _CAre,
+      0,
+      () => exports2.CreateAssociationRequest$,
+      () => exports2.CreateAssociationResult$
+    ];
+    exports2.CreateAssociationBatch$ = [
+      9,
+      n05,
+      _CAB,
+      0,
+      () => exports2.CreateAssociationBatchRequest$,
+      () => exports2.CreateAssociationBatchResult$
+    ];
+    exports2.CreateDocument$ = [
+      9,
+      n05,
+      _CDre,
+      0,
+      () => exports2.CreateDocumentRequest$,
+      () => exports2.CreateDocumentResult$
+    ];
+    exports2.CreateMaintenanceWindow$ = [
+      9,
+      n05,
+      _CMW,
+      0,
+      () => exports2.CreateMaintenanceWindowRequest$,
+      () => exports2.CreateMaintenanceWindowResult$
+    ];
+    exports2.CreateOpsItem$ = [
+      9,
+      n05,
+      _COI,
+      0,
+      () => exports2.CreateOpsItemRequest$,
+      () => exports2.CreateOpsItemResponse$
+    ];
+    exports2.CreateOpsMetadata$ = [
+      9,
+      n05,
+      _COM,
+      0,
+      () => exports2.CreateOpsMetadataRequest$,
+      () => exports2.CreateOpsMetadataResult$
+    ];
+    exports2.CreatePatchBaseline$ = [
+      9,
+      n05,
+      _CPB,
+      0,
+      () => exports2.CreatePatchBaselineRequest$,
+      () => exports2.CreatePatchBaselineResult$
+    ];
+    exports2.CreateResourceDataSync$ = [
+      9,
+      n05,
+      _CRDS,
+      0,
+      () => exports2.CreateResourceDataSyncRequest$,
+      () => exports2.CreateResourceDataSyncResult$
+    ];
+    exports2.DeleteActivation$ = [
+      9,
+      n05,
+      _DA,
+      0,
+      () => exports2.DeleteActivationRequest$,
+      () => exports2.DeleteActivationResult$
+    ];
+    exports2.DeleteAssociation$ = [
+      9,
+      n05,
+      _DAe,
+      0,
+      () => exports2.DeleteAssociationRequest$,
+      () => exports2.DeleteAssociationResult$
+    ];
+    exports2.DeleteDocument$ = [
+      9,
+      n05,
+      _DDe,
+      0,
+      () => exports2.DeleteDocumentRequest$,
+      () => exports2.DeleteDocumentResult$
+    ];
+    exports2.DeleteInventory$ = [
+      9,
+      n05,
+      _DIe,
+      0,
+      () => exports2.DeleteInventoryRequest$,
+      () => exports2.DeleteInventoryResult$
+    ];
+    exports2.DeleteMaintenanceWindow$ = [
+      9,
+      n05,
+      _DMW,
+      0,
+      () => exports2.DeleteMaintenanceWindowRequest$,
+      () => exports2.DeleteMaintenanceWindowResult$
+    ];
+    exports2.DeleteOpsItem$ = [
+      9,
+      n05,
+      _DOI,
+      0,
+      () => exports2.DeleteOpsItemRequest$,
+      () => exports2.DeleteOpsItemResponse$
+    ];
+    exports2.DeleteOpsMetadata$ = [
+      9,
+      n05,
+      _DOM,
+      0,
+      () => exports2.DeleteOpsMetadataRequest$,
+      () => exports2.DeleteOpsMetadataResult$
+    ];
+    exports2.DeleteParameter$ = [
+      9,
+      n05,
+      _DPe,
+      0,
+      () => exports2.DeleteParameterRequest$,
+      () => exports2.DeleteParameterResult$
+    ];
+    exports2.DeleteParameters$ = [
+      9,
+      n05,
+      _DPel,
+      0,
+      () => exports2.DeleteParametersRequest$,
+      () => exports2.DeleteParametersResult$
+    ];
+    exports2.DeletePatchBaseline$ = [
+      9,
+      n05,
+      _DPB,
+      0,
+      () => exports2.DeletePatchBaselineRequest$,
+      () => exports2.DeletePatchBaselineResult$
+    ];
+    exports2.DeleteResourceDataSync$ = [
+      9,
+      n05,
+      _DRDS,
+      0,
+      () => exports2.DeleteResourceDataSyncRequest$,
+      () => exports2.DeleteResourceDataSyncResult$
+    ];
+    exports2.DeleteResourcePolicy$ = [
+      9,
+      n05,
+      _DRP,
+      0,
+      () => exports2.DeleteResourcePolicyRequest$,
+      () => exports2.DeleteResourcePolicyResponse$
+    ];
+    exports2.DeregisterManagedInstance$ = [
+      9,
+      n05,
+      _DMI,
+      0,
+      () => exports2.DeregisterManagedInstanceRequest$,
+      () => exports2.DeregisterManagedInstanceResult$
+    ];
+    exports2.DeregisterPatchBaselineForPatchGroup$ = [
+      9,
+      n05,
+      _DPBFPG,
+      0,
+      () => exports2.DeregisterPatchBaselineForPatchGroupRequest$,
+      () => exports2.DeregisterPatchBaselineForPatchGroupResult$
+    ];
+    exports2.DeregisterTargetFromMaintenanceWindow$ = [
+      9,
+      n05,
+      _DTFMW,
+      0,
+      () => exports2.DeregisterTargetFromMaintenanceWindowRequest$,
+      () => exports2.DeregisterTargetFromMaintenanceWindowResult$
+    ];
+    exports2.DeregisterTaskFromMaintenanceWindow$ = [
+      9,
+      n05,
+      _DTFMWe,
+      0,
+      () => exports2.DeregisterTaskFromMaintenanceWindowRequest$,
+      () => exports2.DeregisterTaskFromMaintenanceWindowResult$
+    ];
+    exports2.DescribeActivations$ = [
+      9,
+      n05,
+      _DAes,
+      0,
+      () => exports2.DescribeActivationsRequest$,
+      () => exports2.DescribeActivationsResult$
+    ];
+    exports2.DescribeAssociation$ = [
+      9,
+      n05,
+      _DAesc,
+      0,
+      () => exports2.DescribeAssociationRequest$,
+      () => exports2.DescribeAssociationResult$
+    ];
+    exports2.DescribeAssociationExecutions$ = [
+      9,
+      n05,
+      _DAEe,
+      0,
+      () => exports2.DescribeAssociationExecutionsRequest$,
+      () => exports2.DescribeAssociationExecutionsResult$
+    ];
+    exports2.DescribeAssociationExecutionTargets$ = [
+      9,
+      n05,
+      _DAET,
+      0,
+      () => exports2.DescribeAssociationExecutionTargetsRequest$,
+      () => exports2.DescribeAssociationExecutionTargetsResult$
+    ];
+    exports2.DescribeAutomationExecutions$ = [
+      9,
+      n05,
+      _DAEes,
+      0,
+      () => exports2.DescribeAutomationExecutionsRequest$,
+      () => exports2.DescribeAutomationExecutionsResult$
+    ];
+    exports2.DescribeAutomationStepExecutions$ = [
+      9,
+      n05,
+      _DASE,
+      0,
+      () => exports2.DescribeAutomationStepExecutionsRequest$,
+      () => exports2.DescribeAutomationStepExecutionsResult$
+    ];
+    exports2.DescribeAvailablePatches$ = [
+      9,
+      n05,
+      _DAP,
+      0,
+      () => exports2.DescribeAvailablePatchesRequest$,
+      () => exports2.DescribeAvailablePatchesResult$
+    ];
+    exports2.DescribeDocument$ = [
+      9,
+      n05,
+      _DDes,
+      0,
+      () => exports2.DescribeDocumentRequest$,
+      () => exports2.DescribeDocumentResult$
+    ];
+    exports2.DescribeDocumentPermission$ = [
+      9,
+      n05,
+      _DDP,
+      0,
+      () => exports2.DescribeDocumentPermissionRequest$,
+      () => exports2.DescribeDocumentPermissionResponse$
+    ];
+    exports2.DescribeEffectiveInstanceAssociations$ = [
+      9,
+      n05,
+      _DEIA,
+      0,
+      () => exports2.DescribeEffectiveInstanceAssociationsRequest$,
+      () => exports2.DescribeEffectiveInstanceAssociationsResult$
+    ];
+    exports2.DescribeEffectivePatchesForPatchBaseline$ = [
+      9,
+      n05,
+      _DEPFPB,
+      0,
+      () => exports2.DescribeEffectivePatchesForPatchBaselineRequest$,
+      () => exports2.DescribeEffectivePatchesForPatchBaselineResult$
+    ];
+    exports2.DescribeInstanceAssociationsStatus$ = [
+      9,
+      n05,
+      _DIAS,
+      0,
+      () => exports2.DescribeInstanceAssociationsStatusRequest$,
+      () => exports2.DescribeInstanceAssociationsStatusResult$
+    ];
+    exports2.DescribeInstanceInformation$ = [
+      9,
+      n05,
+      _DIIe,
+      0,
+      () => exports2.DescribeInstanceInformationRequest$,
+      () => exports2.DescribeInstanceInformationResult$
+    ];
+    exports2.DescribeInstancePatches$ = [
+      9,
+      n05,
+      _DIP,
+      0,
+      () => exports2.DescribeInstancePatchesRequest$,
+      () => exports2.DescribeInstancePatchesResult$
+    ];
+    exports2.DescribeInstancePatchStates$ = [
+      9,
+      n05,
+      _DIPS,
+      0,
+      () => exports2.DescribeInstancePatchStatesRequest$,
+      () => exports2.DescribeInstancePatchStatesResult$
+    ];
+    exports2.DescribeInstancePatchStatesForPatchGroup$ = [
+      9,
+      n05,
+      _DIPSFPG,
+      0,
+      () => exports2.DescribeInstancePatchStatesForPatchGroupRequest$,
+      () => exports2.DescribeInstancePatchStatesForPatchGroupResult$
+    ];
+    exports2.DescribeInstanceProperties$ = [
+      9,
+      n05,
+      _DIPe,
+      0,
+      () => exports2.DescribeInstancePropertiesRequest$,
+      () => exports2.DescribeInstancePropertiesResult$
+    ];
+    exports2.DescribeInventoryDeletions$ = [
+      9,
+      n05,
+      _DID,
+      0,
+      () => exports2.DescribeInventoryDeletionsRequest$,
+      () => exports2.DescribeInventoryDeletionsResult$
+    ];
+    exports2.DescribeMaintenanceWindowExecutions$ = [
+      9,
+      n05,
+      _DMWE,
+      0,
+      () => exports2.DescribeMaintenanceWindowExecutionsRequest$,
+      () => exports2.DescribeMaintenanceWindowExecutionsResult$
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTaskInvocations$ = [
+      9,
+      n05,
+      _DMWETI,
+      0,
+      () => exports2.DescribeMaintenanceWindowExecutionTaskInvocationsRequest$,
+      () => exports2.DescribeMaintenanceWindowExecutionTaskInvocationsResult$
+    ];
+    exports2.DescribeMaintenanceWindowExecutionTasks$ = [
+      9,
+      n05,
+      _DMWET,
+      0,
+      () => exports2.DescribeMaintenanceWindowExecutionTasksRequest$,
+      () => exports2.DescribeMaintenanceWindowExecutionTasksResult$
+    ];
+    exports2.DescribeMaintenanceWindows$ = [
+      9,
+      n05,
+      _DMWe,
+      0,
+      () => exports2.DescribeMaintenanceWindowsRequest$,
+      () => exports2.DescribeMaintenanceWindowsResult$
+    ];
+    exports2.DescribeMaintenanceWindowSchedule$ = [
+      9,
+      n05,
+      _DMWS,
+      0,
+      () => exports2.DescribeMaintenanceWindowScheduleRequest$,
+      () => exports2.DescribeMaintenanceWindowScheduleResult$
+    ];
+    exports2.DescribeMaintenanceWindowsForTarget$ = [
+      9,
+      n05,
+      _DMWFT,
+      0,
+      () => exports2.DescribeMaintenanceWindowsForTargetRequest$,
+      () => exports2.DescribeMaintenanceWindowsForTargetResult$
+    ];
+    exports2.DescribeMaintenanceWindowTargets$ = [
+      9,
+      n05,
+      _DMWT,
+      0,
+      () => exports2.DescribeMaintenanceWindowTargetsRequest$,
+      () => exports2.DescribeMaintenanceWindowTargetsResult$
+    ];
+    exports2.DescribeMaintenanceWindowTasks$ = [
+      9,
+      n05,
+      _DMWTe,
+      0,
+      () => exports2.DescribeMaintenanceWindowTasksRequest$,
+      () => exports2.DescribeMaintenanceWindowTasksResult$
+    ];
+    exports2.DescribeOpsItems$ = [
+      9,
+      n05,
+      _DOIe,
+      0,
+      () => exports2.DescribeOpsItemsRequest$,
+      () => exports2.DescribeOpsItemsResponse$
+    ];
+    exports2.DescribeParameters$ = [
+      9,
+      n05,
+      _DPes,
+      0,
+      () => exports2.DescribeParametersRequest$,
+      () => exports2.DescribeParametersResult$
+    ];
+    exports2.DescribePatchBaselines$ = [
+      9,
+      n05,
+      _DPBe,
+      0,
+      () => exports2.DescribePatchBaselinesRequest$,
+      () => exports2.DescribePatchBaselinesResult$
+    ];
+    exports2.DescribePatchGroups$ = [
+      9,
+      n05,
+      _DPG,
+      0,
+      () => exports2.DescribePatchGroupsRequest$,
+      () => exports2.DescribePatchGroupsResult$
+    ];
+    exports2.DescribePatchGroupState$ = [
+      9,
+      n05,
+      _DPGS,
+      0,
+      () => exports2.DescribePatchGroupStateRequest$,
+      () => exports2.DescribePatchGroupStateResult$
+    ];
+    exports2.DescribePatchProperties$ = [
+      9,
+      n05,
+      _DPP,
+      0,
+      () => exports2.DescribePatchPropertiesRequest$,
+      () => exports2.DescribePatchPropertiesResult$
+    ];
+    exports2.DescribeSessions$ = [
+      9,
+      n05,
+      _DSes,
+      0,
+      () => exports2.DescribeSessionsRequest$,
+      () => exports2.DescribeSessionsResponse$
+    ];
+    exports2.DisassociateOpsItemRelatedItem$ = [
+      9,
+      n05,
+      _DOIRI,
+      0,
+      () => exports2.DisassociateOpsItemRelatedItemRequest$,
+      () => exports2.DisassociateOpsItemRelatedItemResponse$
+    ];
+    exports2.GetAccessToken$ = [
+      9,
+      n05,
+      _GAT,
+      0,
+      () => exports2.GetAccessTokenRequest$,
+      () => exports2.GetAccessTokenResponse$
+    ];
+    exports2.GetAutomationExecution$ = [
+      9,
+      n05,
+      _GAE,
+      0,
+      () => exports2.GetAutomationExecutionRequest$,
+      () => exports2.GetAutomationExecutionResult$
+    ];
+    exports2.GetCalendarState$ = [
+      9,
+      n05,
+      _GCS,
+      0,
+      () => exports2.GetCalendarStateRequest$,
+      () => exports2.GetCalendarStateResponse$
+    ];
+    exports2.GetCommandInvocation$ = [
+      9,
+      n05,
+      _GCI,
+      0,
+      () => exports2.GetCommandInvocationRequest$,
+      () => exports2.GetCommandInvocationResult$
+    ];
+    exports2.GetConnectionStatus$ = [
+      9,
+      n05,
+      _GCSe,
+      0,
+      () => exports2.GetConnectionStatusRequest$,
+      () => exports2.GetConnectionStatusResponse$
+    ];
+    exports2.GetDefaultPatchBaseline$ = [
+      9,
+      n05,
+      _GDPB,
+      0,
+      () => exports2.GetDefaultPatchBaselineRequest$,
+      () => exports2.GetDefaultPatchBaselineResult$
+    ];
+    exports2.GetDeployablePatchSnapshotForInstance$ = [
+      9,
+      n05,
+      _GDPSFI,
+      0,
+      () => exports2.GetDeployablePatchSnapshotForInstanceRequest$,
+      () => exports2.GetDeployablePatchSnapshotForInstanceResult$
+    ];
+    exports2.GetDocument$ = [
+      9,
+      n05,
+      _GD,
+      0,
+      () => exports2.GetDocumentRequest$,
+      () => exports2.GetDocumentResult$
+    ];
+    exports2.GetExecutionPreview$ = [
+      9,
+      n05,
+      _GEP,
+      0,
+      () => exports2.GetExecutionPreviewRequest$,
+      () => exports2.GetExecutionPreviewResponse$
+    ];
+    exports2.GetInventory$ = [
+      9,
+      n05,
+      _GI,
+      0,
+      () => exports2.GetInventoryRequest$,
+      () => exports2.GetInventoryResult$
+    ];
+    exports2.GetInventorySchema$ = [
+      9,
+      n05,
+      _GIS,
+      0,
+      () => exports2.GetInventorySchemaRequest$,
+      () => exports2.GetInventorySchemaResult$
+    ];
+    exports2.GetMaintenanceWindow$ = [
+      9,
+      n05,
+      _GMW,
+      0,
+      () => exports2.GetMaintenanceWindowRequest$,
+      () => exports2.GetMaintenanceWindowResult$
+    ];
+    exports2.GetMaintenanceWindowExecution$ = [
+      9,
+      n05,
+      _GMWE,
+      0,
+      () => exports2.GetMaintenanceWindowExecutionRequest$,
+      () => exports2.GetMaintenanceWindowExecutionResult$
+    ];
+    exports2.GetMaintenanceWindowExecutionTask$ = [
+      9,
+      n05,
+      _GMWET,
+      0,
+      () => exports2.GetMaintenanceWindowExecutionTaskRequest$,
+      () => exports2.GetMaintenanceWindowExecutionTaskResult$
+    ];
+    exports2.GetMaintenanceWindowExecutionTaskInvocation$ = [
+      9,
+      n05,
+      _GMWETI,
+      0,
+      () => exports2.GetMaintenanceWindowExecutionTaskInvocationRequest$,
+      () => exports2.GetMaintenanceWindowExecutionTaskInvocationResult$
+    ];
+    exports2.GetMaintenanceWindowTask$ = [
+      9,
+      n05,
+      _GMWT,
+      0,
+      () => exports2.GetMaintenanceWindowTaskRequest$,
+      () => exports2.GetMaintenanceWindowTaskResult$
+    ];
+    exports2.GetOpsItem$ = [
+      9,
+      n05,
+      _GOI,
+      0,
+      () => exports2.GetOpsItemRequest$,
+      () => exports2.GetOpsItemResponse$
+    ];
+    exports2.GetOpsMetadata$ = [
+      9,
+      n05,
+      _GOM,
+      0,
+      () => exports2.GetOpsMetadataRequest$,
+      () => exports2.GetOpsMetadataResult$
+    ];
+    exports2.GetOpsSummary$ = [
+      9,
+      n05,
+      _GOS,
+      0,
+      () => exports2.GetOpsSummaryRequest$,
+      () => exports2.GetOpsSummaryResult$
+    ];
+    exports2.GetParameter$ = [
+      9,
+      n05,
+      _GP,
+      0,
+      () => exports2.GetParameterRequest$,
+      () => exports2.GetParameterResult$
+    ];
+    exports2.GetParameterHistory$ = [
+      9,
+      n05,
+      _GPH,
+      0,
+      () => exports2.GetParameterHistoryRequest$,
+      () => exports2.GetParameterHistoryResult$
+    ];
+    exports2.GetParameters$ = [
+      9,
+      n05,
+      _GPe,
+      0,
+      () => exports2.GetParametersRequest$,
+      () => exports2.GetParametersResult$
+    ];
+    exports2.GetParametersByPath$ = [
+      9,
+      n05,
+      _GPBP,
+      0,
+      () => exports2.GetParametersByPathRequest$,
+      () => exports2.GetParametersByPathResult$
+    ];
+    exports2.GetPatchBaseline$ = [
+      9,
+      n05,
+      _GPB,
+      0,
+      () => exports2.GetPatchBaselineRequest$,
+      () => exports2.GetPatchBaselineResult$
+    ];
+    exports2.GetPatchBaselineForPatchGroup$ = [
+      9,
+      n05,
+      _GPBFPG,
+      0,
+      () => exports2.GetPatchBaselineForPatchGroupRequest$,
+      () => exports2.GetPatchBaselineForPatchGroupResult$
+    ];
+    exports2.GetResourcePolicies$ = [
+      9,
+      n05,
+      _GRP,
+      0,
+      () => exports2.GetResourcePoliciesRequest$,
+      () => exports2.GetResourcePoliciesResponse$
+    ];
+    exports2.GetServiceSetting$ = [
+      9,
+      n05,
+      _GSS,
+      0,
+      () => exports2.GetServiceSettingRequest$,
+      () => exports2.GetServiceSettingResult$
+    ];
+    exports2.LabelParameterVersion$ = [
+      9,
+      n05,
+      _LPV,
+      0,
+      () => exports2.LabelParameterVersionRequest$,
+      () => exports2.LabelParameterVersionResult$
+    ];
+    exports2.ListAssociations$ = [
+      9,
+      n05,
+      _LA,
+      0,
+      () => exports2.ListAssociationsRequest$,
+      () => exports2.ListAssociationsResult$
+    ];
+    exports2.ListAssociationVersions$ = [
+      9,
+      n05,
+      _LAV,
+      0,
+      () => exports2.ListAssociationVersionsRequest$,
+      () => exports2.ListAssociationVersionsResult$
+    ];
+    exports2.ListCommandInvocations$ = [
+      9,
+      n05,
+      _LCI,
+      0,
+      () => exports2.ListCommandInvocationsRequest$,
+      () => exports2.ListCommandInvocationsResult$
+    ];
+    exports2.ListCommands$ = [
+      9,
+      n05,
+      _LCi,
+      0,
+      () => exports2.ListCommandsRequest$,
+      () => exports2.ListCommandsResult$
+    ];
+    exports2.ListComplianceItems$ = [
+      9,
+      n05,
+      _LCIi,
+      0,
+      () => exports2.ListComplianceItemsRequest$,
+      () => exports2.ListComplianceItemsResult$
+    ];
+    exports2.ListComplianceSummaries$ = [
+      9,
+      n05,
+      _LCS,
+      0,
+      () => exports2.ListComplianceSummariesRequest$,
+      () => exports2.ListComplianceSummariesResult$
+    ];
+    exports2.ListDocumentMetadataHistory$ = [
+      9,
+      n05,
+      _LDMH,
+      0,
+      () => exports2.ListDocumentMetadataHistoryRequest$,
+      () => exports2.ListDocumentMetadataHistoryResponse$
+    ];
+    exports2.ListDocuments$ = [
+      9,
+      n05,
+      _LD,
+      0,
+      () => exports2.ListDocumentsRequest$,
+      () => exports2.ListDocumentsResult$
+    ];
+    exports2.ListDocumentVersions$ = [
+      9,
+      n05,
+      _LDV,
+      0,
+      () => exports2.ListDocumentVersionsRequest$,
+      () => exports2.ListDocumentVersionsResult$
+    ];
+    exports2.ListInventoryEntries$ = [
+      9,
+      n05,
+      _LIE,
+      0,
+      () => exports2.ListInventoryEntriesRequest$,
+      () => exports2.ListInventoryEntriesResult$
+    ];
+    exports2.ListNodes$ = [
+      9,
+      n05,
+      _LN,
+      0,
+      () => exports2.ListNodesRequest$,
+      () => exports2.ListNodesResult$
+    ];
+    exports2.ListNodesSummary$ = [
+      9,
+      n05,
+      _LNS,
+      0,
+      () => exports2.ListNodesSummaryRequest$,
+      () => exports2.ListNodesSummaryResult$
+    ];
+    exports2.ListOpsItemEvents$ = [
+      9,
+      n05,
+      _LOIE,
+      0,
+      () => exports2.ListOpsItemEventsRequest$,
+      () => exports2.ListOpsItemEventsResponse$
+    ];
+    exports2.ListOpsItemRelatedItems$ = [
+      9,
+      n05,
+      _LOIRI,
+      0,
+      () => exports2.ListOpsItemRelatedItemsRequest$,
+      () => exports2.ListOpsItemRelatedItemsResponse$
+    ];
+    exports2.ListOpsMetadata$ = [
+      9,
+      n05,
+      _LOM,
+      0,
+      () => exports2.ListOpsMetadataRequest$,
+      () => exports2.ListOpsMetadataResult$
+    ];
+    exports2.ListResourceComplianceSummaries$ = [
+      9,
+      n05,
+      _LRCS,
+      0,
+      () => exports2.ListResourceComplianceSummariesRequest$,
+      () => exports2.ListResourceComplianceSummariesResult$
+    ];
+    exports2.ListResourceDataSync$ = [
+      9,
+      n05,
+      _LRDS,
+      0,
+      () => exports2.ListResourceDataSyncRequest$,
+      () => exports2.ListResourceDataSyncResult$
+    ];
+    exports2.ListTagsForResource$ = [
+      9,
+      n05,
+      _LTFR,
+      0,
+      () => exports2.ListTagsForResourceRequest$,
+      () => exports2.ListTagsForResourceResult$
+    ];
+    exports2.ModifyDocumentPermission$ = [
+      9,
+      n05,
+      _MDP,
+      0,
+      () => exports2.ModifyDocumentPermissionRequest$,
+      () => exports2.ModifyDocumentPermissionResponse$
+    ];
+    exports2.PutComplianceItems$ = [
+      9,
+      n05,
+      _PCI,
+      0,
+      () => exports2.PutComplianceItemsRequest$,
+      () => exports2.PutComplianceItemsResult$
+    ];
+    exports2.PutInventory$ = [
+      9,
+      n05,
+      _PIu,
+      0,
+      () => exports2.PutInventoryRequest$,
+      () => exports2.PutInventoryResult$
+    ];
+    exports2.PutParameter$ = [
+      9,
+      n05,
+      _PP,
+      0,
+      () => exports2.PutParameterRequest$,
+      () => exports2.PutParameterResult$
+    ];
+    exports2.PutResourcePolicy$ = [
+      9,
+      n05,
+      _PRP,
+      0,
+      () => exports2.PutResourcePolicyRequest$,
+      () => exports2.PutResourcePolicyResponse$
+    ];
+    exports2.RegisterDefaultPatchBaseline$ = [
+      9,
+      n05,
+      _RDPB,
+      0,
+      () => exports2.RegisterDefaultPatchBaselineRequest$,
+      () => exports2.RegisterDefaultPatchBaselineResult$
+    ];
+    exports2.RegisterPatchBaselineForPatchGroup$ = [
+      9,
+      n05,
+      _RPBFPG,
+      0,
+      () => exports2.RegisterPatchBaselineForPatchGroupRequest$,
+      () => exports2.RegisterPatchBaselineForPatchGroupResult$
+    ];
+    exports2.RegisterTargetWithMaintenanceWindow$ = [
+      9,
+      n05,
+      _RTWMW,
+      0,
+      () => exports2.RegisterTargetWithMaintenanceWindowRequest$,
+      () => exports2.RegisterTargetWithMaintenanceWindowResult$
+    ];
+    exports2.RegisterTaskWithMaintenanceWindow$ = [
+      9,
+      n05,
+      _RTWMWe,
+      0,
+      () => exports2.RegisterTaskWithMaintenanceWindowRequest$,
+      () => exports2.RegisterTaskWithMaintenanceWindowResult$
+    ];
+    exports2.RemoveTagsFromResource$ = [
+      9,
+      n05,
+      _RTFR,
+      0,
+      () => exports2.RemoveTagsFromResourceRequest$,
+      () => exports2.RemoveTagsFromResourceResult$
+    ];
+    exports2.ResetServiceSetting$ = [
+      9,
+      n05,
+      _RSS,
+      0,
+      () => exports2.ResetServiceSettingRequest$,
+      () => exports2.ResetServiceSettingResult$
+    ];
+    exports2.ResumeSession$ = [
+      9,
+      n05,
+      _RSe,
+      0,
+      () => exports2.ResumeSessionRequest$,
+      () => exports2.ResumeSessionResponse$
+    ];
+    exports2.SendAutomationSignal$ = [
+      9,
+      n05,
+      _SAS,
+      0,
+      () => exports2.SendAutomationSignalRequest$,
+      () => exports2.SendAutomationSignalResult$
+    ];
+    exports2.SendCommand$ = [
+      9,
+      n05,
+      _SCe,
+      0,
+      () => exports2.SendCommandRequest$,
+      () => exports2.SendCommandResult$
+    ];
+    exports2.StartAccessRequest$ = [
+      9,
+      n05,
+      _SAR,
+      0,
+      () => exports2.StartAccessRequestRequest$,
+      () => exports2.StartAccessRequestResponse$
+    ];
+    exports2.StartAssociationsOnce$ = [
+      9,
+      n05,
+      _SAO,
+      0,
+      () => exports2.StartAssociationsOnceRequest$,
+      () => exports2.StartAssociationsOnceResult$
+    ];
+    exports2.StartAutomationExecution$ = [
+      9,
+      n05,
+      _SAE,
+      0,
+      () => exports2.StartAutomationExecutionRequest$,
+      () => exports2.StartAutomationExecutionResult$
+    ];
+    exports2.StartChangeRequestExecution$ = [
+      9,
+      n05,
+      _SCRE,
+      0,
+      () => exports2.StartChangeRequestExecutionRequest$,
+      () => exports2.StartChangeRequestExecutionResult$
+    ];
+    exports2.StartExecutionPreview$ = [
+      9,
+      n05,
+      _SEP,
+      0,
+      () => exports2.StartExecutionPreviewRequest$,
+      () => exports2.StartExecutionPreviewResponse$
+    ];
+    exports2.StartSession$ = [
+      9,
+      n05,
+      _SSta,
+      0,
+      () => exports2.StartSessionRequest$,
+      () => exports2.StartSessionResponse$
+    ];
+    exports2.StopAutomationExecution$ = [
+      9,
+      n05,
+      _SAEt,
+      0,
+      () => exports2.StopAutomationExecutionRequest$,
+      () => exports2.StopAutomationExecutionResult$
+    ];
+    exports2.TerminateSession$ = [
+      9,
+      n05,
+      _TSe,
+      0,
+      () => exports2.TerminateSessionRequest$,
+      () => exports2.TerminateSessionResponse$
+    ];
+    exports2.UnlabelParameterVersion$ = [
+      9,
+      n05,
+      _UPV,
+      0,
+      () => exports2.UnlabelParameterVersionRequest$,
+      () => exports2.UnlabelParameterVersionResult$
+    ];
+    exports2.UpdateAssociation$ = [
+      9,
+      n05,
+      _UA,
+      0,
+      () => exports2.UpdateAssociationRequest$,
+      () => exports2.UpdateAssociationResult$
+    ];
+    exports2.UpdateAssociationStatus$ = [
+      9,
+      n05,
+      _UAS,
+      0,
+      () => exports2.UpdateAssociationStatusRequest$,
+      () => exports2.UpdateAssociationStatusResult$
+    ];
+    exports2.UpdateDocument$ = [
+      9,
+      n05,
+      _UD,
+      0,
+      () => exports2.UpdateDocumentRequest$,
+      () => exports2.UpdateDocumentResult$
+    ];
+    exports2.UpdateDocumentDefaultVersion$ = [
+      9,
+      n05,
+      _UDDV,
+      0,
+      () => exports2.UpdateDocumentDefaultVersionRequest$,
+      () => exports2.UpdateDocumentDefaultVersionResult$
+    ];
+    exports2.UpdateDocumentMetadata$ = [
+      9,
+      n05,
+      _UDM,
+      0,
+      () => exports2.UpdateDocumentMetadataRequest$,
+      () => exports2.UpdateDocumentMetadataResponse$
+    ];
+    exports2.UpdateMaintenanceWindow$ = [
+      9,
+      n05,
+      _UMW,
+      0,
+      () => exports2.UpdateMaintenanceWindowRequest$,
+      () => exports2.UpdateMaintenanceWindowResult$
+    ];
+    exports2.UpdateMaintenanceWindowTarget$ = [
+      9,
+      n05,
+      _UMWT,
+      0,
+      () => exports2.UpdateMaintenanceWindowTargetRequest$,
+      () => exports2.UpdateMaintenanceWindowTargetResult$
+    ];
+    exports2.UpdateMaintenanceWindowTask$ = [
+      9,
+      n05,
+      _UMWTp,
+      0,
+      () => exports2.UpdateMaintenanceWindowTaskRequest$,
+      () => exports2.UpdateMaintenanceWindowTaskResult$
+    ];
+    exports2.UpdateManagedInstanceRole$ = [
+      9,
+      n05,
+      _UMIR,
+      0,
+      () => exports2.UpdateManagedInstanceRoleRequest$,
+      () => exports2.UpdateManagedInstanceRoleResult$
+    ];
+    exports2.UpdateOpsItem$ = [
+      9,
+      n05,
+      _UOI,
+      0,
+      () => exports2.UpdateOpsItemRequest$,
+      () => exports2.UpdateOpsItemResponse$
+    ];
+    exports2.UpdateOpsMetadata$ = [
+      9,
+      n05,
+      _UOM,
+      0,
+      () => exports2.UpdateOpsMetadataRequest$,
+      () => exports2.UpdateOpsMetadataResult$
+    ];
+    exports2.UpdatePatchBaseline$ = [
+      9,
+      n05,
+      _UPB,
+      0,
+      () => exports2.UpdatePatchBaselineRequest$,
+      () => exports2.UpdatePatchBaselineResult$
+    ];
+    exports2.UpdateResourceDataSync$ = [
+      9,
+      n05,
+      _URDS,
+      0,
+      () => exports2.UpdateResourceDataSyncRequest$,
+      () => exports2.UpdateResourceDataSyncResult$
+    ];
+    exports2.UpdateServiceSetting$ = [
+      9,
+      n05,
+      _USS,
+      0,
+      () => exports2.UpdateServiceSettingRequest$,
+      () => exports2.UpdateServiceSettingResult$
+    ];
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/runtimeConfig.shared.js
+var require_runtimeConfig_shared8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/runtimeConfig.shared.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var protocols_1 = (init_protocols2(), __toCommonJS(protocols_exports2));
+    var smithy_client_1 = require_dist_cjs26();
+    var url_parser_1 = require_dist_cjs19();
+    var util_base64_1 = require_dist_cjs11();
+    var util_utf8_1 = require_dist_cjs10();
+    var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider8();
+    var endpointResolver_1 = require_endpointResolver8();
+    var schemas_0_1 = require_schemas_08();
+    var getRuntimeConfig9 = (config) => {
+      return {
+        apiVersion: "2014-11-06",
+        base64Decoder: config?.base64Decoder ?? util_base64_1.fromBase64,
+        base64Encoder: config?.base64Encoder ?? util_base64_1.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultSSMHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
+            signer: new core_1.AwsSdkSigV4Signer()
+          }
+        ],
+        logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        protocol: config?.protocol ?? protocols_1.AwsJson1_1Protocol,
+        protocolSettings: config?.protocolSettings ?? {
+          defaultNamespace: "com.amazonaws.ssm",
+          errorTypeRegistries: schemas_0_1.errorTypeRegistries,
+          xmlNamespace: "http://ssm.amazonaws.com/doc/2014-11-06/",
+          version: "2014-11-06",
+          serviceTarget: "AmazonSSM"
+        },
+        serviceId: config?.serviceId ?? "SSM",
+        urlParser: config?.urlParser ?? url_parser_1.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? util_utf8_1.toUtf8
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/runtimeConfig.js
+var require_runtimeConfig8 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/runtimeConfig.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var package_json_1 = tslib_1.__importDefault(require_package8());
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var credential_provider_node_1 = require_dist_cjs53();
+    var util_user_agent_node_1 = require_dist_cjs42();
+    var config_resolver_1 = require_dist_cjs32();
+    var hash_node_1 = require_dist_cjs43();
+    var middleware_retry_1 = require_dist_cjs38();
+    var node_config_provider_1 = require_dist_cjs35();
+    var node_http_handler_1 = require_dist_cjs14();
+    var smithy_client_1 = require_dist_cjs26();
+    var util_body_length_node_1 = require_dist_cjs44();
+    var util_defaults_mode_node_1 = require_dist_cjs45();
+    var util_retry_1 = require_dist_cjs29();
+    var runtimeConfig_shared_1 = require_runtimeConfig_shared8();
+    var getRuntimeConfig9 = (config) => {
+      (0, smithy_client_1.emitWarningIfUnsupportedVersion)(process.version);
+      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
+      const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
+      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
+      (0, core_1.emitWarningIfUnsupportedVersion)(process.version);
+      const loaderConfig = {
+        profile: config?.profile,
+        logger: clientSharedValues.logger
+      };
+      return {
+        ...clientSharedValues,
+        ...config,
+        runtime: "node",
+        defaultsMode,
+        authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, node_config_provider_1.loadConfig)({
+          ...middleware_retry_1.NODE_RETRY_MODE_CONFIG_OPTIONS,
+          default: async () => (await defaultConfigProvider()).retryMode || util_retry_1.DEFAULT_RETRY_MODE
+        }, config),
+        sha256: config?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-ssm/dist-cjs/index.js
+var require_dist_cjs62 = __commonJS({
+  "node_modules/@aws-sdk/client-ssm/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var middlewareHostHeader = require_dist_cjs3();
+    var middlewareLogger = require_dist_cjs4();
+    var middlewareRecursionDetection = require_dist_cjs5();
+    var middlewareUserAgent = require_dist_cjs30();
+    var configResolver = require_dist_cjs32();
+    var core = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var schema = (init_schema(), __toCommonJS(schema_exports));
+    var middlewareContentLength = require_dist_cjs33();
+    var middlewareEndpoint = require_dist_cjs37();
+    var middlewareRetry = require_dist_cjs38();
+    var smithyClient = require_dist_cjs26();
+    var httpAuthSchemeProvider = require_httpAuthSchemeProvider8();
+    var runtimeConfig = require_runtimeConfig8();
+    var regionConfigResolver = require_dist_cjs46();
+    var protocolHttp = require_dist_cjs2();
+    var schemas_0 = require_schemas_08();
+    var utilWaiter = require_dist_cjs58();
+    var errors = require_errors9();
+    var SSMServiceException = require_SSMServiceException();
+    var resolveClientEndpointParameters5 = (options) => {
+      return Object.assign(options, {
+        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
+        useFipsEndpoint: options.useFipsEndpoint ?? false,
+        defaultSigningName: "ssm"
+      });
+    };
+    var commonParams5 = {
+      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
+      Endpoint: { type: "builtInParams", name: "endpoint" },
+      Region: { type: "builtInParams", name: "region" },
+      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
+    };
+    var getHttpAuthExtensionConfiguration5 = (runtimeConfig2) => {
+      const _httpAuthSchemes = runtimeConfig2.httpAuthSchemes;
+      let _httpAuthSchemeProvider = runtimeConfig2.httpAuthSchemeProvider;
+      let _credentials = runtimeConfig2.credentials;
+      return {
+        setHttpAuthScheme(httpAuthScheme) {
+          const index = _httpAuthSchemes.findIndex((scheme) => scheme.schemeId === httpAuthScheme.schemeId);
+          if (index === -1) {
+            _httpAuthSchemes.push(httpAuthScheme);
+          } else {
+            _httpAuthSchemes.splice(index, 1, httpAuthScheme);
+          }
+        },
+        httpAuthSchemes() {
+          return _httpAuthSchemes;
+        },
+        setHttpAuthSchemeProvider(httpAuthSchemeProvider2) {
+          _httpAuthSchemeProvider = httpAuthSchemeProvider2;
+        },
+        httpAuthSchemeProvider() {
+          return _httpAuthSchemeProvider;
+        },
+        setCredentials(credentials) {
+          _credentials = credentials;
+        },
+        credentials() {
+          return _credentials;
+        }
+      };
+    };
+    var resolveHttpAuthRuntimeConfig5 = (config) => {
+      return {
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
+      };
+    };
+    var resolveRuntimeExtensions5 = (runtimeConfig2, extensions) => {
+      const extensionConfiguration = Object.assign(regionConfigResolver.getAwsRegionExtensionConfiguration(runtimeConfig2), smithyClient.getDefaultExtensionConfiguration(runtimeConfig2), protocolHttp.getHttpHandlerExtensionConfiguration(runtimeConfig2), getHttpAuthExtensionConfiguration5(runtimeConfig2));
+      extensions.forEach((extension) => extension.configure(extensionConfiguration));
+      return Object.assign(runtimeConfig2, regionConfigResolver.resolveAwsRegionExtensionConfiguration(extensionConfiguration), smithyClient.resolveDefaultRuntimeConfig(extensionConfiguration), protocolHttp.resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig5(extensionConfiguration));
+    };
+    var SSMClient2 = class extends smithyClient.Client {
+      config;
+      constructor(...[configuration]) {
+        const _config_0 = runtimeConfig.getRuntimeConfig(configuration || {});
+        super(_config_0);
+        this.initConfig = _config_0;
+        const _config_1 = resolveClientEndpointParameters5(_config_0);
+        const _config_2 = middlewareUserAgent.resolveUserAgentConfig(_config_1);
+        const _config_3 = middlewareRetry.resolveRetryConfig(_config_2);
+        const _config_4 = configResolver.resolveRegionConfig(_config_3);
+        const _config_5 = middlewareHostHeader.resolveHostHeaderConfig(_config_4);
+        const _config_6 = middlewareEndpoint.resolveEndpointConfig(_config_5);
+        const _config_7 = httpAuthSchemeProvider.resolveHttpAuthSchemeConfig(_config_6);
+        const _config_8 = resolveRuntimeExtensions5(_config_7, configuration?.extensions || []);
+        this.config = _config_8;
+        this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
+        this.middlewareStack.use(middlewareUserAgent.getUserAgentPlugin(this.config));
+        this.middlewareStack.use(middlewareRetry.getRetryPlugin(this.config));
+        this.middlewareStack.use(middlewareContentLength.getContentLengthPlugin(this.config));
+        this.middlewareStack.use(middlewareHostHeader.getHostHeaderPlugin(this.config));
+        this.middlewareStack.use(middlewareLogger.getLoggerPlugin(this.config));
+        this.middlewareStack.use(middlewareRecursionDetection.getRecursionDetectionPlugin(this.config));
+        this.middlewareStack.use(core.getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
+          httpAuthSchemeParametersProvider: httpAuthSchemeProvider.defaultSSMHttpAuthSchemeParametersProvider,
+          identityProviderConfigProvider: async (config) => new core.DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials
+          })
+        }));
+        this.middlewareStack.use(core.getHttpSigningPlugin(this.config));
+      }
+      destroy() {
+        super.destroy();
+      }
+    };
+    var AddTagsToResourceCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "AddTagsToResource", {}).n("SSMClient", "AddTagsToResourceCommand").sc(schemas_0.AddTagsToResource$).build() {
+    };
+    var AssociateOpsItemRelatedItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "AssociateOpsItemRelatedItem", {}).n("SSMClient", "AssociateOpsItemRelatedItemCommand").sc(schemas_0.AssociateOpsItemRelatedItem$).build() {
+    };
+    var CancelCommandCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CancelCommand", {}).n("SSMClient", "CancelCommandCommand").sc(schemas_0.CancelCommand$).build() {
+    };
+    var CancelMaintenanceWindowExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CancelMaintenanceWindowExecution", {}).n("SSMClient", "CancelMaintenanceWindowExecutionCommand").sc(schemas_0.CancelMaintenanceWindowExecution$).build() {
+    };
+    var CreateActivationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateActivation", {}).n("SSMClient", "CreateActivationCommand").sc(schemas_0.CreateActivation$).build() {
+    };
+    var CreateAssociationBatchCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateAssociationBatch", {}).n("SSMClient", "CreateAssociationBatchCommand").sc(schemas_0.CreateAssociationBatch$).build() {
+    };
+    var CreateAssociationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateAssociation", {}).n("SSMClient", "CreateAssociationCommand").sc(schemas_0.CreateAssociation$).build() {
+    };
+    var CreateDocumentCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateDocument", {}).n("SSMClient", "CreateDocumentCommand").sc(schemas_0.CreateDocument$).build() {
+    };
+    var CreateMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateMaintenanceWindow", {}).n("SSMClient", "CreateMaintenanceWindowCommand").sc(schemas_0.CreateMaintenanceWindow$).build() {
+    };
+    var CreateOpsItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateOpsItem", {}).n("SSMClient", "CreateOpsItemCommand").sc(schemas_0.CreateOpsItem$).build() {
+    };
+    var CreateOpsMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateOpsMetadata", {}).n("SSMClient", "CreateOpsMetadataCommand").sc(schemas_0.CreateOpsMetadata$).build() {
+    };
+    var CreatePatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreatePatchBaseline", {}).n("SSMClient", "CreatePatchBaselineCommand").sc(schemas_0.CreatePatchBaseline$).build() {
+    };
+    var CreateResourceDataSyncCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "CreateResourceDataSync", {}).n("SSMClient", "CreateResourceDataSyncCommand").sc(schemas_0.CreateResourceDataSync$).build() {
+    };
+    var DeleteActivationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteActivation", {}).n("SSMClient", "DeleteActivationCommand").sc(schemas_0.DeleteActivation$).build() {
+    };
+    var DeleteAssociationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteAssociation", {}).n("SSMClient", "DeleteAssociationCommand").sc(schemas_0.DeleteAssociation$).build() {
+    };
+    var DeleteDocumentCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteDocument", {}).n("SSMClient", "DeleteDocumentCommand").sc(schemas_0.DeleteDocument$).build() {
+    };
+    var DeleteInventoryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteInventory", {}).n("SSMClient", "DeleteInventoryCommand").sc(schemas_0.DeleteInventory$).build() {
+    };
+    var DeleteMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteMaintenanceWindow", {}).n("SSMClient", "DeleteMaintenanceWindowCommand").sc(schemas_0.DeleteMaintenanceWindow$).build() {
+    };
+    var DeleteOpsItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteOpsItem", {}).n("SSMClient", "DeleteOpsItemCommand").sc(schemas_0.DeleteOpsItem$).build() {
+    };
+    var DeleteOpsMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteOpsMetadata", {}).n("SSMClient", "DeleteOpsMetadataCommand").sc(schemas_0.DeleteOpsMetadata$).build() {
+    };
+    var DeleteParameterCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteParameter", {}).n("SSMClient", "DeleteParameterCommand").sc(schemas_0.DeleteParameter$).build() {
+    };
+    var DeleteParametersCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteParameters", {}).n("SSMClient", "DeleteParametersCommand").sc(schemas_0.DeleteParameters$).build() {
+    };
+    var DeletePatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeletePatchBaseline", {}).n("SSMClient", "DeletePatchBaselineCommand").sc(schemas_0.DeletePatchBaseline$).build() {
+    };
+    var DeleteResourceDataSyncCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteResourceDataSync", {}).n("SSMClient", "DeleteResourceDataSyncCommand").sc(schemas_0.DeleteResourceDataSync$).build() {
+    };
+    var DeleteResourcePolicyCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeleteResourcePolicy", {}).n("SSMClient", "DeleteResourcePolicyCommand").sc(schemas_0.DeleteResourcePolicy$).build() {
+    };
+    var DeregisterManagedInstanceCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeregisterManagedInstance", {}).n("SSMClient", "DeregisterManagedInstanceCommand").sc(schemas_0.DeregisterManagedInstance$).build() {
+    };
+    var DeregisterPatchBaselineForPatchGroupCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeregisterPatchBaselineForPatchGroup", {}).n("SSMClient", "DeregisterPatchBaselineForPatchGroupCommand").sc(schemas_0.DeregisterPatchBaselineForPatchGroup$).build() {
+    };
+    var DeregisterTargetFromMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeregisterTargetFromMaintenanceWindow", {}).n("SSMClient", "DeregisterTargetFromMaintenanceWindowCommand").sc(schemas_0.DeregisterTargetFromMaintenanceWindow$).build() {
+    };
+    var DeregisterTaskFromMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DeregisterTaskFromMaintenanceWindow", {}).n("SSMClient", "DeregisterTaskFromMaintenanceWindowCommand").sc(schemas_0.DeregisterTaskFromMaintenanceWindow$).build() {
+    };
+    var DescribeActivationsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeActivations", {}).n("SSMClient", "DescribeActivationsCommand").sc(schemas_0.DescribeActivations$).build() {
+    };
+    var DescribeAssociationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAssociation", {}).n("SSMClient", "DescribeAssociationCommand").sc(schemas_0.DescribeAssociation$).build() {
+    };
+    var DescribeAssociationExecutionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAssociationExecutions", {}).n("SSMClient", "DescribeAssociationExecutionsCommand").sc(schemas_0.DescribeAssociationExecutions$).build() {
+    };
+    var DescribeAssociationExecutionTargetsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAssociationExecutionTargets", {}).n("SSMClient", "DescribeAssociationExecutionTargetsCommand").sc(schemas_0.DescribeAssociationExecutionTargets$).build() {
+    };
+    var DescribeAutomationExecutionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAutomationExecutions", {}).n("SSMClient", "DescribeAutomationExecutionsCommand").sc(schemas_0.DescribeAutomationExecutions$).build() {
+    };
+    var DescribeAutomationStepExecutionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAutomationStepExecutions", {}).n("SSMClient", "DescribeAutomationStepExecutionsCommand").sc(schemas_0.DescribeAutomationStepExecutions$).build() {
+    };
+    var DescribeAvailablePatchesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeAvailablePatches", {}).n("SSMClient", "DescribeAvailablePatchesCommand").sc(schemas_0.DescribeAvailablePatches$).build() {
+    };
+    var DescribeDocumentCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeDocument", {}).n("SSMClient", "DescribeDocumentCommand").sc(schemas_0.DescribeDocument$).build() {
+    };
+    var DescribeDocumentPermissionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeDocumentPermission", {}).n("SSMClient", "DescribeDocumentPermissionCommand").sc(schemas_0.DescribeDocumentPermission$).build() {
+    };
+    var DescribeEffectiveInstanceAssociationsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeEffectiveInstanceAssociations", {}).n("SSMClient", "DescribeEffectiveInstanceAssociationsCommand").sc(schemas_0.DescribeEffectiveInstanceAssociations$).build() {
+    };
+    var DescribeEffectivePatchesForPatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeEffectivePatchesForPatchBaseline", {}).n("SSMClient", "DescribeEffectivePatchesForPatchBaselineCommand").sc(schemas_0.DescribeEffectivePatchesForPatchBaseline$).build() {
+    };
+    var DescribeInstanceAssociationsStatusCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstanceAssociationsStatus", {}).n("SSMClient", "DescribeInstanceAssociationsStatusCommand").sc(schemas_0.DescribeInstanceAssociationsStatus$).build() {
+    };
+    var DescribeInstanceInformationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstanceInformation", {}).n("SSMClient", "DescribeInstanceInformationCommand").sc(schemas_0.DescribeInstanceInformation$).build() {
+    };
+    var DescribeInstancePatchesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstancePatches", {}).n("SSMClient", "DescribeInstancePatchesCommand").sc(schemas_0.DescribeInstancePatches$).build() {
+    };
+    var DescribeInstancePatchStatesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstancePatchStates", {}).n("SSMClient", "DescribeInstancePatchStatesCommand").sc(schemas_0.DescribeInstancePatchStates$).build() {
+    };
+    var DescribeInstancePatchStatesForPatchGroupCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstancePatchStatesForPatchGroup", {}).n("SSMClient", "DescribeInstancePatchStatesForPatchGroupCommand").sc(schemas_0.DescribeInstancePatchStatesForPatchGroup$).build() {
+    };
+    var DescribeInstancePropertiesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInstanceProperties", {}).n("SSMClient", "DescribeInstancePropertiesCommand").sc(schemas_0.DescribeInstanceProperties$).build() {
+    };
+    var DescribeInventoryDeletionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeInventoryDeletions", {}).n("SSMClient", "DescribeInventoryDeletionsCommand").sc(schemas_0.DescribeInventoryDeletions$).build() {
+    };
+    var DescribeMaintenanceWindowExecutionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutions", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionsCommand").sc(schemas_0.DescribeMaintenanceWindowExecutions$).build() {
+    };
+    var DescribeMaintenanceWindowExecutionTaskInvocationsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutionTaskInvocations", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionTaskInvocationsCommand").sc(schemas_0.DescribeMaintenanceWindowExecutionTaskInvocations$).build() {
+    };
+    var DescribeMaintenanceWindowExecutionTasksCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutionTasks", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionTasksCommand").sc(schemas_0.DescribeMaintenanceWindowExecutionTasks$).build() {
+    };
+    var DescribeMaintenanceWindowScheduleCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowSchedule", {}).n("SSMClient", "DescribeMaintenanceWindowScheduleCommand").sc(schemas_0.DescribeMaintenanceWindowSchedule$).build() {
+    };
+    var DescribeMaintenanceWindowsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindows", {}).n("SSMClient", "DescribeMaintenanceWindowsCommand").sc(schemas_0.DescribeMaintenanceWindows$).build() {
+    };
+    var DescribeMaintenanceWindowsForTargetCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowsForTarget", {}).n("SSMClient", "DescribeMaintenanceWindowsForTargetCommand").sc(schemas_0.DescribeMaintenanceWindowsForTarget$).build() {
+    };
+    var DescribeMaintenanceWindowTargetsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowTargets", {}).n("SSMClient", "DescribeMaintenanceWindowTargetsCommand").sc(schemas_0.DescribeMaintenanceWindowTargets$).build() {
+    };
+    var DescribeMaintenanceWindowTasksCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeMaintenanceWindowTasks", {}).n("SSMClient", "DescribeMaintenanceWindowTasksCommand").sc(schemas_0.DescribeMaintenanceWindowTasks$).build() {
+    };
+    var DescribeOpsItemsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeOpsItems", {}).n("SSMClient", "DescribeOpsItemsCommand").sc(schemas_0.DescribeOpsItems$).build() {
+    };
+    var DescribeParametersCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeParameters", {}).n("SSMClient", "DescribeParametersCommand").sc(schemas_0.DescribeParameters$).build() {
+    };
+    var DescribePatchBaselinesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribePatchBaselines", {}).n("SSMClient", "DescribePatchBaselinesCommand").sc(schemas_0.DescribePatchBaselines$).build() {
+    };
+    var DescribePatchGroupsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribePatchGroups", {}).n("SSMClient", "DescribePatchGroupsCommand").sc(schemas_0.DescribePatchGroups$).build() {
+    };
+    var DescribePatchGroupStateCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribePatchGroupState", {}).n("SSMClient", "DescribePatchGroupStateCommand").sc(schemas_0.DescribePatchGroupState$).build() {
+    };
+    var DescribePatchPropertiesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribePatchProperties", {}).n("SSMClient", "DescribePatchPropertiesCommand").sc(schemas_0.DescribePatchProperties$).build() {
+    };
+    var DescribeSessionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DescribeSessions", {}).n("SSMClient", "DescribeSessionsCommand").sc(schemas_0.DescribeSessions$).build() {
+    };
+    var DisassociateOpsItemRelatedItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "DisassociateOpsItemRelatedItem", {}).n("SSMClient", "DisassociateOpsItemRelatedItemCommand").sc(schemas_0.DisassociateOpsItemRelatedItem$).build() {
+    };
+    var GetAccessTokenCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetAccessToken", {}).n("SSMClient", "GetAccessTokenCommand").sc(schemas_0.GetAccessToken$).build() {
+    };
+    var GetAutomationExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetAutomationExecution", {}).n("SSMClient", "GetAutomationExecutionCommand").sc(schemas_0.GetAutomationExecution$).build() {
+    };
+    var GetCalendarStateCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetCalendarState", {}).n("SSMClient", "GetCalendarStateCommand").sc(schemas_0.GetCalendarState$).build() {
+    };
+    var GetCommandInvocationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetCommandInvocation", {}).n("SSMClient", "GetCommandInvocationCommand").sc(schemas_0.GetCommandInvocation$).build() {
+    };
+    var GetConnectionStatusCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetConnectionStatus", {}).n("SSMClient", "GetConnectionStatusCommand").sc(schemas_0.GetConnectionStatus$).build() {
+    };
+    var GetDefaultPatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetDefaultPatchBaseline", {}).n("SSMClient", "GetDefaultPatchBaselineCommand").sc(schemas_0.GetDefaultPatchBaseline$).build() {
+    };
+    var GetDeployablePatchSnapshotForInstanceCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetDeployablePatchSnapshotForInstance", {}).n("SSMClient", "GetDeployablePatchSnapshotForInstanceCommand").sc(schemas_0.GetDeployablePatchSnapshotForInstance$).build() {
+    };
+    var GetDocumentCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetDocument", {}).n("SSMClient", "GetDocumentCommand").sc(schemas_0.GetDocument$).build() {
+    };
+    var GetExecutionPreviewCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetExecutionPreview", {}).n("SSMClient", "GetExecutionPreviewCommand").sc(schemas_0.GetExecutionPreview$).build() {
+    };
+    var GetInventoryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetInventory", {}).n("SSMClient", "GetInventoryCommand").sc(schemas_0.GetInventory$).build() {
+    };
+    var GetInventorySchemaCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetInventorySchema", {}).n("SSMClient", "GetInventorySchemaCommand").sc(schemas_0.GetInventorySchema$).build() {
+    };
+    var GetMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetMaintenanceWindow", {}).n("SSMClient", "GetMaintenanceWindowCommand").sc(schemas_0.GetMaintenanceWindow$).build() {
+    };
+    var GetMaintenanceWindowExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetMaintenanceWindowExecution", {}).n("SSMClient", "GetMaintenanceWindowExecutionCommand").sc(schemas_0.GetMaintenanceWindowExecution$).build() {
+    };
+    var GetMaintenanceWindowExecutionTaskCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetMaintenanceWindowExecutionTask", {}).n("SSMClient", "GetMaintenanceWindowExecutionTaskCommand").sc(schemas_0.GetMaintenanceWindowExecutionTask$).build() {
+    };
+    var GetMaintenanceWindowExecutionTaskInvocationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetMaintenanceWindowExecutionTaskInvocation", {}).n("SSMClient", "GetMaintenanceWindowExecutionTaskInvocationCommand").sc(schemas_0.GetMaintenanceWindowExecutionTaskInvocation$).build() {
+    };
+    var GetMaintenanceWindowTaskCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetMaintenanceWindowTask", {}).n("SSMClient", "GetMaintenanceWindowTaskCommand").sc(schemas_0.GetMaintenanceWindowTask$).build() {
+    };
+    var GetOpsItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetOpsItem", {}).n("SSMClient", "GetOpsItemCommand").sc(schemas_0.GetOpsItem$).build() {
+    };
+    var GetOpsMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetOpsMetadata", {}).n("SSMClient", "GetOpsMetadataCommand").sc(schemas_0.GetOpsMetadata$).build() {
+    };
+    var GetOpsSummaryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetOpsSummary", {}).n("SSMClient", "GetOpsSummaryCommand").sc(schemas_0.GetOpsSummary$).build() {
+    };
+    var GetParameterCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetParameter", {}).n("SSMClient", "GetParameterCommand").sc(schemas_0.GetParameter$).build() {
+    };
+    var GetParameterHistoryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetParameterHistory", {}).n("SSMClient", "GetParameterHistoryCommand").sc(schemas_0.GetParameterHistory$).build() {
+    };
+    var GetParametersByPathCommand2 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetParametersByPath", {}).n("SSMClient", "GetParametersByPathCommand").sc(schemas_0.GetParametersByPath$).build() {
+    };
+    var GetParametersCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetParameters", {}).n("SSMClient", "GetParametersCommand").sc(schemas_0.GetParameters$).build() {
+    };
+    var GetPatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetPatchBaseline", {}).n("SSMClient", "GetPatchBaselineCommand").sc(schemas_0.GetPatchBaseline$).build() {
+    };
+    var GetPatchBaselineForPatchGroupCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetPatchBaselineForPatchGroup", {}).n("SSMClient", "GetPatchBaselineForPatchGroupCommand").sc(schemas_0.GetPatchBaselineForPatchGroup$).build() {
+    };
+    var GetResourcePoliciesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetResourcePolicies", {}).n("SSMClient", "GetResourcePoliciesCommand").sc(schemas_0.GetResourcePolicies$).build() {
+    };
+    var GetServiceSettingCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "GetServiceSetting", {}).n("SSMClient", "GetServiceSettingCommand").sc(schemas_0.GetServiceSetting$).build() {
+    };
+    var LabelParameterVersionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "LabelParameterVersion", {}).n("SSMClient", "LabelParameterVersionCommand").sc(schemas_0.LabelParameterVersion$).build() {
+    };
+    var ListAssociationsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListAssociations", {}).n("SSMClient", "ListAssociationsCommand").sc(schemas_0.ListAssociations$).build() {
+    };
+    var ListAssociationVersionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListAssociationVersions", {}).n("SSMClient", "ListAssociationVersionsCommand").sc(schemas_0.ListAssociationVersions$).build() {
+    };
+    var ListCommandInvocationsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListCommandInvocations", {}).n("SSMClient", "ListCommandInvocationsCommand").sc(schemas_0.ListCommandInvocations$).build() {
+    };
+    var ListCommandsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListCommands", {}).n("SSMClient", "ListCommandsCommand").sc(schemas_0.ListCommands$).build() {
+    };
+    var ListComplianceItemsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListComplianceItems", {}).n("SSMClient", "ListComplianceItemsCommand").sc(schemas_0.ListComplianceItems$).build() {
+    };
+    var ListComplianceSummariesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListComplianceSummaries", {}).n("SSMClient", "ListComplianceSummariesCommand").sc(schemas_0.ListComplianceSummaries$).build() {
+    };
+    var ListDocumentMetadataHistoryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListDocumentMetadataHistory", {}).n("SSMClient", "ListDocumentMetadataHistoryCommand").sc(schemas_0.ListDocumentMetadataHistory$).build() {
+    };
+    var ListDocumentsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListDocuments", {}).n("SSMClient", "ListDocumentsCommand").sc(schemas_0.ListDocuments$).build() {
+    };
+    var ListDocumentVersionsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListDocumentVersions", {}).n("SSMClient", "ListDocumentVersionsCommand").sc(schemas_0.ListDocumentVersions$).build() {
+    };
+    var ListInventoryEntriesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListInventoryEntries", {}).n("SSMClient", "ListInventoryEntriesCommand").sc(schemas_0.ListInventoryEntries$).build() {
+    };
+    var ListNodesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListNodes", {}).n("SSMClient", "ListNodesCommand").sc(schemas_0.ListNodes$).build() {
+    };
+    var ListNodesSummaryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListNodesSummary", {}).n("SSMClient", "ListNodesSummaryCommand").sc(schemas_0.ListNodesSummary$).build() {
+    };
+    var ListOpsItemEventsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListOpsItemEvents", {}).n("SSMClient", "ListOpsItemEventsCommand").sc(schemas_0.ListOpsItemEvents$).build() {
+    };
+    var ListOpsItemRelatedItemsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListOpsItemRelatedItems", {}).n("SSMClient", "ListOpsItemRelatedItemsCommand").sc(schemas_0.ListOpsItemRelatedItems$).build() {
+    };
+    var ListOpsMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListOpsMetadata", {}).n("SSMClient", "ListOpsMetadataCommand").sc(schemas_0.ListOpsMetadata$).build() {
+    };
+    var ListResourceComplianceSummariesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListResourceComplianceSummaries", {}).n("SSMClient", "ListResourceComplianceSummariesCommand").sc(schemas_0.ListResourceComplianceSummaries$).build() {
+    };
+    var ListResourceDataSyncCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListResourceDataSync", {}).n("SSMClient", "ListResourceDataSyncCommand").sc(schemas_0.ListResourceDataSync$).build() {
+    };
+    var ListTagsForResourceCommand3 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ListTagsForResource", {}).n("SSMClient", "ListTagsForResourceCommand").sc(schemas_0.ListTagsForResource$).build() {
+    };
+    var ModifyDocumentPermissionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ModifyDocumentPermission", {}).n("SSMClient", "ModifyDocumentPermissionCommand").sc(schemas_0.ModifyDocumentPermission$).build() {
+    };
+    var PutComplianceItemsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "PutComplianceItems", {}).n("SSMClient", "PutComplianceItemsCommand").sc(schemas_0.PutComplianceItems$).build() {
+    };
+    var PutInventoryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "PutInventory", {}).n("SSMClient", "PutInventoryCommand").sc(schemas_0.PutInventory$).build() {
+    };
+    var PutParameterCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "PutParameter", {}).n("SSMClient", "PutParameterCommand").sc(schemas_0.PutParameter$).build() {
+    };
+    var PutResourcePolicyCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "PutResourcePolicy", {}).n("SSMClient", "PutResourcePolicyCommand").sc(schemas_0.PutResourcePolicy$).build() {
+    };
+    var RegisterDefaultPatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "RegisterDefaultPatchBaseline", {}).n("SSMClient", "RegisterDefaultPatchBaselineCommand").sc(schemas_0.RegisterDefaultPatchBaseline$).build() {
+    };
+    var RegisterPatchBaselineForPatchGroupCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "RegisterPatchBaselineForPatchGroup", {}).n("SSMClient", "RegisterPatchBaselineForPatchGroupCommand").sc(schemas_0.RegisterPatchBaselineForPatchGroup$).build() {
+    };
+    var RegisterTargetWithMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "RegisterTargetWithMaintenanceWindow", {}).n("SSMClient", "RegisterTargetWithMaintenanceWindowCommand").sc(schemas_0.RegisterTargetWithMaintenanceWindow$).build() {
+    };
+    var RegisterTaskWithMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "RegisterTaskWithMaintenanceWindow", {}).n("SSMClient", "RegisterTaskWithMaintenanceWindowCommand").sc(schemas_0.RegisterTaskWithMaintenanceWindow$).build() {
+    };
+    var RemoveTagsFromResourceCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "RemoveTagsFromResource", {}).n("SSMClient", "RemoveTagsFromResourceCommand").sc(schemas_0.RemoveTagsFromResource$).build() {
+    };
+    var ResetServiceSettingCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ResetServiceSetting", {}).n("SSMClient", "ResetServiceSettingCommand").sc(schemas_0.ResetServiceSetting$).build() {
+    };
+    var ResumeSessionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "ResumeSession", {}).n("SSMClient", "ResumeSessionCommand").sc(schemas_0.ResumeSession$).build() {
+    };
+    var SendAutomationSignalCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "SendAutomationSignal", {}).n("SSMClient", "SendAutomationSignalCommand").sc(schemas_0.SendAutomationSignal$).build() {
+    };
+    var SendCommandCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "SendCommand", {}).n("SSMClient", "SendCommandCommand").sc(schemas_0.SendCommand$).build() {
+    };
+    var StartAccessRequestCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartAccessRequest", {}).n("SSMClient", "StartAccessRequestCommand").sc(schemas_0.StartAccessRequest$).build() {
+    };
+    var StartAssociationsOnceCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartAssociationsOnce", {}).n("SSMClient", "StartAssociationsOnceCommand").sc(schemas_0.StartAssociationsOnce$).build() {
+    };
+    var StartAutomationExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartAutomationExecution", {}).n("SSMClient", "StartAutomationExecutionCommand").sc(schemas_0.StartAutomationExecution$).build() {
+    };
+    var StartChangeRequestExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartChangeRequestExecution", {}).n("SSMClient", "StartChangeRequestExecutionCommand").sc(schemas_0.StartChangeRequestExecution$).build() {
+    };
+    var StartExecutionPreviewCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartExecutionPreview", {}).n("SSMClient", "StartExecutionPreviewCommand").sc(schemas_0.StartExecutionPreview$).build() {
+    };
+    var StartSessionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StartSession", {}).n("SSMClient", "StartSessionCommand").sc(schemas_0.StartSession$).build() {
+    };
+    var StopAutomationExecutionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "StopAutomationExecution", {}).n("SSMClient", "StopAutomationExecutionCommand").sc(schemas_0.StopAutomationExecution$).build() {
+    };
+    var TerminateSessionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "TerminateSession", {}).n("SSMClient", "TerminateSessionCommand").sc(schemas_0.TerminateSession$).build() {
+    };
+    var UnlabelParameterVersionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UnlabelParameterVersion", {}).n("SSMClient", "UnlabelParameterVersionCommand").sc(schemas_0.UnlabelParameterVersion$).build() {
+    };
+    var UpdateAssociationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateAssociation", {}).n("SSMClient", "UpdateAssociationCommand").sc(schemas_0.UpdateAssociation$).build() {
+    };
+    var UpdateAssociationStatusCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateAssociationStatus", {}).n("SSMClient", "UpdateAssociationStatusCommand").sc(schemas_0.UpdateAssociationStatus$).build() {
+    };
+    var UpdateDocumentCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateDocument", {}).n("SSMClient", "UpdateDocumentCommand").sc(schemas_0.UpdateDocument$).build() {
+    };
+    var UpdateDocumentDefaultVersionCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateDocumentDefaultVersion", {}).n("SSMClient", "UpdateDocumentDefaultVersionCommand").sc(schemas_0.UpdateDocumentDefaultVersion$).build() {
+    };
+    var UpdateDocumentMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateDocumentMetadata", {}).n("SSMClient", "UpdateDocumentMetadataCommand").sc(schemas_0.UpdateDocumentMetadata$).build() {
+    };
+    var UpdateMaintenanceWindowCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateMaintenanceWindow", {}).n("SSMClient", "UpdateMaintenanceWindowCommand").sc(schemas_0.UpdateMaintenanceWindow$).build() {
+    };
+    var UpdateMaintenanceWindowTargetCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateMaintenanceWindowTarget", {}).n("SSMClient", "UpdateMaintenanceWindowTargetCommand").sc(schemas_0.UpdateMaintenanceWindowTarget$).build() {
+    };
+    var UpdateMaintenanceWindowTaskCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateMaintenanceWindowTask", {}).n("SSMClient", "UpdateMaintenanceWindowTaskCommand").sc(schemas_0.UpdateMaintenanceWindowTask$).build() {
+    };
+    var UpdateManagedInstanceRoleCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateManagedInstanceRole", {}).n("SSMClient", "UpdateManagedInstanceRoleCommand").sc(schemas_0.UpdateManagedInstanceRole$).build() {
+    };
+    var UpdateOpsItemCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateOpsItem", {}).n("SSMClient", "UpdateOpsItemCommand").sc(schemas_0.UpdateOpsItem$).build() {
+    };
+    var UpdateOpsMetadataCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateOpsMetadata", {}).n("SSMClient", "UpdateOpsMetadataCommand").sc(schemas_0.UpdateOpsMetadata$).build() {
+    };
+    var UpdatePatchBaselineCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdatePatchBaseline", {}).n("SSMClient", "UpdatePatchBaselineCommand").sc(schemas_0.UpdatePatchBaseline$).build() {
+    };
+    var UpdateResourceDataSyncCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateResourceDataSync", {}).n("SSMClient", "UpdateResourceDataSyncCommand").sc(schemas_0.UpdateResourceDataSync$).build() {
+    };
+    var UpdateServiceSettingCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("AmazonSSM", "UpdateServiceSetting", {}).n("SSMClient", "UpdateServiceSettingCommand").sc(schemas_0.UpdateServiceSetting$).build() {
+    };
+    var paginateDescribeActivations = core.createPaginator(SSMClient2, DescribeActivationsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeAssociationExecutions = core.createPaginator(SSMClient2, DescribeAssociationExecutionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeAssociationExecutionTargets = core.createPaginator(SSMClient2, DescribeAssociationExecutionTargetsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeAutomationExecutions = core.createPaginator(SSMClient2, DescribeAutomationExecutionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeAutomationStepExecutions = core.createPaginator(SSMClient2, DescribeAutomationStepExecutionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeAvailablePatches = core.createPaginator(SSMClient2, DescribeAvailablePatchesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeEffectiveInstanceAssociations = core.createPaginator(SSMClient2, DescribeEffectiveInstanceAssociationsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeEffectivePatchesForPatchBaseline = core.createPaginator(SSMClient2, DescribeEffectivePatchesForPatchBaselineCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstanceAssociationsStatus = core.createPaginator(SSMClient2, DescribeInstanceAssociationsStatusCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstanceInformation = core.createPaginator(SSMClient2, DescribeInstanceInformationCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstancePatches = core.createPaginator(SSMClient2, DescribeInstancePatchesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstancePatchStatesForPatchGroup = core.createPaginator(SSMClient2, DescribeInstancePatchStatesForPatchGroupCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstancePatchStates = core.createPaginator(SSMClient2, DescribeInstancePatchStatesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInstanceProperties = core.createPaginator(SSMClient2, DescribeInstancePropertiesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeInventoryDeletions = core.createPaginator(SSMClient2, DescribeInventoryDeletionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowExecutions = core.createPaginator(SSMClient2, DescribeMaintenanceWindowExecutionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowExecutionTaskInvocations = core.createPaginator(SSMClient2, DescribeMaintenanceWindowExecutionTaskInvocationsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowExecutionTasks = core.createPaginator(SSMClient2, DescribeMaintenanceWindowExecutionTasksCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowSchedule = core.createPaginator(SSMClient2, DescribeMaintenanceWindowScheduleCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowsForTarget = core.createPaginator(SSMClient2, DescribeMaintenanceWindowsForTargetCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindows = core.createPaginator(SSMClient2, DescribeMaintenanceWindowsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowTargets = core.createPaginator(SSMClient2, DescribeMaintenanceWindowTargetsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeMaintenanceWindowTasks = core.createPaginator(SSMClient2, DescribeMaintenanceWindowTasksCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeOpsItems = core.createPaginator(SSMClient2, DescribeOpsItemsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeParameters = core.createPaginator(SSMClient2, DescribeParametersCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribePatchBaselines = core.createPaginator(SSMClient2, DescribePatchBaselinesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribePatchGroups = core.createPaginator(SSMClient2, DescribePatchGroupsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribePatchProperties = core.createPaginator(SSMClient2, DescribePatchPropertiesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateDescribeSessions = core.createPaginator(SSMClient2, DescribeSessionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateGetInventory = core.createPaginator(SSMClient2, GetInventoryCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateGetInventorySchema = core.createPaginator(SSMClient2, GetInventorySchemaCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateGetOpsSummary = core.createPaginator(SSMClient2, GetOpsSummaryCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateGetParameterHistory = core.createPaginator(SSMClient2, GetParameterHistoryCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateGetParametersByPath = core.createPaginator(SSMClient2, GetParametersByPathCommand2, "NextToken", "NextToken", "MaxResults");
+    var paginateGetResourcePolicies = core.createPaginator(SSMClient2, GetResourcePoliciesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListAssociations = core.createPaginator(SSMClient2, ListAssociationsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListAssociationVersions = core.createPaginator(SSMClient2, ListAssociationVersionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListCommandInvocations = core.createPaginator(SSMClient2, ListCommandInvocationsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListCommands = core.createPaginator(SSMClient2, ListCommandsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListComplianceItems = core.createPaginator(SSMClient2, ListComplianceItemsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListComplianceSummaries = core.createPaginator(SSMClient2, ListComplianceSummariesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListDocuments = core.createPaginator(SSMClient2, ListDocumentsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListDocumentVersions = core.createPaginator(SSMClient2, ListDocumentVersionsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListNodes = core.createPaginator(SSMClient2, ListNodesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListNodesSummary = core.createPaginator(SSMClient2, ListNodesSummaryCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListOpsItemEvents = core.createPaginator(SSMClient2, ListOpsItemEventsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListOpsItemRelatedItems = core.createPaginator(SSMClient2, ListOpsItemRelatedItemsCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListOpsMetadata = core.createPaginator(SSMClient2, ListOpsMetadataCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListResourceComplianceSummaries = core.createPaginator(SSMClient2, ListResourceComplianceSummariesCommand, "NextToken", "NextToken", "MaxResults");
+    var paginateListResourceDataSync = core.createPaginator(SSMClient2, ListResourceDataSyncCommand, "NextToken", "NextToken", "MaxResults");
+    var checkState = async (client, input) => {
+      let reason;
+      try {
+        let result = await client.send(new GetCommandInvocationCommand(input));
+        reason = result;
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Pending") {
+            return { state: utilWaiter.WaiterState.RETRY, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "InProgress") {
+            return { state: utilWaiter.WaiterState.RETRY, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Delayed") {
+            return { state: utilWaiter.WaiterState.RETRY, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Success") {
+            return { state: utilWaiter.WaiterState.SUCCESS, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Cancelled") {
+            return { state: utilWaiter.WaiterState.FAILURE, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "TimedOut") {
+            return { state: utilWaiter.WaiterState.FAILURE, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Failed") {
+            return { state: utilWaiter.WaiterState.FAILURE, reason };
+          }
+        } catch (e5) {
+        }
+        try {
+          const returnComparator = () => {
+            return result.Status;
+          };
+          if (returnComparator() === "Cancelling") {
+            return { state: utilWaiter.WaiterState.FAILURE, reason };
+          }
+        } catch (e5) {
+        }
+      } catch (exception) {
+        reason = exception;
+        if (exception.name && exception.name == "InvocationDoesNotExist") {
+          return { state: utilWaiter.WaiterState.RETRY, reason };
+        }
+      }
+      return { state: utilWaiter.WaiterState.RETRY, reason };
+    };
+    var waitForCommandExecuted = async (params, input) => {
+      const serviceDefaults = { minDelay: 5, maxDelay: 120 };
+      return utilWaiter.createWaiter({ ...serviceDefaults, ...params }, input, checkState);
+    };
+    var waitUntilCommandExecuted = async (params, input) => {
+      const serviceDefaults = { minDelay: 5, maxDelay: 120 };
+      const result = await utilWaiter.createWaiter({ ...serviceDefaults, ...params }, input, checkState);
+      return utilWaiter.checkExceptions(result);
+    };
+    var commands5 = {
+      AddTagsToResourceCommand,
+      AssociateOpsItemRelatedItemCommand,
+      CancelCommandCommand,
+      CancelMaintenanceWindowExecutionCommand,
+      CreateActivationCommand,
+      CreateAssociationCommand,
+      CreateAssociationBatchCommand,
+      CreateDocumentCommand,
+      CreateMaintenanceWindowCommand,
+      CreateOpsItemCommand,
+      CreateOpsMetadataCommand,
+      CreatePatchBaselineCommand,
+      CreateResourceDataSyncCommand,
+      DeleteActivationCommand,
+      DeleteAssociationCommand,
+      DeleteDocumentCommand,
+      DeleteInventoryCommand,
+      DeleteMaintenanceWindowCommand,
+      DeleteOpsItemCommand,
+      DeleteOpsMetadataCommand,
+      DeleteParameterCommand,
+      DeleteParametersCommand,
+      DeletePatchBaselineCommand,
+      DeleteResourceDataSyncCommand,
+      DeleteResourcePolicyCommand,
+      DeregisterManagedInstanceCommand,
+      DeregisterPatchBaselineForPatchGroupCommand,
+      DeregisterTargetFromMaintenanceWindowCommand,
+      DeregisterTaskFromMaintenanceWindowCommand,
+      DescribeActivationsCommand,
+      DescribeAssociationCommand,
+      DescribeAssociationExecutionsCommand,
+      DescribeAssociationExecutionTargetsCommand,
+      DescribeAutomationExecutionsCommand,
+      DescribeAutomationStepExecutionsCommand,
+      DescribeAvailablePatchesCommand,
+      DescribeDocumentCommand,
+      DescribeDocumentPermissionCommand,
+      DescribeEffectiveInstanceAssociationsCommand,
+      DescribeEffectivePatchesForPatchBaselineCommand,
+      DescribeInstanceAssociationsStatusCommand,
+      DescribeInstanceInformationCommand,
+      DescribeInstancePatchesCommand,
+      DescribeInstancePatchStatesCommand,
+      DescribeInstancePatchStatesForPatchGroupCommand,
+      DescribeInstancePropertiesCommand,
+      DescribeInventoryDeletionsCommand,
+      DescribeMaintenanceWindowExecutionsCommand,
+      DescribeMaintenanceWindowExecutionTaskInvocationsCommand,
+      DescribeMaintenanceWindowExecutionTasksCommand,
+      DescribeMaintenanceWindowsCommand,
+      DescribeMaintenanceWindowScheduleCommand,
+      DescribeMaintenanceWindowsForTargetCommand,
+      DescribeMaintenanceWindowTargetsCommand,
+      DescribeMaintenanceWindowTasksCommand,
+      DescribeOpsItemsCommand,
+      DescribeParametersCommand,
+      DescribePatchBaselinesCommand,
+      DescribePatchGroupsCommand,
+      DescribePatchGroupStateCommand,
+      DescribePatchPropertiesCommand,
+      DescribeSessionsCommand,
+      DisassociateOpsItemRelatedItemCommand,
+      GetAccessTokenCommand,
+      GetAutomationExecutionCommand,
+      GetCalendarStateCommand,
+      GetCommandInvocationCommand,
+      GetConnectionStatusCommand,
+      GetDefaultPatchBaselineCommand,
+      GetDeployablePatchSnapshotForInstanceCommand,
+      GetDocumentCommand,
+      GetExecutionPreviewCommand,
+      GetInventoryCommand,
+      GetInventorySchemaCommand,
+      GetMaintenanceWindowCommand,
+      GetMaintenanceWindowExecutionCommand,
+      GetMaintenanceWindowExecutionTaskCommand,
+      GetMaintenanceWindowExecutionTaskInvocationCommand,
+      GetMaintenanceWindowTaskCommand,
+      GetOpsItemCommand,
+      GetOpsMetadataCommand,
+      GetOpsSummaryCommand,
+      GetParameterCommand,
+      GetParameterHistoryCommand,
+      GetParametersCommand,
+      GetParametersByPathCommand: GetParametersByPathCommand2,
+      GetPatchBaselineCommand,
+      GetPatchBaselineForPatchGroupCommand,
+      GetResourcePoliciesCommand,
+      GetServiceSettingCommand,
+      LabelParameterVersionCommand,
+      ListAssociationsCommand,
+      ListAssociationVersionsCommand,
+      ListCommandInvocationsCommand,
+      ListCommandsCommand,
+      ListComplianceItemsCommand,
+      ListComplianceSummariesCommand,
+      ListDocumentMetadataHistoryCommand,
+      ListDocumentsCommand,
+      ListDocumentVersionsCommand,
+      ListInventoryEntriesCommand,
+      ListNodesCommand,
+      ListNodesSummaryCommand,
+      ListOpsItemEventsCommand,
+      ListOpsItemRelatedItemsCommand,
+      ListOpsMetadataCommand,
+      ListResourceComplianceSummariesCommand,
+      ListResourceDataSyncCommand,
+      ListTagsForResourceCommand: ListTagsForResourceCommand3,
+      ModifyDocumentPermissionCommand,
+      PutComplianceItemsCommand,
+      PutInventoryCommand,
+      PutParameterCommand,
+      PutResourcePolicyCommand,
+      RegisterDefaultPatchBaselineCommand,
+      RegisterPatchBaselineForPatchGroupCommand,
+      RegisterTargetWithMaintenanceWindowCommand,
+      RegisterTaskWithMaintenanceWindowCommand,
+      RemoveTagsFromResourceCommand,
+      ResetServiceSettingCommand,
+      ResumeSessionCommand,
+      SendAutomationSignalCommand,
+      SendCommandCommand,
+      StartAccessRequestCommand,
+      StartAssociationsOnceCommand,
+      StartAutomationExecutionCommand,
+      StartChangeRequestExecutionCommand,
+      StartExecutionPreviewCommand,
+      StartSessionCommand,
+      StopAutomationExecutionCommand,
+      TerminateSessionCommand,
+      UnlabelParameterVersionCommand,
+      UpdateAssociationCommand,
+      UpdateAssociationStatusCommand,
+      UpdateDocumentCommand,
+      UpdateDocumentDefaultVersionCommand,
+      UpdateDocumentMetadataCommand,
+      UpdateMaintenanceWindowCommand,
+      UpdateMaintenanceWindowTargetCommand,
+      UpdateMaintenanceWindowTaskCommand,
+      UpdateManagedInstanceRoleCommand,
+      UpdateOpsItemCommand,
+      UpdateOpsMetadataCommand,
+      UpdatePatchBaselineCommand,
+      UpdateResourceDataSyncCommand,
+      UpdateServiceSettingCommand
+    };
+    var paginators = {
+      paginateDescribeActivations,
+      paginateDescribeAssociationExecutions,
+      paginateDescribeAssociationExecutionTargets,
+      paginateDescribeAutomationExecutions,
+      paginateDescribeAutomationStepExecutions,
+      paginateDescribeAvailablePatches,
+      paginateDescribeEffectiveInstanceAssociations,
+      paginateDescribeEffectivePatchesForPatchBaseline,
+      paginateDescribeInstanceAssociationsStatus,
+      paginateDescribeInstanceInformation,
+      paginateDescribeInstancePatches,
+      paginateDescribeInstancePatchStates,
+      paginateDescribeInstancePatchStatesForPatchGroup,
+      paginateDescribeInstanceProperties,
+      paginateDescribeInventoryDeletions,
+      paginateDescribeMaintenanceWindowExecutions,
+      paginateDescribeMaintenanceWindowExecutionTaskInvocations,
+      paginateDescribeMaintenanceWindowExecutionTasks,
+      paginateDescribeMaintenanceWindows,
+      paginateDescribeMaintenanceWindowSchedule,
+      paginateDescribeMaintenanceWindowsForTarget,
+      paginateDescribeMaintenanceWindowTargets,
+      paginateDescribeMaintenanceWindowTasks,
+      paginateDescribeOpsItems,
+      paginateDescribeParameters,
+      paginateDescribePatchBaselines,
+      paginateDescribePatchGroups,
+      paginateDescribePatchProperties,
+      paginateDescribeSessions,
+      paginateGetInventory,
+      paginateGetInventorySchema,
+      paginateGetOpsSummary,
+      paginateGetParameterHistory,
+      paginateGetParametersByPath,
+      paginateGetResourcePolicies,
+      paginateListAssociations,
+      paginateListAssociationVersions,
+      paginateListCommandInvocations,
+      paginateListCommands,
+      paginateListComplianceItems,
+      paginateListComplianceSummaries,
+      paginateListDocuments,
+      paginateListDocumentVersions,
+      paginateListNodes,
+      paginateListNodesSummary,
+      paginateListOpsItemEvents,
+      paginateListOpsItemRelatedItems,
+      paginateListOpsMetadata,
+      paginateListResourceComplianceSummaries,
+      paginateListResourceDataSync
+    };
+    var waiters = {
+      waitUntilCommandExecuted
+    };
+    var SSM = class extends SSMClient2 {
+    };
+    smithyClient.createAggregatedClient(commands5, SSM, { paginators, waiters });
+    var AccessRequestStatus = {
+      APPROVED: "Approved",
+      EXPIRED: "Expired",
+      PENDING: "Pending",
+      REJECTED: "Rejected",
+      REVOKED: "Revoked"
+    };
+    var AccessType = {
+      JUSTINTIME: "JustInTime",
+      STANDARD: "Standard"
+    };
+    var ResourceTypeForTagging = {
+      ASSOCIATION: "Association",
+      AUTOMATION: "Automation",
+      DOCUMENT: "Document",
+      MAINTENANCE_WINDOW: "MaintenanceWindow",
+      MANAGED_INSTANCE: "ManagedInstance",
+      OPSMETADATA: "OpsMetadata",
+      OPS_ITEM: "OpsItem",
+      PARAMETER: "Parameter",
+      PATCH_BASELINE: "PatchBaseline"
+    };
+    var ExternalAlarmState = {
+      ALARM: "ALARM",
+      UNKNOWN: "UNKNOWN"
+    };
+    var AssociationComplianceSeverity = {
+      Critical: "CRITICAL",
+      High: "HIGH",
+      Low: "LOW",
+      Medium: "MEDIUM",
+      Unspecified: "UNSPECIFIED"
+    };
+    var AssociationSyncCompliance = {
+      Auto: "AUTO",
+      Manual: "MANUAL"
+    };
+    var AssociationStatusName = {
+      Failed: "Failed",
+      Pending: "Pending",
+      Success: "Success"
+    };
+    var Fault = {
+      Client: "Client",
+      Server: "Server",
+      Unknown: "Unknown"
+    };
+    var AttachmentsSourceKey = {
+      AttachmentReference: "AttachmentReference",
+      S3FileUrl: "S3FileUrl",
+      SourceUrl: "SourceUrl"
+    };
+    var DocumentFormat = {
+      JSON: "JSON",
+      TEXT: "TEXT",
+      YAML: "YAML"
+    };
+    var DocumentType = {
+      ApplicationConfiguration: "ApplicationConfiguration",
+      ApplicationConfigurationSchema: "ApplicationConfigurationSchema",
+      AutoApprovalPolicy: "AutoApprovalPolicy",
+      Automation: "Automation",
+      ChangeCalendar: "ChangeCalendar",
+      ChangeTemplate: "Automation.ChangeTemplate",
+      CloudFormation: "CloudFormation",
+      Command: "Command",
+      ConformancePackTemplate: "ConformancePackTemplate",
+      DeploymentStrategy: "DeploymentStrategy",
+      ManualApprovalPolicy: "ManualApprovalPolicy",
+      Package: "Package",
+      Policy: "Policy",
+      ProblemAnalysis: "ProblemAnalysis",
+      ProblemAnalysisTemplate: "ProblemAnalysisTemplate",
+      QuickSetup: "QuickSetup",
+      Session: "Session"
+    };
+    var DocumentHashType = {
+      SHA1: "Sha1",
+      SHA256: "Sha256"
+    };
+    var DocumentParameterType = {
+      String: "String",
+      StringList: "StringList"
+    };
+    var PlatformType = {
+      LINUX: "Linux",
+      MACOS: "MacOS",
+      WINDOWS: "Windows"
+    };
+    var ReviewStatus = {
+      APPROVED: "APPROVED",
+      NOT_REVIEWED: "NOT_REVIEWED",
+      PENDING: "PENDING",
+      REJECTED: "REJECTED"
+    };
+    var DocumentStatus = {
+      Active: "Active",
+      Creating: "Creating",
+      Deleting: "Deleting",
+      Failed: "Failed",
+      Updating: "Updating"
+    };
+    var OpsItemDataType = {
+      SEARCHABLE_STRING: "SearchableString",
+      STRING: "String"
+    };
+    var PatchComplianceLevel = {
+      Critical: "CRITICAL",
+      High: "HIGH",
+      Informational: "INFORMATIONAL",
+      Low: "LOW",
+      Medium: "MEDIUM",
+      Unspecified: "UNSPECIFIED"
+    };
+    var PatchFilterKey = {
+      AdvisoryId: "ADVISORY_ID",
+      Arch: "ARCH",
+      BugzillaId: "BUGZILLA_ID",
+      CVEId: "CVE_ID",
+      Classification: "CLASSIFICATION",
+      Epoch: "EPOCH",
+      MsrcSeverity: "MSRC_SEVERITY",
+      Name: "NAME",
+      PatchId: "PATCH_ID",
+      PatchSet: "PATCH_SET",
+      Priority: "PRIORITY",
+      Product: "PRODUCT",
+      ProductFamily: "PRODUCT_FAMILY",
+      Release: "RELEASE",
+      Repository: "REPOSITORY",
+      Section: "SECTION",
+      Security: "SECURITY",
+      Severity: "SEVERITY",
+      Version: "VERSION"
+    };
+    var PatchComplianceStatus = {
+      Compliant: "COMPLIANT",
+      NonCompliant: "NON_COMPLIANT"
+    };
+    var OperatingSystem = {
+      AlmaLinux: "ALMA_LINUX",
+      AmazonLinux: "AMAZON_LINUX",
+      AmazonLinux2: "AMAZON_LINUX_2",
+      AmazonLinux2022: "AMAZON_LINUX_2022",
+      AmazonLinux2023: "AMAZON_LINUX_2023",
+      CentOS: "CENTOS",
+      Debian: "DEBIAN",
+      MacOS: "MACOS",
+      OracleLinux: "ORACLE_LINUX",
+      Raspbian: "RASPBIAN",
+      RedhatEnterpriseLinux: "REDHAT_ENTERPRISE_LINUX",
+      Rocky_Linux: "ROCKY_LINUX",
+      Suse: "SUSE",
+      Ubuntu: "UBUNTU",
+      Windows: "WINDOWS"
+    };
+    var PatchAction = {
+      AllowAsDependency: "ALLOW_AS_DEPENDENCY",
+      Block: "BLOCK"
+    };
+    var ResourceDataSyncS3Format = {
+      JSON_SERDE: "JsonSerDe"
+    };
+    var InventorySchemaDeleteOption = {
+      DELETE_SCHEMA: "DeleteSchema",
+      DISABLE_SCHEMA: "DisableSchema"
+    };
+    var DescribeActivationsFilterKeys = {
+      ACTIVATION_IDS: "ActivationIds",
+      DEFAULT_INSTANCE_NAME: "DefaultInstanceName",
+      IAM_ROLE: "IamRole"
+    };
+    var AssociationExecutionFilterKey = {
+      CreatedTime: "CreatedTime",
+      ExecutionId: "ExecutionId",
+      Status: "Status"
+    };
+    var AssociationFilterOperatorType = {
+      Equal: "EQUAL",
+      GreaterThan: "GREATER_THAN",
+      LessThan: "LESS_THAN"
+    };
+    var AssociationExecutionTargetsFilterKey = {
+      ResourceId: "ResourceId",
+      ResourceType: "ResourceType",
+      Status: "Status"
+    };
+    var AutomationExecutionFilterKey = {
+      AUTOMATION_SUBTYPE: "AutomationSubtype",
+      AUTOMATION_TYPE: "AutomationType",
+      CURRENT_ACTION: "CurrentAction",
+      DOCUMENT_NAME_PREFIX: "DocumentNamePrefix",
+      EXECUTION_ID: "ExecutionId",
+      EXECUTION_STATUS: "ExecutionStatus",
+      OPS_ITEM_ID: "OpsItemId",
+      PARENT_EXECUTION_ID: "ParentExecutionId",
+      START_TIME_AFTER: "StartTimeAfter",
+      START_TIME_BEFORE: "StartTimeBefore",
+      TAG_KEY: "TagKey",
+      TARGET_RESOURCE_GROUP: "TargetResourceGroup"
+    };
+    var AutomationExecutionStatus = {
+      APPROVED: "Approved",
+      CANCELLED: "Cancelled",
+      CANCELLING: "Cancelling",
+      CHANGE_CALENDAR_OVERRIDE_APPROVED: "ChangeCalendarOverrideApproved",
+      CHANGE_CALENDAR_OVERRIDE_REJECTED: "ChangeCalendarOverrideRejected",
+      COMPLETED_WITH_FAILURE: "CompletedWithFailure",
+      COMPLETED_WITH_SUCCESS: "CompletedWithSuccess",
+      EXITED: "Exited",
+      FAILED: "Failed",
+      INPROGRESS: "InProgress",
+      PENDING: "Pending",
+      PENDING_APPROVAL: "PendingApproval",
+      PENDING_CHANGE_CALENDAR_OVERRIDE: "PendingChangeCalendarOverride",
+      REJECTED: "Rejected",
+      RUNBOOK_INPROGRESS: "RunbookInProgress",
+      SCHEDULED: "Scheduled",
+      SUCCESS: "Success",
+      TIMEDOUT: "TimedOut",
+      WAITING: "Waiting"
+    };
+    var AutomationSubtype = {
+      AccessRequest: "AccessRequest",
+      ChangeRequest: "ChangeRequest"
+    };
+    var AutomationType = {
+      CrossAccount: "CrossAccount",
+      Local: "Local"
+    };
+    var ExecutionMode = {
+      Auto: "Auto",
+      Interactive: "Interactive"
+    };
+    var StepExecutionFilterKey = {
+      ACTION: "Action",
+      PARENT_STEP_EXECUTION_ID: "ParentStepExecutionId",
+      PARENT_STEP_ITERATION: "ParentStepIteration",
+      PARENT_STEP_ITERATOR_VALUE: "ParentStepIteratorValue",
+      START_TIME_AFTER: "StartTimeAfter",
+      START_TIME_BEFORE: "StartTimeBefore",
+      STEP_EXECUTION_ID: "StepExecutionId",
+      STEP_EXECUTION_STATUS: "StepExecutionStatus",
+      STEP_NAME: "StepName"
+    };
+    var DocumentPermissionType = {
+      SHARE: "Share"
+    };
+    var PatchDeploymentStatus = {
+      Approved: "APPROVED",
+      ExplicitApproved: "EXPLICIT_APPROVED",
+      ExplicitRejected: "EXPLICIT_REJECTED",
+      PendingApproval: "PENDING_APPROVAL"
+    };
+    var InstanceInformationFilterKey = {
+      ACTIVATION_IDS: "ActivationIds",
+      AGENT_VERSION: "AgentVersion",
+      ASSOCIATION_STATUS: "AssociationStatus",
+      IAM_ROLE: "IamRole",
+      INSTANCE_IDS: "InstanceIds",
+      PING_STATUS: "PingStatus",
+      PLATFORM_TYPES: "PlatformTypes",
+      RESOURCE_TYPE: "ResourceType"
+    };
+    var PingStatus = {
+      CONNECTION_LOST: "ConnectionLost",
+      INACTIVE: "Inactive",
+      ONLINE: "Online"
+    };
+    var ResourceType = {
+      EC2_INSTANCE: "EC2Instance",
+      MANAGED_INSTANCE: "ManagedInstance"
+    };
+    var SourceType = {
+      AWS_EC2_INSTANCE: "AWS::EC2::Instance",
+      AWS_IOT_THING: "AWS::IoT::Thing",
+      AWS_SSM_MANAGEDINSTANCE: "AWS::SSM::ManagedInstance"
+    };
+    var PatchComplianceDataState = {
+      AvailableSecurityUpdate: "AVAILABLE_SECURITY_UPDATE",
+      Failed: "FAILED",
+      Installed: "INSTALLED",
+      InstalledOther: "INSTALLED_OTHER",
+      InstalledPendingReboot: "INSTALLED_PENDING_REBOOT",
+      InstalledRejected: "INSTALLED_REJECTED",
+      Missing: "MISSING",
+      NotApplicable: "NOT_APPLICABLE"
+    };
+    var PatchOperationType = {
+      INSTALL: "Install",
+      SCAN: "Scan"
+    };
+    var RebootOption = {
+      NO_REBOOT: "NoReboot",
+      REBOOT_IF_NEEDED: "RebootIfNeeded"
+    };
+    var InstancePatchStateOperatorType = {
+      EQUAL: "Equal",
+      GREATER_THAN: "GreaterThan",
+      LESS_THAN: "LessThan",
+      NOT_EQUAL: "NotEqual"
+    };
+    var InstancePropertyFilterOperator = {
+      BEGIN_WITH: "BeginWith",
+      EQUAL: "Equal",
+      GREATER_THAN: "GreaterThan",
+      LESS_THAN: "LessThan",
+      NOT_EQUAL: "NotEqual"
+    };
+    var InstancePropertyFilterKey = {
+      ACTIVATION_IDS: "ActivationIds",
+      AGENT_VERSION: "AgentVersion",
+      ASSOCIATION_STATUS: "AssociationStatus",
+      DOCUMENT_NAME: "DocumentName",
+      IAM_ROLE: "IamRole",
+      INSTANCE_IDS: "InstanceIds",
+      PING_STATUS: "PingStatus",
+      PLATFORM_TYPES: "PlatformTypes",
+      RESOURCE_TYPE: "ResourceType"
+    };
+    var InventoryDeletionStatus = {
+      COMPLETE: "Complete",
+      IN_PROGRESS: "InProgress"
+    };
+    var MaintenanceWindowExecutionStatus = {
+      Cancelled: "CANCELLED",
+      Cancelling: "CANCELLING",
+      Failed: "FAILED",
+      InProgress: "IN_PROGRESS",
+      Pending: "PENDING",
+      SkippedOverlapping: "SKIPPED_OVERLAPPING",
+      Success: "SUCCESS",
+      TimedOut: "TIMED_OUT"
+    };
+    var MaintenanceWindowTaskType = {
+      Automation: "AUTOMATION",
+      Lambda: "LAMBDA",
+      RunCommand: "RUN_COMMAND",
+      StepFunctions: "STEP_FUNCTIONS"
+    };
+    var MaintenanceWindowResourceType = {
+      Instance: "INSTANCE",
+      ResourceGroup: "RESOURCE_GROUP"
+    };
+    var MaintenanceWindowTaskCutoffBehavior = {
+      CancelTask: "CANCEL_TASK",
+      ContinueTask: "CONTINUE_TASK"
+    };
+    var OpsItemFilterKey = {
+      ACCESS_REQUEST_APPROVER_ARN: "AccessRequestByApproverArn",
+      ACCESS_REQUEST_APPROVER_ID: "AccessRequestByApproverId",
+      ACCESS_REQUEST_IS_REPLICA: "AccessRequestByIsReplica",
+      ACCESS_REQUEST_REQUESTER_ARN: "AccessRequestByRequesterArn",
+      ACCESS_REQUEST_REQUESTER_ID: "AccessRequestByRequesterId",
+      ACCESS_REQUEST_SOURCE_ACCOUNT_ID: "AccessRequestBySourceAccountId",
+      ACCESS_REQUEST_SOURCE_OPS_ITEM_ID: "AccessRequestBySourceOpsItemId",
+      ACCESS_REQUEST_SOURCE_REGION: "AccessRequestBySourceRegion",
+      ACCESS_REQUEST_TARGET_RESOURCE_ID: "AccessRequestByTargetResourceId",
+      ACCOUNT_ID: "AccountId",
+      ACTUAL_END_TIME: "ActualEndTime",
+      ACTUAL_START_TIME: "ActualStartTime",
+      AUTOMATION_ID: "AutomationId",
+      CATEGORY: "Category",
+      CHANGE_REQUEST_APPROVER_ARN: "ChangeRequestByApproverArn",
+      CHANGE_REQUEST_APPROVER_NAME: "ChangeRequestByApproverName",
+      CHANGE_REQUEST_REQUESTER_ARN: "ChangeRequestByRequesterArn",
+      CHANGE_REQUEST_REQUESTER_NAME: "ChangeRequestByRequesterName",
+      CHANGE_REQUEST_TARGETS_RESOURCE_GROUP: "ChangeRequestByTargetsResourceGroup",
+      CHANGE_REQUEST_TEMPLATE: "ChangeRequestByTemplate",
+      CREATED_BY: "CreatedBy",
+      CREATED_TIME: "CreatedTime",
+      INSIGHT_TYPE: "InsightByType",
+      LAST_MODIFIED_TIME: "LastModifiedTime",
+      OPERATIONAL_DATA: "OperationalData",
+      OPERATIONAL_DATA_KEY: "OperationalDataKey",
+      OPERATIONAL_DATA_VALUE: "OperationalDataValue",
+      OPSITEM_ID: "OpsItemId",
+      OPSITEM_TYPE: "OpsItemType",
+      PLANNED_END_TIME: "PlannedEndTime",
+      PLANNED_START_TIME: "PlannedStartTime",
+      PRIORITY: "Priority",
+      RESOURCE_ID: "ResourceId",
+      SEVERITY: "Severity",
+      SOURCE: "Source",
+      STATUS: "Status",
+      TITLE: "Title"
+    };
+    var OpsItemFilterOperator = {
+      CONTAINS: "Contains",
+      EQUAL: "Equal",
+      GREATER_THAN: "GreaterThan",
+      LESS_THAN: "LessThan"
+    };
+    var OpsItemStatus = {
+      APPROVED: "Approved",
+      CANCELLED: "Cancelled",
+      CANCELLING: "Cancelling",
+      CHANGE_CALENDAR_OVERRIDE_APPROVED: "ChangeCalendarOverrideApproved",
+      CHANGE_CALENDAR_OVERRIDE_REJECTED: "ChangeCalendarOverrideRejected",
+      CLOSED: "Closed",
+      COMPLETED_WITH_FAILURE: "CompletedWithFailure",
+      COMPLETED_WITH_SUCCESS: "CompletedWithSuccess",
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      OPEN: "Open",
+      PENDING: "Pending",
+      PENDING_APPROVAL: "PendingApproval",
+      PENDING_CHANGE_CALENDAR_OVERRIDE: "PendingChangeCalendarOverride",
+      REJECTED: "Rejected",
+      RESOLVED: "Resolved",
+      REVOKED: "Revoked",
+      RUNBOOK_IN_PROGRESS: "RunbookInProgress",
+      SCHEDULED: "Scheduled",
+      TIMED_OUT: "TimedOut"
+    };
+    var ParametersFilterKey = {
+      KEY_ID: "KeyId",
+      NAME: "Name",
+      TYPE: "Type"
+    };
+    var ParameterTier = {
+      ADVANCED: "Advanced",
+      INTELLIGENT_TIERING: "Intelligent-Tiering",
+      STANDARD: "Standard"
+    };
+    var ParameterType = {
+      SECURE_STRING: "SecureString",
+      STRING: "String",
+      STRING_LIST: "StringList"
+    };
+    var PatchSet = {
+      Application: "APPLICATION",
+      Os: "OS"
+    };
+    var PatchProperty = {
+      PatchClassification: "CLASSIFICATION",
+      PatchMsrcSeverity: "MSRC_SEVERITY",
+      PatchPriority: "PRIORITY",
+      PatchProductFamily: "PRODUCT_FAMILY",
+      PatchSeverity: "SEVERITY",
+      Product: "PRODUCT"
+    };
+    var SessionFilterKey = {
+      ACCESS_TYPE: "AccessType",
+      INVOKED_AFTER: "InvokedAfter",
+      INVOKED_BEFORE: "InvokedBefore",
+      OWNER: "Owner",
+      SESSION_ID: "SessionId",
+      STATUS: "Status",
+      TARGET_ID: "Target"
+    };
+    var SessionState = {
+      ACTIVE: "Active",
+      HISTORY: "History"
+    };
+    var SessionStatus = {
+      CONNECTED: "Connected",
+      CONNECTING: "Connecting",
+      DISCONNECTED: "Disconnected",
+      FAILED: "Failed",
+      TERMINATED: "Terminated",
+      TERMINATING: "Terminating"
+    };
+    var CalendarState = {
+      CLOSED: "CLOSED",
+      OPEN: "OPEN"
+    };
+    var CommandInvocationStatus = {
+      CANCELLED: "Cancelled",
+      CANCELLING: "Cancelling",
+      DELAYED: "Delayed",
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      PENDING: "Pending",
+      SUCCESS: "Success",
+      TIMED_OUT: "TimedOut"
+    };
+    var ConnectionStatus = {
+      CONNECTED: "connected",
+      NOT_CONNECTED: "notconnected"
+    };
+    var AttachmentHashType = {
+      SHA256: "Sha256"
+    };
+    var ImpactType = {
+      MUTATING: "Mutating",
+      NON_MUTATING: "NonMutating",
+      UNDETERMINED: "Undetermined"
+    };
+    var ExecutionPreviewStatus = {
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      PENDING: "Pending",
+      SUCCESS: "Success"
+    };
+    var InventoryQueryOperatorType = {
+      BEGIN_WITH: "BeginWith",
+      EQUAL: "Equal",
+      EXISTS: "Exists",
+      GREATER_THAN: "GreaterThan",
+      LESS_THAN: "LessThan",
+      NOT_EQUAL: "NotEqual"
+    };
+    var InventoryAttributeDataType = {
+      NUMBER: "number",
+      STRING: "string"
+    };
+    var NotificationEvent = {
+      ALL: "All",
+      CANCELLED: "Cancelled",
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      SUCCESS: "Success",
+      TIMED_OUT: "TimedOut"
+    };
+    var NotificationType = {
+      Command: "Command",
+      Invocation: "Invocation"
+    };
+    var OpsFilterOperatorType = {
+      BEGIN_WITH: "BeginWith",
+      EQUAL: "Equal",
+      EXISTS: "Exists",
+      GREATER_THAN: "GreaterThan",
+      LESS_THAN: "LessThan",
+      NOT_EQUAL: "NotEqual"
+    };
+    var AssociationFilterKey = {
+      AssociationId: "AssociationId",
+      AssociationName: "AssociationName",
+      InstanceId: "InstanceId",
+      LastExecutedAfter: "LastExecutedAfter",
+      LastExecutedBefore: "LastExecutedBefore",
+      Name: "Name",
+      ResourceGroupName: "ResourceGroupName",
+      Status: "AssociationStatusName"
+    };
+    var CommandFilterKey = {
+      DOCUMENT_NAME: "DocumentName",
+      EXECUTION_STAGE: "ExecutionStage",
+      INVOKED_AFTER: "InvokedAfter",
+      INVOKED_BEFORE: "InvokedBefore",
+      STATUS: "Status"
+    };
+    var CommandPluginStatus = {
+      CANCELLED: "Cancelled",
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      PENDING: "Pending",
+      SUCCESS: "Success",
+      TIMED_OUT: "TimedOut"
+    };
+    var CommandStatus = {
+      CANCELLED: "Cancelled",
+      CANCELLING: "Cancelling",
+      FAILED: "Failed",
+      IN_PROGRESS: "InProgress",
+      PENDING: "Pending",
+      SUCCESS: "Success",
+      TIMED_OUT: "TimedOut"
+    };
+    var ComplianceQueryOperatorType = {
+      BeginWith: "BEGIN_WITH",
+      Equal: "EQUAL",
+      GreaterThan: "GREATER_THAN",
+      LessThan: "LESS_THAN",
+      NotEqual: "NOT_EQUAL"
+    };
+    var ComplianceSeverity = {
+      Critical: "CRITICAL",
+      High: "HIGH",
+      Informational: "INFORMATIONAL",
+      Low: "LOW",
+      Medium: "MEDIUM",
+      Unspecified: "UNSPECIFIED"
+    };
+    var ComplianceStatus = {
+      Compliant: "COMPLIANT",
+      NonCompliant: "NON_COMPLIANT"
+    };
+    var DocumentMetadataEnum = {
+      DocumentReviews: "DocumentReviews"
+    };
+    var DocumentReviewCommentType = {
+      Comment: "Comment"
+    };
+    var DocumentFilterKey = {
+      DocumentType: "DocumentType",
+      Name: "Name",
+      Owner: "Owner",
+      PlatformTypes: "PlatformTypes"
+    };
+    var NodeFilterKey = {
+      ACCOUNT_ID: "AccountId",
+      AGENT_TYPE: "AgentType",
+      AGENT_VERSION: "AgentVersion",
+      COMPUTER_NAME: "ComputerName",
+      INSTANCE_ID: "InstanceId",
+      INSTANCE_STATUS: "InstanceStatus",
+      IP_ADDRESS: "IpAddress",
+      MANAGED_STATUS: "ManagedStatus",
+      ORGANIZATIONAL_UNIT_ID: "OrganizationalUnitId",
+      ORGANIZATIONAL_UNIT_PATH: "OrganizationalUnitPath",
+      PLATFORM_NAME: "PlatformName",
+      PLATFORM_TYPE: "PlatformType",
+      PLATFORM_VERSION: "PlatformVersion",
+      REGION: "Region",
+      RESOURCE_TYPE: "ResourceType"
+    };
+    var NodeFilterOperatorType = {
+      BEGIN_WITH: "BeginWith",
+      EQUAL: "Equal",
+      NOT_EQUAL: "NotEqual"
+    };
+    var ManagedStatus = {
+      ALL: "All",
+      MANAGED: "Managed",
+      UNMANAGED: "Unmanaged"
+    };
+    var NodeAggregatorType = {
+      COUNT: "Count"
+    };
+    var NodeAttributeName = {
+      AGENT_VERSION: "AgentVersion",
+      PLATFORM_NAME: "PlatformName",
+      PLATFORM_TYPE: "PlatformType",
+      PLATFORM_VERSION: "PlatformVersion",
+      REGION: "Region",
+      RESOURCE_TYPE: "ResourceType"
+    };
+    var NodeTypeName = {
+      INSTANCE: "Instance"
+    };
+    var OpsItemEventFilterKey = {
+      OPSITEM_ID: "OpsItemId"
+    };
+    var OpsItemEventFilterOperator = {
+      EQUAL: "Equal"
+    };
+    var OpsItemRelatedItemsFilterKey = {
+      ASSOCIATION_ID: "AssociationId",
+      RESOURCE_TYPE: "ResourceType",
+      RESOURCE_URI: "ResourceUri"
+    };
+    var OpsItemRelatedItemsFilterOperator = {
+      EQUAL: "Equal"
+    };
+    var LastResourceDataSyncStatus = {
+      FAILED: "Failed",
+      INPROGRESS: "InProgress",
+      SUCCESSFUL: "Successful"
+    };
+    var ComplianceUploadType = {
+      Complete: "COMPLETE",
+      Partial: "PARTIAL"
+    };
+    var SignalType = {
+      APPROVE: "Approve",
+      REJECT: "Reject",
+      RESUME: "Resume",
+      REVOKE: "Revoke",
+      START_STEP: "StartStep",
+      STOP_STEP: "StopStep"
+    };
+    var StopType = {
+      CANCEL: "Cancel",
+      COMPLETE: "Complete"
+    };
+    var DocumentReviewAction = {
+      Approve: "Approve",
+      Reject: "Reject",
+      SendForReview: "SendForReview",
+      UpdateReview: "UpdateReview"
+    };
+    exports2.$Command = smithyClient.Command;
+    exports2.__Client = smithyClient.Client;
+    exports2.SSMServiceException = SSMServiceException.SSMServiceException;
+    exports2.AccessRequestStatus = AccessRequestStatus;
+    exports2.AccessType = AccessType;
+    exports2.AddTagsToResourceCommand = AddTagsToResourceCommand;
+    exports2.AssociateOpsItemRelatedItemCommand = AssociateOpsItemRelatedItemCommand;
+    exports2.AssociationComplianceSeverity = AssociationComplianceSeverity;
+    exports2.AssociationExecutionFilterKey = AssociationExecutionFilterKey;
+    exports2.AssociationExecutionTargetsFilterKey = AssociationExecutionTargetsFilterKey;
+    exports2.AssociationFilterKey = AssociationFilterKey;
+    exports2.AssociationFilterOperatorType = AssociationFilterOperatorType;
+    exports2.AssociationStatusName = AssociationStatusName;
+    exports2.AssociationSyncCompliance = AssociationSyncCompliance;
+    exports2.AttachmentHashType = AttachmentHashType;
+    exports2.AttachmentsSourceKey = AttachmentsSourceKey;
+    exports2.AutomationExecutionFilterKey = AutomationExecutionFilterKey;
+    exports2.AutomationExecutionStatus = AutomationExecutionStatus;
+    exports2.AutomationSubtype = AutomationSubtype;
+    exports2.AutomationType = AutomationType;
+    exports2.CalendarState = CalendarState;
+    exports2.CancelCommandCommand = CancelCommandCommand;
+    exports2.CancelMaintenanceWindowExecutionCommand = CancelMaintenanceWindowExecutionCommand;
+    exports2.CommandFilterKey = CommandFilterKey;
+    exports2.CommandInvocationStatus = CommandInvocationStatus;
+    exports2.CommandPluginStatus = CommandPluginStatus;
+    exports2.CommandStatus = CommandStatus;
+    exports2.ComplianceQueryOperatorType = ComplianceQueryOperatorType;
+    exports2.ComplianceSeverity = ComplianceSeverity;
+    exports2.ComplianceStatus = ComplianceStatus;
+    exports2.ComplianceUploadType = ComplianceUploadType;
+    exports2.ConnectionStatus = ConnectionStatus;
+    exports2.CreateActivationCommand = CreateActivationCommand;
+    exports2.CreateAssociationBatchCommand = CreateAssociationBatchCommand;
+    exports2.CreateAssociationCommand = CreateAssociationCommand;
+    exports2.CreateDocumentCommand = CreateDocumentCommand;
+    exports2.CreateMaintenanceWindowCommand = CreateMaintenanceWindowCommand;
+    exports2.CreateOpsItemCommand = CreateOpsItemCommand;
+    exports2.CreateOpsMetadataCommand = CreateOpsMetadataCommand;
+    exports2.CreatePatchBaselineCommand = CreatePatchBaselineCommand;
+    exports2.CreateResourceDataSyncCommand = CreateResourceDataSyncCommand;
+    exports2.DeleteActivationCommand = DeleteActivationCommand;
+    exports2.DeleteAssociationCommand = DeleteAssociationCommand;
+    exports2.DeleteDocumentCommand = DeleteDocumentCommand;
+    exports2.DeleteInventoryCommand = DeleteInventoryCommand;
+    exports2.DeleteMaintenanceWindowCommand = DeleteMaintenanceWindowCommand;
+    exports2.DeleteOpsItemCommand = DeleteOpsItemCommand;
+    exports2.DeleteOpsMetadataCommand = DeleteOpsMetadataCommand;
+    exports2.DeleteParameterCommand = DeleteParameterCommand;
+    exports2.DeleteParametersCommand = DeleteParametersCommand;
+    exports2.DeletePatchBaselineCommand = DeletePatchBaselineCommand;
+    exports2.DeleteResourceDataSyncCommand = DeleteResourceDataSyncCommand;
+    exports2.DeleteResourcePolicyCommand = DeleteResourcePolicyCommand;
+    exports2.DeregisterManagedInstanceCommand = DeregisterManagedInstanceCommand;
+    exports2.DeregisterPatchBaselineForPatchGroupCommand = DeregisterPatchBaselineForPatchGroupCommand;
+    exports2.DeregisterTargetFromMaintenanceWindowCommand = DeregisterTargetFromMaintenanceWindowCommand;
+    exports2.DeregisterTaskFromMaintenanceWindowCommand = DeregisterTaskFromMaintenanceWindowCommand;
+    exports2.DescribeActivationsCommand = DescribeActivationsCommand;
+    exports2.DescribeActivationsFilterKeys = DescribeActivationsFilterKeys;
+    exports2.DescribeAssociationCommand = DescribeAssociationCommand;
+    exports2.DescribeAssociationExecutionTargetsCommand = DescribeAssociationExecutionTargetsCommand;
+    exports2.DescribeAssociationExecutionsCommand = DescribeAssociationExecutionsCommand;
+    exports2.DescribeAutomationExecutionsCommand = DescribeAutomationExecutionsCommand;
+    exports2.DescribeAutomationStepExecutionsCommand = DescribeAutomationStepExecutionsCommand;
+    exports2.DescribeAvailablePatchesCommand = DescribeAvailablePatchesCommand;
+    exports2.DescribeDocumentCommand = DescribeDocumentCommand;
+    exports2.DescribeDocumentPermissionCommand = DescribeDocumentPermissionCommand;
+    exports2.DescribeEffectiveInstanceAssociationsCommand = DescribeEffectiveInstanceAssociationsCommand;
+    exports2.DescribeEffectivePatchesForPatchBaselineCommand = DescribeEffectivePatchesForPatchBaselineCommand;
+    exports2.DescribeInstanceAssociationsStatusCommand = DescribeInstanceAssociationsStatusCommand;
+    exports2.DescribeInstanceInformationCommand = DescribeInstanceInformationCommand;
+    exports2.DescribeInstancePatchStatesCommand = DescribeInstancePatchStatesCommand;
+    exports2.DescribeInstancePatchStatesForPatchGroupCommand = DescribeInstancePatchStatesForPatchGroupCommand;
+    exports2.DescribeInstancePatchesCommand = DescribeInstancePatchesCommand;
+    exports2.DescribeInstancePropertiesCommand = DescribeInstancePropertiesCommand;
+    exports2.DescribeInventoryDeletionsCommand = DescribeInventoryDeletionsCommand;
+    exports2.DescribeMaintenanceWindowExecutionTaskInvocationsCommand = DescribeMaintenanceWindowExecutionTaskInvocationsCommand;
+    exports2.DescribeMaintenanceWindowExecutionTasksCommand = DescribeMaintenanceWindowExecutionTasksCommand;
+    exports2.DescribeMaintenanceWindowExecutionsCommand = DescribeMaintenanceWindowExecutionsCommand;
+    exports2.DescribeMaintenanceWindowScheduleCommand = DescribeMaintenanceWindowScheduleCommand;
+    exports2.DescribeMaintenanceWindowTargetsCommand = DescribeMaintenanceWindowTargetsCommand;
+    exports2.DescribeMaintenanceWindowTasksCommand = DescribeMaintenanceWindowTasksCommand;
+    exports2.DescribeMaintenanceWindowsCommand = DescribeMaintenanceWindowsCommand;
+    exports2.DescribeMaintenanceWindowsForTargetCommand = DescribeMaintenanceWindowsForTargetCommand;
+    exports2.DescribeOpsItemsCommand = DescribeOpsItemsCommand;
+    exports2.DescribeParametersCommand = DescribeParametersCommand;
+    exports2.DescribePatchBaselinesCommand = DescribePatchBaselinesCommand;
+    exports2.DescribePatchGroupStateCommand = DescribePatchGroupStateCommand;
+    exports2.DescribePatchGroupsCommand = DescribePatchGroupsCommand;
+    exports2.DescribePatchPropertiesCommand = DescribePatchPropertiesCommand;
+    exports2.DescribeSessionsCommand = DescribeSessionsCommand;
+    exports2.DisassociateOpsItemRelatedItemCommand = DisassociateOpsItemRelatedItemCommand;
+    exports2.DocumentFilterKey = DocumentFilterKey;
+    exports2.DocumentFormat = DocumentFormat;
+    exports2.DocumentHashType = DocumentHashType;
+    exports2.DocumentMetadataEnum = DocumentMetadataEnum;
+    exports2.DocumentParameterType = DocumentParameterType;
+    exports2.DocumentPermissionType = DocumentPermissionType;
+    exports2.DocumentReviewAction = DocumentReviewAction;
+    exports2.DocumentReviewCommentType = DocumentReviewCommentType;
+    exports2.DocumentStatus = DocumentStatus;
+    exports2.DocumentType = DocumentType;
+    exports2.ExecutionMode = ExecutionMode;
+    exports2.ExecutionPreviewStatus = ExecutionPreviewStatus;
+    exports2.ExternalAlarmState = ExternalAlarmState;
+    exports2.Fault = Fault;
+    exports2.GetAccessTokenCommand = GetAccessTokenCommand;
+    exports2.GetAutomationExecutionCommand = GetAutomationExecutionCommand;
+    exports2.GetCalendarStateCommand = GetCalendarStateCommand;
+    exports2.GetCommandInvocationCommand = GetCommandInvocationCommand;
+    exports2.GetConnectionStatusCommand = GetConnectionStatusCommand;
+    exports2.GetDefaultPatchBaselineCommand = GetDefaultPatchBaselineCommand;
+    exports2.GetDeployablePatchSnapshotForInstanceCommand = GetDeployablePatchSnapshotForInstanceCommand;
+    exports2.GetDocumentCommand = GetDocumentCommand;
+    exports2.GetExecutionPreviewCommand = GetExecutionPreviewCommand;
+    exports2.GetInventoryCommand = GetInventoryCommand;
+    exports2.GetInventorySchemaCommand = GetInventorySchemaCommand;
+    exports2.GetMaintenanceWindowCommand = GetMaintenanceWindowCommand;
+    exports2.GetMaintenanceWindowExecutionCommand = GetMaintenanceWindowExecutionCommand;
+    exports2.GetMaintenanceWindowExecutionTaskCommand = GetMaintenanceWindowExecutionTaskCommand;
+    exports2.GetMaintenanceWindowExecutionTaskInvocationCommand = GetMaintenanceWindowExecutionTaskInvocationCommand;
+    exports2.GetMaintenanceWindowTaskCommand = GetMaintenanceWindowTaskCommand;
+    exports2.GetOpsItemCommand = GetOpsItemCommand;
+    exports2.GetOpsMetadataCommand = GetOpsMetadataCommand;
+    exports2.GetOpsSummaryCommand = GetOpsSummaryCommand;
+    exports2.GetParameterCommand = GetParameterCommand;
+    exports2.GetParameterHistoryCommand = GetParameterHistoryCommand;
+    exports2.GetParametersByPathCommand = GetParametersByPathCommand2;
+    exports2.GetParametersCommand = GetParametersCommand;
+    exports2.GetPatchBaselineCommand = GetPatchBaselineCommand;
+    exports2.GetPatchBaselineForPatchGroupCommand = GetPatchBaselineForPatchGroupCommand;
+    exports2.GetResourcePoliciesCommand = GetResourcePoliciesCommand;
+    exports2.GetServiceSettingCommand = GetServiceSettingCommand;
+    exports2.ImpactType = ImpactType;
+    exports2.InstanceInformationFilterKey = InstanceInformationFilterKey;
+    exports2.InstancePatchStateOperatorType = InstancePatchStateOperatorType;
+    exports2.InstancePropertyFilterKey = InstancePropertyFilterKey;
+    exports2.InstancePropertyFilterOperator = InstancePropertyFilterOperator;
+    exports2.InventoryAttributeDataType = InventoryAttributeDataType;
+    exports2.InventoryDeletionStatus = InventoryDeletionStatus;
+    exports2.InventoryQueryOperatorType = InventoryQueryOperatorType;
+    exports2.InventorySchemaDeleteOption = InventorySchemaDeleteOption;
+    exports2.LabelParameterVersionCommand = LabelParameterVersionCommand;
+    exports2.LastResourceDataSyncStatus = LastResourceDataSyncStatus;
+    exports2.ListAssociationVersionsCommand = ListAssociationVersionsCommand;
+    exports2.ListAssociationsCommand = ListAssociationsCommand;
+    exports2.ListCommandInvocationsCommand = ListCommandInvocationsCommand;
+    exports2.ListCommandsCommand = ListCommandsCommand;
+    exports2.ListComplianceItemsCommand = ListComplianceItemsCommand;
+    exports2.ListComplianceSummariesCommand = ListComplianceSummariesCommand;
+    exports2.ListDocumentMetadataHistoryCommand = ListDocumentMetadataHistoryCommand;
+    exports2.ListDocumentVersionsCommand = ListDocumentVersionsCommand;
+    exports2.ListDocumentsCommand = ListDocumentsCommand;
+    exports2.ListInventoryEntriesCommand = ListInventoryEntriesCommand;
+    exports2.ListNodesCommand = ListNodesCommand;
+    exports2.ListNodesSummaryCommand = ListNodesSummaryCommand;
+    exports2.ListOpsItemEventsCommand = ListOpsItemEventsCommand;
+    exports2.ListOpsItemRelatedItemsCommand = ListOpsItemRelatedItemsCommand;
+    exports2.ListOpsMetadataCommand = ListOpsMetadataCommand;
+    exports2.ListResourceComplianceSummariesCommand = ListResourceComplianceSummariesCommand;
+    exports2.ListResourceDataSyncCommand = ListResourceDataSyncCommand;
+    exports2.ListTagsForResourceCommand = ListTagsForResourceCommand3;
+    exports2.MaintenanceWindowExecutionStatus = MaintenanceWindowExecutionStatus;
+    exports2.MaintenanceWindowResourceType = MaintenanceWindowResourceType;
+    exports2.MaintenanceWindowTaskCutoffBehavior = MaintenanceWindowTaskCutoffBehavior;
+    exports2.MaintenanceWindowTaskType = MaintenanceWindowTaskType;
+    exports2.ManagedStatus = ManagedStatus;
+    exports2.ModifyDocumentPermissionCommand = ModifyDocumentPermissionCommand;
+    exports2.NodeAggregatorType = NodeAggregatorType;
+    exports2.NodeAttributeName = NodeAttributeName;
+    exports2.NodeFilterKey = NodeFilterKey;
+    exports2.NodeFilterOperatorType = NodeFilterOperatorType;
+    exports2.NodeTypeName = NodeTypeName;
+    exports2.NotificationEvent = NotificationEvent;
+    exports2.NotificationType = NotificationType;
+    exports2.OperatingSystem = OperatingSystem;
+    exports2.OpsFilterOperatorType = OpsFilterOperatorType;
+    exports2.OpsItemDataType = OpsItemDataType;
+    exports2.OpsItemEventFilterKey = OpsItemEventFilterKey;
+    exports2.OpsItemEventFilterOperator = OpsItemEventFilterOperator;
+    exports2.OpsItemFilterKey = OpsItemFilterKey;
+    exports2.OpsItemFilterOperator = OpsItemFilterOperator;
+    exports2.OpsItemRelatedItemsFilterKey = OpsItemRelatedItemsFilterKey;
+    exports2.OpsItemRelatedItemsFilterOperator = OpsItemRelatedItemsFilterOperator;
+    exports2.OpsItemStatus = OpsItemStatus;
+    exports2.ParameterTier = ParameterTier;
+    exports2.ParameterType = ParameterType;
+    exports2.ParametersFilterKey = ParametersFilterKey;
+    exports2.PatchAction = PatchAction;
+    exports2.PatchComplianceDataState = PatchComplianceDataState;
+    exports2.PatchComplianceLevel = PatchComplianceLevel;
+    exports2.PatchComplianceStatus = PatchComplianceStatus;
+    exports2.PatchDeploymentStatus = PatchDeploymentStatus;
+    exports2.PatchFilterKey = PatchFilterKey;
+    exports2.PatchOperationType = PatchOperationType;
+    exports2.PatchProperty = PatchProperty;
+    exports2.PatchSet = PatchSet;
+    exports2.PingStatus = PingStatus;
+    exports2.PlatformType = PlatformType;
+    exports2.PutComplianceItemsCommand = PutComplianceItemsCommand;
+    exports2.PutInventoryCommand = PutInventoryCommand;
+    exports2.PutParameterCommand = PutParameterCommand;
+    exports2.PutResourcePolicyCommand = PutResourcePolicyCommand;
+    exports2.RebootOption = RebootOption;
+    exports2.RegisterDefaultPatchBaselineCommand = RegisterDefaultPatchBaselineCommand;
+    exports2.RegisterPatchBaselineForPatchGroupCommand = RegisterPatchBaselineForPatchGroupCommand;
+    exports2.RegisterTargetWithMaintenanceWindowCommand = RegisterTargetWithMaintenanceWindowCommand;
+    exports2.RegisterTaskWithMaintenanceWindowCommand = RegisterTaskWithMaintenanceWindowCommand;
+    exports2.RemoveTagsFromResourceCommand = RemoveTagsFromResourceCommand;
+    exports2.ResetServiceSettingCommand = ResetServiceSettingCommand;
+    exports2.ResourceDataSyncS3Format = ResourceDataSyncS3Format;
+    exports2.ResourceType = ResourceType;
+    exports2.ResourceTypeForTagging = ResourceTypeForTagging;
+    exports2.ResumeSessionCommand = ResumeSessionCommand;
+    exports2.ReviewStatus = ReviewStatus;
+    exports2.SSM = SSM;
+    exports2.SSMClient = SSMClient2;
+    exports2.SendAutomationSignalCommand = SendAutomationSignalCommand;
+    exports2.SendCommandCommand = SendCommandCommand;
+    exports2.SessionFilterKey = SessionFilterKey;
+    exports2.SessionState = SessionState;
+    exports2.SessionStatus = SessionStatus;
+    exports2.SignalType = SignalType;
+    exports2.SourceType = SourceType;
+    exports2.StartAccessRequestCommand = StartAccessRequestCommand;
+    exports2.StartAssociationsOnceCommand = StartAssociationsOnceCommand;
+    exports2.StartAutomationExecutionCommand = StartAutomationExecutionCommand;
+    exports2.StartChangeRequestExecutionCommand = StartChangeRequestExecutionCommand;
+    exports2.StartExecutionPreviewCommand = StartExecutionPreviewCommand;
+    exports2.StartSessionCommand = StartSessionCommand;
+    exports2.StepExecutionFilterKey = StepExecutionFilterKey;
+    exports2.StopAutomationExecutionCommand = StopAutomationExecutionCommand;
+    exports2.StopType = StopType;
+    exports2.TerminateSessionCommand = TerminateSessionCommand;
+    exports2.UnlabelParameterVersionCommand = UnlabelParameterVersionCommand;
+    exports2.UpdateAssociationCommand = UpdateAssociationCommand;
+    exports2.UpdateAssociationStatusCommand = UpdateAssociationStatusCommand;
+    exports2.UpdateDocumentCommand = UpdateDocumentCommand;
+    exports2.UpdateDocumentDefaultVersionCommand = UpdateDocumentDefaultVersionCommand;
+    exports2.UpdateDocumentMetadataCommand = UpdateDocumentMetadataCommand;
+    exports2.UpdateMaintenanceWindowCommand = UpdateMaintenanceWindowCommand;
+    exports2.UpdateMaintenanceWindowTargetCommand = UpdateMaintenanceWindowTargetCommand;
+    exports2.UpdateMaintenanceWindowTaskCommand = UpdateMaintenanceWindowTaskCommand;
+    exports2.UpdateManagedInstanceRoleCommand = UpdateManagedInstanceRoleCommand;
+    exports2.UpdateOpsItemCommand = UpdateOpsItemCommand;
+    exports2.UpdateOpsMetadataCommand = UpdateOpsMetadataCommand;
+    exports2.UpdatePatchBaselineCommand = UpdatePatchBaselineCommand;
+    exports2.UpdateResourceDataSyncCommand = UpdateResourceDataSyncCommand;
+    exports2.UpdateServiceSettingCommand = UpdateServiceSettingCommand;
+    exports2.paginateDescribeActivations = paginateDescribeActivations;
+    exports2.paginateDescribeAssociationExecutionTargets = paginateDescribeAssociationExecutionTargets;
+    exports2.paginateDescribeAssociationExecutions = paginateDescribeAssociationExecutions;
+    exports2.paginateDescribeAutomationExecutions = paginateDescribeAutomationExecutions;
+    exports2.paginateDescribeAutomationStepExecutions = paginateDescribeAutomationStepExecutions;
+    exports2.paginateDescribeAvailablePatches = paginateDescribeAvailablePatches;
+    exports2.paginateDescribeEffectiveInstanceAssociations = paginateDescribeEffectiveInstanceAssociations;
+    exports2.paginateDescribeEffectivePatchesForPatchBaseline = paginateDescribeEffectivePatchesForPatchBaseline;
+    exports2.paginateDescribeInstanceAssociationsStatus = paginateDescribeInstanceAssociationsStatus;
+    exports2.paginateDescribeInstanceInformation = paginateDescribeInstanceInformation;
+    exports2.paginateDescribeInstancePatchStates = paginateDescribeInstancePatchStates;
+    exports2.paginateDescribeInstancePatchStatesForPatchGroup = paginateDescribeInstancePatchStatesForPatchGroup;
+    exports2.paginateDescribeInstancePatches = paginateDescribeInstancePatches;
+    exports2.paginateDescribeInstanceProperties = paginateDescribeInstanceProperties;
+    exports2.paginateDescribeInventoryDeletions = paginateDescribeInventoryDeletions;
+    exports2.paginateDescribeMaintenanceWindowExecutionTaskInvocations = paginateDescribeMaintenanceWindowExecutionTaskInvocations;
+    exports2.paginateDescribeMaintenanceWindowExecutionTasks = paginateDescribeMaintenanceWindowExecutionTasks;
+    exports2.paginateDescribeMaintenanceWindowExecutions = paginateDescribeMaintenanceWindowExecutions;
+    exports2.paginateDescribeMaintenanceWindowSchedule = paginateDescribeMaintenanceWindowSchedule;
+    exports2.paginateDescribeMaintenanceWindowTargets = paginateDescribeMaintenanceWindowTargets;
+    exports2.paginateDescribeMaintenanceWindowTasks = paginateDescribeMaintenanceWindowTasks;
+    exports2.paginateDescribeMaintenanceWindows = paginateDescribeMaintenanceWindows;
+    exports2.paginateDescribeMaintenanceWindowsForTarget = paginateDescribeMaintenanceWindowsForTarget;
+    exports2.paginateDescribeOpsItems = paginateDescribeOpsItems;
+    exports2.paginateDescribeParameters = paginateDescribeParameters;
+    exports2.paginateDescribePatchBaselines = paginateDescribePatchBaselines;
+    exports2.paginateDescribePatchGroups = paginateDescribePatchGroups;
+    exports2.paginateDescribePatchProperties = paginateDescribePatchProperties;
+    exports2.paginateDescribeSessions = paginateDescribeSessions;
+    exports2.paginateGetInventory = paginateGetInventory;
+    exports2.paginateGetInventorySchema = paginateGetInventorySchema;
+    exports2.paginateGetOpsSummary = paginateGetOpsSummary;
+    exports2.paginateGetParameterHistory = paginateGetParameterHistory;
+    exports2.paginateGetParametersByPath = paginateGetParametersByPath;
+    exports2.paginateGetResourcePolicies = paginateGetResourcePolicies;
+    exports2.paginateListAssociationVersions = paginateListAssociationVersions;
+    exports2.paginateListAssociations = paginateListAssociations;
+    exports2.paginateListCommandInvocations = paginateListCommandInvocations;
+    exports2.paginateListCommands = paginateListCommands;
+    exports2.paginateListComplianceItems = paginateListComplianceItems;
+    exports2.paginateListComplianceSummaries = paginateListComplianceSummaries;
+    exports2.paginateListDocumentVersions = paginateListDocumentVersions;
+    exports2.paginateListDocuments = paginateListDocuments;
+    exports2.paginateListNodes = paginateListNodes;
+    exports2.paginateListNodesSummary = paginateListNodesSummary;
+    exports2.paginateListOpsItemEvents = paginateListOpsItemEvents;
+    exports2.paginateListOpsItemRelatedItems = paginateListOpsItemRelatedItems;
+    exports2.paginateListOpsMetadata = paginateListOpsMetadata;
+    exports2.paginateListResourceComplianceSummaries = paginateListResourceComplianceSummaries;
+    exports2.paginateListResourceDataSync = paginateListResourceDataSync;
+    exports2.waitForCommandExecuted = waitForCommandExecuted;
+    exports2.waitUntilCommandExecuted = waitUntilCommandExecuted;
+    Object.prototype.hasOwnProperty.call(schemas_0, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: schemas_0["__proto__"]
+    });
+    Object.keys(schemas_0).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = schemas_0[k5];
+    });
+    Object.prototype.hasOwnProperty.call(errors, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: errors["__proto__"]
+    });
+    Object.keys(errors).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = errors[k5];
+    });
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/auth/httpAuthSchemeProvider.js
+var require_httpAuthSchemeProvider9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/auth/httpAuthSchemeProvider.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.resolveHttpAuthSchemeConfig = exports2.defaultResourceGroupsTaggingAPIHttpAuthSchemeProvider = exports2.defaultResourceGroupsTaggingAPIHttpAuthSchemeParametersProvider = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var util_middleware_1 = require_dist_cjs7();
+    var defaultResourceGroupsTaggingAPIHttpAuthSchemeParametersProvider = async (config, context, input) => {
+      return {
+        operation: (0, util_middleware_1.getSmithyContext)(context).operation,
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
+          throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
+        })()
+      };
+    };
+    exports2.defaultResourceGroupsTaggingAPIHttpAuthSchemeParametersProvider = defaultResourceGroupsTaggingAPIHttpAuthSchemeParametersProvider;
+    function createAwsAuthSigv4HttpAuthOption5(authParameters) {
+      return {
+        schemeId: "aws.auth#sigv4",
+        signingProperties: {
+          name: "tagging",
+          region: authParameters.region
+        },
+        propertiesExtractor: (config, context) => ({
+          signingProperties: {
+            config,
+            context
+          }
+        })
+      };
+    }
+    var defaultResourceGroupsTaggingAPIHttpAuthSchemeProvider = (authParameters) => {
+      const options = [];
+      switch (authParameters.operation) {
+        default: {
+          options.push(createAwsAuthSigv4HttpAuthOption5(authParameters));
+        }
+      }
+      return options;
+    };
+    exports2.defaultResourceGroupsTaggingAPIHttpAuthSchemeProvider = defaultResourceGroupsTaggingAPIHttpAuthSchemeProvider;
+    var resolveHttpAuthSchemeConfig5 = (config) => {
+      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config);
+      return Object.assign(config_0, {
+        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config.authSchemePreference ?? [])
+      });
+    };
+    exports2.resolveHttpAuthSchemeConfig = resolveHttpAuthSchemeConfig5;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/package.json
+var require_package9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/package.json"(exports2, module2) {
+    module2.exports = {
+      name: "@aws-sdk/client-resource-groups-tagging-api",
+      description: "AWS SDK for JavaScript Resource Groups Tagging Api Client for Node.js, Browser and React Native",
+      version: "3.1015.0",
+      scripts: {
+        build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
+        "build:cjs": "node ../../scripts/compilation/inline client-resource-groups-tagging-api",
+        "build:es": "tsc -p tsconfig.es.json",
+        "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
+        "build:types": "tsc -p tsconfig.types.json",
+        "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
+        clean: "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
+        "extract:docs": "api-extractor run --local",
+        "generate:client": "node ../../scripts/generate-clients/single-service --solo resource-groups-tagging-api",
+        "test:index": "tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs"
+      },
+      main: "./dist-cjs/index.js",
+      types: "./dist-types/index.d.ts",
+      module: "./dist-es/index.js",
+      sideEffects: false,
+      dependencies: {
+        "@aws-crypto/sha256-browser": "5.2.0",
+        "@aws-crypto/sha256-js": "5.2.0",
+        "@aws-sdk/core": "^3.973.24",
+        "@aws-sdk/credential-provider-node": "^3.972.25",
+        "@aws-sdk/middleware-host-header": "^3.972.8",
+        "@aws-sdk/middleware-logger": "^3.972.8",
+        "@aws-sdk/middleware-recursion-detection": "^3.972.8",
+        "@aws-sdk/middleware-user-agent": "^3.972.25",
+        "@aws-sdk/region-config-resolver": "^3.972.9",
+        "@aws-sdk/types": "^3.973.6",
+        "@aws-sdk/util-endpoints": "^3.996.5",
+        "@aws-sdk/util-user-agent-browser": "^3.972.8",
+        "@aws-sdk/util-user-agent-node": "^3.973.11",
+        "@smithy/config-resolver": "^4.4.13",
+        "@smithy/core": "^3.23.12",
+        "@smithy/fetch-http-handler": "^5.3.15",
+        "@smithy/hash-node": "^4.2.12",
+        "@smithy/invalid-dependency": "^4.2.12",
+        "@smithy/middleware-content-length": "^4.2.12",
+        "@smithy/middleware-endpoint": "^4.4.27",
+        "@smithy/middleware-retry": "^4.4.44",
+        "@smithy/middleware-serde": "^4.2.15",
+        "@smithy/middleware-stack": "^4.2.12",
+        "@smithy/node-config-provider": "^4.3.12",
+        "@smithy/node-http-handler": "^4.5.0",
+        "@smithy/protocol-http": "^5.3.12",
+        "@smithy/smithy-client": "^4.12.7",
+        "@smithy/types": "^4.13.1",
+        "@smithy/url-parser": "^4.2.12",
+        "@smithy/util-base64": "^4.3.2",
+        "@smithy/util-body-length-browser": "^4.2.2",
+        "@smithy/util-body-length-node": "^4.2.3",
+        "@smithy/util-defaults-mode-browser": "^4.3.43",
+        "@smithy/util-defaults-mode-node": "^4.2.47",
+        "@smithy/util-endpoints": "^3.3.3",
+        "@smithy/util-middleware": "^4.2.12",
+        "@smithy/util-retry": "^4.2.12",
+        "@smithy/util-utf8": "^4.2.2",
+        tslib: "^2.6.2"
+      },
+      devDependencies: {
+        "@tsconfig/node20": "20.1.8",
+        "@types/node": "^20.14.8",
+        concurrently: "7.0.0",
+        "downlevel-dts": "0.10.1",
+        premove: "4.0.0",
+        typescript: "~5.8.3"
+      },
+      engines: {
+        node: ">=20.0.0"
+      },
+      typesVersions: {
+        "<4.5": {
+          "dist-types/*": [
+            "dist-types/ts3.4/*"
+          ]
+        }
+      },
+      files: [
+        "dist-*/**"
+      ],
+      author: {
+        name: "AWS SDK for JavaScript Team",
+        url: "https://aws.amazon.com/javascript/"
+      },
+      license: "Apache-2.0",
+      browser: {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.browser"
+      },
+      "react-native": {
+        "./dist-es/runtimeConfig": "./dist-es/runtimeConfig.native"
+      },
+      homepage: "https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-resource-groups-tagging-api",
+      repository: {
+        type: "git",
+        url: "https://github.com/aws/aws-sdk-js-v3.git",
+        directory: "clients/client-resource-groups-tagging-api"
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/endpoint/ruleset.js
+var require_ruleset9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/endpoint/ruleset.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ruleSet = void 0;
+    var s5 = "required";
+    var t5 = "fn";
+    var u5 = "argv";
+    var v5 = "ref";
+    var a5 = true;
+    var b5 = "isSet";
+    var c5 = "booleanEquals";
+    var d5 = "error";
+    var e5 = "endpoint";
+    var f5 = "tree";
+    var g5 = "PartitionResult";
+    var h5 = { [s5]: false, "type": "string" };
+    var i5 = { [s5]: true, "default": false, "type": "boolean" };
+    var j5 = { [v5]: "Endpoint" };
+    var k5 = { [t5]: c5, [u5]: [{ [v5]: "UseFIPS" }, true] };
+    var l5 = { [t5]: c5, [u5]: [{ [v5]: "UseDualStack" }, true] };
+    var m5 = {};
+    var n5 = { [t5]: "getAttr", [u5]: [{ [v5]: g5 }, "supportsFIPS"] };
+    var o5 = { [t5]: c5, [u5]: [true, { [t5]: "getAttr", [u5]: [{ [v5]: g5 }, "supportsDualStack"] }] };
+    var p5 = [k5];
+    var q5 = [l5];
+    var r5 = [{ [v5]: "Region" }];
+    var _data5 = { version: "1.0", parameters: { Region: h5, UseDualStack: i5, UseFIPS: i5, Endpoint: h5 }, rules: [{ conditions: [{ [t5]: b5, [u5]: [j5] }], rules: [{ conditions: p5, error: "Invalid Configuration: FIPS and custom endpoint are not supported", type: d5 }, { conditions: q5, error: "Invalid Configuration: Dualstack and custom endpoint are not supported", type: d5 }, { endpoint: { url: j5, properties: m5, headers: m5 }, type: e5 }], type: f5 }, { conditions: [{ [t5]: b5, [u5]: r5 }], rules: [{ conditions: [{ [t5]: "aws.partition", [u5]: r5, assign: g5 }], rules: [{ conditions: [k5, l5], rules: [{ conditions: [{ [t5]: c5, [u5]: [a5, n5] }, o5], rules: [{ endpoint: { url: "https://tagging-fips.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: m5, headers: m5 }, type: e5 }], type: f5 }, { error: "FIPS and DualStack are enabled, but this partition does not support one or both", type: d5 }], type: f5 }, { conditions: p5, rules: [{ conditions: [{ [t5]: c5, [u5]: [n5, a5] }], rules: [{ endpoint: { url: "https://tagging-fips.{Region}.{PartitionResult#dnsSuffix}", properties: m5, headers: m5 }, type: e5 }], type: f5 }, { error: "FIPS is enabled but this partition does not support FIPS", type: d5 }], type: f5 }, { conditions: q5, rules: [{ conditions: [o5], rules: [{ endpoint: { url: "https://tagging.{Region}.{PartitionResult#dualStackDnsSuffix}", properties: m5, headers: m5 }, type: e5 }], type: f5 }, { error: "DualStack is enabled but this partition does not support DualStack", type: d5 }], type: f5 }, { endpoint: { url: "https://tagging.{Region}.{PartitionResult#dnsSuffix}", properties: m5, headers: m5 }, type: e5 }], type: f5 }], type: f5 }, { error: "Invalid Configuration: Missing Region", type: d5 }] };
+    exports2.ruleSet = _data5;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/endpoint/endpointResolver.js
+var require_endpointResolver9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/endpoint/endpointResolver.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.defaultEndpointResolver = void 0;
+    var util_endpoints_1 = require_dist_cjs22();
+    var util_endpoints_2 = require_dist_cjs21();
+    var ruleset_1 = require_ruleset9();
+    var cache5 = new util_endpoints_2.EndpointCache({
+      size: 50,
+      params: ["Endpoint", "Region", "UseDualStack", "UseFIPS"]
+    });
+    var defaultEndpointResolver5 = (endpointParams, context = {}) => {
+      return cache5.get(endpointParams, () => (0, util_endpoints_2.resolveEndpoint)(ruleset_1.ruleSet, {
+        endpointParams,
+        logger: context.logger
+      }));
+    };
+    exports2.defaultEndpointResolver = defaultEndpointResolver5;
+    util_endpoints_2.customEndpointFunctions.aws = util_endpoints_1.awsEndpointFunctions;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/models/ResourceGroupsTaggingAPIServiceException.js
+var require_ResourceGroupsTaggingAPIServiceException = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/models/ResourceGroupsTaggingAPIServiceException.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ResourceGroupsTaggingAPIServiceException = exports2.__ServiceException = void 0;
+    var smithy_client_1 = require_dist_cjs26();
+    Object.defineProperty(exports2, "__ServiceException", { enumerable: true, get: function() {
+      return smithy_client_1.ServiceException;
+    } });
+    var ResourceGroupsTaggingAPIServiceException = class _ResourceGroupsTaggingAPIServiceException extends smithy_client_1.ServiceException {
+      constructor(options) {
+        super(options);
+        Object.setPrototypeOf(this, _ResourceGroupsTaggingAPIServiceException.prototype);
+      }
+    };
+    exports2.ResourceGroupsTaggingAPIServiceException = ResourceGroupsTaggingAPIServiceException;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/models/errors.js
+var require_errors10 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/models/errors.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.PaginationTokenExpiredException = exports2.ThrottledException = exports2.InvalidParameterException = exports2.InternalServiceException = exports2.ConstraintViolationException = exports2.ConcurrentModificationException = void 0;
+    var ResourceGroupsTaggingAPIServiceException_1 = require_ResourceGroupsTaggingAPIServiceException();
+    var ConcurrentModificationException = class _ConcurrentModificationException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "ConcurrentModificationException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ConcurrentModificationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ConcurrentModificationException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ConcurrentModificationException = ConcurrentModificationException;
+    var ConstraintViolationException = class _ConstraintViolationException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "ConstraintViolationException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ConstraintViolationException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ConstraintViolationException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ConstraintViolationException = ConstraintViolationException;
+    var InternalServiceException = class _InternalServiceException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "InternalServiceException";
+      $fault = "server";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InternalServiceException",
+          $fault: "server",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InternalServiceException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InternalServiceException = InternalServiceException;
+    var InvalidParameterException = class _InvalidParameterException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "InvalidParameterException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "InvalidParameterException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _InvalidParameterException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.InvalidParameterException = InvalidParameterException;
+    var ThrottledException = class _ThrottledException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "ThrottledException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "ThrottledException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _ThrottledException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.ThrottledException = ThrottledException;
+    var PaginationTokenExpiredException = class _PaginationTokenExpiredException extends ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException {
+      name = "PaginationTokenExpiredException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "PaginationTokenExpiredException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _PaginationTokenExpiredException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.PaginationTokenExpiredException = PaginationTokenExpiredException;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/schemas/schemas_0.js
+var require_schemas_09 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/schemas/schemas_0.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.UntagResources$ = exports2.TagResources$ = exports2.StartReportCreation$ = exports2.ListRequiredTags$ = exports2.GetTagValues$ = exports2.GetTagKeys$ = exports2.GetResources$ = exports2.GetComplianceSummary$ = exports2.DescribeReportCreation$ = exports2.UntagResourcesOutput$ = exports2.UntagResourcesInput$ = exports2.TagResourcesOutput$ = exports2.TagResourcesInput$ = exports2.TagFilter$ = exports2.Tag$ = exports2.Summary$ = exports2.StartReportCreationOutput$ = exports2.StartReportCreationInput$ = exports2.ResourceTagMapping$ = exports2.RequiredTag$ = exports2.ListRequiredTagsOutput$ = exports2.ListRequiredTagsInput$ = exports2.GetTagValuesOutput$ = exports2.GetTagValuesInput$ = exports2.GetTagKeysOutput$ = exports2.GetTagKeysInput$ = exports2.GetResourcesOutput$ = exports2.GetResourcesInput$ = exports2.GetComplianceSummaryOutput$ = exports2.GetComplianceSummaryInput$ = exports2.FailureInfo$ = exports2.DescribeReportCreationOutput$ = exports2.DescribeReportCreationInput$ = exports2.ComplianceDetails$ = exports2.errorTypeRegistries = exports2.ThrottledException$ = exports2.PaginationTokenExpiredException$ = exports2.InvalidParameterException$ = exports2.InternalServiceException$ = exports2.ConstraintViolationException$ = exports2.ConcurrentModificationException$ = exports2.ResourceGroupsTaggingAPIServiceException$ = void 0;
+    var _CD = "ComplianceDetails";
+    var _CFRT = "CloudFormationResourceTypes";
+    var _CME = "ConcurrentModificationException";
+    var _CS2 = "ComplianceStatus";
+    var _CVE = "ConstraintViolationException";
+    var _DRC = "DescribeReportCreation";
+    var _DRCI = "DescribeReportCreationInput";
+    var _DRCO = "DescribeReportCreationOutput";
+    var _EC = "ErrorCode";
+    var _ECR = "ExcludeCompliantResources";
+    var _EM = "ErrorMessage";
+    var _FI = "FailureInfo";
+    var _FRM = "FailedResourcesMap";
+    var _GB = "GroupBy";
+    var _GCS = "GetComplianceSummary";
+    var _GCSI = "GetComplianceSummaryInput";
+    var _GCSO = "GetComplianceSummaryOutput";
+    var _GR = "GetResources";
+    var _GRI = "GetResourcesInput";
+    var _GRO = "GetResourcesOutput";
+    var _GTK = "GetTagKeys";
+    var _GTKI = "GetTagKeysInput";
+    var _GTKO = "GetTagKeysOutput";
+    var _GTV = "GetTagValues";
+    var _GTVI = "GetTagValuesInput";
+    var _GTVO = "GetTagValuesOutput";
+    var _ICD = "IncludeComplianceDetails";
+    var _IPE = "InvalidParameterException";
+    var _ISE3 = "InternalServiceException";
+    var _K2 = "Key";
+    var _KWNV = "KeysWithNoncompliantValues";
+    var _LRT = "ListRequiredTags";
+    var _LRTI = "ListRequiredTagsInput";
+    var _LRTO = "ListRequiredTagsOutput";
+    var _LU = "LastUpdated";
+    var _M = "Message";
+    var _MR = "MaxResults";
+    var _NCR = "NonCompliantResources";
+    var _NK = "NoncompliantKeys";
+    var _NT = "NextToken";
+    var _PT = "PaginationToken";
+    var _PTEE = "PaginationTokenExpiredException";
+    var _R = "Region";
+    var _RARN = "ResourceARN";
+    var _RARNL = "ResourceARNList";
+    var _RF = "RegionFilters";
+    var _RPP = "ResourcesPerPage";
+    var _RT3 = "RequiredTags";
+    var _RTF = "ResourceTypeFilters";
+    var _RTFLRT = "RequiredTagsForListRequiredTags";
+    var _RTK = "ReportingTagKeys";
+    var _RTM = "ResourceTagMapping";
+    var _RTML = "ResourceTagMappingList";
+    var _RTe = "RequiredTag";
+    var _RTes = "ResourceType";
+    var _S = "Status";
+    var _SB = "S3Bucket";
+    var _SC = "StatusCode";
+    var _SD = "StartDate";
+    var _SL = "S3Location";
+    var _SLu = "SummaryList";
+    var _SRC = "StartReportCreation";
+    var _SRCI = "StartReportCreationInput";
+    var _SRCO = "StartReportCreationOutput";
+    var _Su = "Summary";
+    var _T2 = "Tags";
+    var _TE = "ThrottledException";
+    var _TF = "TagFilters";
+    var _TFL = "TagFilterList";
+    var _TFa = "TagFilter";
+    var _TI = "TargetId";
+    var _TIF = "TargetIdFilters";
+    var _TIT = "TargetIdType";
+    var _TK = "TagKeys";
+    var _TKF = "TagKeyFilters";
+    var _TL = "TagList";
+    var _TPP = "TagsPerPage";
+    var _TR = "TagResources";
+    var _TRI = "TagResourcesInput";
+    var _TRO = "TagResourcesOutput";
+    var _TV = "TagValues";
+    var _Ta2 = "Tag";
+    var _UR = "UntagResources";
+    var _URI = "UntagResourcesInput";
+    var _URO = "UntagResourcesOutput";
+    var _V2 = "Value";
+    var _Va = "Values";
+    var _c5 = "client";
+    var _e5 = "error";
+    var _h4 = "http";
+    var _s5 = "smithy.ts.sdk.synthetic.com.amazonaws.resourcegroupstaggingapi";
+    var _se3 = "server";
+    var n05 = "com.amazonaws.resourcegroupstaggingapi";
+    var schema_1 = (init_schema(), __toCommonJS(schema_exports));
+    var errors_1 = require_errors10();
+    var ResourceGroupsTaggingAPIServiceException_1 = require_ResourceGroupsTaggingAPIServiceException();
+    var _s_registry5 = schema_1.TypeRegistry.for(_s5);
+    exports2.ResourceGroupsTaggingAPIServiceException$ = [-3, _s5, "ResourceGroupsTaggingAPIServiceException", 0, [], []];
+    _s_registry5.registerError(exports2.ResourceGroupsTaggingAPIServiceException$, ResourceGroupsTaggingAPIServiceException_1.ResourceGroupsTaggingAPIServiceException);
+    var n0_registry5 = schema_1.TypeRegistry.for(n05);
+    exports2.ConcurrentModificationException$ = [
+      -3,
+      n05,
+      _CME,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ConcurrentModificationException$, errors_1.ConcurrentModificationException);
+    exports2.ConstraintViolationException$ = [
+      -3,
+      n05,
+      _CVE,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ConstraintViolationException$, errors_1.ConstraintViolationException);
+    exports2.InternalServiceException$ = [
+      -3,
+      n05,
+      _ISE3,
+      { [_e5]: _se3 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InternalServiceException$, errors_1.InternalServiceException);
+    exports2.InvalidParameterException$ = [
+      -3,
+      n05,
+      _IPE,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.InvalidParameterException$, errors_1.InvalidParameterException);
+    exports2.PaginationTokenExpiredException$ = [
+      -3,
+      n05,
+      _PTEE,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.PaginationTokenExpiredException$, errors_1.PaginationTokenExpiredException);
+    exports2.ThrottledException$ = [
+      -3,
+      n05,
+      _TE,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.ThrottledException$, errors_1.ThrottledException);
+    exports2.errorTypeRegistries = [
+      _s_registry5,
+      n0_registry5
+    ];
+    exports2.ComplianceDetails$ = [
+      3,
+      n05,
+      _CD,
+      0,
+      [_NK, _KWNV, _CS2],
+      [64 | 0, 64 | 0, 2]
+    ];
+    exports2.DescribeReportCreationInput$ = [
+      3,
+      n05,
+      _DRCI,
+      0,
+      [],
+      []
+    ];
+    exports2.DescribeReportCreationOutput$ = [
+      3,
+      n05,
+      _DRCO,
+      0,
+      [_S, _SL, _SD, _EM],
+      [0, 0, 0, 0]
+    ];
+    exports2.FailureInfo$ = [
+      3,
+      n05,
+      _FI,
+      0,
+      [_SC, _EC, _EM],
+      [1, 0, 0]
+    ];
+    exports2.GetComplianceSummaryInput$ = [
+      3,
+      n05,
+      _GCSI,
+      0,
+      [_TIF, _RF, _RTF, _TKF, _GB, _MR, _PT],
+      [64 | 0, 64 | 0, 64 | 0, 64 | 0, 64 | 0, 1, 0]
+    ];
+    exports2.GetComplianceSummaryOutput$ = [
+      3,
+      n05,
+      _GCSO,
+      0,
+      [_SLu, _PT],
+      [() => SummaryList, 0]
+    ];
+    exports2.GetResourcesInput$ = [
+      3,
+      n05,
+      _GRI,
+      0,
+      [_PT, _TF, _RPP, _TPP, _RTF, _ICD, _ECR, _RARNL],
+      [0, () => TagFilterList, 1, 1, 64 | 0, 2, 2, 64 | 0]
+    ];
+    exports2.GetResourcesOutput$ = [
+      3,
+      n05,
+      _GRO,
+      0,
+      [_PT, _RTML],
+      [0, () => ResourceTagMappingList]
+    ];
+    exports2.GetTagKeysInput$ = [
+      3,
+      n05,
+      _GTKI,
+      0,
+      [_PT],
+      [0]
+    ];
+    exports2.GetTagKeysOutput$ = [
+      3,
+      n05,
+      _GTKO,
+      0,
+      [_PT, _TK],
+      [0, 64 | 0]
+    ];
+    exports2.GetTagValuesInput$ = [
+      3,
+      n05,
+      _GTVI,
+      0,
+      [_K2, _PT],
+      [0, 0],
+      1
+    ];
+    exports2.GetTagValuesOutput$ = [
+      3,
+      n05,
+      _GTVO,
+      0,
+      [_PT, _TV],
+      [0, 64 | 0]
+    ];
+    exports2.ListRequiredTagsInput$ = [
+      3,
+      n05,
+      _LRTI,
+      0,
+      [_NT, _MR],
+      [0, 1]
+    ];
+    exports2.ListRequiredTagsOutput$ = [
+      3,
+      n05,
+      _LRTO,
+      0,
+      [_RT3, _NT],
+      [() => RequiredTagsForListRequiredTags, 0]
+    ];
+    exports2.RequiredTag$ = [
+      3,
+      n05,
+      _RTe,
+      0,
+      [_RTes, _CFRT, _RTK],
+      [0, 64 | 0, 64 | 0]
+    ];
+    exports2.ResourceTagMapping$ = [
+      3,
+      n05,
+      _RTM,
+      0,
+      [_RARN, _T2, _CD],
+      [0, () => TagList, () => exports2.ComplianceDetails$]
+    ];
+    exports2.StartReportCreationInput$ = [
+      3,
+      n05,
+      _SRCI,
+      0,
+      [_SB],
+      [0],
+      1
+    ];
+    exports2.StartReportCreationOutput$ = [
+      3,
+      n05,
+      _SRCO,
+      0,
+      [],
+      []
+    ];
+    exports2.Summary$ = [
+      3,
+      n05,
+      _Su,
+      0,
+      [_LU, _TI, _TIT, _R, _RTes, _NCR],
+      [0, 0, 0, 0, 0, 1]
+    ];
+    exports2.Tag$ = [
+      3,
+      n05,
+      _Ta2,
+      0,
+      [_K2, _V2],
+      [0, 0],
+      2
+    ];
+    exports2.TagFilter$ = [
+      3,
+      n05,
+      _TFa,
+      0,
+      [_K2, _Va],
+      [0, 64 | 0]
+    ];
+    exports2.TagResourcesInput$ = [
+      3,
+      n05,
+      _TRI,
+      0,
+      [_RARNL, _T2],
+      [64 | 0, 128 | 0],
+      2
+    ];
+    exports2.TagResourcesOutput$ = [
+      3,
+      n05,
+      _TRO,
+      0,
+      [_FRM],
+      [() => FailedResourcesMap]
+    ];
+    exports2.UntagResourcesInput$ = [
+      3,
+      n05,
+      _URI,
+      0,
+      [_RARNL, _TK],
+      [64 | 0, 64 | 0],
+      2
+    ];
+    exports2.UntagResourcesOutput$ = [
+      3,
+      n05,
+      _URO,
+      0,
+      [_FRM],
+      [() => FailedResourcesMap]
+    ];
+    var CloudFormationResourceTypes = 64 | 0;
+    var GroupBy = 64 | 0;
+    var RegionFilterList = 64 | 0;
+    var ReportingTagKeys = 64 | 0;
+    var RequiredTagsForListRequiredTags = [
+      1,
+      n05,
+      _RTFLRT,
+      0,
+      () => exports2.RequiredTag$
+    ];
+    var ResourceARNListForGet = 64 | 0;
+    var ResourceARNListForTagUntag = 64 | 0;
+    var ResourceTagMappingList = [
+      1,
+      n05,
+      _RTML,
+      0,
+      () => exports2.ResourceTagMapping$
+    ];
+    var ResourceTypeFilterList = 64 | 0;
+    var SummaryList = [
+      1,
+      n05,
+      _SLu,
+      0,
+      () => exports2.Summary$
+    ];
+    var TagFilterList = [
+      1,
+      n05,
+      _TFL,
+      0,
+      () => exports2.TagFilter$
+    ];
+    var TagKeyFilterList = 64 | 0;
+    var TagKeyList = 64 | 0;
+    var TagKeyListForUntag = 64 | 0;
+    var TagList = [
+      1,
+      n05,
+      _TL,
+      0,
+      () => exports2.Tag$
+    ];
+    var TagValueList = 64 | 0;
+    var TagValuesOutputList = 64 | 0;
+    var TargetIdFilterList = 64 | 0;
+    var FailedResourcesMap = [
+      2,
+      n05,
+      _FRM,
+      0,
+      0,
+      () => exports2.FailureInfo$
+    ];
+    var TagMap = 128 | 0;
+    exports2.DescribeReportCreation$ = [
+      9,
+      n05,
+      _DRC,
+      { [_h4]: ["POST", "/DescribeReportCreation", 200] },
+      () => exports2.DescribeReportCreationInput$,
+      () => exports2.DescribeReportCreationOutput$
+    ];
+    exports2.GetComplianceSummary$ = [
+      9,
+      n05,
+      _GCS,
+      { [_h4]: ["POST", "/GetComplianceSummary", 200] },
+      () => exports2.GetComplianceSummaryInput$,
+      () => exports2.GetComplianceSummaryOutput$
+    ];
+    exports2.GetResources$ = [
+      9,
+      n05,
+      _GR,
+      { [_h4]: ["POST", "/GetResources", 200] },
+      () => exports2.GetResourcesInput$,
+      () => exports2.GetResourcesOutput$
+    ];
+    exports2.GetTagKeys$ = [
+      9,
+      n05,
+      _GTK,
+      { [_h4]: ["POST", "/GetTagKeys", 200] },
+      () => exports2.GetTagKeysInput$,
+      () => exports2.GetTagKeysOutput$
+    ];
+    exports2.GetTagValues$ = [
+      9,
+      n05,
+      _GTV,
+      { [_h4]: ["POST", "/GetTagValues", 200] },
+      () => exports2.GetTagValuesInput$,
+      () => exports2.GetTagValuesOutput$
+    ];
+    exports2.ListRequiredTags$ = [
+      9,
+      n05,
+      _LRT,
+      { [_h4]: ["POST", "/ListRequiredTags", 200] },
+      () => exports2.ListRequiredTagsInput$,
+      () => exports2.ListRequiredTagsOutput$
+    ];
+    exports2.StartReportCreation$ = [
+      9,
+      n05,
+      _SRC,
+      { [_h4]: ["POST", "/StartReportCreation", 200] },
+      () => exports2.StartReportCreationInput$,
+      () => exports2.StartReportCreationOutput$
+    ];
+    exports2.TagResources$ = [
+      9,
+      n05,
+      _TR,
+      { [_h4]: ["POST", "/TagResources", 200] },
+      () => exports2.TagResourcesInput$,
+      () => exports2.TagResourcesOutput$
+    ];
+    exports2.UntagResources$ = [
+      9,
+      n05,
+      _UR,
+      { [_h4]: ["POST", "/UntagResources", 200] },
+      () => exports2.UntagResourcesInput$,
+      () => exports2.UntagResourcesOutput$
+    ];
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/runtimeConfig.shared.js
+var require_runtimeConfig_shared9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/runtimeConfig.shared.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var protocols_1 = (init_protocols2(), __toCommonJS(protocols_exports2));
+    var smithy_client_1 = require_dist_cjs26();
+    var url_parser_1 = require_dist_cjs19();
+    var util_base64_1 = require_dist_cjs11();
+    var util_utf8_1 = require_dist_cjs10();
+    var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider9();
+    var endpointResolver_1 = require_endpointResolver9();
+    var schemas_0_1 = require_schemas_09();
+    var getRuntimeConfig9 = (config) => {
+      return {
+        apiVersion: "2017-01-26",
+        base64Decoder: config?.base64Decoder ?? util_base64_1.fromBase64,
+        base64Encoder: config?.base64Encoder ?? util_base64_1.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultResourceGroupsTaggingAPIHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
+          {
+            schemeId: "aws.auth#sigv4",
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
+            signer: new core_1.AwsSdkSigV4Signer()
+          }
+        ],
+        logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        protocol: config?.protocol ?? protocols_1.AwsJson1_1Protocol,
+        protocolSettings: config?.protocolSettings ?? {
+          defaultNamespace: "com.amazonaws.resourcegroupstaggingapi",
+          errorTypeRegistries: schemas_0_1.errorTypeRegistries,
+          version: "2017-01-26",
+          serviceTarget: "ResourceGroupsTaggingAPI_20170126"
+        },
+        serviceId: config?.serviceId ?? "Resource Groups Tagging API",
+        urlParser: config?.urlParser ?? url_parser_1.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? util_utf8_1.toUtf8
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/runtimeConfig.js
+var require_runtimeConfig9 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/runtimeConfig.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getRuntimeConfig = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var package_json_1 = tslib_1.__importDefault(require_package9());
+    var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
+    var credential_provider_node_1 = require_dist_cjs53();
+    var util_user_agent_node_1 = require_dist_cjs42();
+    var config_resolver_1 = require_dist_cjs32();
+    var hash_node_1 = require_dist_cjs43();
+    var middleware_retry_1 = require_dist_cjs38();
+    var node_config_provider_1 = require_dist_cjs35();
+    var node_http_handler_1 = require_dist_cjs14();
+    var smithy_client_1 = require_dist_cjs26();
+    var util_body_length_node_1 = require_dist_cjs44();
+    var util_defaults_mode_node_1 = require_dist_cjs45();
+    var util_retry_1 = require_dist_cjs29();
+    var runtimeConfig_shared_1 = require_runtimeConfig_shared9();
+    var getRuntimeConfig9 = (config) => {
+      (0, smithy_client_1.emitWarningIfUnsupportedVersion)(process.version);
+      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
+      const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
+      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
+      (0, core_1.emitWarningIfUnsupportedVersion)(process.version);
+      const loaderConfig = {
+        profile: config?.profile,
+        logger: clientSharedValues.logger
+      };
+      return {
+        ...clientSharedValues,
+        ...config,
+        runtime: "node",
+        defaultsMode,
+        authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, node_config_provider_1.loadConfig)({
+          ...middleware_retry_1.NODE_RETRY_MODE_CONFIG_OPTIONS,
+          default: async () => (await defaultConfigProvider()).retryMode || util_retry_1.DEFAULT_RETRY_MODE
+        }, config),
+        sha256: config?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+      };
+    };
+    exports2.getRuntimeConfig = getRuntimeConfig9;
+  }
+});
+
+// node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/index.js
+var require_dist_cjs63 = __commonJS({
+  "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var middlewareHostHeader = require_dist_cjs3();
+    var middlewareLogger = require_dist_cjs4();
+    var middlewareRecursionDetection = require_dist_cjs5();
+    var middlewareUserAgent = require_dist_cjs30();
+    var configResolver = require_dist_cjs32();
+    var core = (init_dist_es(), __toCommonJS(dist_es_exports));
+    var schema = (init_schema(), __toCommonJS(schema_exports));
+    var middlewareContentLength = require_dist_cjs33();
+    var middlewareEndpoint = require_dist_cjs37();
+    var middlewareRetry = require_dist_cjs38();
+    var smithyClient = require_dist_cjs26();
+    var httpAuthSchemeProvider = require_httpAuthSchemeProvider9();
+    var runtimeConfig = require_runtimeConfig9();
+    var regionConfigResolver = require_dist_cjs46();
+    var protocolHttp = require_dist_cjs2();
+    var schemas_0 = require_schemas_09();
+    var errors = require_errors10();
+    var ResourceGroupsTaggingAPIServiceException = require_ResourceGroupsTaggingAPIServiceException();
+    var resolveClientEndpointParameters5 = (options) => {
+      return Object.assign(options, {
+        useDualstackEndpoint: options.useDualstackEndpoint ?? false,
+        useFipsEndpoint: options.useFipsEndpoint ?? false,
+        defaultSigningName: "tagging"
+      });
+    };
+    var commonParams5 = {
+      UseFIPS: { type: "builtInParams", name: "useFipsEndpoint" },
+      Endpoint: { type: "builtInParams", name: "endpoint" },
+      Region: { type: "builtInParams", name: "region" },
+      UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
+    };
+    var getHttpAuthExtensionConfiguration5 = (runtimeConfig2) => {
+      const _httpAuthSchemes = runtimeConfig2.httpAuthSchemes;
+      let _httpAuthSchemeProvider = runtimeConfig2.httpAuthSchemeProvider;
+      let _credentials = runtimeConfig2.credentials;
+      return {
+        setHttpAuthScheme(httpAuthScheme) {
+          const index = _httpAuthSchemes.findIndex((scheme) => scheme.schemeId === httpAuthScheme.schemeId);
+          if (index === -1) {
+            _httpAuthSchemes.push(httpAuthScheme);
+          } else {
+            _httpAuthSchemes.splice(index, 1, httpAuthScheme);
+          }
+        },
+        httpAuthSchemes() {
+          return _httpAuthSchemes;
+        },
+        setHttpAuthSchemeProvider(httpAuthSchemeProvider2) {
+          _httpAuthSchemeProvider = httpAuthSchemeProvider2;
+        },
+        httpAuthSchemeProvider() {
+          return _httpAuthSchemeProvider;
+        },
+        setCredentials(credentials) {
+          _credentials = credentials;
+        },
+        credentials() {
+          return _credentials;
+        }
+      };
+    };
+    var resolveHttpAuthRuntimeConfig5 = (config) => {
+      return {
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
+      };
+    };
+    var resolveRuntimeExtensions5 = (runtimeConfig2, extensions) => {
+      const extensionConfiguration = Object.assign(regionConfigResolver.getAwsRegionExtensionConfiguration(runtimeConfig2), smithyClient.getDefaultExtensionConfiguration(runtimeConfig2), protocolHttp.getHttpHandlerExtensionConfiguration(runtimeConfig2), getHttpAuthExtensionConfiguration5(runtimeConfig2));
+      extensions.forEach((extension) => extension.configure(extensionConfiguration));
+      return Object.assign(runtimeConfig2, regionConfigResolver.resolveAwsRegionExtensionConfiguration(extensionConfiguration), smithyClient.resolveDefaultRuntimeConfig(extensionConfiguration), protocolHttp.resolveHttpHandlerRuntimeConfig(extensionConfiguration), resolveHttpAuthRuntimeConfig5(extensionConfiguration));
+    };
+    var ResourceGroupsTaggingAPIClient2 = class extends smithyClient.Client {
+      config;
+      constructor(...[configuration]) {
+        const _config_0 = runtimeConfig.getRuntimeConfig(configuration || {});
+        super(_config_0);
+        this.initConfig = _config_0;
+        const _config_1 = resolveClientEndpointParameters5(_config_0);
+        const _config_2 = middlewareUserAgent.resolveUserAgentConfig(_config_1);
+        const _config_3 = middlewareRetry.resolveRetryConfig(_config_2);
+        const _config_4 = configResolver.resolveRegionConfig(_config_3);
+        const _config_5 = middlewareHostHeader.resolveHostHeaderConfig(_config_4);
+        const _config_6 = middlewareEndpoint.resolveEndpointConfig(_config_5);
+        const _config_7 = httpAuthSchemeProvider.resolveHttpAuthSchemeConfig(_config_6);
+        const _config_8 = resolveRuntimeExtensions5(_config_7, configuration?.extensions || []);
+        this.config = _config_8;
+        this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
+        this.middlewareStack.use(middlewareUserAgent.getUserAgentPlugin(this.config));
+        this.middlewareStack.use(middlewareRetry.getRetryPlugin(this.config));
+        this.middlewareStack.use(middlewareContentLength.getContentLengthPlugin(this.config));
+        this.middlewareStack.use(middlewareHostHeader.getHostHeaderPlugin(this.config));
+        this.middlewareStack.use(middlewareLogger.getLoggerPlugin(this.config));
+        this.middlewareStack.use(middlewareRecursionDetection.getRecursionDetectionPlugin(this.config));
+        this.middlewareStack.use(core.getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
+          httpAuthSchemeParametersProvider: httpAuthSchemeProvider.defaultResourceGroupsTaggingAPIHttpAuthSchemeParametersProvider,
+          identityProviderConfigProvider: async (config) => new core.DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials
+          })
+        }));
+        this.middlewareStack.use(core.getHttpSigningPlugin(this.config));
+      }
+      destroy() {
+        super.destroy();
+      }
+    };
+    var DescribeReportCreationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "DescribeReportCreation", {}).n("ResourceGroupsTaggingAPIClient", "DescribeReportCreationCommand").sc(schemas_0.DescribeReportCreation$).build() {
+    };
+    var GetComplianceSummaryCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "GetComplianceSummary", {}).n("ResourceGroupsTaggingAPIClient", "GetComplianceSummaryCommand").sc(schemas_0.GetComplianceSummary$).build() {
+    };
+    var GetResourcesCommand2 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "GetResources", {}).n("ResourceGroupsTaggingAPIClient", "GetResourcesCommand").sc(schemas_0.GetResources$).build() {
+    };
+    var GetTagKeysCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "GetTagKeys", {}).n("ResourceGroupsTaggingAPIClient", "GetTagKeysCommand").sc(schemas_0.GetTagKeys$).build() {
+    };
+    var GetTagValuesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "GetTagValues", {}).n("ResourceGroupsTaggingAPIClient", "GetTagValuesCommand").sc(schemas_0.GetTagValues$).build() {
+    };
+    var ListRequiredTagsCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "ListRequiredTags", {}).n("ResourceGroupsTaggingAPIClient", "ListRequiredTagsCommand").sc(schemas_0.ListRequiredTags$).build() {
+    };
+    var StartReportCreationCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "StartReportCreation", {}).n("ResourceGroupsTaggingAPIClient", "StartReportCreationCommand").sc(schemas_0.StartReportCreation$).build() {
+    };
+    var TagResourcesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "TagResources", {}).n("ResourceGroupsTaggingAPIClient", "TagResourcesCommand").sc(schemas_0.TagResources$).build() {
+    };
+    var UntagResourcesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+      return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
+    }).s("ResourceGroupsTaggingAPI_20170126", "UntagResources", {}).n("ResourceGroupsTaggingAPIClient", "UntagResourcesCommand").sc(schemas_0.UntagResources$).build() {
+    };
+    var paginateGetComplianceSummary = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetComplianceSummaryCommand, "PaginationToken", "PaginationToken", "MaxResults");
+    var paginateGetResources = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetResourcesCommand2, "PaginationToken", "PaginationToken", "ResourcesPerPage");
+    var paginateGetTagKeys = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetTagKeysCommand, "PaginationToken", "PaginationToken", "");
+    var paginateGetTagValues = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetTagValuesCommand, "PaginationToken", "PaginationToken", "");
+    var paginateListRequiredTags = core.createPaginator(ResourceGroupsTaggingAPIClient2, ListRequiredTagsCommand, "NextToken", "NextToken", "MaxResults");
+    var commands5 = {
+      DescribeReportCreationCommand,
+      GetComplianceSummaryCommand,
+      GetResourcesCommand: GetResourcesCommand2,
+      GetTagKeysCommand,
+      GetTagValuesCommand,
+      ListRequiredTagsCommand,
+      StartReportCreationCommand,
+      TagResourcesCommand,
+      UntagResourcesCommand
+    };
+    var paginators = {
+      paginateGetComplianceSummary,
+      paginateGetResources,
+      paginateGetTagKeys,
+      paginateGetTagValues,
+      paginateListRequiredTags
+    };
+    var ResourceGroupsTaggingAPI = class extends ResourceGroupsTaggingAPIClient2 {
+    };
+    smithyClient.createAggregatedClient(commands5, ResourceGroupsTaggingAPI, { paginators });
+    var ErrorCode = {
+      INTERNAL_SERVICE_EXCEPTION: "InternalServiceException",
+      INVALID_PARAMETER_EXCEPTION: "InvalidParameterException"
+    };
+    var GroupByAttribute = {
+      REGION: "REGION",
+      RESOURCE_TYPE: "RESOURCE_TYPE",
+      TARGET_ID: "TARGET_ID"
+    };
+    var TargetIdType = {
+      ACCOUNT: "ACCOUNT",
+      OU: "OU",
+      ROOT: "ROOT"
+    };
+    exports2.$Command = smithyClient.Command;
+    exports2.__Client = smithyClient.Client;
+    exports2.ResourceGroupsTaggingAPIServiceException = ResourceGroupsTaggingAPIServiceException.ResourceGroupsTaggingAPIServiceException;
+    exports2.DescribeReportCreationCommand = DescribeReportCreationCommand;
+    exports2.ErrorCode = ErrorCode;
+    exports2.GetComplianceSummaryCommand = GetComplianceSummaryCommand;
+    exports2.GetResourcesCommand = GetResourcesCommand2;
+    exports2.GetTagKeysCommand = GetTagKeysCommand;
+    exports2.GetTagValuesCommand = GetTagValuesCommand;
+    exports2.GroupByAttribute = GroupByAttribute;
+    exports2.ListRequiredTagsCommand = ListRequiredTagsCommand;
+    exports2.ResourceGroupsTaggingAPI = ResourceGroupsTaggingAPI;
+    exports2.ResourceGroupsTaggingAPIClient = ResourceGroupsTaggingAPIClient2;
+    exports2.StartReportCreationCommand = StartReportCreationCommand;
+    exports2.TagResourcesCommand = TagResourcesCommand;
+    exports2.TargetIdType = TargetIdType;
+    exports2.UntagResourcesCommand = UntagResourcesCommand;
+    exports2.paginateGetComplianceSummary = paginateGetComplianceSummary;
+    exports2.paginateGetResources = paginateGetResources;
+    exports2.paginateGetTagKeys = paginateGetTagKeys;
+    exports2.paginateGetTagValues = paginateGetTagValues;
+    exports2.paginateListRequiredTags = paginateListRequiredTags;
+    Object.prototype.hasOwnProperty.call(schemas_0, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: schemas_0["__proto__"]
+    });
+    Object.keys(schemas_0).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = schemas_0[k5];
+    });
+    Object.prototype.hasOwnProperty.call(errors, "__proto__") && !Object.prototype.hasOwnProperty.call(exports2, "__proto__") && Object.defineProperty(exports2, "__proto__", {
+      enumerable: true,
+      value: errors["__proto__"]
+    });
+    Object.keys(errors).forEach(function(k5) {
+      if (k5 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, k5)) exports2[k5] = errors[k5];
+    });
+  }
+});
+
 // src/cli.ts
 var cli_exports = {};
 __export(cli_exports, {
@@ -73282,8 +87912,8 @@ __export(cli_exports, {
   toDotenv: () => toDotenv
 });
 module.exports = __toCommonJS(cli_exports);
-var import_promises4 = require("node:fs/promises");
-var import_node_path4 = __toESM(require("node:path"), 1);
+var import_promises5 = require("node:fs/promises");
+var import_node_path5 = __toESM(require("node:path"), 1);
 
 // src/lib/aws/client.ts
 var import_client_api_gateway = __toESM(require_dist_cjs54(), 1);
@@ -73532,8 +88162,8 @@ function formatUserSafeError(error2, env = process.env) {
 }
 
 // src/runtime.ts
-var import_promises3 = require("node:fs/promises");
-var import_node_path3 = __toESM(require("node:path"), 1);
+var import_promises4 = require("node:fs/promises");
+var import_node_path4 = __toESM(require("node:path"), 1);
 
 // src/contracts.ts
 var actionContract = {
@@ -73591,8 +88221,11 @@ var actionContract = {
     "export-summary-json": {
       description: "discover-many summary JSON containing attempted, exported, failed, and skipped counts."
     },
+    "candidates-json": {
+      description: "JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering."
+    },
     "provider-type": {
-      description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, or glue."
+      description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm."
     },
     "spec-format": {
       description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
@@ -73929,8 +88562,8 @@ function normalizeRepoUrl(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path5 = sshMatch[2];
-    return `https://${host}/${path5}`;
+    const path6 = sshMatch[2];
+    return `https://${host}/${path6}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -74010,10 +88643,6 @@ function isLikelyOpenApiDocument(content) {
 function isLikelyGraphqlSchema(content) {
   const trimmed = content.trim();
   return /\btype\s+Query\b/.test(trimmed) || /\bschema\s*\{/.test(trimmed);
-}
-async function findExistingRepoSpec(repoRoot) {
-  const match = await findExistingRepoSpecTyped(repoRoot);
-  return match?.path;
 }
 async function findExistingRepoSpecTyped(repoRoot) {
   for (const candidate of SPEC_CANDIDATES) {
@@ -74570,6 +89199,357 @@ var GlueSchemaProvider = class {
   }
 };
 
+// src/lib/providers/ssm.ts
+function detectFormat(content, key) {
+  const trimmed = content.trim();
+  if (key.endsWith(".graphql") || key.endsWith(".gql") || /\btype\s+Query\b/.test(trimmed)) {
+    return { format: "graphql-sdl", filename: "schema.graphql" };
+  }
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed.openapi || parsed.swagger) return { format: "openapi-json", filename: "index.json" };
+    if (parsed.$schema || parsed.type === "object" || parsed.type === "record") return { format: "json-schema", filename: "schema.json" };
+  } catch {
+  }
+  if (trimmed.startsWith("openapi:") || trimmed.startsWith("swagger:")) {
+    return { format: "openapi-yaml", filename: "index.yaml" };
+  }
+  return { format: "openapi-json", filename: "index.json" };
+}
+function groupByService(entries) {
+  const map2 = /* @__PURE__ */ new Map();
+  for (const entry of entries) {
+    let spec = map2.get(entry.serviceName);
+    if (!spec) {
+      spec = { serviceName: entry.serviceName };
+      map2.set(entry.serviceName, spec);
+    }
+    if (entry.key === "url" || entry.key === "spec-url") {
+      spec.url = entry.value;
+    } else if (entry.key === "content" || entry.key === "spec-content") {
+      spec.content = entry.value;
+    } else if (entry.key === "format" || entry.key === "spec-format") {
+      spec.format = entry.value;
+    }
+  }
+  return [...map2.values()].filter((s5) => s5.url || s5.content);
+}
+var SsmProvider = class {
+  constructor(client) {
+    this.client = client;
+  }
+  type = "ssm";
+  async probe() {
+    return this.client.probe();
+  }
+  async listCandidates() {
+    const entries = await this.client.listSpecParameters();
+    const services = groupByService(entries);
+    return services.map((svc) => ({
+      id: `ssm/${svc.serviceName}`,
+      name: svc.serviceName,
+      providerType: "ssm",
+      tags: {},
+      evidence: [`Found spec registration in SSM at /postman/specs/${svc.serviceName}/`],
+      meta: {
+        url: svc.url ?? "",
+        hasContent: svc.content ? "true" : "false",
+        format: svc.format ?? ""
+      }
+    }));
+  }
+  async exportSpec(candidate, _options) {
+    const entries = await this.client.listSpecParameters();
+    const services = groupByService(entries);
+    const svc = services.find((s5) => s5.serviceName === candidate.name);
+    if (svc?.content) {
+      const { format: format2, filename } = detectFormat(svc.content, candidate.name);
+      return {
+        content: svc.content,
+        format: format2,
+        filename,
+        evidence: [`Spec content loaded from SSM /postman/specs/${candidate.name}/content`]
+      };
+    }
+    if (svc?.url) {
+      const pointerContent = JSON.stringify({
+        specUrl: svc.url,
+        serviceName: candidate.name,
+        registeredVia: "ssm-parameter-store"
+      }, null, 2);
+      return {
+        content: pointerContent,
+        format: "openapi-json",
+        filename: "spec-pointer.json",
+        evidence: [`Spec URL registered in SSM: ${svc.url}`]
+      };
+    }
+    throw new Error(`No spec content or URL found in SSM for service ${candidate.name}`);
+  }
+};
+
+// src/lib/aws/ssm-client.ts
+var import_client_ssm = __toESM(require_dist_cjs62(), 1);
+var import_node_http_handler10 = __toESM(require_dist_cjs14(), 1);
+var DEFAULT_PATH_PREFIX = "/postman/specs";
+var SsmSdkClient = class {
+  client;
+  constructor(region, options = {}) {
+    const requestTimeoutMs = options.requestTimeoutMs ?? 3e4;
+    this.client = new import_client_ssm.SSMClient({
+      region,
+      maxAttempts: options.maxAttempts ?? 3,
+      requestHandler: new import_node_http_handler10.NodeHttpHandler({
+        connectionTimeout: requestTimeoutMs,
+        socketTimeout: requestTimeoutMs
+      })
+    });
+  }
+  async listSpecParameters(pathPrefix = DEFAULT_PATH_PREFIX) {
+    const items = [];
+    let nextToken;
+    do {
+      const response = await this.client.send(
+        new import_client_ssm.GetParametersByPathCommand({
+          Path: pathPrefix,
+          Recursive: true,
+          WithDecryption: true,
+          NextToken: nextToken
+        })
+      );
+      for (const param of response.Parameters ?? []) {
+        if (!param.Name || !param.Value) continue;
+        const parts = param.Name.replace(pathPrefix, "").replace(/^\//, "").split("/");
+        if (parts.length < 2) continue;
+        const serviceName = parts[0] ?? "";
+        const key = parts.slice(1).join("/");
+        items.push({ serviceName, key, value: param.Value });
+      }
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return items;
+  }
+  async probe() {
+    try {
+      await this.client.send(
+        new import_client_ssm.GetParametersByPathCommand({ Path: DEFAULT_PATH_PREFIX, Recursive: false, MaxResults: 1 })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+// src/lib/aws/tagging-client.ts
+var import_client_resource_groups_tagging_api = __toESM(require_dist_cjs63(), 1);
+var import_node_http_handler11 = __toESM(require_dist_cjs14(), 1);
+var TaggingSdkClient = class {
+  client;
+  constructor(region, options = {}) {
+    const requestTimeoutMs = options.requestTimeoutMs ?? 3e4;
+    this.client = new import_client_resource_groups_tagging_api.ResourceGroupsTaggingAPIClient({
+      region,
+      maxAttempts: options.maxAttempts ?? 3,
+      requestHandler: new import_node_http_handler11.NodeHttpHandler({
+        connectionTimeout: requestTimeoutMs,
+        socketTimeout: requestTimeoutMs
+      })
+    });
+  }
+  async getResourcesByTag(tagKey, tagValues, resourceTypes) {
+    const items = [];
+    let paginationToken;
+    do {
+      const response = await this.client.send(
+        new import_client_resource_groups_tagging_api.GetResourcesCommand({
+          TagFilters: [{ Key: tagKey, Values: tagValues.length > 0 ? tagValues : void 0 }],
+          ResourceTypeFilters: resourceTypes,
+          PaginationToken: paginationToken
+        })
+      );
+      for (const mapping of response.ResourceTagMappingList ?? []) {
+        if (!mapping.ResourceARN) continue;
+        const tags = {};
+        for (const tag2 of mapping.Tags ?? []) {
+          if (tag2.Key) tags[tag2.Key] = tag2.Value ?? "";
+        }
+        items.push({ arn: mapping.ResourceARN, tags });
+      }
+      paginationToken = response.PaginationToken;
+    } while (paginationToken);
+    return items;
+  }
+  async probe() {
+    try {
+      await this.client.send(new import_client_resource_groups_tagging_api.GetResourcesCommand({ ResourceTypeFilters: ["apigateway"], TagFilters: [] }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+// src/lib/resolve/narrowing-pipeline.ts
+function slugifyRepoName(repoSlug) {
+  if (!repoSlug) return [];
+  const repoName = repoSlug.split("/").pop()?.trim() ?? "";
+  if (!repoName) return [];
+  const slugs = [repoName];
+  for (const suffix of ["-service", "-api", "-backend", "-server", "-app"]) {
+    if (repoName.endsWith(suffix)) {
+      slugs.push(repoName.slice(0, -suffix.length));
+    }
+  }
+  return slugs.filter((s5) => s5.length > 2);
+}
+function tierIacFingerprint(signals) {
+  const ids = [...signals.explicitGatewayIdHints, ...signals.inferredGatewayIdHints];
+  if (ids.length === 0) return void 0;
+  return {
+    gatewayIds: ids,
+    tier: "iac-fingerprint",
+    evidence: [`IaC fingerprinting found ${ids.length} gateway ID(s) from repo files`]
+  };
+}
+async function tierCloudFormationCorrelation(ctx) {
+  if (!ctx.cfnClient) return void 0;
+  const slugs = slugifyRepoName(ctx.repoSlug);
+  if (slugs.length === 0) return void 0;
+  let stacks;
+  try {
+    stacks = await ctx.cfnClient.listActiveStacks();
+  } catch {
+    return void 0;
+  }
+  const matchingIds = [];
+  const evidence = [];
+  for (const stack of stacks) {
+    const stackLower = stack.name.toLowerCase();
+    const matches = slugs.some((slug) => stackLower.includes(slug.toLowerCase()));
+    if (!matches) continue;
+    try {
+      const resources = await ctx.cfnClient.listApiResources(stack.name);
+      for (const resource of resources) {
+        if (resource.physicalId) {
+          matchingIds.push(resource.physicalId);
+          evidence.push(`Stack ${stack.name} contains ${resource.type} -> ${resource.physicalId}`);
+        }
+      }
+    } catch {
+    }
+  }
+  if (matchingIds.length === 0) return void 0;
+  return { gatewayIds: matchingIds, tier: "cfn-correlation", evidence };
+}
+async function tierTagPreFilter(ctx) {
+  if (!ctx.taggingClient) return void 0;
+  if (!ctx.repoSlug) return void 0;
+  const tagKeys = ["postman:repo", "repository", "repo", "github:repository"];
+  const tagValues = [ctx.repoSlug];
+  const repoName = ctx.repoSlug.split("/").pop()?.trim();
+  if (repoName) tagValues.push(repoName);
+  const apiGatewayTypes = [
+    "apigateway:restapis",
+    "apigateway:apis"
+  ];
+  for (const tagKey of tagKeys) {
+    try {
+      const resources = await ctx.taggingClient.getResourcesByTag(tagKey, tagValues, apiGatewayTypes);
+      if (resources.length === 0) continue;
+      const ids = resources.map((r5) => {
+        const match = r5.arn.match(/\/(?:restapis|apis)\/([a-z0-9_-]+)/);
+        return match?.[1];
+      }).filter((id) => Boolean(id));
+      if (ids.length > 0) {
+        return {
+          gatewayIds: ids,
+          tier: "tag-prefilter",
+          evidence: [`Found ${ids.length} API(s) tagged with ${tagKey}=${tagValues.join("|")}`]
+        };
+      }
+    } catch {
+    }
+  }
+  return void 0;
+}
+function tierNamingHeuristic(candidateNames, ctx) {
+  const slugs = slugifyRepoName(ctx.repoSlug);
+  if (slugs.length === 0) return void 0;
+  const matches = candidateNames.filter((c5) => {
+    const nameLower = c5.name.toLowerCase();
+    return slugs.some((slug) => nameLower.includes(slug.toLowerCase()));
+  });
+  if (matches.length === 0) return void 0;
+  return {
+    gatewayIds: matches.map((m5) => m5.id),
+    tier: "naming-heuristic",
+    evidence: [`Name matching narrowed ${candidateNames.length} candidates to ${matches.length} using repo slug`]
+  };
+}
+async function runNarrowingPipeline(ctx, allCandidates) {
+  const t1 = tierIacFingerprint(ctx.signals);
+  if (t1) return t1;
+  const t22 = await tierCloudFormationCorrelation(ctx);
+  if (t22) return t22;
+  const t32 = await tierTagPreFilter(ctx);
+  if (t32) return t32;
+  const t42 = tierNamingHeuristic(allCandidates, ctx);
+  if (t42) return t42;
+  return void 0;
+}
+
+// src/lib/repo/catalog.ts
+var import_promises3 = require("node:fs/promises");
+var import_node_path3 = __toESM(require("node:path"), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
+async function detectCatalogApis(repoRoot) {
+  const candidates = ["catalog-info.yaml", "catalog-info.yml"];
+  let content;
+  for (const filename of candidates) {
+    try {
+      content = await (0, import_promises3.readFile)(import_node_path3.default.resolve(repoRoot, filename), "utf8");
+      break;
+    } catch {
+    }
+  }
+  if (!content) return void 0;
+  let docs;
+  try {
+    const parsed = (0, import_yaml3.parse)(content, { maxAliasCount: 100 });
+    docs = Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return void 0;
+  }
+  const apis = [];
+  for (const doc of docs) {
+    if (!doc || doc.kind !== "API") continue;
+    const name = doc.metadata?.name ?? "";
+    if (!name) continue;
+    const def = doc.spec?.definition;
+    let specPath;
+    let specUrl;
+    if (typeof def === "string") {
+      if (def.startsWith("http://") || def.startsWith("https://")) {
+        specUrl = def;
+      } else {
+        specPath = def;
+      }
+    } else if (def && typeof def === "object") {
+      const textRef = def.$text;
+      if (typeof textRef === "string") {
+        if (textRef.startsWith("http://") || textRef.startsWith("https://")) {
+          specUrl = textRef;
+        } else {
+          specPath = textRef;
+        }
+      }
+    }
+    apis.push({ name, specPath, specUrl });
+  }
+  return apis.length > 0 ? apis : void 0;
+}
+
 // src/runtime.ts
 var DEFAULT_MODE = "resolve-one";
 var DEFAULT_REPO_ROOT = ".";
@@ -74730,13 +89710,13 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path3.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path4.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
-  const base = import_node_path3.default.resolve(rootPath);
-  const resolved = import_node_path3.default.resolve(base, targetPath);
-  const relative = import_node_path3.default.relative(base, resolved);
-  if (relative.startsWith("..") || import_node_path3.default.isAbsolute(relative)) {
+  const base = import_node_path4.default.resolve(rootPath);
+  const resolved = import_node_path4.default.resolve(base, targetPath);
+  const relative = import_node_path4.default.relative(base, resolved);
+  if (relative.startsWith("..") || import_node_path4.default.isAbsolute(relative)) {
     throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
   }
   return resolved;
@@ -74745,8 +89725,8 @@ function userSafeWarning(message) {
   return sanitizeLogMessage(message);
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises3.mkdir)(import_node_path3.default.dirname(outputPath), { recursive: true });
-  await (0, import_promises3.writeFile)(outputPath, content, "utf8");
+  await (0, import_promises4.mkdir)(import_node_path4.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises4.writeFile)(outputPath, content, "utf8");
 }
 async function selectStage(aws, candidate, preferredStage) {
   if (preferredStage) {
@@ -74881,17 +89861,18 @@ async function runDiscovery(inputs, dependencies) {
     dependencies.core.info(`Found ${items.length} HTTP API(s) in ${Date.now() - httpStart}ms`);
     return items;
   });
-  const selectedCandidates = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
+  let selectedCandidates = filterCandidates(restApis, httpApis, inputs.includeV2, inputs.apiFilter);
   if (inputs.maxCandidates > 0 && selectedCandidates.length > inputs.maxCandidates) {
-    throw new Error(
-      `Candidate count ${selectedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
+    dependencies.core.warning(
+      userSafeWarning(`${selectedCandidates.length} API Gateway candidates exceed limit (${inputs.maxCandidates}). Truncating to first ${inputs.maxCandidates}. Use api-filter or gateway-id to narrow.`)
     );
+    selectedCandidates = selectedCandidates.slice(0, inputs.maxCandidates);
   }
   dependencies.core.info(`Export candidate count after filters: ${selectedCandidates.length}`);
   const discovered = [];
   const summary = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path3.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path4.default.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, "output-dir");
   await dependencies.core.group("Export OpenAPI specs", async () => {
     for (const candidate of selectedCandidates) {
@@ -74908,7 +89889,7 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(import_node_path3.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path4.default.relative(resolvedRoot, resolvedOutputDir), folderName);
         if (inputs.dryRun) {
           summary.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
@@ -74931,7 +89912,10 @@ async function runDiscovery(inputs, dependencies) {
   return { discovered, summary };
 }
 async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
-  const existingSpecPath = await findExistingRepoSpec(inputs.repoRoot);
+  const catalogApis = await detectCatalogApis(inputs.repoRoot);
+  const catalogSpecPath = catalogApis?.[0]?.specPath;
+  const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
+  const existingSpecPath = catalogSpecPath ?? repoSpec?.path;
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const narrowedCandidates = inputs.expectedGatewayIds.length > 0 ? await actionCore.group(
     "Resolve API candidates by explicit gateway ID",
@@ -74942,13 +89926,39 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
     inputs.includeV2,
     inputs.apiFilter
   );
+  let finalCandidates = narrowedCandidates;
   if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
-    throw new Error(
-      `Candidate count ${narrowedCandidates.length} exceeds the safe discovery limit (${inputs.maxCandidates}). Prefer a known gateway-id or use the CLI for advanced narrowing.`
-    );
+    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const narrowingResult = await actionCore.group("Progressive narrowing", async () => {
+      let cfnClient;
+      let taggingClient;
+      try {
+        cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
+      } catch {
+      }
+      try {
+        taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+      } catch {
+      }
+      return runNarrowingPipeline(
+        { repoSlug: inputs.repoContext.repoSlug, serviceHints: signals.serviceHints, signals, cfnClient, taggingClient },
+        narrowedCandidates.map((c5) => ({ id: c5.id, name: c5.name }))
+      );
+    });
+    if (narrowingResult) {
+      const narrowedIds = new Set(narrowingResult.gatewayIds);
+      finalCandidates = narrowedCandidates.filter((c5) => narrowedIds.has(c5.id));
+      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${narrowedCandidates.length} candidates to ${finalCandidates.length}`);
+    }
+    if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
+      actionCore.warning(
+        userSafeWarning(`${finalCandidates.length} candidates after narrowing still exceeds limit (${inputs.maxCandidates}). Using top ${inputs.maxCandidates} by name relevance.`)
+      );
+      finalCandidates = finalCandidates.slice(0, inputs.maxCandidates);
+    }
   }
   const gateways = [];
-  for (const candidate of narrowedCandidates) {
+  for (const candidate of finalCandidates) {
     const candidateEvidence = [];
     let tags = {};
     try {
@@ -74962,7 +89972,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
   const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
   if (selectedSource.sourceType === "gateway-export" && selectedSource.gatewayId) {
-    const selectedGateway = narrowedCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
+    const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
     if (!selectedGateway) {
       return toManualReviewResult(selectedSource, ["Selected gateway could not be reloaded for export"]);
     }
@@ -75009,13 +90019,14 @@ function buildProviderRegistry(inputs, awsClient) {
   registry.register(new EventBridgeSchemasProvider(new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
   return registry;
 }
 async function runMultiProviderDiscovery(providers, inputs, dependencies) {
   const discovered = [];
   const summary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path3.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path4.default.resolve(inputs.repoRoot);
   for (const provider of providers) {
     await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
       let candidates;
@@ -75046,7 +90057,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies) {
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-          const relativeSpecPath = import_node_path3.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
+          const relativeSpecPath = import_node_path4.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
           const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
           await dependencies.writeSpecFile(absoluteSpecPath, result.content);
           summary.exported += 1;
@@ -75093,6 +90104,7 @@ function buildExecutionOutputs(result) {
       "service-name": "",
       "gateway-id": "",
       "spec-path": "",
+      "candidates-json": "",
       "provider-type": "",
       "spec-format": ""
     };
@@ -75115,6 +90127,7 @@ function buildExecutionOutputs(result) {
     "services-json": "[]",
     "service-count": "0",
     "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
+    "candidates-json": "",
     "provider-type": "",
     "spec-format": ""
   };
@@ -75248,6 +90261,7 @@ function toDotenv(outputs) {
     POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON: outputs["export-summary-json"] ?? "",
     POSTMAN_AWS_SPEC_SERVICES_JSON: outputs["services-json"] ?? "",
     POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs["service-count"] ?? "",
+    POSTMAN_AWS_SPEC_CANDIDATES_JSON: outputs["candidates-json"] ?? "",
     POSTMAN_AWS_SPEC_PROVIDER_TYPE: outputs["provider-type"] ?? "",
     POSTMAN_AWS_SPEC_FORMAT: outputs["spec-format"] ?? ""
   };
@@ -75257,14 +90271,14 @@ async function writeOptionalFile(filePath, content) {
   if (!filePath) {
     return;
   }
-  const workspaceRoot = import_node_path4.default.resolve(process.cwd());
-  const resolved = import_node_path4.default.resolve(workspaceRoot, filePath);
-  const relative = import_node_path4.default.relative(workspaceRoot, resolved);
-  if (relative.startsWith("..") || import_node_path4.default.isAbsolute(relative)) {
+  const workspaceRoot = import_node_path5.default.resolve(process.cwd());
+  const resolved = import_node_path5.default.resolve(workspaceRoot, filePath);
+  const relative = import_node_path5.default.relative(workspaceRoot, resolved);
+  if (relative.startsWith("..") || import_node_path5.default.isAbsolute(relative)) {
     throw new Error(`Output path must stay within workspace: ${filePath}`);
   }
-  await (0, import_promises4.mkdir)(import_node_path4.default.dirname(resolved), { recursive: true });
-  await (0, import_promises4.writeFile)(resolved, content, "utf8");
+  await (0, import_promises5.mkdir)(import_node_path5.default.dirname(resolved), { recursive: true });
+  await (0, import_promises5.writeFile)(resolved, content, "utf8");
 }
 async function runCli(argv = process.argv.slice(2)) {
   const config = parseCliArgs(argv, process.env);
