@@ -96,7 +96,9 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_SERVICE_NAME: outputs['service-name'] ?? '',
     POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON: outputs['export-summary-json'] ?? '',
     POSTMAN_AWS_SPEC_SERVICES_JSON: outputs['services-json'] ?? '',
-    POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs['service-count'] ?? ''
+    POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs['service-count'] ?? '',
+    POSTMAN_AWS_SPEC_PROVIDER_TYPE: outputs['provider-type'] ?? '',
+    POSTMAN_AWS_SPEC_FORMAT: outputs['spec-format'] ?? ''
   };
 
   return Object.entries(envPairs)

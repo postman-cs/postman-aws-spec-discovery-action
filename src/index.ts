@@ -3,6 +3,8 @@ import * as core from '@actions/core';
 import { contractOutputNames, type DiscoveredService } from './contracts.js';
 import { AwsApiGatewaySdkClient, type AwsGatewayClient } from './lib/aws/client.js';
 import { formatUserSafeError } from './lib/logging/sanitize.js';
+import { ProviderRegistry } from './lib/providers/registry.js';
+import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
 import {
   defaultWriteSpecFile,
   execute,
@@ -19,6 +21,7 @@ export interface CoreLike extends InputReaderLike, ReporterLike {
 export interface GitHubActionDependencies {
   createAwsClient?: (region: string) => AwsGatewayClient;
   writeSpecFile?: (outputPath: string, content: string) => Promise<void>;
+  providerRegistry?: ProviderRegistry;
 }
 
 export async function runAction(
@@ -32,10 +35,20 @@ export async function runAction(
       requestTimeoutMs: inputs.requestTimeoutMs,
       maxAttempts: inputs.maxAttempts
     });
+
+  // When a custom AWS client is injected (tests), build a minimal registry with only API Gateway
+  // to avoid probing real AWS services. In production, omit providerRegistry so execute() auto-detects.
+  let providerRegistry = dependencies.providerRegistry;
+  if (!providerRegistry && dependencies.createAwsClient) {
+    providerRegistry = new ProviderRegistry();
+    providerRegistry.register(new ApiGatewayProvider(awsClient, { includeV2: inputs.includeV2, apiFilter: inputs.apiFilter }));
+  }
+
   const result = await execute(inputs, {
     core: actionCore,
     aws: awsClient,
-    writeSpecFile: dependencies.writeSpecFile ?? defaultWriteSpecFile
+    writeSpecFile: dependencies.writeSpecFile ?? defaultWriteSpecFile,
+    providerRegistry
   });
 
   for (const [name, value] of Object.entries(result.outputs)) {

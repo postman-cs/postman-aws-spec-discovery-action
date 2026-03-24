@@ -17,7 +17,13 @@ const SPEC_CANDIDATES = [
   'api/openapi.json',
   'docs/openapi.yaml',
   'docs/openapi.yml',
-  'docs/openapi.json'
+  'docs/openapi.json',
+  'schema.graphql',
+  'schema.gql',
+  'graphql/schema.graphql',
+  'graphql/schema.gql',
+  'api/schema.graphql',
+  'src/schema.graphql'
 ];
 
 function isLikelyOpenApiDocument(content: string): boolean {
@@ -32,7 +38,22 @@ function isLikelyOpenApiDocument(content: string): boolean {
   }
 }
 
+function isLikelyGraphqlSchema(content: string): boolean {
+  const trimmed = content.trim();
+  return /\btype\s+Query\b/.test(trimmed) || /\bschema\s*\{/.test(trimmed);
+}
+
+export interface RepoSpecMatch {
+  path: string;
+  type: 'openapi' | 'graphql';
+}
+
 export async function findExistingRepoSpec(repoRoot: string): Promise<string | undefined> {
+  const match = await findExistingRepoSpecTyped(repoRoot);
+  return match?.path;
+}
+
+export async function findExistingRepoSpecTyped(repoRoot: string): Promise<RepoSpecMatch | undefined> {
   for (const candidate of SPEC_CANDIDATES) {
     const fullPath = path.resolve(repoRoot, candidate);
     try {
@@ -41,8 +62,12 @@ export async function findExistingRepoSpec(repoRoot: string): Promise<string | u
         continue;
       }
       const content = await readFile(fullPath, 'utf8');
-      if (isLikelyOpenApiDocument(content)) {
-        return candidate.replace(/\\/g, '/');
+      const isGraphql = candidate.endsWith('.graphql') || candidate.endsWith('.gql');
+      if (isGraphql && isLikelyGraphqlSchema(content)) {
+        return { path: candidate.replace(/\\/g, '/'), type: 'graphql' };
+      }
+      if (!isGraphql && isLikelyOpenApiDocument(content)) {
+        return { path: candidate.replace(/\\/g, '/'), type: 'openapi' };
       }
     } catch {
       // Continue search.

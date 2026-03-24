@@ -15,13 +15,38 @@ export interface AwsSpecDiscoveryActionContract {
   outputs: Record<string, ActionOutputContract>;
 }
 
-export type GatewayType = 'REST' | 'HTTP';
+export type GatewayType = 'REST' | 'HTTP' | 'WEBSOCKET';
 
 export type ActionMode = 'resolve-one' | 'discover-many';
 
 export type ResolutionStatus = 'resolved' | 'unresolved';
 
-export type SourceType = 'repo-spec' | 'gateway-export' | 'manual-review' | 'discover-many';
+export type SourceType =
+  | 'repo-spec'
+  | 'gateway-export'
+  | 'appsync-schema'
+  | 'eventbridge-schema'
+  | 'cfn-embedded'
+  | 's3-spec'
+  | 'glue-schema'
+  | 'manual-review'
+  | 'discover-many';
+
+export type ProviderType =
+  | 'api-gateway'
+  | 'appsync'
+  | 'eventbridge-schemas'
+  | 'cloudformation'
+  | 's3'
+  | 'glue';
+
+export type SpecFormat =
+  | 'openapi-yaml'
+  | 'openapi-json'
+  | 'graphql-sdl'
+  | 'json-schema'
+  | 'avro'
+  | 'protobuf';
 
 export interface ResolvedServiceCandidate {
   serviceName: string;
@@ -51,6 +76,8 @@ export interface DiscoveredService {
   gatewayId: string;
   gatewayType: GatewayType;
   stage: string;
+  providerType?: ProviderType;
+  specFormat?: SpecFormat;
 }
 
 export const actionContract: AwsSpecDiscoveryActionContract = {
@@ -85,7 +112,8 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       description: 'Resolution status: resolved or unresolved.'
     },
     'source-type': {
-      description: 'Resolved source type: repo-spec, gateway-export, manual-review, or discover-many.'
+      description:
+        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, s3-spec, glue-schema, manual-review, or discover-many.'
     },
     'mapping-confidence': {
       description: 'Numeric confidence score for selected service candidate.'
@@ -108,6 +136,14 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     'export-summary-json': {
       description:
         'discover-many summary JSON containing attempted, exported, failed, and skipped counts.'
+    },
+    'provider-type': {
+      description:
+        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, or glue.'
+    },
+    'spec-format': {
+      description:
+        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf.'
     }
   }
 };

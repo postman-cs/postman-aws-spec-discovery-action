@@ -1,11 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type { ProviderType } from '../../contracts.js';
+
 export interface RepoSignals {
   serviceHints: string[];
   explicitGatewayIdHints: string[];
   inferredGatewayIdHints: string[];
   evidence: string[];
+  /** Providers hinted at by repo contents (IaC files, schema files, etc.). */
+  providerHints?: ProviderType[];
 }
 
 function unique(values: string[]): string[] {
@@ -39,6 +43,31 @@ function inferServiceNameFromRepoSlug(repoSlug?: string): string | undefined {
   return parts[parts.length - 1]?.trim();
 }
 
+const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
+  { pattern: /AWS::AppSync::GraphQLApi/i, provider: 'appsync' },
+  { pattern: /AWS::Serverless::GraphQLApi/i, provider: 'appsync' },
+  { pattern: /appsync/i, provider: 'appsync' },
+  { pattern: /AWS::Events::EventBus/i, provider: 'eventbridge-schemas' },
+  { pattern: /AWS::Serverless::EventBridgeRule/i, provider: 'eventbridge-schemas' },
+  { pattern: /schema_registry|SchemaRegistry/i, provider: 'eventbridge-schemas' },
+  { pattern: /AWS::Glue::Schema/i, provider: 'glue' },
+  { pattern: /AWS::Glue::Registry/i, provider: 'glue' },
+  { pattern: /AWS::ApiGateway::RestApi/i, provider: 'api-gateway' },
+  { pattern: /AWS::ApiGatewayV2::Api/i, provider: 'api-gateway' },
+  { pattern: /AWS::Serverless::Api\b/i, provider: 'api-gateway' },
+  { pattern: /AWS::Serverless::HttpApi/i, provider: 'api-gateway' }
+];
+
+function detectProviderHints(content: string): ProviderType[] {
+  const found = new Set<ProviderType>();
+  for (const { pattern, provider } of PROVIDER_PATTERNS) {
+    if (pattern.test(content)) {
+      found.add(provider);
+    }
+  }
+  return [...found];
+}
+
 export async function collectRepoSignals(
   repoRoot: string,
   repoSlug?: string,
@@ -51,12 +80,16 @@ export async function collectRepoSignals(
   ]);
   const inferredGatewayHints: string[] = [];
   const evidence: string[] = [];
+  const providerHintSet = new Set<ProviderType>();
 
   const inspectFiles = [
     '.github/workflows/deploy.yml',
     '.gitlab-ci.yml',
     'template.yaml',
+    'template.yml',
     'serverless.yml',
+    'serverless.yaml',
+    'cdk.json',
     'README.md'
   ];
 
@@ -69,6 +102,24 @@ export async function collectRepoSignals(
         inferredGatewayHints.push(...extracted);
         evidence.push(`Found gateway ID hints in ${file}`);
       }
+      for (const hint of detectProviderHints(content)) {
+        providerHintSet.add(hint);
+        evidence.push(`Detected ${hint} provider hint in ${file}`);
+      }
+    } catch {
+      // Optional file.
+    }
+  }
+
+  // Check for GraphQL schema files as AppSync hint
+  const graphqlFiles = ['schema.graphql', 'schema.gql', 'graphql/schema.graphql', 'src/schema.graphql'];
+  for (const file of graphqlFiles) {
+    const fullPath = path.resolve(repoRoot, file);
+    try {
+      await readFile(fullPath, 'utf8');
+      providerHintSet.add('appsync');
+      evidence.push(`Found GraphQL schema file: ${file}`);
+      break;
     } catch {
       // Optional file.
     }
@@ -78,6 +129,7 @@ export async function collectRepoSignals(
     serviceHints: unique(serviceHints),
     explicitGatewayIdHints: unique(expectedGatewayIds),
     inferredGatewayIdHints: unique(inferredGatewayHints),
-    evidence: unique(evidence)
+    evidence: unique(evidence),
+    providerHints: [...providerHintSet]
   };
 }

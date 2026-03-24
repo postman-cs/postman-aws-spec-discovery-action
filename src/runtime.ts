@@ -6,15 +6,27 @@ import {
   type ActionMode,
   type DiscoveredService,
   type GatewayType,
+  type ProviderType,
   type ResolutionResult
 } from './contracts.js';
 import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
+import { AppSyncSdkClient } from './lib/aws/appsync-client.js';
+import { EventBridgeSchemasSdkClient } from './lib/aws/schemas-client.js';
+import { CloudFormationSdkClient } from './lib/aws/cloudformation-client.js';
+import { GlueSchemaSdkClient } from './lib/aws/glue-client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
-import { findExistingRepoSpec } from './lib/repo/specs.js';
+import { findExistingRepoSpec, findExistingRepoSpecTyped } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
+import { ProviderRegistry } from './lib/providers/registry.js';
+import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
+import { AppSyncProvider } from './lib/providers/appsync.js';
+import { EventBridgeSchemasProvider } from './lib/providers/eventbridge-schemas.js';
+import { CloudFormationProvider } from './lib/providers/cloudformation.js';
+import { GlueSchemaProvider } from './lib/providers/glue.js';
+import type { SpecProvider, SpecCandidate } from './lib/providers/types.js';
 
 export interface InputReaderLike {
   getInput(name: string, options?: { required?: boolean }): string;
@@ -63,6 +75,8 @@ export interface DiscoveryDependencies {
   core: ReporterLike;
   aws: AwsGatewayClient;
   writeSpecFile(outputPath: string, content: string): Promise<void>;
+  /** Optional override for the provider registry. When omitted, providers are auto-detected via IAM probing. */
+  providerRegistry?: ProviderRegistry;
 }
 
 export interface DiscoverySummary {
@@ -305,7 +319,13 @@ async function selectStage(aws: AwsGatewayClient, candidate: GatewayCandidate, p
 function filterCandidates(restApis: RestApiSummary[], httpApis: HttpApiSummary[], includeV2: boolean, apiFilter?: RegExp): GatewayCandidate[] {
   const rest: GatewayCandidate[] = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: 'REST' }));
   const http: GatewayCandidate[] = includeV2
-    ? httpApis.filter((api) => !api.protocolType || api.protocolType === 'HTTP').map((api) => ({ id: api.id, name: api.name, gatewayType: 'HTTP' }))
+    ? httpApis
+        .filter((api) => !api.protocolType || api.protocolType === 'HTTP' || api.protocolType === 'WEBSOCKET')
+        .map((api) => ({
+          id: api.id,
+          name: api.name,
+          gatewayType: (api.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP') as GatewayType
+        }))
     : [];
   const all = [...rest, ...http];
   return apiFilter ? all.filter((api) => apiFilter.test(api.name)) : all;
@@ -327,8 +347,9 @@ async function lookupCandidatesByIds(inputs: ResolvedInputs, awsClient: AwsGatew
     if (!found && inputs.includeV2) {
       try {
         const httpApi = await awsClient.getHttpApi(gatewayId);
-        if (httpApi && (!httpApi.protocolType || httpApi.protocolType === 'HTTP')) {
-          candidates.push({ id: httpApi.id, name: httpApi.name, gatewayType: 'HTTP' });
+        if (httpApi && (!httpApi.protocolType || httpApi.protocolType === 'HTTP' || httpApi.protocolType === 'WEBSOCKET')) {
+          const gwType: GatewayType = httpApi.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP';
+          candidates.push({ id: httpApi.id, name: httpApi.name, gatewayType: gwType });
           found = true;
         } else if (httpApi) {
           actionCore.warning(userSafeWarning(`Skipping v2 API ${gatewayId} because protocol type ${httpApi.protocolType} is not supported`));
@@ -575,6 +596,92 @@ export async function runResolution(
   return selectedSource;
 }
 
+function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {
+  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+  const registry = new ProviderRegistry();
+
+  registry.register(new ApiGatewayProvider(awsClient, { includeV2: inputs.includeV2, apiFilter: inputs.apiFilter }));
+  registry.register(new AppSyncProvider(new AppSyncSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new EventBridgeSchemasProvider(new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
+
+  return registry;
+}
+
+async function runMultiProviderDiscovery(
+  providers: SpecProvider[],
+  inputs: ResolvedInputs,
+  dependencies: DiscoveryDependencies
+): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary }> {
+  const discovered: DiscoveredService[] = [];
+  const summary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+  const slugUsage = new Map<string, number>();
+  const resolvedRoot = path.resolve(inputs.repoRoot);
+
+  for (const provider of providers) {
+    await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
+      let candidates: SpecCandidate[];
+      try {
+        candidates = await provider.listCandidates();
+      } catch (error) {
+        dependencies.core.warning(userSafeWarning(`Failed listing candidates from ${provider.type}: ${formatUserSafeError(error)}`));
+        summary.failed += 1;
+        return;
+      }
+
+      dependencies.core.info(`Found ${candidates.length} candidate(s) from ${provider.type}`);
+      summary.attempted += candidates.length;
+
+      if (inputs.maxCandidates > 0 && summary.attempted > inputs.maxCandidates) {
+        dependencies.core.warning(userSafeWarning(`Skipping ${provider.type}: total candidates (${summary.attempted}) exceeds limit (${inputs.maxCandidates})`));
+        summary.skipped += candidates.length;
+        return;
+      }
+
+      for (const candidate of candidates) {
+        if (inputs.dryRun) {
+          summary.skipped += 1;
+          dependencies.core.info(`Dry run: skipping export for ${provider.type} candidate ${candidate.id} (${candidate.name})`);
+          continue;
+        }
+        try {
+          const result = await provider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+          const serviceName = candidate.name;
+          const baseFolder = projectFolderName(serviceName);
+          const next = (slugUsage.get(baseFolder) ?? 0) + 1;
+          slugUsage.set(baseFolder, next);
+          const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
+          const relativeSpecPath = path.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, '/');
+          const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
+
+          await dependencies.writeSpecFile(absoluteSpecPath, result.content);
+          summary.exported += 1;
+
+          const gatewayType = (candidate.meta.gatewayType ?? 'REST') as GatewayType;
+          discovered.push({
+            serviceName,
+            specPath: relativeSpecPath,
+            gatewayId: candidate.id,
+            gatewayType,
+            stage: result.stage ?? '',
+            providerType: provider.type,
+            specFormat: result.format
+          });
+          dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
+        } catch (error) {
+          summary.failed += 1;
+          dependencies.core.warning(
+            userSafeWarning(`Failed exporting ${provider.type} candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error)}`)
+          );
+        }
+      }
+    });
+  }
+
+  return { discovered, summary };
+}
+
 function buildExecutionOutputs(result: {
   mode: ActionMode;
   discovered: DiscoveredService[];
@@ -600,7 +707,9 @@ function buildExecutionOutputs(result: {
       }),
       'service-name': '',
       'gateway-id': '',
-      'spec-path': ''
+      'spec-path': '',
+      'provider-type': '',
+      'spec-format': ''
     };
   }
 
@@ -621,14 +730,53 @@ function buildExecutionOutputs(result: {
     'spec-path': resolution.specPath ?? '',
     'services-json': '[]',
     'service-count': '0',
-    'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 })
+    'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
+    'provider-type': '',
+    'spec-format': ''
   };
 }
 
 export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDependencies): Promise<ExecutionResult> {
   await runPreflight(inputs, dependencies);
+
   if (inputs.mode === 'discover-many') {
-    const { discovered, summary } = await runDiscovery(inputs, dependencies);
+    // Use injected registry or build one and auto-detect via IAM probing
+    const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+    const availableProviders = dependencies.providerRegistry
+      ? registry.all()
+      : await dependencies.core.group('Probe available providers', async () => {
+          const available = await registry.probeAvailable();
+          dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+          return available;
+        });
+
+    // Always include API Gateway discovery (backward compat)
+    const apiGwProvider = registry.get('api-gateway');
+    if (availableProviders.length === 0 && apiGwProvider) {
+      availableProviders.push(apiGwProvider);
+    }
+
+    // Run legacy API Gateway discovery first (preserves existing behavior and tests)
+    const { discovered: legacyDiscovered, summary: legacySummary } = await runDiscovery(inputs, dependencies);
+
+    // Run additional providers (skip api-gateway since we already ran it via legacy path)
+    const extraProviders = availableProviders.filter((p) => p.type !== 'api-gateway');
+    let extraDiscovered: DiscoveredService[] = [];
+    let extraSummary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+    if (extraProviders.length > 0) {
+      const extraResult = await runMultiProviderDiscovery(extraProviders, inputs, dependencies);
+      extraDiscovered = extraResult.discovered;
+      extraSummary = extraResult.summary;
+    }
+
+    const discovered = [...legacyDiscovered, ...extraDiscovered];
+    const summary: DiscoverySummary = {
+      attempted: legacySummary.attempted + extraSummary.attempted,
+      exported: legacySummary.exported + extraSummary.exported,
+      failed: legacySummary.failed + extraSummary.failed,
+      skipped: legacySummary.skipped + extraSummary.skipped
+    };
+
     if (summary.failed > 0) {
       dependencies.core.warning(
         userSafeWarning(`discover-many encountered ${summary.failed} export failure(s); strict mode marks resolution as unresolved`)
@@ -641,6 +789,7 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary })
     };
   }
+
   const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile);
   return {
     mode: inputs.mode,

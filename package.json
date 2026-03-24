@@ -1,7 +1,7 @@
 {
   "name": "postman-aws-spec-discovery-action",
-  "version": "0.3.0",
-  "description": "Public open-alpha Postman AWS API Gateway spec discovery for GitHub and GitLab workflows.",
+  "version": "0.4.0",
+  "description": "Discover and export API specs from AWS services (API Gateway, AppSync, EventBridge, CloudFormation, Glue).",
   "type": "module",
   "main": "dist/index.cjs",
   "bin": {
@@ -25,6 +25,10 @@
     "@actions/core": "^1.11.1",
     "@aws-sdk/client-api-gateway": "^3.1014.0",
     "@aws-sdk/client-apigatewayv2": "^3.1014.0",
+    "@aws-sdk/client-appsync": "^3.1015.0",
+    "@aws-sdk/client-cloudformation": "^3.1015.0",
+    "@aws-sdk/client-glue": "^3.1015.0",
+    "@aws-sdk/client-schemas": "^3.1015.0",
     "@aws-sdk/client-sts": "^3.1014.0",
     "@smithy/node-http-handler": "^4.4.5"
   },

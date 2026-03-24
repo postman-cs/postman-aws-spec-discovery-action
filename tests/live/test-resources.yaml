@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Temporary test resources for multi-provider spec discovery validation
+
+Resources:
+  # 1. REST API Gateway with embedded OpenAPI spec
+  TestRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: spec-discovery-test-rest
+      Description: Test REST API for spec discovery
+      Body:
+        openapi: '3.0.1'
+        info:
+          title: spec-discovery-test-rest
+          version: '1.0.0'
+        paths:
+          /health:
+            get:
+              summary: Health check
+              responses:
+                '200':
+                  description: OK
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseTemplates:
+                      application/json: '{"status":"ok"}'
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-test
+        - Key: env
+          Value: test
+
+  TestRestDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: TestRestApi
+    Properties:
+      RestApiId: !Ref TestRestApi
+
+  TestRestStageProd:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref TestRestApi
+      DeploymentId: !Ref TestRestDeployment
+      StageName: prod
+
+  # 2. HTTP API Gateway
+  TestHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: spec-discovery-test-http
+      ProtocolType: HTTP
+      Description: Test HTTP API for spec discovery
+      Tags:
+        postman:project-name: spec-discovery-test-http
+
+  TestHttpStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref TestHttpApi
+      StageName: '$default'
+      AutoDeploy: true
+
+  # 3. WebSocket API Gateway
+  TestWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: spec-discovery-test-websocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action
+      Description: Test WebSocket API for spec discovery
+      Tags:
+        postman:project-name: spec-discovery-test-ws
+
+  # 4. AppSync GraphQL API
+  TestGraphqlApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: spec-discovery-test-graphql
+      AuthenticationType: API_KEY
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-test-graphql
+
+  TestGraphqlSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt TestGraphqlApi.ApiId
+      Definition: |
+        type Query {
+          getItem(id: ID!): Item
+          listItems: [Item]
+        }
+        type Mutation {
+          createItem(input: CreateItemInput!): Item
+        }
+        type Item {
+          id: ID!
+          name: String!
+          description: String
+          createdAt: String
+        }
+        input CreateItemInput {
+          name: String!
+          description: String
+        }
+
+  # 5. EventBridge Schema Registry with custom schema
+  TestSchemaRegistry:
+    Type: AWS::EventSchemas::Registry
+    Properties:
+      RegistryName: spec-discovery-test-registry
+      Description: Test registry for spec discovery
+      Tags:
+        - Key: env
+          Value: test
+
+  TestEventSchema:
+    Type: AWS::EventSchemas::Schema
+    Properties:
+      RegistryName: !GetAtt TestSchemaRegistry.RegistryName
+      SchemaName: spec-discovery-test.OrderCreated
+      Type: OpenApi3
+      Description: Test event schema
+      Content: >
+        {"openapi":"3.0.0","info":{"title":"OrderCreated","version":"1.0.0"},"paths":{},"components":{"schemas":{"OrderCreated":{"type":"object","properties":{"orderId":{"type":"string"},"customerId":{"type":"string"},"amount":{"type":"number"},"createdAt":{"type":"string","format":"date-time"}},"required":["orderId","customerId","amount"]}}}}
+
+  # 6. Glue Schema Registry with Avro schema
+  TestGlueRegistry:
+    Type: AWS::Glue::Registry
+    Properties:
+      Name: spec-discovery-test-glue-registry
+      Description: Test Glue registry for spec discovery
+
+  TestGlueSchema:
+    Type: AWS::Glue::Schema
+    Properties:
+      Registry:
+        RegistryName: !Ref TestGlueRegistry
+      Name: spec-discovery-test-user-event
+      DataFormat: AVRO
+      Compatibility: NONE
+      SchemaDefinition: >
+        {"type":"record","name":"UserEvent","namespace":"com.example.test","fields":[{"name":"userId","type":"string"},{"name":"action","type":"string"},{"name":"timestamp","type":"long"}]}
+
+Outputs:
+  RestApiId:
+    Value: !Ref TestRestApi
+  HttpApiId:
+    Value: !Ref TestHttpApi
+  WebSocketApiId:
+    Value: !Ref TestWebSocketApi
+  GraphqlApiId:
+    Value: !GetAtt TestGraphqlApi.ApiId
+  SchemaRegistryName:
+    Value: !GetAtt TestSchemaRegistry.RegistryName
+  GlueRegistryName:
+    Value: !Ref TestGlueRegistry
