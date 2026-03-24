@@ -12,6 +12,7 @@ The action is intentionally zero-config:
 - Providers are auto-detected via IAM permission probing
 - Safety checks, retries, and bounded discovery are on by default
 - Repo-first resolution prefers existing specs before calling AWS
+- Remote spec fetch only activates when the repo already points to one through Backstage or SSM
 
 ## Supported providers
 
@@ -24,11 +25,11 @@ The action is intentionally zero-config:
 | EventBridge Schema Registry | JSON Schema / OpenAPI | IAM probe + IaC references |
 | CloudFormation (embedded specs) | OpenAPI JSON | IAM probe |
 | Glue Schema Registry | Avro / JSON Schema / Protobuf | IAM probe + IaC references |
-| SSM Parameter Store | Any (spec content or URL pointer) | IAM probe for `/postman/specs/` path |
+| SSM Parameter Store | Any (stored content or fetched URL content) | IAM probe for `/postman/specs/` path |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
-The action also detects Backstage `catalog-info.yaml` files in the repo root and extracts API spec references automatically.
+The action also detects Backstage `catalog-info.yaml` files in the repo root and resolves API spec path or URL references automatically.
 
 ## Security
 
@@ -118,7 +119,7 @@ Everything else is auto-resolved:
 | `spec-path` | Resolved/generated spec path when available |
 | `gateway-id` | Selected gateway ID when available |
 | `service-name` | Resolved service name |
-| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`) |
+| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`) |
 | `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`) |
 | `candidates-json` | JSON array of top candidates when resolution is ambiguous |
 | `services-json` | discover-many mode: JSON array of all discovered services |
@@ -136,7 +137,7 @@ Everything else is auto-resolved:
 | Glue (Avro) | `schema.avsc` | Avro |
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
-| SSM Parameter Store | auto-detected | Any (spec content or URL pointer) |
+| SSM Parameter Store | auto-detected | Any (spec content or fetched URL content) |
 
 ## Usage
 
@@ -202,9 +203,25 @@ node dist/cli.cjs \
 
 **Existing specs**: If the repo already has `openapi.yaml`, `swagger.json`, `schema.graphql`, or similar files, the action uses them directly without calling AWS.
 
-**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` is present in the repo root with `kind: API` entities, the action extracts spec path or URL references from it automatically.
+**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` is present in the repo root with `kind: API` entities, the action uses a local `definition` path directly or fetches the referenced HTTPS URL automatically.
 
-**SSM Parameter Store**: If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. This is the recommended way to register specs for services that run on EKS, ECS, or behind ALBs.
+Example `catalog-info.yaml` using a remote OpenAPI document:
+
+```yaml
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: payments-api
+spec:
+  type: openapi
+  owner: payments-platform
+  lifecycle: production
+  definition: https://payments.example.com/openapi.yaml
+```
+
+With that file committed at the repo root, the action resolves the spec URL automatically. No extra action inputs are required.
+
+**SSM Parameter Store**: If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. Stored content is used directly; HTTPS URLs are fetched automatically. This is the recommended zero-config way to register specs for services that run on EKS, ECS, or behind ALBs.
 
 ### SSM spec registry convention
 
@@ -217,6 +234,26 @@ Store your spec reference in SSM Parameter Store:
 ```
 
 The action discovers these automatically. No action configuration needed.
+
+Example SSM registration with a remote OpenAPI document:
+
+```bash
+aws ssm put-parameter \
+  --name /postman/specs/payments-api/url \
+  --type String \
+  --overwrite \
+  --value https://payments.example.com/openapi.json
+
+aws ssm put-parameter \
+  --name /postman/specs/payments-api/format \
+  --type String \
+  --overwrite \
+  --value openapi-json
+```
+
+Once those parameters exist, the action fetches the spec automatically during discovery. No repo changes or action inputs are needed.
+
+If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversized response), the action preserves the registration as a pointer artifact for manual follow-up instead of silently accepting bad content.
 
 ### Tag convention
 

@@ -109300,7 +109300,7 @@ var actionContract = {
       description: "Resolution status: resolved or unresolved."
     },
     "source-type": {
-      description: "Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, s3-spec, glue-schema, manual-review, or discover-many."
+      description: "Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, ssm-registry, manual-review, or discover-many."
     },
     "mapping-confidence": {
       description: "Numeric confidence score for selected service candidate."
@@ -109327,7 +109327,7 @@ var actionContract = {
       description: "JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering."
     },
     "provider-type": {
-      description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm."
+      description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, or ssm."
     },
     "spec-format": {
       description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
@@ -110551,6 +110551,43 @@ var GlueSchemaProvider = class {
   }
 };
 
+// src/lib/fetch/spec-fetcher.ts
+var MAX_SPEC_BYTES = 10 * 1024 * 1024;
+var DEFAULT_TIMEOUT_MS = 15e3;
+async function fetchSpecFromUrl(url, options = {}) {
+  const maxBytes = options.maxBytes ?? MAX_SPEC_BYTES;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const parsed = new URL(url);
+  if (parsed.protocol !== "https:") {
+    throw new Error(`Only HTTPS URLs are supported for remote spec fetch; got ${parsed.protocol}`);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: "application/json, application/yaml, text/yaml, text/plain, */*" },
+      redirect: "follow"
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} fetching ${url}`);
+    }
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && Number.parseInt(contentLength, 10) > maxBytes) {
+      throw new Error(`Response too large (${contentLength} bytes) for ${url}; limit is ${maxBytes}`);
+    }
+    const buffer = await response.arrayBuffer();
+    if (buffer.byteLength > maxBytes) {
+      throw new Error(`Response body too large (${buffer.byteLength} bytes) for ${url}; limit is ${maxBytes}`);
+    }
+    const content = new TextDecoder().decode(buffer);
+    const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+    return { content, contentType };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // src/lib/providers/ssm.ts
 function detectFormat(content, key) {
   const trimmed = content.trim();
@@ -110624,17 +110661,30 @@ var SsmProvider = class {
       };
     }
     if (svc?.url) {
-      const pointerContent = JSON.stringify({
-        specUrl: svc.url,
-        serviceName: candidate.name,
-        registeredVia: "ssm-parameter-store"
-      }, null, 2);
-      return {
-        content: pointerContent,
-        format: "openapi-json",
-        filename: "spec-pointer.json",
-        evidence: [`Spec URL registered in SSM: ${svc.url}`]
-      };
+      try {
+        const fetched = await fetchSpecFromUrl(svc.url, { timeoutMs: 15e3 });
+        const { format: format2, filename } = detectFormat(fetched.content, svc.url);
+        return {
+          content: fetched.content,
+          format: format2,
+          filename,
+          evidence: [`Spec fetched from URL registered in SSM: ${svc.url}`]
+        };
+      } catch (fetchError) {
+        const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+        const pointerContent = JSON.stringify({
+          specUrl: svc.url,
+          serviceName: candidate.name,
+          registeredVia: "ssm-parameter-store",
+          fetchError: detail
+        }, null, 2);
+        return {
+          content: pointerContent,
+          format: "openapi-json",
+          filename: "spec-pointer.json",
+          evidence: [`Spec URL registered in SSM: ${svc.url} (fetch failed: ${detail})`]
+        };
+      }
     }
     throw new Error(`No spec content or URL found in SSM for service ${candidate.name}`);
   }
@@ -111276,8 +111326,24 @@ async function runDiscovery(inputs, dependencies) {
 async function runResolution(inputs, awsClient, actionCore, writeSpecFile) {
   const catalogApis = await detectCatalogApis(inputs.repoRoot);
   const catalogSpecPath = catalogApis?.[0]?.specPath;
+  const catalogSpecUrl = catalogApis?.[0]?.specUrl;
   const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
-  const existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+  let existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+  if (!existingSpecPath && catalogSpecUrl) {
+    try {
+      actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
+      const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15e3 });
+      const folderName = catalogApis?.[0]?.name ?? "catalog-api";
+      const targetPath = import_node_path4.default.join(inputs.outputDir, folderName, "index.yaml");
+      const absolutePath = import_node_path4.default.resolve(inputs.repoRoot, targetPath);
+      await writeSpecFile(absolutePath, fetched.content);
+      existingSpecPath = targetPath.replace(/\\/g, "/");
+      actionCore.info(`Fetched remote spec from catalog URL and saved to ${existingSpecPath}`);
+    } catch (error2) {
+      const detail = error2 instanceof Error ? error2.message : String(error2);
+      actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
+    }
+  }
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const narrowedCandidates = inputs.expectedGatewayIds.length > 0 ? await actionCore.group(
     "Resolve API candidates by explicit gateway ID",
@@ -111467,8 +111533,8 @@ function buildExecutionOutputs(result) {
       "gateway-id": "",
       "spec-path": "",
       "candidates-json": "",
-      "provider-type": "",
-      "spec-format": ""
+      "provider-type": discovered.length > 0 ? discovered[0]?.providerType ?? "" : "",
+      "spec-format": discovered.length > 0 ? discovered[0]?.specFormat ?? "" : ""
     };
   }
   const resolution = result.resolution ?? {
@@ -111490,7 +111556,7 @@ function buildExecutionOutputs(result) {
     "service-count": "0",
     "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     "candidates-json": "",
-    "provider-type": "",
+    "provider-type": resolution.sourceType === "gateway-export" ? "api-gateway" : "",
     "spec-format": ""
   };
 }

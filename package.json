@@ -1,6 +1,6 @@
 {
   "name": "postman-aws-spec-discovery-action",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Discover and export API specs from AWS services with zero-config auto-detection.",
   "type": "module",
   "main": "dist/index.cjs",

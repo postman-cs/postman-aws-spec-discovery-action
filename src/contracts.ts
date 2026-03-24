@@ -27,7 +27,6 @@ export type SourceType =
   | 'appsync-schema'
   | 'eventbridge-schema'
   | 'cfn-embedded'
-  | 's3-spec'
   | 'glue-schema'
   | 'ssm-registry'
   | 'manual-review'
@@ -38,7 +37,6 @@ export type ProviderType =
   | 'appsync'
   | 'eventbridge-schemas'
   | 'cloudformation'
-  | 's3'
   | 'glue'
   | 'ssm';
 
@@ -115,7 +113,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'source-type': {
       description:
-        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, s3-spec, glue-schema, manual-review, or discover-many.'
+        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, ssm-registry, manual-review, or discover-many.'
     },
     'mapping-confidence': {
       description: 'Numeric confidence score for selected service candidate.'
@@ -145,7 +143,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'provider-type': {
       description:
-        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm.'
+        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, or ssm.'
     },
     'spec-format': {
       description:

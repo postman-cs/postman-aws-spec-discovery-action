@@ -12,7 +12,7 @@ import {
 import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
 import { AppSyncSdkClient } from './lib/aws/appsync-client.js';
 import { EventBridgeSchemasSdkClient } from './lib/aws/schemas-client.js';
-import { CloudFormationSdkClient } from './lib/aws/cloudformation-client.js';
+import { CloudFormationSdkClient, type CloudFormationSpecClient } from './lib/aws/cloudformation-client.js';
 import { GlueSchemaSdkClient } from './lib/aws/glue-client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
@@ -28,9 +28,10 @@ import { CloudFormationProvider } from './lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from './lib/providers/glue.js';
 import { SsmProvider } from './lib/providers/ssm.js';
 import { SsmSdkClient } from './lib/aws/ssm-client.js';
-import { TaggingSdkClient } from './lib/aws/tagging-client.js';
+import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-client.js';
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
+import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
 import type { SpecProvider, SpecCandidate } from './lib/providers/types.js';
 
 export interface InputReaderLike {
@@ -526,9 +527,27 @@ export async function runResolution(
   // Check for Backstage catalog-info.yaml first -- it may reference a spec path
   const catalogApis = await detectCatalogApis(inputs.repoRoot);
   const catalogSpecPath = catalogApis?.[0]?.specPath;
+  const catalogSpecUrl = catalogApis?.[0]?.specUrl;
 
   const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
-  const existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+  let existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+
+  // If Backstage catalog references a remote URL and no local spec exists, fetch it
+  if (!existingSpecPath && catalogSpecUrl) {
+    try {
+      actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
+      const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15000 });
+      const folderName = catalogApis?.[0]?.name ?? 'catalog-api';
+      const targetPath = path.join(inputs.outputDir, folderName, 'index.yaml');
+      const absolutePath = path.resolve(inputs.repoRoot, targetPath);
+      await writeSpecFile(absolutePath, fetched.content);
+      existingSpecPath = targetPath.replace(/\\/g, '/');
+      actionCore.info(`Fetched remote spec from catalog URL and saved to ${existingSpecPath}`);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
+    }
+  }
 
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const narrowedCandidates =
@@ -548,8 +567,8 @@ export async function runResolution(
   if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
-      let cfnClient;
-      let taggingClient;
+      let cfnClient: CloudFormationSpecClient | undefined;
+      let taggingClient: TaggingSpecClient | undefined;
       try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
       try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
 
@@ -747,8 +766,8 @@ function buildExecutionOutputs(result: {
       'gateway-id': '',
       'spec-path': '',
       'candidates-json': '',
-      'provider-type': '',
-      'spec-format': ''
+      'provider-type': discovered.length > 0 ? (discovered[0]?.providerType ?? '') : '',
+      'spec-format': discovered.length > 0 ? (discovered[0]?.specFormat ?? '') : ''
     };
   }
 
@@ -771,7 +790,7 @@ function buildExecutionOutputs(result: {
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     'candidates-json': '',
-    'provider-type': '',
+    'provider-type': resolution.sourceType === 'gateway-export' ? 'api-gateway' : '',
     'spec-format': ''
   };
 }

@@ -1,5 +1,6 @@
 import type { SpecFormat } from '../../contracts.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
+import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 function detectFormat(content: string, key: string): { format: SpecFormat; filename: string } {
@@ -86,18 +87,32 @@ export class SsmProvider implements SpecProvider {
     }
 
     if (svc?.url) {
-      // URL-based specs require fetching -- store the URL as a pointer file
-      const pointerContent = JSON.stringify({
-        specUrl: svc.url,
-        serviceName: candidate.name,
-        registeredVia: 'ssm-parameter-store'
-      }, null, 2);
-      return {
-        content: pointerContent,
-        format: 'openapi-json',
-        filename: 'spec-pointer.json',
-        evidence: [`Spec URL registered in SSM: ${svc.url}`]
-      };
+      // Attempt to fetch actual spec content from the registered URL
+      try {
+        const fetched = await fetchSpecFromUrl(svc.url, { timeoutMs: 15000 });
+        const { format, filename } = detectFormat(fetched.content, svc.url);
+        return {
+          content: fetched.content,
+          format,
+          filename,
+          evidence: [`Spec fetched from URL registered in SSM: ${svc.url}`]
+        };
+      } catch (fetchError) {
+        // Fall back to pointer file if fetch fails (e.g. non-HTTPS, network error)
+        const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+        const pointerContent = JSON.stringify({
+          specUrl: svc.url,
+          serviceName: candidate.name,
+          registeredVia: 'ssm-parameter-store',
+          fetchError: detail
+        }, null, 2);
+        return {
+          content: pointerContent,
+          format: 'openapi-json',
+          filename: 'spec-pointer.json',
+          evidence: [`Spec URL registered in SSM: ${svc.url} (fetch failed: ${detail})`]
+        };
+      }
     }
 
     throw new Error(`No spec content or URL found in SSM for service ${candidate.name}`);

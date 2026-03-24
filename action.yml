@@ -22,7 +22,7 @@ outputs:
   resolution-status:
     description: "Resolution status: resolved or unresolved."
   source-type:
-    description: "Resolved source type: repo-spec, gateway-export, manual-review, or discover-many."
+    description: "Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, ssm-registry, manual-review, or discover-many."
   mapping-confidence:
     description: Numeric confidence score for selected service candidate.
   spec-path:
@@ -40,7 +40,7 @@ outputs:
   candidates-json:
     description: "JSON array of top candidates when resolution is ambiguous."
   provider-type:
-    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, s3, glue, or ssm."
+    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, or ssm."
   spec-format:
     description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
 runs:
