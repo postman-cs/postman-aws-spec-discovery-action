@@ -200,6 +200,8 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     getInput('repo-root', env) ??
     normalizeInputValue(env.GITHUB_WORKSPACE) ??
     normalizeInputValue(env.CI_PROJECT_DIR) ??
+    normalizeInputValue(env.BITBUCKET_CLONE_DIR) ??
+    normalizeInputValue(env.BUILD_SOURCESDIRECTORY) ??
     DEFAULT_REPO_ROOT;
   const gatewayId = getInput('gateway-id', env);
   const expectedServiceName = getInput('expected-service-name', env);

@@ -14,6 +14,8 @@ The action is intentionally zero-config:
 - Repo-first resolution prefers existing specs before calling AWS
 - Remote spec fetch only activates when the repo already points to one through Backstage or SSM
 
+No GitHub token required. This action uses only AWS credentials for API access. Repo context (URL, branch, commit) is auto-detected from your CI environment.
+
 ## Supported providers
 
 | Provider | Spec format | Auto-detected via |
@@ -181,6 +183,20 @@ node dist/cli.cjs \
   --repo-root "$CI_PROJECT_DIR" \
   --result-json "$CI_PROJECT_DIR/postman-aws-spec-discovery-result.json" \
   --dotenv-path "$CI_PROJECT_DIR/postman-aws-spec-discovery.env"
+```
+
+### Bitbucket Pipelines
+
+```bash
+node dist/cli.cjs \
+  --aws-region us-east-1
+```
+
+### Azure DevOps
+
+```bash
+node dist/cli.cjs \
+  --aws-region us-east-1
 ```
 
 ## How auto-detection works

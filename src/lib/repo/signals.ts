@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ProviderType } from '../../contracts.js';
+import { findIaCFiles } from './scan.js';
 
 export interface RepoSignals {
   serviceHints: string[];
@@ -55,7 +56,20 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /AWS::ApiGateway::RestApi/i, provider: 'api-gateway' },
   { pattern: /AWS::ApiGatewayV2::Api/i, provider: 'api-gateway' },
   { pattern: /AWS::Serverless::Api\b/i, provider: 'api-gateway' },
-  { pattern: /AWS::Serverless::HttpApi/i, provider: 'api-gateway' }
+  { pattern: /AWS::Serverless::HttpApi/i, provider: 'api-gateway' },
+
+  // Terraform resource types
+  { pattern: /resource\s+"aws_api_gateway_rest_api"/i, provider: 'api-gateway' },
+  { pattern: /resource\s+"aws_apigatewayv2_api"/i, provider: 'api-gateway' },
+  { pattern: /resource\s+"aws_appsync_graphql_api"/i, provider: 'appsync' },
+  { pattern: /resource\s+"aws_schemas_schema"/i, provider: 'eventbridge-schemas' },
+  { pattern: /resource\s+"aws_cloudwatch_event_bus"/i, provider: 'eventbridge-schemas' },
+  { pattern: /resource\s+"aws_glue_schema"/i, provider: 'glue' },
+
+  // Pulumi resource constructors (TypeScript/Python/Go)
+  { pattern: /aws\.apigateway\.RestApi/i, provider: 'api-gateway' },
+  { pattern: /aws\.apigatewayv2\.Api/i, provider: 'api-gateway' },
+  { pattern: /aws\.appsync\.GraphQLApi/i, provider: 'appsync' },
 ];
 
 function detectProviderHints(content: string): ProviderType[] {
@@ -123,6 +137,37 @@ export async function collectRepoSignals(
     } catch {
       // Optional file.
     }
+  }
+
+  const iacFiles = await findIaCFiles(repoRoot, ['.tf']);
+  for (const filePath of iacFiles) {
+    const content = await readFile(filePath, 'utf8').catch(() => '');
+    if (!content) continue;
+    const extracted = extractGatewayIds(content);
+    if (extracted.length > 0) {
+      inferredGatewayHints.push(...extracted);
+      evidence.push(`Found gateway ID hints in ${filePath}`);
+    }
+    for (const hint of detectProviderHints(content)) {
+      providerHintSet.add(hint);
+      evidence.push(`Detected ${hint} provider hint in ${filePath}`);
+    }
+  }
+
+  const pulumiYaml = path.resolve(repoRoot, 'Pulumi.yaml');
+  try {
+    await readFile(pulumiYaml, 'utf8');
+    const pulumiFiles = await findIaCFiles(repoRoot, ['.ts', '.py', '.go']);
+    for (const filePath of pulumiFiles) {
+      const content = await readFile(filePath, 'utf8').catch(() => '');
+      if (!content) continue;
+      for (const hint of detectProviderHints(content)) {
+        providerHintSet.add(hint);
+        evidence.push(`Detected ${hint} provider hint in ${filePath}`);
+      }
+    }
+  } catch {
+    // Optional: no Pulumi project present.
   }
 
   return {
