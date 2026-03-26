@@ -1,5 +1,5 @@
 {
-  "name": "postman-aws-spec-discovery-action",
+  "name": "@postman-cse/onboarding-aws-spec-discovery",
   "version": "0.5.1",
   "description": "Discover and export API specs from AWS services with zero-config auto-detection.",
   "type": "module",
@@ -8,7 +8,7 @@
     "postman-aws-spec-discovery": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/cli.cjs",
+    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/cli.cjs",
     "check:dist": "npm run build && git diff --exit-code -- dist",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
@@ -21,6 +21,9 @@
     "openapi"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@aws-sdk/client-api-gateway": "^3.1014.0",

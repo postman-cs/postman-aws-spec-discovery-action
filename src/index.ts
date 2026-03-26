@@ -1,3 +1,4 @@
+// GitHub Action shell -- see runtime.ts for the core execution logic (execute, resolveInputs).
 import * as core from '@actions/core';
 
 import { contractOutputNames, type DiscoveredService } from './contracts.js';
