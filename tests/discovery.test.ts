@@ -74,15 +74,32 @@ describe('input parsing', () => {
       'output-dir': 'out/specs'
     });
 
-    const inputs = readActionInputs(core);
+    // Clear CI workspace env vars to avoid fallback pollution in test
+    const origGH = process.env.GITHUB_WORKSPACE;
+    const origGL = process.env.CI_PROJECT_DIR;
+    const origBB = process.env.BITBUCKET_CLONE_DIR;
+    const origADO = process.env.BUILD_SOURCESDIRECTORY;
+    delete process.env.GITHUB_WORKSPACE;
+    delete process.env.CI_PROJECT_DIR;
+    delete process.env.BITBUCKET_CLONE_DIR;
+    delete process.env.BUILD_SOURCESDIRECTORY;
 
-    expect(inputs.mode).toBe('resolve-one');
-    expect(inputs.awsRegion).toBe('us-west-2');
-    expect(inputs.repoRoot).toBe('.');
-    expect(inputs.expectedGatewayIds).toEqual(['rest-1']);
-    expect(inputs.stage).toBe('prod');
-    expect(inputs.outputDir).toBe('out/specs');
-    expect(inputs.includeV2).toBe(true);
+    try {
+      const inputs = readActionInputs(core);
+
+      expect(inputs.mode).toBe('resolve-one');
+      expect(inputs.awsRegion).toBe('us-west-2');
+      expect(inputs.repoRoot).toBe('.');
+      expect(inputs.expectedGatewayIds).toEqual(['rest-1']);
+      expect(inputs.stage).toBe('prod');
+      expect(inputs.outputDir).toBe('out/specs');
+      expect(inputs.includeV2).toBe(true);
+    } finally {
+      if (origGH !== undefined) process.env.GITHUB_WORKSPACE = origGH;
+      if (origGL !== undefined) process.env.CI_PROJECT_DIR = origGL;
+      if (origBB !== undefined) process.env.BITBUCKET_CLONE_DIR = origBB;
+      if (origADO !== undefined) process.env.BUILD_SOURCESDIRECTORY = origADO;
+    }
   });
 
   it('fails fast on invalid include-v2 values', () => {
@@ -103,6 +120,40 @@ describe('input parsing', () => {
     });
 
     expect(inputs.repoRoot).toBe('/tmp/github-workspace');
+  });
+
+  it('auto-resolves repo-root from Bitbucket BITBUCKET_CLONE_DIR', () => {
+    const inputs = resolveInputs({
+      INPUT_MODE: 'resolve-one',
+      INPUT_AWS_REGION: 'us-east-1',
+      BITBUCKET_CLONE_DIR: '/opt/atlassian/pipelines/agent/build'
+    });
+
+    expect(inputs.repoRoot).toBe('/opt/atlassian/pipelines/agent/build');
+  });
+
+  it('auto-resolves repo-root from Azure DevOps BUILD_SOURCESDIRECTORY', () => {
+    const inputs = resolveInputs({
+      INPUT_MODE: 'resolve-one',
+      INPUT_AWS_REGION: 'us-east-1',
+      BUILD_SOURCESDIRECTORY: '/home/vsts/work/1/s'
+    });
+
+    expect(inputs.repoRoot).toBe('/home/vsts/work/1/s');
+  });
+
+  it('explicit repo-root input overrides all CI env vars', () => {
+    const inputs = resolveInputs({
+      INPUT_MODE: 'resolve-one',
+      INPUT_AWS_REGION: 'us-east-1',
+      INPUT_REPO_ROOT: '/explicit/path',
+      GITHUB_WORKSPACE: '/tmp/github-workspace',
+      CI_PROJECT_DIR: '/tmp/gitlab',
+      BITBUCKET_CLONE_DIR: '/tmp/bitbucket',
+      BUILD_SOURCESDIRECTORY: '/tmp/azure'
+    });
+
+    expect(inputs.repoRoot).toBe('/explicit/path');
   });
 });
 
