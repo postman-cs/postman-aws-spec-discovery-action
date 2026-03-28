@@ -74,6 +74,7 @@ export class CloudFormationProvider implements SpecProvider {
   }
 
   public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
+    void _options;
     const stackName = candidate.meta.stackName ?? '';
     const logicalId = candidate.meta.logicalId ?? '';
 

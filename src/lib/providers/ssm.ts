@@ -72,6 +72,7 @@ export class SsmProvider implements SpecProvider {
   }
 
   public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
+    void _options;
     const entries = await this.client.listSpecParameters();
     const services = groupByService(entries);
     const svc = services.find((s) => s.serviceName === candidate.name);

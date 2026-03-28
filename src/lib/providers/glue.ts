@@ -50,6 +50,7 @@ export class GlueSchemaProvider implements SpecProvider {
   }
 
   public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
+    void _options;
     const schemaArn = candidate.meta.schemaArn ?? '';
     const version = await this.client.getLatestSchemaVersion(schemaArn);
     const { format, filename } = dataFormatToSpecFormat(version.dataFormat);

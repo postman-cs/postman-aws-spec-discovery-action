@@ -25,6 +25,7 @@ export class AppSyncProvider implements SpecProvider {
   }
 
   public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
+    void _options;
     const content = await this.client.getSchema(candidate.id);
     const tags = await this.client.getTags(candidate.meta.arn ?? '');
     const serviceName = (tags['postman:project-name'] ?? '').trim() || (tags.Name ?? '').trim() || candidate.name;

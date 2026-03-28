@@ -39,6 +39,7 @@ export class EventBridgeSchemasProvider implements SpecProvider {
   }
 
   public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
+    void _options;
     const registryName = candidate.meta.registryName ?? '';
     const schemaName = candidate.meta.schemaName ?? '';
 

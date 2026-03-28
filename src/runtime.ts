@@ -6,7 +6,6 @@ import {
   type ActionMode,
   type DiscoveredService,
   type GatewayType,
-  type ProviderType,
   type ResolutionResult
 } from './contracts.js';
 import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
@@ -168,7 +167,9 @@ function parseServiceMapping(raw: string): Record<string, string> {
     parsed = JSON.parse(raw);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid JSON for service-mapping-json: ${detail}`);
+    throw new Error(`Invalid JSON for service-mapping-json: ${detail}`, {
+      cause: error
+    });
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('service-mapping-json must be a JSON object keyed by gateway id');
@@ -182,7 +183,9 @@ function parseStringArrayJson(raw: string, inputName: string): string[] {
     parsed = JSON.parse(raw);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid JSON for ${inputName}: ${detail}`);
+    throw new Error(`Invalid JSON for ${inputName}: ${detail}`, {
+      cause: error
+    });
   }
   if (!Array.isArray(parsed)) {
     throw new Error(`${inputName} must be a JSON array`);
@@ -234,7 +237,9 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
       apiFilter = new RegExp(apiFilterRaw);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(`Invalid regex for api-filter: ${detail}`);
+      throw new Error(`Invalid regex for api-filter: ${detail}`, {
+        cause: error
+      });
     }
   }
 

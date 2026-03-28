@@ -110424,6 +110424,7 @@ var AppSyncProvider = class {
     }));
   }
   async exportSpec(candidate, _options) {
+    void _options;
     const content = await this.client.getSchema(candidate.id);
     const tags = await this.client.getTags(candidate.meta.arn ?? "");
     const serviceName = (tags["postman:project-name"] ?? "").trim() || (tags.Name ?? "").trim() || candidate.name;
@@ -110469,6 +110470,7 @@ var EventBridgeSchemasProvider = class {
     return candidates;
   }
   async exportSpec(candidate, _options) {
+    void _options;
     const registryName = candidate.meta.registryName ?? "";
     const schemaName = candidate.meta.schemaName ?? "";
     const { content } = await this.client.describeSchema(registryName, schemaName);
@@ -110547,6 +110549,7 @@ var CloudFormationProvider = class {
     return candidates;
   }
   async exportSpec(candidate, _options) {
+    void _options;
     const stackName = candidate.meta.stackName ?? "";
     const logicalId = candidate.meta.logicalId ?? "";
     const templateBody = await this.client.getTemplate(stackName);
@@ -110628,6 +110631,7 @@ var GlueSchemaProvider = class {
     return candidates;
   }
   async exportSpec(candidate, _options) {
+    void _options;
     const schemaArn = candidate.meta.schemaArn ?? "";
     const version = await this.client.getLatestSchemaVersion(schemaArn);
     const { format: format2, filename } = dataFormatToSpecFormat(version.dataFormat);
@@ -110739,6 +110743,7 @@ var SsmProvider = class {
     }));
   }
   async exportSpec(candidate, _options) {
+    void _options;
     const entries = await this.client.listSpecParameters();
     const services = groupByService(entries);
     const svc = services.find((s5) => s5.serviceName === candidate.name);
@@ -111106,7 +111111,9 @@ function parseServiceMapping(raw) {
     parsed = JSON.parse(raw);
   } catch (error2) {
     const detail = error2 instanceof Error ? error2.message : String(error2);
-    throw new Error(`Invalid JSON for service-mapping-json: ${detail}`);
+    throw new Error(`Invalid JSON for service-mapping-json: ${detail}`, {
+      cause: error2
+    });
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("service-mapping-json must be a JSON object keyed by gateway id");
@@ -111119,7 +111126,9 @@ function parseStringArrayJson(raw, inputName) {
     parsed = JSON.parse(raw);
   } catch (error2) {
     const detail = error2 instanceof Error ? error2.message : String(error2);
-    throw new Error(`Invalid JSON for ${inputName}: ${detail}`);
+    throw new Error(`Invalid JSON for ${inputName}: ${detail}`, {
+      cause: error2
+    });
   }
   if (!Array.isArray(parsed)) {
     throw new Error(`${inputName} must be a JSON array`);
@@ -111163,7 +111172,9 @@ function resolveInputs(env = process.env) {
       apiFilter = new RegExp(apiFilterRaw);
     } catch (error2) {
       const detail = error2 instanceof Error ? error2.message : String(error2);
-      throw new Error(`Invalid regex for api-filter: ${detail}`);
+      throw new Error(`Invalid regex for api-filter: ${detail}`, {
+        cause: error2
+      });
     }
   }
   const expectedGatewayIds = [gatewayId, ...parseStringArrayJson(expectedGatewayIdsRaw, "expected-gateway-ids-json")].filter(
