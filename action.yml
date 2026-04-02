@@ -44,5 +44,5 @@ outputs:
   spec-format:
     description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
 runs:
-  using: node22
+  using: node24
   main: dist/index.cjs

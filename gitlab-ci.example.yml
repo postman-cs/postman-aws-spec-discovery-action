@@ -6,7 +6,7 @@ variables:
   POSTMAN_AWS_SPEC_DISCOVERY_DIR: ".tools/postman-aws-spec-discovery-action"
 
 resolve_api_spec:
-  image: node:22
+  image: node:24
   stage: resolve
   script:
     - git clone --depth 1 --branch "$POSTMAN_AWS_SPEC_DISCOVERY_REF" https://github.com/postman-cs/postman-aws-spec-discovery-action.git "$POSTMAN_AWS_SPEC_DISCOVERY_DIR"
