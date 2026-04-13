@@ -1,15 +1,20 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { runCli as runCliCommand } from '../../src/cli.js';
 
 interface CliExecutionResult {
   mode: string;
   outputs: Record<string, string>;
+}
+
+interface CliExecutionArtifacts {
+  stdoutResult: CliExecutionResult;
+  fileResult: CliExecutionResult;
 }
 
 interface DiscoveredServiceRecord {
@@ -22,6 +27,7 @@ interface DiscoveredServiceRecord {
 const CURRENT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(CURRENT_DIR, '..', '..');
 const FIXTURES_DIR = path.join(REPO_ROOT, 'tests', 'live', 'fixtures');
+const CLI_ENTRYPOINT = path.join(REPO_ROOT, 'dist', 'cli.cjs');
 
 const createdWorkspaces: string[] = [];
 
@@ -48,35 +54,43 @@ async function writeSnsTemplate(workspace: string, topicName: string): Promise<v
   await writeFile(path.join(workspace, 'template.yaml'), template, 'utf8');
 }
 
-async function runCli(workspace: string, env: Record<string, string>): Promise<CliExecutionResult> {
-  const originalCwd = process.cwd();
-  const originalValues = new Map<string, string | undefined>();
+function parseCliExecutionResult(raw: string, source: string): CliExecutionResult {
+  try {
+    return JSON.parse(raw) as CliExecutionResult;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed parsing CLI ${source}: ${message}`, { cause: error });
+  }
+}
+
+function runCli(workspace: string, env: Record<string, string>): CliExecutionArtifacts {
+  if (!existsSync(CLI_ENTRYPOINT)) {
+    throw new Error(`CLI bundle not found at ${CLI_ENTRYPOINT}`);
+  }
   const mergedEnv = {
+    ...process.env,
     INPUT_AWS_REGION: 'us-east-1',
     INPUT_REPO_ROOT: workspace,
     INPUT_OUTPUT_DIR: 'discovered-specs',
     ...env
   };
-  for (const [key, value] of Object.entries(mergedEnv)) {
-    originalValues.set(key, process.env[key]);
-    process.env[key] = value;
+  const resultJsonPath = path.join(workspace, 'result.json');
+
+  const stdout = execFileSync('node', [CLI_ENTRYPOINT, '--result-json', 'result.json'], {
+    cwd: workspace,
+    env: mergedEnv,
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024
+  });
+
+  const stdoutResult = parseCliExecutionResult(stdout, 'stdout');
+  const fileResult = parseCliExecutionResult(readFileSync(resultJsonPath, 'utf8'), 'result.json');
+
+  if (JSON.stringify(stdoutResult.outputs) !== JSON.stringify(fileResult.outputs)) {
+    throw new Error('CLI stdout output did not match result.json output');
   }
 
-  const resultJsonPath = path.join(workspace, 'result.json');
-  process.chdir(workspace);
-  try {
-    await runCliCommand(['--result-json', 'result.json']);
-    return JSON.parse(readFileSync(resultJsonPath, 'utf8')) as CliExecutionResult;
-  } finally {
-    process.chdir(originalCwd);
-    for (const [key, value] of originalValues.entries()) {
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-  }
+  return { stdoutResult, fileResult };
 }
 
 describe('SNS live CLI integration', () => {
@@ -86,9 +100,10 @@ describe('SNS live CLI integration', () => {
 
   it('discover-many includes SNS services, service-count, output structure, and existing providers', async () => {
     const workspace = await createWorkspace('sns-live-discover-many');
-    const result = await runCli(workspace, {
+    const { stdoutResult, fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'discover-many'
     });
+    expect(stdoutResult.mode).toBe(result.mode);
 
     const services = parseServices(result);
     const snsServices = services.filter((entry) => entry.providerType === 'sns');
@@ -113,7 +128,7 @@ describe('SNS live CLI integration', () => {
     await writeSnsTemplate(workspace, 'SpecDiscoveryTestTopic');
     await cp(path.join(FIXTURES_DIR, 'asyncapi.yaml'), path.join(workspace, 'asyncapi.yaml'));
 
-    const result = await runCli(workspace, {
+    const { fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'resolve-one',
       INPUT_EXPECTED_SERVICE_NAME: 'SpecDiscoveryTestTopic'
     });
@@ -134,7 +149,7 @@ describe('SNS live CLI integration', () => {
     await writeSnsTemplate(workspace, 'SpecDiscoverySubscribedTopic');
     await cp(path.join(FIXTURES_DIR, 'schema.json'), path.join(workspace, 'schema.json'));
 
-    const result = await runCli(workspace, {
+    const { fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'resolve-one',
       INPUT_EXPECTED_SERVICE_NAME: 'SpecDiscoverySubscribedTopic',
       INPUT_MAX_CANDIDATES: '1'
@@ -155,7 +170,7 @@ describe('SNS live CLI integration', () => {
     const workspace = await createWorkspace('sns-live-ssm');
     await writeSnsTemplate(workspace, 'SpecDiscoveryTestTopic');
 
-    const result = await runCli(workspace, {
+    const { fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'resolve-one',
       INPUT_EXPECTED_SERVICE_NAME: 'SpecDiscoveryTestTopic'
     });
@@ -174,7 +189,7 @@ describe('SNS live CLI integration', () => {
     const workspace = await createWorkspace('sns-live-manual-review');
     await writeSnsTemplate(workspace, 'SpecDiscoverySubscribedTopic');
 
-    const result = await runCli(workspace, {
+    const { fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'resolve-one',
       INPUT_EXPECTED_SERVICE_NAME: 'SpecDiscoverySubscribedTopic',
       INPUT_MAX_CANDIDATES: '1'
@@ -186,18 +201,19 @@ describe('SNS live CLI integration', () => {
     expect(result.outputs['spec-format']).toBe('');
   });
 
-  it('uses tagged SNS topic metadata when ranking candidates', async () => {
+  it('uses SNS tags for candidate ranking in resolve-one (services-json does not expose raw tag metadata)', async () => {
     const workspace = await createWorkspace('sns-live-tag-ranking');
     await writeSnsTemplate(workspace, 'SpecDiscoveryTaggedTopic');
     await cp(path.join(FIXTURES_DIR, 'asyncapi.yaml'), path.join(workspace, 'asyncapi.yaml'));
 
-    const result = await runCli(workspace, {
+    const { fileResult: result } = runCli(workspace, {
       INPUT_MODE: 'resolve-one',
       INPUT_EXPECTED_SERVICE_NAME: 'test-service'
     });
 
     expect(result.outputs['resolution-status']).toBe('resolved');
     expect(result.outputs['source-type']).toBe('sns-contract');
+    expect(result.outputs['service-name']).toBe('SpecDiscoveryTaggedTopic');
     expect(result.outputs['gateway-id']).toContain(':SpecDiscoveryTaggedTopic');
   });
 });
