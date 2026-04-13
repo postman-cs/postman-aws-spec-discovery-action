@@ -108,4 +108,42 @@ spec:
       await rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('parses multi-document catalog-info.yaml and returns API entities across documents', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        `apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: infra
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: orders-api
+spec:
+  definition: https://example.com/orders.asyncapi.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: billing-api
+spec:
+  definition:
+    $text: ./billing/openapi.yaml
+`,
+        'utf8'
+      );
+
+      const result = await detectCatalogApis(tempDir);
+      expect(result).toEqual([
+        { name: 'orders-api', specUrl: 'https://example.com/orders.asyncapi.yaml', specPath: undefined },
+        { name: 'billing-api', specPath: './billing/openapi.yaml', specUrl: undefined }
+      ]);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });

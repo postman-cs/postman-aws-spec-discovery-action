@@ -35,6 +35,13 @@ function topicNameFromArn(topicArn: string): string {
   return lastColonIndex >= 0 ? topicArn.slice(lastColonIndex + 1) : topicArn;
 }
 
+function isAuthorizationDeniedError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return /AccessDeniedException|AuthorizationErrorException/i.test(error.message);
+}
+
 export class SnsSdkClient implements SnsSpecClient {
   private readonly client: SNSClient;
 
@@ -113,7 +120,7 @@ export class SnsSdkClient implements SnsSpecClient {
       } while (nextToken);
       return subscriptions;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('AccessDeniedException')) {
+      if (isAuthorizationDeniedError(error)) {
         return [];
       }
       throw error;
@@ -125,7 +132,7 @@ export class SnsSdkClient implements SnsSpecClient {
       const response = await this.client.send(new GetSubscriptionAttributesCommand({ SubscriptionArn: subscriptionArn }));
       return response.Attributes ?? {};
     } catch (error) {
-      if (error instanceof Error && error.message.includes('AccessDeniedException')) {
+      if (isAuthorizationDeniedError(error)) {
         return {};
       }
       throw error;

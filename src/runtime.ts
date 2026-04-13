@@ -691,6 +691,13 @@ export async function runResolution(
   let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
   let resolvedSnsExport: SpecExportResult | undefined;
   const snsManualReviewEvidence: string[] = [];
+  let snsManualReviewMetadata:
+    | {
+        serviceName: string;
+        metadataContent: string;
+        sidecars?: Array<{ filename: string; content: string }>;
+      }
+    | undefined;
   const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
   if (shouldAttemptSns) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
@@ -730,6 +737,13 @@ export async function runResolution(
         const contract = await snsProvider.resolveContract(candidate);
         if (!contract.resolved) {
           snsManualReviewEvidence.push(...contract.evidence);
+          if (!snsManualReviewMetadata) {
+            snsManualReviewMetadata = {
+              serviceName: candidate.name,
+              metadataContent: JSON.stringify(contract.metadata, null, 2),
+              sidecars: contract.sidecars
+            };
+          }
           continue;
         }
         const format = contract.result.format;
@@ -826,9 +840,10 @@ export async function runResolution(
     }
     const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
     await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
-    if (metadataSidecar && relativeMetadataPath) {
-      const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, 'output-dir');
-      await writeSpecFile(absoluteMetadataPath, metadataSidecar.content);
+    for (const sidecar of resolvedSnsExport.sidecars ?? []) {
+      const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
+      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
+      await writeSpecFile(absoluteSidecarPath, sidecar.content);
     }
     return {
       ...selectedSource,
@@ -839,7 +854,30 @@ export async function runResolution(
   }
 
   if (selectedSource.sourceType === 'manual-review' && snsManualReviewEvidence.length > 0) {
-    return toManualReviewResult(selectedSource, snsManualReviewEvidence);
+    const serviceName = selectedSource.serviceName ?? snsManualReviewMetadata?.serviceName ?? 'service';
+    const relativeProviderDir = path.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, '/');
+    const relativeMetadataPath = path.join(relativeProviderDir, 'sns-resolution-metadata.json').replace(/\\/g, '/');
+    const manualReviewResult = toManualReviewResult(
+      { ...selectedSource, contractOrigin: 'manual-review', metadataPath: relativeMetadataPath },
+      snsManualReviewEvidence
+    );
+    if (inputs.dryRun) {
+      return {
+        ...manualReviewResult,
+        evidence: [...manualReviewResult.evidence, 'Dry run enabled; skipped SNS metadata sidecar write']
+      };
+    }
+
+    if (snsManualReviewMetadata?.metadataContent) {
+      const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, 'output-dir');
+      await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
+      for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
+        const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
+        const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
+        await writeSpecFile(absoluteSidecarPath, sidecar.content);
+      }
+    }
+    return manualReviewResult;
   }
 
   return selectedSource;
@@ -921,6 +959,20 @@ async function runMultiProviderDiscovery(
 
           const gatewayType = (candidate.meta.gatewayType ?? (provider.type === 'sns' ? 'SNS' : 'REST')) as GatewayType;
           const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
+          let contractOrigin: DiscoveredService['contractOrigin'];
+          let variantCount: number | undefined;
+          if (provider.type === 'sns' && metadataSidecar) {
+            try {
+              const parsed = JSON.parse(metadataSidecar.content) as {
+                contractOrigin?: DiscoveredService['contractOrigin'];
+                variantCount?: number;
+              };
+              contractOrigin = parsed.contractOrigin;
+              variantCount = typeof parsed.variantCount === 'number' ? parsed.variantCount : undefined;
+            } catch {
+              // ignore malformed metadata sidecar
+            }
+          }
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -929,6 +981,8 @@ async function runMultiProviderDiscovery(
             stage: result.stage ?? '',
             providerType: provider.type,
             specFormat: result.format,
+            contractOrigin,
+            variantCount,
             metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);

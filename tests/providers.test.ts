@@ -1,4 +1,5 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -870,6 +871,30 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract allows git-tracked generated AsyncAPI in ignored framework directories', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      execFileSync('git', ['init'], { cwd: tempDir, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.name', 'test-user'], { cwd: tempDir, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.email', 'test-user@example.com'], { cwd: tempDir, stdio: 'ignore' });
+      await mkdir(path.join(tempDir, 'build', 'generated'), { recursive: true });
+      await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      execFileSync('git', ['add', '--', 'build/generated/orders.asyncapi.yaml'], { cwd: tempDir, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'track generated asyncapi fixture'], { cwd: tempDir, stdio: 'ignore' });
+      await writeFile(path.join(tempDir, '.gitignore'), 'build/\n', 'utf8');
+
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'generated-asyncapi' });
+      if (result.resolved) {
+        expect(result.result.filename).toBe('orders.asyncapi.yaml');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract returns ssm-content origin for explicit and auto-detected formats', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
@@ -1098,6 +1123,32 @@ describe('SnsProvider', () => {
       expect(result.evidence.some((line) => line.includes('spec-pointer.json'))).toBe(true);
       expect(result.evidence.some((line) => line.includes('"specUrl": "https://example.com/orders.asyncapi.yaml"'))).toBe(true);
       expect(result.evidence.some((line) => line.includes('"fetchError": "HTTP 503 fetching https://example.com/orders.asyncapi.yaml"'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec emits spec-pointer.json sidecar when SSM URL fetch fails', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/orders.asyncapi.yaml' }
+          ])
+        }),
+        vi.fn().mockRejectedValue(new Error('HTTP 503 fetching https://example.com/orders.asyncapi.yaml')) as never
+      );
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+      const pointer = result.sidecars?.find((entry) => entry.filename === 'spec-pointer.json');
+
+      expect(result.filename).toBe('manual-review.json');
+      expect(pointer).toBeDefined();
+      expect(pointer?.content).toContain('"specUrl": "https://example.com/orders.asyncapi.yaml"');
+      expect(pointer?.content).toContain('"fetchError": "HTTP 503 fetching https://example.com/orders.asyncapi.yaml"');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1797,6 +1848,18 @@ describe('SnsSdkClient', () => {
     snsSendMock.mockReset();
     snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
     snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
+    const client = new SnsSdkClient('us-east-1');
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+    const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';
+
+    await expect(client.listSubscriptionsByTopic(topicArn)).resolves.toEqual([]);
+    await expect(client.getSubscriptionAttributes(subscriptionArn)).resolves.toEqual({});
+  });
+
+  it('subscription reads handle AuthorizationErrorException gracefully', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockRejectedValueOnce(new Error('AuthorizationErrorException'));
+    snsSendMock.mockRejectedValueOnce(new Error('AuthorizationErrorException'));
     const client = new SnsSdkClient('us-east-1');
     const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
     const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';

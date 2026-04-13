@@ -1,5 +1,7 @@
+import { execFile } from 'node:child_process';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { parse } from 'yaml';
 
 import type { SpecFormat } from '../../contracts.js';
@@ -91,14 +93,18 @@ export type SnsContractResult =
       result: SpecExportResult;
       evidence: string[];
       metadata: SnsResolutionMetadata;
+      sidecars?: Array<{ filename: string; content: string }>;
     }
   | {
       resolved: false;
       evidence: string[];
       metadata: SnsResolutionMetadata;
+      sidecars?: Array<{ filename: string; content: string }>;
     };
 
 const METADATA_SIDECAR_FILENAME = 'sns-resolution-metadata.json';
+const SPEC_POINTER_FILENAME = 'spec-pointer.json';
+const execFileAsync = promisify(execFile);
 
 function topicNameFromArn(topicArn: string): string {
   const index = topicArn.lastIndexOf(':');
@@ -416,42 +422,61 @@ function createGitignoreMatcher(repoRoot: string, content: string): (targetPath:
       const pattern = normalizePathForMatch(directoryOnly ? line.slice(0, -1) : line);
       const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
       const regexSource = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]');
-      return { directoryOnly, regex: new RegExp(`(^|/)${regexSource}($|/)`) };
+      return { directoryOnly, pattern, regex: new RegExp(`(^|/)${regexSource}($|/)`) };
     });
 
   return (targetPath: string, isDirectory: boolean): boolean => {
     const relative = normalizePathForMatch(path.relative(repoRoot, targetPath));
-    return rules.some((rule) => (!rule.directoryOnly || isDirectory) && rule.regex.test(relative));
+    return rules.some((rule) => {
+      if (!rule.directoryOnly) {
+        return rule.regex.test(relative);
+      }
+      return relative === rule.pattern || relative.startsWith(`${rule.pattern}/`) || (isDirectory && rule.regex.test(relative));
+    });
   };
 }
 
-async function collectFilesByExtension(
-  currentPath: string,
-  matcher: (targetPath: string, isDirectory: boolean) => boolean
-): Promise<string[]> {
+async function collectFilesByExtensionUnfiltered(currentPath: string): Promise<string[]> {
   const entries = await readdir(currentPath, { withFileTypes: true }).catch(() => []);
   const files: string[] = [];
 
   for (const entry of entries) {
     const fullPath = path.join(currentPath, entry.name);
     if (entry.isDirectory()) {
-      if (DEFAULT_IGNORED_DIRS.has(entry.name) || matcher(fullPath, true)) {
+      if (DEFAULT_IGNORED_DIRS.has(entry.name)) {
         continue;
       }
-      files.push(...(await collectFilesByExtension(fullPath, matcher)));
+      files.push(...(await collectFilesByExtensionUnfiltered(fullPath)));
       continue;
     }
 
-    if (!entry.isFile() || matcher(fullPath, false)) {
+    if (!entry.isFile()) {
       continue;
     }
-
     if (GENERATED_ASYNCAPI_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
       files.push(fullPath);
     }
   }
 
   return files;
+}
+
+function isFrameworkOutputPath(repoRoot: string, filePath: string): boolean {
+  const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
+  return relative.startsWith('build/') || relative.startsWith('.build/') || relative.startsWith('out/');
+}
+
+async function isGitTrackedFile(repoRoot: string, filePath: string): Promise<boolean> {
+  const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
+  if (!relative || relative.startsWith('..')) {
+    return false;
+  }
+  try {
+    await execFileAsync('git', ['-C', repoRoot, 'ls-files', '--error-unmatch', '--', relative]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function findContractFiles(repoRoot: string, topicName: string): Promise<{ asyncapi: string[]; jsonSchema: string[] }> {
@@ -493,18 +518,31 @@ async function findGeneratedAsyncApiFiles(repoRoot: string, topicName: string): 
   for (const frameworkRoot of ['build', '.build', 'out']) {
     const rootPath = path.join(repoRoot, frameworkRoot);
     const rootStats = await stat(rootPath).catch(() => null);
-    if (!rootStats || !rootStats.isDirectory() || matcher(rootPath, true)) {
+    if (!rootStats || !rootStats.isDirectory()) {
       continue;
     }
-    for (const filePath of await collectFilesByExtension(rootPath, matcher)) {
+    for (const filePath of await collectFilesByExtensionUnfiltered(rootPath)) {
       discovered.add(filePath);
     }
   }
 
-  return sortByTopicAffinity(
-    [...discovered].filter((filePath) => !matcher(filePath, false) && isGeneratedAsyncApiPath(repoRoot, filePath)),
-    topicName
-  );
+  const accepted: string[] = [];
+  for (const filePath of discovered) {
+    if (!isGeneratedAsyncApiPath(repoRoot, filePath)) {
+      continue;
+    }
+
+    const ignored = matcher(filePath, false);
+    if (!ignored) {
+      accepted.push(filePath);
+      continue;
+    }
+    if (isFrameworkOutputPath(repoRoot, filePath) && (await isGitTrackedFile(repoRoot, filePath))) {
+      accepted.push(filePath);
+    }
+  }
+
+  return sortByTopicAffinity(accepted, topicName);
 }
 
 async function resolveAsyncApiContract(
@@ -666,7 +704,11 @@ export class SnsProvider implements SpecProvider {
     if (contract.resolved) {
       return {
         ...contract.result,
-        sidecars: [...(contract.result.sidecars ?? []), { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
+        sidecars: [
+          ...(contract.result.sidecars ?? []),
+          ...(contract.sidecars ?? []),
+          { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }
+        ]
       };
     }
 
@@ -684,7 +726,7 @@ export class SnsProvider implements SpecProvider {
       format: 'json-schema',
       filename: 'manual-review.json',
       evidence: contract.evidence,
-      sidecars: [{ filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
+      sidecars: [...(contract.sidecars ?? []), { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
     };
   }
 
@@ -696,6 +738,7 @@ export class SnsProvider implements SpecProvider {
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
     void this.eventBridgeClient;
     void this.codeDerivedResolver;
+    let pointerSidecar: { filename: string; content: string } | undefined;
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, 'repo-local');
@@ -794,6 +837,7 @@ export class SnsProvider implements SpecProvider {
         } catch (fetchError) {
           const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
           const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
+          pointerSidecar = { filename: SPEC_POINTER_FILENAME, content: pointerArtifact };
           priorEvidence.push(
             `Failed to fetch SNS contract from SSM URL ${ssmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
           );
@@ -852,7 +896,8 @@ export class SnsProvider implements SpecProvider {
       return {
         resolved: false,
         evidence: finalEvidence,
-        metadata
+        metadata,
+        sidecars: pointerSidecar ? [pointerSidecar] : undefined
       };
     }
 
@@ -876,7 +921,8 @@ export class SnsProvider implements SpecProvider {
         evidence: finalEvidence
       },
       evidence: finalEvidence,
-      metadata
+      metadata,
+      sidecars: pointerSidecar ? [pointerSidecar] : undefined
     };
   }
 

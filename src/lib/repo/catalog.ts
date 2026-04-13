@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parse } from 'yaml';
+import { parseAllDocuments } from 'yaml';
 
 export interface CatalogApiRef {
   name: string;
@@ -40,9 +40,9 @@ export async function detectCatalogApis(repoRoot: string): Promise<CatalogApiRef
 
   let docs: CatalogEntity[];
   try {
-    // catalog-info.yaml can be multi-document
-    const parsed = parse(content, { maxAliasCount: 100 });
-    docs = Array.isArray(parsed) ? parsed : [parsed];
+    docs = parseAllDocuments(content)
+      .map((document) => document.toJSON() as CatalogEntity | null)
+      .filter((document): document is CatalogEntity => Boolean(document && typeof document === 'object'));
   } catch {
     return undefined;
   }
