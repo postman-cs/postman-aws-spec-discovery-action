@@ -214,6 +214,45 @@ Resources:
       Protocol: sqs
       Endpoint: !GetAtt SpecDiscoverySubscriptionQueue.Arn
 
+  SpecDiscoveryRawSubscriptionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SpecDiscoveryRawSubscriptionQueue
+
+  SpecDiscoveryRawQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SpecDiscoveryRawSubscriptionQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSnsPublishRaw
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt SpecDiscoveryRawSubscriptionQueue.Arn
+            Condition:
+              ArnEquals:
+                'aws:SourceArn': !Ref SpecDiscoverySubscriptionTopic
+
+  SpecDiscoveryRawSqsSubscription:
+    Type: AWS::SNS::Subscription
+    DependsOn: SpecDiscoveryRawQueuePolicy
+    Properties:
+      TopicArn: !Ref SpecDiscoverySubscriptionTopic
+      Protocol: sqs
+      Endpoint: !GetAtt SpecDiscoveryRawSubscriptionQueue.Arn
+      RawMessageDelivery: true
+
+  SpecDiscoveryHttpsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SpecDiscoverySubscriptionTopic
+      Protocol: https
+      Endpoint: https://example.com/sns-webhook-test
+
   # 11. SSM contract pointers for SNS resolution
   SpecDiscoveryTopicContractFormat:
     Type: AWS::SSM::Parameter
@@ -248,6 +287,20 @@ Resources:
                       type: string
                     message:
                       type: string
+
+  SpecDiscoveryUrlTopicContractUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /postman/specs/spec-discovery-url-topic/spec-url
+      Type: String
+      Value: https://json.schemastore.org/package
+
+  SpecDiscoveryUrlTopicContractFormat:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /postman/specs/spec-discovery-url-topic/spec-format
+      Type: String
+      Value: json-schema
 
 Outputs:
   RestApiId:

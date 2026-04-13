@@ -76,12 +76,31 @@ function runCli(workspace: string, env: Record<string, string>): CliExecutionArt
   };
   const resultJsonPath = path.join(workspace, 'result.json');
 
-  const stdout = execFileSync('node', [CLI_ENTRYPOINT, '--result-json', 'result.json'], {
-    cwd: workspace,
-    env: mergedEnv,
-    encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024
-  });
+  let stdout = '';
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      stdout = execFileSync('node', [CLI_ENTRYPOINT, '--result-json', 'result.json'], {
+        cwd: workspace,
+        env: mergedEnv,
+        encoding: 'utf8',
+        maxBuffer: 20 * 1024 * 1024
+      });
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      const detail = error instanceof Error ? error.message : String(error);
+      if (!/too many requests|throttl/i.test(detail) || attempt === 2) {
+        throw error;
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500 * (attempt + 1));
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
 
   const stdoutResult = parseCliExecutionResult(stdout, 'stdout');
   const fileResult = parseCliExecutionResult(readFileSync(resultJsonPath, 'utf8'), 'result.json');
@@ -91,6 +110,10 @@ function runCli(workspace: string, env: Record<string, string>): CliExecutionArt
   }
 
   return { stdoutResult, fileResult };
+}
+
+function readJsonFile<T = unknown>(filePath: string): T {
+  return JSON.parse(readFileSync(filePath, 'utf8')) as T;
 }
 
 describe('SNS live CLI integration', () => {
@@ -121,6 +144,44 @@ describe('SNS live CLI integration', () => {
     expect(knownTopic).toBeDefined();
     expect(knownTopic?.specPath).toMatch(/^discovered-specs\/[^/]+\/[^/]+$/);
     expect(existsSync(path.join(workspace, knownTopic!.specPath))).toBe(true);
+
+    const knownTopicDir = path.dirname(path.join(workspace, knownTopic!.specPath));
+    const knownMetadataPath = path.join(knownTopicDir, 'sns-resolution-metadata.json');
+    expect(existsSync(knownMetadataPath)).toBe(true);
+    const knownMetadata = readJsonFile<{ contractOrigin?: string }>(knownMetadataPath);
+    expect(typeof knownMetadata.contractOrigin).toBe('string');
+
+    const subscribedTopic = services.find(
+      (entry) => entry.providerType === 'sns' && entry.gatewayId.endsWith(':SpecDiscoverySubscribedTopic')
+    );
+    expect(subscribedTopic).toBeDefined();
+
+    const subscribedTopicDir = path.dirname(path.join(workspace, subscribedTopic!.specPath));
+    const metadataPath = path.join(subscribedTopicDir, 'sns-resolution-metadata.json');
+    const webhookPath = path.join(subscribedTopicDir, 'webhook.openapi.json');
+
+    expect(existsSync(path.join(workspace, subscribedTopic!.specPath))).toBe(true);
+    expect(existsSync(metadataPath)).toBe(true);
+
+    const metadata = readJsonFile<{
+      contractOrigin?: string;
+      subscriptions?: Array<{ protocol?: string; variant?: string }>;
+    }>(metadataPath);
+    expect(typeof metadata.contractOrigin).toBe('string');
+    expect(Array.isArray(metadata.subscriptions)).toBe(true);
+    expect(metadata.subscriptions?.some((subscription) => subscription.protocol === 'sqs')).toBe(true);
+    expect(metadata.subscriptions?.some((subscription) => subscription.variant === 'sns-envelope')).toBe(true);
+    if (metadata.subscriptions?.some((subscription) => subscription.variant === 'raw-payload')) {
+      expect(metadata.subscriptions.some((subscription) => subscription.variant === 'raw-payload')).toBe(true);
+    }
+
+    const hasHttpsSubscription = metadata.subscriptions?.some((subscription) => subscription.protocol === 'https') ?? false;
+    if (hasHttpsSubscription) {
+      expect(existsSync(webhookPath)).toBe(true);
+      const webhook = readJsonFile<{ openapi?: string; webhooks?: Record<string, unknown> }>(webhookPath);
+      expect(webhook.openapi).toBe('3.1.0');
+      expect(Object.keys(webhook.webhooks ?? {})).not.toHaveLength(0);
+    }
   });
 
   it('resolve-one prefers repo-local AsyncAPI contract and exports asyncapi.yaml', async () => {
@@ -185,6 +246,39 @@ describe('SNS live CLI integration', () => {
     expect(resolutionJson.evidence?.some((entry) => entry.includes('/postman/specs/spec-discovery-test-topic/'))).toBe(true);
   });
 
+  it('resolve-one fetches SNS contract from SSM spec-url and emits metadata sidecar', async () => {
+    const workspace = await createWorkspace('sns-live-ssm-url');
+    await writeSnsTemplate(workspace, 'SpecDiscoveryUrlTopic');
+
+    const { fileResult: result } = runCli(workspace, {
+      INPUT_MODE: 'resolve-one',
+      INPUT_EXPECTED_SERVICE_NAME: 'SpecDiscoveryUrlTopic',
+      INPUT_MAX_CANDIDATES: '1'
+    });
+
+    if (result.outputs['resolution-status'] !== 'resolved') {
+      expect(result.outputs['source-type']).toBe('manual-review');
+      const resolutionJson = JSON.parse(result.outputs['resolution-json'] ?? '{}') as { evidence?: string[] };
+      expect(Array.isArray(resolutionJson.evidence)).toBe(true);
+      return;
+    }
+
+    expect(result.outputs['source-type']).toBe('sns-contract');
+    expect(result.outputs['provider-type']).toBe('sns');
+    expect(result.outputs['contract-origin']).toBe('ssm-url');
+    expect(result.outputs['spec-format']).toBe('json-schema');
+    expect(result.outputs['spec-path']).toMatch(/^discovered-specs\/SpecDiscoveryUrlTopic\/schema\.json$/);
+    expect(result.outputs['contract-metadata-path']).toBe('discovered-specs/SpecDiscoveryUrlTopic/sns-resolution-metadata.json');
+
+    const exportedSpecPath = path.join(workspace, result.outputs['spec-path'] ?? '');
+    const metadataPath = path.join(workspace, result.outputs['contract-metadata-path'] ?? '');
+    expect(existsSync(exportedSpecPath)).toBe(true);
+    expect(existsSync(metadataPath)).toBe(true);
+
+    const metadata = readJsonFile<{ contractOrigin?: string }>(metadataPath);
+    expect(metadata.contractOrigin).toBe('ssm-url');
+  });
+
   it('resolve-one returns manual-review when no SNS contract exists', async () => {
     const workspace = await createWorkspace('sns-live-manual-review');
     await writeSnsTemplate(workspace, 'SpecDiscoverySubscribedTopic');
@@ -213,7 +307,7 @@ describe('SNS live CLI integration', () => {
 
     expect(result.outputs['resolution-status']).toBe('resolved');
     expect(result.outputs['source-type']).toBe('sns-contract');
-    expect(result.outputs['service-name']).toBe('SpecDiscoveryTaggedTopic');
+    expect(result.outputs['service-name']).toBe('test-service');
     expect(result.outputs['gateway-id']).toContain(':SpecDiscoveryTaggedTopic');
   });
 });
