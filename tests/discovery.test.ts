@@ -986,6 +986,67 @@ describe('SNS runtime integration', () => {
     expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/sns-resolution-metadata.json'))).toBe(true);
   });
 
+  it('propagates SNS contractOrigin and variantCount into discover-many services-json entries', async () => {
+    const { core } = createCoreStub();
+    const snsProvider = createDiscoverManySnsProvider({
+      listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
+      exportSpec: vi.fn().mockResolvedValue({
+        content: 'asyncapi: 2.6.0',
+        format: 'asyncapi-yaml',
+        filename: 'asyncapi.yaml',
+        evidence: ['resolved'],
+        sidecars: [
+          {
+            filename: 'sns-resolution-metadata.json',
+            content: '{"contractOrigin":"repo-asyncapi","variantCount":2}'
+          }
+        ]
+      })
+    });
+    const registry = new ProviderRegistry();
+    registry.register(snsProvider);
+
+    const result = await execute(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws: createAwsClientStub(),
+        providerRegistry: registry,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    const snsEntry = result.discovered.find((entry) => entry.providerType === 'sns');
+    expect(snsEntry?.contractOrigin).toBe('repo-asyncapi');
+    expect(snsEntry?.variantCount).toBe(2);
+
+    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
+      providerType?: string;
+      contractOrigin?: string;
+      variantCount?: number;
+    }>;
+    const serializedSns = services.find((entry) => entry.providerType === 'sns');
+    expect(serializedSns?.contractOrigin).toBe('repo-asyncapi');
+    expect(serializedSns?.variantCount).toBe(2);
+  });
+
   it('supports discover-many dry-run for SNS without exporting', async () => {
     const { core } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
@@ -1067,6 +1128,63 @@ describe('SNS runtime integration', () => {
 
     expect(snsProvider.exportSpec).toHaveBeenCalledTimes(2);
     expect(result.exportSummary?.skipped).toBe(1);
+  });
+
+  it('writes SNS manual-review metadata sidecar and propagates metadataPath/contractOrigin in resolve-one', async () => {
+    await withSnsSignals(async (tempDir) => {
+      const writes = new Map<string, string>();
+      const snsProvider = createSnsProviderStub({
+        listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
+        resolveContract: vi.fn().mockResolvedValue({
+          resolved: false,
+          evidence: ['manual review'],
+          metadata: {
+            contractOrigin: 'manual-review',
+            subscriptions: [],
+            evidence: ['manual review'],
+            subscriptionSummary: {
+              topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+              total: 0,
+              failed: 0,
+              errors: []
+            }
+          }
+        })
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        async (outputPath, content) => {
+          writes.set(outputPath.replace(/\\/g, '/'), content);
+        },
+        { snsProvider }
+      );
+
+      expect(result.sourceType).toBe('manual-review');
+      expect(result.contractOrigin).toBe('manual-review');
+      expect(result.metadataPath).toBe('discovered-specs/orders/sns-resolution-metadata.json');
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders/sns-resolution-metadata.json'))).toBe(true);
+    });
   });
 });
 
