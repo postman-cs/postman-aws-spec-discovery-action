@@ -171,17 +171,12 @@ describe('SNS live CLI integration', () => {
     expect(Array.isArray(metadata.subscriptions)).toBe(true);
     expect(metadata.subscriptions?.some((subscription) => subscription.protocol === 'sqs')).toBe(true);
     expect(metadata.subscriptions?.some((subscription) => subscription.variant === 'sns-envelope')).toBe(true);
-    if (metadata.subscriptions?.some((subscription) => subscription.variant === 'raw-payload')) {
-      expect(metadata.subscriptions.some((subscription) => subscription.variant === 'raw-payload')).toBe(true);
-    }
-
-    const hasHttpsSubscription = metadata.subscriptions?.some((subscription) => subscription.protocol === 'https') ?? false;
-    if (hasHttpsSubscription) {
-      expect(existsSync(webhookPath)).toBe(true);
-      const webhook = readJsonFile<{ openapi?: string; webhooks?: Record<string, unknown> }>(webhookPath);
-      expect(webhook.openapi).toBe('3.1.0');
-      expect(Object.keys(webhook.webhooks ?? {})).not.toHaveLength(0);
-    }
+    expect(metadata.subscriptions?.some((subscription) => subscription.variant === 'raw-payload')).toBe(true);
+    expect(metadata.subscriptions?.some((subscription) => subscription.protocol === 'https')).toBe(true);
+    expect(existsSync(webhookPath)).toBe(true);
+    const webhook = readJsonFile<{ openapi?: string; webhooks?: Record<string, unknown> }>(webhookPath);
+    expect(webhook.openapi).toBe('3.1.0');
+    expect(Object.keys(webhook.webhooks ?? {})).not.toHaveLength(0);
   });
 
   it('resolve-one prefers repo-local AsyncAPI contract and exports asyncapi.yaml', async () => {
@@ -256,16 +251,10 @@ describe('SNS live CLI integration', () => {
       INPUT_MAX_CANDIDATES: '1'
     });
 
-    if (result.outputs['resolution-status'] !== 'resolved') {
-      expect(result.outputs['source-type']).toBe('manual-review');
-      const resolutionJson = JSON.parse(result.outputs['resolution-json'] ?? '{}') as { evidence?: string[] };
-      expect(Array.isArray(resolutionJson.evidence)).toBe(true);
-      return;
-    }
-
+    expect(result.outputs['resolution-status']).toBe('resolved');
     expect(result.outputs['source-type']).toBe('sns-contract');
     expect(result.outputs['provider-type']).toBe('sns');
-    expect(result.outputs['contract-origin']).toBe('ssm-url');
+    expect(['ssm-content', 'ssm-url']).toContain(result.outputs['contract-origin']);
     expect(result.outputs['spec-format']).toBe('json-schema');
     expect(result.outputs['spec-path']).toMatch(/^discovered-specs\/SpecDiscoveryUrlTopic\/schema\.json$/);
     expect(result.outputs['contract-metadata-path']).toBe('discovered-specs/SpecDiscoveryUrlTopic/sns-resolution-metadata.json');

@@ -183,6 +183,11 @@ Resources:
     Properties:
       TopicName: SpecDiscoverySubscribedTopic
 
+  SpecDiscoveryUrlTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SpecDiscoveryUrlTopic
+
   SpecDiscoverySubscriptionQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -323,3 +328,5 @@ Outputs:
     Value: !Ref SpecDiscoveryFifoTopic
   SnsSubscriptionTopicArn:
     Value: !Ref SpecDiscoverySubscriptionTopic
+  SnsUrlTopicArn:
+    Value: !Ref SpecDiscoveryUrlTopic
