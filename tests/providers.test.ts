@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  GetTopicAttributesCommand,
+  ListTagsForResourceCommand,
+  ListTopicsCommand
+} from '@aws-sdk/client-sns';
 
 import { ProviderRegistry } from '../src/lib/providers/registry.js';
 import { ApiGatewayProvider } from '../src/lib/providers/api-gateway.js';
@@ -6,11 +11,26 @@ import { AppSyncProvider } from '../src/lib/providers/appsync.js';
 import { EventBridgeSchemasProvider } from '../src/lib/providers/eventbridge-schemas.js';
 import { CloudFormationProvider } from '../src/lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from '../src/lib/providers/glue.js';
+import { SnsSdkClient } from '../src/lib/aws/sns-client.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import type { AppSyncSpecClient } from '../src/lib/aws/appsync-client.js';
 import type { EventBridgeSchemasSpecClient } from '../src/lib/aws/schemas-client.js';
 import type { CloudFormationSpecClient } from '../src/lib/aws/cloudformation-client.js';
 import type { GlueSchemaSpecClient } from '../src/lib/aws/glue-client.js';
+
+const { snsSendMock } = vi.hoisted(() => ({
+  snsSendMock: vi.fn()
+}));
+
+vi.mock('@aws-sdk/client-sns', async () => {
+  const actual = await vi.importActual<typeof import('@aws-sdk/client-sns')>('@aws-sdk/client-sns');
+  return {
+    ...actual,
+    SNSClient: class {
+      public send = snsSendMock;
+    }
+  };
+});
 
 function createGatewayClientStub(overrides: Partial<AwsGatewayClient> = {}): AwsGatewayClient {
   return {
@@ -341,5 +361,93 @@ describe('GlueSchemaProvider', () => {
     );
     expect(result.format).toBe('protobuf');
     expect(result.filename).toBe('schema.proto');
+  });
+});
+
+describe('SnsSdkClient', () => {
+  it('probe succeeds', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValueOnce({ Topics: [] });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.probe()).resolves.toBe(true);
+    expect(snsSendMock).toHaveBeenCalledTimes(1);
+    expect(snsSendMock.mock.calls[0]?.[0]).toBeInstanceOf(ListTopicsCommand);
+    expect((snsSendMock.mock.calls[0]?.[0] as ListTopicsCommand).input).toEqual({});
+  });
+
+  it('probe fails gracefully for IAM denial', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.probe()).resolves.toBe(false);
+  });
+
+  it('probe handles network failure', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockRejectedValueOnce(new Error('ENOTFOUND sns.us-east-1.amazonaws.com'));
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.probe()).resolves.toBe(false);
+  });
+
+  it('listTopics returns topics across pages', async () => {
+    snsSendMock.mockReset();
+    snsSendMock
+      .mockResolvedValueOnce({
+        Topics: [{ TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic' }],
+        NextToken: 'next-1'
+      })
+      .mockResolvedValueOnce({
+        Topics: [{ TopicArn: 'arn:aws:sns:us-east-1:123456789012:billing-topic.fifo' }]
+      });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.listTopics()).resolves.toEqual([
+      { topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic', name: 'orders-topic' },
+      { topicArn: 'arn:aws:sns:us-east-1:123456789012:billing-topic.fifo', name: 'billing-topic.fifo' }
+    ]);
+    expect(snsSendMock).toHaveBeenCalledTimes(2);
+    expect((snsSendMock.mock.calls[0]?.[0] as ListTopicsCommand).input).toEqual({ NextToken: undefined });
+    expect((snsSendMock.mock.calls[1]?.[0] as ListTopicsCommand).input).toEqual({ NextToken: 'next-1' });
+  });
+
+  it('getTopicAttributes returns attributes', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValueOnce({
+      Attributes: {
+        DisplayName: 'Orders Topic',
+        Policy: '{"Version":"2012-10-17"}'
+      }
+    });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.getTopicAttributes('arn:aws:sns:us-east-1:123456789012:orders-topic')).resolves.toEqual({
+      DisplayName: 'Orders Topic',
+      Policy: '{"Version":"2012-10-17"}'
+    });
+    expect((snsSendMock.mock.calls[0]?.[0] as GetTopicAttributesCommand).input).toEqual({
+      TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic'
+    });
+  });
+
+  it('listTagsForResource returns tags', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValueOnce({
+      Tags: [
+        { Key: 'environment', Value: 'prod' },
+        { Key: 'team', Value: 'platform' }
+      ]
+    });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.listTagsForResource('arn:aws:sns:us-east-1:123456789012:orders-topic')).resolves.toEqual({
+      environment: 'prod',
+      team: 'platform'
+    });
+    expect((snsSendMock.mock.calls[0]?.[0] as ListTagsForResourceCommand).input).toEqual({
+      ResourceArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic'
+    });
   });
 });

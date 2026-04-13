@@ -35,6 +35,7 @@
     "@aws-sdk/client-glue": "^3.1015.0",
     "@aws-sdk/client-resource-groups-tagging-api": "^3.1015.0",
     "@aws-sdk/client-schemas": "^3.1015.0",
+    "@aws-sdk/client-sns": "^3.1029.0",
     "@aws-sdk/client-ssm": "^3.1015.0",
     "@aws-sdk/client-sts": "^3.1014.0",
     "@smithy/node-http-handler": "^4.4.5"
