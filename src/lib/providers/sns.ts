@@ -83,8 +83,60 @@ function normalizeFilterPolicyScope(value: string | undefined): 'MessageAttribut
   return (value ?? '').trim() === 'MessageBody' ? 'MessageBody' : 'MessageAttributes';
 }
 
-function parseMessageAttributes(rawValue: string | undefined): Record<string, { dataType?: string }> {
-  if (!rawValue) {
+function inferFilterPolicyAttributeType(value: unknown): string | undefined {
+  if (typeof value === 'number') {
+    return 'Number';
+  }
+  if (typeof value === 'string' || typeof value === 'boolean') {
+    return 'String';
+  }
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    let sawString = false;
+    let sawNumber = false;
+    for (const entry of value) {
+      const inferred = inferFilterPolicyAttributeType(entry);
+      if (inferred === 'String') {
+        sawString = true;
+      } else if (inferred === 'Number') {
+        sawNumber = true;
+      }
+    }
+    if (sawString) return 'String';
+    if (sawNumber) return 'Number';
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  if ('numeric' in record) {
+    return 'Number';
+  }
+  if ('anything-but' in record) {
+    return inferFilterPolicyAttributeType(record['anything-but']);
+  }
+  if ('prefix' in record || 'suffix' in record || 'equals-ignore-case' in record || 'ip-address' in record || 'exists' in record) {
+    return 'String';
+  }
+
+  let sawString = false;
+  let sawNumber = false;
+  for (const nestedValue of Object.values(record)) {
+    const inferred = inferFilterPolicyAttributeType(nestedValue);
+    if (inferred === 'String') {
+      sawString = true;
+    } else if (inferred === 'Number') {
+      sawNumber = true;
+    }
+  }
+  if (sawString) return 'String';
+  if (sawNumber) return 'Number';
+  return undefined;
+}
+
+function parseFilterPolicyMessageAttributes(rawValue: string | undefined): Record<string, { dataType?: string }> {
+  if (!rawValue?.trim()) {
     return {};
   }
   try {
@@ -95,12 +147,8 @@ function parseMessageAttributes(rawValue: string | undefined): Record<string, { 
 
     const attributes: Record<string, { dataType?: string }> = {};
     for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        continue;
-      }
-      const record = value as Record<string, unknown>;
-      const dataType = typeof record.DataType === 'string' ? record.DataType : typeof record.dataType === 'string' ? record.dataType : undefined;
-      attributes[key] = dataType ? { dataType } : {};
+      const dataType = inferFilterPolicyAttributeType(value);
+      attributes[key] = dataType ? { dataType } : { dataType: 'String' };
     }
     return attributes;
   } catch {
@@ -564,14 +612,59 @@ function deepCloneJsonValue(value: unknown): unknown {
   return JSON.parse(JSON.stringify(value));
 }
 
-function extractAsyncApiPayloadSchema(document: unknown): unknown {
+function extractAsyncApiPayloadSchema(document: unknown): { payloadSchema: unknown; components?: Record<string, unknown> } {
   if (!document || typeof document !== 'object' || Array.isArray(document)) {
-    return { type: 'object' };
+    return { payloadSchema: { type: 'object' } };
   }
 
-  const channels = (document as Record<string, unknown>).channels;
+  const root = document as Record<string, unknown>;
+  const channels = root.channels;
+  const schemas =
+    root.components && typeof root.components === 'object' && !Array.isArray(root.components)
+      ? (root.components as Record<string, unknown>).schemas
+      : undefined;
+  const schemaComponents = schemas && typeof schemas === 'object' && !Array.isArray(schemas) ? (schemas as Record<string, unknown>) : {};
+  const copiedComponents: Record<string, unknown> = {};
+  const seen = new Set<string>();
+
+  const copyComponentSchemaByRef = (ref: string): void => {
+    const match = /^#\/components\/schemas\/(.+)$/.exec(ref);
+    if (!match) return;
+    const schemaName = match[1];
+    if (!schemaName || seen.has(schemaName)) return;
+    const sourceSchema = schemaComponents[schemaName];
+    if (!sourceSchema || typeof sourceSchema !== 'object' || Array.isArray(sourceSchema)) return;
+    seen.add(schemaName);
+    copiedComponents[schemaName] = deepCloneJsonValue(sourceSchema);
+    collectNestedRefs(copiedComponents[schemaName]);
+  };
+
+  const collectNestedRefs = (value: unknown): void => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      for (const entry of value) collectNestedRefs(entry);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    const ref = typeof record.$ref === 'string' ? record.$ref : undefined;
+    if (ref) {
+      copyComponentSchemaByRef(ref);
+    }
+    for (const nested of Object.values(record)) {
+      collectNestedRefs(nested);
+    }
+  };
+
+  const finalize = (payloadSchema: unknown): { payloadSchema: unknown; components?: Record<string, unknown> } => {
+    collectNestedRefs(payloadSchema);
+    return {
+      payloadSchema,
+      ...(Object.keys(copiedComponents).length > 0 ? { components: copiedComponents } : {})
+    };
+  };
+
   if (!channels || typeof channels !== 'object' || Array.isArray(channels)) {
-    return { type: 'object' };
+    return { payloadSchema: { type: 'object' } };
   }
 
   for (const channelValue of Object.values(channels as Record<string, unknown>)) {
@@ -589,7 +682,7 @@ function extractAsyncApiPayloadSchema(document: unknown): unknown {
       }
       const payload = (message as Record<string, unknown>).payload;
       if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-        return payload;
+        return finalize(payload);
       }
       const oneOf = (message as Record<string, unknown>).oneOf;
       if (Array.isArray(oneOf)) {
@@ -599,34 +692,34 @@ function extractAsyncApiPayloadSchema(document: unknown): unknown {
           }
           const oneOfPayload = (entry as Record<string, unknown>).payload;
           if (oneOfPayload && typeof oneOfPayload === 'object' && !Array.isArray(oneOfPayload)) {
-            return oneOfPayload;
+            return finalize(oneOfPayload);
           }
         }
       }
     }
   }
 
-  return { type: 'object' };
+  return { payloadSchema: { type: 'object' } };
 }
 
-function canonicalPayloadSchema(canonical: SpecExportResult): unknown {
+function canonicalPayloadSchema(canonical: SpecExportResult): { payloadSchema: unknown; components?: Record<string, unknown> } {
   if (canonical.format === 'json-schema') {
     try {
       const parsed = JSON.parse(canonical.content);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed;
+        return { payloadSchema: parsed };
       }
     } catch {
-      return { type: 'object' };
+      return { payloadSchema: { type: 'object' } };
     }
-    return { type: 'object' };
+    return { payloadSchema: { type: 'object' } };
   }
 
   if (canonical.format === 'asyncapi-json') {
     try {
       return extractAsyncApiPayloadSchema(JSON.parse(canonical.content));
     } catch {
-      return { type: 'object' };
+      return { payloadSchema: { type: 'object' } };
     }
   }
 
@@ -634,11 +727,11 @@ function canonicalPayloadSchema(canonical: SpecExportResult): unknown {
     try {
       return extractAsyncApiPayloadSchema(parse(canonical.content));
     } catch {
-      return { type: 'object' };
+      return { payloadSchema: { type: 'object' } };
     }
   }
 
-  return { type: 'object' };
+  return { payloadSchema: { type: 'object' } };
 }
 
 function buildWebhookPayloadSchema(rawDelivery: boolean, baseSchema: unknown): unknown {
@@ -672,7 +765,8 @@ function buildWebhookSidecar(
     return undefined;
   }
 
-  const basePayloadSchema = canonicalPayloadSchema(canonical);
+  const payloadExtraction = canonicalPayloadSchema(canonical);
+  const basePayloadSchema = payloadExtraction.payloadSchema;
   const variants = new Set(httpSubscriptions.map((subscription) => subscription.variant === 'raw-payload'));
   const webhooks: Record<string, unknown> = {};
 
@@ -708,7 +802,8 @@ function buildWebhookSidecar(
           title: 'SNS Webhook Sidecar',
           version: '1.0.0'
         },
-        webhooks
+        webhooks,
+        ...(payloadExtraction.components ? { components: { schemas: payloadExtraction.components } } : {})
       },
       null,
       2
@@ -1312,7 +1407,9 @@ export class SnsProvider implements SpecProvider {
       }
       try {
         const attributes = await this.client.getSubscriptionAttributes(subscriptionArn);
-        const parsedMessageAttributes = parseMessageAttributes(attributes.MessageAttributes);
+        const filterPolicyScope = normalizeFilterPolicyScope(attributes.FilterPolicyScope);
+        const parsedMessageAttributes =
+          filterPolicyScope === 'MessageAttributes' ? parseFilterPolicyMessageAttributes(attributes.FilterPolicy) : {};
         subscriptions.push({
           subscriptionArn,
           protocol: attributes.Protocol ?? summary.protocol,
@@ -1321,7 +1418,7 @@ export class SnsProvider implements SpecProvider {
           RawMessageDelivery: attributes.RawMessageDelivery,
           FilterPolicy: attributes.FilterPolicy,
           FilterPolicyScope: attributes.FilterPolicyScope,
-          filterPolicyScope: normalizeFilterPolicyScope(attributes.FilterPolicyScope),
+          filterPolicyScope,
           ...(attributes.FilterPolicy ? { filterPolicyRaw: attributes.FilterPolicy } : {}),
           ...(Object.keys(parsedMessageAttributes).length > 0 ? { messageAttributes: parsedMessageAttributes } : {}),
           RedrivePolicy: attributes.RedrivePolicy,
@@ -1331,6 +1428,12 @@ export class SnsProvider implements SpecProvider {
         const detail = error instanceof Error ? error.message : String(error);
         evidence.push(`Failed to read SNS subscription attributes for ${subscriptionArn}: ${detail}`);
         errors.push({ subscriptionArn, error: detail });
+        subscriptions.push({
+          subscriptionArn,
+          protocol: summary.protocol,
+          endpoint: summary.endpoint,
+          variant: classifyDeliveryVariant(summary.protocol, undefined)
+        });
       }
     }
 
