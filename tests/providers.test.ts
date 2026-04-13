@@ -1993,6 +1993,166 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract generates webhook.openapi.json for HTTP/S subscriptions with OpenAPI 3.1 webhooks', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object","properties":{"orderId":{"type":"string"}}}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'https',
+            Endpoint: 'https://subscriber.example.com/orders',
+            RawMessageDelivery: 'true'
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        expect(webhookSidecar).toBeDefined();
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc.openapi).toBe('3.1.0');
+        expect(webhookDoc).toHaveProperty('webhooks');
+        const entries = Object.values((webhookDoc.webhooks as Record<string, unknown>) ?? {});
+        expect(entries.length).toBeGreaterThan(0);
+        const firstWebhook = entries[0] as Record<string, unknown>;
+        const post = firstWebhook.post as Record<string, unknown>;
+        expect(post['x-sns-raw-delivery']).toBe(true);
+        expect(post).toHaveProperty('requestBody.content.application/json.schema');
+        const serialized = JSON.stringify(webhookDoc);
+        expect(serialized).not.toContain('subscriber.example.com');
+        expect(result.metadata.subscriptions[0]?.endpoint).toBe('https://subscriber.example.com/orders');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract does not generate webhook sidecar for non-http subscriptions', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-sqs', protocol: 'sqs', endpoint: 'queue' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-lambda', protocol: 'lambda', endpoint: 'fn' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({ Protocol: 'sqs', RawMessageDelivery: 'true' })
+            .mockResolvedValueOnce({ Protocol: 'lambda' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        expect(result.sidecars?.some((sidecar) => sidecar.filename === 'webhook.openapi.json') ?? false).toBe(false);
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract emits a single webhook sidecar for multiple HTTP/S subscriptions and both variants', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http', protocol: 'http', endpoint: 'http://a.example.com' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-https', protocol: 'https', endpoint: 'https://b.example.com' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({ Protocol: 'http', RawMessageDelivery: 'false' })
+            .mockResolvedValueOnce({ Protocol: 'https', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        const webhookSidecars = (result.sidecars ?? []).filter((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        expect(webhookSidecars).toHaveLength(1);
+        const doc = JSON.parse(webhookSidecars[0]?.content ?? '{}') as Record<string, unknown>;
+        const webhookEntries = Object.values((doc.webhooks as Record<string, unknown>) ?? {}) as Array<Record<string, unknown>>;
+        const rawFlags = webhookEntries.map((entry) => ((entry.post as Record<string, unknown>)['x-sns-raw-delivery'] as boolean));
+        expect(rawFlags.sort()).toEqual([false, true]);
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec keeps canonical contract as primary while adding webhook sidecar', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-https', protocol: 'https', endpoint: 'https://a.example.com' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'https', RawMessageDelivery: 'false' })
+        }),
+        tempDir
+      );
+
+      const exported = await provider.exportSpec(createSnsCandidate(), {});
+      expect(exported.filename).toBe('schema.json');
+      expect(exported.format).toBe('json-schema');
+      expect(exported.sidecars?.some((sidecar) => sidecar.filename === 'webhook.openapi.json')).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records webhook generation failures without failing canonical resolution', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-https', protocol: 'https', endpoint: 'https://a.example.com' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'https', RawMessageDelivery: 'false' })
+        }),
+        tempDir,
+        undefined,
+        {
+          webhookSidecarBuilder: () => {
+            throw new Error('webhook generation blew up');
+          }
+        }
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        expect(result.sidecars?.some((sidecar) => sidecar.filename === 'webhook.openapi.json') ?? false).toBe(false);
+      }
+      expect(result.evidence.some((line) => line.includes('Failed to generate webhook sidecar'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract records AccessDenied subscription list failure as evidence and still returns metadata', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
