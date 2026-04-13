@@ -1,7 +1,6 @@
-import { execFile } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 import { parse } from 'yaml';
 
 import type { SpecFormat } from '../../contracts.js';
@@ -72,6 +71,7 @@ interface SnsProviderDependencies {
   catalogApis?: CatalogApiRef[];
   eventBridgeClient?: unknown;
   codeDerivedResolver?: unknown;
+  gitIgnoreChecker?: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
 }
 
 export type SnsContractOrigin =
@@ -104,7 +104,6 @@ export type SnsContractResult =
 
 const METADATA_SIDECAR_FILENAME = 'sns-resolution-metadata.json';
 const SPEC_POINTER_FILENAME = 'spec-pointer.json';
-const execFileAsync = promisify(execFile);
 
 function topicNameFromArn(topicArn: string): string {
   const index = topicArn.lastIndexOf(':');
@@ -412,30 +411,6 @@ function isGeneratedAsyncApiPath(repoRoot: string, filePath: string): boolean {
   return false;
 }
 
-function createGitignoreMatcher(repoRoot: string, content: string): (targetPath: string, isDirectory: boolean) => boolean {
-  const rules = content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith('#'))
-    .map((line) => {
-      const directoryOnly = line.endsWith('/');
-      const pattern = normalizePathForMatch(directoryOnly ? line.slice(0, -1) : line);
-      const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-      const regexSource = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]');
-      return { directoryOnly, pattern, regex: new RegExp(`(^|/)${regexSource}($|/)`) };
-    });
-
-  return (targetPath: string, isDirectory: boolean): boolean => {
-    const relative = normalizePathForMatch(path.relative(repoRoot, targetPath));
-    return rules.some((rule) => {
-      if (!rule.directoryOnly) {
-        return rule.regex.test(relative);
-      }
-      return relative === rule.pattern || relative.startsWith(`${rule.pattern}/`) || (isDirectory && rule.regex.test(relative));
-    });
-  };
-}
-
 async function collectFilesByExtensionUnfiltered(currentPath: string): Promise<string[]> {
   const entries = await readdir(currentPath, { withFileTypes: true }).catch(() => []);
   const files: string[] = [];
@@ -466,13 +441,14 @@ function isFrameworkOutputPath(repoRoot: string, filePath: string): boolean {
   return relative.startsWith('build/') || relative.startsWith('.build/') || relative.startsWith('out/');
 }
 
-async function isGitTrackedFile(repoRoot: string, filePath: string): Promise<boolean> {
+async function isGitIgnoredByGit(repoRoot: string, filePath: string): Promise<boolean> {
   const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
   if (!relative || relative.startsWith('..')) {
-    return false;
+    return true;
   }
   try {
-    await execFileAsync('git', ['-C', repoRoot, 'ls-files', '--error-unmatch', '--', relative]);
+    const escapedRelative = relative.replace(/(["`$\\])/g, '\\$1');
+    execSync(`git check-ignore -q -- "${escapedRelative}"`, { cwd: repoRoot, stdio: 'ignore' });
     return true;
   } catch {
     return false;
@@ -508,10 +484,11 @@ async function findContractFiles(repoRoot: string, topicName: string): Promise<{
   };
 }
 
-async function findGeneratedAsyncApiFiles(repoRoot: string, topicName: string): Promise<string[]> {
-  const gitignorePath = path.join(repoRoot, '.gitignore');
-  const gitignoreContent = await readFile(gitignorePath, 'utf8').catch(() => '');
-  const matcher = createGitignoreMatcher(repoRoot, gitignoreContent);
+async function findGeneratedAsyncApiFiles(
+  repoRoot: string,
+  topicName: string,
+  gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean = isGitIgnoredByGit
+): Promise<string[]> {
   const scanned = await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']);
   const discovered = new Set<string>(scanned);
 
@@ -532,12 +509,13 @@ async function findGeneratedAsyncApiFiles(repoRoot: string, topicName: string): 
       continue;
     }
 
-    const ignored = matcher(filePath, false);
-    if (!ignored) {
+    if (!isFrameworkOutputPath(repoRoot, filePath)) {
       accepted.push(filePath);
       continue;
     }
-    if (isFrameworkOutputPath(repoRoot, filePath) && (await isGitTrackedFile(repoRoot, filePath))) {
+
+    const ignored = await gitIgnoreChecker(repoRoot, filePath);
+    if (!ignored) {
       accepted.push(filePath);
     }
   }
@@ -634,6 +612,7 @@ export class SnsProvider implements SpecProvider {
   private readonly preloadedCatalogApis?: CatalogApiRef[];
   private readonly eventBridgeClient?: unknown;
   private readonly codeDerivedResolver?: unknown;
+  private readonly gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
 
   public constructor(
     private readonly client: SnsSpecClient,
@@ -643,6 +622,7 @@ export class SnsProvider implements SpecProvider {
   ) {
     if (typeof dependencies === 'function') {
       this.fetchRemoteSpec = dependencies;
+      this.gitIgnoreChecker = isGitIgnoredByGit;
       return;
     }
 
@@ -650,6 +630,7 @@ export class SnsProvider implements SpecProvider {
     this.preloadedCatalogApis = dependencies.catalogApis;
     this.eventBridgeClient = dependencies.eventBridgeClient;
     this.codeDerivedResolver = dependencies.codeDerivedResolver;
+    this.gitIgnoreChecker = dependencies.gitIgnoreChecker ?? isGitIgnoredByGit;
   }
 
   public async probe(): Promise<boolean> {
@@ -762,7 +743,11 @@ export class SnsProvider implements SpecProvider {
 
     const generatedAsyncApiResolution = resolvedExport
       ? { evidence: priorEvidence }
-      : await resolveAsyncApiContract(resolvedRepoRoot, await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName), 'generated');
+      : await resolveAsyncApiContract(
+          resolvedRepoRoot,
+          await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker),
+          'generated'
+        );
     if (!resolvedExport && 'match' in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
       resolvedOrigin = 'generated-asyncapi';
       resolvedExport = generatedAsyncApiResolution.match;

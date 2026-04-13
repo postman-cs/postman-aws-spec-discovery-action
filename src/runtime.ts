@@ -763,7 +763,14 @@ export async function runResolution(
           variantCount: contract.variantCount,
           evidence: [...snsManualReviewEvidence, ...candidate.evidence, ...contract.evidence]
         };
-        resolvedSnsExport = contract.result;
+        resolvedSnsExport = {
+          ...contract.result,
+          sidecars: [
+            ...(contract.result.sidecars ?? []),
+            ...(contract.sidecars ?? []),
+            { filename: 'sns-resolution-metadata.json', content: JSON.stringify(contract.metadata, null, 2) }
+          ]
+        };
         break;
       } catch (error) {
         actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error)}`));

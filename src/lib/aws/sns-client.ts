@@ -35,11 +35,22 @@ function topicNameFromArn(topicArn: string): string {
   return lastColonIndex >= 0 ? topicArn.slice(lastColonIndex + 1) : topicArn;
 }
 
-function isAuthorizationDeniedError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
+function extractAwsErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') {
+    return undefined;
   }
-  return /AccessDeniedException|AuthorizationErrorException/i.test(error.message);
+  const candidate = error as { name?: unknown; __type?: unknown };
+  const name = typeof candidate.name === 'string' ? candidate.name : undefined;
+  const type = typeof candidate.__type === 'string' ? candidate.__type : undefined;
+  if (name === 'AccessDeniedException' || name === 'AuthorizationErrorException') {
+    return name;
+  }
+  return type ?? name;
+}
+
+function isAuthorizationDeniedError(error: unknown): boolean {
+  const errorCode = extractAwsErrorCode(error);
+  return errorCode === 'AccessDeniedException' || errorCode === 'AuthorizationErrorException';
 }
 
 export class SnsSdkClient implements SnsSpecClient {
