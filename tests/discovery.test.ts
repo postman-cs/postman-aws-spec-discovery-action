@@ -11,7 +11,9 @@ import { findExistingRepoSpec } from '../src/lib/repo/specs.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
 import { chooseSource } from '../src/lib/resolve/source-selector.js';
-import { buildExecutionOutputs } from '../src/runtime.js';
+import { ProviderRegistry } from '../src/lib/providers/registry.js';
+import type { SpecProvider } from '../src/lib/providers/types.js';
+import { buildExecutionOutputs, buildProviderRegistry, execute, runResolution } from '../src/runtime.js';
 
 function createCoreStub(values: Record<string, string> = {}) {
   const outputs: Record<string, string> = {};
@@ -239,14 +241,18 @@ describe('runDiscovery', () => {
         specPath: 'discovered-specs/payments-core/index.yaml',
         gatewayId: 'rest-1',
         gatewayType: 'REST',
-        stage: 'prod'
+        stage: 'prod',
+        providerType: 'api-gateway',
+        specFormat: 'openapi-yaml'
       },
       {
         serviceName: 'checkout-service',
         specPath: 'discovered-specs/checkout-service/index.yaml',
         gatewayId: 'http-1',
         gatewayType: 'HTTP',
-        stage: '$default'
+        stage: '$default',
+        providerType: 'api-gateway',
+        specFormat: 'openapi-yaml'
       }
     ]);
 
@@ -351,6 +357,319 @@ describe('runDiscovery', () => {
     expect(result.discovered).toHaveLength(0);
     expect(result.summary.skipped).toBeGreaterThan(0);
     expect(aws.exportRestApi).not.toHaveBeenCalled();
+  });
+});
+
+describe('SNS runtime integration', () => {
+  function createSnsProviderStub(overrides: Partial<SpecProvider> = {}): SpecProvider {
+    return {
+      type: 'sns',
+      probe: vi.fn().mockResolvedValue(true),
+      listCandidates: vi.fn().mockResolvedValue([]),
+      exportSpec: vi.fn().mockResolvedValue({
+        content: 'asyncapi: 2.6.0',
+        format: 'asyncapi-yaml',
+        filename: 'asyncapi.yaml',
+        evidence: ['Resolved SNS contract']
+      }),
+      ...overrides
+    };
+  }
+
+  it('registers sns in buildProviderRegistry after ssm', () => {
+    const inputs = resolveInputs({
+      INPUT_AWS_REGION: 'us-east-1'
+    });
+    const registry = buildProviderRegistry(inputs, createAwsClientStub());
+    const providerTypes = registry.all().map((provider) => provider.type);
+
+    expect(registry.get('sns')).toBeDefined();
+    expect(providerTypes).toContain('sns');
+    expect(providerTypes.indexOf('ssm')).toBeLessThan(providerTypes.indexOf('sns'));
+  });
+
+  it('includes SNS results in discover-many services output', async () => {
+    const { core } = createCoreStub();
+    const snsProvider = createSnsProviderStub({
+      listCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+          name: 'orders-topic',
+          providerType: 'sns',
+          tags: {},
+          evidence: ['sns topic'],
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic' }
+        }
+      ])
+    });
+    const registry = new ProviderRegistry();
+    registry.register(snsProvider);
+    const awsClient = createAwsClientStub({
+      listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'orders-api' }]),
+      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+    });
+
+    const result = await execute(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws: awsClient,
+        providerRegistry: registry,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    const providerTypes = result.discovered.map((entry) => entry.providerType);
+    expect(providerTypes).toContain('api-gateway');
+    expect(providerTypes).toContain('sns');
+    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{ providerType?: string }>;
+    expect(services.map((entry) => entry.providerType)).toContain('api-gateway');
+    expect(services.map((entry) => entry.providerType)).toContain('sns');
+  });
+
+  it('supports discover-many dry-run for SNS without exporting', async () => {
+    const { core } = createCoreStub();
+    const snsProvider = createSnsProviderStub({
+      listCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+          name: 'orders-topic',
+          providerType: 'sns',
+          tags: {},
+          evidence: [],
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic' }
+        }
+      ])
+    });
+    const registry = new ProviderRegistry();
+    registry.register(snsProvider);
+
+    const result = await execute(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: true,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws: createAwsClientStub(),
+        providerRegistry: registry,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    expect(result.discovered).toEqual([]);
+    expect(result.exportSummary?.skipped).toBe(1);
+    expect(snsProvider.exportSpec).not.toHaveBeenCalled();
+  });
+
+  it('limits SNS candidates per provider with max-candidates', async () => {
+    const { core } = createCoreStub();
+    const snsProvider = createSnsProviderStub({
+      listCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'arn:aws:sns:us-east-1:123456789012:topic-1',
+          name: 'topic-1',
+          providerType: 'sns',
+          tags: {},
+          evidence: [],
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:topic-1' }
+        },
+        {
+          id: 'arn:aws:sns:us-east-1:123456789012:topic-2',
+          name: 'topic-2',
+          providerType: 'sns',
+          tags: {},
+          evidence: [],
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:topic-2' }
+        },
+        {
+          id: 'arn:aws:sns:us-east-1:123456789012:topic-3',
+          name: 'topic-3',
+          providerType: 'sns',
+          tags: {},
+          evidence: [],
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:topic-3' }
+        }
+      ])
+    });
+    const registry = new ProviderRegistry();
+    registry.register(snsProvider);
+
+    const result = await execute(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 2,
+        dryRun: false,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws: createAwsClientStub(),
+        providerRegistry: registry,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    expect(snsProvider.exportSpec).toHaveBeenCalledTimes(2);
+    expect(result.exportSummary?.skipped).toBe(1);
+  });
+
+  it('resolves sns-contract when repo signals include sns', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-resolution-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'template.yaml'),
+        'Resources:\n  Topic:\n    Type: AWS::SNS::Topic',
+        'utf8'
+      );
+      const snsProvider = createSnsProviderStub({
+        listCandidates: vi.fn().mockResolvedValue([
+          {
+            id: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+            name: 'orders-topic',
+            providerType: 'sns',
+            tags: {},
+            evidence: [],
+            meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic' }
+          }
+        ])
+      });
+      const writeSpec = vi.fn().mockResolvedValue(undefined);
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        writeSpec,
+        { snsProvider }
+      );
+
+      expect(result.sourceType).toBe('sns-contract');
+      expect(result.providerType).toBe('sns');
+      expect(result.specFormat).toBe('asyncapi-yaml');
+      expect(result.specPath).toContain('discovered-specs/orders-topic/asyncapi.yaml');
+      expect(writeSpec).toHaveBeenCalledTimes(1);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps API Gateway precedence when both API Gateway and SNS signals exist', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-resolution-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'template.yaml'),
+        [
+          'Resources:',
+          '  RestApi:',
+          '    Type: AWS::ApiGateway::RestApi',
+          '  Topic:',
+          '    Type: AWS::SNS::Topic'
+        ].join('\n'),
+        'utf8'
+      );
+      const snsProvider = createSnsProviderStub();
+      const awsClient = createAwsClientStub({
+        listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'orders-api' }]),
+        getRestTags: vi.fn().mockResolvedValue({ 'postman:project-name': 'orders' }),
+        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        awsClient,
+        createCoreStub().core,
+        vi.fn().mockResolvedValue(undefined),
+        { snsProvider }
+      );
+
+      expect(result.sourceType).toBe('gateway-export');
+      expect(result.gatewayId).toBe('rest-1');
+      expect(snsProvider.probe).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 

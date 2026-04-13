@@ -26,7 +26,9 @@ import { EventBridgeSchemasProvider } from './lib/providers/eventbridge-schemas.
 import { CloudFormationProvider } from './lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from './lib/providers/glue.js';
 import { SsmProvider } from './lib/providers/ssm.js';
+import { SnsProvider } from './lib/providers/sns.js';
 import { SsmSdkClient } from './lib/aws/ssm-client.js';
+import { SnsSdkClient } from './lib/aws/sns-client.js';
 import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-client.js';
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
@@ -97,6 +99,10 @@ export interface ExecutionResult {
   resolution?: ResolutionResult;
   exportSummary?: DiscoverySummary;
   outputs: Record<string, string>;
+}
+
+export interface ResolutionDependencies {
+  snsProvider?: SpecProvider;
 }
 
 const DEFAULT_MODE: ActionMode = 'resolve-one';
@@ -383,6 +389,48 @@ function inferFallbackServiceName(inputs: ResolvedInputs): string | undefined {
   return inputs.expectedServiceName ?? inputs.repoContext.repoSlug?.split('/').pop()?.trim() ?? inputs.repoContext.repoUrl?.split('/').pop()?.trim();
 }
 
+function normalizeSnsName(value: string): string {
+  return value.trim().toLowerCase().replace(/\.fifo$/i, '');
+}
+
+function scoreSnsCandidate(candidate: SpecCandidate, serviceHints: string[]): number {
+  const candidateName = normalizeSnsName(candidate.name);
+  const tagValues = Object.values(candidate.tags).map((value) => normalizeSnsName(value));
+  const projectTag = normalizeSnsName(candidate.tags['postman:project-name'] ?? '');
+  let score = 0;
+
+  for (const rawHint of serviceHints) {
+    const hint = normalizeSnsName(rawHint);
+    if (!hint) {
+      continue;
+    }
+    if (candidateName === hint) {
+      score += 60;
+      continue;
+    }
+    if (candidateName.includes(hint) || hint.includes(candidateName)) {
+      score += 40;
+    }
+    if (projectTag === hint) {
+      score += 50;
+    } else if (tagValues.some((value) => value.includes(hint))) {
+      score += 20;
+    }
+  }
+
+  return score;
+}
+
+function sortSnsCandidates(candidates: SpecCandidate[], serviceHints: string[]): SpecCandidate[] {
+  return [...candidates].sort((left, right) => {
+    const scoreDiff = scoreSnsCandidate(right, serviceHints) - scoreSnsCandidate(left, serviceHints);
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+    return left.name.localeCompare(right.name);
+  });
+}
+
 function pickPreferredStage(stages: string[]): string | undefined {
   const priority = ['prod', 'production', '$default', 'main', 'staging', 'stage', 'dev', 'development'];
   const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
@@ -511,7 +559,15 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
             : await dependencies.aws.exportHttpApi(candidate.id, stage);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         summary.exported += 1;
-        discovered.push({ serviceName, specPath: relativeSpecPath, gatewayId: candidate.id, gatewayType: candidate.gatewayType, stage });
+        discovered.push({
+          serviceName,
+          specPath: relativeSpecPath,
+          gatewayId: candidate.id,
+          gatewayType: candidate.gatewayType,
+          stage,
+          providerType: 'api-gateway',
+          specFormat: 'openapi-yaml'
+        });
         dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
       } catch (error) {
         summary.failed += 1;
@@ -529,7 +585,8 @@ export async function runResolution(
   inputs: ResolvedInputs,
   awsClient: AwsGatewayClient,
   actionCore: Pick<ReporterLike, 'group' | 'info' | 'warning'>,
-  writeSpecFile: (outputPath: string, content: string) => Promise<void>
+  writeSpecFile: (outputPath: string, content: string) => Promise<void>,
+  resolutionDependencies: ResolutionDependencies = {}
 ): Promise<ResolutionResult> {
   // Check for Backstage catalog-info.yaml first -- it may reference a spec path
   const catalogApis = await detectCatalogApis(inputs.repoRoot);
@@ -615,6 +672,9 @@ export async function runResolution(
 
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
   const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
+  if (selectedSource.sourceType === 'repo-spec') {
+    return selectedSource;
+  }
   if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId) {
     const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
     if (!selectedGateway) {
@@ -655,11 +715,77 @@ export async function runResolution(
       }
       throw error;
     }
+    return selectedSource;
   }
-  return selectedSource;
+
+  const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
+  if (!shouldAttemptSns) {
+    return selectedSource;
+  }
+
+  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+  const snsProvider =
+    resolutionDependencies.snsProvider ??
+    new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
+
+  let snsAvailable: boolean;
+  try {
+    snsAvailable = await snsProvider.probe();
+  } catch {
+    snsAvailable = false;
+  }
+  if (!snsAvailable) {
+    return toManualReviewResult(selectedSource, ['Detected sns provider hints but SNS provider probe was unavailable']);
+  }
+
+  let snsCandidates: SpecCandidate[];
+  try {
+    snsCandidates = await snsProvider.listCandidates();
+  } catch (error) {
+    actionCore.warning(userSafeWarning(`Failed listing SNS candidates: ${formatUserSafeError(error)}`));
+    return toManualReviewResult(selectedSource, ['Detected sns provider hints but failed listing SNS candidates']);
+  }
+
+  const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
+  let candidatesToTry = sortedSnsCandidates;
+  if (inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates) {
+    candidatesToTry = sortedSnsCandidates.slice(0, inputs.maxCandidates);
+  }
+
+  const resolvedRoot = path.resolve(inputs.repoRoot);
+  for (const candidate of candidatesToTry) {
+    try {
+      const exportResult = await snsProvider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+      const relativeProviderPath = path.join(inputs.outputDir, projectFolderName(candidate.name), exportResult.filename).replace(/\\/g, '/');
+      if (!inputs.dryRun) {
+        const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeProviderPath, 'output-dir');
+        await writeSpecFile(absoluteSpecPath, exportResult.content);
+      }
+      return {
+        status: 'resolved',
+        sourceType: 'sns-contract',
+        serviceName: candidate.name,
+        confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+        specPath: relativeProviderPath,
+        gatewayId: candidate.id,
+        gatewayType: 'SNS',
+        providerType: 'sns',
+        specFormat: exportResult.format,
+        evidence: [
+          ...selectedSource.evidence,
+          ...exportResult.evidence,
+          ...(inputs.dryRun ? ['Dry run enabled; skipped SNS contract file write'] : [])
+        ]
+      };
+    } catch (error) {
+      actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error)}`));
+    }
+  }
+
+  return toManualReviewResult(selectedSource, ['Detected sns provider hints but no resolvable SNS contract was found']);
 }
 
-function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {
+export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {
   const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
   const registry = new ProviderRegistry();
 
@@ -669,6 +795,7 @@ function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClie
   registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
 
   return registry;
 }
@@ -695,15 +822,19 @@ async function runMultiProviderDiscovery(
       }
 
       dependencies.core.info(`Found ${candidates.length} candidate(s) from ${provider.type}`);
-      summary.attempted += candidates.length;
-
-      if (inputs.maxCandidates > 0 && summary.attempted > inputs.maxCandidates) {
-        dependencies.core.warning(userSafeWarning(`Skipping ${provider.type}: total candidates (${summary.attempted}) exceeds limit (${inputs.maxCandidates})`));
-        summary.skipped += candidates.length;
-        return;
+      let providerCandidates = candidates;
+      if (inputs.maxCandidates > 0 && candidates.length > inputs.maxCandidates) {
+        dependencies.core.warning(
+          userSafeWarning(
+            `${provider.type} returned ${candidates.length} candidates; limiting to first ${inputs.maxCandidates} for this provider`
+          )
+        );
+        summary.skipped += candidates.length - inputs.maxCandidates;
+        providerCandidates = candidates.slice(0, inputs.maxCandidates);
       }
+      summary.attempted += providerCandidates.length;
 
-      for (const candidate of candidates) {
+      for (const candidate of providerCandidates) {
         if (inputs.dryRun) {
           summary.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${provider.type} candidate ${candidate.id} (${candidate.name})`);
