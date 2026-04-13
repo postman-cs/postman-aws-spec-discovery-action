@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parse } from 'yaml';
 
 import type { SpecFormat } from '../../contracts.js';
+import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
 import type { SnsSpecClient } from '../aws/sns-client.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
 import { findIaCFiles } from '../repo/scan.js';
@@ -114,6 +115,19 @@ function parseKnownFormat(format: string | undefined): { format: SpecFormat; fil
   if (normalized === 'asyncapi-json') return { format: 'asyncapi-json', filename: 'asyncapi.json' };
   if (normalized === 'json-schema') return { format: 'json-schema', filename: 'schema.json' };
   return undefined;
+}
+
+function buildSsmPointerArtifact(specUrl: string, serviceName: string, fetchError: string): string {
+  return JSON.stringify(
+    {
+      specUrl,
+      serviceName,
+      registeredVia: 'ssm-parameter-store',
+      fetchError
+    },
+    null,
+    2
+  );
 }
 
 function detectFormat(content: string, filenameHint: string): { format: SpecFormat; filename: string } | undefined {
@@ -377,7 +391,8 @@ export class SnsProvider implements SpecProvider {
   public constructor(
     private readonly client: SnsSpecClient,
     private readonly repoRoot: string = '.',
-    private readonly ssmClient?: SsmSpecClient
+    private readonly ssmClient?: SsmSpecClient,
+    private readonly fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl
   ) {}
 
   public async probe(): Promise<boolean> {
@@ -537,6 +552,38 @@ export class SnsProvider implements SpecProvider {
             },
             evidence
           };
+        }
+      }
+
+      const ssmUrl = ssmMatch?.url;
+      if (ssmUrl) {
+        try {
+          const fetched = await this.fetchRemoteSpec(ssmUrl, { timeoutMs: 15000 });
+          const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat(fetched.content, ssmMatch?.format ?? '');
+          if (resolvedFormat) {
+            const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
+            return {
+              resolved: true,
+              origin: 'ssm-url',
+              result: {
+                content: fetched.content,
+                format: resolvedFormat.format,
+                filename: resolvedFormat.filename,
+                evidence
+              },
+              evidence
+            };
+          }
+
+          priorEvidence.push(
+            `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+          );
+        } catch (fetchError) {
+          const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+          const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
+          priorEvidence.push(
+            `Failed to fetch SNS contract from SSM URL ${ssmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
+          );
         }
       }
     }
