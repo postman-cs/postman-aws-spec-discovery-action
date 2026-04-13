@@ -1384,6 +1384,156 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract inspects subscriptions and models required metadata fields', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const listSubscriptionsByTopic = vi.fn().mockResolvedValue([
+        {
+          subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1',
+          protocol: 'sqs',
+          endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue'
+        }
+      ]);
+      const getSubscriptionAttributes = vi.fn().mockResolvedValue({
+        RawMessageDelivery: 'true',
+        FilterPolicy: '{"eventType":["order.created"]}',
+        FilterPolicyScope: 'MessageBody',
+        RedrivePolicy: '{"deadLetterTargetArn":"arn:aws:sqs:us-east-1:123456789012:dlq"}',
+        DeliveryPolicy: '{"healthyRetryPolicy":{"numRetries":3}}'
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic,
+          getSubscriptionAttributes
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(listSubscriptionsByTopic).toHaveBeenCalledWith('arn:aws:sns:us-east-1:123456789012:orders-topic');
+      expect(getSubscriptionAttributes).toHaveBeenCalledWith('arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1');
+      expect(result.metadata.contractOrigin).toBe('repo-asyncapi');
+      expect(result.metadata.subscriptions).toEqual([
+        {
+          subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1',
+          protocol: 'sqs',
+          endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+          RawMessageDelivery: 'true',
+          FilterPolicy: '{"eventType":["order.created"]}',
+          FilterPolicyScope: 'MessageBody',
+          RedrivePolicy: '{"deadLetterTargetArn":"arn:aws:sqs:us-east-1:123456789012:dlq"}',
+          DeliveryPolicy: '{"healthyRetryPolicy":{"numRetries":3}}'
+        }
+      ]);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract keeps subscription inspection non-fatal for per-subscription attribute failures', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2', protocol: 'lambda', endpoint: 'fn-1' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({ RawMessageDelivery: 'false' })
+            .mockRejectedValueOnce(new Error('InternalErrorException'))
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      expect(result.metadata.subscriptions).toHaveLength(1);
+      expect(result.metadata.subscriptions[0]?.subscriptionArn).toContain('sub-1');
+      expect(result.metadata.subscriptionSummary.failed).toBe(1);
+      expect(result.metadata.subscriptionSummary.errors).toEqual([
+        { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2', error: 'InternalErrorException' }
+      ]);
+      expect(result.evidence.some((line) => line.includes('sub-2'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records AccessDenied subscription list failure as evidence and still returns metadata', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockRejectedValue(new Error('AccessDeniedException: not authorized')),
+          getSubscriptionAttributes: vi.fn()
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(result.metadata.subscriptions).toEqual([]);
+      expect(result.metadata.subscriptionSummary.errors).toEqual([{ error: 'AccessDeniedException: not authorized' }]);
+      expect(result.evidence.some((line) => line.includes('AccessDeniedException'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract returns metadata sidecar payload for manual-review with empty subscriptions array', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([])
+        }),
+        tempDir,
+        createSsmClientStub()
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.metadata.contractOrigin).toBe('manual-review');
+      expect(result.metadata.subscriptions).toEqual([]);
+      expect(result.metadata.subscriptionSummary.total).toBe(0);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec emits sns-resolution-metadata.json sidecar for resolved and manual-review results', async () => {
+    const resolvedDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    const unresolvedDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(resolvedDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const resolvedProvider = new SnsProvider(createSnsClientStub(), resolvedDir);
+      const resolved = await resolvedProvider.exportSpec(createSnsCandidate(), {});
+      const resolvedSidecar = resolved.sidecars?.find((entry) => entry.filename === 'sns-resolution-metadata.json');
+      expect(resolvedSidecar).toBeDefined();
+      expect(() => JSON.parse(resolvedSidecar?.content ?? '')).not.toThrow();
+
+      const unresolvedProvider = new SnsProvider(createSnsClientStub(), unresolvedDir, createSsmClientStub());
+      const unresolved = await unresolvedProvider.exportSpec(createSnsCandidate(), {});
+      expect(unresolved.filename).toBe('manual-review.json');
+      const unresolvedSidecar = unresolved.sidecars?.find((entry) => entry.filename === 'sns-resolution-metadata.json');
+      expect(unresolvedSidecar).toBeDefined();
+      expect(JSON.parse(unresolvedSidecar?.content ?? '{}')).toMatchObject({ contractOrigin: 'manual-review', subscriptions: [] });
+    } finally {
+      await rm(resolvedDir, { recursive: true, force: true });
+      await rm(unresolvedDir, { recursive: true, force: true });
+    }
+  });
+
   it('exportSpec delegates to resolveContract result', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
@@ -1396,7 +1546,11 @@ describe('SnsProvider', () => {
 
       expect(resolved).toEqual(expect.objectContaining({ resolved: true }));
       if (resolved.resolved) {
-        expect(exported).toEqual(resolved.result);
+        expect(exported.content).toBe(resolved.result.content);
+        expect(exported.format).toBe(resolved.result.format);
+        expect(exported.filename).toBe(resolved.result.filename);
+        expect(exported.evidence).toEqual(resolved.result.evidence);
+        expect(exported.sidecars?.some((sidecar) => sidecar.filename === 'sns-resolution-metadata.json')).toBe(true);
       }
     } finally {
       await rm(tempDir, { recursive: true, force: true });

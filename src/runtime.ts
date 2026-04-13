@@ -795,21 +795,28 @@ export async function runResolution(
     if (!resolvedSnsExport) {
       return toManualReviewResult(selectedSource, ['SNS contract was selected but export payload was unavailable']);
     }
-    const relativeProviderPath = path
-      .join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'), resolvedSnsExport.filename)
-      .replace(/\\/g, '/');
+    const relativeProviderDir = path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service')).replace(/\\/g, '/');
+    const relativeProviderPath = path.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, '/');
+    const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
+    const relativeMetadataPath = metadataSidecar ? path.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, '/') : undefined;
     if (inputs.dryRun) {
       return {
         ...selectedSource,
         specPath: relativeProviderPath,
+        metadataPath: relativeMetadataPath,
         evidence: [...selectedSource.evidence, 'Dry run enabled; skipped SNS contract file write']
       };
     }
     const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
     await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
+    if (metadataSidecar && relativeMetadataPath) {
+      const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, 'output-dir');
+      await writeSpecFile(absoluteMetadataPath, metadataSidecar.content);
+    }
     return {
       ...selectedSource,
-      specPath: relativeProviderPath
+      specPath: relativeProviderPath,
+      metadataPath: relativeMetadataPath
     };
   }
 
@@ -887,9 +894,15 @@ async function runMultiProviderDiscovery(
           const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
 
           await dependencies.writeSpecFile(absoluteSpecPath, result.content);
+          for (const sidecar of result.sidecars ?? []) {
+            const relativeSidecarPath = path.join(inputs.outputDir, folderName, sidecar.filename).replace(/\\/g, '/');
+            const absoluteSidecarPath = resolvePathWithinRoot(resolvedRoot, relativeSidecarPath, 'output-dir');
+            await dependencies.writeSpecFile(absoluteSidecarPath, sidecar.content);
+          }
           summary.exported += 1;
 
           const gatewayType = (candidate.meta.gatewayType ?? (provider.type === 'sns' ? 'SNS' : 'REST')) as GatewayType;
+          const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -897,7 +910,8 @@ async function runMultiProviderDiscovery(
             gatewayType,
             stage: result.stage ?? '',
             providerType: provider.type,
-            specFormat: result.format
+            specFormat: result.format,
+            metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
         } catch (error) {
