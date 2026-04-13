@@ -40,3 +40,4 @@ temp/
 .svelte-kit/
 .eslintcache
 .omx/
+.factory/
