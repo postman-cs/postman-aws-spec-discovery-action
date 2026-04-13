@@ -10,6 +10,7 @@ import type { SsmSpecClient } from '../aws/ssm-client.js';
 import type { EventBridgeSchemasSpecClient } from '../aws/schemas-client.js';
 import { detectCatalogApis, type CatalogApiRef } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
+import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 import {
   resolveCodeDerivedContract as defaultResolveCodeDerivedContract,
@@ -364,16 +365,6 @@ function normalizeServiceKey(value: string): string {
     .replace(/[_\s]+/g, '-')
     .replace(/-+/g, '-')
     .toLowerCase();
-}
-
-function resolvePathWithinRoot(rootPath: string, targetPath: string, fieldName: string): string {
-  const base = path.resolve(rootPath);
-  const resolved = path.resolve(base, targetPath);
-  const relative = path.relative(base, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
-  }
-  return resolved;
 }
 
 function toEvidencePath(repoRoot: string, filePath: string): string {

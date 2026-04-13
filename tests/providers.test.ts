@@ -18,6 +18,7 @@ import { EventBridgeSchemasProvider } from '../src/lib/providers/eventbridge-sch
 import { CloudFormationProvider } from '../src/lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from '../src/lib/providers/glue.js';
 import { SnsProvider } from '../src/lib/providers/sns.js';
+import { resolveCodeDerivedContract } from '../src/lib/providers/sns-code-derived.js';
 import { SnsSdkClient } from '../src/lib/aws/sns-client.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import type { AppSyncSpecClient } from '../src/lib/aws/appsync-client.js';
@@ -1376,34 +1377,40 @@ describe('SnsProvider', () => {
         }
         throw new Error(`unexpected url ${url}`);
       });
+      const listSpecParametersMock = vi.fn().mockImplementation(async () => {
+        const entries: Array<{ serviceName: string; key: string; value: string }> = [];
+        if (ssmState.content) {
+          entries.push({ serviceName: 'orders-topic', key: 'content', value: ssmState.content });
+        }
+        if (ssmState.url) {
+          entries.push({ serviceName: 'orders-topic', key: 'url', value: ssmState.url });
+        }
+        return entries;
+      });
+      const listRegistriesMock = vi.fn().mockImplementation(async () => (eventBridgeState.enabled ? [{ name: 'custom-registry', arn: 'arn:registry' }] : []));
+      const listSchemasMock = vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]);
+      const describeSchemaMock = vi.fn().mockResolvedValue({
+        content: JSON.stringify({
+          type: 'object',
+          properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
+        }),
+        schemaVersion: '1'
+      });
+      const codeDerivedMock = vi.fn(resolveCodeDerivedContract);
       const provider = new SnsProvider(
         createSnsClientStub(),
         tempDir,
         createSsmClientStub({
-          listSpecParameters: vi.fn().mockImplementation(async () => {
-            const entries: Array<{ serviceName: string; key: string; value: string }> = [];
-            if (ssmState.content) {
-              entries.push({ serviceName: 'orders-topic', key: 'content', value: ssmState.content });
-            }
-            if (ssmState.url) {
-              entries.push({ serviceName: 'orders-topic', key: 'url', value: ssmState.url });
-            }
-            return entries;
-          })
+          listSpecParameters: listSpecParametersMock
         }),
         {
           fetchSpecFromUrl: fetchMock as never,
           eventBridgeClient: createSchemasClientStub({
-            listRegistries: vi.fn().mockImplementation(async () => (eventBridgeState.enabled ? [{ name: 'custom-registry', arn: 'arn:registry' }] : [])),
-            listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
-            describeSchema: vi.fn().mockResolvedValue({
-              content: JSON.stringify({
-                type: 'object',
-                properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
-              }),
-              schemaVersion: '1'
-            })
-          })
+            listRegistries: listRegistriesMock,
+            listSchemas: listSchemasMock,
+            describeSchema: describeSchemaMock
+          }),
+          codeDerivedResolver: codeDerivedMock
         }
       );
 
@@ -1442,31 +1449,61 @@ describe('SnsProvider', () => {
       ssmState.url = 'https://example.com/ssm.asyncapi.json';
 
       expect(await resolveOrigin()).toBe('repo-asyncapi');
+      expect(listSpecParametersMock).toHaveBeenCalledTimes(0);
+      expect(fetchMock).toHaveBeenCalledTimes(0);
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       await rm(path.join(tempDir, 'asyncapi.yaml'), { force: true });
       expect(await resolveOrigin()).toBe('repo-json-schema');
+      expect(listSpecParametersMock).toHaveBeenCalledTimes(0);
+      expect(fetchMock).toHaveBeenCalledTimes(0);
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       await rm(path.join(tempDir, 'schema.json'), { force: true });
       expect(await resolveOrigin()).toBe('generated-asyncapi');
+      expect(listSpecParametersMock).toHaveBeenCalledTimes(0);
+      expect(fetchMock).toHaveBeenCalledTimes(0);
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       await rm(path.join(tempDir, 'spec'), { recursive: true, force: true });
       expect(await resolveOrigin()).toBe('ssm-content');
+      expect(listSpecParametersMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(0);
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       ssmState.content = undefined;
       expect(await resolveOrigin()).toBe('ssm-url');
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000 });
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       ssmState.url = undefined;
       expect(await resolveOrigin()).toBe('catalog-url');
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000 });
+      expect(listRegistriesMock).toHaveBeenCalledTimes(0);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       await rm(path.join(tempDir, 'catalog-info.yaml'), { force: true });
       expect(await resolveOrigin()).toBe('eventbridge-derived');
+      expect(listRegistriesMock).toHaveBeenCalledTimes(1);
+      expect(listSchemasMock).toHaveBeenCalledTimes(1);
+      expect(describeSchemaMock).toHaveBeenCalledTimes(1);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       eventBridgeState.enabled = false;
       expect(await resolveOrigin()).toBe('code-derived');
+      expect(listRegistriesMock).toHaveBeenCalledTimes(2);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(1);
 
       await rm(path.join(tempDir, 'publisher.ts'), { force: true });
       await rm(path.join(tempDir, 'schemas'), { recursive: true, force: true });
       expect(await resolveOrigin()).toBe('manual-review');
+      expect(listRegistriesMock).toHaveBeenCalledTimes(3);
+      expect(codeDerivedMock).toHaveBeenCalledTimes(2);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1494,6 +1531,7 @@ describe('SnsProvider', () => {
         throw new Error(`unexpected url ${url}`);
       });
       const ssmEntries: Array<{ serviceName: string; key: string; value: string }> = [];
+      const listSpecParametersMock = vi.fn().mockImplementation(async () => ssmEntries);
       const eventBridgeClient = createSchemasClientStub({
         listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
         listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
@@ -1505,13 +1543,14 @@ describe('SnsProvider', () => {
           schemaVersion: '1'
         })
       });
+      const codeDerivedMock = vi.fn(resolveCodeDerivedContract);
       const provider = new SnsProvider(
         createSnsClientStub(),
         tempDir,
         createSsmClientStub({
-          listSpecParameters: vi.fn().mockImplementation(async () => ssmEntries)
+          listSpecParameters: listSpecParametersMock
         }),
-        { fetchSpecFromUrl: fetchMock as never, eventBridgeClient }
+        { fetchSpecFromUrl: fetchMock as never, eventBridgeClient, codeDerivedResolver: codeDerivedMock }
       );
 
       const enableSource = async (source: string): Promise<void> => {
@@ -1563,6 +1602,23 @@ describe('SnsProvider', () => {
 
       const resolvedOrigin = result.resolved ? result.origin : 'manual-review';
       expect(resolvedOrigin).toBe(higher);
+      if (['repo-asyncapi', 'repo-json-schema', 'generated-asyncapi'].includes(higher)) {
+        expect(listSpecParametersMock).toHaveBeenCalledTimes(0);
+      }
+      if (lower === 'ssm-url') {
+        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000 });
+      }
+      if (lower === 'catalog-url') {
+        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000 });
+      }
+      if (lower === 'eventbridge-derived') {
+        expect(eventBridgeClient.listRegistries).toHaveBeenCalledTimes(0);
+        expect(eventBridgeClient.listSchemas).toHaveBeenCalledTimes(0);
+        expect(eventBridgeClient.describeSchema).toHaveBeenCalledTimes(0);
+      }
+      if (lower === 'code-derived') {
+        expect(codeDerivedMock).toHaveBeenCalledTimes(0);
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -3103,6 +3159,66 @@ describe('SnsProvider', () => {
         expect(result.result.format).toBe('json-schema');
         expect(result.result.content).toContain('"$schema"');
       }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects code-derived JSON schema imports that resolve outside repo-root', async () => {
+    const parentDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-outside-parent-'));
+    const tempDir = path.join(parentDir, 'repo');
+    const outsideSchemaPath = path.join(parentDir, 'outside-schema.json');
+    try {
+      await mkdir(tempDir, { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import payloadSchema from '../outside-schema.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(payloadSchema) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        outsideSchemaPath,
+        JSON.stringify({ $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' }, null, 2),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('resolves outside repo-root'))).toBe(true);
+    } finally {
+      await rm(parentDir, { recursive: true, force: true });
+    }
+  });
+
+  it('requires payload linkage for imported JSON schema candidates', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'schemas'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import payloadSchema from './schemas/order-payload.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const eventPayload = { id: "1" };',
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(eventPayload) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'schemas', 'order-payload.json'),
+        JSON.stringify({ $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' }, null, 2),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parse } from 'yaml';
 
 import type { SpecCandidate, SpecExportResult } from './types.js';
+import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 
 const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts', '.mjs', '.cjs']);
 const JAVA_EXTENSIONS = new Set(['.java']);
@@ -57,6 +58,39 @@ function hasTopicLinkage(content: string, hints: Set<string>): boolean {
     }
   }
   return false;
+}
+
+interface JsonSchemaReference {
+  refPath: string;
+  identifier?: string;
+}
+
+function extractJsonSchemaReferences(content: string): JsonSchemaReference[] {
+  const references: JsonSchemaReference[] = [];
+  const importPattern = /import\s+([A-Za-z_$][\w$]*)\s+from\s+['"]([^'"]+\.json)['"]/g;
+  const requirePattern = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(\s*['"]([^'"]+\.json)['"]\s*\)/g;
+
+  for (const match of content.matchAll(importPattern)) {
+    references.push({ identifier: match[1], refPath: match[2] });
+  }
+  for (const match of content.matchAll(requirePattern)) {
+    references.push({ identifier: match[1], refPath: match[2] });
+  }
+
+  return references;
+}
+
+function hasPayloadLinkage(content: string, identifier: string | undefined): boolean {
+  if (!identifier) {
+    return false;
+  }
+  const escapedIdentifier = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const patterns = [
+    new RegExp(`Message\\s*:\\s*JSON\\.stringify\\(\\s*${escapedIdentifier}\\s*\\)`),
+    new RegExp(`Message\\s*:\\s*${escapedIdentifier}\\b`),
+    new RegExp(`const\\s+\\w+\\s*=\\s*JSON\\.stringify\\(\\s*${escapedIdentifier}\\s*\\)[\\s\\S]{0,200}Message\\s*:\\s*\\w+`)
+  ];
+  return patterns.some((pattern) => pattern.test(content));
 }
 
 function looksLikeJsonSchema(value: unknown): boolean {
@@ -259,11 +293,25 @@ export const resolveCodeDerivedContract: ResolveCodeDerivedContract = async ({
     const displayPath = relativePath(repoRoot, filePath);
 
     if (CODE_EXTENSIONS.has(extension) && hasTopicLinkage(content, hints)) {
-      const schemaReferencePattern = /(?:import\s+[\w*\s{},]*\s+from\s+|require\()\s*['"]([^'"]+\.json)['"]\)?/g;
-      for (const schemaMatch of content.matchAll(schemaReferencePattern)) {
-        const refPath = schemaMatch[1];
+      for (const schemaReference of extractJsonSchemaReferences(content)) {
+        const refPath = schemaReference.refPath;
         if (!refPath) continue;
-        const resolvedRefPath = path.resolve(path.dirname(filePath), refPath);
+        if (!hasPayloadLinkage(content, schemaReference.identifier)) {
+          continue;
+        }
+        let resolvedRefPath: string;
+        try {
+          resolvedRefPath = resolvePathWithinRoot(
+            repoRoot,
+            path.resolve(path.dirname(filePath), refPath),
+            `code-derived JSON schema import in ${displayPath}`
+          );
+        } catch {
+          evidence.push(
+            `Rejected code-derived JSON schema reference ${refPath} in ${displayPath} because it resolves outside repo-root`
+          );
+          continue;
+        }
         const schemaContent = await readFile(resolvedRefPath, 'utf8').catch(() => undefined);
         if (!schemaContent) {
           continue;

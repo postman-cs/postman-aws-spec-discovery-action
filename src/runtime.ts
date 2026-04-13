@@ -33,6 +33,7 @@ import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-clie
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
 import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
+import { resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 import type { SnsContractResolutionContext, SnsContractResult } from './lib/providers/sns.js';
@@ -320,16 +321,6 @@ function projectFolderName(projectName: string): string {
 
 function toRelativeSpecPath(outputDir: string, folderName: string): string {
   return path.join(outputDir, folderName, 'index.yaml').replace(/\\/g, '/');
-}
-
-function resolvePathWithinRoot(rootPath: string, targetPath: string, fieldName: string): string {
-  const base = path.resolve(rootPath);
-  const resolved = path.resolve(base, targetPath);
-  const relative = path.relative(base, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
-  }
-  return resolved;
 }
 
 function userSafeWarning(message: string): string {
