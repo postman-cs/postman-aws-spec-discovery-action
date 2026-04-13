@@ -17,6 +17,20 @@ interface ServiceSpec {
   format?: string;
 }
 
+export type SnsContractOrigin = 'repo-asyncapi' | 'repo-json-schema' | 'ssm';
+
+export type SnsContractResult =
+  | {
+      resolved: true;
+      origin: SnsContractOrigin;
+      result: SpecExportResult;
+      evidence: string[];
+    }
+  | {
+      resolved: false;
+      evidence: string[];
+    };
+
 function topicNameFromArn(topicArn: string): string {
   const index = topicArn.lastIndexOf(':');
   return index >= 0 ? topicArn.slice(index + 1) : topicArn;
@@ -295,10 +309,43 @@ export class SnsProvider implements SpecProvider {
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
 
+    const contract = await this.resolveContract(candidate);
+    if (contract.resolved) {
+      return contract.result;
+    }
+
+    const manualReview = {
+      status: 'unresolved',
+      sourceType: 'manual-review',
+      providerType: 'sns',
+      topicArn,
+      topicName,
+      attemptedSources: ['repo-local-asyncapi', 'repo-local-json-schema', 'ssm-registry']
+    };
+
+    return {
+      content: JSON.stringify(manualReview, null, 2),
+      format: 'json-schema',
+      filename: 'manual-review.json',
+      evidence: contract.evidence
+    };
+  }
+
+  public async resolveContract(candidate: SpecCandidate): Promise<SnsContractResult> {
+    const resolvedRepoRoot = path.resolve(this.repoRoot);
+    const topicArn = candidate.meta.topicArn ?? candidate.id;
+    const topicName = topicNameFromArn(topicArn);
+    resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
+
     const files = await findContractFiles(resolvedRepoRoot, topicName);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi);
     if (asyncApiResolution.match) {
-      return asyncApiResolution.match;
+      return {
+        resolved: true,
+        origin: 'repo-asyncapi',
+        result: asyncApiResolution.match,
+        evidence: asyncApiResolution.match.evidence
+      };
     }
 
     const jsonSchemaResolution = await resolveJsonSchemaContract(
@@ -307,7 +354,12 @@ export class SnsProvider implements SpecProvider {
       asyncApiResolution.evidence
     );
     if (jsonSchemaResolution.match) {
-      return jsonSchemaResolution.match;
+      return {
+        resolved: true,
+        origin: 'repo-json-schema',
+        result: jsonSchemaResolution.match,
+        evidence: jsonSchemaResolution.match.evidence
+      };
     }
 
     const priorEvidence = [...jsonSchemaResolution.evidence];
@@ -339,32 +391,23 @@ export class SnsProvider implements SpecProvider {
       if (ssmMatch?.content) {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat(ssmMatch.content, ssmMatch.format ?? '');
         if (resolvedFormat) {
+          const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
           return {
-            content: ssmMatch.content,
-            format: resolvedFormat.format,
-            filename: resolvedFormat.filename,
-            evidence: [
-              ...priorEvidence,
-              `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`
-            ]
+            resolved: true,
+            origin: 'ssm',
+            result: {
+              content: ssmMatch.content,
+              format: resolvedFormat.format,
+              filename: resolvedFormat.filename,
+              evidence
+            },
+            evidence
           };
         }
       }
     }
-
-    const manualReview = {
-      status: 'unresolved',
-      sourceType: 'manual-review',
-      providerType: 'sns',
-      topicArn,
-      topicName,
-      attemptedSources: ['repo-local-asyncapi', 'repo-local-json-schema', 'ssm-registry']
-    };
-
     return {
-      content: JSON.stringify(manualReview, null, 2),
-      format: 'json-schema',
-      filename: 'manual-review.json',
+      resolved: false,
       evidence: [...priorEvidence, `No SNS contract found for ${topicArn}; manual review required`]
     };
   }
