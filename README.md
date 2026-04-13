@@ -619,6 +619,18 @@ npm test
 npm run build
 ```
 
+### Live integration tests
+
+Live tests run the built CLI against real AWS resources. See [docs/LIVE_TESTING_RUNBOOK.md](docs/LIVE_TESTING_RUNBOOK.md) for full setup instructions.
+
+```bash
+# Prerequisites: AWS credentials configured, stack deployed, CLI built
+npm run build
+npm run test:live:sns
+```
+
+> **Important:** Live tests execute `dist/cli.cjs`, not source TypeScript. Always rebuild before running live tests.
+
 ## Versioning policy
 
 - Action follows SemVer.

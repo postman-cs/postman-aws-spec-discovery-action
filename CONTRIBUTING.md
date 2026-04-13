@@ -26,6 +26,7 @@ npm run build       # Bundle to dist/ (esbuild)
 - [ ] `npm run build` has been run and `dist/` is updated
 - [ ] Changes are focused and address a single concern
 - [ ] New functionality includes tests
+- [ ] If changing SNS provider logic, signals, or runtime integration, run live integration tests: `npm run build && npm run test:live:sns`. See [docs/LIVE_TESTING_RUNBOOK.md](docs/LIVE_TESTING_RUNBOOK.md) for AWS setup.
 
 ### Rebuilding dist/
 
