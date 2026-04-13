@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -631,6 +631,265 @@ describe('SnsProvider', () => {
           {}
         )
       ).rejects.toThrow(/must stay within repo-root\/workspace/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract returns repo-asyncapi origin for yaml, yml, and json', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const yamlDir = path.join(tempDir, 'yaml');
+      const ymlDir = path.join(tempDir, 'yml');
+      const jsonDir = path.join(tempDir, 'json');
+      await mkdir(yamlDir, { recursive: true });
+      await mkdir(ymlDir, { recursive: true });
+      await mkdir(jsonDir, { recursive: true });
+      await writeFile(path.join(yamlDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\ninfo:\n  title: YAML\n  version: 1.0.0\nchannels: {}', 'utf8');
+      await writeFile(path.join(ymlDir, 'asyncapi.yml'), 'asyncapi: 2.6.0\ninfo:\n  title: YML\n  version: 1.0.0\nchannels: {}', 'utf8');
+      await writeFile(
+        path.join(jsonDir, 'asyncapi.json'),
+        JSON.stringify({ asyncapi: '2.6.0', info: { title: 'JSON', version: '1.0.0' }, channels: {} }),
+        'utf8'
+      );
+
+      const yamlProvider = new SnsProvider(createSnsClientStub(), yamlDir);
+      const ymlProvider = new SnsProvider(createSnsClientStub(), ymlDir);
+      const jsonProvider = new SnsProvider(createSnsClientStub(), jsonDir);
+
+      const yamlResult = await yamlProvider.resolveContract(createSnsCandidate());
+      const ymlResult = await ymlProvider.resolveContract(createSnsCandidate());
+      const jsonResult = await jsonProvider.resolveContract(createSnsCandidate());
+
+      expect(yamlResult).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(ymlResult).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(jsonResult).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (yamlResult.resolved) expect(yamlResult.result.format).toBe('asyncapi-yaml');
+      if (ymlResult.resolved) expect(ymlResult.result.format).toBe('asyncapi-yaml');
+      if (jsonResult.resolved) expect(jsonResult.result.format).toBe('asyncapi-json');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract returns repo-json-schema origin', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'events.schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        expect(result.result.format).toBe('json-schema');
+        expect(result.result.filename).toBe('events.schema.json');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract returns ssm origin for explicit and auto-detected formats', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const explicit = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"asyncapi":"2.6.0","channels":{}}' },
+            { serviceName: 'orders-topic', key: 'format', value: 'asyncapi-json' }
+          ])
+        })
+      );
+      const explicitSchema = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"type":"object","properties":{}}' },
+            { serviceName: 'orders-topic', key: 'format', value: 'json-schema' }
+          ])
+        })
+      );
+      const auto = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: 'asyncapi: 2.6.0\nchannels: {}' }
+          ])
+        })
+      );
+
+      const explicitResult = await explicit.resolveContract(createSnsCandidate());
+      const explicitSchemaResult = await explicitSchema.resolveContract(createSnsCandidate());
+      const autoResult = await auto.resolveContract(createSnsCandidate());
+
+      expect(explicitResult).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(explicitSchemaResult).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(autoResult).toMatchObject({ resolved: true, origin: 'ssm' });
+      if (explicitResult.resolved) expect(explicitResult.result.format).toBe('asyncapi-json');
+      if (explicitSchemaResult.resolved) expect(explicitSchemaResult.result.format).toBe('json-schema');
+      if (autoResult.resolved) expect(autoResult.result.format).toBe('asyncapi-yaml');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract enforces precedence and falls through malformed files with evidence', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'not: asyncapi', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const ssmClient = createSsmClientStub({
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'orders-topic', key: 'content', value: '{"asyncapi":"2.6.0","channels":{}}' }
+        ])
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, ssmClient);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      expect(ssmClient.listSpecParameters).not.toHaveBeenCalled();
+      if (result.resolved) {
+        expect(result.evidence.some((line) => line.includes('Skipped malformed AsyncAPI file'))).toBe(true);
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract falls through malformed AsyncAPI and malformed JSON Schema to SSM', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: [', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' }
+          ])
+        })
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(result.evidence.some((line) => line.includes('Skipped malformed AsyncAPI file'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('Skipped malformed JSON Schema file'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract returns unresolved for no sources, url-only SSM, and missing SSM client', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const withoutSsm = new SnsProvider(createSnsClientStub(), tempDir);
+      const urlOnly = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/asyncapi.yaml' }
+          ])
+        })
+      );
+
+      const withoutSsmResult = await withoutSsm.resolveContract(createSnsCandidate());
+      const urlOnlyResult = await urlOnly.resolveContract(createSnsCandidate());
+
+      expect(withoutSsmResult).toEqual(expect.objectContaining({ resolved: false }));
+      expect(urlOnlyResult).toEqual(expect.objectContaining({ resolved: false }));
+      expect(urlOnlyResult.evidence.some((line) => line.includes('manual review'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract normalizes SSM service names and keeps auditable evidence', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-events-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' }
+          ])
+        })
+      );
+
+      const result = await provider.resolveContract(
+        createSnsCandidate({
+          id: 'arn:aws:sns:us-east-1:123456789012:OrdersEventsTopic.fifo',
+          name: 'OrdersEventsTopic.fifo',
+          meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:OrdersEventsTopic.fifo' }
+        })
+      );
+
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(result.evidence.some((line) => line.includes('/postman/specs/orders-events-topic/'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract evidence includes repo file paths and accumulated fallback trail', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'contracts'), { recursive: true });
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'title: missing asyncapi key', 'utf8');
+      await writeFile(path.join(tempDir, 'contracts', 'orders.schema.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      expect(result.evidence.some((line) => line.includes('asyncapi.yaml'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('contracts/orders.schema.json'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract enforces path sandboxing for unsafe topic names', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      await expect(
+        provider.resolveContract(
+          createSnsCandidate({
+            id: 'arn:aws:sns:us-east-1:123456789012:../../escape',
+            name: '../../escape',
+            meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:../../escape' }
+          })
+        )
+      ).rejects.toThrow(/must stay within repo-root\/workspace/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec delegates to resolveContract result', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+      const candidate = createSnsCandidate();
+
+      const resolved = await provider.resolveContract(candidate);
+      const exported = await provider.exportSpec(candidate, {});
+
+      expect(resolved).toEqual(expect.objectContaining({ resolved: true }));
+      if (resolved.resolved) {
+        expect(exported).toEqual(resolved.result);
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
