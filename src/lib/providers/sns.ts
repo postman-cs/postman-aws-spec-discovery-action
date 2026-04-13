@@ -255,6 +255,10 @@ interface SnsProviderDependencies {
   eventBridgeClient?: unknown;
   codeDerivedResolver?: unknown;
   gitIgnoreChecker?: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
+  webhookSidecarBuilder?: (
+    canonical: SpecExportResult,
+    subscriptions: SnsSubscriptionMetadata[]
+  ) => { filename: string; content: string } | undefined;
 }
 
 export type SnsContractOrigin =
@@ -287,6 +291,7 @@ export type SnsContractResult =
 
 const METADATA_SIDECAR_FILENAME = 'sns-resolution-metadata.json';
 const SPEC_POINTER_FILENAME = 'spec-pointer.json';
+const WEBHOOK_SIDECAR_FILENAME = 'webhook.openapi.json';
 
 function topicNameFromArn(topicArn: string): string {
   const index = topicArn.lastIndexOf(':');
@@ -555,6 +560,162 @@ function detectFormat(content: string, filenameHint: string): { format: SpecForm
   return undefined;
 }
 
+function deepCloneJsonValue(value: unknown): unknown {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function extractAsyncApiPayloadSchema(document: unknown): unknown {
+  if (!document || typeof document !== 'object' || Array.isArray(document)) {
+    return { type: 'object' };
+  }
+
+  const channels = (document as Record<string, unknown>).channels;
+  if (!channels || typeof channels !== 'object' || Array.isArray(channels)) {
+    return { type: 'object' };
+  }
+
+  for (const channelValue of Object.values(channels as Record<string, unknown>)) {
+    if (!channelValue || typeof channelValue !== 'object' || Array.isArray(channelValue)) {
+      continue;
+    }
+    for (const operationName of ['publish', 'subscribe']) {
+      const operation = (channelValue as Record<string, unknown>)[operationName];
+      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
+        continue;
+      }
+      const message = (operation as Record<string, unknown>).message;
+      if (!message || typeof message !== 'object' || Array.isArray(message)) {
+        continue;
+      }
+      const payload = (message as Record<string, unknown>).payload;
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        return payload;
+      }
+      const oneOf = (message as Record<string, unknown>).oneOf;
+      if (Array.isArray(oneOf)) {
+        for (const entry of oneOf) {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+            continue;
+          }
+          const oneOfPayload = (entry as Record<string, unknown>).payload;
+          if (oneOfPayload && typeof oneOfPayload === 'object' && !Array.isArray(oneOfPayload)) {
+            return oneOfPayload;
+          }
+        }
+      }
+    }
+  }
+
+  return { type: 'object' };
+}
+
+function canonicalPayloadSchema(canonical: SpecExportResult): unknown {
+  if (canonical.format === 'json-schema') {
+    try {
+      const parsed = JSON.parse(canonical.content);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return { type: 'object' };
+    }
+    return { type: 'object' };
+  }
+
+  if (canonical.format === 'asyncapi-json') {
+    try {
+      return extractAsyncApiPayloadSchema(JSON.parse(canonical.content));
+    } catch {
+      return { type: 'object' };
+    }
+  }
+
+  if (canonical.format === 'asyncapi-yaml') {
+    try {
+      return extractAsyncApiPayloadSchema(parse(canonical.content));
+    } catch {
+      return { type: 'object' };
+    }
+  }
+
+  return { type: 'object' };
+}
+
+function buildWebhookPayloadSchema(rawDelivery: boolean, baseSchema: unknown): unknown {
+  const payloadSchema = deepCloneJsonValue(baseSchema);
+  if (rawDelivery) {
+    return payloadSchema;
+  }
+  return {
+    type: 'object',
+    properties: {
+      Type: { type: 'string' },
+      MessageId: { type: 'string' },
+      TopicArn: { type: 'string' },
+      Timestamp: { type: 'string' },
+      Message: payloadSchema
+    },
+    required: ['Message'],
+    additionalProperties: true
+  };
+}
+
+function buildWebhookSidecar(
+  canonical: SpecExportResult,
+  subscriptions: SnsSubscriptionMetadata[]
+): { filename: string; content: string } | undefined {
+  const httpSubscriptions = subscriptions.filter((subscription) => {
+    const protocol = (subscription.protocol ?? '').toLowerCase();
+    return protocol === 'http' || protocol === 'https';
+  });
+  if (httpSubscriptions.length === 0) {
+    return undefined;
+  }
+
+  const basePayloadSchema = canonicalPayloadSchema(canonical);
+  const variants = new Set(httpSubscriptions.map((subscription) => subscription.variant === 'raw-payload'));
+  const webhooks: Record<string, unknown> = {};
+
+  for (const rawDelivery of variants) {
+    const webhookName = rawDelivery ? 'snsMessageRaw' : 'snsMessageWrapped';
+    webhooks[webhookName] = {
+      post: {
+        operationId: webhookName,
+        'x-sns-raw-delivery': rawDelivery,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: buildWebhookPayloadSchema(rawDelivery, basePayloadSchema)
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'SNS notification received'
+          }
+        }
+      }
+    };
+  }
+
+  return {
+    filename: WEBHOOK_SIDECAR_FILENAME,
+    content: JSON.stringify(
+      {
+        openapi: '3.1.0',
+        info: {
+          title: 'SNS Webhook Sidecar',
+          version: '1.0.0'
+        },
+        webhooks
+      },
+      null,
+      2
+    )
+  };
+}
+
 function sortByTopicAffinity(files: string[], topicName: string): string[] {
   const loweredTopicName = topicName.toLowerCase();
   return [...files].sort((left, right) => {
@@ -796,6 +957,10 @@ export class SnsProvider implements SpecProvider {
   private readonly eventBridgeClient?: unknown;
   private readonly codeDerivedResolver?: unknown;
   private readonly gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
+  private readonly webhookSidecarBuilder: (
+    canonical: SpecExportResult,
+    subscriptions: SnsSubscriptionMetadata[]
+  ) => { filename: string; content: string } | undefined;
 
   public constructor(
     private readonly client: SnsSpecClient,
@@ -806,6 +971,7 @@ export class SnsProvider implements SpecProvider {
     if (typeof dependencies === 'function') {
       this.fetchRemoteSpec = dependencies;
       this.gitIgnoreChecker = isGitIgnoredByGit;
+      this.webhookSidecarBuilder = buildWebhookSidecar;
       return;
     }
 
@@ -814,6 +980,7 @@ export class SnsProvider implements SpecProvider {
     this.eventBridgeClient = dependencies.eventBridgeClient;
     this.codeDerivedResolver = dependencies.codeDerivedResolver;
     this.gitIgnoreChecker = dependencies.gitIgnoreChecker ?? isGitIgnoredByGit;
+    this.webhookSidecarBuilder = dependencies.webhookSidecarBuilder ?? buildWebhookSidecar;
   }
 
   public async probe(): Promise<boolean> {
@@ -1089,6 +1256,16 @@ export class SnsProvider implements SpecProvider {
       }
     };
     const variantCount = new Set(metadata.subscriptions.map((subscription) => subscription.variant)).size;
+    const sidecars = pointerSidecar ? [pointerSidecar] : [];
+    try {
+      const webhookSidecar = this.webhookSidecarBuilder(resolvedExport, metadata.subscriptions);
+      if (webhookSidecar) {
+        sidecars.push(webhookSidecar);
+      }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      finalEvidence.push(`Failed to generate webhook sidecar for ${topicArn}: ${detail}`);
+    }
 
     return {
       resolved: true,
@@ -1100,7 +1277,7 @@ export class SnsProvider implements SpecProvider {
       },
       evidence: finalEvidence,
       metadata,
-      sidecars: pointerSidecar ? [pointerSidecar] : undefined
+      sidecars: sidecars.length > 0 ? sidecars : undefined
     };
   }
 
