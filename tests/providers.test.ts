@@ -1153,6 +1153,172 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract resolves Backstage catalog URL with topic affinity as catalog-url origin', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  definition: https://example.com/orders.asyncapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      const fetchMock = vi.fn().mockResolvedValue({
+        content: 'asyncapi: 2.6.0\nchannels: {}',
+        contentType: 'application/yaml'
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), fetchMock as never);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'catalog-url' });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000 });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract resolves repo-tracked contract registry URL mapping as catalog-url origin', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, '.postman'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, '.postman', 'contracts.yaml'),
+        ['contracts:', '  orders-topic:', '    url: https://example.com/orders.registry.asyncapi.yaml'].join('\n'),
+        'utf8'
+      );
+      const fetchMock = vi.fn().mockResolvedValue({
+        content: '{"asyncapi":"2.6.0","channels":{}}',
+        contentType: 'application/json'
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), fetchMock as never);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'catalog-url' });
+      if (result.resolved) {
+        expect(result.result.format).toBe('asyncapi-json');
+      }
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.registry.asyncapi.yaml', { timeoutMs: 15000 });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records catalog URL fetch failure evidence and falls through to manual-review', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  definition: https://example.com/orders.asyncapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      const fetchMock = vi.fn().mockRejectedValue(new Error('HTTP 503 fetching https://example.com/orders.asyncapi.yaml'));
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), fetchMock as never);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('Backstage catalog API'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('HTTP 503'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract keeps precedence: SSM content and generated AsyncAPI outrank catalog URLs', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  definition: https://example.com/orders.asyncapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+      await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const generatedProvider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"asyncapi":"2.6.0","channels":{}}' }
+          ])
+        }),
+        vi.fn().mockResolvedValue({ content: 'asyncapi: 2.6.0\nchannels: {}', contentType: 'application/yaml' }) as never
+      );
+
+      const generatedResult = await generatedProvider.resolveContract(createSnsCandidate());
+      expect(generatedResult).toMatchObject({ resolved: true, origin: 'generated-asyncapi' });
+
+      await rm(path.join(tempDir, 'spec'), { recursive: true, force: true });
+      const ssmProvider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' }
+          ])
+        }),
+        vi.fn().mockResolvedValue({ content: 'asyncapi: 2.6.0\nchannels: {}', contentType: 'application/yaml' }) as never
+      );
+
+      const ssmResult = await ssmProvider.resolveContract(createSnsCandidate());
+      expect(ssmResult).toMatchObject({ resolved: true, origin: 'ssm-content' });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract does not fetch remote contracts when no catalog or registry URL matches', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: billing-api',
+          'spec:',
+          '  definition: https://example.com/billing.asyncapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      const fetchMock = vi.fn().mockResolvedValue({
+        content: 'asyncapi: 2.6.0\nchannels: {}',
+        contentType: 'application/yaml'
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), fetchMock as never);
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract normalizes SSM service names and keeps auditable evidence', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
