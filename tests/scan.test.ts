@@ -354,6 +354,21 @@ describe('SNS provider patterns via collectRepoSignals', () => {
     expect(signals.providerHints).toContain('sns');
   });
 
+  it('does not detect sns from README examples while still extracting gateway IDs', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'README.md'),
+      [
+        'Supports AWS::SNS::Topic in examples.',
+        'Use https://abc123def4.execute-api.us-east-1.amazonaws.com/prod for smoke tests.',
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints ?? []).not.toContain('sns');
+    expect(signals.inferredGatewayIdHints).toContain('abc123def4');
+  });
+
   it('detects sns from Terraform aws_sns_topic resource', async () => {
     const root = await makeTempDir();
     await writeFile(

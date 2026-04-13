@@ -100,6 +100,11 @@ function toEvidencePath(repoRoot: string, filePath: string): string {
   return relative.startsWith('..') ? filePath : relative;
 }
 
+function shouldDetectProviderHintsForFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  return ext !== '.md' && ext !== '.markdown';
+}
+
 function isSnsEventContractFile(filePath: string): boolean {
   const lower = path.basename(filePath).toLowerCase();
   return (
@@ -145,11 +150,13 @@ export async function collectRepoSignals(
         inferredGatewayHints.push(...extracted);
         evidence.push(`Found gateway ID hints in ${file}`);
       }
-      for (const hint of detectProviderHints(content)) {
-        providerHintSet.add(hint);
-        evidence.push(`Detected ${hint} provider hint in ${file}`);
-        if (hint === 'sns') {
-          snsEvidenceRoots.add(repoRoot);
+      if (shouldDetectProviderHintsForFile(file)) {
+        for (const hint of detectProviderHints(content)) {
+          providerHintSet.add(hint);
+          evidence.push(`Detected ${hint} provider hint in ${file}`);
+          if (hint === 'sns') {
+            snsEvidenceRoots.add(repoRoot);
+          }
         }
       }
     } catch {
