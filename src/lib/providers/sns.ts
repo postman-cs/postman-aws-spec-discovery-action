@@ -47,6 +47,7 @@ interface SnsSubscriptionMetadata {
   subscriptionArn: string;
   protocol?: string;
   endpoint?: string;
+  variant: 'raw-payload' | 'sns-envelope';
   RawMessageDelivery?: string;
   FilterPolicy?: string;
   FilterPolicyScope?: string;
@@ -64,6 +65,14 @@ interface SnsResolutionMetadata {
     failed: number;
     errors: Array<{ subscriptionArn?: string; error: string }>;
   };
+}
+
+function classifyDeliveryVariant(protocol: string | undefined, rawMessageDelivery: string | undefined): 'raw-payload' | 'sns-envelope' {
+  const normalizedProtocol = (protocol ?? '').trim().toLowerCase();
+  if (normalizedProtocol === 'lambda') {
+    return 'sns-envelope';
+  }
+  return (rawMessageDelivery ?? '').trim().toLowerCase() === 'true' ? 'raw-payload' : 'sns-envelope';
 }
 
 interface SnsProviderDependencies {
@@ -897,10 +906,12 @@ export class SnsProvider implements SpecProvider {
         errors: subscriptionInspection.errors
       }
     };
+    const variantCount = new Set(metadata.subscriptions.map((subscription) => subscription.variant)).size;
 
     return {
       resolved: true,
       origin: resolvedOrigin,
+      variantCount,
       result: {
         ...resolvedExport,
         evidence: finalEvidence
@@ -946,6 +957,7 @@ export class SnsProvider implements SpecProvider {
           subscriptionArn,
           protocol: attributes.Protocol ?? summary.protocol,
           endpoint: attributes.Endpoint ?? summary.endpoint,
+          variant: classifyDeliveryVariant(attributes.Protocol ?? summary.protocol, attributes.RawMessageDelivery),
           RawMessageDelivery: attributes.RawMessageDelivery,
           FilterPolicy: attributes.FilterPolicy,
           FilterPolicyScope: attributes.FilterPolicyScope,
