@@ -619,13 +619,44 @@ function extractAsyncApiPayloadSchema(document: unknown): { payloadSchema: unkno
 
   const root = document as Record<string, unknown>;
   const channels = root.channels;
-  const schemas =
+  const components =
     root.components && typeof root.components === 'object' && !Array.isArray(root.components)
-      ? (root.components as Record<string, unknown>).schemas
+      ? (root.components as Record<string, unknown>)
       : undefined;
+  const schemas = components?.schemas;
+  const messages = components?.messages;
   const schemaComponents = schemas && typeof schemas === 'object' && !Array.isArray(schemas) ? (schemas as Record<string, unknown>) : {};
+  const messageComponents = messages && typeof messages === 'object' && !Array.isArray(messages) ? (messages as Record<string, unknown>) : {};
   const copiedComponents: Record<string, unknown> = {};
   const seen = new Set<string>();
+  const seenMessages = new Set<string>();
+
+  const resolveMessageByRef = (value: unknown): Record<string, unknown> | undefined => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    const record = value as Record<string, unknown>;
+    const ref = typeof record.$ref === 'string' ? record.$ref : undefined;
+    if (!ref) {
+      return record;
+    }
+    const match = /^#\/components\/messages\/(.+)$/.exec(ref);
+    if (!match) {
+      return record;
+    }
+    const messageName = match[1];
+    if (!messageName || seenMessages.has(messageName)) {
+      return undefined;
+    }
+    const sourceMessage = messageComponents[messageName];
+    if (!sourceMessage || typeof sourceMessage !== 'object' || Array.isArray(sourceMessage)) {
+      return undefined;
+    }
+    seenMessages.add(messageName);
+    const resolved = resolveMessageByRef(sourceMessage);
+    seenMessages.delete(messageName);
+    return resolved;
+  };
 
   const copyComponentSchemaByRef = (ref: string): void => {
     const match = /^#\/components\/schemas\/(.+)$/.exec(ref);
@@ -676,21 +707,28 @@ function extractAsyncApiPayloadSchema(document: unknown): { payloadSchema: unkno
       if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
         continue;
       }
-      const message = (operation as Record<string, unknown>).message;
-      if (!message || typeof message !== 'object' || Array.isArray(message)) {
+      const message = resolveMessageByRef((operation as Record<string, unknown>).message);
+      if (!message) {
         continue;
       }
-      const payload = (message as Record<string, unknown>).payload;
+      const payload = message.payload;
       if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
         return finalize(payload);
       }
-      const oneOf = (message as Record<string, unknown>).oneOf;
+      const oneOf = message.oneOf;
       if (Array.isArray(oneOf)) {
         for (const entry of oneOf) {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
             continue;
           }
-          const oneOfPayload = (entry as Record<string, unknown>).payload;
+          const resolvedEntry = resolveMessageByRef(entry);
+          if (!resolvedEntry) {
+            continue;
+          }
+          if (typeof resolvedEntry.$ref === 'string' && /^#\/components\/schemas\/.+$/.test(resolvedEntry.$ref)) {
+            return finalize({ $ref: resolvedEntry.$ref });
+          }
+          const oneOfPayload = resolvedEntry.payload;
           if (oneOfPayload && typeof oneOfPayload === 'object' && !Array.isArray(oneOfPayload)) {
             return finalize(oneOfPayload);
           }

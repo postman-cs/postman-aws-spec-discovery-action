@@ -2112,6 +2112,192 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract resolves message-level $ref entries to AsyncAPI components/messages definitions', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        [
+          'asyncapi: 2.6.0',
+          'components:',
+          '  messages:',
+          '    OrderCreatedMessage:',
+          '      payload:',
+          '        $ref: "#/components/schemas/OrderEvent"',
+          '  schemas:',
+          '    OrderEvent:',
+          '      type: object',
+          '      properties:',
+          '        orderId:',
+          '          type: string',
+          'channels:',
+          '  orders:',
+          '    publish:',
+          '      message:',
+          '        $ref: "#/components/messages/OrderCreatedMessage"'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'https', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc).toHaveProperty(
+          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.$ref',
+          '#/components/schemas/OrderEvent'
+        );
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderEvent');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract resolves oneOf message members that are $ref entries', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        [
+          'asyncapi: 2.6.0',
+          'components:',
+          '  messages:',
+          '    OrderCreatedMessage:',
+          '      payload:',
+          '        $ref: "#/components/schemas/OrderCreatedEvent"',
+          '    OrderCancelledMessage:',
+          '      payload:',
+          '        $ref: "#/components/schemas/OrderCancelledEvent"',
+          '  schemas:',
+          '    OrderCreatedEvent:',
+          '      type: object',
+          '      properties:',
+          '        orderId:',
+          '          type: string',
+          '    OrderCancelledEvent:',
+          '      type: object',
+          '      properties:',
+          '        reason:',
+          '          type: string',
+          'channels:',
+          '  orders:',
+          '    publish:',
+          '      message:',
+          '        oneOf:',
+          '          - $ref: "#/components/messages/OrderCreatedMessage"',
+          '          - $ref: "#/components/messages/OrderCancelledMessage"'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'https', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc).toHaveProperty(
+          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.$ref',
+          '#/components/schemas/OrderCreatedEvent'
+        );
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderCreatedEvent');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract carries deeply nested AsyncAPI schema $ref chains into webhook components', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        [
+          'asyncapi: 2.6.0',
+          'components:',
+          '  messages:',
+          '    OrderMessage:',
+          '      payload:',
+          '        $ref: "#/components/schemas/OrderEvent"',
+          '  schemas:',
+          '    OrderEvent:',
+          '      type: object',
+          '      properties:',
+          '        detail:',
+          '          $ref: "#/components/schemas/OrderDetail"',
+          '    OrderDetail:',
+          '      type: object',
+          '      properties:',
+          '        payment:',
+          '          $ref: "#/components/schemas/PaymentDetail"',
+          '    PaymentDetail:',
+          '      type: object',
+          '      properties:',
+          '        cardLast4:',
+          '          type: string',
+          'channels:',
+          '  orders:',
+          '    publish:',
+          '      message:',
+          '        $ref: "#/components/messages/OrderMessage"'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'https', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderEvent');
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderDetail');
+        expect(webhookDoc).toHaveProperty('components.schemas.PaymentDetail');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract does not generate webhook sidecar for non-http subscriptions', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
