@@ -34,7 +34,17 @@ Each provider is probed at startup. If your role lacks permission for a provider
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root and resolves API spec path or URL references automatically.
 
-SNS is handled as a contract resolver (not a native AWS spec exporter). For SNS topics, contract resolution precedence is: **repo-local AsyncAPI > repo-local JSON Schema > SSM registry > manual-review**.
+SNS is handled as a **contract resolver**, not an AWS spec exporter. SNS has no native exportable API specification, so the provider resolves durable event contracts from repo-local files or SSM Parameter Store. For each discovered SNS topic, the resolution chain is:
+
+1. **Repo-local AsyncAPI** (`asyncapi.yaml`, `asyncapi.yml`, `asyncapi.json`) -- validated by checking for the `asyncapi` top-level key. Files with the topic name in their path are prioritized.
+2. **Repo-local JSON Schema** (`schema.json`, `*.schema.json`) -- validated by checking for `$schema`, `type`, `properties`, or similar schema markers.
+3. **SSM Parameter Store** (`/postman/specs/{service-name}/content`) -- fuzzy name matching strips `.fifo` suffixes and normalizes camelCase to kebab-case. Only `content` entries are used for SNS; URL entries are not fetched.
+4. **Manual review fallback** -- writes a `manual-review.json` pointer when no contract source is found.
+
+### SNS mode behavior
+
+- **resolve-one**: SNS is a fallback after API Gateway. It only fires when API Gateway resolution fails AND the repo contains SNS IaC signals. Topics whose resolution produces a `manual-review` result are skipped (the next topic is tried).
+- **discover-many**: SNS runs alongside all other providers. Every discovered topic gets exported, including those that produce `manual-review` results.
 
 ## Security
 
@@ -100,10 +110,12 @@ Full IAM policy (all providers):
 
 You only need permissions for the providers you use. Providers you lack access to are silently skipped.
 
-Required IAM permissions for SNS contract discovery are:
-- `sns:ListTopics`
-- `sns:GetTopicAttributes`
-- `sns:ListTagsForResource`
+Required IAM permissions for SNS contract discovery:
+- `sns:ListTopics` -- enumerate topics in the account
+- `sns:GetTopicAttributes` -- read topic metadata (non-fatal if denied; topic still becomes a candidate)
+- `sns:ListTagsForResource` -- read topic tags for naming and scoring (non-fatal if denied)
+
+If SNS also resolves contracts from SSM, `ssm:GetParametersByPath` is additionally required.
 
 ## Inputs
 
@@ -183,8 +195,11 @@ These are auto-detected from CI environment variables. Override them only when a
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
 | SSM Parameter Store | auto-detected | Any (spec content or fetched URL content) |
-| SNS (AsyncAPI contracts) | `asyncapi.yaml` or `asyncapi.json` | AsyncAPI |
-| SNS (JSON Schema contracts) | `schema.json` | JSON Schema |
+| SNS (AsyncAPI YAML) | `asyncapi.yaml` | AsyncAPI YAML |
+| SNS (AsyncAPI JSON) | `asyncapi.json` | AsyncAPI JSON |
+| SNS (JSON Schema) | `schema.json` | JSON Schema |
+| SNS (SSM auto-detected) | varies | varies |
+| SNS (no contract found) | `manual-review.json` | JSON Schema |
 
 ## Usage
 
@@ -222,7 +237,9 @@ Exports specs from all discovered APIs across all available providers:
 
 ### Event-driven repos (SNS contract resolution)
 
-For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI or JSON Schema and let `resolve-one` select the best source automatically:
+For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI or JSON Schema and let the action resolve it automatically. The action detects SNS usage from IaC files and resolves durable event contracts rather than exporting an AWS-generated spec.
+
+**resolve-one** (single best contract):
 
 ```yaml
 - id: resolve-events
@@ -234,11 +251,50 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
     aws-region: us-east-1
 ```
 
-Resolution order for SNS topics is:
-1. Repo-local AsyncAPI (`asyncapi.yaml`, `asyncapi.yml`, `asyncapi.json`)
-2. Repo-local JSON Schema (`schema.json`, `*.schema.json`)
-3. SSM registry (`/postman/specs/{topic}/...`)
-4. `manual-review`
+In `resolve-one`, SNS fires only when API Gateway resolution fails and the repo has SNS IaC signals. Topics that resolve to `manual-review` are skipped; the action tries the next topic.
+
+**discover-many** (all topics across all providers):
+
+```yaml
+- id: discover-all
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  env:
+    INPUT_MODE: discover-many
+  with:
+    aws-region: us-east-1
+```
+
+In `discover-many`, every SNS topic gets exported, including those that produce `manual-review` results. This is useful for auditing contract coverage across all event-driven services in an account.
+
+**Example repo layout** for an event-driven microservice:
+
+```
+template.yaml          # SAM template with AWS::SNS::Topic
+asyncapi.yaml          # AsyncAPI contract for the main topic
+events/
+  order-placed/
+    asyncapi.yaml      # Topic-specific contract (prioritized by path match)
+  order-shipped/
+    schema.json        # JSON Schema fallback
+```
+
+**Topic naming**: The `postman:project-name` tag on the SNS topic is used as the service name. If no tag is set, the topic name from the ARN is used as a fallback.
+
+**SSM integration for SNS**: When repo-local contracts are not found, the action checks SSM Parameter Store at `/postman/specs/{service-name}/content`. Matching is fuzzy: `.fifo` suffixes are stripped and camelCase names are normalized to kebab-case. Only `content` entries are used (not URL entries). Example SSM registration:
+
+```bash
+aws ssm put-parameter \
+  --name /postman/specs/order-events/content \
+  --type String \
+  --overwrite \
+  --value '{"asyncapi":"2.6.0","info":{"title":"Order Events"},"channels":{}}'
+
+aws ssm put-parameter \
+  --name /postman/specs/order-events/format \
+  --type String \
+  --overwrite \
+  --value asyncapi-json
+```
 
 ### GitLab / other CI
 
@@ -280,23 +336,26 @@ node dist/cli.cjs \
 
 CloudFormation / SAM:
 - `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`
-- Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`
+- Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`, `AWS::SNS::Topic`, `AWS::SNS::Subscription`
+- SNS-specific patterns: `Type: SNS` (SAM event bindings), `arn:aws:sns:` (topic ARN references)
 
 Terraform:
 - All `.tf` files (searched up to 4 directories deep, max 50 files)
-- Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`
+- Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`, `aws_sns_topic`, `aws_sns_topic_subscription`
 
 CDK:
 - Detected when `cdk.json` is present; scans TypeScript sources for AWS constructs
 - Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`
+- SNS-specific patterns: `new sns.Topic(`, `sns.Topic.fromTopicArn(`, `SnsEventSource`
 
 Pulumi:
 - Detected when `Pulumi.yaml` is present; scans `.ts`, `.py`, and `.go` source files
-- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`
+- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`, `aws.sns.Topic`
 
 Additional signal sources:
 - `.graphql` / `.gql` files in common locations (`schema.graphql`, `graphql/schema.graphql`, `src/schema.graphql`) for AppSync hints
 - `.github/workflows/deploy.yml`, `.gitlab-ci.yml`, and `README.md` are scanned for embedded gateway IDs
+- When SNS IaC signals are detected, the action also scans nearby directories for AsyncAPI and JSON Schema files as contract evidence
 
 **Gateway ID extraction**: The action extracts API Gateway IDs from repo files using these patterns:
 - Execute-API URLs: `https://{id}.execute-api.{region}.amazonaws.com`
@@ -331,6 +390,30 @@ When multiple API Gateway candidates are found, the action scores each one to pi
 | Inferred gateway ID match | +25 | Candidate ID was extracted from repo IaC files or deploy workflows |
 
 A candidate must reach a confidence score of **40 or higher** to be auto-resolved. Below that threshold the action returns `manual-review` status. When two candidates tie, the result is marked ambiguous.
+
+### SNS candidate scoring
+
+SNS topics are scored separately from API Gateway candidates. When multiple topics exist, each is scored against service name hints (from `expected-service-name`, repo slug, or repo URL):
+
+| Signal | Points | Description |
+| --- | --- | --- |
+| Exact name match | +60 | Topic name matches a service hint exactly (after FIFO suffix stripping) |
+| `postman:project-name` tag match | +50 | The `postman:project-name` tag value matches a service hint exactly |
+| Partial name match | +40 | Topic name contains the service hint or vice versa |
+| Tag value contains hint | +20 | Any tag value on the topic contains the service hint |
+
+Topics are sorted by score (highest first). On a tie, topics are sorted alphabetically. The resolved confidence is the maximum of 60 or the candidate score. FIFO topics (`.fifo` suffix) are handled transparently -- the suffix is stripped during name normalization for scoring.
+
+The `max-candidates` input also applies to SNS: if more topics exist than the cap, only the top-scored topics are tried.
+
+### SNS edge cases
+
+- **FIFO topics**: The `.fifo` suffix is stripped during topic naming and SSM matching but preserved in the topic ARN.
+- **Path traversal protection**: Topic names are validated against the repo root before writing output files. Names that would escape the workspace are rejected.
+- **Attribute/tag fetch failures**: If `sns:GetTopicAttributes` or `sns:ListTagsForResource` fails for a specific topic, the topic still becomes a candidate with empty attributes/tags.
+- **File scan limits**: Contract file scanning uses the same limits as IaC scanning: maximum 50 files, maximum directory depth of 4.
+- **Probe failure**: If the SNS probe fails, it is non-fatal in both modes. In `resolve-one`, the action falls back to `manual-review`. In `discover-many`, the SNS provider is silently skipped.
+- **Dry run**: SNS respects `dry-run` -- topics are listed and contracts are resolved but no files are written to disk.
 
 ### Service name resolution
 
