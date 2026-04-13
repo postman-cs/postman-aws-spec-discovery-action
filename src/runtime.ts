@@ -105,6 +105,14 @@ export interface ExecutionResult {
 
 export interface ResolutionDependencies {
   snsProvider?: SnsResolutionProvider;
+  createSnsProvider?: (dependencies: {
+    fetchSpecFromUrl: typeof fetchSpecFromUrl;
+    catalogApis: Awaited<ReturnType<typeof detectCatalogApis>>;
+    eventBridgeClient?: unknown;
+    codeDerivedResolver?: unknown;
+  }) => SnsResolutionProvider;
+  eventBridgeClient?: unknown;
+  codeDerivedResolver?: unknown;
 }
 
 interface SnsResolutionProvider {
@@ -686,9 +694,17 @@ export async function runResolution(
   const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
   if (shouldAttemptSns) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const snsRuntimeDependencies = {
+      fetchSpecFromUrl,
+      catalogApis,
+      eventBridgeClient: resolutionDependencies.eventBridgeClient,
+      codeDerivedResolver: resolutionDependencies.codeDerivedResolver
+    };
     const snsProvider =
       resolutionDependencies.snsProvider ??
-      new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
+      (resolutionDependencies.createSnsProvider
+        ? resolutionDependencies.createSnsProvider(snsRuntimeDependencies)
+        : new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), snsRuntimeDependencies));
 
     let snsCandidates: SpecCandidate[] = [];
     try {
@@ -730,6 +746,7 @@ export async function runResolution(
           confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
           origin: contract.origin,
           specFormat: format,
+          variantCount: contract.variantCount,
           evidence: [...snsManualReviewEvidence, ...candidate.evidence, ...contract.evidence]
         };
         resolvedSnsExport = contract.result;
@@ -816,7 +833,8 @@ export async function runResolution(
     return {
       ...selectedSource,
       specPath: relativeProviderPath,
-      metadataPath: relativeMetadataPath
+      metadataPath: relativeMetadataPath,
+      variantCount: selectedSource.variantCount
     };
   }
 

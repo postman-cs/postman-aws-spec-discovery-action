@@ -1289,6 +1289,78 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract enforces deterministic 7-level precedence chain', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const ssmState: { content?: string; url?: string } = {};
+      const fetchMock = vi.fn(async (url: string) => {
+        if (url.includes('ssm')) {
+          return { content: '{"asyncapi":"2.6.0","channels":{}}', contentType: 'application/json' };
+        }
+        if (url.includes('catalog')) {
+          return { content: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', contentType: 'application/json' };
+        }
+        throw new Error(`unexpected url ${url}`);
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockImplementation(async () => {
+            const entries: Array<{ serviceName: string; key: string; value: string }> = [];
+            if (ssmState.content) {
+              entries.push({ serviceName: 'orders-topic', key: 'content', value: ssmState.content });
+            }
+            if (ssmState.url) {
+              entries.push({ serviceName: 'orders-topic', key: 'url', value: ssmState.url });
+            }
+            return entries;
+          })
+        }),
+        fetchMock as never
+      );
+
+      const resolveOrigin = async (): Promise<string> => {
+        const result = await provider.resolveContract(createSnsCandidate());
+        return result.resolved ? result.origin : 'manual-review';
+      };
+
+      await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
+      await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        ['apiVersion: backstage.io/v1alpha1', 'kind: API', 'metadata:', '  name: orders-api', 'spec:', '  definition: https://example.com/catalog.asyncapi.json'].join('\n'),
+        'utf8'
+      );
+      ssmState.content = '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}';
+      ssmState.url = 'https://example.com/ssm.asyncapi.json';
+
+      expect(await resolveOrigin()).toBe('repo-asyncapi');
+
+      await rm(path.join(tempDir, 'asyncapi.yaml'), { force: true });
+      expect(await resolveOrigin()).toBe('repo-json-schema');
+
+      await rm(path.join(tempDir, 'schema.json'), { force: true });
+      expect(await resolveOrigin()).toBe('generated-asyncapi');
+
+      await rm(path.join(tempDir, 'spec'), { recursive: true, force: true });
+      expect(await resolveOrigin()).toBe('ssm-content');
+
+      ssmState.content = undefined;
+      expect(await resolveOrigin()).toBe('ssm-url');
+
+      ssmState.url = undefined;
+      expect(await resolveOrigin()).toBe('catalog-url');
+
+      await rm(path.join(tempDir, 'catalog-info.yaml'), { force: true });
+      expect(await resolveOrigin()).toBe('manual-review');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract does not fetch remote contracts when no catalog or registry URL matches', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {

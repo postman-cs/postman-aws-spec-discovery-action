@@ -6,7 +6,7 @@ import type { SpecFormat } from '../../contracts.js';
 import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
 import type { SnsSpecClient } from '../aws/sns-client.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
-import { detectCatalogApis } from '../repo/catalog.js';
+import { detectCatalogApis, type CatalogApiRef } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
@@ -65,6 +65,13 @@ interface SnsResolutionMetadata {
   };
 }
 
+interface SnsProviderDependencies {
+  fetchSpecFromUrl?: typeof fetchSpecFromUrl;
+  catalogApis?: CatalogApiRef[];
+  eventBridgeClient?: unknown;
+  codeDerivedResolver?: unknown;
+}
+
 export type SnsContractOrigin =
   | 'repo-asyncapi'
   | 'repo-json-schema'
@@ -80,6 +87,7 @@ export type SnsContractResult =
   | {
       resolved: true;
       origin: SnsContractOrigin;
+      variantCount?: number;
       result: SpecExportResult;
       evidence: string[];
       metadata: SnsResolutionMetadata;
@@ -254,13 +262,17 @@ function extractRegistryUrls(node: unknown, keyTrail: string[] = []): Array<{ se
   return results;
 }
 
-async function collectCatalogUrlCandidates(repoRoot: string, hints: Set<string>): Promise<RemoteUrlCandidate[]> {
-  const catalogApis = await detectCatalogApis(repoRoot);
-  if (!catalogApis || catalogApis.length === 0) {
+async function collectCatalogUrlCandidates(
+  repoRoot: string,
+  hints: Set<string>,
+  catalogApis?: CatalogApiRef[]
+): Promise<RemoteUrlCandidate[]> {
+  const detectedCatalogApis = catalogApis ?? (await detectCatalogApis(repoRoot));
+  if (!detectedCatalogApis || detectedCatalogApis.length === 0) {
     return [];
   }
 
-  return catalogApis
+  return detectedCatalogApis
     .filter((entry): entry is { name: string; specUrl: string } => Boolean(entry.specUrl && isHttpUrl(entry.specUrl)))
     .map((entry) => ({
       url: entry.specUrl,
@@ -580,13 +592,27 @@ async function resolveJsonSchemaContract(
 
 export class SnsProvider implements SpecProvider {
   public readonly type = 'sns' as const;
+  private readonly fetchRemoteSpec: typeof fetchSpecFromUrl;
+  private readonly preloadedCatalogApis?: CatalogApiRef[];
+  private readonly eventBridgeClient?: unknown;
+  private readonly codeDerivedResolver?: unknown;
 
   public constructor(
     private readonly client: SnsSpecClient,
     private readonly repoRoot: string = '.',
     private readonly ssmClient?: SsmSpecClient,
-    private readonly fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl
-  ) {}
+    dependencies: typeof fetchSpecFromUrl | SnsProviderDependencies = fetchSpecFromUrl
+  ) {
+    if (typeof dependencies === 'function') {
+      this.fetchRemoteSpec = dependencies;
+      return;
+    }
+
+    this.fetchRemoteSpec = dependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+    this.preloadedCatalogApis = dependencies.catalogApis;
+    this.eventBridgeClient = dependencies.eventBridgeClient;
+    this.codeDerivedResolver = dependencies.codeDerivedResolver;
+  }
 
   public async probe(): Promise<boolean> {
     return this.client.probe();
@@ -668,6 +694,8 @@ export class SnsProvider implements SpecProvider {
     const topicName = topicNameFromArn(topicArn);
     const affinityHints = collectHints(topicName, candidate.name);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
+    void this.eventBridgeClient;
+    void this.codeDerivedResolver;
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, 'repo-local');
@@ -775,7 +803,7 @@ export class SnsProvider implements SpecProvider {
 
     if (!resolvedExport) {
       const remoteUrlCandidates = [
-        ...(await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints)),
+        ...(await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints, this.preloadedCatalogApis)),
         ...(await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints))
       ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
 
