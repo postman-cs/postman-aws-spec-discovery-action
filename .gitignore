@@ -39,3 +39,5 @@ temp/
 .nuxt/
 .svelte-kit/
 .eslintcache
+.omx/
+docs/PROPOSED_SNS_RESOLUTION_MODEL.md
