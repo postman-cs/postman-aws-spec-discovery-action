@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  GetSubscriptionAttributesCommand,
   GetTopicAttributesCommand,
+  ListSubscriptionsByTopicCommand,
   ListTagsForResourceCommand,
   ListTopicsCommand
 } from '@aws-sdk/client-sns';
@@ -107,6 +109,8 @@ function createSnsClientStub(overrides: Partial<SnsSpecClient> = {}): SnsSpecCli
     listTopics: vi.fn().mockResolvedValue([]),
     getTopicAttributes: vi.fn().mockResolvedValue({}),
     listTagsForResource: vi.fn().mockResolvedValue({}),
+    listSubscriptionsByTopic: vi.fn().mockResolvedValue([]),
+    getSubscriptionAttributes: vi.fn().mockResolvedValue({}),
     ...overrides
   };
 }
@@ -981,5 +985,93 @@ describe('SnsSdkClient', () => {
     expect((snsSendMock.mock.calls[0]?.[0] as ListTagsForResourceCommand).input).toEqual({
       ResourceArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic'
     });
+  });
+
+  it('listSubscriptionsByTopic returns subscriptions across pages', async () => {
+    snsSendMock.mockReset();
+    snsSendMock
+      .mockResolvedValueOnce({
+        Subscriptions: [
+          {
+            SubscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1',
+            Protocol: 'sqs',
+            Endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+            TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+            Owner: '123456789012'
+          }
+        ],
+        NextToken: 'next-1'
+      })
+      .mockResolvedValueOnce({
+        Subscriptions: [
+          {
+            SubscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2',
+            Protocol: 'lambda',
+            Endpoint: 'arn:aws:lambda:us-east-1:123456789012:function:orders-handler',
+            TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+            Owner: '123456789012'
+          }
+        ]
+      });
+    const client = new SnsSdkClient('us-east-1');
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+
+    await expect(client.listSubscriptionsByTopic(topicArn)).resolves.toEqual([
+      {
+        subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1',
+        protocol: 'sqs',
+        endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+        topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+        owner: '123456789012'
+      },
+      {
+        subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2',
+        protocol: 'lambda',
+        endpoint: 'arn:aws:lambda:us-east-1:123456789012:function:orders-handler',
+        topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+        owner: '123456789012'
+      }
+    ]);
+    expect(snsSendMock).toHaveBeenCalledTimes(2);
+    expect((snsSendMock.mock.calls[0]?.[0] as ListSubscriptionsByTopicCommand).input).toEqual({
+      TopicArn: topicArn,
+      NextToken: undefined
+    });
+    expect((snsSendMock.mock.calls[1]?.[0] as ListSubscriptionsByTopicCommand).input).toEqual({
+      TopicArn: topicArn,
+      NextToken: 'next-1'
+    });
+  });
+
+  it('getSubscriptionAttributes returns full attributes map', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValueOnce({
+      Attributes: {
+        RawMessageDelivery: 'true',
+        FilterPolicyScope: 'MessageBody'
+      }
+    });
+    const client = new SnsSdkClient('us-east-1');
+    const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';
+
+    await expect(client.getSubscriptionAttributes(subscriptionArn)).resolves.toEqual({
+      RawMessageDelivery: 'true',
+      FilterPolicyScope: 'MessageBody'
+    });
+    expect((snsSendMock.mock.calls[0]?.[0] as GetSubscriptionAttributesCommand).input).toEqual({
+      SubscriptionArn: subscriptionArn
+    });
+  });
+
+  it('subscription reads handle AccessDeniedException gracefully', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
+    snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
+    const client = new SnsSdkClient('us-east-1');
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+    const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';
+
+    await expect(client.listSubscriptionsByTopic(topicArn)).resolves.toEqual([]);
+    await expect(client.getSubscriptionAttributes(subscriptionArn)).resolves.toEqual({});
   });
 });

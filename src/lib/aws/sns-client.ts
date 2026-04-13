@@ -1,6 +1,8 @@
 import {
   SNSClient,
+  GetSubscriptionAttributesCommand,
   GetTopicAttributesCommand,
+  ListSubscriptionsByTopicCommand,
   ListTagsForResourceCommand,
   ListTopicsCommand
 } from '@aws-sdk/client-sns';
@@ -16,6 +18,16 @@ export interface SnsSpecClient {
   listTopics(): Promise<SnsTopicSummary[]>;
   getTopicAttributes(topicArn: string): Promise<Record<string, string>>;
   listTagsForResource(topicArn: string): Promise<Record<string, string>>;
+  listSubscriptionsByTopic(topicArn: string): Promise<SnsSubscriptionSummary[]>;
+  getSubscriptionAttributes(subscriptionArn: string): Promise<Record<string, string>>;
+}
+
+export interface SnsSubscriptionSummary {
+  subscriptionArn: string;
+  protocol?: string;
+  endpoint?: string;
+  topicArn?: string;
+  owner?: string;
 }
 
 function topicNameFromArn(topicArn: string): string {
@@ -78,5 +90,45 @@ export class SnsSdkClient implements SnsSpecClient {
       tags[tag.Key] = tag.Value;
     }
     return tags;
+  }
+
+  public async listSubscriptionsByTopic(topicArn: string): Promise<SnsSubscriptionSummary[]> {
+    const subscriptions: SnsSubscriptionSummary[] = [];
+    let nextToken: string | undefined;
+    try {
+      do {
+        const response = await this.client.send(new ListSubscriptionsByTopicCommand({ TopicArn: topicArn, NextToken: nextToken }));
+        for (const subscription of response.Subscriptions ?? []) {
+          const subscriptionArn = subscription.SubscriptionArn;
+          if (!subscriptionArn) continue;
+          subscriptions.push({
+            subscriptionArn,
+            protocol: subscription.Protocol,
+            endpoint: subscription.Endpoint,
+            topicArn: subscription.TopicArn,
+            owner: subscription.Owner
+          });
+        }
+        nextToken = response.NextToken;
+      } while (nextToken);
+      return subscriptions;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('AccessDeniedException')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  public async getSubscriptionAttributes(subscriptionArn: string): Promise<Record<string, string>> {
+    try {
+      const response = await this.client.send(new GetSubscriptionAttributesCommand({ SubscriptionArn: subscriptionArn }));
+      return response.Attributes ?? {};
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('AccessDeniedException')) {
+        return {};
+      }
+      throw error;
+    }
   }
 }
