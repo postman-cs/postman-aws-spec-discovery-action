@@ -72,6 +72,9 @@ describe('action contract', () => {
     expect(actionOutputs['source-type'].description).toContain('sns-contract');
     expect(actionOutputs['spec-format'].description).toContain('asyncapi-yaml');
     expect(actionOutputs['spec-format'].description).toContain('asyncapi-json');
+    expect(actionOutputs['contract-origin'].description).toContain('ssm-content');
+    expect(actionOutputs['contract-metadata-path'].description.length).toBeGreaterThan(0);
+    expect(actionOutputs['variant-count'].description.length).toBeGreaterThan(0);
   });
 
   it('typechecks discovered service and resolution result for sns', () => {
@@ -82,7 +85,10 @@ describe('action contract', () => {
       gatewayType: 'SNS',
       stage: '',
       providerType: 'sns',
-      specFormat: 'asyncapi-yaml'
+      specFormat: 'asyncapi-yaml',
+      contractOrigin: 'repo-asyncapi',
+      metadataPath: 'discovered-specs/orders-topic/sns-resolution-metadata.json',
+      variantCount: 2
     } satisfies DiscoveredService;
 
     const resolution = {
@@ -94,6 +100,9 @@ describe('action contract', () => {
       gatewayType: 'SNS',
       providerType: 'sns',
       specFormat: 'asyncapi-yaml',
+      contractOrigin: 'repo-asyncapi',
+      metadataPath: 'discovered-specs/orders-topic/sns-resolution-metadata.json',
+      variantCount: 2,
       evidence: ['Resolved SNS contract']
     } satisfies ResolutionResult;
 

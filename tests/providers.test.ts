@@ -690,7 +690,7 @@ describe('SnsProvider', () => {
     }
   });
 
-  it('resolveContract returns ssm origin for explicit and auto-detected formats', async () => {
+  it('resolveContract returns ssm-content origin for explicit and auto-detected formats', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
       const explicit = new SnsProvider(
@@ -727,9 +727,9 @@ describe('SnsProvider', () => {
       const explicitSchemaResult = await explicitSchema.resolveContract(createSnsCandidate());
       const autoResult = await auto.resolveContract(createSnsCandidate());
 
-      expect(explicitResult).toMatchObject({ resolved: true, origin: 'ssm' });
-      expect(explicitSchemaResult).toMatchObject({ resolved: true, origin: 'ssm' });
-      expect(autoResult).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(explicitResult).toMatchObject({ resolved: true, origin: 'ssm-content' });
+      expect(explicitSchemaResult).toMatchObject({ resolved: true, origin: 'ssm-content' });
+      expect(autoResult).toMatchObject({ resolved: true, origin: 'ssm-content' });
       if (explicitResult.resolved) expect(explicitResult.result.format).toBe('asyncapi-json');
       if (explicitSchemaResult.resolved) expect(explicitSchemaResult.result.format).toBe('json-schema');
       if (autoResult.resolved) expect(autoResult.result.format).toBe('asyncapi-yaml');
@@ -778,7 +778,7 @@ describe('SnsProvider', () => {
       );
 
       const result = await provider.resolveContract(createSnsCandidate());
-      expect(result).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm-content' });
       expect(result.evidence.some((line) => line.includes('Skipped malformed AsyncAPI file'))).toBe(true);
       expect(result.evidence.some((line) => line.includes('Skipped malformed JSON Schema file'))).toBe(true);
     } finally {
@@ -832,7 +832,7 @@ describe('SnsProvider', () => {
         })
       );
 
-      expect(result).toMatchObject({ resolved: true, origin: 'ssm' });
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm-content' });
       expect(result.evidence.some((line) => line.includes('/postman/specs/orders-events-topic/'))).toBe(true);
     } finally {
       await rm(tempDir, { recursive: true, force: true });

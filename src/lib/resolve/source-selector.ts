@@ -31,6 +31,10 @@ function isRepoLocalSnsOrigin(origin: SnsResolvedCandidate['origin']): boolean {
   return origin === 'repo-asyncapi' || origin === 'repo-json-schema';
 }
 
+function toContractOrigin(origin: SnsResolvedCandidate['origin']) {
+  return origin && origin !== 'unknown' ? origin : undefined;
+}
+
 function manualReviewEvidence(input: SourceSelectionInput): string[] {
   const evidence = [...(input.candidate?.evidence ?? []), ...(input.snsCandidate?.evidence ?? [])];
   return evidence.length > 0 ? evidence : ['No matching source found'];
@@ -69,6 +73,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
         gatewayType: 'SNS',
         providerType: 'sns',
         specFormat: resolvedSns.specFormat,
+        contractOrigin: toContractOrigin(resolvedSns.origin),
         evidence: resolvedSns.evidence
       };
     }
@@ -95,6 +100,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       gatewayType: 'SNS',
       providerType: 'sns',
       specFormat: resolvedSns.specFormat,
+      contractOrigin: toContractOrigin(resolvedSns.origin),
       evidence: resolvedSns.evidence
     };
   }
@@ -122,6 +128,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       gatewayType: 'SNS',
       providerType: 'sns',
       specFormat: resolvedSns.specFormat,
+      contractOrigin: toContractOrigin(resolvedSns.origin),
       evidence: resolvedSns.evidence
     };
   }

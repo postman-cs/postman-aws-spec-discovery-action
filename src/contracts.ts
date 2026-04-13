@@ -1,3 +1,5 @@
+import type { SnsContractOrigin } from './lib/providers/sns.js';
+
 export interface ActionInputContract {
   description: string;
   required: boolean;
@@ -72,6 +74,9 @@ export interface ResolutionResult {
   gatewayType?: GatewayType;
   providerType?: ProviderType;
   specFormat?: SpecFormat;
+  contractOrigin?: SnsContractOrigin;
+  metadataPath?: string;
+  variantCount?: number;
   stage?: string;
   evidence: string[];
 }
@@ -84,6 +89,9 @@ export interface DiscoveredService {
   stage: string;
   providerType?: ProviderType;
   specFormat?: SpecFormat;
+  contractOrigin?: SnsContractOrigin;
+  metadataPath?: string;
+  variantCount?: number;
 }
 
 export const actionContract: AwsSpecDiscoveryActionContract = {
@@ -154,6 +162,16 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     'spec-format': {
       description:
         'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf.'
+    },
+    'contract-origin': {
+      description:
+        'SNS contract provenance when available: repo-asyncapi, repo-json-schema, generated-asyncapi, ssm-content, ssm-url, catalog-url, eventbridge-derived, code-derived, or manual-review.'
+    },
+    'contract-metadata-path': {
+      description: 'Path to SNS resolution metadata sidecar when available.'
+    },
+    'variant-count': {
+      description: 'Number of SNS delivery variants discovered when available.'
     }
   }
 };

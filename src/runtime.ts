@@ -941,7 +941,10 @@ export function buildExecutionOutputs(result: {
       'spec-path': '',
       'candidates-json': '',
       'provider-type': discovered.length > 0 ? (discovered[0]?.providerType ?? '') : '',
-      'spec-format': discovered.length > 0 ? (discovered[0]?.specFormat ?? '') : ''
+      'spec-format': discovered.length > 0 ? (discovered[0]?.specFormat ?? '') : '',
+      'contract-origin': '',
+      'contract-metadata-path': '',
+      'variant-count': ''
     };
   }
 
@@ -965,7 +968,10 @@ export function buildExecutionOutputs(result: {
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     'candidates-json': '',
     'provider-type': resolution.providerType ?? (resolution.sourceType === 'gateway-export' ? 'api-gateway' : ''),
-    'spec-format': resolution.specFormat ?? ''
+    'spec-format': resolution.specFormat ?? '',
+    'contract-origin': resolution.contractOrigin ?? '',
+    'contract-metadata-path': resolution.metadataPath ?? '',
+    'variant-count': resolution.variantCount !== undefined ? String(resolution.variantCount) : ''
   };
 }
 
