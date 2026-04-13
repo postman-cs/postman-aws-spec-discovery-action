@@ -96,19 +96,51 @@ You only need permissions for the providers you use. Providers you lack access t
 
 ## Inputs
 
+### Core inputs
+
 | Input | Required | Default | Notes |
 | --- | --- | --- | --- |
 | `aws-region` | yes | n/a | Region used for all AWS API calls |
+| `mode` | no | `resolve-one` | `resolve-one` resolves a single best spec; `discover-many` exports all discovered APIs across all providers |
 | `gateway-id` | no | `''` | Optional known API Gateway ID to bypass broad discovery |
-| `stage` | no | `''` | Optional stage override |
+| `stage` | no | `''` | Optional stage override (see [Stage auto-selection](#stage-auto-selection) for default behavior) |
 | `output-dir` | no | `discovered-specs` | Must resolve within `repo-root` |
 
-Everything else is auto-resolved:
-- Repo URL, slug, provider, ref, and SHA come from CI environment variables
-- Available providers are auto-detected via IAM permission probing
-- Repo signals (IaC files, schema files) inform provider selection
-- Preflight auth and permission checks run before discovery
-- Bounded discovery, retries, and timeouts use safe defaults
+### Resolution tuning inputs
+
+These inputs are optional and rarely needed. They are set via environment variables prefixed with `INPUT_` (for example `INPUT_EXPECTED_SERVICE_NAME`).
+
+| Input | Default | Notes |
+| --- | --- | --- |
+| `expected-service-name` | auto-detected | Explicit service name hint used for candidate scoring |
+| `expected-gateway-ids-json` | `[]` | JSON array of gateway IDs to look up directly (bypasses enumeration) |
+| `api-filter` | none | Regex filter applied to API names before scoring |
+| `service-mapping-json` | `{}` | JSON object mapping gateway IDs to service names |
+| `include-v2` | `true` | Include HTTP and WebSocket APIs (API Gateway v2) in discovery |
+| `max-candidates` | `50` | Soft cap on candidates before triggering progressive narrowing or truncation |
+| `dry-run` | `false` | Run resolution logic without writing spec files to disk |
+
+### Preflight and reliability inputs
+
+| Input | Default | Notes |
+| --- | --- | --- |
+| `preflight-checks` | `true` | Enable preflight STS identity and permission validation |
+| `preflight-permission-probe` | `true` | Enable the IAM permission probe specifically (requires `preflight-checks`) |
+| `request-timeout-ms` | `30000` | Per-request timeout in milliseconds for AWS SDK calls |
+| `max-attempts` | `3` | AWS SDK retry count for transient failures |
+
+### Repo context overrides
+
+These are auto-detected from CI environment variables. Override them only when auto-detection is unavailable or incorrect.
+
+| Input | Notes |
+| --- | --- |
+| `repo-root` | Workspace root directory (auto-detected from `GITHUB_WORKSPACE`, `CI_PROJECT_DIR`, `BITBUCKET_CLONE_DIR`, or `BUILD_SOURCESDIRECTORY`) |
+| `repo-url` | Repository HTTPS URL |
+| `repo-slug` | Repository slug (`org/repo-name`) |
+| `git-provider` | `github`, `gitlab`, `bitbucket`, or `azure-devops` |
+| `ref` | Branch or tag ref |
+| `sha` | Commit SHA |
 
 ## Outputs
 
@@ -211,15 +243,95 @@ node dist/cli.cjs \
 4. **Naming heuristic** -- match the slugified repo name against API names
 5. **Full enumeration** -- only as a last resort, with soft truncation instead of hard failure
 
-**Repository signals**: The action scans IaC files for references to AWS services:
-- `template.yaml`, `serverless.yml`, `cdk.json` for CloudFormation resource types
-- `.graphql` / `.gql` files for AppSync hints
-- `AWS::Events::EventBus` or `SchemaRegistry` references for EventBridge
-- `AWS::Glue::Schema` references for Glue
+**Repository signals**: The action scans IaC files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, and Pulumi.
 
-**Existing specs**: If the repo already has `openapi.yaml`, `swagger.json`, `schema.graphql`, or similar files, the action uses them directly without calling AWS.
+CloudFormation / SAM:
+- `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`, `cdk.json`
+- Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`
 
-**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` is present in the repo root with `kind: API` entities, the action uses a local `definition` path directly or fetches the referenced HTTPS URL automatically.
+Terraform:
+- All `.tf` files (searched up to 4 directories deep, max 50 files)
+- Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`
+
+Pulumi:
+- Detected when `Pulumi.yaml` is present; scans `.ts`, `.py`, and `.go` source files
+- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`
+
+Additional signal sources:
+- `.graphql` / `.gql` files in common locations (`schema.graphql`, `graphql/schema.graphql`, `src/schema.graphql`) for AppSync hints
+- `.github/workflows/deploy.yml`, `.gitlab-ci.yml`, and `README.md` are scanned for embedded gateway IDs
+
+**Gateway ID extraction**: The action extracts API Gateway IDs from repo files using these patterns:
+- Execute-API URLs: `https://{id}.execute-api.{region}.amazonaws.com`
+- CLI flags: `--rest-api-id {id}`, `--api-id {id}`
+- ARN paths: `restapis/{id}`
+- Environment variables: `REST_API_ID={id}`, `HTTP_API_ID={id}`, `API_GATEWAY_ID={id}`
+
+**Existing specs**: The action checks 22 specific file paths before calling AWS. If a valid OpenAPI or GraphQL spec is found at any of these locations, it is used directly:
+
+```
+openapi.yaml          openapi.yml          openapi.json
+swagger.yaml          swagger.yml          swagger.json
+spec/openapi.yaml     spec/openapi.yml     spec/openapi.json
+api/openapi.yaml      api/openapi.yml      api/openapi.json
+docs/openapi.yaml     docs/openapi.yml     docs/openapi.json
+schema.graphql        schema.gql
+graphql/schema.graphql    graphql/schema.gql
+api/schema.graphql    src/schema.graphql
+```
+
+Files are validated before use -- OpenAPI files must contain an `openapi` or `swagger` top-level key, and GraphQL files must contain a `type Query` or `schema {}` block.
+
+### Candidate scoring
+
+When multiple API Gateway candidates are found, the action scores each one to pick the best match:
+
+| Signal | Points | Description |
+| --- | --- | --- |
+| Explicit gateway ID match | +100 | Candidate ID appears in `gateway-id` or `expected-gateway-ids-json` |
+| Tag value matches service hint | +40 | Any tag value on the gateway contains the service name hint |
+| Gateway name matches service hint | +30 | The API name contains the inferred or explicit service name |
+| Inferred gateway ID match | +25 | Candidate ID was extracted from repo IaC files or deploy workflows |
+
+A candidate must reach a confidence score of **40 or higher** to be auto-resolved. Below that threshold the action returns `manual-review` status. When two candidates tie, the result is marked ambiguous.
+
+### Service name resolution
+
+The resolved service name follows this priority:
+
+1. `postman:project-name` tag on the AWS resource
+2. `Name` tag on the AWS resource
+3. `service-mapping-json` entry for the gateway ID (if provided)
+4. API Gateway name
+
+### Stage auto-selection
+
+When no explicit `stage` input is provided, the action selects a stage automatically:
+
+1. If only one stage is deployed, it is used
+2. If multiple stages exist, the first match from this priority list is selected:
+   `prod` > `production` > `$default` > `main` > `staging` > `stage` > `dev` > `development`
+3. If no match is found, the result is `manual-review` with the available stages listed in evidence
+4. For HTTP APIs with no deployed stages, the latest API configuration is exported without a stage
+
+**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` (or `catalog-info.yml`) is present in the repo root with `kind: API` entities, the action resolves spec references automatically. Both simple string definitions and `$text` references are supported. Multi-document YAML files with multiple `kind: API` entities are parsed; in `resolve-one` mode the first API's spec reference is used.
+
+Supported definition formats:
+
+```yaml
+# Simple string -- local path
+spec:
+  definition: ./openapi.yaml
+
+# Simple string -- remote URL
+spec:
+  definition: https://payments.example.com/openapi.yaml
+
+# $text reference -- local path or remote URL
+spec:
+  definition:
+    $text: https://payments.example.com/openapi.yaml
+```
 
 Example `catalog-info.yaml` using a remote OpenAPI document:
 
@@ -269,7 +381,18 @@ aws ssm put-parameter \
 
 Once those parameters exist, the action fetches the spec automatically during discovery. No repo changes or action inputs are needed.
 
-If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversized response), the action preserves the registration as a pointer artifact for manual follow-up instead of silently accepting bad content.
+The SSM provider also recognizes `spec-url`, `spec-content`, and `spec-format` as alternative parameter key suffixes alongside `url`, `content`, and `format`.
+
+If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversized response), the action writes a `spec-pointer.json` artifact for manual follow-up instead of silently accepting bad content:
+
+```json
+{
+  "specUrl": "https://api.example.com/openapi.json",
+  "serviceName": "payments-api",
+  "registeredVia": "ssm-parameter-store",
+  "fetchError": "HTTP 503 fetching https://api.example.com/openapi.json"
+}
+```
 
 ### Tag convention
 
@@ -280,6 +403,19 @@ postman:repo = org/repo-name
 ```
 
 The action checks this tag via the Resource Groups Tagging API before enumerating all APIs.
+
+### CI provider auto-detection
+
+The action auto-detects repository context from CI environment variables. Manual overrides are available via repo context inputs (see [Repo context overrides](#repo-context-overrides)).
+
+| CI platform | Provider | Repo URL source | Slug source | Ref source | SHA source |
+| --- | --- | --- | --- | --- | --- |
+| GitHub Actions | `github` | `GITHUB_SERVER_URL` + `GITHUB_REPOSITORY` | `GITHUB_REPOSITORY` | `GITHUB_REF_NAME` | `GITHUB_SHA` |
+| GitLab CI | `gitlab` | `CI_PROJECT_URL` | `CI_PROJECT_PATH` | `CI_COMMIT_REF_NAME` | `CI_COMMIT_SHA` |
+| Bitbucket Pipelines | `bitbucket` | `BITBUCKET_GIT_HTTP_ORIGIN` | `BITBUCKET_WORKSPACE`/`BITBUCKET_REPO_SLUG` | `BITBUCKET_BRANCH` | `BITBUCKET_COMMIT` |
+| Azure DevOps | `azure-devops` | `BUILD_REPOSITORY_URI` | `BUILD_REPOSITORY_NAME` | `BUILD_SOURCEBRANCHNAME` | `BUILD_SOURCEVERSION` |
+
+SSH-style repo URLs (for example `git@github.com:org/repo.git`) are automatically normalized to HTTPS.
 
 ## Troubleshooting
 
