@@ -36,6 +36,7 @@ import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 import type { SnsContractResolutionContext, SnsContractResult } from './lib/providers/sns.js';
+import type { ResolveCodeDerivedContract } from './lib/providers/sns-code-derived.js';
 import type { SnsResolvedCandidate } from './lib/resolve/source-selector.js';
 
 export interface InputReaderLike {
@@ -110,10 +111,10 @@ export interface ResolutionDependencies {
     fetchSpecFromUrl: typeof fetchSpecFromUrl;
     catalogApis: Awaited<ReturnType<typeof detectCatalogApis>>;
     eventBridgeClient?: EventBridgeSchemasSpecClient;
-    codeDerivedResolver?: unknown;
+    codeDerivedResolver?: ResolveCodeDerivedContract;
   }) => SnsResolutionProvider;
   eventBridgeClient?: EventBridgeSchemasSpecClient;
-  codeDerivedResolver?: unknown;
+  codeDerivedResolver?: ResolveCodeDerivedContract;
 }
 
 interface SnsResolutionProvider {
