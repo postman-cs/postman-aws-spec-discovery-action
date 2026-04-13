@@ -1440,6 +1440,39 @@ describe('runAction', () => {
     expect(outputs['variant-count']).toBe('2');
   });
 
+  it.each([
+    'repo-asyncapi',
+    'repo-json-schema',
+    'generated-asyncapi',
+    'ssm-content',
+    'ssm-url',
+    'catalog-url',
+    'eventbridge-derived',
+    'code-derived'
+  ] as const)('keeps existing consumer fields stable for sns origin %s', (origin) => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: {
+        status: 'resolved',
+        sourceType: 'sns-contract',
+        serviceName: 'orders-topic',
+        confidence: 80,
+        specPath: `discovered-specs/orders-topic/${origin === 'repo-asyncapi' ? 'asyncapi.yaml' : 'index.json'}`,
+        gatewayId: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+        gatewayType: 'SNS',
+        providerType: 'sns',
+        specFormat: origin === 'repo-asyncapi' ? 'asyncapi-yaml' : 'json-schema',
+        contractOrigin: origin,
+        evidence: ['resolved']
+      }
+    });
+
+    expect(outputs['source-type']).toBe('sns-contract');
+    expect(outputs['provider-type']).toBe('sns');
+    expect(outputs['spec-path']).toContain('discovered-specs/orders-topic/');
+  });
+
   it('marks discover-many unresolved on export failures by default', async () => {
     const previousMode = process.env.INPUT_MODE;
     process.env.INPUT_MODE = 'discover-many';

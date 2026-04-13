@@ -1232,7 +1232,7 @@ var require_util = __commonJS({
     var net = require("node:net");
     var { Blob: Blob2 } = require("node:buffer");
     var nodeUtil = require("node:util");
-    var { stringify } = require("node:querystring");
+    var { stringify: stringify2 } = require("node:querystring");
     var { EventEmitter: EE } = require("node:events");
     var { InvalidArgumentError } = require_errors();
     var { headerNameLowerCasedRecord } = require_constants();
@@ -1292,7 +1292,7 @@ var require_util = __commonJS({
       if (url.includes("?") || url.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify(queryParams);
+      const stringified = stringify2(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -1337,14 +1337,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path7 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path8 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path7 && path7[0] !== "/") {
-          path7 = `/${path7}`;
+        if (path8 && path8[0] !== "/") {
+          path8 = `/${path8}`;
         }
-        return new URL(`${origin}${path7}`);
+        return new URL(`${origin}${path8}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1795,39 +1795,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path7, origin }
+          request: { method, path: path8, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path7);
+        debuglog("sending request to %s %s/%s", method, origin, path8);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path7, origin },
+          request: { method, path: path8, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path7,
+          path8,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path7, origin }
+          request: { method, path: path8, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path7);
+        debuglog("trailers received from %s %s/%s", method, origin, path8);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path7, origin },
+          request: { method, path: path8, origin },
           error: error2
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path7,
+          path8,
           error2.message
         );
       });
@@ -1876,9 +1876,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path7, origin }
+            request: { method, path: path8, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path7);
+          debuglog("sending request to %s %s/%s", method, origin, path8);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1941,7 +1941,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request2 = class {
       constructor(origin, {
-        path: path7,
+        path: path8,
         method,
         body,
         headers,
@@ -1956,11 +1956,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler) {
-        if (typeof path7 !== "string") {
+        if (typeof path8 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path7[0] !== "/" && !(path7.startsWith("http://") || path7.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path8[0] !== "/" && !(path8.startsWith("http://") || path8.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path7)) {
+        } else if (invalidPathRegex.test(path8)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -2026,7 +2026,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path7, query) : path7;
+        this.path = query ? buildURL(path8, query) : path8;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6545,7 +6545,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request) {
-      const { method, path: path7, host, upgrade, blocking, reset } = request;
+      const { method, path: path8, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util.isFormDataLike(body)) {
@@ -6611,7 +6611,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path7} HTTP/1.1\r
+      let header = `${method} ${path8} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -7137,7 +7137,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
-      const { method, path: path7, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { method, path: path8, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
         util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
@@ -7204,7 +7204,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path7;
+      headers[HTTP2_HEADER_PATH] = path8;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7557,9 +7557,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path7 = search ? `${pathname}${search}` : pathname;
+        const path8 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path7;
+        this.opts.path = path8;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8793,10 +8793,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path7 = "/",
+          path: path8 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path7;
+        opts.path = origin + path8;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -10717,20 +10717,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path7) {
-      if (typeof path7 !== "string") {
-        return path7;
+    function safeUrl(path8) {
+      if (typeof path8 !== "string") {
+        return path8;
       }
-      const pathSegments = path7.split("?");
+      const pathSegments = path8.split("?");
       if (pathSegments.length !== 2) {
-        return path7;
+        return path8;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path7, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path7);
+    function matchKey(mockDispatch2, { path: path8, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path8);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10752,7 +10752,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath2 = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path7 }) => matchValue(safeUrl(path7), resolvedPath2));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path8 }) => matchValue(safeUrl(path8), resolvedPath2));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath2}'`);
       }
@@ -10790,9 +10790,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path7, method, body, headers, query } = opts;
+      const { path: path8, method, body, headers, query } = opts;
       return {
-        path: path7,
+        path: path8,
         method,
         body,
         headers,
@@ -11255,10 +11255,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path7, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path8, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path7,
+            Path: path8,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -16139,9 +16139,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path7) {
-      for (let i5 = 0; i5 < path7.length; ++i5) {
-        const code = path7.charCodeAt(i5);
+    function validateCookiePath(path8) {
+      for (let i5 = 0; i5 < path8.length; ++i5) {
+        const code = path8.charCodeAt(i5);
         if (code < 32 || // exclude CTLs (0-31)
         code === 127 || // DEL
         code === 59) {
@@ -16189,7 +16189,7 @@ var require_util6 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify(cookie) {
+    function stringify2(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -16243,7 +16243,7 @@ var require_util6 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify
+      stringify: stringify2
     };
   }
 });
@@ -16393,7 +16393,7 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify } = require_util6();
+    var { stringify: stringify2 } = require_util6();
     var { webidl } = require_webidl();
     var { Headers: Headers2 } = require_headers();
     function getCookies(headers) {
@@ -16436,7 +16436,7 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       webidl.brandCheck(headers, Headers2, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify(cookie);
+      const str = stringify2(cookie);
       if (str) {
         headers.append("Set-Cookie", str);
       }
@@ -18781,11 +18781,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path7 = opts.path;
+          let path8 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path7 = `/${path7}`;
+            path8 = `/${path8}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path7);
+          url = new URL(util.parseOrigin(url).origin + path8);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -19712,7 +19712,7 @@ var require_summary = __commonJS({
     exports2.summary = exports2.markdownSummary = exports2.SUMMARY_DOCS_URL = exports2.SUMMARY_ENV_VAR = void 0;
     var os_1 = require("os");
     var fs_1 = require("fs");
-    var { access, appendFile, writeFile: writeFile2 } = fs_1.promises;
+    var { access: access2, appendFile, writeFile: writeFile2 } = fs_1.promises;
     exports2.SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
     exports2.SUMMARY_DOCS_URL = "https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary";
     var Summary = class {
@@ -19735,7 +19735,7 @@ var require_summary = __commonJS({
             throw new Error(`Unable to find environment variable for $${exports2.SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`);
           }
           try {
-            yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
+            yield access2(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
           } catch (_a2) {
             throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
           }
@@ -20004,7 +20004,7 @@ var require_path_utils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.toPlatformPath = exports2.toWin32Path = exports2.toPosixPath = void 0;
-    var path7 = __importStar2(require("path"));
+    var path8 = __importStar2(require("path"));
     function toPosixPath(pth) {
       return pth.replace(/[\\]/g, "/");
     }
@@ -20014,7 +20014,7 @@ var require_path_utils = __commonJS({
     }
     exports2.toWin32Path = toWin32Path;
     function toPlatformPath(pth) {
-      return pth.replace(/[/\\]/g, path7.sep);
+      return pth.replace(/[/\\]/g, path8.sep);
     }
     exports2.toPlatformPath = toPlatformPath;
   }
@@ -20078,7 +20078,7 @@ var require_io_util = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
     var fs = __importStar2(require("fs"));
-    var path7 = __importStar2(require("path"));
+    var path8 = __importStar2(require("path"));
     _a2 = fs.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
     exports2.IS_WINDOWS = process.platform === "win32";
     exports2.UV_FS_O_EXLOCK = 268435456;
@@ -20127,7 +20127,7 @@ var require_io_util = __commonJS({
         }
         if (stats && stats.isFile()) {
           if (exports2.IS_WINDOWS) {
-            const upperExt = path7.extname(filePath).toUpperCase();
+            const upperExt = path8.extname(filePath).toUpperCase();
             if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) {
               return filePath;
             }
@@ -20151,11 +20151,11 @@ var require_io_util = __commonJS({
           if (stats && stats.isFile()) {
             if (exports2.IS_WINDOWS) {
               try {
-                const directory = path7.dirname(filePath);
-                const upperName = path7.basename(filePath).toUpperCase();
+                const directory = path8.dirname(filePath);
+                const upperName = path8.basename(filePath).toUpperCase();
                 for (const actualName of yield exports2.readdir(directory)) {
                   if (upperName === actualName.toUpperCase()) {
-                    filePath = path7.join(directory, actualName);
+                    filePath = path8.join(directory, actualName);
                     break;
                   }
                 }
@@ -20250,7 +20250,7 @@ var require_io = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.findInPath = exports2.which = exports2.mkdirP = exports2.rmRF = exports2.mv = exports2.cp = void 0;
     var assert_1 = require("assert");
-    var path7 = __importStar2(require("path"));
+    var path8 = __importStar2(require("path"));
     var ioUtil = __importStar2(require_io_util());
     function cp(source, dest, options = {}) {
       return __awaiter2(this, void 0, void 0, function* () {
@@ -20259,7 +20259,7 @@ var require_io = __commonJS({
         if (destStat && destStat.isFile() && !force) {
           return;
         }
-        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path7.join(dest, path7.basename(source)) : dest;
+        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path8.join(dest, path8.basename(source)) : dest;
         if (!(yield ioUtil.exists(source))) {
           throw new Error(`no such file or directory: ${source}`);
         }
@@ -20271,7 +20271,7 @@ var require_io = __commonJS({
             yield cpDirRecursive(source, newDest, 0, force);
           }
         } else {
-          if (path7.relative(source, newDest) === "") {
+          if (path8.relative(source, newDest) === "") {
             throw new Error(`'${newDest}' and '${source}' are the same file`);
           }
           yield copyFile(source, newDest, force);
@@ -20284,7 +20284,7 @@ var require_io = __commonJS({
         if (yield ioUtil.exists(dest)) {
           let destExists = true;
           if (yield ioUtil.isDirectory(dest)) {
-            dest = path7.join(dest, path7.basename(source));
+            dest = path8.join(dest, path8.basename(source));
             destExists = yield ioUtil.exists(dest);
           }
           if (destExists) {
@@ -20295,7 +20295,7 @@ var require_io = __commonJS({
             }
           }
         }
-        yield mkdirP(path7.dirname(dest));
+        yield mkdirP(path8.dirname(dest));
         yield ioUtil.rename(source, dest);
       });
     }
@@ -20358,7 +20358,7 @@ var require_io = __commonJS({
         }
         const extensions = [];
         if (ioUtil.IS_WINDOWS && process.env["PATHEXT"]) {
-          for (const extension of process.env["PATHEXT"].split(path7.delimiter)) {
+          for (const extension of process.env["PATHEXT"].split(path8.delimiter)) {
             if (extension) {
               extensions.push(extension);
             }
@@ -20371,12 +20371,12 @@ var require_io = __commonJS({
           }
           return [];
         }
-        if (tool.includes(path7.sep)) {
+        if (tool.includes(path8.sep)) {
           return [];
         }
         const directories = [];
         if (process.env.PATH) {
-          for (const p5 of process.env.PATH.split(path7.delimiter)) {
+          for (const p5 of process.env.PATH.split(path8.delimiter)) {
             if (p5) {
               directories.push(p5);
             }
@@ -20384,7 +20384,7 @@ var require_io = __commonJS({
         }
         const matches = [];
         for (const directory of directories) {
-          const filePath = yield ioUtil.tryGetExecutablePath(path7.join(directory, tool), extensions);
+          const filePath = yield ioUtil.tryGetExecutablePath(path8.join(directory, tool), extensions);
           if (filePath) {
             matches.push(filePath);
           }
@@ -20500,7 +20500,7 @@ var require_toolrunner = __commonJS({
     var os = __importStar2(require("os"));
     var events = __importStar2(require("events"));
     var child = __importStar2(require("child_process"));
-    var path7 = __importStar2(require("path"));
+    var path8 = __importStar2(require("path"));
     var io = __importStar2(require_io());
     var ioUtil = __importStar2(require_io_util());
     var timers_1 = require("timers");
@@ -20715,7 +20715,7 @@ var require_toolrunner = __commonJS({
       exec() {
         return __awaiter2(this, void 0, void 0, function* () {
           if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
-            this.toolPath = path7.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
+            this.toolPath = path8.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
           }
           this.toolPath = yield io.which(this.toolPath, true);
           return new Promise((resolve, reject) => __awaiter2(this, void 0, void 0, function* () {
@@ -21215,7 +21215,7 @@ var require_core = __commonJS({
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
     var os = __importStar2(require("os"));
-    var path7 = __importStar2(require("path"));
+    var path8 = __importStar2(require("path"));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
     (function(ExitCode2) {
@@ -21243,7 +21243,7 @@ var require_core = __commonJS({
       } else {
         (0, command_1.issueCommand)("add-path", {}, inputPath);
       }
-      process.env["PATH"] = `${inputPath}${path7.delimiter}${process.env["PATH"]}`;
+      process.env["PATH"] = `${inputPath}${path8.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
     function getInput2(name, options) {
@@ -22207,9 +22207,9 @@ var init_createPaginator = __esm({
       command = withCommand(command) ?? command;
       return await client.send(command, ...args);
     };
-    get = (fromObject, path7) => {
+    get = (fromObject, path8) => {
       let cursor2 = fromObject;
-      const pathComponents = path7.split(".");
+      const pathComponents = path8.split(".");
       for (const step of pathComponents) {
         if (!cursor2 || typeof cursor2 !== "object") {
           return void 0;
@@ -23227,12 +23227,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             const password = request.password ?? "";
             auth = `${username}:${password}`;
           }
-          let path7 = request.path;
+          let path8 = request.path;
           if (queryString) {
-            path7 += `?${queryString}`;
+            path8 += `?${queryString}`;
           }
           if (request.fragment) {
-            path7 += `#${request.fragment}`;
+            path8 += `#${request.fragment}`;
           }
           let hostname = request.hostname ?? "";
           if (hostname[0] === "[" && hostname.endsWith("]")) {
@@ -23244,7 +23244,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             headers: request.headers,
             host: hostname,
             method: request.method,
-            path: path7,
+            path: path8,
             port: request.port,
             agent,
             auth
@@ -23527,16 +23527,16 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(err);
           };
           const queryString = querystringBuilder.buildQueryString(query || {});
-          let path7 = request.path;
+          let path8 = request.path;
           if (queryString) {
-            path7 += `?${queryString}`;
+            path8 += `?${queryString}`;
           }
           if (request.fragment) {
-            path7 += `#${request.fragment}`;
+            path8 += `#${request.fragment}`;
           }
           const req = session.request({
             ...request.headers,
-            [http2.constants.HTTP2_HEADER_PATH]: path7,
+            [http2.constants.HTTP2_HEADER_PATH]: path8,
             [http2.constants.HTTP2_HEADER_METHOD]: method
           });
           session.ref();
@@ -23723,13 +23723,13 @@ var require_dist_cjs15 = __commonJS({
           const abortError = buildAbortError(abortSignal);
           return Promise.reject(abortError);
         }
-        let path7 = request.path;
+        let path8 = request.path;
         const queryString = querystringBuilder.buildQueryString(request.query || {});
         if (queryString) {
-          path7 += `?${queryString}`;
+          path8 += `?${queryString}`;
         }
         if (request.fragment) {
-          path7 += `#${request.fragment}`;
+          path8 += `#${request.fragment}`;
         }
         let auth = "";
         if (request.username != null || request.password != null) {
@@ -23738,7 +23738,7 @@ var require_dist_cjs15 = __commonJS({
           auth = `${username}:${password}@`;
         }
         const { port, method } = request;
-        const url = `${request.protocol}//${auth}${request.hostname}${port ? `:${port}` : ""}${path7}`;
+        const url = `${request.protocol}//${auth}${request.hostname}${port ? `:${port}` : ""}${path8}`;
         const body = method === "GET" || method === "HEAD" ? void 0 : request.body;
         const requestOptions = {
           body,
@@ -25970,13 +25970,13 @@ function __disposeResources(env) {
   }
   return next();
 }
-function __rewriteRelativeImportExtension(path7, preserveJsx) {
-  if (typeof path7 === "string" && /^\.\.?\//.test(path7)) {
-    return path7.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m5, tsx, d5, ext, cm) {
+function __rewriteRelativeImportExtension(path8, preserveJsx) {
+  if (typeof path8 === "string" && /^\.\.?\//.test(path8)) {
+    return path8.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m5, tsx, d5, ext, cm) {
       return tsx ? preserveJsx ? ".jsx" : ".js" : d5 && (!ext || !cm) ? m5 : d5 + ext + "." + cm.toLowerCase() + "js";
     });
   }
-  return path7;
+  return path8;
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
@@ -26872,11 +26872,11 @@ var init_HttpBindingProtocol = __esm({
           const opTraits = translateTraits(operationSchema.traits);
           if (opTraits.http) {
             request.method = opTraits.http[0];
-            const [path7, search] = opTraits.http[1].split("?");
+            const [path8, search] = opTraits.http[1].split("?");
             if (request.path == "/") {
-              request.path = path7;
+              request.path = path8;
             } else {
-              request.path += path7;
+              request.path += path8;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
             Object.assign(query, Object.fromEntries(traitSearchParams));
@@ -27272,8 +27272,8 @@ var init_requestBuilder = __esm({
         return this;
       }
       p(memberName, labelValueProvider, uriLabel, isGreedyLabel) {
-        this.resolvePathStack.push((path7) => {
-          this.path = resolvedPath(path7, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
+        this.resolvePathStack.push((path8) => {
+          this.path = resolvedPath(path8, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
         });
         return this;
       }
@@ -27923,18 +27923,18 @@ var require_dist_cjs21 = __commonJS({
       }
     };
     var booleanEquals = (value1, value2) => value1 === value2;
-    var getAttrPathList = (path7) => {
-      const parts = path7.split(".");
+    var getAttrPathList = (path8) => {
+      const parts = path8.split(".");
       const pathList = [];
       for (const part of parts) {
         const squareBracketIndex = part.indexOf("[");
         if (squareBracketIndex !== -1) {
           if (part.indexOf("]") !== part.length - 1) {
-            throw new EndpointError(`Path: '${path7}' does not end with ']'`);
+            throw new EndpointError(`Path: '${path8}' does not end with ']'`);
           }
           const arrayIndex = part.slice(squareBracketIndex + 1, -1);
           if (Number.isNaN(parseInt(arrayIndex))) {
-            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path7}'`);
+            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path8}'`);
           }
           if (squareBracketIndex !== 0) {
             pathList.push(part.slice(0, squareBracketIndex));
@@ -27946,9 +27946,9 @@ var require_dist_cjs21 = __commonJS({
       }
       return pathList;
     };
-    var getAttr = (value, path7) => getAttrPathList(path7).reduce((acc, index) => {
+    var getAttr = (value, path8) => getAttrPathList(path8).reduce((acc, index) => {
       if (typeof acc !== "object") {
-        throw new EndpointError(`Index '${index}' in '${path7}' not found in '${JSON.stringify(value)}'`);
+        throw new EndpointError(`Index '${index}' in '${path8}' not found in '${JSON.stringify(value)}'`);
       } else if (Array.isArray(acc)) {
         return acc[parseInt(index)];
       }
@@ -27967,8 +27967,8 @@ var require_dist_cjs21 = __commonJS({
             return value;
           }
           if (typeof value === "object" && "hostname" in value) {
-            const { hostname: hostname2, port, protocol: protocol2 = "", path: path7 = "", query = {} } = value;
-            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path7}`);
+            const { hostname: hostname2, port, protocol: protocol2 = "", path: path8 = "", query = {} } = value;
+            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path8}`);
             url.search = Object.entries(query).map(([k5, v5]) => `${k5}=${v5}`).join("&");
             return url;
           }
@@ -29783,16 +29783,16 @@ var require_readFile = __commonJS({
     var promises_1 = require("node:fs/promises");
     exports2.filePromises = {};
     exports2.fileIntercept = {};
-    var readFile5 = (path7, options) => {
-      if (exports2.fileIntercept[path7] !== void 0) {
-        return exports2.fileIntercept[path7];
+    var readFile6 = (path8, options) => {
+      if (exports2.fileIntercept[path8] !== void 0) {
+        return exports2.fileIntercept[path8];
       }
-      if (!exports2.filePromises[path7] || options?.ignoreCache) {
-        exports2.filePromises[path7] = (0, promises_1.readFile)(path7, "utf8");
+      if (!exports2.filePromises[path8] || options?.ignoreCache) {
+        exports2.filePromises[path8] = (0, promises_1.readFile)(path8, "utf8");
       }
-      return exports2.filePromises[path7];
+      return exports2.filePromises[path8];
     };
-    exports2.readFile = readFile5;
+    exports2.readFile = readFile6;
   }
 });
 
@@ -29803,9 +29803,9 @@ var require_dist_cjs30 = __commonJS({
     var getHomeDir = require_getHomeDir();
     var getSSOTokenFilepath = require_getSSOTokenFilepath();
     var getSSOTokenFromFile = require_getSSOTokenFromFile();
-    var path7 = require("path");
+    var path8 = require("path");
     var types = require_dist_cjs();
-    var readFile5 = require_readFile();
+    var readFile6 = require_readFile();
     var ENV_PROFILE = "AWS_PROFILE";
     var DEFAULT_PROFILE = "default";
     var getProfileName = (init) => init.profile || process.env[ENV_PROFILE] || DEFAULT_PROFILE;
@@ -29825,9 +29825,9 @@ var require_dist_cjs30 = __commonJS({
       ...data2.default && { default: data2.default }
     });
     var ENV_CONFIG_PATH = "AWS_CONFIG_FILE";
-    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path7.join(getHomeDir.getHomeDir(), ".aws", "config");
+    var getConfigFilepath = () => process.env[ENV_CONFIG_PATH] || path8.join(getHomeDir.getHomeDir(), ".aws", "config");
     var ENV_CREDENTIALS_PATH = "AWS_SHARED_CREDENTIALS_FILE";
-    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path7.join(getHomeDir.getHomeDir(), ".aws", "credentials");
+    var getCredentialsFilepath = () => process.env[ENV_CREDENTIALS_PATH] || path8.join(getHomeDir.getHomeDir(), ".aws", "credentials");
     var prefixKeyRegex = /^([\w-]+)\s(["'])?([\w-@\+\.%:/]+)\2$/;
     var profileNameBlockList = ["__proto__", "profile __proto__"];
     var parseIni = (iniData) => {
@@ -29882,17 +29882,17 @@ var require_dist_cjs30 = __commonJS({
       const relativeHomeDirPrefix = "~/";
       let resolvedFilepath = filepath;
       if (filepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedFilepath = path7.join(homeDir, filepath.slice(2));
+        resolvedFilepath = path8.join(homeDir, filepath.slice(2));
       }
       let resolvedConfigFilepath = configFilepath;
       if (configFilepath.startsWith(relativeHomeDirPrefix)) {
-        resolvedConfigFilepath = path7.join(homeDir, configFilepath.slice(2));
+        resolvedConfigFilepath = path8.join(homeDir, configFilepath.slice(2));
       }
       const parsedFiles = await Promise.all([
-        readFile5.readFile(resolvedConfigFilepath, {
+        readFile6.readFile(resolvedConfigFilepath, {
           ignoreCache: init.ignoreCache
         }).then(parseIni).then(getConfigData).catch(swallowError$1),
-        readFile5.readFile(resolvedFilepath, {
+        readFile6.readFile(resolvedFilepath, {
           ignoreCache: init.ignoreCache
         }).then(parseIni).catch(swallowError$1)
       ]);
@@ -29903,7 +29903,7 @@ var require_dist_cjs30 = __commonJS({
     };
     var getSsoSessionData = (data2) => Object.entries(data2).filter(([key]) => key.startsWith(types.IniSectionType.SSO_SESSION + CONFIG_PREFIX_SEPARATOR)).reduce((acc, [key, value]) => ({ ...acc, [key.substring(key.indexOf(CONFIG_PREFIX_SEPARATOR) + 1)]: value }), {});
     var swallowError = () => ({});
-    var loadSsoSessionData = async (init = {}) => readFile5.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
+    var loadSsoSessionData = async (init = {}) => readFile6.readFile(init.configFilepath ?? getConfigFilepath()).then(parseIni).then(getSsoSessionData).catch(swallowError);
     var mergeConfigFiles = (...files) => {
       const merged = {};
       for (const file of files) {
@@ -29923,10 +29923,10 @@ var require_dist_cjs30 = __commonJS({
     };
     var externalDataInterceptor = {
       getFileRecord() {
-        return readFile5.fileIntercept;
+        return readFile6.fileIntercept;
       },
-      interceptFile(path8, contents) {
-        readFile5.fileIntercept[path8] = Promise.resolve(contents);
+      interceptFile(path9, contents) {
+        readFile6.fileIntercept[path9] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return getSSOTokenFromFile.tokenIntercept;
@@ -29936,7 +29936,7 @@ var require_dist_cjs30 = __commonJS({
       }
     };
     exports2.getSSOTokenFromFile = getSSOTokenFromFile.getSSOTokenFromFile;
-    exports2.readFile = readFile5.readFile;
+    exports2.readFile = readFile6.readFile;
     exports2.CONFIG_PREFIX_SEPARATOR = CONFIG_PREFIX_SEPARATOR;
     exports2.DEFAULT_PROFILE = DEFAULT_PROFILE;
     exports2.ENV_PROFILE = ENV_PROFILE;
@@ -30251,8 +30251,8 @@ var require_dist_cjs33 = __commonJS({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path7 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path7}`;
+              const { protocol, hostname, port, path: path8 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path8}`;
             }
           }
           return endpoint;
@@ -32252,10 +32252,10 @@ ${longDate}
 ${credentialScope}
 ${utilHexEncoding.toHex(hashedRequest)}`;
       }
-      getCanonicalPath({ path: path7 }) {
+      getCanonicalPath({ path: path8 }) {
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
-          for (const pathSegment of path7.split("/")) {
+          for (const pathSegment of path8.split("/")) {
             if (pathSegment?.length === 0)
               continue;
             if (pathSegment === ".")
@@ -32266,11 +32266,11 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
               normalizedPathSegments.push(pathSegment);
             }
           }
-          const normalizedPath = `${path7?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path7?.endsWith("/") ? "/" : ""}`;
+          const normalizedPath = `${path8?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path8?.endsWith("/") ? "/" : ""}`;
           const doubleEncoded = utilUriEscape.escapeUri(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
-        return path7;
+        return path8;
       }
       validateResolvedCredentials(credentials) {
         if (typeof credentials !== "object" || typeof credentials.accessKeyId !== "string" || typeof credentials.secretAccessKey !== "string") {
@@ -33574,11 +33574,11 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = (0, import_util_middleware5.getSmithyContext)(context);
-        const path7 = `/service/${service}/operation/${operation2}`;
+        const path8 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
-          request.path += path7.slice(1);
+          request.path += path8.slice(1);
         } else {
-          request.path += path7;
+          request.path += path8;
         }
         return request;
       }
@@ -87515,17 +87515,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path7) {
-      const ctrl = callVisitor(key, node, visitor, path7);
+    function visit_(key, node, visitor, path8) {
+      const ctrl = callVisitor(key, node, visitor, path8);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path7, ctrl);
-        return visit_(key, ctrl, visitor, path7);
+        replaceNode(key, path8, ctrl);
+        return visit_(key, ctrl, visitor, path8);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path7 = Object.freeze(path7.concat(node));
+          path8 = Object.freeze(path8.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = visit_(i5, node.items[i5], visitor, path7);
+            const ci = visit_(i5, node.items[i5], visitor, path8);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -87536,13 +87536,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path7 = Object.freeze(path7.concat(node));
-          const ck = visit_("key", node.key, visitor, path7);
+          path8 = Object.freeze(path8.concat(node));
+          const ck = visit_("key", node.key, visitor, path8);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path7);
+          const cv = visit_("value", node.value, visitor, path8);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -87563,17 +87563,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path7) {
-      const ctrl = await callVisitor(key, node, visitor, path7);
+    async function visitAsync_(key, node, visitor, path8) {
+      const ctrl = await callVisitor(key, node, visitor, path8);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path7, ctrl);
-        return visitAsync_(key, ctrl, visitor, path7);
+        replaceNode(key, path8, ctrl);
+        return visitAsync_(key, ctrl, visitor, path8);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path7 = Object.freeze(path7.concat(node));
+          path8 = Object.freeze(path8.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = await visitAsync_(i5, node.items[i5], visitor, path7);
+            const ci = await visitAsync_(i5, node.items[i5], visitor, path8);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -87584,13 +87584,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path7 = Object.freeze(path7.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path7);
+          path8 = Object.freeze(path8.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path8);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path7);
+          const cv = await visitAsync_("value", node.value, visitor, path8);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -87617,23 +87617,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path7) {
+    function callVisitor(key, node, visitor, path8) {
       if (typeof visitor === "function")
-        return visitor(key, node, path7);
+        return visitor(key, node, path8);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path7);
+        return visitor.Map?.(key, node, path8);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path7);
+        return visitor.Seq?.(key, node, path8);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path7);
+        return visitor.Pair?.(key, node, path8);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path7);
+        return visitor.Scalar?.(key, node, path8);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path7);
+        return visitor.Alias?.(key, node, path8);
       return void 0;
     }
-    function replaceNode(key, path7, node) {
-      const parent = path7[path7.length - 1];
+    function replaceNode(key, path8, node) {
+      const parent = path8[path8.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -88241,10 +88241,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path7, value) {
+    function collectionFromPath(schema, path8, value) {
       let v5 = value;
-      for (let i5 = path7.length - 1; i5 >= 0; --i5) {
-        const k5 = path7[i5];
+      for (let i5 = path8.length - 1; i5 >= 0; --i5) {
+        const k5 = path8[i5];
         if (typeof k5 === "number" && Number.isInteger(k5) && k5 >= 0) {
           const a5 = [];
           a5[k5] = v5;
@@ -88263,7 +88263,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path7) => path7 == null || typeof path7 === "object" && !!path7[Symbol.iterator]().next().done;
+    var isEmptyPath = (path8) => path8 == null || typeof path8 === "object" && !!path8[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -88293,11 +88293,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path7, value) {
-        if (isEmptyPath(path7))
+      addIn(path8, value) {
+        if (isEmptyPath(path8))
           this.add(value);
         else {
-          const [key, ...rest] = path7;
+          const [key, ...rest] = path8;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -88311,8 +88311,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path7) {
-        const [key, ...rest] = path7;
+      deleteIn(path8) {
+        const [key, ...rest] = path8;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -88326,8 +88326,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path7, keepScalar) {
-        const [key, ...rest] = path7;
+      getIn(path8, keepScalar) {
+        const [key, ...rest] = path8;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -88345,8 +88345,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path7) {
-        const [key, ...rest] = path7;
+      hasIn(path8) {
+        const [key, ...rest] = path8;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -88356,8 +88356,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path7, value) {
-        const [key, ...rest] = path7;
+      setIn(path8, value) {
+        const [key, ...rest] = path8;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -88904,7 +88904,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag2));
       return props.join(" ");
     }
-    function stringify(item, ctx, onComment, onChompKeep) {
+    function stringify2(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -88933,7 +88933,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports2.createStringifyContext = createStringifyContext;
-    exports2.stringify = stringify;
+    exports2.stringify = stringify2;
   }
 });
 
@@ -88943,7 +88943,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar = require_Scalar();
-    var stringify = require_stringify();
+    var stringify2 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -88965,7 +88965,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify2.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -89017,7 +89017,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify2.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -89155,7 +89155,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge = require_merge();
-    var stringify = require_stringify();
+    var stringify2 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map2, { key, value }) {
@@ -89191,7 +89191,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify2.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node of ctx.anchors.keys())
           strCtx.anchors.add(node.anchor);
@@ -89258,12 +89258,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify = require_stringify();
+    var stringify2 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify2 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify2(collection, ctx, options);
+      const stringify3 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify3(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -89288,7 +89288,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify2.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -89355,7 +89355,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify.stringify(item, itemCtx, () => comment = null);
+        let str = stringify2.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i5 < items.length - 1) {
           str += ",";
@@ -90716,7 +90716,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify = require_stringify();
+    var stringify2 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -90731,7 +90731,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify.createStringifyContext(doc, options);
+      const ctx = stringify2.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -90753,7 +90753,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify2.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -90761,7 +90761,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify.stringify(doc.contents, ctx));
+        lines.push(stringify2.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -90869,9 +90869,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path7, value) {
+      addIn(path8, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path7, value);
+          this.contents.addIn(path8, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -90946,14 +90946,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path7) {
-        if (Collection.isEmptyPath(path7)) {
+      deleteIn(path8) {
+        if (Collection.isEmptyPath(path8)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path7) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path8) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -90968,10 +90968,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path7, keepScalar) {
-        if (Collection.isEmptyPath(path7))
+      getIn(path8, keepScalar) {
+        if (Collection.isEmptyPath(path8))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path7, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path8, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -90982,10 +90982,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path7) {
-        if (Collection.isEmptyPath(path7))
+      hasIn(path8) {
+        if (Collection.isEmptyPath(path8))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path7) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path8) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -91002,13 +91002,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path7, value) {
-        if (Collection.isEmptyPath(path7)) {
+      setIn(path8, value) {
+        if (Collection.isEmptyPath(path8)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path7), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path8), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path7, value);
+          this.contents.setIn(path8, value);
         }
       }
       /**
@@ -92893,7 +92893,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports2) {
     "use strict";
-    var stringify = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify2 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -92946,7 +92946,7 @@ var require_cst_stringify = __commonJS({
         res += stringifyToken(value);
       return res;
     }
-    exports2.stringify = stringify;
+    exports2.stringify = stringify2;
   }
 });
 
@@ -92965,9 +92965,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path7) => {
+    visit.itemAtPath = (cst, path8) => {
       let item = cst;
-      for (const [field, index] of path7) {
+      for (const [field, index] of path8) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -92976,23 +92976,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path7) => {
-      const parent = visit.itemAtPath(cst, path7.slice(0, -1));
-      const field = path7[path7.length - 1][0];
+    visit.parentCollection = (cst, path8) => {
+      const parent = visit.itemAtPath(cst, path8.slice(0, -1));
+      const field = path8[path8.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path7, item, visitor) {
-      let ctrl = visitor(item, path7);
+    function _visit(path8, item, visitor) {
+      let ctrl = visitor(item, path8);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i5 = 0; i5 < token.items.length; ++i5) {
-            const ci = _visit(Object.freeze(path7.concat([[field, i5]])), token.items[i5], visitor);
+            const ci = _visit(Object.freeze(path8.concat([[field, i5]])), token.items[i5], visitor);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -93003,10 +93003,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path7);
+            ctrl = ctrl(item, path8);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path7) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path8) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -94607,7 +94607,7 @@ var require_public_api = __commonJS({
       const lineCounter$1 = options.lineCounter || prettyErrors && new lineCounter.LineCounter() || null;
       return { lineCounter: lineCounter$1, prettyErrors };
     }
-    function parseAllDocuments(source, options = {}) {
+    function parseAllDocuments2(source, options = {}) {
       const { lineCounter: lineCounter2, prettyErrors } = parseOptions(options);
       const parser$1 = new parser.Parser(lineCounter2?.addNewLine);
       const composer$1 = new composer.Composer(options);
@@ -94659,7 +94659,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify(value, replacer, options) {
+    function stringify2(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -94682,9 +94682,9 @@ var require_public_api = __commonJS({
       return new Document.Document(value, _replacer, options).toString(options);
     }
     exports2.parse = parse5;
-    exports2.parseAllDocuments = parseAllDocuments;
+    exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument;
-    exports2.stringify = stringify;
+    exports2.stringify = stringify2;
   }
 });
 
@@ -110920,7 +110920,7 @@ var require_dist_cjs63 = __commonJS({
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("AmazonSimpleNotificationService", "GetSMSSandboxAccountStatus", {}).n("SNSClient", "GetSMSSandboxAccountStatusCommand").sc(schemas_0.GetSMSSandboxAccountStatus$).build() {
     };
-    var GetSubscriptionAttributesCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+    var GetSubscriptionAttributesCommand2 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("AmazonSimpleNotificationService", "GetSubscriptionAttributes", {}).n("SNSClient", "GetSubscriptionAttributesCommand").sc(schemas_0.GetSubscriptionAttributes$).build() {
     };
@@ -110948,7 +110948,7 @@ var require_dist_cjs63 = __commonJS({
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("AmazonSimpleNotificationService", "ListSMSSandboxPhoneNumbers", {}).n("SNSClient", "ListSMSSandboxPhoneNumbersCommand").sc(schemas_0.ListSMSSandboxPhoneNumbers$).build() {
     };
-    var ListSubscriptionsByTopicCommand = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
+    var ListSubscriptionsByTopicCommand2 = class extends smithyClient.Command.classBuilder().ep(commonParams5).m(function(Command, cs, config, o5) {
       return [middlewareEndpoint.getEndpointPlugin(config, Command.getEndpointParameterInstructions())];
     }).s("AmazonSimpleNotificationService", "ListSubscriptionsByTopic", {}).n("SNSClient", "ListSubscriptionsByTopicCommand").sc(schemas_0.ListSubscriptionsByTopic$).build() {
     };
@@ -111029,7 +111029,7 @@ var require_dist_cjs63 = __commonJS({
     var paginateListPhoneNumbersOptedOut = core2.createPaginator(SNSClient2, ListPhoneNumbersOptedOutCommand, "nextToken", "nextToken", "");
     var paginateListPlatformApplications = core2.createPaginator(SNSClient2, ListPlatformApplicationsCommand, "NextToken", "NextToken", "");
     var paginateListSMSSandboxPhoneNumbers = core2.createPaginator(SNSClient2, ListSMSSandboxPhoneNumbersCommand, "NextToken", "NextToken", "MaxResults");
-    var paginateListSubscriptionsByTopic = core2.createPaginator(SNSClient2, ListSubscriptionsByTopicCommand, "NextToken", "NextToken", "");
+    var paginateListSubscriptionsByTopic = core2.createPaginator(SNSClient2, ListSubscriptionsByTopicCommand2, "NextToken", "NextToken", "");
     var paginateListSubscriptions = core2.createPaginator(SNSClient2, ListSubscriptionsCommand, "NextToken", "NextToken", "");
     var paginateListTopics = core2.createPaginator(SNSClient2, ListTopicsCommand2, "NextToken", "NextToken", "");
     var commands5 = {
@@ -111049,7 +111049,7 @@ var require_dist_cjs63 = __commonJS({
       GetPlatformApplicationAttributesCommand,
       GetSMSAttributesCommand,
       GetSMSSandboxAccountStatusCommand,
-      GetSubscriptionAttributesCommand,
+      GetSubscriptionAttributesCommand: GetSubscriptionAttributesCommand2,
       GetTopicAttributesCommand: GetTopicAttributesCommand2,
       ListEndpointsByPlatformApplicationCommand,
       ListOriginationNumbersCommand,
@@ -111057,7 +111057,7 @@ var require_dist_cjs63 = __commonJS({
       ListPlatformApplicationsCommand,
       ListSMSSandboxPhoneNumbersCommand,
       ListSubscriptionsCommand,
-      ListSubscriptionsByTopicCommand,
+      ListSubscriptionsByTopicCommand: ListSubscriptionsByTopicCommand2,
       ListTagsForResourceCommand: ListTagsForResourceCommand4,
       ListTopicsCommand: ListTopicsCommand2,
       OptInPhoneNumberCommand,
@@ -111137,7 +111137,7 @@ var require_dist_cjs63 = __commonJS({
     exports2.GetPlatformApplicationAttributesCommand = GetPlatformApplicationAttributesCommand;
     exports2.GetSMSAttributesCommand = GetSMSAttributesCommand;
     exports2.GetSMSSandboxAccountStatusCommand = GetSMSSandboxAccountStatusCommand;
-    exports2.GetSubscriptionAttributesCommand = GetSubscriptionAttributesCommand;
+    exports2.GetSubscriptionAttributesCommand = GetSubscriptionAttributesCommand2;
     exports2.GetTopicAttributesCommand = GetTopicAttributesCommand2;
     exports2.LanguageCodeString = LanguageCodeString;
     exports2.ListEndpointsByPlatformApplicationCommand = ListEndpointsByPlatformApplicationCommand;
@@ -111145,7 +111145,7 @@ var require_dist_cjs63 = __commonJS({
     exports2.ListPhoneNumbersOptedOutCommand = ListPhoneNumbersOptedOutCommand;
     exports2.ListPlatformApplicationsCommand = ListPlatformApplicationsCommand;
     exports2.ListSMSSandboxPhoneNumbersCommand = ListSMSSandboxPhoneNumbersCommand;
-    exports2.ListSubscriptionsByTopicCommand = ListSubscriptionsByTopicCommand;
+    exports2.ListSubscriptionsByTopicCommand = ListSubscriptionsByTopicCommand2;
     exports2.ListSubscriptionsCommand = ListSubscriptionsCommand;
     exports2.ListTagsForResourceCommand = ListTagsForResourceCommand4;
     exports2.ListTopicsCommand = ListTopicsCommand2;
@@ -112798,8 +112798,8 @@ var ApiGatewayProvider = class {
 };
 
 // src/runtime.ts
-var import_promises6 = require("node:fs/promises");
-var import_node_path6 = __toESM(require("node:path"), 1);
+var import_promises7 = require("node:fs/promises");
+var import_node_path7 = __toESM(require("node:path"), 1);
 
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs57(), 1);
@@ -113128,8 +113128,8 @@ function normalizeRepoUrl(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path7 = sshMatch[2];
-    return `https://${host}/${path7}`;
+    const path8 = sshMatch[2];
+    return `https://${host}/${path8}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -113324,6 +113324,7 @@ var PROVIDER_PATTERNS = [
   { pattern: /\bType\s*:\s*SNS\b/i, provider: "sns" },
   { pattern: /arn:aws:sns:/i, provider: "sns" },
   { pattern: /AWS::Events::EventBus/i, provider: "eventbridge-schemas" },
+  { pattern: /AWS::Events::Rule/i, provider: "eventbridge-schemas" },
   { pattern: /AWS::Serverless::EventBridgeRule/i, provider: "eventbridge-schemas" },
   { pattern: /schema_registry|SchemaRegistry/i, provider: "eventbridge-schemas" },
   { pattern: /AWS::Glue::Schema/i, provider: "glue" },
@@ -113346,12 +113347,26 @@ var PROVIDER_PATTERNS = [
   { pattern: /new\s+sns\.Topic\s*\(/i, provider: "sns" },
   { pattern: /sns\.Topic\.fromTopicArn\s*\(/i, provider: "sns" },
   { pattern: /SnsEventSource/i, provider: "sns" },
+  { pattern: /aws-cdk-lib\/aws-events/i, provider: "eventbridge-schemas" },
+  { pattern: /new\s+events\.EventBus\s*\(/i, provider: "eventbridge-schemas" },
   // Pulumi resource constructors (TypeScript/Python/Go)
   { pattern: /aws\.apigateway\.RestApi/i, provider: "api-gateway" },
   { pattern: /aws\.apigatewayv2\.Api/i, provider: "api-gateway" },
   { pattern: /aws\.appsync\.GraphQLApi/i, provider: "appsync" },
   { pattern: /aws\.sns\.Topic/i, provider: "sns" }
 ];
+function detectSnsEventBridgeBridgePattern(content) {
+  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource/i.test(
+    content
+  );
+  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda/i.test(
+    content
+  );
+  const hasEventBridge = /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\./i.test(
+    content
+  );
+  return hasSns && hasLambda && hasEventBridge;
+}
 function detectProviderHints(content) {
   const found = /* @__PURE__ */ new Set();
   for (const { pattern, provider } of PROVIDER_PATTERNS) {
@@ -113409,6 +113424,11 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
             snsEvidenceRoots.add(repoRoot);
           }
         }
+        if (detectSnsEventBridgeBridgePattern(content)) {
+          evidence.push(`Detected SNS/EventBridge bridge pattern in ${file}`);
+          providerHintSet.add("sns");
+          providerHintSet.add("eventbridge-schemas");
+        }
       }
     } catch {
     }
@@ -113440,6 +113460,11 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         snsEvidenceRoots.add(import_node_path3.default.dirname(filePath));
       }
     }
+    if (detectSnsEventBridgeBridgePattern(content)) {
+      evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+      providerHintSet.add("sns");
+      providerHintSet.add("eventbridge-schemas");
+    }
   }
   const cdkJson = import_node_path3.default.resolve(repoRoot, "cdk.json");
   try {
@@ -113454,6 +113479,11 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         if (hint === "sns") {
           snsEvidenceRoots.add(import_node_path3.default.dirname(filePath));
         }
+      }
+      if (detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+        providerHintSet.add("sns");
+        providerHintSet.add("eventbridge-schemas");
       }
     }
   } catch {
@@ -113471,6 +113501,11 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         if (hint === "sns") {
           snsEvidenceRoots.add(import_node_path3.default.dirname(filePath));
         }
+      }
+      if (detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+        providerHintSet.add("sns");
+        providerHintSet.add("eventbridge-schemas");
       }
     }
   } catch {
@@ -113548,6 +113583,7 @@ function chooseSource(input) {
         providerType: "sns",
         specFormat: resolvedSns.specFormat,
         contractOrigin: toContractOrigin(resolvedSns.origin),
+        variantCount: resolvedSns.variantCount,
         evidence: resolvedSns.evidence
       };
     }
@@ -113573,6 +113609,7 @@ function chooseSource(input) {
       providerType: "sns",
       specFormat: resolvedSns.specFormat,
       contractOrigin: toContractOrigin(resolvedSns.origin),
+      variantCount: resolvedSns.variantCount,
       evidence: resolvedSns.evidence
     };
   }
@@ -113599,6 +113636,7 @@ function chooseSource(input) {
       providerType: "sns",
       specFormat: resolvedSns.specFormat,
       contractOrigin: toContractOrigin(resolvedSns.origin),
+      variantCount: resolvedSns.variantCount,
       evidence: resolvedSns.evidence
     };
   }
@@ -114054,10 +114092,584 @@ var SsmProvider = class {
 };
 
 // src/lib/providers/sns.ts
+var import_node_child_process = require("node:child_process");
+var import_promises6 = require("node:fs/promises");
+var import_node_path6 = __toESM(require("node:path"), 1);
+var import_yaml5 = __toESM(require_dist(), 1);
+
+// src/lib/repo/catalog.ts
 var import_promises4 = require("node:fs/promises");
 var import_node_path4 = __toESM(require("node:path"), 1);
 var import_yaml3 = __toESM(require_dist(), 1);
+async function detectCatalogApis(repoRoot) {
+  const candidates = ["catalog-info.yaml", "catalog-info.yml"];
+  let content;
+  for (const filename of candidates) {
+    try {
+      content = await (0, import_promises4.readFile)(import_node_path4.default.resolve(repoRoot, filename), "utf8");
+      break;
+    } catch {
+    }
+  }
+  if (!content) return void 0;
+  let docs;
+  try {
+    docs = (0, import_yaml3.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+  } catch {
+    return void 0;
+  }
+  const apis = [];
+  for (const doc of docs) {
+    if (!doc || doc.kind !== "API") continue;
+    const name = doc.metadata?.name ?? "";
+    if (!name) continue;
+    const def = doc.spec?.definition;
+    let specPath;
+    let specUrl;
+    if (typeof def === "string") {
+      if (def.startsWith("http://") || def.startsWith("https://")) {
+        specUrl = def;
+      } else {
+        specPath = def;
+      }
+    } else if (def && typeof def === "object") {
+      const textRef = def.$text;
+      if (typeof textRef === "string") {
+        if (textRef.startsWith("http://") || textRef.startsWith("https://")) {
+          specUrl = textRef;
+        } else {
+          specPath = textRef;
+        }
+      }
+    }
+    apis.push({ name, specPath, specUrl });
+  }
+  return apis.length > 0 ? apis : void 0;
+}
+
+// src/lib/providers/sns-code-derived.ts
+var import_promises5 = require("node:fs/promises");
+var import_node_path5 = __toESM(require("node:path"), 1);
+var import_yaml4 = __toESM(require_dist(), 1);
+var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
+var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
+var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
+function normalizeHint(value) {
+  return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
+}
+function relativePath(repoRoot, filePath) {
+  return import_node_path5.default.relative(repoRoot, filePath).replace(/\\/g, "/");
+}
+function hasTopicLinkage(content, hints) {
+  const lowered = content.toLowerCase();
+  if (!/(PublishCommand|\.publish\s*\()/i.test(content)) {
+    return false;
+  }
+  for (const hint of hints) {
+    if (hint && lowered.includes(hint)) {
+      return true;
+    }
+  }
+  return false;
+}
+function looksLikeJsonSchema(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const obj = value;
+  return Boolean(
+    obj.$schema || obj.type || obj.properties || obj.items || obj.required || obj.definitions || obj.$defs
+  );
+}
+async function walkFiles(root) {
+  const queue = [root];
+  const files = [];
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (!current) continue;
+    const entries = await (0, import_promises5.readdir)(current, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const fullPath = import_node_path5.default.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (!IGNORED_DIRS.has(entry.name)) {
+          queue.push(fullPath);
+        }
+        continue;
+      }
+      if (entry.isFile()) {
+        files.push(fullPath);
+      }
+    }
+  }
+  return files;
+}
+async function fileExists(filePath) {
+  try {
+    await (0, import_promises5.access)(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function createSyntheticJsonSchema(sourcePath, kind, topicName, details = {}) {
+  return JSON.stringify(
+    {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      additionalProperties: true,
+      "x-code-derived": {
+        sourcePath,
+        kind,
+        topicName,
+        ...details
+      }
+    },
+    null,
+    2
+  );
+}
+function parseStaticJavaSnsAnnotation(content, topicHints) {
+  const annotationPattern = /@SnsPublish\s*\(([^)]*)\)/gs;
+  for (const annotationMatch of content.matchAll(annotationPattern)) {
+    const args = annotationMatch[1] ?? "";
+    const topicMatch = /topicName\s*=\s*"([^"]+)"/.exec(args);
+    const payloadMatch = /payloadType\s*=\s*([A-Za-z0-9_$.]+)\.class/.exec(args);
+    if (!topicMatch || !payloadMatch) {
+      continue;
+    }
+    const topicName = topicMatch[1];
+    if (!topicName || topicName.includes("${") || topicName.includes("+")) {
+      continue;
+    }
+    const normalized = normalizeHint(topicName);
+    let linked = false;
+    for (const hint of topicHints) {
+      if (!hint) continue;
+      if (normalized === hint || normalized.includes(hint) || hint.includes(normalized)) {
+        linked = true;
+        break;
+      }
+    }
+    if (!linked) {
+      continue;
+    }
+    return { topicName, payloadType: payloadMatch[1] };
+  }
+  return void 0;
+}
+function detectAsyncApiFormat(content, filePath) {
+  try {
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
+    if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
+      return void 0;
+    }
+    return {
+      content,
+      format: filePath.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml",
+      filename: import_node_path5.default.basename(filePath),
+      evidence: []
+    };
+  } catch {
+    return void 0;
+  }
+}
+var resolveCodeDerivedContract = async ({
+  repoRoot,
+  topicName,
+  topicArn,
+  serviceHints = []
+}) => {
+  const evidence = [];
+  const candidates = [];
+  const hints = new Set(
+    [
+      normalizeHint(topicName),
+      normalizeHint(topicArn),
+      ...serviceHints.map(normalizeHint)
+    ].filter(Boolean)
+  );
+  const springwolfPaths = [
+    import_node_path5.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
+    import_node_path5.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
+  ];
+  for (const springwolfPath of springwolfPaths) {
+    if (!await fileExists(springwolfPath)) {
+      continue;
+    }
+    const content = await (0, import_promises5.readFile)(springwolfPath, "utf8").catch(() => void 0);
+    if (!content) {
+      continue;
+    }
+    const exportResult = detectAsyncApiFormat(content, springwolfPath);
+    if (!exportResult) {
+      continue;
+    }
+    candidates.push({
+      kind: "springwolf",
+      sourcePath: springwolfPath,
+      displayPath: relativePath(repoRoot, springwolfPath),
+      result: exportResult
+    });
+  }
+  const generatedAsyncApiPaths = [
+    import_node_path5.default.join(repoRoot, "generated", "asyncapi.json"),
+    import_node_path5.default.join(repoRoot, "generated", "asyncapi.yaml"),
+    import_node_path5.default.join(repoRoot, "generated", "asyncapi.yml")
+  ];
+  for (const generatedPath of generatedAsyncApiPaths) {
+    if (!await fileExists(generatedPath)) {
+      continue;
+    }
+    const content = await (0, import_promises5.readFile)(generatedPath, "utf8").catch(() => void 0);
+    if (!content) {
+      continue;
+    }
+    const exportResult = detectAsyncApiFormat(content, generatedPath);
+    if (!exportResult) {
+      continue;
+    }
+    candidates.push({
+      kind: "generated-asyncapi",
+      sourcePath: generatedPath,
+      displayPath: relativePath(repoRoot, generatedPath),
+      result: exportResult
+    });
+  }
+  const files = await walkFiles(repoRoot);
+  for (const filePath of files) {
+    const extension = import_node_path5.default.extname(filePath).toLowerCase();
+    if (!CODE_EXTENSIONS.has(extension) && !JAVA_EXTENSIONS.has(extension)) {
+      continue;
+    }
+    const content = await (0, import_promises5.readFile)(filePath, "utf8").catch(() => void 0);
+    if (!content) {
+      continue;
+    }
+    const displayPath = relativePath(repoRoot, filePath);
+    if (CODE_EXTENSIONS.has(extension) && hasTopicLinkage(content, hints)) {
+      const schemaReferencePattern = /(?:import\s+[\w*\s{},]*\s+from\s+|require\()\s*['"]([^'"]+\.json)['"]\)?/g;
+      for (const schemaMatch of content.matchAll(schemaReferencePattern)) {
+        const refPath = schemaMatch[1];
+        if (!refPath) continue;
+        const resolvedRefPath = import_node_path5.default.resolve(import_node_path5.default.dirname(filePath), refPath);
+        const schemaContent = await (0, import_promises5.readFile)(resolvedRefPath, "utf8").catch(() => void 0);
+        if (!schemaContent) {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(schemaContent);
+          if (!looksLikeJsonSchema(parsed)) {
+            continue;
+          }
+          candidates.push({
+            kind: "json-schema-ref",
+            sourcePath: resolvedRefPath,
+            displayPath: relativePath(repoRoot, resolvedRefPath),
+            result: {
+              content: schemaContent,
+              format: "json-schema",
+              filename: import_node_path5.default.basename(resolvedRefPath),
+              evidence: []
+            }
+          });
+        } catch {
+        }
+      }
+      if (/\bz\.object\s*\(/.test(content)) {
+        candidates.push({
+          kind: "zod",
+          sourcePath: filePath,
+          displayPath,
+          result: {
+            content: createSyntheticJsonSchema(displayPath, "zod", topicName),
+            format: "json-schema",
+            filename: "schema.json",
+            evidence: []
+          }
+        });
+      }
+      if (/\bType\.Object\s*\(/.test(content)) {
+        candidates.push({
+          kind: "typebox",
+          sourcePath: filePath,
+          displayPath,
+          result: {
+            content: createSyntheticJsonSchema(displayPath, "typebox", topicName),
+            format: "json-schema",
+            filename: "schema.json",
+            evidence: []
+          }
+        });
+      }
+    }
+    if (JAVA_EXTENSIONS.has(extension)) {
+      const annotation = parseStaticJavaSnsAnnotation(content, hints);
+      if (annotation) {
+        candidates.push({
+          kind: "java-annotation",
+          sourcePath: filePath,
+          displayPath,
+          result: {
+            content: createSyntheticJsonSchema(displayPath, "java-annotation", topicName, {
+              payloadType: annotation.payloadType,
+              annotationTopicName: annotation.topicName
+            }),
+            format: "json-schema",
+            filename: "schema.json",
+            evidence: []
+          }
+        });
+      }
+    }
+  }
+  const uniqueCandidates = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const key = `${candidate.kind}:${candidate.sourcePath}`;
+    if (!uniqueCandidates.has(key)) {
+      uniqueCandidates.set(key, candidate);
+    }
+  }
+  const deduped = [...uniqueCandidates.values()];
+  if (deduped.length === 0) {
+    return { evidence };
+  }
+  if (deduped.length > 1) {
+    const ambiguousCandidates = deduped.map((candidate) => `${candidate.kind}:${candidate.displayPath}`);
+    evidence.push(`Ambiguous code-derived candidates found: ${ambiguousCandidates.join(", ")}`);
+    return { evidence, ambiguousCandidates };
+  }
+  const selected = deduped[0];
+  if (!selected) {
+    return { evidence };
+  }
+  return {
+    evidence: [...evidence, `Resolved SNS contract from code-derived ${selected.kind} source ${selected.displayPath}`],
+    resolved: {
+      ...selected.result,
+      evidence: [`Resolved SNS contract from code-derived ${selected.kind} source ${selected.displayPath}`]
+    }
+  };
+};
+
+// src/lib/providers/sns.ts
 var ASYNCAPI_FILE_NAMES = /* @__PURE__ */ new Set(["asyncapi.yaml", "asyncapi.yml", "asyncapi.json"]);
+var GENERATED_ASYNCAPI_EXTENSIONS = /* @__PURE__ */ new Set([".yaml", ".yml", ".json"]);
+var GENERATED_ROOT_PREFIXES = ["spec/", "contracts/", "events/", "build/", ".build/", "out/"];
+var DEFAULT_IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
+var CONTRACT_REGISTRY_FILES = [
+  ".postman/contracts.yaml",
+  ".postman/contracts.yml",
+  ".postman/contracts.json",
+  ".postman/contract-registry.yaml",
+  ".postman/contract-registry.yml",
+  ".postman/contract-registry.json",
+  "contracts.yaml",
+  "contracts.yml",
+  "contracts.json",
+  "contract-registry.yaml",
+  "contract-registry.yml",
+  "contract-registry.json"
+];
+function classifyDeliveryVariant(protocol, rawMessageDelivery) {
+  const normalizedProtocol = (protocol ?? "").trim().toLowerCase();
+  if (normalizedProtocol === "lambda") {
+    return "sns-envelope";
+  }
+  return (rawMessageDelivery ?? "").trim().toLowerCase() === "true" ? "raw-payload" : "sns-envelope";
+}
+function normalizeFilterPolicyScope(value) {
+  return (value ?? "").trim() === "MessageBody" ? "MessageBody" : "MessageAttributes";
+}
+function inferFilterPolicyAttributeType(value) {
+  if (typeof value === "number") {
+    return "Number";
+  }
+  if (typeof value === "string" || typeof value === "boolean") {
+    return "String";
+  }
+  if (!value || typeof value !== "object") {
+    return void 0;
+  }
+  if (Array.isArray(value)) {
+    let sawString2 = false;
+    let sawNumber2 = false;
+    for (const entry of value) {
+      const inferred = inferFilterPolicyAttributeType(entry);
+      if (inferred === "String") {
+        sawString2 = true;
+      } else if (inferred === "Number") {
+        sawNumber2 = true;
+      }
+    }
+    if (sawString2) return "String";
+    if (sawNumber2) return "Number";
+    return void 0;
+  }
+  const record = value;
+  if ("numeric" in record) {
+    return "Number";
+  }
+  if ("anything-but" in record) {
+    return inferFilterPolicyAttributeType(record["anything-but"]);
+  }
+  if ("prefix" in record || "suffix" in record || "equals-ignore-case" in record || "ip-address" in record || "exists" in record) {
+    return "String";
+  }
+  let sawString = false;
+  let sawNumber = false;
+  for (const nestedValue of Object.values(record)) {
+    const inferred = inferFilterPolicyAttributeType(nestedValue);
+    if (inferred === "String") {
+      sawString = true;
+    } else if (inferred === "Number") {
+      sawNumber = true;
+    }
+  }
+  if (sawString) return "String";
+  if (sawNumber) return "Number";
+  return void 0;
+}
+function parseFilterPolicyMessageAttributes(rawValue) {
+  if (!rawValue?.trim()) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    const attributes = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const dataType = inferFilterPolicyAttributeType(value);
+      attributes[key] = dataType ? { dataType } : { dataType: "String" };
+    }
+    return attributes;
+  } catch {
+    return {};
+  }
+}
+function mergeMessageAttributes(subscriptions) {
+  const merged = {};
+  for (const subscription of subscriptions) {
+    if (!subscription.messageAttributes) {
+      continue;
+    }
+    for (const [name, attribute] of Object.entries(subscription.messageAttributes)) {
+      merged[name] = merged[name] ?? {};
+      if (!merged[name].dataType && attribute.dataType) {
+        merged[name].dataType = attribute.dataType;
+      }
+    }
+  }
+  return merged;
+}
+function toAsyncApiHeaderSchema(attribute) {
+  const normalized = (attribute.dataType ?? "").toLowerCase();
+  if (normalized.startsWith("number")) {
+    return { type: "number" };
+  }
+  return { type: "string" };
+}
+function hasExistingAsyncApiHeaders(document) {
+  if (!document || typeof document !== "object" || Array.isArray(document)) {
+    return false;
+  }
+  const root = document;
+  const channels = root.channels;
+  if (!channels || typeof channels !== "object" || Array.isArray(channels)) {
+    return false;
+  }
+  for (const channel of Object.values(channels)) {
+    if (!channel || typeof channel !== "object" || Array.isArray(channel)) {
+      continue;
+    }
+    for (const operationName of ["publish", "subscribe"]) {
+      const operation2 = channel[operationName];
+      if (!operation2 || typeof operation2 !== "object" || Array.isArray(operation2)) {
+        continue;
+      }
+      const message = operation2.message;
+      if (!message || typeof message !== "object" || Array.isArray(message)) {
+        continue;
+      }
+      const messageRecord = message;
+      if (messageRecord.headers) {
+        return true;
+      }
+      if (Array.isArray(messageRecord.oneOf)) {
+        for (const oneOfMessage of messageRecord.oneOf) {
+          if (oneOfMessage && typeof oneOfMessage === "object" && !Array.isArray(oneOfMessage) && oneOfMessage.headers) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+function deriveAsyncApiHeaders(content, format2, messageAttributes) {
+  if (format2 !== "asyncapi-yaml" && format2 !== "asyncapi-json" || Object.keys(messageAttributes).length === 0) {
+    return content;
+  }
+  let parsed;
+  try {
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+  } catch {
+    return content;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || hasExistingAsyncApiHeaders(parsed)) {
+    return content;
+  }
+  const document = parsed;
+  const channels = document.channels;
+  if (!channels || typeof channels !== "object" || Array.isArray(channels)) {
+    return content;
+  }
+  const headerRef = "#/components/schemas/SnsDerivedHeaders";
+  const components = document.components && typeof document.components === "object" && !Array.isArray(document.components) ? document.components : {};
+  const schemas = components.schemas && typeof components.schemas === "object" && !Array.isArray(components.schemas) ? components.schemas : {};
+  schemas.SnsDerivedHeaders = {
+    type: "object",
+    properties: Object.fromEntries(
+      Object.entries(messageAttributes).map(([name, attribute]) => [name, toAsyncApiHeaderSchema(attribute)])
+    ),
+    additionalProperties: true
+  };
+  components.schemas = schemas;
+  document.components = components;
+  for (const channel of Object.values(channels)) {
+    if (!channel || typeof channel !== "object" || Array.isArray(channel)) {
+      continue;
+    }
+    for (const operationName of ["publish", "subscribe"]) {
+      const operation2 = channel[operationName];
+      if (!operation2 || typeof operation2 !== "object" || Array.isArray(operation2)) {
+        continue;
+      }
+      const message = operation2.message;
+      if (!message || typeof message !== "object" || Array.isArray(message)) {
+        continue;
+      }
+      const messageRecord = message;
+      if (Array.isArray(messageRecord.oneOf)) {
+        for (const oneOfMessage of messageRecord.oneOf) {
+          if (oneOfMessage && typeof oneOfMessage === "object" && !Array.isArray(oneOfMessage)) {
+            const record = oneOfMessage;
+            if (!record.headers) {
+              record.headers = { $ref: headerRef };
+            }
+          }
+        }
+      } else if (!messageRecord.headers) {
+        messageRecord.headers = { $ref: headerRef };
+      }
+    }
+  }
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml5.stringify)(document);
+}
+var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
+var SPEC_POINTER_FILENAME = "spec-pointer.json";
+var WEBHOOK_SIDECAR_FILENAME = "webhook.openapi.json";
 function topicNameFromArn(topicArn) {
   const index = topicArn.lastIndexOf(":");
   return index >= 0 ? topicArn.slice(index + 1) : topicArn;
@@ -114066,16 +114678,16 @@ function normalizeServiceKey(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
-  const base = import_node_path4.default.resolve(rootPath);
-  const resolved = import_node_path4.default.resolve(base, targetPath);
-  const relative = import_node_path4.default.relative(base, resolved);
-  if (relative.startsWith("..") || import_node_path4.default.isAbsolute(relative)) {
+  const base = import_node_path6.default.resolve(rootPath);
+  const resolved = import_node_path6.default.resolve(base, targetPath);
+  const relative = import_node_path6.default.relative(base, resolved);
+  if (relative.startsWith("..") || import_node_path6.default.isAbsolute(relative)) {
     throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
   }
   return resolved;
 }
 function toEvidencePath2(repoRoot, filePath) {
-  const relative = import_node_path4.default.relative(repoRoot, filePath);
+  const relative = import_node_path6.default.relative(repoRoot, filePath);
   return relative.startsWith("..") ? filePath : relative.replace(/\\/g, "/");
 }
 function groupByService2(entries) {
@@ -114096,7 +114708,7 @@ function groupByService2(entries) {
   }
   return [...grouped.values()];
 }
-function looksLikeJsonSchema(value) {
+function looksLikeJsonSchema2(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -114113,6 +114725,138 @@ function parseKnownFormat(format2) {
   if (normalized === "json-schema") return { format: "json-schema", filename: "schema.json" };
   return void 0;
 }
+function isHttpUrl(value) {
+  return /^https?:\/\//i.test(value.trim());
+}
+function bestAffinity(target, hints) {
+  if (!target) return 0;
+  const normalized = normalizeServiceKey(target);
+  if (!normalized) return 0;
+  let score = 0;
+  for (const hint of hints) {
+    if (!hint) continue;
+    if (normalized === hint) {
+      score = Math.max(score, 100);
+      continue;
+    }
+    if (normalized.includes(hint) || hint.includes(normalized)) {
+      score = Math.max(score, 60);
+      continue;
+    }
+    const hintTokens = new Set(hint.split("-").filter(Boolean));
+    const targetTokens = normalized.split("-").filter(Boolean);
+    const overlap = targetTokens.some((token) => hintTokens.has(token));
+    if (overlap) {
+      score = Math.max(score, 30);
+    }
+  }
+  return score;
+}
+function collectHints(topicName, candidateName) {
+  const canonicalTopicName = topicName.replace(/\.fifo$/i, "");
+  return new Set(
+    [
+      normalizeServiceKey(topicName),
+      normalizeServiceKey(canonicalTopicName),
+      normalizeServiceKey(candidateName),
+      normalizeServiceKey(candidateName.replace(/\.fifo$/i, ""))
+    ].filter((entry) => entry.length > 0)
+  );
+}
+function extractRegistryUrls(node, keyTrail = []) {
+  if (typeof node === "string") {
+    return isHttpUrl(node) ? [{ selector: keyTrail[keyTrail.length - 1], url: node.trim() }] : [];
+  }
+  if (!node || typeof node !== "object") {
+    return [];
+  }
+  if (Array.isArray(node)) {
+    return node.flatMap((entry) => extractRegistryUrls(entry, keyTrail));
+  }
+  const record = node;
+  const selectors = [
+    record.topic,
+    record.topicName,
+    record["topic-name"],
+    record.service,
+    record.serviceName,
+    record["service-name"],
+    record.name,
+    keyTrail[keyTrail.length - 1]
+  ].filter((value) => typeof value === "string" && value.trim().length > 0);
+  const urls = [record.url, record.specUrl, record["spec-url"], record.definition].filter((value) => typeof value === "string" && isHttpUrl(value)).map((value) => value.trim());
+  const results = [];
+  for (const url of urls) {
+    if (selectors.length === 0) {
+      results.push({ url });
+      continue;
+    }
+    for (const selector of selectors) {
+      results.push({ selector, url });
+    }
+  }
+  for (const [key, value] of Object.entries(record)) {
+    results.push(...extractRegistryUrls(value, [...keyTrail, key]));
+  }
+  return results;
+}
+async function collectCatalogUrlCandidates(repoRoot, hints, catalogApis) {
+  const detectedCatalogApis = catalogApis ?? await detectCatalogApis(repoRoot);
+  if (!detectedCatalogApis || detectedCatalogApis.length === 0) {
+    return [];
+  }
+  return detectedCatalogApis.filter((entry) => Boolean(entry.specUrl && isHttpUrl(entry.specUrl))).map((entry) => ({
+    url: entry.specUrl,
+    source: `Backstage catalog API "${entry.name}"`,
+    affinity: bestAffinity(entry.name, hints)
+  })).filter((entry) => entry.affinity > 0).sort((left, right) => right.affinity - left.affinity || left.url.localeCompare(right.url));
+}
+async function collectRegistryUrlCandidates(repoRoot, hints) {
+  const candidates = [];
+  for (const relativePath2 of CONTRACT_REGISTRY_FILES) {
+    const filePath = import_node_path6.default.join(repoRoot, relativePath2);
+    const content = await (0, import_promises6.readFile)(filePath, "utf8").catch(() => void 0);
+    if (!content) continue;
+    let parsed;
+    try {
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    } catch {
+      continue;
+    }
+    const extracted = extractRegistryUrls(parsed);
+    for (const entry of extracted) {
+      const affinity = bestAffinity(entry.selector, hints);
+      if (affinity > 0) {
+        candidates.push({
+          url: entry.url,
+          source: `contract registry file ${relativePath2}`,
+          affinity
+        });
+      }
+    }
+  }
+  const deduped = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const key = `${candidate.source}::${candidate.url}`;
+    const existing = deduped.get(key);
+    if (!existing || candidate.affinity > existing.affinity) {
+      deduped.set(key, candidate);
+    }
+  }
+  return [...deduped.values()].sort((left, right) => right.affinity - left.affinity || left.url.localeCompare(right.url));
+}
+function buildSsmPointerArtifact(specUrl, serviceName, fetchError) {
+  return JSON.stringify(
+    {
+      specUrl,
+      serviceName,
+      registeredVia: "ssm-parameter-store",
+      fetchError
+    },
+    null,
+    2
+  );
+}
 function detectFormat2(content, filenameHint) {
   const configured = parseKnownFormat(filenameHint);
   if (configured) return configured;
@@ -114123,20 +114867,326 @@ function detectFormat2(content, filenameHint) {
     if (parsed.asyncapi) {
       return { format: "asyncapi-json", filename: "asyncapi.json" };
     }
-    if (looksLikeJsonSchema(parsed)) {
+    if (looksLikeJsonSchema2(parsed)) {
       return { format: "json-schema", filename: "schema.json" };
     }
     return void 0;
   } catch {
   }
   try {
-    const parsed = (0, import_yaml3.parse)(trimmed);
+    const parsed = (0, import_yaml5.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
   } catch {
   }
   return void 0;
+}
+function parseStructuredDocument(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return (0, import_yaml5.parse)(value);
+  }
+}
+function getSchemaByRef(document, ref) {
+  const match = /^#\/(.+)$/.exec(ref);
+  if (!match || !document || typeof document !== "object" || Array.isArray(document)) {
+    return void 0;
+  }
+  const segments = match[1]?.split("/") ?? [];
+  let current = document;
+  for (const segment of segments) {
+    if (!current || typeof current !== "object" || Array.isArray(current)) {
+      return void 0;
+    }
+    current = current[segment];
+  }
+  return current;
+}
+function resolveSchemaNode(node, root, visited = /* @__PURE__ */ new Set()) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) {
+    return node;
+  }
+  const record = node;
+  const ref = typeof record.$ref === "string" ? record.$ref : void 0;
+  if (!ref) {
+    return record;
+  }
+  if (visited.has(ref)) {
+    return void 0;
+  }
+  visited.add(ref);
+  const resolved = getSchemaByRef(root, ref);
+  return resolveSchemaNode(resolved, root, visited);
+}
+function hasSnsEnvelopeFields(node, root) {
+  const resolved = resolveSchemaNode(node, root);
+  if (!resolved || typeof resolved !== "object" || Array.isArray(resolved)) {
+    return false;
+  }
+  const properties = resolved.properties;
+  if (!properties || typeof properties !== "object" || Array.isArray(properties)) {
+    return false;
+  }
+  const propertyKeys = Object.keys(properties);
+  return ["Message", "MessageId", "TopicArn", "Type"].every((requiredField) => propertyKeys.includes(requiredField));
+}
+function detectSnsShapeFromSchemaDocument(document) {
+  if (!document || typeof document !== "object" || Array.isArray(document)) {
+    return { matches: false, transformed: false };
+  }
+  const root = document;
+  if (hasSnsEnvelopeFields(root, root)) {
+    return { matches: true, transformed: false };
+  }
+  const rootProperties = root.properties;
+  if (rootProperties && typeof rootProperties === "object" && !Array.isArray(rootProperties)) {
+    const detailNode = rootProperties.detail;
+    if (detailNode && hasSnsEnvelopeFields(detailNode, root)) {
+      return { matches: true, transformed: true };
+    }
+  }
+  const components = root.components;
+  const componentSchemas = components && typeof components === "object" && !Array.isArray(components) ? components.schemas : void 0;
+  if (componentSchemas && typeof componentSchemas === "object" && !Array.isArray(componentSchemas)) {
+    for (const schema of Object.values(componentSchemas)) {
+      if (hasSnsEnvelopeFields(schema, root)) {
+        return { matches: true, transformed: false };
+      }
+      if (schema && typeof schema === "object" && !Array.isArray(schema)) {
+        const detailNode = schema.properties;
+        if (detailNode && typeof detailNode === "object" && !Array.isArray(detailNode)) {
+          const nestedDetail = detailNode.detail;
+          if (nestedDetail && hasSnsEnvelopeFields(nestedDetail, root)) {
+            return { matches: true, transformed: true };
+          }
+        }
+      }
+    }
+  }
+  return { matches: false, transformed: false };
+}
+function deepCloneJsonValue(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function extractAsyncApiPayloadSchema(document) {
+  if (!document || typeof document !== "object" || Array.isArray(document)) {
+    return { payloadSchema: { type: "object" } };
+  }
+  const root = document;
+  const channels = root.channels;
+  const components = root.components && typeof root.components === "object" && !Array.isArray(root.components) ? root.components : void 0;
+  const schemas = components?.schemas;
+  const messages = components?.messages;
+  const schemaComponents = schemas && typeof schemas === "object" && !Array.isArray(schemas) ? schemas : {};
+  const messageComponents = messages && typeof messages === "object" && !Array.isArray(messages) ? messages : {};
+  const copiedComponents = {};
+  const seen = /* @__PURE__ */ new Set();
+  const seenMessages = /* @__PURE__ */ new Set();
+  const resolveMessageByRef = (value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return void 0;
+    }
+    const record = value;
+    const ref = typeof record.$ref === "string" ? record.$ref : void 0;
+    if (!ref) {
+      return record;
+    }
+    const match = /^#\/components\/messages\/(.+)$/.exec(ref);
+    if (!match) {
+      return record;
+    }
+    const messageName = match[1];
+    if (!messageName || seenMessages.has(messageName)) {
+      return void 0;
+    }
+    const sourceMessage = messageComponents[messageName];
+    if (!sourceMessage || typeof sourceMessage !== "object" || Array.isArray(sourceMessage)) {
+      return void 0;
+    }
+    seenMessages.add(messageName);
+    const resolved = resolveMessageByRef(sourceMessage);
+    seenMessages.delete(messageName);
+    return resolved;
+  };
+  const copyComponentSchemaByRef = (ref) => {
+    const match = /^#\/components\/schemas\/(.+)$/.exec(ref);
+    if (!match) return;
+    const schemaName = match[1];
+    if (!schemaName || seen.has(schemaName)) return;
+    const sourceSchema = schemaComponents[schemaName];
+    if (!sourceSchema || typeof sourceSchema !== "object" || Array.isArray(sourceSchema)) return;
+    seen.add(schemaName);
+    copiedComponents[schemaName] = deepCloneJsonValue(sourceSchema);
+    collectNestedRefs(copiedComponents[schemaName]);
+  };
+  const collectNestedRefs = (value) => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const entry of value) collectNestedRefs(entry);
+      return;
+    }
+    const record = value;
+    const ref = typeof record.$ref === "string" ? record.$ref : void 0;
+    if (ref) {
+      copyComponentSchemaByRef(ref);
+    }
+    for (const nested of Object.values(record)) {
+      collectNestedRefs(nested);
+    }
+  };
+  const finalize = (payloadSchema) => {
+    collectNestedRefs(payloadSchema);
+    return {
+      payloadSchema,
+      ...Object.keys(copiedComponents).length > 0 ? { components: copiedComponents } : {}
+    };
+  };
+  if (!channels || typeof channels !== "object" || Array.isArray(channels)) {
+    return { payloadSchema: { type: "object" } };
+  }
+  for (const channelValue of Object.values(channels)) {
+    if (!channelValue || typeof channelValue !== "object" || Array.isArray(channelValue)) {
+      continue;
+    }
+    for (const operationName of ["publish", "subscribe"]) {
+      const operation2 = channelValue[operationName];
+      if (!operation2 || typeof operation2 !== "object" || Array.isArray(operation2)) {
+        continue;
+      }
+      const message = resolveMessageByRef(operation2.message);
+      if (!message) {
+        continue;
+      }
+      const payload2 = message.payload;
+      if (payload2 && typeof payload2 === "object" && !Array.isArray(payload2)) {
+        return finalize(payload2);
+      }
+      const oneOf = message.oneOf;
+      if (Array.isArray(oneOf)) {
+        const oneOfPayloadSchemas = [];
+        for (const entry of oneOf) {
+          if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+            continue;
+          }
+          const resolvedEntry = resolveMessageByRef(entry);
+          if (!resolvedEntry) {
+            continue;
+          }
+          if (typeof resolvedEntry.$ref === "string" && /^#\/components\/schemas\/.+$/.test(resolvedEntry.$ref)) {
+            oneOfPayloadSchemas.push({ $ref: resolvedEntry.$ref });
+            continue;
+          }
+          const oneOfPayload = resolvedEntry.payload;
+          if (oneOfPayload && typeof oneOfPayload === "object" && !Array.isArray(oneOfPayload)) {
+            oneOfPayloadSchemas.push(oneOfPayload);
+          }
+        }
+        if (oneOfPayloadSchemas.length > 0) {
+          return finalize({ oneOf: oneOfPayloadSchemas });
+        }
+      }
+    }
+  }
+  return { payloadSchema: { type: "object" } };
+}
+function canonicalPayloadSchema(canonical) {
+  if (canonical.format === "json-schema") {
+    try {
+      const parsed = JSON.parse(canonical.content);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return { payloadSchema: parsed };
+      }
+    } catch {
+      return { payloadSchema: { type: "object" } };
+    }
+    return { payloadSchema: { type: "object" } };
+  }
+  if (canonical.format === "asyncapi-json") {
+    try {
+      return extractAsyncApiPayloadSchema(JSON.parse(canonical.content));
+    } catch {
+      return { payloadSchema: { type: "object" } };
+    }
+  }
+  if (canonical.format === "asyncapi-yaml") {
+    try {
+      return extractAsyncApiPayloadSchema((0, import_yaml5.parse)(canonical.content));
+    } catch {
+      return { payloadSchema: { type: "object" } };
+    }
+  }
+  return { payloadSchema: { type: "object" } };
+}
+function buildWebhookPayloadSchema(rawDelivery, baseSchema) {
+  const payloadSchema = deepCloneJsonValue(baseSchema);
+  if (rawDelivery) {
+    return payloadSchema;
+  }
+  return {
+    type: "object",
+    properties: {
+      Type: { type: "string" },
+      MessageId: { type: "string" },
+      TopicArn: { type: "string" },
+      Timestamp: { type: "string" },
+      Message: payloadSchema
+    },
+    required: ["Message"],
+    additionalProperties: true
+  };
+}
+function buildWebhookSidecar(canonical, subscriptions) {
+  const httpSubscriptions = subscriptions.filter((subscription) => {
+    const protocol = (subscription.protocol ?? "").toLowerCase();
+    return protocol === "http" || protocol === "https";
+  });
+  if (httpSubscriptions.length === 0) {
+    return void 0;
+  }
+  const payloadExtraction = canonicalPayloadSchema(canonical);
+  const basePayloadSchema = payloadExtraction.payloadSchema;
+  const variants = new Set(httpSubscriptions.map((subscription) => subscription.variant === "raw-payload"));
+  const webhooks = {};
+  for (const rawDelivery of variants) {
+    const webhookName = rawDelivery ? "snsMessageRaw" : "snsMessageWrapped";
+    webhooks[webhookName] = {
+      post: {
+        operationId: webhookName,
+        "x-sns-raw-delivery": rawDelivery,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: buildWebhookPayloadSchema(rawDelivery, basePayloadSchema)
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "SNS notification received"
+          }
+        }
+      }
+    };
+  }
+  return {
+    filename: WEBHOOK_SIDECAR_FILENAME,
+    content: JSON.stringify(
+      {
+        openapi: "3.1.0",
+        info: {
+          title: "SNS Webhook Sidecar",
+          version: "1.0.0"
+        },
+        webhooks,
+        ...payloadExtraction.components ? { components: { schemas: payloadExtraction.components } } : {}
+      },
+      null,
+      2
+    )
+  };
 }
 function sortByTopicAffinity(files, topicName) {
   const loweredTopicName = topicName.toLowerCase();
@@ -114149,13 +115199,84 @@ function sortByTopicAffinity(files, topicName) {
     return left.localeCompare(right);
   });
 }
+function normalizePathForMatch(value) {
+  return value.replace(/\\/g, "/").replace(/^\/+/, "");
+}
+function isGeneratedSearchRootPath(repoRoot, filePath) {
+  const relative = normalizePathForMatch(import_node_path6.default.relative(repoRoot, filePath));
+  return GENERATED_ROOT_PREFIXES.some((prefix) => relative.startsWith(prefix));
+}
+function isGeneratedAsyncApiPath(repoRoot, filePath) {
+  const relative = normalizePathForMatch(import_node_path6.default.relative(repoRoot, filePath));
+  const base = import_node_path6.default.basename(relative).toLowerCase();
+  const isDotAsyncApi = base.endsWith(".asyncapi.yaml") || base.endsWith(".asyncapi.yml") || base.endsWith(".asyncapi.json");
+  const isNamedAsyncApi = base === "asyncapi.yaml" || base === "asyncapi.yml" || base === "asyncapi.json";
+  if (relative.startsWith("spec/") || relative.startsWith("contracts/")) {
+    return isDotAsyncApi;
+  }
+  if (relative.startsWith("events/")) {
+    return isNamedAsyncApi;
+  }
+  if (relative.startsWith("build/") || relative.startsWith(".build/") || relative.startsWith("out/")) {
+    return isDotAsyncApi || isNamedAsyncApi;
+  }
+  return false;
+}
+async function collectFilesByExtensionUnfiltered(currentPath) {
+  const entries = await (0, import_promises6.readdir)(currentPath, { withFileTypes: true }).catch(() => []);
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = import_node_path6.default.join(currentPath, entry.name);
+    if (entry.isDirectory()) {
+      if (DEFAULT_IGNORED_DIRS.has(entry.name)) {
+        continue;
+      }
+      files.push(...await collectFilesByExtensionUnfiltered(fullPath));
+      continue;
+    }
+    if (!entry.isFile()) {
+      continue;
+    }
+    if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path6.default.extname(entry.name).toLowerCase())) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+function isFrameworkOutputPath(repoRoot, filePath) {
+  const relative = normalizePathForMatch(import_node_path6.default.relative(repoRoot, filePath));
+  return relative.startsWith("build/") || relative.startsWith(".build/") || relative.startsWith("out/");
+}
+async function isGitIgnoredByGit(repoRoot, filePath) {
+  const relative = normalizePathForMatch(import_node_path6.default.relative(repoRoot, filePath));
+  if (!relative || relative.startsWith("..")) {
+    return true;
+  }
+  try {
+    const escapedRelative = relative.replace(/(["`$\\])/g, "\\$1");
+    (0, import_node_child_process.execSync)(`git check-ignore -q -- "${escapedRelative}"`, { cwd: repoRoot, stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 async function findContractFiles(repoRoot, topicName) {
   const files = await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
   const asyncapi = [];
   const jsonSchema = [];
   for (const filePath of files) {
     const safePath = resolvePathWithinRoot(repoRoot, filePath, "repo contract path");
-    const baseName = import_node_path4.default.basename(safePath).toLowerCase();
+    const normalizedRelativePath = normalizePathForMatch(import_node_path6.default.relative(repoRoot, safePath)).toLowerCase();
+    if (normalizedRelativePath === "build/springwolf/asyncapi.json" || normalizedRelativePath === "target/springwolf/asyncapi.json") {
+      continue;
+    }
+    const baseName = import_node_path6.default.basename(safePath).toLowerCase();
+    if (isGeneratedSearchRootPath(repoRoot, safePath)) {
+      if (baseName === "schema.json" || baseName.endsWith(".schema.json")) {
+        jsonSchema.push(safePath);
+      }
+      continue;
+    }
     if (ASYNCAPI_FILE_NAMES.has(baseName)) {
       asyncapi.push(safePath);
       continue;
@@ -114169,35 +115290,65 @@ async function findContractFiles(repoRoot, topicName) {
     jsonSchema: sortByTopicAffinity(jsonSchema, topicName)
   };
 }
-async function resolveAsyncApiContract(repoRoot, files) {
+async function findGeneratedAsyncApiFiles(repoRoot, topicName, gitIgnoreChecker = isGitIgnoredByGit) {
+  const scanned = await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
+  const discovered = new Set(scanned);
+  for (const frameworkRoot of ["build", ".build", "out"]) {
+    const rootPath = import_node_path6.default.join(repoRoot, frameworkRoot);
+    const rootStats = await (0, import_promises6.stat)(rootPath).catch(() => null);
+    if (!rootStats || !rootStats.isDirectory()) {
+      continue;
+    }
+    for (const filePath of await collectFilesByExtensionUnfiltered(rootPath)) {
+      discovered.add(filePath);
+    }
+  }
+  const accepted = [];
+  for (const filePath of discovered) {
+    if (!isGeneratedAsyncApiPath(repoRoot, filePath)) {
+      continue;
+    }
+    if (!isFrameworkOutputPath(repoRoot, filePath)) {
+      accepted.push(filePath);
+      continue;
+    }
+    const ignored = await gitIgnoreChecker(repoRoot, filePath);
+    if (!ignored) {
+      accepted.push(filePath);
+    }
+  }
+  return sortByTopicAffinity(accepted, topicName);
+}
+async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-local") {
   const evidence = [];
   for (const filePath of files) {
-    const relativePath = toEvidencePath2(repoRoot, filePath);
+    const relativePath2 = toEvidencePath2(repoRoot, filePath);
     let content;
     try {
-      content = await (0, import_promises4.readFile)(filePath, "utf8");
+      content = await (0, import_promises6.readFile)(filePath, "utf8");
     } catch {
-      evidence.push(`Skipped malformed AsyncAPI file ${relativePath} (unreadable)`);
+      evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (unreadable)`);
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml3.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
-        evidence.push(`Skipped malformed AsyncAPI file ${relativePath} (missing asyncapi key)`);
+        evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
       }
       const format2 = filePath.toLowerCase().endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml";
+      const sourceDescription = sourceLabel === "generated" ? "generated AsyncAPI" : "repo-local AsyncAPI";
       return {
         match: {
           content,
           format: format2,
-          filename: import_node_path4.default.basename(filePath),
-          evidence: [...evidence, `Resolved SNS contract from repo-local AsyncAPI file ${relativePath}`]
+          filename: import_node_path6.default.basename(filePath),
+          evidence: [...evidence, `Resolved SNS contract from ${sourceDescription} file ${relativePath2}`]
         },
         evidence
       };
     } catch {
-      evidence.push(`Skipped malformed AsyncAPI file ${relativePath} (failed to parse)`);
+      evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (failed to parse)`);
     }
   }
   return { evidence };
@@ -114205,42 +115356,61 @@ async function resolveAsyncApiContract(repoRoot, files) {
 async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []) {
   const evidence = [...inheritedEvidence];
   for (const filePath of files) {
-    const relativePath = toEvidencePath2(repoRoot, filePath);
+    const relativePath2 = toEvidencePath2(repoRoot, filePath);
     let content;
     try {
-      content = await (0, import_promises4.readFile)(filePath, "utf8");
+      content = await (0, import_promises6.readFile)(filePath, "utf8");
     } catch {
-      evidence.push(`Skipped malformed JSON Schema file ${relativePath} (unreadable)`);
+      evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (unreadable)`);
       continue;
     }
     try {
       const parsed = JSON.parse(content);
-      if (!looksLikeJsonSchema(parsed)) {
-        evidence.push(`Skipped malformed JSON Schema file ${relativePath} (missing schema markers)`);
+      if (!looksLikeJsonSchema2(parsed)) {
+        evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (missing schema markers)`);
         continue;
       }
       return {
         match: {
           content,
           format: "json-schema",
-          filename: import_node_path4.default.basename(filePath),
-          evidence: [...evidence, `Resolved SNS contract from repo-local JSON Schema file ${relativePath}`]
+          filename: import_node_path6.default.basename(filePath),
+          evidence: [...evidence, `Resolved SNS contract from repo-local JSON Schema file ${relativePath2}`]
         },
         evidence
       };
     } catch {
-      evidence.push(`Skipped malformed JSON Schema file ${relativePath} (failed to parse JSON)`);
+      evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (failed to parse JSON)`);
     }
   }
   return { evidence };
 }
 var SnsProvider = class {
-  constructor(client, repoRoot = ".", ssmClient) {
+  constructor(client, repoRoot = ".", ssmClient, dependencies = fetchSpecFromUrl) {
     this.client = client;
     this.repoRoot = repoRoot;
     this.ssmClient = ssmClient;
+    if (typeof dependencies === "function") {
+      this.fetchRemoteSpec = dependencies;
+      this.gitIgnoreChecker = isGitIgnoredByGit;
+      this.webhookSidecarBuilder = buildWebhookSidecar;
+      this.codeDerivedResolver = resolveCodeDerivedContract;
+      return;
+    }
+    this.fetchRemoteSpec = dependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+    this.preloadedCatalogApis = dependencies.catalogApis;
+    this.eventBridgeClient = dependencies.eventBridgeClient;
+    this.codeDerivedResolver = dependencies.codeDerivedResolver ?? resolveCodeDerivedContract;
+    this.gitIgnoreChecker = dependencies.gitIgnoreChecker ?? isGitIgnoredByGit;
+    this.webhookSidecarBuilder = dependencies.webhookSidecarBuilder ?? buildWebhookSidecar;
   }
   type = "sns";
+  fetchRemoteSpec;
+  preloadedCatalogApis;
+  eventBridgeClient;
+  codeDerivedResolver;
+  gitIgnoreChecker;
+  webhookSidecarBuilder;
   async probe() {
     return this.client.probe();
   }
@@ -114272,15 +115442,21 @@ var SnsProvider = class {
     }
     return candidates;
   }
-  async exportSpec(candidate, _options) {
-    void _options;
-    const resolvedRepoRoot = import_node_path4.default.resolve(this.repoRoot);
+  async exportSpec(candidate, options = {}) {
+    const resolvedRepoRoot = import_node_path6.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
-    const contract = await this.resolveContract(candidate);
+    const contract = await this.resolveContract(candidate, options.resolutionContext);
     if (contract.resolved) {
-      return contract.result;
+      return {
+        ...contract.result,
+        sidecars: [
+          ...contract.result.sidecars ?? [],
+          ...contract.sidecars ?? [],
+          { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }
+        ]
+      };
     }
     const manualReview = {
       status: "unresolved",
@@ -114288,45 +115464,67 @@ var SnsProvider = class {
       providerType: "sns",
       topicArn,
       topicName,
-      attemptedSources: ["repo-local-asyncapi", "repo-local-json-schema", "ssm-registry"]
+      attemptedSources: [
+        "repo-local-asyncapi",
+        "repo-local-json-schema",
+        "generated-asyncapi",
+        "ssm-registry",
+        "catalog-url",
+        "eventbridge-derived",
+        "code-derived"
+      ]
     };
     return {
       content: JSON.stringify(manualReview, null, 2),
       format: "json-schema",
       filename: "manual-review.json",
-      evidence: contract.evidence
+      evidence: contract.evidence,
+      sidecars: [...contract.sidecars ?? [], { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
     };
   }
-  async resolveContract(candidate) {
-    const resolvedRepoRoot = import_node_path4.default.resolve(this.repoRoot);
+  async resolveContract(candidate, resolutionContext = {}) {
+    const resolvedRepoRoot = import_node_path6.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
+    const affinityHints = collectHints(topicName, candidate.name);
+    for (const serviceHint of resolutionContext.serviceHints ?? []) {
+      const normalized = normalizeServiceKey(serviceHint);
+      if (normalized) {
+        affinityHints.add(normalized);
+      }
+    }
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
+    let pointerSidecar;
     const files = await findContractFiles(resolvedRepoRoot, topicName);
-    const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi);
+    const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, "repo-local");
+    let resolvedOrigin;
+    let resolvedExport;
+    let priorEvidence = [];
     if (asyncApiResolution.match) {
-      return {
-        resolved: true,
-        origin: "repo-asyncapi",
-        result: asyncApiResolution.match,
-        evidence: asyncApiResolution.match.evidence
-      };
+      resolvedOrigin = "repo-asyncapi";
+      resolvedExport = asyncApiResolution.match;
+      priorEvidence = asyncApiResolution.match.evidence;
     }
-    const jsonSchemaResolution = await resolveJsonSchemaContract(
+    const jsonSchemaResolution = resolvedExport ? { evidence: priorEvidence } : await resolveJsonSchemaContract(resolvedRepoRoot, files.jsonSchema, asyncApiResolution.evidence);
+    if (!resolvedExport && "match" in jsonSchemaResolution && jsonSchemaResolution.match) {
+      resolvedOrigin = "repo-json-schema";
+      resolvedExport = jsonSchemaResolution.match;
+      priorEvidence = jsonSchemaResolution.match.evidence;
+    }
+    const generatedAsyncApiResolution = resolvedExport ? { evidence: priorEvidence } : await resolveAsyncApiContract(
       resolvedRepoRoot,
-      files.jsonSchema,
-      asyncApiResolution.evidence
+      await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker),
+      "generated"
     );
-    if (jsonSchemaResolution.match) {
-      return {
-        resolved: true,
-        origin: "repo-json-schema",
-        result: jsonSchemaResolution.match,
-        evidence: jsonSchemaResolution.match.evidence
-      };
+    if (!resolvedExport && "match" in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
+      resolvedOrigin = "generated-asyncapi";
+      resolvedExport = generatedAsyncApiResolution.match;
+      priorEvidence = generatedAsyncApiResolution.match.evidence;
     }
-    const priorEvidence = [...jsonSchemaResolution.evidence];
-    if (this.ssmClient) {
+    if (!resolvedExport) {
+      priorEvidence = [...jsonSchemaResolution.evidence, ...generatedAsyncApiResolution.evidence];
+    }
+    if (!resolvedExport && this.ssmClient) {
       const specs = groupByService2(await this.ssmClient.listSpecParameters());
       const canonicalTopicName = topicName.replace(/\.fifo$/i, "");
       const serviceKeys = new Set(
@@ -114350,24 +115548,270 @@ var SnsProvider = class {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat2(ssmMatch.content, ssmMatch.format ?? "");
         if (resolvedFormat) {
           const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
-          return {
-            resolved: true,
-            origin: "ssm-content",
-            result: {
-              content: ssmMatch.content,
+          resolvedOrigin = "ssm-content";
+          resolvedExport = {
+            content: ssmMatch.content,
+            format: resolvedFormat.format,
+            filename: resolvedFormat.filename,
+            evidence
+          };
+          priorEvidence = evidence;
+        }
+      }
+      const ssmUrl = ssmMatch?.url;
+      if (!resolvedExport && ssmUrl) {
+        try {
+          const fetched = await this.fetchRemoteSpec(ssmUrl, { timeoutMs: 15e3 });
+          const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat2(fetched.content, ssmMatch?.format ?? "");
+          if (resolvedFormat) {
+            const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
+            resolvedOrigin = "ssm-url";
+            resolvedExport = {
+              content: fetched.content,
               format: resolvedFormat.format,
               filename: resolvedFormat.filename,
               evidence
-            },
-            evidence
-          };
+            };
+            priorEvidence = evidence;
+          }
+          if (!resolvedExport) {
+            priorEvidence.push(
+              `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+            );
+          }
+        } catch (fetchError) {
+          const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+          const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
+          pointerSidecar = { filename: SPEC_POINTER_FILENAME, content: pointerArtifact };
+          priorEvidence.push(
+            `Failed to fetch SNS contract from SSM URL ${ssmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
+          );
         }
       }
     }
-    return {
-      resolved: false,
-      evidence: [...priorEvidence, `No SNS contract found for ${topicArn}; manual review required`]
+    if (!resolvedExport) {
+      const remoteUrlCandidates = [
+        ...await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints, this.preloadedCatalogApis),
+        ...await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints)
+      ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
+      for (const remoteCandidate of remoteUrlCandidates) {
+        try {
+          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15e3 });
+          const resolvedFormat = detectFormat2(fetched.content, "");
+          if (!resolvedFormat) {
+            priorEvidence.push(
+              `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+            );
+            continue;
+          }
+          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
+          resolvedOrigin = "catalog-url";
+          resolvedExport = {
+            content: fetched.content,
+            format: resolvedFormat.format,
+            filename: resolvedFormat.filename,
+            evidence
+          };
+          priorEvidence = evidence;
+          break;
+        } catch (fetchError) {
+          const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+        }
+      }
+    }
+    let bridgeDerivedTransformed = false;
+    const bridgeEvidence = resolutionContext.bridgeEvidence ?? [];
+    const shouldAttemptEventBridgeDerived = bridgeEvidence.length > 0;
+    if (!resolvedExport && this.eventBridgeClient && shouldAttemptEventBridgeDerived) {
+      try {
+        const registries = await this.eventBridgeClient.listRegistries();
+        const topicHints = new Set(affinityHints);
+        const matchedSchemas = [];
+        for (const registry of registries) {
+          const schemas = await this.eventBridgeClient.listSchemas(registry.name);
+          for (const schema of schemas) {
+            const affinity = bestAffinity(schema.name, topicHints);
+            if (affinity > 0) {
+              matchedSchemas.push({ registryName: registry.name, schemaName: schema.name, affinity });
+            }
+          }
+        }
+        matchedSchemas.sort((left, right) => right.affinity - left.affinity || left.schemaName.localeCompare(right.schemaName));
+        for (const schema of matchedSchemas) {
+          try {
+            const described = await this.eventBridgeClient.describeSchema(schema.registryName, schema.schemaName);
+            const parsed = parseStructuredDocument(described.content);
+            const shape = detectSnsShapeFromSchemaDocument(parsed);
+            if (!shape.matches) {
+              priorEvidence.push(
+                `EventBridge schema ${schema.registryName}/${schema.schemaName} did not match SNS payload shape`
+              );
+              continue;
+            }
+            resolvedOrigin = "eventbridge-derived";
+            bridgeDerivedTransformed = shape.transformed;
+            resolvedExport = {
+              content: typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2),
+              format: "json-schema",
+              filename: "index.json",
+              evidence: [
+                ...priorEvidence,
+                `Resolved SNS contract from EventBridge schema ${schema.registryName}/${schema.schemaName}`
+              ]
+            };
+            priorEvidence = resolvedExport.evidence;
+            break;
+          } catch (error2) {
+            const detail = error2 instanceof Error ? error2.message : String(error2);
+            priorEvidence.push(`Failed describing EventBridge schema ${schema.registryName}/${schema.schemaName}: ${detail}`);
+          }
+        }
+      } catch (error2) {
+        const detail = error2 instanceof Error ? error2.message : String(error2);
+        priorEvidence.push(`EventBridge bridge detection unavailable: ${detail}`);
+      }
+    } else if (!resolvedExport && this.eventBridgeClient) {
+      priorEvidence.push("Skipped EventBridge-derived fallback because no SNS/EventBridge bridge evidence was detected");
+    }
+    if (!resolvedExport) {
+      const codeDerived = await this.codeDerivedResolver({
+        repoRoot: resolvedRepoRoot,
+        candidate,
+        topicName,
+        topicArn,
+        serviceHints: resolutionContext.serviceHints
+      });
+      if (codeDerived.resolved) {
+        resolvedOrigin = "code-derived";
+        resolvedExport = {
+          ...codeDerived.resolved,
+          evidence: [...priorEvidence, ...codeDerived.evidence]
+        };
+        priorEvidence = resolvedExport.evidence;
+      } else if (codeDerived.evidence.length > 0) {
+        priorEvidence.push(...codeDerived.evidence);
+      }
+    }
+    const subscriptionInspection = await this.inspectSubscriptions(topicArn);
+    const finalEvidence = [...priorEvidence, ...subscriptionInspection.evidence];
+    if (!resolvedExport || !resolvedOrigin) {
+      finalEvidence.push(`No SNS contract found for ${topicArn}; manual review required`);
+      const messageAttributes2 = mergeMessageAttributes(subscriptionInspection.subscriptions);
+      const metadata2 = {
+        contractOrigin: "manual-review",
+        subscriptions: subscriptionInspection.subscriptions,
+        messageAttributes: messageAttributes2,
+        evidence: finalEvidence,
+        subscriptionSummary: {
+          topicArn,
+          total: subscriptionInspection.subscriptions.length,
+          failed: subscriptionInspection.errors.length,
+          errors: subscriptionInspection.errors
+        }
+      };
+      return {
+        resolved: false,
+        evidence: finalEvidence,
+        metadata: metadata2,
+        sidecars: pointerSidecar ? [pointerSidecar] : void 0
+      };
+    }
+    const messageAttributes = mergeMessageAttributes(subscriptionInspection.subscriptions);
+    resolvedExport = {
+      ...resolvedExport,
+      content: deriveAsyncApiHeaders(resolvedExport.content, resolvedExport.format, messageAttributes)
     };
+    const metadata = {
+      contractOrigin: resolvedOrigin,
+      ...resolvedOrigin === "eventbridge-derived" && bridgeDerivedTransformed ? { transformed: true } : {},
+      subscriptions: subscriptionInspection.subscriptions,
+      messageAttributes,
+      evidence: finalEvidence,
+      subscriptionSummary: {
+        topicArn,
+        total: subscriptionInspection.subscriptions.length,
+        failed: subscriptionInspection.errors.length,
+        errors: subscriptionInspection.errors
+      }
+    };
+    const variantCount = new Set(metadata.subscriptions.map((subscription) => subscription.variant)).size;
+    const sidecars = pointerSidecar ? [pointerSidecar] : [];
+    try {
+      const webhookSidecar = this.webhookSidecarBuilder(resolvedExport, metadata.subscriptions);
+      if (webhookSidecar) {
+        sidecars.push(webhookSidecar);
+      }
+    } catch (error2) {
+      const detail = error2 instanceof Error ? error2.message : String(error2);
+      finalEvidence.push(`Failed to generate webhook sidecar for ${topicArn}: ${detail}`);
+    }
+    return {
+      resolved: true,
+      origin: resolvedOrigin,
+      variantCount,
+      result: {
+        ...resolvedExport,
+        evidence: finalEvidence
+      },
+      evidence: finalEvidence,
+      metadata,
+      sidecars: sidecars.length > 0 ? sidecars : void 0
+    };
+  }
+  async inspectSubscriptions(topicArn) {
+    const evidence = [];
+    const errors = [];
+    let summaries;
+    try {
+      summaries = await this.client.listSubscriptionsByTopic(topicArn);
+      evidence.push(`Inspected SNS subscriptions for topic ${topicArn}; discovered ${summaries.length}`);
+    } catch (error2) {
+      const detail = error2 instanceof Error ? error2.message : String(error2);
+      const isAccessDenied = /AccessDeniedException/i.test(detail);
+      evidence.push(
+        isAccessDenied ? `Could not list subscriptions for ${topicArn}: AccessDeniedException (continuing with evidence only)` : `Could not list subscriptions for ${topicArn}: ${detail} (continuing with evidence only)`
+      );
+      errors.push({ error: detail });
+      return { subscriptions: [], evidence, errors };
+    }
+    const subscriptions = [];
+    for (const summary of summaries) {
+      const subscriptionArn = summary.subscriptionArn;
+      if (!subscriptionArn) {
+        continue;
+      }
+      try {
+        const attributes = await this.client.getSubscriptionAttributes(subscriptionArn);
+        const filterPolicyScope = normalizeFilterPolicyScope(attributes.FilterPolicyScope);
+        const parsedMessageAttributes = filterPolicyScope === "MessageAttributes" ? parseFilterPolicyMessageAttributes(attributes.FilterPolicy) : {};
+        subscriptions.push({
+          subscriptionArn,
+          protocol: attributes.Protocol ?? summary.protocol,
+          endpoint: attributes.Endpoint ?? summary.endpoint,
+          variant: classifyDeliveryVariant(attributes.Protocol ?? summary.protocol, attributes.RawMessageDelivery),
+          RawMessageDelivery: attributes.RawMessageDelivery,
+          FilterPolicy: attributes.FilterPolicy,
+          FilterPolicyScope: attributes.FilterPolicyScope,
+          filterPolicyScope,
+          ...attributes.FilterPolicy ? { filterPolicyRaw: attributes.FilterPolicy } : {},
+          ...Object.keys(parsedMessageAttributes).length > 0 ? { messageAttributes: parsedMessageAttributes } : {},
+          RedrivePolicy: attributes.RedrivePolicy,
+          DeliveryPolicy: attributes.DeliveryPolicy
+        });
+      } catch (error2) {
+        const detail = error2 instanceof Error ? error2.message : String(error2);
+        evidence.push(`Failed to read SNS subscription attributes for ${subscriptionArn}: ${detail}`);
+        errors.push({ subscriptionArn, error: detail });
+        subscriptions.push({
+          subscriptionArn,
+          protocol: summary.protocol,
+          endpoint: summary.endpoint,
+          variant: classifyDeliveryVariant(summary.protocol, void 0)
+        });
+      }
+    }
+    return { subscriptions, evidence, errors };
   }
 };
 
@@ -114431,6 +115875,22 @@ function topicNameFromArn2(topicArn) {
   const lastColonIndex = topicArn.lastIndexOf(":");
   return lastColonIndex >= 0 ? topicArn.slice(lastColonIndex + 1) : topicArn;
 }
+function extractAwsErrorCode(error2) {
+  if (!error2 || typeof error2 !== "object") {
+    return void 0;
+  }
+  const candidate = error2;
+  const name = typeof candidate.name === "string" ? candidate.name : void 0;
+  const type = typeof candidate.__type === "string" ? candidate.__type : void 0;
+  if (name === "AccessDeniedException" || name === "AuthorizationErrorException") {
+    return name;
+  }
+  return type ?? name;
+}
+function isAuthorizationDeniedError(error2) {
+  const errorCode = extractAwsErrorCode(error2);
+  return errorCode === "AccessDeniedException" || errorCode === "AuthorizationErrorException";
+}
 var SnsSdkClient = class {
   client;
   constructor(region, options = {}) {
@@ -114481,6 +115941,44 @@ var SnsSdkClient = class {
       tags[tag2.Key] = tag2.Value;
     }
     return tags;
+  }
+  async listSubscriptionsByTopic(topicArn) {
+    const subscriptions = [];
+    let nextToken;
+    try {
+      do {
+        const response = await this.client.send(new import_client_sns.ListSubscriptionsByTopicCommand({ TopicArn: topicArn, NextToken: nextToken }));
+        for (const subscription of response.Subscriptions ?? []) {
+          const subscriptionArn = subscription.SubscriptionArn;
+          if (!subscriptionArn) continue;
+          subscriptions.push({
+            subscriptionArn,
+            protocol: subscription.Protocol,
+            endpoint: subscription.Endpoint,
+            topicArn: subscription.TopicArn,
+            owner: subscription.Owner
+          });
+        }
+        nextToken = response.NextToken;
+      } while (nextToken);
+      return subscriptions;
+    } catch (error2) {
+      if (isAuthorizationDeniedError(error2)) {
+        return [];
+      }
+      throw error2;
+    }
+  }
+  async getSubscriptionAttributes(subscriptionArn) {
+    try {
+      const response = await this.client.send(new import_client_sns.GetSubscriptionAttributesCommand({ SubscriptionArn: subscriptionArn }));
+      return response.Attributes ?? {};
+    } catch (error2) {
+      if (isAuthorizationDeniedError(error2)) {
+        return {};
+      }
+      throw error2;
+    }
   }
 };
 
@@ -114640,57 +116138,6 @@ async function runNarrowingPipeline(ctx, allCandidates) {
   const t42 = tierNamingHeuristic(allCandidates, ctx);
   if (t42) return t42;
   return void 0;
-}
-
-// src/lib/repo/catalog.ts
-var import_promises5 = require("node:fs/promises");
-var import_node_path5 = __toESM(require("node:path"), 1);
-var import_yaml4 = __toESM(require_dist(), 1);
-async function detectCatalogApis(repoRoot) {
-  const candidates = ["catalog-info.yaml", "catalog-info.yml"];
-  let content;
-  for (const filename of candidates) {
-    try {
-      content = await (0, import_promises5.readFile)(import_node_path5.default.resolve(repoRoot, filename), "utf8");
-      break;
-    } catch {
-    }
-  }
-  if (!content) return void 0;
-  let docs;
-  try {
-    const parsed = (0, import_yaml4.parse)(content, { maxAliasCount: 100 });
-    docs = Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
-    return void 0;
-  }
-  const apis = [];
-  for (const doc of docs) {
-    if (!doc || doc.kind !== "API") continue;
-    const name = doc.metadata?.name ?? "";
-    if (!name) continue;
-    const def = doc.spec?.definition;
-    let specPath;
-    let specUrl;
-    if (typeof def === "string") {
-      if (def.startsWith("http://") || def.startsWith("https://")) {
-        specUrl = def;
-      } else {
-        specPath = def;
-      }
-    } else if (def && typeof def === "object") {
-      const textRef = def.$text;
-      if (typeof textRef === "string") {
-        if (textRef.startsWith("http://") || textRef.startsWith("https://")) {
-          specUrl = textRef;
-        } else {
-          specPath = textRef;
-        }
-      }
-    }
-    apis.push({ name, specPath, specUrl });
-  }
-  return apis.length > 0 ? apis : void 0;
 }
 
 // src/runtime.ts
@@ -114869,13 +116316,13 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path6.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path7.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 function resolvePathWithinRoot2(rootPath, targetPath, fieldName) {
-  const base = import_node_path6.default.resolve(rootPath);
-  const resolved = import_node_path6.default.resolve(base, targetPath);
-  const relative = import_node_path6.default.relative(base, resolved);
-  if (relative.startsWith("..") || import_node_path6.default.isAbsolute(relative)) {
+  const base = import_node_path7.default.resolve(rootPath);
+  const resolved = import_node_path7.default.resolve(base, targetPath);
+  const relative = import_node_path7.default.relative(base, resolved);
+  if (relative.startsWith("..") || import_node_path7.default.isAbsolute(relative)) {
     throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
   }
   return resolved;
@@ -114884,8 +116331,8 @@ function userSafeWarning(message) {
   return sanitizeLogMessage(message);
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises6.mkdir)(import_node_path6.default.dirname(outputPath), { recursive: true });
-  await (0, import_promises6.writeFile)(outputPath, content, "utf8");
+  await (0, import_promises7.mkdir)(import_node_path7.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises7.writeFile)(outputPath, content, "utf8");
 }
 async function selectStage(aws, candidate, preferredStage) {
   if (preferredStage) {
@@ -114982,6 +116429,15 @@ function sortSnsCandidates(candidates, serviceHints) {
     return left.name.localeCompare(right.name);
   });
 }
+function collectSnsEventBridgeBridgeEvidence(signals) {
+  const providerHints = signals.providerHints ?? [];
+  const hasSnsHint = providerHints.includes("sns");
+  const hasEventBridgeHint = providerHints.includes("eventbridge-schemas");
+  if (!hasSnsHint || !hasEventBridgeHint) {
+    return [];
+  }
+  return signals.evidence.filter((entry) => /sns.*eventbridge|eventbridge.*sns|bridge pattern/i.test(entry));
+}
 function pickPreferredStage(stages) {
   const priority = ["prod", "production", "$default", "main", "staging", "stage", "dev", "development"];
   const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
@@ -115068,7 +116524,7 @@ async function runDiscovery(inputs, dependencies) {
   const discovered = [];
   const summary = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path6.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path7.default.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot2(resolvedRoot, inputs.outputDir, "output-dir");
   await dependencies.core.group("Export OpenAPI specs", async () => {
     for (const candidate of selectedCandidates) {
@@ -115085,7 +116541,7 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(import_node_path6.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path7.default.relative(resolvedRoot, resolvedOutputDir), folderName);
         if (inputs.dryRun) {
           summary.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
@@ -115126,8 +116582,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
       const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15e3 });
       const folderName = catalogApis?.[0]?.name ?? "catalog-api";
-      const targetPath = import_node_path6.default.join(inputs.outputDir, folderName, "index.yaml");
-      const absolutePath = import_node_path6.default.resolve(inputs.repoRoot, targetPath);
+      const targetPath = import_node_path7.default.join(inputs.outputDir, folderName, "index.yaml");
+      const absolutePath = import_node_path7.default.resolve(inputs.repoRoot, targetPath);
       await writeSpecFile(absolutePath, fetched.content);
       existingSpecPath = targetPath.replace(/\\/g, "/");
       actionCore.info(`Fetched remote spec from catalog URL and saved to ${existingSpecPath}`);
@@ -115193,10 +116649,17 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   let resolvedSnsCandidate;
   let resolvedSnsExport;
   const snsManualReviewEvidence = [];
+  let snsManualReviewMetadata;
   const shouldAttemptSns = signals.providerHints?.includes("sns") ?? false;
   if (shouldAttemptSns) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
-    const snsProvider = resolutionDependencies.snsProvider ?? new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
+    const snsRuntimeDependencies = {
+      fetchSpecFromUrl,
+      catalogApis,
+      eventBridgeClient: resolutionDependencies.eventBridgeClient ?? new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts),
+      codeDerivedResolver: resolutionDependencies.codeDerivedResolver
+    };
+    const snsProvider = resolutionDependencies.snsProvider ?? (resolutionDependencies.createSnsProvider ? resolutionDependencies.createSnsProvider(snsRuntimeDependencies) : new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), snsRuntimeDependencies));
     let snsCandidates = [];
     try {
       const snsAvailable = await snsProvider.probe();
@@ -115210,12 +116673,23 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       snsManualReviewEvidence.push("Detected sns provider hints but SNS provider probe was unavailable");
     }
     const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
+    const bridgeEvidence = collectSnsEventBridgeBridgeEvidence(signals);
     const candidatesToTry = inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates ? sortedSnsCandidates.slice(0, inputs.maxCandidates) : sortedSnsCandidates;
     for (const candidate of candidatesToTry) {
       try {
-        const contract = await snsProvider.resolveContract(candidate);
+        const contract = await snsProvider.resolveContract(candidate, {
+          serviceHints: signals.serviceHints,
+          bridgeEvidence
+        });
         if (!contract.resolved) {
           snsManualReviewEvidence.push(...contract.evidence);
+          if (!snsManualReviewMetadata) {
+            snsManualReviewMetadata = {
+              serviceName: candidate.name,
+              metadataContent: JSON.stringify(contract.metadata, null, 2),
+              sidecars: contract.sidecars
+            };
+          }
           continue;
         }
         const format2 = contract.result.format;
@@ -115229,12 +116703,20 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
         resolvedSnsCandidate = {
           serviceName: candidate.name,
           topicArn: candidate.id,
-          confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+          confidence: contract.origin === "eventbridge-derived" ? 55 : Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
           origin: contract.origin,
           specFormat: format2,
+          variantCount: contract.variantCount,
           evidence: [...snsManualReviewEvidence, ...candidate.evidence, ...contract.evidence]
         };
-        resolvedSnsExport = contract.result;
+        resolvedSnsExport = {
+          ...contract.result,
+          sidecars: [
+            ...contract.result.sidecars ?? [],
+            ...contract.sidecars ?? [],
+            { filename: "sns-resolution-metadata.json", content: JSON.stringify(contract.metadata, null, 2) }
+          ]
+        };
         break;
       } catch (error2) {
         actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`));
@@ -115293,23 +116775,56 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!resolvedSnsExport) {
       return toManualReviewResult(selectedSource, ["SNS contract was selected but export payload was unavailable"]);
     }
-    const relativeProviderPath = import_node_path6.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"), resolvedSnsExport.filename).replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path7.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+    const relativeProviderPath = import_node_path7.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
+    const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
+    const relativeMetadataPath = metadataSidecar ? import_node_path7.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
     if (inputs.dryRun) {
       return {
         ...selectedSource,
         specPath: relativeProviderPath,
+        metadataPath: relativeMetadataPath,
         evidence: [...selectedSource.evidence, "Dry run enabled; skipped SNS contract file write"]
       };
     }
     const absoluteSpecPath = resolvePathWithinRoot2(inputs.repoRoot, relativeProviderPath, "output-dir");
     await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
+    for (const sidecar of resolvedSnsExport.sidecars ?? []) {
+      const relativeSidecarPath = import_node_path7.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
+      const absoluteSidecarPath = resolvePathWithinRoot2(inputs.repoRoot, relativeSidecarPath, "output-dir");
+      await writeSpecFile(absoluteSidecarPath, sidecar.content);
+    }
     return {
       ...selectedSource,
-      specPath: relativeProviderPath
+      specPath: relativeProviderPath,
+      metadataPath: relativeMetadataPath,
+      variantCount: selectedSource.variantCount
     };
   }
   if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
-    return toManualReviewResult(selectedSource, snsManualReviewEvidence);
+    const serviceName = selectedSource.serviceName ?? snsManualReviewMetadata?.serviceName ?? "service";
+    const relativeProviderDir = import_node_path7.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+    const relativeMetadataPath = import_node_path7.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
+    const manualReviewResult = toManualReviewResult(
+      { ...selectedSource, contractOrigin: "manual-review", metadataPath: relativeMetadataPath },
+      snsManualReviewEvidence
+    );
+    if (inputs.dryRun) {
+      return {
+        ...manualReviewResult,
+        evidence: [...manualReviewResult.evidence, "Dry run enabled; skipped SNS metadata sidecar write"]
+      };
+    }
+    if (snsManualReviewMetadata?.metadataContent) {
+      const absoluteMetadataPath = resolvePathWithinRoot2(inputs.repoRoot, relativeMetadataPath, "output-dir");
+      await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
+      for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
+        const relativeSidecarPath = import_node_path7.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
+        const absoluteSidecarPath = resolvePathWithinRoot2(inputs.repoRoot, relativeSidecarPath, "output-dir");
+        await writeSpecFile(absoluteSidecarPath, sidecar.content);
+      }
+    }
+    return manualReviewResult;
   }
   return selectedSource;
 }
@@ -115325,11 +116840,11 @@ function buildProviderRegistry(inputs, awsClient) {
   registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
   return registry;
 }
-async function runMultiProviderDiscovery(providers, inputs, dependencies) {
+async function runMultiProviderDiscovery(providers, inputs, dependencies, snsResolutionContext) {
   const discovered = [];
   const summary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path6.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path7.default.resolve(inputs.repoRoot);
   for (const provider of providers) {
     await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
       let candidates;
@@ -115359,17 +116874,37 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies) {
           continue;
         }
         try {
-          const result = await provider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+          const result = await provider.exportSpec(candidate, {
+            stage: inputs.stage,
+            dryRun: inputs.dryRun,
+            ...provider.type === "sns" ? { resolutionContext: snsResolutionContext } : {}
+          });
           const serviceName = candidate.name;
           const baseFolder = projectFolderName(serviceName);
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-          const relativeSpecPath = import_node_path6.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
+          const relativeSpecPath = import_node_path7.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
           const absoluteSpecPath = resolvePathWithinRoot2(resolvedRoot, relativeSpecPath, "output-dir");
           await dependencies.writeSpecFile(absoluteSpecPath, result.content);
+          for (const sidecar of result.sidecars ?? []) {
+            const relativeSidecarPath = import_node_path7.default.join(inputs.outputDir, folderName, sidecar.filename).replace(/\\/g, "/");
+            const absoluteSidecarPath = resolvePathWithinRoot2(resolvedRoot, relativeSidecarPath, "output-dir");
+            await dependencies.writeSpecFile(absoluteSidecarPath, sidecar.content);
+          }
           summary.exported += 1;
           const gatewayType = candidate.meta.gatewayType ?? (provider.type === "sns" ? "SNS" : "REST");
+          const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
+          let contractOrigin;
+          let variantCount;
+          if (provider.type === "sns" && metadataSidecar) {
+            try {
+              const parsed = JSON.parse(metadataSidecar.content);
+              contractOrigin = parsed.contractOrigin;
+              variantCount = typeof parsed.variantCount === "number" ? parsed.variantCount : void 0;
+            } catch {
+            }
+          }
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -115377,7 +116912,10 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies) {
             gatewayType,
             stage: result.stage ?? "",
             providerType: provider.type,
-            specFormat: result.format
+            specFormat: result.format,
+            contractOrigin,
+            variantCount,
+            metadataPath: metadataSidecar ? import_node_path7.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
         } catch (error2) {
@@ -115463,8 +117001,13 @@ async function execute(inputs, dependencies) {
     const extraProviders = availableProviders.filter((p5) => p5.type !== "api-gateway");
     let extraDiscovered = [];
     let extraSummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+    const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
+    const snsResolutionContext = {
+      serviceHints: signals.serviceHints,
+      bridgeEvidence: collectSnsEventBridgeBridgeEvidence(signals)
+    };
     if (extraProviders.length > 0) {
-      const extraResult = await runMultiProviderDiscovery(extraProviders, inputs, dependencies);
+      const extraResult = await runMultiProviderDiscovery(extraProviders, inputs, dependencies, snsResolutionContext);
       extraDiscovered = extraResult.discovered;
       extraSummary = extraResult.summary;
     }
