@@ -752,6 +752,7 @@ describe('SNS runtime integration', () => {
         listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
         resolveContract: vi.fn().mockResolvedValue(createResolvedSnsContract('asyncapi-yaml', 'repo-asyncapi'))
       });
+
       await runResolution(
         {
           mode: 'resolve-one',
@@ -789,6 +790,14 @@ describe('SNS runtime integration', () => {
           resolveContract: vi.fn().mockResolvedValue(createResolvedSnsContract('asyncapi-yaml', 'repo-asyncapi'))
         })
       );
+      const eventBridgeClient = {
+        listRegistries: vi.fn().mockResolvedValue([]),
+        listSchemas: vi.fn().mockResolvedValue([]),
+        exportSchema: vi.fn().mockResolvedValue('{}'),
+        describeSchema: vi.fn().mockResolvedValue({ content: '{}', schemaVersion: '1' }),
+        getTags: vi.fn().mockResolvedValue({}),
+        probe: vi.fn().mockResolvedValue(true)
+      };
 
       await runResolution(
         {
@@ -813,14 +822,14 @@ describe('SNS runtime integration', () => {
         createAwsClientStub(),
         createCoreStub().core,
         vi.fn().mockResolvedValue(undefined),
-        { createSnsProvider, eventBridgeClient: {}, codeDerivedResolver: {} }
+        { createSnsProvider, eventBridgeClient, codeDerivedResolver: {} }
       );
 
       expect(createSnsProvider).toHaveBeenCalledTimes(1);
       const call = createSnsProvider.mock.calls[0]?.[0];
       expect(call?.fetchSpecFromUrl).toBeTypeOf('function');
       expect(call?.catalogApis).toBeUndefined();
-      expect(call?.eventBridgeClient).toEqual({});
+      expect(call?.eventBridgeClient).toBe(eventBridgeClient);
       expect(call?.codeDerivedResolver).toEqual({});
     });
   });

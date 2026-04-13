@@ -2546,6 +2546,166 @@ describe('SnsProvider', () => {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('does not query EventBridge bridge fallback when stronger SNS sources resolve', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+        describeSchema: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            type: 'object',
+            properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
+          }),
+          schemaVersion: '1'
+        })
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, undefined, { eventBridgeClient });
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(eventBridgeClient.listRegistries).not.toHaveBeenCalled();
+      expect(eventBridgeClient.listSchemas).not.toHaveBeenCalled();
+      expect(eventBridgeClient.describeSchema).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('queries EventBridge schema registry fallback when stronger SNS sources fail and resolves SNS envelope shape', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([
+          { name: 'unrelated-events', arn: 'arn:schema:1', registryName: 'custom-registry', versionCount: 1 },
+          { name: 'orders-topic-events', arn: 'arn:schema:2', registryName: 'custom-registry', versionCount: 1 }
+        ]),
+        describeSchema: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            type: 'object',
+            properties: {
+              Message: { type: 'string' },
+              MessageId: { type: 'string' },
+              TopicArn: { type: 'string' },
+              Type: { type: 'string' }
+            }
+          }),
+          schemaVersion: '1'
+        })
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), { eventBridgeClient });
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'eventbridge-derived' });
+      if (result.resolved) {
+        expect(result.result.format).toBe('json-schema');
+        expect(result.metadata.contractOrigin).toBe('eventbridge-derived');
+      }
+      expect(eventBridgeClient.listRegistries).toHaveBeenCalledTimes(1);
+      expect(eventBridgeClient.listSchemas).toHaveBeenCalledWith('custom-registry');
+      expect(eventBridgeClient.describeSchema).toHaveBeenCalledTimes(1);
+      expect(eventBridgeClient.describeSchema).toHaveBeenCalledWith('custom-registry', 'orders-topic-events');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('flags transformed metadata for EventBridge wrapper schemas with SNS payload under detail', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+        describeSchema: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            type: 'object',
+            properties: {
+              detail: {
+                type: 'object',
+                properties: {
+                  Message: { type: 'string' },
+                  MessageId: { type: 'string' },
+                  TopicArn: { type: 'string' },
+                  Type: { type: 'string' }
+                }
+              }
+            }
+          }),
+          schemaVersion: '1'
+        })
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), { eventBridgeClient });
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'eventbridge-derived' });
+      expect(result.metadata).toEqual(expect.objectContaining({ transformed: true }));
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('degrades gracefully when EventBridge schemas permissions are missing', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockRejectedValue(Object.assign(new Error('no access'), { name: 'AccessDeniedException' })),
+        listSchemas: vi.fn(),
+        describeSchema: vi.fn()
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), { eventBridgeClient });
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.metadata.contractOrigin).toBe('manual-review');
+      expect(result.evidence.some((entry) => entry.includes('EventBridge'))).toBe(true);
+      expect(eventBridgeClient.listRegistries).toHaveBeenCalledTimes(1);
+      expect(eventBridgeClient.listSchemas).not.toHaveBeenCalled();
+      expect(eventBridgeClient.describeSchema).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps precedence: SSM URL resolves before EventBridge-derived fallback', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const fetchMock = vi.fn().mockResolvedValue({ content: '{"asyncapi":"2.6.0","channels":{}}', contentType: 'application/json' });
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+        describeSchema: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            type: 'object',
+            properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
+          }),
+          schemaVersion: '1'
+        })
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([{ serviceName: 'orders-topic', key: 'url', value: 'https://example.com/orders.asyncapi.json' }])
+        }),
+        { fetchSpecFromUrl: fetchMock as never, eventBridgeClient }
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm-url' });
+      expect(eventBridgeClient.listRegistries).not.toHaveBeenCalled();
+      expect(eventBridgeClient.describeSchema).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('SnsSdkClient', () => {

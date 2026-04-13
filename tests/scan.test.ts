@@ -495,4 +495,66 @@ describe('SNS provider patterns via collectRepoSignals', () => {
     expect(signals.providerHints ?? []).not.toContain('sns');
     expect(signals.providerHints).toContain('api-gateway');
   });
+
+  it('flags bridge evidence when CloudFormation/SAM includes SNS-to-Lambda-to-EventBridge pipeline hints', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      [
+        'Resources:',
+        '  Topic:',
+        '    Type: AWS::SNS::Topic',
+        '  HandlerFunction:',
+        '    Type: AWS::Serverless::Function',
+        '    Properties:',
+        '      Events:',
+        '        TopicEvent:',
+        '          Type: SNS',
+        '  BridgeRule:',
+        '    Type: AWS::Events::Rule'
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.providerHints).toContain('eventbridge-schemas');
+    expect(signals.evidence.some((entry) => entry.includes('Detected SNS/EventBridge bridge pattern'))).toBe(true);
+  });
+
+  it('flags bridge evidence when Terraform includes sns topic/subscription and event bus resources', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'main.tf'),
+      [
+        'resource "aws_sns_topic" "orders" { name = "orders-topic" }',
+        'resource "aws_sns_topic_subscription" "orders" { topic_arn = aws_sns_topic.orders.arn protocol = "lambda" endpoint = aws_lambda_function.handler.arn }',
+        'resource "aws_cloudwatch_event_bus" "orders" { name = "orders" }'
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.providerHints).toContain('eventbridge-schemas');
+    expect(signals.evidence.some((entry) => entry.includes('Detected SNS/EventBridge bridge pattern'))).toBe(true);
+  });
+
+  it('flags bridge evidence when CDK includes SnsEventSource and EventBridge usage', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(
+      path.join(root, 'stack.ts'),
+      [
+        "import * as sns from 'aws-cdk-lib/aws-sns';",
+        "import { SnsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';",
+        "import * as events from 'aws-cdk-lib/aws-events';",
+        'new SnsEventSource(topic);',
+        'new events.EventBus(this, "BridgeBus");'
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.providerHints).toContain('eventbridge-schemas');
+    expect(signals.evidence.some((entry) => entry.includes('Detected SNS/EventBridge bridge pattern'))).toBe(true);
+  });
 });

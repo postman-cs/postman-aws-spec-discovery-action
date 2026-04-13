@@ -33,6 +33,7 @@ import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-clie
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
 import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
+import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 import type { SnsContractResult } from './lib/providers/sns.js';
 import type { SnsResolvedCandidate } from './lib/resolve/source-selector.js';
@@ -108,10 +109,10 @@ export interface ResolutionDependencies {
   createSnsProvider?: (dependencies: {
     fetchSpecFromUrl: typeof fetchSpecFromUrl;
     catalogApis: Awaited<ReturnType<typeof detectCatalogApis>>;
-    eventBridgeClient?: unknown;
+    eventBridgeClient?: EventBridgeSchemasSpecClient;
     codeDerivedResolver?: unknown;
   }) => SnsResolutionProvider;
-  eventBridgeClient?: unknown;
+  eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: unknown;
 }
 
@@ -704,7 +705,8 @@ export async function runResolution(
     const snsRuntimeDependencies = {
       fetchSpecFromUrl,
       catalogApis,
-      eventBridgeClient: resolutionDependencies.eventBridgeClient,
+      eventBridgeClient:
+        resolutionDependencies.eventBridgeClient ?? new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts),
       codeDerivedResolver: resolutionDependencies.codeDerivedResolver
     };
     const snsProvider =
@@ -757,7 +759,10 @@ export async function runResolution(
         resolvedSnsCandidate = {
           serviceName: candidate.name,
           topicArn: candidate.id,
-          confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+          confidence:
+            contract.origin === 'eventbridge-derived'
+              ? 55
+              : Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
           origin: contract.origin,
           specFormat: format,
           variantCount: contract.variantCount,
