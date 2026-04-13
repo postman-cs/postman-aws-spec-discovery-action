@@ -22,9 +22,51 @@ const actionManifest = parse(
 };
 
 describe('action contract', () => {
+  const expectedExistingInputRequirements = {
+    'aws-region': true,
+    'gateway-id': false,
+    stage: false,
+    'output-dir': false
+  } as const;
+  const expectedExistingOutputDescriptions = {
+    'resolution-json': 'JSON resolution result describing status, source type, confidence, and evidence.',
+    'resolution-status': 'Resolution status: resolved or unresolved.',
+    'source-type':
+      'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, manual-review, or discover-many.',
+    'mapping-confidence': 'Numeric confidence score for selected service candidate.',
+    'spec-path': 'Path to resolved or generated specification when available.',
+    'gateway-id': 'Resolved API Gateway ID when available.',
+    'service-name': 'Resolved service name.',
+    'services-json': 'Legacy discover-many output: JSON array of exported services.',
+    'service-count': 'Legacy discover-many output: number of exported services.',
+    'export-summary-json': 'discover-many summary JSON containing attempted, exported, failed, and skipped counts.',
+    'candidates-json':
+      'JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering.',
+    'provider-type':
+      'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, or ssm.',
+    'spec-format':
+      'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf.'
+  } as const;
+
   it('keeps action.yml aligned with declared contract', () => {
     expect(Object.keys(actionManifest.inputs)).toEqual(contractInputNames);
     expect(Object.keys(actionManifest.outputs)).toEqual(contractOutputNames);
+  });
+
+  it('keeps existing required inputs unchanged and introduces no new required inputs', () => {
+    expect(Object.keys(actionContract.inputs)).toEqual(Object.keys(expectedExistingInputRequirements));
+    for (const [inputName, isRequired] of Object.entries(expectedExistingInputRequirements)) {
+      expect(actionContract.inputs[inputName]?.required).toBe(isRequired);
+      expect(actionManifest.inputs[inputName]?.required).toBe(isRequired);
+    }
+    expect(Object.values(actionContract.inputs).filter((input) => input.required)).toHaveLength(1);
+  });
+
+  it('keeps existing output descriptions unchanged while adding SNS metadata outputs', () => {
+    for (const [outputName, description] of Object.entries(expectedExistingOutputDescriptions)) {
+      expect(actionContract.outputs[outputName]?.description).toBe(description);
+      expect((actionManifest.outputs as Record<string, { description: string }>)[outputName]?.description.length).toBeGreaterThan(0);
+    }
   });
 
   it('keeps expected defaults for optional inputs', () => {

@@ -1362,10 +1362,11 @@ describe('SnsProvider', () => {
     }
   });
 
-  it('resolveContract enforces deterministic 7-level precedence chain', async () => {
+  it('resolveContract enforces deterministic 9-level precedence waterfall from highest to lowest', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
       const ssmState: { content?: string; url?: string } = {};
+      const eventBridgeState = { enabled: true };
       const fetchMock = vi.fn(async (url: string) => {
         if (url.includes('ssm')) {
           return { content: '{"asyncapi":"2.6.0","channels":{}}', contentType: 'application/json' };
@@ -1390,18 +1391,48 @@ describe('SnsProvider', () => {
             return entries;
           })
         }),
-        fetchMock as never
+        {
+          fetchSpecFromUrl: fetchMock as never,
+          eventBridgeClient: createSchemasClientStub({
+            listRegistries: vi.fn().mockImplementation(async () => (eventBridgeState.enabled ? [{ name: 'custom-registry', arn: 'arn:registry' }] : [])),
+            listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+            describeSchema: vi.fn().mockResolvedValue({
+              content: JSON.stringify({
+                type: 'object',
+                properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
+              }),
+              schemaVersion: '1'
+            })
+          })
+        }
       );
 
       const resolveOrigin = async (): Promise<string> => {
-        const result = await provider.resolveContract(createSnsCandidate());
+        const result = await provider.resolveContract(createSnsCandidate(), {
+          bridgeEvidence: ['Detected SNS/EventBridge bridge pattern in template.yaml']
+        });
         return result.resolved ? result.origin : 'manual-review';
       };
 
       await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+      await mkdir(path.join(tempDir, 'schemas'), { recursive: true });
       await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
       await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
       await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import payloadSchema from './schemas/order-payload.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(payloadSchema) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'schemas', 'order-payload.json'),
+        JSON.stringify({ $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' }, null, 2),
+        'utf8'
+      );
       await writeFile(
         path.join(tempDir, 'catalog-info.yaml'),
         ['apiVersion: backstage.io/v1alpha1', 'kind: API', 'metadata:', '  name: orders-api', 'spec:', '  definition: https://example.com/catalog.asyncapi.json'].join('\n'),
@@ -1428,7 +1459,235 @@ describe('SnsProvider', () => {
       expect(await resolveOrigin()).toBe('catalog-url');
 
       await rm(path.join(tempDir, 'catalog-info.yaml'), { force: true });
+      expect(await resolveOrigin()).toBe('eventbridge-derived');
+
+      eventBridgeState.enabled = false;
+      expect(await resolveOrigin()).toBe('code-derived');
+
+      await rm(path.join(tempDir, 'publisher.ts'), { force: true });
+      await rm(path.join(tempDir, 'schemas'), { recursive: true, force: true });
       expect(await resolveOrigin()).toBe('manual-review');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    { higher: 'repo-asyncapi', lower: 'repo-json-schema' },
+    { higher: 'repo-json-schema', lower: 'generated-asyncapi' },
+    { higher: 'generated-asyncapi', lower: 'ssm-content' },
+    { higher: 'ssm-content', lower: 'ssm-url' },
+    { higher: 'ssm-url', lower: 'catalog-url' },
+    { higher: 'catalog-url', lower: 'eventbridge-derived' },
+    { higher: 'eventbridge-derived', lower: 'code-derived' },
+    { higher: 'code-derived', lower: 'manual-review' }
+  ])('resolveContract prefers $higher over adjacent lower-precedence $lower', async ({ higher, lower }) => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-transition-'));
+    try {
+      const fetchMock = vi.fn(async (url: string) => {
+        if (url.includes('ssm')) {
+          return { content: '{"asyncapi":"2.6.0","channels":{}}', contentType: 'application/json' };
+        }
+        if (url.includes('catalog')) {
+          return { content: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', contentType: 'application/json' };
+        }
+        throw new Error(`unexpected url ${url}`);
+      });
+      const ssmEntries: Array<{ serviceName: string; key: string; value: string }> = [];
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+        describeSchema: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            type: 'object',
+            properties: { Message: { type: 'string' }, MessageId: { type: 'string' }, TopicArn: { type: 'string' }, Type: { type: 'string' } }
+          }),
+          schemaVersion: '1'
+        })
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockImplementation(async () => ssmEntries)
+        }),
+        { fetchSpecFromUrl: fetchMock as never, eventBridgeClient }
+      );
+
+      const enableSource = async (source: string): Promise<void> => {
+        switch (source) {
+          case 'repo-asyncapi':
+            await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+            break;
+          case 'repo-json-schema':
+            await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
+            break;
+          case 'generated-asyncapi':
+            await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+            await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+            break;
+          case 'ssm-content':
+            ssmEntries.push({ serviceName: 'orders-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' });
+            break;
+          case 'ssm-url':
+            ssmEntries.push({ serviceName: 'orders-topic', key: 'url', value: 'https://example.com/ssm.asyncapi.json' });
+            break;
+          case 'catalog-url':
+            await writeFile(
+              path.join(tempDir, 'catalog-info.yaml'),
+              ['apiVersion: backstage.io/v1alpha1', 'kind: API', 'metadata:', '  name: orders-api', 'spec:', '  definition: https://example.com/catalog.asyncapi.json'].join('\n'),
+              'utf8'
+            );
+            break;
+          case 'eventbridge-derived':
+            break;
+          case 'code-derived':
+            await mkdir(path.join(tempDir, 'schemas'), { recursive: true });
+            await writeFile(path.join(tempDir, 'publisher.ts'), "import payloadSchema from './schemas/order-payload.json';\nawait sns.publish({ TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic', Message: JSON.stringify(payloadSchema) });", 'utf8');
+            await writeFile(path.join(tempDir, 'schemas', 'order-payload.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
+            break;
+          case 'manual-review':
+            break;
+          default:
+            throw new Error(`unsupported source ${source}`);
+        }
+      };
+
+      await enableSource(lower);
+      await enableSource(higher);
+
+      const bridgeEvidence = higher === 'eventbridge-derived' || lower === 'eventbridge-derived'
+        ? ['Detected SNS/EventBridge bridge pattern in template.yaml']
+        : [];
+      const result = await provider.resolveContract(createSnsCandidate(), { bridgeEvidence });
+
+      const resolvedOrigin = result.resolved ? result.origin : 'manual-review';
+      expect(resolvedOrigin).toBe(higher);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('accumulates evidence across failed levels before resolving with code-derived fallback', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-evidence-'));
+    try {
+      await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+      await mkdir(path.join(tempDir, 'schemas'), { recursive: true });
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'openapi: 3.0.1', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"openapi":"3.0.1"}', 'utf8');
+      await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'openapi: 3.0.1', 'utf8');
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import payloadSchema from './schemas/order-payload.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(payloadSchema) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(path.join(tempDir, 'schemas', 'order-payload.json'), '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', 'utf8');
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        ['apiVersion: backstage.io/v1alpha1', 'kind: API', 'metadata:', '  name: orders-api', 'spec:', '  definition: https://example.com/catalog.asyncapi.json'].join('\n'),
+        'utf8'
+      );
+
+      const fetchMock = vi.fn(async (url: string) => {
+        if (url.includes('ssm')) {
+          return { content: '{"openapi":"3.0.1"}', contentType: 'application/json' };
+        }
+        throw new Error(`catalog fetch failed for ${url}`);
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([{ serviceName: 'orders-topic', key: 'url', value: 'https://example.com/ssm.contract.json' }])
+        }),
+        {
+          fetchSpecFromUrl: fetchMock as never,
+          eventBridgeClient: createSchemasClientStub({
+            listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+            listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+            describeSchema: vi.fn().mockResolvedValue({
+              content: JSON.stringify({ type: 'object', properties: { detail: { type: 'object', properties: { id: { type: 'string' } } } } }),
+              schemaVersion: '1'
+            })
+          })
+        }
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate(), {
+        bridgeEvidence: ['Detected SNS/EventBridge bridge pattern in template.yaml']
+      });
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      expect(result.evidence.some((line) => line.includes('asyncapi.yaml'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('schema.json'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('spec/orders-topic.asyncapi.yaml'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('SSM URL'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('catalog'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('EventBridge schema'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps repo-local contract as canonical while still enriching subscriptions and webhook sidecars across all milestones', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-cross-milestone-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const listSpecParameters = vi.fn().mockResolvedValue([
+        { serviceName: 'orders-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' }
+      ]);
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn(),
+        describeSchema: vi.fn()
+      });
+      const codeDerivedResolver = vi.fn().mockResolvedValue({ resolved: undefined, evidence: [] });
+      const snsClient = createSnsClientStub({
+        listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+          {
+            subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-sqs',
+            protocol: 'sqs',
+            endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+            topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+            owner: '123456789012'
+          },
+          {
+            subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+            protocol: 'https',
+            endpoint: 'https://example.com/orders',
+            topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+            owner: '123456789012'
+          }
+        ]),
+        getSubscriptionAttributes: vi.fn().mockResolvedValue({
+          RawMessageDelivery: 'false',
+          FilterPolicy: '{"eventType":["order.created"]}',
+          FilterPolicyScope: 'MessageAttributes'
+        })
+      });
+      const provider = new SnsProvider(
+        snsClient,
+        tempDir,
+        createSsmClientStub({ listSpecParameters }),
+        { eventBridgeClient, codeDerivedResolver }
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate(), {
+        bridgeEvidence: ['Detected SNS/EventBridge bridge pattern in template.yaml']
+      });
+
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      expect(snsClient.listSubscriptionsByTopic).toHaveBeenCalledTimes(1);
+      expect(snsClient.getSubscriptionAttributes).toHaveBeenCalledTimes(2);
+      expect(result.metadata.subscriptions).toHaveLength(2);
+      expect(result.sidecars?.some((sidecar) => sidecar.filename === 'webhook.openapi.json')).toBe(true);
+      expect(listSpecParameters).not.toHaveBeenCalled();
+      expect(eventBridgeClient.listRegistries).not.toHaveBeenCalled();
+      expect(codeDerivedResolver).not.toHaveBeenCalled();
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
