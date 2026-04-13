@@ -43,7 +43,7 @@ SNS is handled as a **contract resolver**, not an AWS spec exporter. SNS has no 
 
 ### SNS mode behavior
 
-- **resolve-one**: SNS is a fallback after API Gateway. It only fires when API Gateway resolution fails AND the repo contains SNS IaC signals. Topics whose resolution produces a `manual-review` result are skipped (the next topic is tried).
+- **resolve-one**: API Gateway and SNS are peer sources when SNS IaC signals are present. The resolver compares the best API Gateway and SNS candidates by confidence, selects the higher-confidence source, and applies deterministic tie-breaks: repo-local SNS origins (`repo-asyncapi`, `repo-json-schema`) win ties, while SSM-backed SNS contracts lose ties to API Gateway. Topics whose resolution produces a `manual-review` result are skipped (the next topic is tried).
 - **discover-many**: SNS runs alongside all other providers. Every discovered topic gets exported, including those that produce `manual-review` results.
 
 ## Security
@@ -251,7 +251,7 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
     aws-region: us-east-1
 ```
 
-In `resolve-one`, SNS fires only when API Gateway resolution fails and the repo has SNS IaC signals. Topics that resolve to `manual-review` are skipped; the action tries the next topic.
+In `resolve-one`, API Gateway and SNS are evaluated together when the repo has SNS IaC signals. The action compares confidence scores and selects the best source, with deterministic ties (repo-local SNS beats equal-confidence API Gateway; SSM-backed SNS loses equal-confidence ties). Topics that resolve to `manual-review` are skipped; the action tries the next topic.
 
 **discover-many** (all topics across all providers):
 
