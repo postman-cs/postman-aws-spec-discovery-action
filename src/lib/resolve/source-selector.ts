@@ -14,6 +14,7 @@ export interface SnsResolvedCandidate {
   confidence: number;
   origin?: SnsContractOrigin | 'unknown';
   specFormat: 'asyncapi-yaml' | 'asyncapi-json' | 'json-schema';
+  variantCount?: number;
   evidence: string[];
 }
 
@@ -74,6 +75,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
         providerType: 'sns',
         specFormat: resolvedSns.specFormat,
         contractOrigin: toContractOrigin(resolvedSns.origin),
+        variantCount: resolvedSns.variantCount,
         evidence: resolvedSns.evidence
       };
     }
@@ -101,6 +103,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       providerType: 'sns',
       specFormat: resolvedSns.specFormat,
       contractOrigin: toContractOrigin(resolvedSns.origin),
+      variantCount: resolvedSns.variantCount,
       evidence: resolvedSns.evidence
     };
   }
@@ -129,6 +132,7 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       providerType: 'sns',
       specFormat: resolvedSns.specFormat,
       contractOrigin: toContractOrigin(resolvedSns.origin),
+      variantCount: resolvedSns.variantCount,
       evidence: resolvedSns.evidence
     };
   }
