@@ -34,6 +34,8 @@ import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
 import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
+import type { SnsContractResult } from './lib/providers/sns.js';
+import type { SnsResolvedCandidate } from './lib/resolve/source-selector.js';
 
 export interface InputReaderLike {
   getInput(name: string, options?: { required?: boolean }): string;
@@ -102,7 +104,13 @@ export interface ExecutionResult {
 }
 
 export interface ResolutionDependencies {
-  snsProvider?: SpecProvider;
+  snsProvider?: SnsResolutionProvider;
+}
+
+interface SnsResolutionProvider {
+  probe(): Promise<boolean>;
+  listCandidates(): Promise<SpecCandidate[]>;
+  resolveContract(candidate: SpecCandidate): Promise<SnsContractResult>;
 }
 
 const DEFAULT_MODE: ActionMode = 'resolve-one';
@@ -480,18 +488,6 @@ function isManualReviewExportError(error: { name?: string; message: string }): b
   return error.name === 'BadRequestException' || isKnownRestExportLimitation(error.message);
 }
 
-function isSnsManualReviewExport(result: SpecExportResult): boolean {
-  if (result.filename === 'manual-review.json') {
-    return true;
-  }
-  try {
-    const parsed = JSON.parse(result.content) as { sourceType?: string; status?: string };
-    return parsed.sourceType === 'manual-review' || parsed.status === 'unresolved';
-  } catch {
-    return false;
-  }
-}
-
 async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDependencies): Promise<void> {
   if (!inputs.preflightChecks) {
     dependencies.core.info('Preflight checks skipped by configuration');
@@ -683,7 +679,73 @@ export async function runResolution(
   }
 
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
-  const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
+
+  let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
+  let resolvedSnsExport: SpecExportResult | undefined;
+  const snsManualReviewEvidence: string[] = [];
+  const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
+  if (shouldAttemptSns) {
+    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const snsProvider =
+      resolutionDependencies.snsProvider ??
+      new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
+
+    let snsCandidates: SpecCandidate[] = [];
+    try {
+      const snsAvailable = await snsProvider.probe();
+      if (snsAvailable) {
+        snsCandidates = await snsProvider.listCandidates();
+      } else {
+        snsManualReviewEvidence.push('Detected sns provider hints but SNS provider probe was unavailable');
+      }
+    } catch (error) {
+      actionCore.warning(userSafeWarning(`Failed preparing SNS provider: ${formatUserSafeError(error)}`));
+      snsManualReviewEvidence.push('Detected sns provider hints but SNS provider probe was unavailable');
+    }
+
+    const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
+    const candidatesToTry =
+      inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates
+        ? sortedSnsCandidates.slice(0, inputs.maxCandidates)
+        : sortedSnsCandidates;
+
+    for (const candidate of candidatesToTry) {
+      try {
+        const contract = await snsProvider.resolveContract(candidate);
+        if (!contract.resolved) {
+          snsManualReviewEvidence.push(...contract.evidence);
+          continue;
+        }
+        const format = contract.result.format;
+        if (format !== 'asyncapi-yaml' && format !== 'asyncapi-json' && format !== 'json-schema') {
+          snsManualReviewEvidence.push(
+            ...contract.evidence,
+            `SNS candidate ${candidate.id} (${candidate.name}) resolved unsupported format ${format}`
+          );
+          continue;
+        }
+        resolvedSnsCandidate = {
+          serviceName: candidate.name,
+          topicArn: candidate.id,
+          confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+          origin: contract.origin,
+          specFormat: format,
+          evidence: [...snsManualReviewEvidence, ...candidate.evidence, ...contract.evidence]
+        };
+        resolvedSnsExport = contract.result;
+        break;
+      } catch (error) {
+        actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error)}`));
+      }
+    }
+  }
+
+  const selectedSource = chooseSource({
+    existingSpecPath,
+    candidate: resolvedCandidate,
+    snsCandidate: resolvedSnsCandidate,
+    fallbackServiceName: inferFallbackServiceName(inputs)
+  });
   if (selectedSource.sourceType === 'repo-spec') {
     return selectedSource;
   }
@@ -729,83 +791,33 @@ export async function runResolution(
     }
     return selectedSource;
   }
-
-  const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
-  if (!shouldAttemptSns) {
-    return selectedSource;
-  }
-
-  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
-  const snsProvider =
-    resolutionDependencies.snsProvider ??
-    new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
-
-  let snsAvailable: boolean;
-  try {
-    snsAvailable = await snsProvider.probe();
-  } catch {
-    snsAvailable = false;
-  }
-  if (!snsAvailable) {
-    return toManualReviewResult(selectedSource, ['Detected sns provider hints but SNS provider probe was unavailable']);
-  }
-
-  let snsCandidates: SpecCandidate[];
-  try {
-    snsCandidates = await snsProvider.listCandidates();
-  } catch (error) {
-    actionCore.warning(userSafeWarning(`Failed listing SNS candidates: ${formatUserSafeError(error)}`));
-    return toManualReviewResult(selectedSource, ['Detected sns provider hints but failed listing SNS candidates']);
-  }
-
-  const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
-  let candidatesToTry = sortedSnsCandidates;
-  if (inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates) {
-    candidatesToTry = sortedSnsCandidates.slice(0, inputs.maxCandidates);
-  }
-
-  const resolvedRoot = path.resolve(inputs.repoRoot);
-  const snsManualReviewEvidence: string[] = [];
-  for (const candidate of candidatesToTry) {
-    try {
-      const exportResult = await snsProvider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
-      if (isSnsManualReviewExport(exportResult)) {
-        snsManualReviewEvidence.push(
-          ...exportResult.evidence,
-          `SNS candidate ${candidate.id} (${candidate.name}) did not provide a resolvable contract`
-        );
-        continue;
-      }
-      const relativeProviderPath = path.join(inputs.outputDir, projectFolderName(candidate.name), exportResult.filename).replace(/\\/g, '/');
-      if (!inputs.dryRun) {
-        const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeProviderPath, 'output-dir');
-        await writeSpecFile(absoluteSpecPath, exportResult.content);
-      }
-      return {
-        status: 'resolved',
-        sourceType: 'sns-contract',
-        serviceName: candidate.name,
-        confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
-        specPath: relativeProviderPath,
-        gatewayId: candidate.id,
-        gatewayType: 'SNS',
-        providerType: 'sns',
-        specFormat: exportResult.format,
-        evidence: [
-          ...selectedSource.evidence,
-          ...exportResult.evidence,
-          ...(inputs.dryRun ? ['Dry run enabled; skipped SNS contract file write'] : [])
-        ]
-      };
-    } catch (error) {
-      actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error)}`));
+  if (selectedSource.sourceType === 'sns-contract') {
+    if (!resolvedSnsExport) {
+      return toManualReviewResult(selectedSource, ['SNS contract was selected but export payload was unavailable']);
     }
+    const relativeProviderPath = path
+      .join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'), resolvedSnsExport.filename)
+      .replace(/\\/g, '/');
+    if (inputs.dryRun) {
+      return {
+        ...selectedSource,
+        specPath: relativeProviderPath,
+        evidence: [...selectedSource.evidence, 'Dry run enabled; skipped SNS contract file write']
+      };
+    }
+    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
+    await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
+    return {
+      ...selectedSource,
+      specPath: relativeProviderPath
+    };
   }
 
-  return toManualReviewResult(selectedSource, [
-    ...snsManualReviewEvidence,
-    'Detected sns provider hints but no resolvable SNS contract was found'
-  ]);
+  if (selectedSource.sourceType === 'manual-review' && snsManualReviewEvidence.length > 0) {
+    return toManualReviewResult(selectedSource, snsManualReviewEvidence);
+  }
+
+  return selectedSource;
 }
 
 export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {

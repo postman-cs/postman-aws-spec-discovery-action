@@ -113491,13 +113491,30 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
 }
 
 // src/lib/resolve/source-selector.ts
+var MINIMUM_RESOLVED_CONFIDENCE = 40;
+function isResolvedGatewayCandidate(candidate) {
+  return Boolean(candidate && !candidate.ambiguous && candidate.confidence >= MINIMUM_RESOLVED_CONFIDENCE);
+}
+function isResolvedSnsCandidate(candidate) {
+  return Boolean(candidate && candidate.confidence >= MINIMUM_RESOLVED_CONFIDENCE);
+}
+function isRepoLocalSnsOrigin(origin) {
+  return origin === "repo-asyncapi" || origin === "repo-json-schema";
+}
+function manualReviewEvidence(input) {
+  const evidence = [...input.candidate?.evidence ?? [], ...input.snsCandidate?.evidence ?? []];
+  return evidence.length > 0 ? evidence : ["No matching source found"];
+}
 function chooseSource(input) {
+  const hasGatewayCandidate = Boolean(input.candidate);
+  const hasSnsCandidate = Boolean(input.snsCandidate);
+  const bestObservedConfidence = Math.max(input.candidate?.confidence ?? 0, input.snsCandidate?.confidence ?? 0);
   if (input.existingSpecPath) {
     return {
       status: "resolved",
       sourceType: "repo-spec",
-      serviceName: input.candidate?.serviceName ?? input.fallbackServiceName ?? "unknown-service",
-      confidence: input.candidate ? Math.max(80, input.candidate.confidence) : 70,
+      serviceName: input.candidate?.serviceName ?? input.snsCandidate?.serviceName ?? input.fallbackServiceName ?? "unknown-service",
+      confidence: hasGatewayCandidate || hasSnsCandidate ? Math.max(80, bestObservedConfidence) : 70,
       specPath: input.existingSpecPath,
       gatewayId: input.candidate?.gatewayId,
       gatewayType: input.candidate?.gatewayType,
@@ -113505,27 +113522,80 @@ function chooseSource(input) {
       evidence: ["Resolved from existing repository specification", ...input.candidate?.evidence ?? []]
     };
   }
-  if (input.candidate && !input.candidate.ambiguous && input.candidate.confidence >= 40) {
+  const resolvedGateway = isResolvedGatewayCandidate(input.candidate) ? input.candidate : void 0;
+  const resolvedSns = isResolvedSnsCandidate(input.snsCandidate) ? input.snsCandidate : void 0;
+  if (resolvedGateway && resolvedSns) {
+    if (resolvedSns.confidence > resolvedGateway.confidence) {
+      return {
+        status: "resolved",
+        sourceType: "sns-contract",
+        serviceName: resolvedSns.serviceName,
+        confidence: resolvedSns.confidence,
+        gatewayId: resolvedSns.topicArn,
+        gatewayType: "SNS",
+        providerType: "sns",
+        specFormat: resolvedSns.specFormat,
+        evidence: resolvedSns.evidence
+      };
+    }
+    if (resolvedGateway.confidence > resolvedSns.confidence || !isRepoLocalSnsOrigin(resolvedSns.origin)) {
+      return {
+        status: "resolved",
+        sourceType: "gateway-export",
+        serviceName: resolvedGateway.serviceName,
+        confidence: resolvedGateway.confidence,
+        gatewayId: resolvedGateway.gatewayId,
+        gatewayType: resolvedGateway.gatewayType,
+        stage: resolvedGateway.stage,
+        evidence: resolvedGateway.evidence
+      };
+    }
+    return {
+      status: "resolved",
+      sourceType: "sns-contract",
+      serviceName: resolvedSns.serviceName,
+      confidence: resolvedSns.confidence,
+      gatewayId: resolvedSns.topicArn,
+      gatewayType: "SNS",
+      providerType: "sns",
+      specFormat: resolvedSns.specFormat,
+      evidence: resolvedSns.evidence
+    };
+  }
+  if (resolvedGateway) {
     return {
       status: "resolved",
       sourceType: "gateway-export",
-      serviceName: input.candidate.serviceName,
-      confidence: input.candidate.confidence,
-      gatewayId: input.candidate.gatewayId,
-      gatewayType: input.candidate.gatewayType,
-      stage: input.candidate.stage,
-      evidence: input.candidate.evidence
+      serviceName: resolvedGateway.serviceName,
+      confidence: resolvedGateway.confidence,
+      gatewayId: resolvedGateway.gatewayId,
+      gatewayType: resolvedGateway.gatewayType,
+      stage: resolvedGateway.stage,
+      evidence: resolvedGateway.evidence
+    };
+  }
+  if (resolvedSns) {
+    return {
+      status: "resolved",
+      sourceType: "sns-contract",
+      serviceName: resolvedSns.serviceName,
+      confidence: resolvedSns.confidence,
+      gatewayId: resolvedSns.topicArn,
+      gatewayType: "SNS",
+      providerType: "sns",
+      specFormat: resolvedSns.specFormat,
+      evidence: resolvedSns.evidence
     };
   }
   return {
     status: "unresolved",
     sourceType: "manual-review",
-    serviceName: input.candidate?.serviceName ?? input.fallbackServiceName ?? "unknown-service",
-    confidence: input.candidate?.confidence ?? 0,
-    gatewayId: input.candidate?.gatewayId,
-    gatewayType: input.candidate?.gatewayType,
+    serviceName: input.fallbackServiceName ?? "unknown-service",
+    confidence: bestObservedConfidence,
+    gatewayId: input.candidate?.gatewayId ?? input.snsCandidate?.topicArn,
+    gatewayType: input.candidate?.gatewayType ?? (input.snsCandidate?.topicArn ? "SNS" : void 0),
     stage: input.candidate?.stage,
-    evidence: input.candidate?.evidence ?? ["No matching source found"]
+    evidence: manualReviewEvidence(input)
   };
 }
 
@@ -114193,10 +114263,39 @@ var SnsProvider = class {
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
+    const contract = await this.resolveContract(candidate);
+    if (contract.resolved) {
+      return contract.result;
+    }
+    const manualReview = {
+      status: "unresolved",
+      sourceType: "manual-review",
+      providerType: "sns",
+      topicArn,
+      topicName,
+      attemptedSources: ["repo-local-asyncapi", "repo-local-json-schema", "ssm-registry"]
+    };
+    return {
+      content: JSON.stringify(manualReview, null, 2),
+      format: "json-schema",
+      filename: "manual-review.json",
+      evidence: contract.evidence
+    };
+  }
+  async resolveContract(candidate) {
+    const resolvedRepoRoot = import_node_path4.default.resolve(this.repoRoot);
+    const topicArn = candidate.meta.topicArn ?? candidate.id;
+    const topicName = topicNameFromArn(topicArn);
+    resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
     const files = await findContractFiles(resolvedRepoRoot, topicName);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi);
     if (asyncApiResolution.match) {
-      return asyncApiResolution.match;
+      return {
+        resolved: true,
+        origin: "repo-asyncapi",
+        result: asyncApiResolution.match,
+        evidence: asyncApiResolution.match.evidence
+      };
     }
     const jsonSchemaResolution = await resolveJsonSchemaContract(
       resolvedRepoRoot,
@@ -114204,7 +114303,12 @@ var SnsProvider = class {
       asyncApiResolution.evidence
     );
     if (jsonSchemaResolution.match) {
-      return jsonSchemaResolution.match;
+      return {
+        resolved: true,
+        origin: "repo-json-schema",
+        result: jsonSchemaResolution.match,
+        evidence: jsonSchemaResolution.match.evidence
+      };
     }
     const priorEvidence = [...jsonSchemaResolution.evidence];
     if (this.ssmClient) {
@@ -114230,30 +114334,23 @@ var SnsProvider = class {
       if (ssmMatch?.content) {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat2(ssmMatch.content, ssmMatch.format ?? "");
         if (resolvedFormat) {
+          const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
           return {
-            content: ssmMatch.content,
-            format: resolvedFormat.format,
-            filename: resolvedFormat.filename,
-            evidence: [
-              ...priorEvidence,
-              `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`
-            ]
+            resolved: true,
+            origin: "ssm",
+            result: {
+              content: ssmMatch.content,
+              format: resolvedFormat.format,
+              filename: resolvedFormat.filename,
+              evidence
+            },
+            evidence
           };
         }
       }
     }
-    const manualReview = {
-      status: "unresolved",
-      sourceType: "manual-review",
-      providerType: "sns",
-      topicArn,
-      topicName,
-      attemptedSources: ["repo-local-asyncapi", "repo-local-json-schema", "ssm-registry"]
-    };
     return {
-      content: JSON.stringify(manualReview, null, 2),
-      format: "json-schema",
-      filename: "manual-review.json",
+      resolved: false,
       evidence: [...priorEvidence, `No SNS contract found for ${topicArn}; manual review required`]
     };
   }
@@ -114914,17 +115011,6 @@ function isKnownRestExportLimitation(message) {
 function isManualReviewExportError(error2) {
   return error2.name === "BadRequestException" || isKnownRestExportLimitation(error2.message);
 }
-function isSnsManualReviewExport(result) {
-  if (result.filename === "manual-review.json") {
-    return true;
-  }
-  try {
-    const parsed = JSON.parse(result.content);
-    return parsed.sourceType === "manual-review" || parsed.status === "unresolved";
-  } catch {
-    return false;
-  }
-}
 async function runPreflight(inputs, dependencies) {
   if (!inputs.preflightChecks) {
     dependencies.core.info("Preflight checks skipped by configuration");
@@ -115047,16 +115133,16 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   );
   let finalCandidates = narrowedCandidates;
   if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
-    const sdkOpts2 = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group("Progressive narrowing", async () => {
       let cfnClient;
       let taggingClient;
       try {
-        cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts2);
+        cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
       } catch {
       }
       try {
-        taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts2);
+        taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
       } catch {
       }
       return runNarrowingPipeline(
@@ -115089,7 +115175,63 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
   const resolvedCandidate = resolveServiceCandidate(gateways, signals);
-  const selectedSource = chooseSource({ existingSpecPath, candidate: resolvedCandidate, fallbackServiceName: inferFallbackServiceName(inputs) });
+  let resolvedSnsCandidate;
+  let resolvedSnsExport;
+  const snsManualReviewEvidence = [];
+  const shouldAttemptSns = signals.providerHints?.includes("sns") ?? false;
+  if (shouldAttemptSns) {
+    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const snsProvider = resolutionDependencies.snsProvider ?? new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
+    let snsCandidates = [];
+    try {
+      const snsAvailable = await snsProvider.probe();
+      if (snsAvailable) {
+        snsCandidates = await snsProvider.listCandidates();
+      } else {
+        snsManualReviewEvidence.push("Detected sns provider hints but SNS provider probe was unavailable");
+      }
+    } catch (error2) {
+      actionCore.warning(userSafeWarning(`Failed preparing SNS provider: ${formatUserSafeError(error2)}`));
+      snsManualReviewEvidence.push("Detected sns provider hints but SNS provider probe was unavailable");
+    }
+    const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
+    const candidatesToTry = inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates ? sortedSnsCandidates.slice(0, inputs.maxCandidates) : sortedSnsCandidates;
+    for (const candidate of candidatesToTry) {
+      try {
+        const contract = await snsProvider.resolveContract(candidate);
+        if (!contract.resolved) {
+          snsManualReviewEvidence.push(...contract.evidence);
+          continue;
+        }
+        const format2 = contract.result.format;
+        if (format2 !== "asyncapi-yaml" && format2 !== "asyncapi-json" && format2 !== "json-schema") {
+          snsManualReviewEvidence.push(
+            ...contract.evidence,
+            `SNS candidate ${candidate.id} (${candidate.name}) resolved unsupported format ${format2}`
+          );
+          continue;
+        }
+        resolvedSnsCandidate = {
+          serviceName: candidate.name,
+          topicArn: candidate.id,
+          confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+          origin: contract.origin,
+          specFormat: format2,
+          evidence: [...snsManualReviewEvidence, ...candidate.evidence, ...contract.evidence]
+        };
+        resolvedSnsExport = contract.result;
+        break;
+      } catch (error2) {
+        actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`));
+      }
+    }
+  }
+  const selectedSource = chooseSource({
+    existingSpecPath,
+    candidate: resolvedCandidate,
+    snsCandidate: resolvedSnsCandidate,
+    fallbackServiceName: inferFallbackServiceName(inputs)
+  });
   if (selectedSource.sourceType === "repo-spec") {
     return selectedSource;
   }
@@ -115132,74 +115274,29 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
     return selectedSource;
   }
-  const shouldAttemptSns = signals.providerHints?.includes("sns") ?? false;
-  if (!shouldAttemptSns) {
-    return selectedSource;
-  }
-  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
-  const snsProvider = resolutionDependencies.snsProvider ?? new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts));
-  let snsAvailable;
-  try {
-    snsAvailable = await snsProvider.probe();
-  } catch {
-    snsAvailable = false;
-  }
-  if (!snsAvailable) {
-    return toManualReviewResult(selectedSource, ["Detected sns provider hints but SNS provider probe was unavailable"]);
-  }
-  let snsCandidates;
-  try {
-    snsCandidates = await snsProvider.listCandidates();
-  } catch (error2) {
-    actionCore.warning(userSafeWarning(`Failed listing SNS candidates: ${formatUserSafeError(error2)}`));
-    return toManualReviewResult(selectedSource, ["Detected sns provider hints but failed listing SNS candidates"]);
-  }
-  const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
-  let candidatesToTry = sortedSnsCandidates;
-  if (inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates) {
-    candidatesToTry = sortedSnsCandidates.slice(0, inputs.maxCandidates);
-  }
-  const resolvedRoot = import_node_path6.default.resolve(inputs.repoRoot);
-  const snsManualReviewEvidence = [];
-  for (const candidate of candidatesToTry) {
-    try {
-      const exportResult = await snsProvider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
-      if (isSnsManualReviewExport(exportResult)) {
-        snsManualReviewEvidence.push(
-          ...exportResult.evidence,
-          `SNS candidate ${candidate.id} (${candidate.name}) did not provide a resolvable contract`
-        );
-        continue;
-      }
-      const relativeProviderPath = import_node_path6.default.join(inputs.outputDir, projectFolderName(candidate.name), exportResult.filename).replace(/\\/g, "/");
-      if (!inputs.dryRun) {
-        const absoluteSpecPath = resolvePathWithinRoot2(resolvedRoot, relativeProviderPath, "output-dir");
-        await writeSpecFile(absoluteSpecPath, exportResult.content);
-      }
-      return {
-        status: "resolved",
-        sourceType: "sns-contract",
-        serviceName: candidate.name,
-        confidence: Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
-        specPath: relativeProviderPath,
-        gatewayId: candidate.id,
-        gatewayType: "SNS",
-        providerType: "sns",
-        specFormat: exportResult.format,
-        evidence: [
-          ...selectedSource.evidence,
-          ...exportResult.evidence,
-          ...inputs.dryRun ? ["Dry run enabled; skipped SNS contract file write"] : []
-        ]
-      };
-    } catch (error2) {
-      actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`));
+  if (selectedSource.sourceType === "sns-contract") {
+    if (!resolvedSnsExport) {
+      return toManualReviewResult(selectedSource, ["SNS contract was selected but export payload was unavailable"]);
     }
+    const relativeProviderPath = import_node_path6.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"), resolvedSnsExport.filename).replace(/\\/g, "/");
+    if (inputs.dryRun) {
+      return {
+        ...selectedSource,
+        specPath: relativeProviderPath,
+        evidence: [...selectedSource.evidence, "Dry run enabled; skipped SNS contract file write"]
+      };
+    }
+    const absoluteSpecPath = resolvePathWithinRoot2(inputs.repoRoot, relativeProviderPath, "output-dir");
+    await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
+    return {
+      ...selectedSource,
+      specPath: relativeProviderPath
+    };
   }
-  return toManualReviewResult(selectedSource, [
-    ...snsManualReviewEvidence,
-    "Detected sns provider hints but no resolvable SNS contract was found"
-  ]);
+  if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
+    return toManualReviewResult(selectedSource, snsManualReviewEvidence);
+  }
+  return selectedSource;
 }
 function buildProviderRegistry(inputs, awsClient) {
   const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
