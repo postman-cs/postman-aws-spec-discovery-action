@@ -1,5 +1,5 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
+import * as childProcess from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -861,7 +861,9 @@ describe('SnsProvider', () => {
       await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
       await mkdir(path.join(tempDir, 'spec'), { recursive: true });
       await writeFile(path.join(tempDir, 'spec', 'ignored.asyncapi.yaml'), 'openapi: 3.0.0', 'utf8');
-      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, undefined, {
+        gitIgnoreChecker: vi.fn().mockResolvedValue(true)
+      });
 
       const result = await provider.resolveContract(createSnsCandidate());
 
@@ -874,13 +876,13 @@ describe('SnsProvider', () => {
   it('resolveContract allows git-tracked generated AsyncAPI in ignored framework directories', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
-      execFileSync('git', ['init'], { cwd: tempDir, stdio: 'ignore' });
-      execFileSync('git', ['config', 'user.name', 'test-user'], { cwd: tempDir, stdio: 'ignore' });
-      execFileSync('git', ['config', 'user.email', 'test-user@example.com'], { cwd: tempDir, stdio: 'ignore' });
+      childProcess.execFileSync('git', ['init'], { cwd: tempDir, stdio: 'ignore' });
+      childProcess.execFileSync('git', ['config', 'user.name', 'test-user'], { cwd: tempDir, stdio: 'ignore' });
+      childProcess.execFileSync('git', ['config', 'user.email', 'test-user@example.com'], { cwd: tempDir, stdio: 'ignore' });
       await mkdir(path.join(tempDir, 'build', 'generated'), { recursive: true });
       await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
-      execFileSync('git', ['add', '--', 'build/generated/orders.asyncapi.yaml'], { cwd: tempDir, stdio: 'ignore' });
-      execFileSync('git', ['commit', '-m', 'track generated asyncapi fixture'], { cwd: tempDir, stdio: 'ignore' });
+      childProcess.execFileSync('git', ['add', '--', 'build/generated/orders.asyncapi.yaml'], { cwd: tempDir, stdio: 'ignore' });
+      childProcess.execFileSync('git', ['commit', '-m', 'track generated asyncapi fixture'], { cwd: tempDir, stdio: 'ignore' });
       await writeFile(path.join(tempDir, '.gitignore'), 'build/\n', 'utf8');
 
       const provider = new SnsProvider(createSnsClientStub(), tempDir);
@@ -890,6 +892,26 @@ describe('SnsProvider', () => {
       if (result.resolved) {
         expect(result.result.filename).toBe('orders.asyncapi.yaml');
       }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract uses git check-ignore for framework output directories', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'build', 'generated'), { recursive: true });
+      await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      await mkdir(path.join(tempDir, 'spec'), { recursive: true });
+      await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const gitIgnoreChecker = vi.fn().mockResolvedValue(false);
+
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, undefined, { gitIgnoreChecker });
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'generated-asyncapi' });
+      expect(gitIgnoreChecker).toHaveBeenCalledTimes(1);
+      expect(gitIgnoreChecker).toHaveBeenCalledWith(tempDir, path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'));
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1846,8 +1868,8 @@ describe('SnsSdkClient', () => {
 
   it('subscription reads handle AccessDeniedException gracefully', async () => {
     snsSendMock.mockReset();
-    snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
-    snsSendMock.mockRejectedValueOnce(new Error('AccessDeniedException'));
+    snsSendMock.mockRejectedValueOnce(Object.assign(new Error('not authorized'), { name: 'AccessDeniedException' }));
+    snsSendMock.mockRejectedValueOnce(Object.assign(new Error('not authorized'), { __type: 'AccessDeniedException' }));
     const client = new SnsSdkClient('us-east-1');
     const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
     const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';
@@ -1858,8 +1880,8 @@ describe('SnsSdkClient', () => {
 
   it('subscription reads handle AuthorizationErrorException gracefully', async () => {
     snsSendMock.mockReset();
-    snsSendMock.mockRejectedValueOnce(new Error('AuthorizationErrorException'));
-    snsSendMock.mockRejectedValueOnce(new Error('AuthorizationErrorException'));
+    snsSendMock.mockRejectedValueOnce(Object.assign(new Error('missing permission'), { name: 'AuthorizationErrorException' }));
+    snsSendMock.mockRejectedValueOnce(Object.assign(new Error('missing permission'), { __type: 'AuthorizationErrorException' }));
     const client = new SnsSdkClient('us-east-1');
     const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
     const subscriptionArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1';

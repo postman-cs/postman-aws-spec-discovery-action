@@ -1186,6 +1186,72 @@ describe('SNS runtime integration', () => {
       expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders/sns-resolution-metadata.json'))).toBe(true);
     });
   });
+
+  it('writes SNS metadata sidecar for successful resolve-one contract and sets metadataPath', async () => {
+    await withSnsSignals(async (tempDir) => {
+      const writes = new Map<string, string>();
+      const snsProvider = createSnsProviderStub({
+        listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
+        resolveContract: vi.fn().mockResolvedValue({
+          resolved: true,
+          origin: 'repo-asyncapi',
+          evidence: ['resolved'],
+          result: {
+            content: 'asyncapi: 2.6.0',
+            format: 'asyncapi-yaml',
+            filename: 'asyncapi.yaml',
+            evidence: ['resolved'],
+            sidecars: [{ filename: 'webhook.openapi.json', content: '{"openapi":"3.1.0"}' }]
+          },
+          metadata: {
+            contractOrigin: 'repo-asyncapi',
+            subscriptions: [],
+            evidence: ['resolved'],
+            subscriptionSummary: {
+              topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+              total: 0,
+              failed: 0,
+              errors: []
+            }
+          }
+        })
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        async (outputPath, content) => {
+          writes.set(outputPath.replace(/\\/g, '/'), content);
+        },
+        { snsProvider }
+      );
+
+      expect(result.sourceType).toBe('sns-contract');
+      expect(result.metadataPath).toBe('discovered-specs/orders-topic/sns-resolution-metadata.json');
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/asyncapi.yaml'))).toBe(true);
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/webhook.openapi.json'))).toBe(true);
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/sns-resolution-metadata.json'))).toBe(true);
+    });
+  });
 });
 
 describe('runAction', () => {
