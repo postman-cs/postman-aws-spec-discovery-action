@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
+    "test:live:sns": "vitest run --config vitest.live.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "keywords": [

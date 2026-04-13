@@ -33,7 +33,7 @@ import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-clie
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
 import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
-import type { SpecProvider, SpecCandidate } from './lib/providers/types.js';
+import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 
 export interface InputReaderLike {
   getInput(name: string, options?: { required?: boolean }): string;
@@ -480,6 +480,18 @@ function isManualReviewExportError(error: { name?: string; message: string }): b
   return error.name === 'BadRequestException' || isKnownRestExportLimitation(error.message);
 }
 
+function isSnsManualReviewExport(result: SpecExportResult): boolean {
+  if (result.filename === 'manual-review.json') {
+    return true;
+  }
+  try {
+    const parsed = JSON.parse(result.content) as { sourceType?: string; status?: string };
+    return parsed.sourceType === 'manual-review' || parsed.status === 'unresolved';
+  } catch {
+    return false;
+  }
+}
+
 async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDependencies): Promise<void> {
   if (!inputs.preflightChecks) {
     dependencies.core.info('Preflight checks skipped by configuration');
@@ -753,9 +765,17 @@ export async function runResolution(
   }
 
   const resolvedRoot = path.resolve(inputs.repoRoot);
+  const snsManualReviewEvidence: string[] = [];
   for (const candidate of candidatesToTry) {
     try {
       const exportResult = await snsProvider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+      if (isSnsManualReviewExport(exportResult)) {
+        snsManualReviewEvidence.push(
+          ...exportResult.evidence,
+          `SNS candidate ${candidate.id} (${candidate.name}) did not provide a resolvable contract`
+        );
+        continue;
+      }
       const relativeProviderPath = path.join(inputs.outputDir, projectFolderName(candidate.name), exportResult.filename).replace(/\\/g, '/');
       if (!inputs.dryRun) {
         const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeProviderPath, 'output-dir');
@@ -782,7 +802,10 @@ export async function runResolution(
     }
   }
 
-  return toManualReviewResult(selectedSource, ['Detected sns provider hints but no resolvable SNS contract was found']);
+  return toManualReviewResult(selectedSource, [
+    ...snsManualReviewEvidence,
+    'Detected sns provider hints but no resolvable SNS contract was found'
+  ]);
 }
 
 export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {

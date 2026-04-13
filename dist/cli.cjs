@@ -92623,6 +92623,9 @@ function topicNameFromArn(topicArn) {
   const index = topicArn.lastIndexOf(":");
   return index >= 0 ? topicArn.slice(index + 1) : topicArn;
 }
+function normalizeServiceKey(value) {
+  return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
+}
 function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
   const base = import_node_path4.default.resolve(rootPath);
   const resolved = import_node_path4.default.resolve(base, targetPath);
@@ -92849,8 +92852,24 @@ var SnsProvider = class {
     const priorEvidence = [...jsonSchemaResolution.evidence];
     if (this.ssmClient) {
       const specs = groupByService2(await this.ssmClient.listSpecParameters());
-      const serviceKeys = [topicName, topicName.replace(/\.fifo$/i, "")];
-      const ssmMatch = specs.find((entry) => serviceKeys.includes(entry.serviceName));
+      const canonicalTopicName = topicName.replace(/\.fifo$/i, "");
+      const serviceKeys = new Set(
+        [
+          topicName,
+          canonicalTopicName,
+          topicName.toLowerCase(),
+          canonicalTopicName.toLowerCase(),
+          normalizeServiceKey(topicName),
+          normalizeServiceKey(canonicalTopicName)
+        ].filter((entry) => entry.length > 0)
+      );
+      const ssmMatch = specs.find((entry) => {
+        const entryName = entry.serviceName.trim();
+        if (!entryName) {
+          return false;
+        }
+        return serviceKeys.has(entryName) || serviceKeys.has(entryName.toLowerCase()) || serviceKeys.has(normalizeServiceKey(entryName));
+      });
       if (ssmMatch?.content) {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat2(ssmMatch.content, ssmMatch.format ?? "");
         if (resolvedFormat) {
@@ -93528,6 +93547,17 @@ function isKnownRestExportLimitation(message) {
 function isManualReviewExportError(error2) {
   return error2.name === "BadRequestException" || isKnownRestExportLimitation(error2.message);
 }
+function isSnsManualReviewExport(result) {
+  if (result.filename === "manual-review.json") {
+    return true;
+  }
+  try {
+    const parsed = JSON.parse(result.content);
+    return parsed.sourceType === "manual-review" || parsed.status === "unresolved";
+  } catch {
+    return false;
+  }
+}
 async function runPreflight(inputs, dependencies) {
   if (!inputs.preflightChecks) {
     dependencies.core.info("Preflight checks skipped by configuration");
@@ -93763,9 +93793,17 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     candidatesToTry = sortedSnsCandidates.slice(0, inputs.maxCandidates);
   }
   const resolvedRoot = import_node_path6.default.resolve(inputs.repoRoot);
+  const snsManualReviewEvidence = [];
   for (const candidate of candidatesToTry) {
     try {
       const exportResult = await snsProvider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+      if (isSnsManualReviewExport(exportResult)) {
+        snsManualReviewEvidence.push(
+          ...exportResult.evidence,
+          `SNS candidate ${candidate.id} (${candidate.name}) did not provide a resolvable contract`
+        );
+        continue;
+      }
       const relativeProviderPath = import_node_path6.default.join(inputs.outputDir, projectFolderName(candidate.name), exportResult.filename).replace(/\\/g, "/");
       if (!inputs.dryRun) {
         const absoluteSpecPath = resolvePathWithinRoot2(resolvedRoot, relativeProviderPath, "output-dir");
@@ -93791,7 +93829,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       actionCore.warning(userSafeWarning(`Failed resolving SNS candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`));
     }
   }
-  return toManualReviewResult(selectedSource, ["Detected sns provider hints but no resolvable SNS contract was found"]);
+  return toManualReviewResult(selectedSource, [
+    ...snsManualReviewEvidence,
+    "Detected sns provider hints but no resolvable SNS contract was found"
+  ]);
 }
 function buildProviderRegistry(inputs, awsClient) {
   const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };

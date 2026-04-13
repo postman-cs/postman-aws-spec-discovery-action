@@ -22,6 +22,15 @@ function topicNameFromArn(topicArn: string): string {
   return index >= 0 ? topicArn.slice(index + 1) : topicArn;
 }
 
+function normalizeServiceKey(value: string): string {
+  return value
+    .replace(/\.fifo$/i, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[_\s]+/g, '-')
+    .replace(/-+/g, '-')
+    .toLowerCase();
+}
+
 function resolvePathWithinRoot(rootPath: string, targetPath: string, fieldName: string): string {
   const base = path.resolve(rootPath);
   const resolved = path.resolve(base, targetPath);
@@ -302,8 +311,28 @@ export class SnsProvider implements SpecProvider {
 
     if (this.ssmClient) {
       const specs = groupByService(await this.ssmClient.listSpecParameters());
-      const serviceKeys = [topicName, topicName.replace(/\.fifo$/i, '')];
-      const ssmMatch = specs.find((entry) => serviceKeys.includes(entry.serviceName));
+      const canonicalTopicName = topicName.replace(/\.fifo$/i, '');
+      const serviceKeys = new Set(
+        [
+          topicName,
+          canonicalTopicName,
+          topicName.toLowerCase(),
+          canonicalTopicName.toLowerCase(),
+          normalizeServiceKey(topicName),
+          normalizeServiceKey(canonicalTopicName)
+        ].filter((entry) => entry.length > 0)
+      );
+      const ssmMatch = specs.find((entry) => {
+        const entryName = entry.serviceName.trim();
+        if (!entryName) {
+          return false;
+        }
+        return (
+          serviceKeys.has(entryName) ||
+          serviceKeys.has(entryName.toLowerCase()) ||
+          serviceKeys.has(normalizeServiceKey(entryName))
+        );
+      });
       if (ssmMatch?.content) {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat(ssmMatch.content, ssmMatch.format ?? '');
         if (resolvedFormat) {
