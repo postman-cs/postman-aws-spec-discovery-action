@@ -1,0 +1,12 @@
+asyncapi: 2.6.0
+info:
+  title: Broken AsyncAPI Fixture
+  version: 1.0.0
+channels:
+  spec-discovery-test-topic:
+    subscribe:
+      message:
+        payload:
+          type: object
+          properties:
+            brokenField: [this is not valid yaml

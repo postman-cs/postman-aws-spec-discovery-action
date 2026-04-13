@@ -147,12 +147,107 @@ Resources:
     Type: AWS::Glue::Schema
     Properties:
       Registry:
-        RegistryName: !Ref TestGlueRegistry
+        Name: spec-discovery-test-glue-registry
       Name: spec-discovery-test-user-event
       DataFormat: AVRO
       Compatibility: NONE
       SchemaDefinition: >
         {"type":"record","name":"UserEvent","namespace":"com.example.test","fields":[{"name":"userId","type":"string"},{"name":"action","type":"string"},{"name":"timestamp","type":"long"}]}
+
+  # 7. SNS standard topic
+  SpecDiscoveryTestTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SpecDiscoveryTestTopic
+
+  # 8. SNS tagged topic
+  SpecDiscoveryTaggedTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SpecDiscoveryTaggedTopic
+      Tags:
+        - Key: postman:project-name
+          Value: test-service
+
+  # 9. SNS FIFO topic
+  SpecDiscoveryFifoTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SpecDiscoveryTestTopic.fifo
+      FifoTopic: true
+      ContentBasedDeduplication: true
+
+  # 10. SNS topic with SQS subscription
+  SpecDiscoverySubscriptionTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SpecDiscoverySubscribedTopic
+
+  SpecDiscoverySubscriptionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SpecDiscoverySubscriptionQueue
+
+  SpecDiscoveryQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SpecDiscoverySubscriptionQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSnsPublish
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt SpecDiscoverySubscriptionQueue.Arn
+            Condition:
+              ArnEquals:
+                'aws:SourceArn': !Ref SpecDiscoverySubscriptionTopic
+
+  SpecDiscoverySqsSubscription:
+    Type: AWS::SNS::Subscription
+    DependsOn: SpecDiscoveryQueuePolicy
+    Properties:
+      TopicArn: !Ref SpecDiscoverySubscriptionTopic
+      Protocol: sqs
+      Endpoint: !GetAtt SpecDiscoverySubscriptionQueue.Arn
+
+  # 11. SSM contract pointers for SNS resolution
+  SpecDiscoveryTopicContractFormat:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /postman/specs/spec-discovery-test-topic/format
+      Type: String
+      Value: asyncapi-yaml
+
+  SpecDiscoveryTopicContractContent:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /postman/specs/spec-discovery-test-topic/content
+      Type: String
+      Value: |
+        asyncapi: 2.6.0
+        info:
+          title: Spec Discovery Test Topic Contract
+          version: 1.0.0
+        channels:
+          spec-discovery-test-topic:
+            description: Sample contract for SNS live testing
+            subscribe:
+              message:
+                contentType: application/json
+                payload:
+                  type: object
+                  required:
+                    - eventType
+                    - message
+                  properties:
+                    eventType:
+                      type: string
+                    message:
+                      type: string
 
 Outputs:
   RestApiId:
@@ -167,3 +262,11 @@ Outputs:
     Value: !GetAtt TestSchemaRegistry.RegistryName
   GlueRegistryName:
     Value: !Ref TestGlueRegistry
+  SnsTestTopicArn:
+    Value: !Ref SpecDiscoveryTestTopic
+  SnsTaggedTopicArn:
+    Value: !Ref SpecDiscoveryTaggedTopic
+  SnsFifoTopicArn:
+    Value: !Ref SpecDiscoveryFifoTopic
+  SnsSubscriptionTopicArn:
+    Value: !Ref SpecDiscoverySubscriptionTopic

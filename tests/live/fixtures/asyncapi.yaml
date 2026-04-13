@@ -1,0 +1,24 @@
+asyncapi: 2.6.0
+info:
+  title: Spec Discovery Test Topic
+  version: 1.0.0
+  description: Sample AsyncAPI contract for live SNS contract resolution tests.
+channels:
+  spec-discovery-test-topic:
+    description: SNS topic channel used for live validation.
+    subscribe:
+      summary: Consumer receives events from the topic.
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          required:
+            - eventType
+            - messageId
+          properties:
+            eventType:
+              type: string
+            messageId:
+              type: string
+            payload:
+              type: object
