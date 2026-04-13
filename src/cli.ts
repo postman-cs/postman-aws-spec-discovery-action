@@ -99,7 +99,10 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs['service-count'] ?? '',
     POSTMAN_AWS_SPEC_CANDIDATES_JSON: outputs['candidates-json'] ?? '',
     POSTMAN_AWS_SPEC_PROVIDER_TYPE: outputs['provider-type'] ?? '',
-    POSTMAN_AWS_SPEC_FORMAT: outputs['spec-format'] ?? ''
+    POSTMAN_AWS_SPEC_FORMAT: outputs['spec-format'] ?? '',
+    POSTMAN_AWS_SPEC_CONTRACT_ORIGIN: outputs['contract-origin'] ?? '',
+    POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH: outputs['contract-metadata-path'] ?? '',
+    POSTMAN_AWS_SPEC_VARIANT_COUNT: outputs['variant-count'] ?? ''
   };
 
   return Object.entries(envPairs)

@@ -19,7 +19,7 @@ function createSnsCandidate(
     serviceName: string;
     topicArn: string;
     confidence: number;
-    origin: 'repo-asyncapi' | 'repo-json-schema' | 'ssm' | 'unknown';
+    origin: 'repo-asyncapi' | 'repo-json-schema' | 'ssm-content' | 'unknown';
     specFormat: 'asyncapi-yaml' | 'asyncapi-json' | 'json-schema';
     evidence: string[];
   }> = {}
@@ -88,7 +88,7 @@ describe('chooseSource (source-agnostic)', () => {
     });
     const ssm = chooseSource({
       candidate: createGatewayCandidate({ confidence: 80 }),
-      snsCandidate: createSnsCandidate({ confidence: 80, origin: 'ssm' })
+      snsCandidate: createSnsCandidate({ confidence: 80, origin: 'ssm-content' })
     });
     const unknown = chooseSource({
       candidate: createGatewayCandidate({ confidence: 80 }),

@@ -43,6 +43,12 @@ outputs:
     description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, or ssm."
   spec-format:
     description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf."
+  contract-origin:
+    description: "SNS contract provenance when available: repo-asyncapi, repo-json-schema, generated-asyncapi, ssm-content, ssm-url, catalog-url, eventbridge-derived, code-derived, or manual-review."
+  contract-metadata-path:
+    description: "Path to SNS resolution metadata sidecar when available."
+  variant-count:
+    description: "Number of SNS delivery variants discovered when available."
 runs:
   using: node24
   main: dist/index.cjs

@@ -408,7 +408,10 @@ describe('SNS runtime integration', () => {
     };
   }
 
-  function createResolvedSnsContract(format: 'asyncapi-yaml' | 'asyncapi-json' | 'json-schema', origin: 'repo-asyncapi' | 'repo-json-schema' | 'ssm') {
+  function createResolvedSnsContract(
+    format: 'asyncapi-yaml' | 'asyncapi-json' | 'json-schema',
+    origin: 'repo-asyncapi' | 'repo-json-schema' | 'ssm-content'
+  ) {
     return {
       resolved: true as const,
       origin,
@@ -559,7 +562,7 @@ describe('SNS runtime integration', () => {
 
       const ssmProvider = createSnsProviderStub({
         listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-api')]),
-        resolveContract: vi.fn().mockResolvedValue(createResolvedSnsContract('json-schema', 'ssm'))
+        resolveContract: vi.fn().mockResolvedValue(createResolvedSnsContract('json-schema', 'ssm-content'))
       });
       const ssmResult = await runResolution(inputs, awsClient, createCoreStub().core, vi.fn().mockResolvedValue(undefined), {
         snsProvider: ssmProvider
@@ -985,6 +988,9 @@ describe('runAction', () => {
         gatewayType: 'SNS',
         providerType: 'sns',
         specFormat: 'asyncapi-yaml',
+        contractOrigin: 'repo-asyncapi',
+        metadataPath: 'discovered-specs/orders-topic/sns-resolution-metadata.json',
+        variantCount: 2,
         evidence: ['Resolved SNS contract']
       }
     });
@@ -992,6 +998,9 @@ describe('runAction', () => {
     expect(outputs['source-type']).toBe('sns-contract');
     expect(outputs['provider-type']).toBe('sns');
     expect(outputs['spec-format']).toBe('asyncapi-yaml');
+    expect(outputs['contract-origin']).toBe('repo-asyncapi');
+    expect(outputs['contract-metadata-path']).toBe('discovered-specs/orders-topic/sns-resolution-metadata.json');
+    expect(outputs['variant-count']).toBe('2');
   });
 
   it('marks discover-many unresolved on export failures by default', async () => {
@@ -1106,10 +1115,16 @@ describe('hardening helpers', () => {
       'gateway-id': 'abc123def4',
       'service-name': 'payments',
       'services-json': '[]',
-      'service-count': '0'
+      'service-count': '0',
+      'contract-origin': 'repo-asyncapi',
+      'contract-metadata-path': 'discovered-specs/payments/sns-resolution-metadata.json',
+      'variant-count': '2'
     });
 
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_RESOLUTION_STATUS=');
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_SERVICE_NAME=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_CONTRACT_ORIGIN=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_VARIANT_COUNT=');
   });
 });

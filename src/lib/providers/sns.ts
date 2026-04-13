@@ -17,7 +17,16 @@ interface ServiceSpec {
   format?: string;
 }
 
-export type SnsContractOrigin = 'repo-asyncapi' | 'repo-json-schema' | 'ssm';
+export type SnsContractOrigin =
+  | 'repo-asyncapi'
+  | 'repo-json-schema'
+  | 'generated-asyncapi'
+  | 'ssm-content'
+  | 'ssm-url'
+  | 'catalog-url'
+  | 'eventbridge-derived'
+  | 'code-derived'
+  | 'manual-review';
 
 export type SnsContractResult =
   | {
@@ -394,7 +403,7 @@ export class SnsProvider implements SpecProvider {
           const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
           return {
             resolved: true,
-            origin: 'ssm',
+            origin: 'ssm-content',
             result: {
               content: ssmMatch.content,
               format: resolvedFormat.format,
