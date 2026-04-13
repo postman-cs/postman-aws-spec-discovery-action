@@ -722,7 +722,7 @@ async function runMultiProviderDiscovery(
           await dependencies.writeSpecFile(absoluteSpecPath, result.content);
           summary.exported += 1;
 
-          const gatewayType = (candidate.meta.gatewayType ?? 'REST') as GatewayType;
+          const gatewayType = (candidate.meta.gatewayType ?? (provider.type === 'sns' ? 'SNS' : 'REST')) as GatewayType;
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -746,7 +746,7 @@ async function runMultiProviderDiscovery(
   return { discovered, summary };
 }
 
-function buildExecutionOutputs(result: {
+export function buildExecutionOutputs(result: {
   mode: ActionMode;
   discovered: DiscoveredService[];
   resolution?: ResolutionResult;
@@ -797,8 +797,8 @@ function buildExecutionOutputs(result: {
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     'candidates-json': '',
-    'provider-type': resolution.sourceType === 'gateway-export' ? 'api-gateway' : '',
-    'spec-format': ''
+    'provider-type': resolution.providerType ?? (resolution.sourceType === 'gateway-export' ? 'api-gateway' : ''),
+    'spec-format': resolution.specFormat ?? ''
   };
 }
 

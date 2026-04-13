@@ -11,6 +11,7 @@ import { findExistingRepoSpec } from '../src/lib/repo/specs.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
 import { chooseSource } from '../src/lib/resolve/source-selector.js';
+import { buildExecutionOutputs } from '../src/runtime.js';
 
 function createCoreStub(values: Record<string, string> = {}) {
   const outputs: Record<string, string> = {};
@@ -410,6 +411,28 @@ describe('runAction', () => {
 
     expect(outputs['resolution-status']).toBe('unresolved');
     expect(outputs['source-type']).toBe('manual-review');
+  });
+
+  it('propagates provider-type and spec-format for non-gateway resolve-one results', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: {
+        status: 'resolved',
+        sourceType: 'sns-contract',
+        serviceName: 'orders-topic',
+        confidence: 100,
+        gatewayId: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+        gatewayType: 'SNS',
+        providerType: 'sns',
+        specFormat: 'asyncapi-yaml',
+        evidence: ['Resolved SNS contract']
+      }
+    });
+
+    expect(outputs['source-type']).toBe('sns-contract');
+    expect(outputs['provider-type']).toBe('sns');
+    expect(outputs['spec-format']).toBe('asyncapi-yaml');
   });
 
   it('marks discover-many unresolved on export failures by default', async () => {

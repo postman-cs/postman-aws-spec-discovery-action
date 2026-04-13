@@ -3,10 +3,17 @@ import { resolve } from 'node:path';
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
-import { actionContract, contractInputNames, contractOutputNames } from '../src/contracts.js';
+import {
+  actionContract,
+  contractInputNames,
+  contractOutputNames,
+  type DiscoveredService,
+  type ResolutionResult
+} from '../src/contracts.js';
 import { resolveInputs } from '../src/index.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
+const contractsSource = readFileSync(resolve(repoRoot, 'src/contracts.ts'), 'utf8');
 const actionManifest = parse(
   readFileSync(resolve(repoRoot, 'action.yml'), 'utf8')
 ) as {
@@ -45,5 +52,53 @@ describe('action contract', () => {
     expect(parsed.serviceMapping).toEqual({ a1: 'payments' });
     expect(parsed.expectedGatewayIds).toEqual(['abc123def0', 'def456ghi7']);
     expect(parsed.outputDir).toBe('custom-dir');
+  });
+
+  it('supports sns values in type unions', () => {
+    expect(contractsSource).toContain("| 'sns'");
+    expect(contractsSource).toContain("| 'sns-contract'");
+    expect(contractsSource).toContain("| 'asyncapi-yaml'");
+    expect(contractsSource).toContain("| 'asyncapi-json'");
+  });
+
+  it('includes sns values in output descriptions', () => {
+    expect(actionContract.outputs['provider-type'].description).toContain('sns');
+    expect(actionContract.outputs['source-type'].description).toContain('sns-contract');
+    expect(actionContract.outputs['spec-format'].description).toContain('asyncapi-yaml');
+    expect(actionContract.outputs['spec-format'].description).toContain('asyncapi-json');
+
+    const actionOutputs = actionManifest.outputs as Record<string, { description: string }>;
+    expect(actionOutputs['provider-type'].description).toContain('sns');
+    expect(actionOutputs['source-type'].description).toContain('sns-contract');
+    expect(actionOutputs['spec-format'].description).toContain('asyncapi-yaml');
+    expect(actionOutputs['spec-format'].description).toContain('asyncapi-json');
+  });
+
+  it('typechecks discovered service and resolution result for sns', () => {
+    const discoveredService = {
+      serviceName: 'orders-topic',
+      specPath: 'discovered-specs/orders-topic/asyncapi.yaml',
+      gatewayId: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+      gatewayType: 'SNS',
+      stage: '',
+      providerType: 'sns',
+      specFormat: 'asyncapi-yaml'
+    } satisfies DiscoveredService;
+
+    const resolution = {
+      status: 'resolved',
+      sourceType: 'sns-contract',
+      serviceName: 'orders-topic',
+      confidence: 100,
+      gatewayId: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+      gatewayType: 'SNS',
+      providerType: 'sns',
+      specFormat: 'asyncapi-yaml',
+      evidence: ['Resolved SNS contract']
+    } satisfies ResolutionResult;
+
+    expect(discoveredService.providerType).toBe('sns');
+    expect(resolution.providerType).toBe('sns');
+    expect(resolution.specFormat).toBe('asyncapi-yaml');
   });
 });

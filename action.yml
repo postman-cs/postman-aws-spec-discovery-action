@@ -22,7 +22,7 @@ outputs:
   resolution-status:
     description: "Resolution status: resolved or unresolved."
   source-type:
-    description: "Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, ssm-registry, manual-review, or discover-many."
+    description: "Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, manual-review, or discover-many."
   mapping-confidence:
     description: Numeric confidence score for selected service candidate.
   spec-path:
@@ -40,9 +40,9 @@ outputs:
   candidates-json:
     description: "JSON array of top candidates when resolution is ambiguous."
   provider-type:
-    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, or ssm."
+    description: "Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, or ssm."
   spec-format:
-    description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, json-schema, avro, or protobuf."
+    description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf."
 runs:
   using: node24
   main: dist/index.cjs
