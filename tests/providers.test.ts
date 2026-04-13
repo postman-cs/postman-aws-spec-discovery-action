@@ -991,6 +991,168 @@ describe('SnsProvider', () => {
     }
   });
 
+  it('resolveContract keeps SSM inline content precedence over url and spec-url', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const fetchMock = vi.fn();
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'content', value: '{"asyncapi":"2.6.0","channels":{}}' },
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/contract.yaml' },
+            { serviceName: 'orders-topic', key: 'spec-url', value: 'https://example.com/contract.json' }
+          ])
+        }),
+        fetchMock as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'ssm-content' });
+      expect(fetchMock).not.toHaveBeenCalled();
+      if (result.resolved) {
+        expect(result.result.content).toContain('"asyncapi":"2.6.0"');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract fetches SSM url/spec-url and detects asyncapi and json-schema formats', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const urlFetcher = vi
+        .fn()
+        .mockResolvedValueOnce({ content: 'asyncapi: 2.6.0\nchannels: {}', contentType: 'application/yaml' })
+        .mockResolvedValueOnce({ content: '{"asyncapi":"2.6.0","channels":{}}', contentType: 'application/json' })
+        .mockResolvedValueOnce({ content: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}', contentType: 'application/json' });
+
+      const urlProvider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/orders.asyncapi.yaml' }
+          ])
+        }),
+        urlFetcher as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+      const specUrlProvider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'spec-url', value: 'https://example.com/orders.asyncapi.json' }
+          ])
+        }),
+        urlFetcher as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+      const jsonSchemaProvider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/orders.schema.json' }
+          ])
+        }),
+        urlFetcher as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+
+      const urlResult = await urlProvider.resolveContract(createSnsCandidate());
+      const specUrlResult = await specUrlProvider.resolveContract(createSnsCandidate());
+      const jsonSchemaResult = await jsonSchemaProvider.resolveContract(createSnsCandidate());
+
+      expect(urlResult).toMatchObject({ resolved: true, origin: 'ssm-url' });
+      expect(specUrlResult).toMatchObject({ resolved: true, origin: 'ssm-url' });
+      expect(jsonSchemaResult).toMatchObject({ resolved: true, origin: 'ssm-url' });
+      if (urlResult.resolved) expect(urlResult.result.format).toBe('asyncapi-yaml');
+      if (specUrlResult.resolved) expect(specUrlResult.result.format).toBe('asyncapi-json');
+      if (jsonSchemaResult.resolved) expect(jsonSchemaResult.result.format).toBe('json-schema');
+      expect(urlFetcher).toHaveBeenNthCalledWith(1, 'https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000 });
+      expect(urlFetcher).toHaveBeenNthCalledWith(2, 'https://example.com/orders.asyncapi.json', { timeoutMs: 15000 });
+      expect(urlFetcher).toHaveBeenNthCalledWith(3, 'https://example.com/orders.schema.json', { timeoutMs: 15000 });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records pointer-style evidence when SSM URL fetch fails', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/orders.asyncapi.yaml' }
+          ])
+        }),
+        vi.fn().mockRejectedValue(new Error('HTTP 503 fetching https://example.com/orders.asyncapi.yaml')) as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('spec-pointer.json'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('"specUrl": "https://example.com/orders.asyncapi.yaml"'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('"fetchError": "HTTP 503 fetching https://example.com/orders.asyncapi.yaml"'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records HTTPS enforcement errors for HTTP SSM URLs', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'http://example.com/orders.asyncapi.yaml' }
+          ])
+        })
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('Only HTTPS URLs are supported'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('"specUrl": "http://example.com/orders.asyncapi.yaml"'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract falls through when fetched SSM URL content is unsupported format', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(
+        createSnsClientStub(),
+        tempDir,
+        createSsmClientStub({
+          listSpecParameters: vi.fn().mockResolvedValue([
+            { serviceName: 'orders-topic', key: 'url', value: 'https://example.com/openapi.yaml' }
+          ])
+        }),
+        vi.fn().mockResolvedValue({
+          content: 'openapi: 3.1.0\ninfo:\n  title: Orders API\n  version: "1.0.0"\npaths: {}',
+          contentType: 'application/yaml'
+        }) as unknown as typeof import('../src/lib/fetch/spec-fetcher.js').fetchSpecFromUrl
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('unsupported format'))).toBe(true);
+      expect(result.evidence.some((line) => line.includes('manual review'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('resolveContract normalizes SSM service names and keeps auditable evidence', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
