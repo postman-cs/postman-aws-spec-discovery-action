@@ -7,6 +7,7 @@ import type { SpecFormat } from '../../contracts.js';
 import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
 import type { SnsSpecClient } from '../aws/sns-client.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
+import type { EventBridgeSchemasSpecClient } from '../aws/schemas-client.js';
 import { detectCatalogApis, type CatalogApiRef } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
@@ -60,6 +61,7 @@ interface SnsSubscriptionMetadata {
 
 interface SnsResolutionMetadata {
   contractOrigin: SnsContractOrigin;
+  transformed?: boolean;
   subscriptions: SnsSubscriptionMetadata[];
   messageAttributes: Record<string, { dataType?: string }>;
   evidence: string[];
@@ -300,7 +302,7 @@ function deriveAsyncApiHeaders(
 interface SnsProviderDependencies {
   fetchSpecFromUrl?: typeof fetchSpecFromUrl;
   catalogApis?: CatalogApiRef[];
-  eventBridgeClient?: unknown;
+  eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: unknown;
   gitIgnoreChecker?: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
   webhookSidecarBuilder?: (
@@ -606,6 +608,102 @@ function detectFormat(content: string, filenameHint: string): { format: SpecForm
   }
 
   return undefined;
+}
+
+function parseStructuredDocument(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return parse(value);
+  }
+}
+
+function getSchemaByRef(document: unknown, ref: string): unknown {
+  const match = /^#\/(.+)$/.exec(ref);
+  if (!match || !document || typeof document !== 'object' || Array.isArray(document)) {
+    return undefined;
+  }
+  const segments = match[1]?.split('/') ?? [];
+  let current: unknown = document;
+  for (const segment of segments) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return current;
+}
+
+function resolveSchemaNode(node: unknown, root: unknown, visited = new Set<string>()): unknown {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) {
+    return node;
+  }
+  const record = node as Record<string, unknown>;
+  const ref = typeof record.$ref === 'string' ? record.$ref : undefined;
+  if (!ref) {
+    return record;
+  }
+  if (visited.has(ref)) {
+    return undefined;
+  }
+  visited.add(ref);
+  const resolved = getSchemaByRef(root, ref);
+  return resolveSchemaNode(resolved, root, visited);
+}
+
+function hasSnsEnvelopeFields(node: unknown, root: unknown): boolean {
+  const resolved = resolveSchemaNode(node, root);
+  if (!resolved || typeof resolved !== 'object' || Array.isArray(resolved)) {
+    return false;
+  }
+  const properties = (resolved as Record<string, unknown>).properties;
+  if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
+    return false;
+  }
+  const propertyKeys = Object.keys(properties as Record<string, unknown>);
+  return ['Message', 'MessageId', 'TopicArn', 'Type'].every((requiredField) => propertyKeys.includes(requiredField));
+}
+
+function detectSnsShapeFromSchemaDocument(document: unknown): { matches: boolean; transformed: boolean } {
+  if (!document || typeof document !== 'object' || Array.isArray(document)) {
+    return { matches: false, transformed: false };
+  }
+  const root = document as Record<string, unknown>;
+  if (hasSnsEnvelopeFields(root, root)) {
+    return { matches: true, transformed: false };
+  }
+
+  const rootProperties = root.properties;
+  if (rootProperties && typeof rootProperties === 'object' && !Array.isArray(rootProperties)) {
+    const detailNode = (rootProperties as Record<string, unknown>).detail;
+    if (detailNode && hasSnsEnvelopeFields(detailNode, root)) {
+      return { matches: true, transformed: true };
+    }
+  }
+
+  const components = root.components;
+  const componentSchemas =
+    components && typeof components === 'object' && !Array.isArray(components)
+      ? (components as Record<string, unknown>).schemas
+      : undefined;
+  if (componentSchemas && typeof componentSchemas === 'object' && !Array.isArray(componentSchemas)) {
+    for (const schema of Object.values(componentSchemas as Record<string, unknown>)) {
+      if (hasSnsEnvelopeFields(schema, root)) {
+        return { matches: true, transformed: false };
+      }
+      if (schema && typeof schema === 'object' && !Array.isArray(schema)) {
+        const detailNode = (schema as Record<string, unknown>).properties;
+        if (detailNode && typeof detailNode === 'object' && !Array.isArray(detailNode)) {
+          const nestedDetail = (detailNode as Record<string, unknown>).detail;
+          if (nestedDetail && hasSnsEnvelopeFields(nestedDetail, root)) {
+            return { matches: true, transformed: true };
+          }
+        }
+      }
+    }
+  }
+
+  return { matches: false, transformed: false };
 }
 
 function deepCloneJsonValue(value: unknown): unknown {
@@ -1092,7 +1190,7 @@ export class SnsProvider implements SpecProvider {
   public readonly type = 'sns' as const;
   private readonly fetchRemoteSpec: typeof fetchSpecFromUrl;
   private readonly preloadedCatalogApis?: CatalogApiRef[];
-  private readonly eventBridgeClient?: unknown;
+  private readonly eventBridgeClient?: EventBridgeSchemasSpecClient;
   private readonly codeDerivedResolver?: unknown;
   private readonly gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
   private readonly webhookSidecarBuilder: (
@@ -1187,7 +1285,14 @@ export class SnsProvider implements SpecProvider {
       providerType: 'sns',
       topicArn,
       topicName,
-      attemptedSources: ['repo-local-asyncapi', 'repo-local-json-schema', 'generated-asyncapi', 'ssm-registry']
+      attemptedSources: [
+        'repo-local-asyncapi',
+        'repo-local-json-schema',
+        'generated-asyncapi',
+        'ssm-registry',
+        'catalog-url',
+        'eventbridge-derived'
+      ]
     };
 
     return {
@@ -1351,6 +1456,59 @@ export class SnsProvider implements SpecProvider {
       }
     }
 
+    let bridgeDerivedTransformed = false;
+    if (!resolvedExport && this.eventBridgeClient) {
+      try {
+        const registries = await this.eventBridgeClient.listRegistries();
+        const topicHints = collectHints(topicName, candidate.name);
+        const matchedSchemas: Array<{ registryName: string; schemaName: string; affinity: number }> = [];
+
+        for (const registry of registries) {
+          const schemas = await this.eventBridgeClient.listSchemas(registry.name);
+          for (const schema of schemas) {
+            const affinity = bestAffinity(schema.name, topicHints);
+            if (affinity > 0) {
+              matchedSchemas.push({ registryName: registry.name, schemaName: schema.name, affinity });
+            }
+          }
+        }
+
+        matchedSchemas.sort((left, right) => right.affinity - left.affinity || left.schemaName.localeCompare(right.schemaName));
+        for (const schema of matchedSchemas) {
+          try {
+            const described = await this.eventBridgeClient.describeSchema(schema.registryName, schema.schemaName);
+            const parsed = parseStructuredDocument(described.content);
+            const shape = detectSnsShapeFromSchemaDocument(parsed);
+            if (!shape.matches) {
+              priorEvidence.push(
+                `EventBridge schema ${schema.registryName}/${schema.schemaName} did not match SNS payload shape`
+              );
+              continue;
+            }
+            resolvedOrigin = 'eventbridge-derived';
+            bridgeDerivedTransformed = shape.transformed;
+            resolvedExport = {
+              content: typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2),
+              format: 'json-schema',
+              filename: 'index.json',
+              evidence: [
+                ...priorEvidence,
+                `Resolved SNS contract from EventBridge schema ${schema.registryName}/${schema.schemaName}`
+              ]
+            };
+            priorEvidence = resolvedExport.evidence;
+            break;
+          } catch (error) {
+            const detail = error instanceof Error ? error.message : String(error);
+            priorEvidence.push(`Failed describing EventBridge schema ${schema.registryName}/${schema.schemaName}: ${detail}`);
+          }
+        }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        priorEvidence.push(`EventBridge bridge detection unavailable: ${detail}`);
+      }
+    }
+
     const subscriptionInspection = await this.inspectSubscriptions(topicArn);
     const finalEvidence = [...priorEvidence, ...subscriptionInspection.evidence];
     if (!resolvedExport || !resolvedOrigin) {
@@ -1383,6 +1541,7 @@ export class SnsProvider implements SpecProvider {
     };
     const metadata: SnsResolutionMetadata = {
       contractOrigin: resolvedOrigin,
+      ...(resolvedOrigin === 'eventbridge-derived' && bridgeDerivedTransformed ? { transformed: true } : {}),
       subscriptions: subscriptionInspection.subscriptions,
       messageAttributes,
       evidence: finalEvidence,

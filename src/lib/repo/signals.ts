@@ -53,6 +53,7 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /\bType\s*:\s*SNS\b/i, provider: 'sns' },
   { pattern: /arn:aws:sns:/i, provider: 'sns' },
   { pattern: /AWS::Events::EventBus/i, provider: 'eventbridge-schemas' },
+  { pattern: /AWS::Events::Rule/i, provider: 'eventbridge-schemas' },
   { pattern: /AWS::Serverless::EventBridgeRule/i, provider: 'eventbridge-schemas' },
   { pattern: /schema_registry|SchemaRegistry/i, provider: 'eventbridge-schemas' },
   { pattern: /AWS::Glue::Schema/i, provider: 'glue' },
@@ -77,6 +78,8 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /new\s+sns\.Topic\s*\(/i, provider: 'sns' },
   { pattern: /sns\.Topic\.fromTopicArn\s*\(/i, provider: 'sns' },
   { pattern: /SnsEventSource/i, provider: 'sns' },
+  { pattern: /aws-cdk-lib\/aws-events/i, provider: 'eventbridge-schemas' },
+  { pattern: /new\s+events\.EventBus\s*\(/i, provider: 'eventbridge-schemas' },
 
   // Pulumi resource constructors (TypeScript/Python/Go)
   { pattern: /aws\.apigateway\.RestApi/i, provider: 'api-gateway' },
@@ -84,6 +87,20 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /aws\.appsync\.GraphQLApi/i, provider: 'appsync' },
   { pattern: /aws\.sns\.Topic/i, provider: 'sns' },
 ];
+
+function detectSnsEventBridgeBridgePattern(content: string): boolean {
+  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource/i.test(
+    content
+  );
+  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda/i.test(
+    content
+  );
+  const hasEventBridge =
+    /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\./i.test(
+      content
+    );
+  return hasSns && hasLambda && hasEventBridge;
+}
 
 function detectProviderHints(content: string): ProviderType[] {
   const found = new Set<ProviderType>();
@@ -158,6 +175,11 @@ export async function collectRepoSignals(
             snsEvidenceRoots.add(repoRoot);
           }
         }
+        if (detectSnsEventBridgeBridgePattern(content)) {
+          evidence.push(`Detected SNS/EventBridge bridge pattern in ${file}`);
+          providerHintSet.add('sns');
+          providerHintSet.add('eventbridge-schemas');
+        }
       }
     } catch {
       // Optional file.
@@ -194,6 +216,11 @@ export async function collectRepoSignals(
         snsEvidenceRoots.add(path.dirname(filePath));
       }
     }
+    if (detectSnsEventBridgeBridgePattern(content)) {
+      evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+      providerHintSet.add('sns');
+      providerHintSet.add('eventbridge-schemas');
+    }
   }
 
   const cdkJson = path.resolve(repoRoot, 'cdk.json');
@@ -209,6 +236,11 @@ export async function collectRepoSignals(
         if (hint === 'sns') {
           snsEvidenceRoots.add(path.dirname(filePath));
         }
+      }
+      if (detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+        providerHintSet.add('sns');
+        providerHintSet.add('eventbridge-schemas');
       }
     }
   } catch {
@@ -228,6 +260,11 @@ export async function collectRepoSignals(
         if (hint === 'sns') {
           snsEvidenceRoots.add(path.dirname(filePath));
         }
+      }
+      if (detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${toEvidencePath(repoRoot, filePath)}`);
+        providerHintSet.add('sns');
+        providerHintSet.add('eventbridge-schemas');
       }
     }
   } catch {
