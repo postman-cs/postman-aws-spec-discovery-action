@@ -12,6 +12,10 @@ export interface SpecCandidate {
 export interface ExportOptions {
   stage?: string;
   dryRun?: boolean;
+  resolutionContext?: {
+    serviceHints?: string[];
+    bridgeEvidence?: string[];
+  };
 }
 
 export interface SpecExportResult {

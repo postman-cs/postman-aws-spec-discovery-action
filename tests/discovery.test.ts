@@ -1056,6 +1056,92 @@ describe('SNS runtime integration', () => {
     expect(serializedSns?.variantCount).toBe(2);
   });
 
+  it('threads SNS discover-many resolution context so bridge-backed exports can emit eventbridge-derived origin', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'sns-discover-many-bridge-'));
+    try {
+      await writeFile(
+        path.join(root, 'template.yaml'),
+        [
+          'Resources:',
+          '  Topic:',
+          '    Type: AWS::SNS::Topic',
+          '  HandlerFunction:',
+          '    Type: AWS::Serverless::Function',
+          '    Properties:',
+          '      Events:',
+          '        TopicEvent:',
+          '          Type: SNS',
+          '  BridgeRule:',
+          '    Type: AWS::Events::Rule'
+        ].join('\n')
+      );
+
+      const { core } = createCoreStub();
+      const snsProvider = createDiscoverManySnsProvider({
+        listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
+        exportSpec: vi.fn().mockImplementation(async (_candidate, options) => {
+          const bridgeEvidence = options?.resolutionContext?.bridgeEvidence ?? [];
+          const origin = bridgeEvidence.length > 0 ? 'eventbridge-derived' : 'manual-review';
+          return {
+            content: '{"type":"object"}',
+            format: 'json-schema',
+            filename: 'index.json',
+            evidence: ['resolved'],
+            sidecars: [
+              {
+                filename: 'sns-resolution-metadata.json',
+                content: JSON.stringify({ contractOrigin: origin })
+              }
+            ]
+          };
+        })
+      });
+      const registry = new ProviderRegistry();
+      registry.register(snsProvider);
+
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: root,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
+
+      const snsEntry = result.discovered.find((entry) => entry.providerType === 'sns');
+      expect(snsEntry?.contractOrigin).toBe('eventbridge-derived');
+      expect(snsProvider.exportSpec).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          resolutionContext: expect.objectContaining({
+            serviceHints: expect.any(Array),
+            bridgeEvidence: expect.arrayContaining([expect.stringContaining('Detected SNS/EventBridge bridge pattern')])
+          })
+        })
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('supports discover-many dry-run for SNS without exporting', async () => {
     const { core } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
