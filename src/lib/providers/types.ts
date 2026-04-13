@@ -20,6 +20,10 @@ export interface SpecExportResult {
   filename: string;
   stage?: string;
   evidence: string[];
+  sidecars?: Array<{
+    filename: string;
+    content: string;
+  }>;
 }
 
 export interface SpecProvider {

@@ -42,6 +42,29 @@ interface RemoteUrlCandidate {
   affinity: number;
 }
 
+interface SnsSubscriptionMetadata {
+  subscriptionArn: string;
+  protocol?: string;
+  endpoint?: string;
+  RawMessageDelivery?: string;
+  FilterPolicy?: string;
+  FilterPolicyScope?: string;
+  RedrivePolicy?: string;
+  DeliveryPolicy?: string;
+}
+
+interface SnsResolutionMetadata {
+  contractOrigin: SnsContractOrigin;
+  subscriptions: SnsSubscriptionMetadata[];
+  evidence: string[];
+  subscriptionSummary: {
+    topicArn: string;
+    total: number;
+    failed: number;
+    errors: Array<{ subscriptionArn?: string; error: string }>;
+  };
+}
+
 export type SnsContractOrigin =
   | 'repo-asyncapi'
   | 'repo-json-schema'
@@ -59,11 +82,15 @@ export type SnsContractResult =
       origin: SnsContractOrigin;
       result: SpecExportResult;
       evidence: string[];
+      metadata: SnsResolutionMetadata;
     }
   | {
       resolved: false;
       evidence: string[];
+      metadata: SnsResolutionMetadata;
     };
+
+const METADATA_SIDECAR_FILENAME = 'sns-resolution-metadata.json';
 
 function topicNameFromArn(topicArn: string): string {
   const index = topicArn.lastIndexOf(':');
@@ -611,7 +638,10 @@ export class SnsProvider implements SpecProvider {
 
     const contract = await this.resolveContract(candidate);
     if (contract.resolved) {
-      return contract.result;
+      return {
+        ...contract.result,
+        sidecars: [...(contract.result.sidecars ?? []), { filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
+      };
     }
 
     const manualReview = {
@@ -627,7 +657,8 @@ export class SnsProvider implements SpecProvider {
       content: JSON.stringify(manualReview, null, 2),
       format: 'json-schema',
       filename: 'manual-review.json',
-      evidence: contract.evidence
+      evidence: contract.evidence,
+      sidecars: [{ filename: METADATA_SIDECAR_FILENAME, content: JSON.stringify(contract.metadata, null, 2) }]
     };
   }
 
@@ -640,47 +671,38 @@ export class SnsProvider implements SpecProvider {
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, 'repo-local');
+    let resolvedOrigin: SnsContractOrigin | undefined;
+    let resolvedExport: SpecExportResult | undefined;
+    let priorEvidence: string[] = [];
     if (asyncApiResolution.match) {
-      return {
-        resolved: true,
-        origin: 'repo-asyncapi',
-        result: asyncApiResolution.match,
-        evidence: asyncApiResolution.match.evidence
-      };
+      resolvedOrigin = 'repo-asyncapi';
+      resolvedExport = asyncApiResolution.match;
+      priorEvidence = asyncApiResolution.match.evidence;
     }
 
-    const jsonSchemaResolution = await resolveJsonSchemaContract(
-      resolvedRepoRoot,
-      files.jsonSchema,
-      asyncApiResolution.evidence
-    );
-    if (jsonSchemaResolution.match) {
-      return {
-        resolved: true,
-        origin: 'repo-json-schema',
-        result: jsonSchemaResolution.match,
-        evidence: jsonSchemaResolution.match.evidence
-      };
+    const jsonSchemaResolution = resolvedExport
+      ? { evidence: priorEvidence }
+      : await resolveJsonSchemaContract(resolvedRepoRoot, files.jsonSchema, asyncApiResolution.evidence);
+    if (!resolvedExport && 'match' in jsonSchemaResolution && jsonSchemaResolution.match) {
+      resolvedOrigin = 'repo-json-schema';
+      resolvedExport = jsonSchemaResolution.match;
+      priorEvidence = jsonSchemaResolution.match.evidence;
     }
 
-    const generatedAsyncApiFiles = await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName);
-    const generatedAsyncApiResolution = await resolveAsyncApiContract(
-      resolvedRepoRoot,
-      generatedAsyncApiFiles,
-      'generated'
-    );
-    if (generatedAsyncApiResolution.match) {
-      return {
-        resolved: true,
-        origin: 'generated-asyncapi',
-        result: generatedAsyncApiResolution.match,
-        evidence: generatedAsyncApiResolution.match.evidence
-      };
+    const generatedAsyncApiResolution = resolvedExport
+      ? { evidence: priorEvidence }
+      : await resolveAsyncApiContract(resolvedRepoRoot, await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName), 'generated');
+    if (!resolvedExport && 'match' in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
+      resolvedOrigin = 'generated-asyncapi';
+      resolvedExport = generatedAsyncApiResolution.match;
+      priorEvidence = generatedAsyncApiResolution.match.evidence;
     }
 
-    const priorEvidence = [...jsonSchemaResolution.evidence, ...generatedAsyncApiResolution.evidence];
+    if (!resolvedExport) {
+      priorEvidence = [...jsonSchemaResolution.evidence, ...generatedAsyncApiResolution.evidence];
+    }
 
-    if (this.ssmClient) {
+    if (!resolvedExport && this.ssmClient) {
       const specs = groupByService(await this.ssmClient.listSpecParameters());
       const canonicalTopicName = topicName.replace(/\.fifo$/i, '');
       const serviceKeys = new Set(
@@ -708,43 +730,39 @@ export class SnsProvider implements SpecProvider {
         const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat(ssmMatch.content, ssmMatch.format ?? '');
         if (resolvedFormat) {
           const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
-          return {
-            resolved: true,
-            origin: 'ssm-content',
-            result: {
-              content: ssmMatch.content,
-              format: resolvedFormat.format,
-              filename: resolvedFormat.filename,
-              evidence
-            },
+          resolvedOrigin = 'ssm-content';
+          resolvedExport = {
+            content: ssmMatch.content,
+            format: resolvedFormat.format,
+            filename: resolvedFormat.filename,
             evidence
           };
+          priorEvidence = evidence;
         }
       }
 
       const ssmUrl = ssmMatch?.url;
-      if (ssmUrl) {
+      if (!resolvedExport && ssmUrl) {
         try {
           const fetched = await this.fetchRemoteSpec(ssmUrl, { timeoutMs: 15000 });
           const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat(fetched.content, ssmMatch?.format ?? '');
           if (resolvedFormat) {
             const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
-            return {
-              resolved: true,
-              origin: 'ssm-url',
-              result: {
-                content: fetched.content,
-                format: resolvedFormat.format,
-                filename: resolvedFormat.filename,
-                evidence
-              },
+            resolvedOrigin = 'ssm-url';
+            resolvedExport = {
+              content: fetched.content,
+              format: resolvedFormat.format,
+              filename: resolvedFormat.filename,
               evidence
             };
+            priorEvidence = evidence;
           }
 
-          priorEvidence.push(
-            `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
-          );
+          if (!resolvedExport) {
+            priorEvidence.push(
+              `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+            );
+          }
         } catch (fetchError) {
           const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
           const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
@@ -755,42 +773,133 @@ export class SnsProvider implements SpecProvider {
       }
     }
 
-    const remoteUrlCandidates = [
-      ...(await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints)),
-      ...(await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints))
-    ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
+    if (!resolvedExport) {
+      const remoteUrlCandidates = [
+        ...(await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints)),
+        ...(await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints))
+      ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
 
-    for (const remoteCandidate of remoteUrlCandidates) {
-      try {
-        const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15000 });
-        const resolvedFormat = detectFormat(fetched.content, '');
-        if (!resolvedFormat) {
-          priorEvidence.push(
-            `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
-          );
-          continue;
-        }
-        const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
-        return {
-          resolved: true,
-          origin: 'catalog-url',
-          result: {
+      for (const remoteCandidate of remoteUrlCandidates) {
+        try {
+          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15000 });
+          const resolvedFormat = detectFormat(fetched.content, '');
+          if (!resolvedFormat) {
+            priorEvidence.push(
+              `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+            );
+            continue;
+          }
+          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
+          resolvedOrigin = 'catalog-url';
+          resolvedExport = {
             content: fetched.content,
             format: resolvedFormat.format,
             filename: resolvedFormat.filename,
             evidence
-          },
-          evidence
-        };
-      } catch (fetchError) {
-        const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-        priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+          };
+          priorEvidence = evidence;
+          break;
+        } catch (fetchError) {
+          const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+        }
       }
     }
 
-    return {
-      resolved: false,
-      evidence: [...priorEvidence, `No SNS contract found for ${topicArn}; manual review required`]
+    const subscriptionInspection = await this.inspectSubscriptions(topicArn);
+    const finalEvidence = [...priorEvidence, ...subscriptionInspection.evidence];
+    if (!resolvedExport || !resolvedOrigin) {
+      finalEvidence.push(`No SNS contract found for ${topicArn}; manual review required`);
+      const metadata: SnsResolutionMetadata = {
+        contractOrigin: 'manual-review',
+        subscriptions: subscriptionInspection.subscriptions,
+        evidence: finalEvidence,
+        subscriptionSummary: {
+          topicArn,
+          total: subscriptionInspection.subscriptions.length,
+          failed: subscriptionInspection.errors.length,
+          errors: subscriptionInspection.errors
+        }
+      };
+      return {
+        resolved: false,
+        evidence: finalEvidence,
+        metadata
+      };
+    }
+
+    const metadata: SnsResolutionMetadata = {
+      contractOrigin: resolvedOrigin,
+      subscriptions: subscriptionInspection.subscriptions,
+      evidence: finalEvidence,
+      subscriptionSummary: {
+        topicArn,
+        total: subscriptionInspection.subscriptions.length,
+        failed: subscriptionInspection.errors.length,
+        errors: subscriptionInspection.errors
+      }
     };
+
+    return {
+      resolved: true,
+      origin: resolvedOrigin,
+      result: {
+        ...resolvedExport,
+        evidence: finalEvidence
+      },
+      evidence: finalEvidence,
+      metadata
+    };
+  }
+
+  private async inspectSubscriptions(topicArn: string): Promise<{
+    subscriptions: SnsSubscriptionMetadata[];
+    evidence: string[];
+    errors: Array<{ subscriptionArn?: string; error: string }>;
+  }> {
+    const evidence: string[] = [];
+    const errors: Array<{ subscriptionArn?: string; error: string }> = [];
+    let summaries: Awaited<ReturnType<SnsSpecClient['listSubscriptionsByTopic']>>;
+    try {
+      summaries = await this.client.listSubscriptionsByTopic(topicArn);
+      evidence.push(`Inspected SNS subscriptions for topic ${topicArn}; discovered ${summaries.length}`);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      const isAccessDenied = /AccessDeniedException/i.test(detail);
+      evidence.push(
+        isAccessDenied
+          ? `Could not list subscriptions for ${topicArn}: AccessDeniedException (continuing with evidence only)`
+          : `Could not list subscriptions for ${topicArn}: ${detail} (continuing with evidence only)`
+      );
+      errors.push({ error: detail });
+      return { subscriptions: [], evidence, errors };
+    }
+
+    const subscriptions: SnsSubscriptionMetadata[] = [];
+    for (const summary of summaries) {
+      const subscriptionArn = summary.subscriptionArn;
+      if (!subscriptionArn) {
+        continue;
+      }
+      try {
+        const attributes = await this.client.getSubscriptionAttributes(subscriptionArn);
+        subscriptions.push({
+          subscriptionArn,
+          protocol: attributes.Protocol ?? summary.protocol,
+          endpoint: attributes.Endpoint ?? summary.endpoint,
+          RawMessageDelivery: attributes.RawMessageDelivery,
+          FilterPolicy: attributes.FilterPolicy,
+          FilterPolicyScope: attributes.FilterPolicyScope,
+          RedrivePolicy: attributes.RedrivePolicy,
+          DeliveryPolicy: attributes.DeliveryPolicy
+        });
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        evidence.push(`Failed to read SNS subscription attributes for ${subscriptionArn}: ${detail}`);
+        errors.push({ subscriptionArn, error: detail });
+      }
+    }
+
+    return { subscriptions, evidence, errors };
   }
 }
