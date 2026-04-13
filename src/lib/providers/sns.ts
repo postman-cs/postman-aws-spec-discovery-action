@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
@@ -9,6 +9,9 @@ import { findIaCFiles } from '../repo/scan.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 const ASYNCAPI_FILE_NAMES = new Set(['asyncapi.yaml', 'asyncapi.yml', 'asyncapi.json']);
+const GENERATED_ASYNCAPI_EXTENSIONS = new Set(['.yaml', '.yml', '.json']);
+const GENERATED_ROOT_PREFIXES = ['spec/', 'contracts/', 'events/', 'build/', '.build/', 'out/'] as const;
+const DEFAULT_IGNORED_DIRS = new Set(['.git', 'node_modules', 'dist']);
 
 interface ServiceSpec {
   serviceName: string;
@@ -157,6 +160,81 @@ function sortByTopicAffinity(files: string[], topicName: string): string[] {
   });
 }
 
+function normalizePathForMatch(value: string): string {
+  return value.replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
+function isGeneratedSearchRootPath(repoRoot: string, filePath: string): boolean {
+  const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
+  return GENERATED_ROOT_PREFIXES.some((prefix) => relative.startsWith(prefix));
+}
+
+function isGeneratedAsyncApiPath(repoRoot: string, filePath: string): boolean {
+  const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
+  const base = path.basename(relative).toLowerCase();
+  const isDotAsyncApi = base.endsWith('.asyncapi.yaml') || base.endsWith('.asyncapi.yml') || base.endsWith('.asyncapi.json');
+  const isNamedAsyncApi = base === 'asyncapi.yaml' || base === 'asyncapi.yml' || base === 'asyncapi.json';
+
+  if (relative.startsWith('spec/') || relative.startsWith('contracts/')) {
+    return isDotAsyncApi;
+  }
+  if (relative.startsWith('events/')) {
+    return isNamedAsyncApi;
+  }
+  if (relative.startsWith('build/') || relative.startsWith('.build/') || relative.startsWith('out/')) {
+    return isDotAsyncApi || isNamedAsyncApi;
+  }
+  return false;
+}
+
+function createGitignoreMatcher(repoRoot: string, content: string): (targetPath: string, isDirectory: boolean) => boolean {
+  const rules = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#'))
+    .map((line) => {
+      const directoryOnly = line.endsWith('/');
+      const pattern = normalizePathForMatch(directoryOnly ? line.slice(0, -1) : line);
+      const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+      const regexSource = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]');
+      return { directoryOnly, regex: new RegExp(`(^|/)${regexSource}($|/)`) };
+    });
+
+  return (targetPath: string, isDirectory: boolean): boolean => {
+    const relative = normalizePathForMatch(path.relative(repoRoot, targetPath));
+    return rules.some((rule) => (!rule.directoryOnly || isDirectory) && rule.regex.test(relative));
+  };
+}
+
+async function collectFilesByExtension(
+  currentPath: string,
+  matcher: (targetPath: string, isDirectory: boolean) => boolean
+): Promise<string[]> {
+  const entries = await readdir(currentPath, { withFileTypes: true }).catch(() => []);
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(currentPath, entry.name);
+    if (entry.isDirectory()) {
+      if (DEFAULT_IGNORED_DIRS.has(entry.name) || matcher(fullPath, true)) {
+        continue;
+      }
+      files.push(...(await collectFilesByExtension(fullPath, matcher)));
+      continue;
+    }
+
+    if (!entry.isFile() || matcher(fullPath, false)) {
+      continue;
+    }
+
+    if (GENERATED_ASYNCAPI_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
 async function findContractFiles(repoRoot: string, topicName: string): Promise<{ asyncapi: string[]; jsonSchema: string[] }> {
   const files = await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']);
   const asyncapi: string[] = [];
@@ -165,6 +243,12 @@ async function findContractFiles(repoRoot: string, topicName: string): Promise<{
   for (const filePath of files) {
     const safePath = resolvePathWithinRoot(repoRoot, filePath, 'repo contract path');
     const baseName = path.basename(safePath).toLowerCase();
+    if (isGeneratedSearchRootPath(repoRoot, safePath)) {
+      if (baseName === 'schema.json' || baseName.endsWith('.schema.json')) {
+        jsonSchema.push(safePath);
+      }
+      continue;
+    }
     if (ASYNCAPI_FILE_NAMES.has(baseName)) {
       asyncapi.push(safePath);
       continue;
@@ -180,9 +264,34 @@ async function findContractFiles(repoRoot: string, topicName: string): Promise<{
   };
 }
 
+async function findGeneratedAsyncApiFiles(repoRoot: string, topicName: string): Promise<string[]> {
+  const gitignorePath = path.join(repoRoot, '.gitignore');
+  const gitignoreContent = await readFile(gitignorePath, 'utf8').catch(() => '');
+  const matcher = createGitignoreMatcher(repoRoot, gitignoreContent);
+  const scanned = await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']);
+  const discovered = new Set<string>(scanned);
+
+  for (const frameworkRoot of ['build', '.build', 'out']) {
+    const rootPath = path.join(repoRoot, frameworkRoot);
+    const rootStats = await stat(rootPath).catch(() => null);
+    if (!rootStats || !rootStats.isDirectory() || matcher(rootPath, true)) {
+      continue;
+    }
+    for (const filePath of await collectFilesByExtension(rootPath, matcher)) {
+      discovered.add(filePath);
+    }
+  }
+
+  return sortByTopicAffinity(
+    [...discovered].filter((filePath) => !matcher(filePath, false) && isGeneratedAsyncApiPath(repoRoot, filePath)),
+    topicName
+  );
+}
+
 async function resolveAsyncApiContract(
   repoRoot: string,
-  files: string[]
+  files: string[],
+  sourceLabel: 'repo-local' | 'generated' = 'repo-local'
 ): Promise<{ match?: SpecExportResult; evidence: string[] }> {
   const evidence: string[] = [];
 
@@ -204,12 +313,13 @@ async function resolveAsyncApiContract(
       }
 
       const format: SpecFormat = filePath.toLowerCase().endsWith('.json') ? 'asyncapi-json' : 'asyncapi-yaml';
+      const sourceDescription = sourceLabel === 'generated' ? 'generated AsyncAPI' : 'repo-local AsyncAPI';
       return {
         match: {
           content,
           format,
           filename: path.basename(filePath),
-          evidence: [...evidence, `Resolved SNS contract from repo-local AsyncAPI file ${relativePath}`]
+          evidence: [...evidence, `Resolved SNS contract from ${sourceDescription} file ${relativePath}`]
         },
         evidence
       };
@@ -329,7 +439,7 @@ export class SnsProvider implements SpecProvider {
       providerType: 'sns',
       topicArn,
       topicName,
-      attemptedSources: ['repo-local-asyncapi', 'repo-local-json-schema', 'ssm-registry']
+      attemptedSources: ['repo-local-asyncapi', 'repo-local-json-schema', 'generated-asyncapi', 'ssm-registry']
     };
 
     return {
@@ -347,7 +457,7 @@ export class SnsProvider implements SpecProvider {
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
-    const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi);
+    const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, 'repo-local');
     if (asyncApiResolution.match) {
       return {
         resolved: true,
@@ -371,7 +481,22 @@ export class SnsProvider implements SpecProvider {
       };
     }
 
-    const priorEvidence = [...jsonSchemaResolution.evidence];
+    const generatedAsyncApiFiles = await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName);
+    const generatedAsyncApiResolution = await resolveAsyncApiContract(
+      resolvedRepoRoot,
+      generatedAsyncApiFiles,
+      'generated'
+    );
+    if (generatedAsyncApiResolution.match) {
+      return {
+        resolved: true,
+        origin: 'generated-asyncapi',
+        result: generatedAsyncApiResolution.match,
+        evidence: generatedAsyncApiResolution.match.evidence
+      };
+    }
+
+    const priorEvidence = [...jsonSchemaResolution.evidence, ...generatedAsyncApiResolution.evidence];
 
     if (this.ssmClient) {
       const specs = groupByService(await this.ssmClient.listSpecParameters());
