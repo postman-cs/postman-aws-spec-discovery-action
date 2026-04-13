@@ -48,6 +48,10 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /AWS::AppSync::GraphQLApi/i, provider: 'appsync' },
   { pattern: /AWS::Serverless::GraphQLApi/i, provider: 'appsync' },
   { pattern: /appsync/i, provider: 'appsync' },
+  { pattern: /AWS::SNS::Topic/i, provider: 'sns' },
+  { pattern: /AWS::SNS::Subscription/i, provider: 'sns' },
+  { pattern: /\bType\s*:\s*SNS\b/i, provider: 'sns' },
+  { pattern: /arn:aws:sns:/i, provider: 'sns' },
   { pattern: /AWS::Events::EventBus/i, provider: 'eventbridge-schemas' },
   { pattern: /AWS::Serverless::EventBridgeRule/i, provider: 'eventbridge-schemas' },
   { pattern: /schema_registry|SchemaRegistry/i, provider: 'eventbridge-schemas' },
@@ -62,14 +66,23 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /resource\s+"aws_api_gateway_rest_api"/i, provider: 'api-gateway' },
   { pattern: /resource\s+"aws_apigatewayv2_api"/i, provider: 'api-gateway' },
   { pattern: /resource\s+"aws_appsync_graphql_api"/i, provider: 'appsync' },
+  { pattern: /resource\s+"aws_sns_topic"/i, provider: 'sns' },
+  { pattern: /resource\s+"aws_sns_topic_subscription"/i, provider: 'sns' },
   { pattern: /resource\s+"aws_schemas_schema"/i, provider: 'eventbridge-schemas' },
   { pattern: /resource\s+"aws_cloudwatch_event_bus"/i, provider: 'eventbridge-schemas' },
   { pattern: /resource\s+"aws_glue_schema"/i, provider: 'glue' },
+
+  // CDK TypeScript patterns
+  { pattern: /aws-cdk-lib\/aws-sns/i, provider: 'sns' },
+  { pattern: /new\s+sns\.Topic\s*\(/i, provider: 'sns' },
+  { pattern: /sns\.Topic\.fromTopicArn\s*\(/i, provider: 'sns' },
+  { pattern: /SnsEventSource/i, provider: 'sns' },
 
   // Pulumi resource constructors (TypeScript/Python/Go)
   { pattern: /aws\.apigateway\.RestApi/i, provider: 'api-gateway' },
   { pattern: /aws\.apigatewayv2\.Api/i, provider: 'api-gateway' },
   { pattern: /aws\.appsync\.GraphQLApi/i, provider: 'appsync' },
+  { pattern: /aws\.sns\.Topic/i, provider: 'sns' },
 ];
 
 function detectProviderHints(content: string): ProviderType[] {
@@ -80,6 +93,21 @@ function detectProviderHints(content: string): ProviderType[] {
     }
   }
   return [...found];
+}
+
+function toEvidencePath(repoRoot: string, filePath: string): string {
+  const relative = path.relative(repoRoot, filePath);
+  return relative.startsWith('..') ? filePath : relative;
+}
+
+function isSnsEventContractFile(filePath: string): boolean {
+  const lower = path.basename(filePath).toLowerCase();
+  return (
+    lower === 'asyncapi.yaml' ||
+    lower === 'asyncapi.yml' ||
+    lower === 'asyncapi.json' ||
+    lower.endsWith('.schema.json')
+  );
 }
 
 export async function collectRepoSignals(
@@ -95,6 +123,7 @@ export async function collectRepoSignals(
   const inferredGatewayHints: string[] = [];
   const evidence: string[] = [];
   const providerHintSet = new Set<ProviderType>();
+  const snsEvidenceRoots = new Set<string>();
 
   const inspectFiles = [
     '.github/workflows/deploy.yml',
@@ -119,6 +148,9 @@ export async function collectRepoSignals(
       for (const hint of detectProviderHints(content)) {
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${file}`);
+        if (hint === 'sns') {
+          snsEvidenceRoots.add(repoRoot);
+        }
       }
     } catch {
       // Optional file.
@@ -150,8 +182,30 @@ export async function collectRepoSignals(
     }
     for (const hint of detectProviderHints(content)) {
       providerHintSet.add(hint);
-      evidence.push(`Detected ${hint} provider hint in ${filePath}`);
+      evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
+      if (hint === 'sns') {
+        snsEvidenceRoots.add(path.dirname(filePath));
+      }
     }
+  }
+
+  const cdkJson = path.resolve(repoRoot, 'cdk.json');
+  try {
+    await readFile(cdkJson, 'utf8');
+    const cdkFiles = await findIaCFiles(repoRoot, ['.ts']);
+    for (const filePath of cdkFiles) {
+      const content = await readFile(filePath, 'utf8').catch(() => '');
+      if (!content) continue;
+      for (const hint of detectProviderHints(content)) {
+        providerHintSet.add(hint);
+        evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
+        if (hint === 'sns') {
+          snsEvidenceRoots.add(path.dirname(filePath));
+        }
+      }
+    }
+  } catch {
+    // Optional: no CDK project present.
   }
 
   const pulumiYaml = path.resolve(repoRoot, 'Pulumi.yaml');
@@ -163,11 +217,32 @@ export async function collectRepoSignals(
       if (!content) continue;
       for (const hint of detectProviderHints(content)) {
         providerHintSet.add(hint);
-        evidence.push(`Detected ${hint} provider hint in ${filePath}`);
+        evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
+        if (hint === 'sns') {
+          snsEvidenceRoots.add(path.dirname(filePath));
+        }
       }
     }
   } catch {
     // Optional: no Pulumi project present.
+  }
+
+  if (providerHintSet.has('sns')) {
+    const contractCandidates = new Set<string>();
+    const contractSearchRoots = new Set<string>([repoRoot, ...snsEvidenceRoots]);
+
+    for (const searchRoot of contractSearchRoots) {
+      const files = await findIaCFiles(searchRoot, ['.yaml', '.yml', '.json']);
+      for (const filePath of files) {
+        if (isSnsEventContractFile(filePath)) {
+          contractCandidates.add(filePath);
+        }
+      }
+    }
+
+    for (const contractPath of contractCandidates) {
+      evidence.push(`Found SNS event contract file: ${toEvidencePath(repoRoot, contractPath)}`);
+    }
   }
 
   return {

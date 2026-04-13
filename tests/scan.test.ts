@@ -300,3 +300,184 @@ describe('Pulumi provider patterns via collectRepoSignals', () => {
     expect(signals.providerHints).toContain('appsync');
   });
 });
+
+describe('SNS provider patterns via collectRepoSignals', () => {
+  it('detects sns from CloudFormation AWS::SNS::Topic', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      ['Resources:', '  Topic:', '    Type: AWS::SNS::Topic'].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from CloudFormation AWS::SNS::Subscription', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      ['Resources:', '  Subscription:', '    Type: AWS::SNS::Subscription'].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from SAM SNS event bindings', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      [
+        'Resources:',
+        '  HandlerFunction:',
+        '    Type: AWS::Serverless::Function',
+        '    Properties:',
+        '      Events:',
+        '        TopicEvent:',
+        '          Type: SNS',
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from SNS ARN references', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      'TopicArn: arn:aws:sns:us-east-1:123456789012:orders-topic',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from Terraform aws_sns_topic resource', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'main.tf'),
+      'resource "aws_sns_topic" "orders" { name = "orders-topic" }',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from Terraform aws_sns_topic_subscription resource', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'main.tf'),
+      'resource "aws_sns_topic_subscription" "orders" { topic_arn = "arn:aws:sns:us-east-1:123456789012:orders-topic" protocol = "sqs" endpoint = "arn:aws:sqs:us-east-1:123456789012:orders-queue" }',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from CDK TypeScript source when cdk.json exists', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(
+      path.join(root, 'stack.ts'),
+      [
+        "import * as sns from 'aws-cdk-lib/aws-sns';",
+        'const topic = new sns.Topic(this, "OrdersTopic");',
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from CDK sns.Topic.fromTopicArn usage when cdk.json exists', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(
+      path.join(root, 'stack.ts'),
+      'const topic = sns.Topic.fromTopicArn(this, "OrdersTopic", "arn:aws:sns:us-east-1:123456789012:orders-topic");',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from CDK SnsEventSource usage when cdk.json exists', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(
+      path.join(root, 'stack.ts'),
+      'const source = new SnsEventSource(topic);',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects sns from Pulumi TypeScript source', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'Pulumi.yaml'), 'name: my-stack\nruntime: nodejs\n');
+    await writeFile(
+      path.join(root, 'index.ts'),
+      'const topic = new aws.sns.Topic("orders-topic", {});',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects asyncapi.yml as SNS contract evidence when SNS IaC is present', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'template.yaml'), 'Type: AWS::SNS::Topic');
+    await writeFile(path.join(root, 'asyncapi.yml'), 'asyncapi: 2.6.0');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.evidence.some((entry) => entry.includes('asyncapi.yml'))).toBe(true);
+  });
+
+  it('detects asyncapi.yaml as SNS contract evidence when SNS IaC is present', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'template.yaml'), 'Type: AWS::SNS::Topic');
+    await writeFile(path.join(root, 'asyncapi.yaml'), 'asyncapi: 2.6.0');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.evidence.some((entry) => entry.includes('asyncapi.yaml'))).toBe(true);
+  });
+
+  it('detects asyncapi.json as SNS contract evidence when SNS IaC is present', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'main.tf'), 'resource "aws_sns_topic" "orders" {}');
+    await writeFile(path.join(root, 'asyncapi.json'), JSON.stringify({ asyncapi: '2.6.0' }));
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.evidence.some((entry) => entry.includes('asyncapi.json'))).toBe(true);
+  });
+
+  it('detects *.schema.json as SNS contract evidence when SNS IaC is present', async () => {
+    const root = await makeTempDir();
+    await mkdir(path.join(root, 'schemas'));
+    await writeFile(path.join(root, 'template.yaml'), 'Type: AWS::SNS::Topic');
+    await writeFile(path.join(root, 'schemas', 'orders.schema.json'), '{}');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.evidence.some((entry) => entry.includes('orders.schema.json'))).toBe(true);
+  });
+
+  it('does not infer sns from event contract files without SNS IaC', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'asyncapi.yaml'), 'asyncapi: 2.6.0');
+    await writeFile(
+      path.join(root, 'main.tf'),
+      'resource "aws_api_gateway_rest_api" "my_api" { name = "MyAPI" }',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints ?? []).not.toContain('sns');
+    expect(signals.providerHints).toContain('api-gateway');
+  });
+});
