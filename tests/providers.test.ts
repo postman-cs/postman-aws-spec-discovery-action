@@ -2168,7 +2168,7 @@ describe('SnsProvider', () => {
     }
   });
 
-  it('resolveContract resolves oneOf message members that are $ref entries', async () => {
+  it('resolveContract resolves all oneOf message members that are $ref entries', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
       await writeFile(
@@ -2223,11 +2223,17 @@ describe('SnsProvider', () => {
       if (result.resolved) {
         const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
         const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc).toHaveProperty('webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.oneOf');
         expect(webhookDoc).toHaveProperty(
-          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.$ref',
+          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.oneOf.0.$ref',
           '#/components/schemas/OrderCreatedEvent'
         );
+        expect(webhookDoc).toHaveProperty(
+          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.oneOf.1.$ref',
+          '#/components/schemas/OrderCancelledEvent'
+        );
         expect(webhookDoc).toHaveProperty('components.schemas.OrderCreatedEvent');
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderCancelledEvent');
       }
     } finally {
       await rm(tempDir, { recursive: true, force: true });

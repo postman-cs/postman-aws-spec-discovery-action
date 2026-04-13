@@ -717,6 +717,7 @@ function extractAsyncApiPayloadSchema(document: unknown): { payloadSchema: unkno
       }
       const oneOf = message.oneOf;
       if (Array.isArray(oneOf)) {
+        const oneOfPayloadSchemas: unknown[] = [];
         for (const entry of oneOf) {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
             continue;
@@ -726,12 +727,16 @@ function extractAsyncApiPayloadSchema(document: unknown): { payloadSchema: unkno
             continue;
           }
           if (typeof resolvedEntry.$ref === 'string' && /^#\/components\/schemas\/.+$/.test(resolvedEntry.$ref)) {
-            return finalize({ $ref: resolvedEntry.$ref });
+            oneOfPayloadSchemas.push({ $ref: resolvedEntry.$ref });
+            continue;
           }
           const oneOfPayload = resolvedEntry.payload;
           if (oneOfPayload && typeof oneOfPayload === 'object' && !Array.isArray(oneOfPayload)) {
-            return finalize(oneOfPayload);
+            oneOfPayloadSchemas.push(oneOfPayload);
           }
+        }
+        if (oneOfPayloadSchemas.length > 0) {
+          return finalize({ oneOf: oneOfPayloadSchemas });
         }
       }
     }
