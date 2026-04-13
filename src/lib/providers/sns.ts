@@ -339,6 +339,11 @@ export type SnsContractResult =
       sidecars?: Array<{ filename: string; content: string }>;
     };
 
+export interface SnsContractResolutionContext {
+  serviceHints?: string[];
+  bridgeEvidence?: string[];
+}
+
 const METADATA_SIDECAR_FILENAME = 'sns-resolution-metadata.json';
 const SPEC_POINTER_FILENAME = 'spec-pointer.json';
 const WEBHOOK_SIDECAR_FILENAME = 'webhook.openapi.json';
@@ -1304,11 +1309,20 @@ export class SnsProvider implements SpecProvider {
     };
   }
 
-  public async resolveContract(candidate: SpecCandidate): Promise<SnsContractResult> {
+  public async resolveContract(
+    candidate: SpecCandidate,
+    resolutionContext: SnsContractResolutionContext = {}
+  ): Promise<SnsContractResult> {
     const resolvedRepoRoot = path.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     const affinityHints = collectHints(topicName, candidate.name);
+    for (const serviceHint of resolutionContext.serviceHints ?? []) {
+      const normalized = normalizeServiceKey(serviceHint);
+      if (normalized) {
+        affinityHints.add(normalized);
+      }
+    }
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
     void this.eventBridgeClient;
     void this.codeDerivedResolver;
@@ -1457,10 +1471,12 @@ export class SnsProvider implements SpecProvider {
     }
 
     let bridgeDerivedTransformed = false;
-    if (!resolvedExport && this.eventBridgeClient) {
+    const bridgeEvidence = resolutionContext.bridgeEvidence ?? [];
+    const shouldAttemptEventBridgeDerived = bridgeEvidence.length > 0;
+    if (!resolvedExport && this.eventBridgeClient && shouldAttemptEventBridgeDerived) {
       try {
         const registries = await this.eventBridgeClient.listRegistries();
-        const topicHints = collectHints(topicName, candidate.name);
+        const topicHints = new Set(affinityHints);
         const matchedSchemas: Array<{ registryName: string; schemaName: string; affinity: number }> = [];
 
         for (const registry of registries) {
@@ -1507,6 +1523,8 @@ export class SnsProvider implements SpecProvider {
         const detail = error instanceof Error ? error.message : String(error);
         priorEvidence.push(`EventBridge bridge detection unavailable: ${detail}`);
       }
+    } else if (!resolvedExport && this.eventBridgeClient) {
+      priorEvidence.push('Skipped EventBridge-derived fallback because no SNS/EventBridge bridge evidence was detected');
     }
 
     const subscriptionInspection = await this.inspectSubscriptions(topicArn);

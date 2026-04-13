@@ -35,7 +35,7 @@ import { detectCatalogApis } from './lib/repo/catalog.js';
 import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
-import type { SnsContractResult } from './lib/providers/sns.js';
+import type { SnsContractResolutionContext, SnsContractResult } from './lib/providers/sns.js';
 import type { SnsResolvedCandidate } from './lib/resolve/source-selector.js';
 
 export interface InputReaderLike {
@@ -119,7 +119,7 @@ export interface ResolutionDependencies {
 interface SnsResolutionProvider {
   probe(): Promise<boolean>;
   listCandidates(): Promise<SpecCandidate[]>;
-  resolveContract(candidate: SpecCandidate): Promise<SnsContractResult>;
+  resolveContract(candidate: SpecCandidate, resolutionContext?: SnsContractResolutionContext): Promise<SnsContractResult>;
 }
 
 const DEFAULT_MODE: ActionMode = 'resolve-one';
@@ -448,6 +448,17 @@ function sortSnsCandidates(candidates: SpecCandidate[], serviceHints: string[]):
   });
 }
 
+function collectSnsEventBridgeBridgeEvidence(signals: Awaited<ReturnType<typeof collectRepoSignals>>): string[] {
+  const providerHints = signals.providerHints ?? [];
+  const hasSnsHint = providerHints.includes('sns');
+  const hasEventBridgeHint = providerHints.includes('eventbridge-schemas');
+  if (!hasSnsHint || !hasEventBridgeHint) {
+    return [];
+  }
+
+  return signals.evidence.filter((entry) => /sns.*eventbridge|eventbridge.*sns|bridge pattern/i.test(entry));
+}
+
 function pickPreferredStage(stages: string[]): string | undefined {
   const priority = ['prod', 'production', '$default', 'main', 'staging', 'stage', 'dev', 'development'];
   const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
@@ -729,6 +740,7 @@ export async function runResolution(
     }
 
     const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
+    const bridgeEvidence = collectSnsEventBridgeBridgeEvidence(signals);
     const candidatesToTry =
       inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates
         ? sortedSnsCandidates.slice(0, inputs.maxCandidates)
@@ -736,7 +748,10 @@ export async function runResolution(
 
     for (const candidate of candidatesToTry) {
       try {
-        const contract = await snsProvider.resolveContract(candidate);
+        const contract = await snsProvider.resolveContract(candidate, {
+          serviceHints: signals.serviceHints,
+          bridgeEvidence
+        });
         if (!contract.resolved) {
           snsManualReviewEvidence.push(...contract.evidence);
           if (!snsManualReviewMetadata) {
