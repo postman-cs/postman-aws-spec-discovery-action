@@ -6,6 +6,7 @@ import type { SpecFormat } from '../../contracts.js';
 import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
 import type { SnsSpecClient } from '../aws/sns-client.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
+import { detectCatalogApis } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
@@ -13,12 +14,32 @@ const ASYNCAPI_FILE_NAMES = new Set(['asyncapi.yaml', 'asyncapi.yml', 'asyncapi.
 const GENERATED_ASYNCAPI_EXTENSIONS = new Set(['.yaml', '.yml', '.json']);
 const GENERATED_ROOT_PREFIXES = ['spec/', 'contracts/', 'events/', 'build/', '.build/', 'out/'] as const;
 const DEFAULT_IGNORED_DIRS = new Set(['.git', 'node_modules', 'dist']);
+const CONTRACT_REGISTRY_FILES = [
+  '.postman/contracts.yaml',
+  '.postman/contracts.yml',
+  '.postman/contracts.json',
+  '.postman/contract-registry.yaml',
+  '.postman/contract-registry.yml',
+  '.postman/contract-registry.json',
+  'contracts.yaml',
+  'contracts.yml',
+  'contracts.json',
+  'contract-registry.yaml',
+  'contract-registry.yml',
+  'contract-registry.json'
+] as const;
 
 interface ServiceSpec {
   serviceName: string;
   url?: string;
   content?: string;
   format?: string;
+}
+
+interface RemoteUrlCandidate {
+  url: string;
+  source: string;
+  affinity: number;
 }
 
 export type SnsContractOrigin =
@@ -115,6 +136,151 @@ function parseKnownFormat(format: string | undefined): { format: SpecFormat; fil
   if (normalized === 'asyncapi-json') return { format: 'asyncapi-json', filename: 'asyncapi.json' };
   if (normalized === 'json-schema') return { format: 'json-schema', filename: 'schema.json' };
   return undefined;
+}
+
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+function bestAffinity(target: string | undefined, hints: Set<string>): number {
+  if (!target) return 0;
+  const normalized = normalizeServiceKey(target);
+  if (!normalized) return 0;
+
+  let score = 0;
+  for (const hint of hints) {
+    if (!hint) continue;
+    if (normalized === hint) {
+      score = Math.max(score, 100);
+      continue;
+    }
+    if (normalized.includes(hint) || hint.includes(normalized)) {
+      score = Math.max(score, 60);
+      continue;
+    }
+    const hintTokens = new Set(hint.split('-').filter(Boolean));
+    const targetTokens = normalized.split('-').filter(Boolean);
+    const overlap = targetTokens.some((token) => hintTokens.has(token));
+    if (overlap) {
+      score = Math.max(score, 30);
+    }
+  }
+  return score;
+}
+
+function collectHints(topicName: string, candidateName: string): Set<string> {
+  const canonicalTopicName = topicName.replace(/\.fifo$/i, '');
+  return new Set(
+    [
+      normalizeServiceKey(topicName),
+      normalizeServiceKey(canonicalTopicName),
+      normalizeServiceKey(candidateName),
+      normalizeServiceKey(candidateName.replace(/\.fifo$/i, ''))
+    ].filter((entry) => entry.length > 0)
+  );
+}
+
+function extractRegistryUrls(node: unknown, keyTrail: string[] = []): Array<{ selector?: string; url: string }> {
+  if (typeof node === 'string') {
+    return isHttpUrl(node) ? [{ selector: keyTrail[keyTrail.length - 1], url: node.trim() }] : [];
+  }
+
+  if (!node || typeof node !== 'object') {
+    return [];
+  }
+
+  if (Array.isArray(node)) {
+    return node.flatMap((entry) => extractRegistryUrls(entry, keyTrail));
+  }
+
+  const record = node as Record<string, unknown>;
+  const selectors = [
+    record.topic,
+    record.topicName,
+    record['topic-name'],
+    record.service,
+    record.serviceName,
+    record['service-name'],
+    record.name,
+    keyTrail[keyTrail.length - 1]
+  ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+  const urls = [record.url, record.specUrl, record['spec-url'], record.definition]
+    .filter((value): value is string => typeof value === 'string' && isHttpUrl(value))
+    .map((value) => value.trim());
+
+  const results: Array<{ selector?: string; url: string }> = [];
+  for (const url of urls) {
+    if (selectors.length === 0) {
+      results.push({ url });
+      continue;
+    }
+    for (const selector of selectors) {
+      results.push({ selector, url });
+    }
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    results.push(...extractRegistryUrls(value, [...keyTrail, key]));
+  }
+
+  return results;
+}
+
+async function collectCatalogUrlCandidates(repoRoot: string, hints: Set<string>): Promise<RemoteUrlCandidate[]> {
+  const catalogApis = await detectCatalogApis(repoRoot);
+  if (!catalogApis || catalogApis.length === 0) {
+    return [];
+  }
+
+  return catalogApis
+    .filter((entry): entry is { name: string; specUrl: string } => Boolean(entry.specUrl && isHttpUrl(entry.specUrl)))
+    .map((entry) => ({
+      url: entry.specUrl,
+      source: `Backstage catalog API "${entry.name}"`,
+      affinity: bestAffinity(entry.name, hints)
+    }))
+    .filter((entry) => entry.affinity > 0)
+    .sort((left, right) => right.affinity - left.affinity || left.url.localeCompare(right.url));
+}
+
+async function collectRegistryUrlCandidates(repoRoot: string, hints: Set<string>): Promise<RemoteUrlCandidate[]> {
+  const candidates: RemoteUrlCandidate[] = [];
+
+  for (const relativePath of CONTRACT_REGISTRY_FILES) {
+    const filePath = path.join(repoRoot, relativePath);
+    const content = await readFile(filePath, 'utf8').catch(() => undefined);
+    if (!content) continue;
+
+    let parsed: unknown;
+    try {
+      parsed = relativePath.endsWith('.json') ? JSON.parse(content) : parse(content);
+    } catch {
+      continue;
+    }
+    const extracted = extractRegistryUrls(parsed);
+    for (const entry of extracted) {
+      const affinity = bestAffinity(entry.selector, hints);
+      if (affinity > 0) {
+        candidates.push({
+          url: entry.url,
+          source: `contract registry file ${relativePath}`,
+          affinity
+        });
+      }
+    }
+  }
+
+  const deduped = new Map<string, RemoteUrlCandidate>();
+  for (const candidate of candidates) {
+    const key = `${candidate.source}::${candidate.url}`;
+    const existing = deduped.get(key);
+    if (!existing || candidate.affinity > existing.affinity) {
+      deduped.set(key, candidate);
+    }
+  }
+
+  return [...deduped.values()].sort((left, right) => right.affinity - left.affinity || left.url.localeCompare(right.url));
 }
 
 function buildSsmPointerArtifact(specUrl: string, serviceName: string, fetchError: string): string {
@@ -469,6 +635,7 @@ export class SnsProvider implements SpecProvider {
     const resolvedRepoRoot = path.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
+    const affinityHints = collectHints(topicName, candidate.name);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
@@ -587,6 +754,40 @@ export class SnsProvider implements SpecProvider {
         }
       }
     }
+
+    const remoteUrlCandidates = [
+      ...(await collectCatalogUrlCandidates(resolvedRepoRoot, affinityHints)),
+      ...(await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints))
+    ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
+
+    for (const remoteCandidate of remoteUrlCandidates) {
+      try {
+        const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15000 });
+        const resolvedFormat = detectFormat(fetched.content, '');
+        if (!resolvedFormat) {
+          priorEvidence.push(
+            `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+          );
+          continue;
+        }
+        const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
+        return {
+          resolved: true,
+          origin: 'catalog-url',
+          result: {
+            content: fetched.content,
+            format: resolvedFormat.format,
+            filename: resolvedFormat.filename,
+            evidence
+          },
+          evidence
+        };
+      } catch (fetchError) {
+        const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
+        priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+      }
+    }
+
     return {
       resolved: false,
       evidence: [...priorEvidence, `No SNS contract found for ${topicArn}; manual review required`]
