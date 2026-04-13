@@ -91341,6 +91341,15 @@ var actionContract = {
     },
     "spec-format": {
       description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf."
+    },
+    "contract-origin": {
+      description: "SNS contract provenance when available: repo-asyncapi, repo-json-schema, generated-asyncapi, ssm-content, ssm-url, catalog-url, eventbridge-derived, code-derived, or manual-review."
+    },
+    "contract-metadata-path": {
+      description: "Path to SNS resolution metadata sidecar when available."
+    },
+    "variant-count": {
+      description: "Number of SNS delivery variants discovered when available."
     }
   }
 };
@@ -92056,6 +92065,9 @@ function isResolvedSnsCandidate(candidate) {
 function isRepoLocalSnsOrigin(origin) {
   return origin === "repo-asyncapi" || origin === "repo-json-schema";
 }
+function toContractOrigin(origin) {
+  return origin && origin !== "unknown" ? origin : void 0;
+}
 function manualReviewEvidence(input) {
   const evidence = [...input.candidate?.evidence ?? [], ...input.snsCandidate?.evidence ?? []];
   return evidence.length > 0 ? evidence : ["No matching source found"];
@@ -92090,6 +92102,7 @@ function chooseSource(input) {
         gatewayType: "SNS",
         providerType: "sns",
         specFormat: resolvedSns.specFormat,
+        contractOrigin: toContractOrigin(resolvedSns.origin),
         evidence: resolvedSns.evidence
       };
     }
@@ -92114,6 +92127,7 @@ function chooseSource(input) {
       gatewayType: "SNS",
       providerType: "sns",
       specFormat: resolvedSns.specFormat,
+      contractOrigin: toContractOrigin(resolvedSns.origin),
       evidence: resolvedSns.evidence
     };
   }
@@ -92139,6 +92153,7 @@ function chooseSource(input) {
       gatewayType: "SNS",
       providerType: "sns",
       specFormat: resolvedSns.specFormat,
+      contractOrigin: toContractOrigin(resolvedSns.origin),
       evidence: resolvedSns.evidence
     };
   }
@@ -92983,7 +92998,7 @@ var SnsProvider = class {
           const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
           return {
             resolved: true,
-            origin: "ssm",
+            origin: "ssm-content",
             result: {
               content: ssmMatch.content,
               format: resolvedFormat.format,
@@ -94035,7 +94050,10 @@ function buildExecutionOutputs(result) {
       "spec-path": "",
       "candidates-json": "",
       "provider-type": discovered.length > 0 ? discovered[0]?.providerType ?? "" : "",
-      "spec-format": discovered.length > 0 ? discovered[0]?.specFormat ?? "" : ""
+      "spec-format": discovered.length > 0 ? discovered[0]?.specFormat ?? "" : "",
+      "contract-origin": "",
+      "contract-metadata-path": "",
+      "variant-count": ""
     };
   }
   const resolution = result.resolution ?? {
@@ -94058,7 +94076,10 @@ function buildExecutionOutputs(result) {
     "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     "candidates-json": "",
     "provider-type": resolution.providerType ?? (resolution.sourceType === "gateway-export" ? "api-gateway" : ""),
-    "spec-format": resolution.specFormat ?? ""
+    "spec-format": resolution.specFormat ?? "",
+    "contract-origin": resolution.contractOrigin ?? "",
+    "contract-metadata-path": resolution.metadataPath ?? "",
+    "variant-count": resolution.variantCount !== void 0 ? String(resolution.variantCount) : ""
   };
 }
 async function execute(inputs, dependencies) {
@@ -94192,7 +94213,10 @@ function toDotenv(outputs) {
     POSTMAN_AWS_SPEC_SERVICE_COUNT: outputs["service-count"] ?? "",
     POSTMAN_AWS_SPEC_CANDIDATES_JSON: outputs["candidates-json"] ?? "",
     POSTMAN_AWS_SPEC_PROVIDER_TYPE: outputs["provider-type"] ?? "",
-    POSTMAN_AWS_SPEC_FORMAT: outputs["spec-format"] ?? ""
+    POSTMAN_AWS_SPEC_FORMAT: outputs["spec-format"] ?? "",
+    POSTMAN_AWS_SPEC_CONTRACT_ORIGIN: outputs["contract-origin"] ?? "",
+    POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH: outputs["contract-metadata-path"] ?? "",
+    POSTMAN_AWS_SPEC_VARIANT_COUNT: outputs["variant-count"] ?? ""
   };
   return Object.entries(envPairs).map(([key, value]) => `${key}=${JSON.stringify(value)}`).join("\n");
 }
