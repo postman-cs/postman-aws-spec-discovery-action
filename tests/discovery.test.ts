@@ -822,7 +822,11 @@ describe('SNS runtime integration', () => {
         createAwsClientStub(),
         createCoreStub().core,
         vi.fn().mockResolvedValue(undefined),
-        { createSnsProvider, eventBridgeClient, codeDerivedResolver: {} }
+        {
+          createSnsProvider,
+          eventBridgeClient,
+          codeDerivedResolver: vi.fn().mockResolvedValue({ evidence: [] })
+        }
       );
 
       expect(createSnsProvider).toHaveBeenCalledTimes(1);
@@ -830,7 +834,7 @@ describe('SNS runtime integration', () => {
       expect(call?.fetchSpecFromUrl).toBeTypeOf('function');
       expect(call?.catalogApis).toBeUndefined();
       expect(call?.eventBridgeClient).toBe(eventBridgeClient);
-      expect(call?.codeDerivedResolver).toEqual({});
+      expect(call?.codeDerivedResolver).toBeTypeOf('function');
     });
   });
 

@@ -11,6 +11,10 @@ import type { EventBridgeSchemasSpecClient } from '../aws/schemas-client.js';
 import { detectCatalogApis, type CatalogApiRef } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
+import {
+  resolveCodeDerivedContract as defaultResolveCodeDerivedContract,
+  type ResolveCodeDerivedContract
+} from './sns-code-derived.js';
 
 const ASYNCAPI_FILE_NAMES = new Set(['asyncapi.yaml', 'asyncapi.yml', 'asyncapi.json']);
 const GENERATED_ASYNCAPI_EXTENSIONS = new Set(['.yaml', '.yml', '.json']);
@@ -303,7 +307,7 @@ interface SnsProviderDependencies {
   fetchSpecFromUrl?: typeof fetchSpecFromUrl;
   catalogApis?: CatalogApiRef[];
   eventBridgeClient?: EventBridgeSchemasSpecClient;
-  codeDerivedResolver?: unknown;
+  codeDerivedResolver?: ResolveCodeDerivedContract;
   gitIgnoreChecker?: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
   webhookSidecarBuilder?: (
     canonical: SpecExportResult,
@@ -1047,6 +1051,10 @@ async function findContractFiles(repoRoot: string, topicName: string): Promise<{
 
   for (const filePath of files) {
     const safePath = resolvePathWithinRoot(repoRoot, filePath, 'repo contract path');
+    const normalizedRelativePath = normalizePathForMatch(path.relative(repoRoot, safePath)).toLowerCase();
+    if (normalizedRelativePath === 'build/springwolf/asyncapi.json' || normalizedRelativePath === 'target/springwolf/asyncapi.json') {
+      continue;
+    }
     const baseName = path.basename(safePath).toLowerCase();
     if (isGeneratedSearchRootPath(repoRoot, safePath)) {
       if (baseName === 'schema.json' || baseName.endsWith('.schema.json')) {
@@ -1196,7 +1204,7 @@ export class SnsProvider implements SpecProvider {
   private readonly fetchRemoteSpec: typeof fetchSpecFromUrl;
   private readonly preloadedCatalogApis?: CatalogApiRef[];
   private readonly eventBridgeClient?: EventBridgeSchemasSpecClient;
-  private readonly codeDerivedResolver?: unknown;
+  private readonly codeDerivedResolver: ResolveCodeDerivedContract;
   private readonly gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean;
   private readonly webhookSidecarBuilder: (
     canonical: SpecExportResult,
@@ -1213,13 +1221,14 @@ export class SnsProvider implements SpecProvider {
       this.fetchRemoteSpec = dependencies;
       this.gitIgnoreChecker = isGitIgnoredByGit;
       this.webhookSidecarBuilder = buildWebhookSidecar;
+      this.codeDerivedResolver = defaultResolveCodeDerivedContract;
       return;
     }
 
     this.fetchRemoteSpec = dependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
     this.preloadedCatalogApis = dependencies.catalogApis;
     this.eventBridgeClient = dependencies.eventBridgeClient;
-    this.codeDerivedResolver = dependencies.codeDerivedResolver;
+    this.codeDerivedResolver = dependencies.codeDerivedResolver ?? defaultResolveCodeDerivedContract;
     this.gitIgnoreChecker = dependencies.gitIgnoreChecker ?? isGitIgnoredByGit;
     this.webhookSidecarBuilder = dependencies.webhookSidecarBuilder ?? buildWebhookSidecar;
   }
@@ -1294,7 +1303,8 @@ export class SnsProvider implements SpecProvider {
         'generated-asyncapi',
         'ssm-registry',
         'catalog-url',
-        'eventbridge-derived'
+        'eventbridge-derived',
+        'code-derived'
       ]
     };
 
@@ -1322,8 +1332,6 @@ export class SnsProvider implements SpecProvider {
       }
     }
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
-    void this.eventBridgeClient;
-    void this.codeDerivedResolver;
     let pointerSidecar: { filename: string; content: string } | undefined;
 
     const files = await findContractFiles(resolvedRepoRoot, topicName);
@@ -1523,6 +1531,26 @@ export class SnsProvider implements SpecProvider {
       }
     } else if (!resolvedExport && this.eventBridgeClient) {
       priorEvidence.push('Skipped EventBridge-derived fallback because no SNS/EventBridge bridge evidence was detected');
+    }
+
+    if (!resolvedExport) {
+      const codeDerived = await this.codeDerivedResolver({
+        repoRoot: resolvedRepoRoot,
+        candidate,
+        topicName,
+        topicArn,
+        serviceHints: resolutionContext.serviceHints
+      });
+      if (codeDerived.resolved) {
+        resolvedOrigin = 'code-derived';
+        resolvedExport = {
+          ...codeDerived.resolved,
+          evidence: [...priorEvidence, ...codeDerived.evidence]
+        };
+        priorEvidence = resolvedExport.evidence;
+      } else if (codeDerived.evidence.length > 0) {
+        priorEvidence.push(...codeDerived.evidence);
+      }
     }
 
     const subscriptionInspection = await this.inspectSubscriptions(topicArn);

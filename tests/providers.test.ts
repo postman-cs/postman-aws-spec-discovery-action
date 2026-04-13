@@ -2777,6 +2777,252 @@ describe('SnsProvider', () => {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('runs code-derived fallback only after eventbridge-derived fallback fails', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import payloadSchema from './schemas/order-payload.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'await sns.send(new PublishCommand({',
+          '  TopicArn: topicArn,',
+          '  Message: JSON.stringify(payloadSchema)',
+          '}));'
+        ].join('\n'),
+        'utf8'
+      );
+      await mkdir(path.join(tempDir, 'schemas'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'schemas', 'order-payload.json'),
+        JSON.stringify({ $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' }, null, 2),
+        'utf8'
+      );
+      const eventBridgeClient = createSchemasClientStub({
+        listRegistries: vi.fn().mockResolvedValue([{ name: 'custom-registry', arn: 'arn:registry' }]),
+        listSchemas: vi.fn().mockResolvedValue([{ name: 'orders-topic-events', arn: 'arn:schema', registryName: 'custom-registry', versionCount: 1 }]),
+        describeSchema: vi.fn().mockRejectedValue(new Error('schema unavailable'))
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub(), { eventBridgeClient });
+
+      const result = await provider.resolveContract(createSnsCandidate(), {
+        bridgeEvidence: ['Detected SNS/EventBridge bridge pattern in template.yaml']
+      });
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      expect(eventBridgeClient.describeSchema).toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects JS/TS JSON Schema references near SNS publisher calls as code-derived', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'src', 'schemas'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'src', 'publisher.ts'),
+        [
+          "import payloadSchema from './schemas/order-payload.json';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(payloadSchema) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'src', 'schemas', 'order-payload.json'),
+        JSON.stringify({ $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' }, null, 2),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      if (result.resolved) {
+        expect(result.result.format).toBe('json-schema');
+        expect(result.result.content).toContain('"$schema"');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects Zod schemas tied to SNS topic constants as code-derived', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import { z } from 'zod';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const OrderEvent = z.object({ orderId: z.string() });',
+          'await sns.send(new PublishCommand({ TopicArn: topicArn, Message: JSON.stringify(OrderEvent.parse(event)) }));'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      if (result.resolved) {
+        expect(result.result.content).toContain('zod');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects TypeBox schemas tied to SNS topic constants as code-derived', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "import { Type } from '@sinclair/typebox';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const OrderEvent = Type.Object({ orderId: Type.String() });',
+          'await sns.publish({ TopicArn: topicArn, Message: JSON.stringify(OrderEvent) });'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      if (result.resolved) {
+        expect(result.result.content).toContain('typebox');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects Springwolf AsyncAPI artifacts as code-derived', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'target', 'springwolf'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'target', 'springwolf', 'asyncapi.json'),
+        JSON.stringify({ asyncapi: '2.6.0', channels: {} }, null, 2),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'code-derived' });
+      if (result.resolved) {
+        expect(result.result.format).toBe('asyncapi-json');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('accepts Java SNS publish annotations only when topic and payload are statically recoverable', async () => {
+    const acceptedDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    const rejectedDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(acceptedDir, 'Publisher.java'),
+        [
+          '@SnsPublish(topicName = "orders-topic", payloadType = OrderEvent.class)',
+          'class Publisher {}'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(rejectedDir, 'Publisher.java'),
+        [
+          '@SnsPublish(topicName = "${topicName}", payloadType = OrderEvent.class)',
+          'class Publisher {}'
+        ].join('\n'),
+        'utf8'
+      );
+      const acceptedProvider = new SnsProvider(createSnsClientStub(), acceptedDir, createSsmClientStub());
+      const rejectedProvider = new SnsProvider(createSnsClientStub(), rejectedDir, createSsmClientStub());
+
+      const acceptedResult = await acceptedProvider.resolveContract(createSnsCandidate());
+      const rejectedResult = await rejectedProvider.resolveContract(createSnsCandidate());
+
+      expect(acceptedResult).toMatchObject({ resolved: true, origin: 'code-derived' });
+      expect(rejectedResult).toEqual(expect.objectContaining({ resolved: false }));
+    } finally {
+      await rm(acceptedDir, { recursive: true, force: true });
+      await rm(rejectedDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not infer code-derived contracts from unlinked DTOs or business logic', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'OrderEvent.ts'),
+        [
+          'export interface OrderEvent {',
+          '  orderId: string;',
+          '  amount: number;',
+          '}'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'publisher.ts'),
+        [
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const payload = { orderId, amount };',
+          'await sns.publish({ TopicArn: topicArn, Message: JSON.stringify(payload) });'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('manual review'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns manual-review when multiple code-derived candidates are ambiguous', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'publisher-one.ts'),
+        [
+          "import { z } from 'zod';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const SchemaOne = z.object({ orderId: z.string() });',
+          'await sns.publish({ TopicArn: topicArn, Message: JSON.stringify(SchemaOne.parse(event)) });'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'publisher-two.ts'),
+        [
+          "import { z } from 'zod';",
+          "const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';",
+          'const SchemaTwo = z.object({ id: z.string() });',
+          'await sns.publish({ TopicArn: topicArn, Message: JSON.stringify(SchemaTwo.parse(event)) });'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toEqual(expect.objectContaining({ resolved: false }));
+      expect(result.evidence.some((line) => line.includes('Ambiguous code-derived candidates'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('SnsSdkClient', () => {
