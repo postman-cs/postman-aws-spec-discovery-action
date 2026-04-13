@@ -1566,6 +1566,7 @@ describe('SnsProvider', () => {
           subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1',
           protocol: 'sqs',
           endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+          variant: 'raw-payload',
           RawMessageDelivery: 'true',
           FilterPolicy: '{"eventType":["order.created"]}',
           FilterPolicyScope: 'MessageBody',
@@ -1573,6 +1574,173 @@ describe('SnsProvider', () => {
           DeliveryPolicy: '{"healthyRetryPolicy":{"numRetries":3}}'
         }
       ]);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract classifies SQS RawMessageDelivery=true as raw-payload', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'sqs', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, variantCount: 1 });
+      expect(result.metadata.subscriptions[0]?.variant).toBe('raw-payload');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract classifies SQS RawMessageDelivery=false as sns-envelope', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'sqs', RawMessageDelivery: 'false' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions[0]?.variant).toBe('sns-envelope');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract classifies SQS with RawMessageDelivery unset as sns-envelope', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'sqs' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions[0]?.variant).toBe('sns-envelope');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract always classifies lambda subscriptions as sns-envelope', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'lambda', endpoint: 'function-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'lambda', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions[0]?.variant).toBe('sns-envelope');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract classifies HTTP subscriptions using RawMessageDelivery', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'https', endpoint: 'https://example.com/a' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2', protocol: 'http', endpoint: 'http://example.com/b' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({ Protocol: 'https', RawMessageDelivery: 'true' })
+            .mockResolvedValueOnce({ Protocol: 'http', RawMessageDelivery: 'false' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions.map((subscription) => subscription.variant)).toEqual(['raw-payload', 'sns-envelope']);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract sets variantCount to count distinct delivery variants', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2', protocol: 'https', endpoint: 'https://example.com' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-3', protocol: 'lambda', endpoint: 'function-1' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({ Protocol: 'sqs', RawMessageDelivery: 'true' })
+            .mockResolvedValueOnce({ Protocol: 'https', RawMessageDelivery: 'false' })
+            .mockResolvedValueOnce({ Protocol: 'lambda', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, variantCount: 2 });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract delivery variant classification does not change canonical contract selection', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const candidate = createSnsCandidate();
+      const withoutSubscriptionsProvider = new SnsProvider(createSnsClientStub(), tempDir);
+      const withSubscriptionsProvider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({ Protocol: 'sqs', RawMessageDelivery: 'true' })
+        }),
+        tempDir
+      );
+
+      const withoutSubscriptions = await withoutSubscriptionsProvider.resolveContract(candidate);
+      const withSubscriptions = await withSubscriptionsProvider.resolveContract(candidate);
+      expect(withoutSubscriptions).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      expect(withSubscriptions).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (withoutSubscriptions.resolved && withSubscriptions.resolved) {
+        expect(withSubscriptions.result.format).toBe(withoutSubscriptions.result.format);
+        expect(withSubscriptions.result.filename).toBe(withoutSubscriptions.result.filename);
+        expect(withSubscriptions.result.content).toBe(withoutSubscriptions.result.content);
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
