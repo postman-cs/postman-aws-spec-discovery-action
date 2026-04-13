@@ -928,7 +928,8 @@ export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGate
 async function runMultiProviderDiscovery(
   providers: SpecProvider[],
   inputs: ResolvedInputs,
-  dependencies: DiscoveryDependencies
+  dependencies: DiscoveryDependencies,
+  snsResolutionContext?: SnsContractResolutionContext
 ): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary }> {
   const discovered: DiscoveredService[] = [];
   const summary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
@@ -966,7 +967,11 @@ async function runMultiProviderDiscovery(
           continue;
         }
         try {
-          const result = await provider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+          const result = await provider.exportSpec(candidate, {
+            stage: inputs.stage,
+            dryRun: inputs.dryRun,
+            ...(provider.type === 'sns' ? { resolutionContext: snsResolutionContext } : {})
+          });
           // SNS provider may set candidate.name from postman:project-name; use candidate.name directly.
           const serviceName = candidate.name;
           const baseFolder = projectFolderName(serviceName);
@@ -1115,8 +1120,14 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
     const extraProviders = availableProviders.filter((p) => p.type !== 'api-gateway');
     let extraDiscovered: DiscoveredService[] = [];
     let extraSummary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+    const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
+    const snsResolutionContext: SnsContractResolutionContext = {
+      serviceHints: signals.serviceHints,
+      bridgeEvidence: collectSnsEventBridgeBridgeEvidence(signals)
+    };
+
     if (extraProviders.length > 0) {
-      const extraResult = await runMultiProviderDiscovery(extraProviders, inputs, dependencies);
+      const extraResult = await runMultiProviderDiscovery(extraProviders, inputs, dependencies, snsResolutionContext);
       extraDiscovered = extraResult.discovered;
       extraSummary = extraResult.summary;
     }

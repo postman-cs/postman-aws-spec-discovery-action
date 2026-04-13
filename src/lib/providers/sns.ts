@@ -1264,15 +1264,13 @@ export class SnsProvider implements SpecProvider {
     return candidates;
   }
 
-  public async exportSpec(candidate: SpecCandidate, _options?: ExportOptions): Promise<SpecExportResult> {
-    void _options;
-
+  public async exportSpec(candidate: SpecCandidate, options: ExportOptions = {}): Promise<SpecExportResult> {
     const resolvedRepoRoot = path.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
 
-    const contract = await this.resolveContract(candidate);
+    const contract = await this.resolveContract(candidate, options.resolutionContext);
     if (contract.resolved) {
       return {
         ...contract.result,
