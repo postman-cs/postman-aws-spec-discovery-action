@@ -1570,10 +1570,224 @@ describe('SnsProvider', () => {
           RawMessageDelivery: 'true',
           FilterPolicy: '{"eventType":["order.created"]}',
           FilterPolicyScope: 'MessageBody',
+          filterPolicyScope: 'MessageBody',
+          filterPolicyRaw: '{"eventType":["order.created"]}',
           RedrivePolicy: '{"deadLetterTargetArn":"arn:aws:sqs:us-east-1:123456789012:dlq"}',
           DeliveryPolicy: '{"healthyRetryPolicy":{"numRetries":3}}'
         }
       ]);
+      expect(result.metadata.messageAttributes).toEqual({});
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract preserves structured messageAttributes metadata from subscription attributes', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'sqs',
+            MessageAttributes: JSON.stringify({
+              eventType: { DataType: 'String' },
+              attempt: { DataType: 'Number' }
+            })
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata).toHaveProperty('messageAttributes');
+      expect(result.metadata.messageAttributes).toEqual({
+        eventType: { dataType: 'String' },
+        attempt: { dataType: 'Number' }
+      });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract derives AsyncAPI message headers when missing using known message attributes', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        [
+          'asyncapi: 2.6.0',
+          'channels:',
+          '  orders:',
+          '    publish:',
+          '      message:',
+          '        payload:',
+          '          type: object',
+          '          properties:',
+          '            orderId:',
+          '              type: string'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'sqs',
+            MessageAttributes: JSON.stringify({
+              eventType: { DataType: 'String' },
+              retries: { DataType: 'Number' }
+            })
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        expect(result.result.content).toContain('SnsDerivedHeaders');
+        expect(result.result.content).toContain('eventType');
+        expect(result.result.content).toContain('retries');
+        expect(result.result.content).toContain('$ref: "#/components/schemas/SnsDerivedHeaders"');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract does not modify AsyncAPI headers when existing headers are already defined', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    const asyncApiWithHeaders = [
+      'asyncapi: 2.6.0',
+      'components:',
+      '  schemas:',
+      '    ExistingHeaders:',
+      '      type: object',
+      '      properties:',
+      '        existing:',
+      '          type: string',
+      'channels:',
+      '  orders:',
+      '    publish:',
+      '      message:',
+      '        headers:',
+      '          $ref: "#/components/schemas/ExistingHeaders"',
+      '        payload:',
+      '          type: object',
+      '          properties:',
+      '            orderId:',
+      '              type: string'
+    ].join('\n');
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), asyncApiWithHeaders, 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'sqs',
+            MessageAttributes: JSON.stringify({
+              eventType: { DataType: 'String' }
+            })
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        expect(result.result.content).toContain('$ref: "#/components/schemas/ExistingHeaders"');
+        expect(result.result.content).not.toContain('SnsDerivedHeaders');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract records filter policy scope for MessageBody and defaults to MessageAttributes when absent', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-body', protocol: 'sqs', endpoint: 'queue-1' },
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-default', protocol: 'sqs', endpoint: 'queue-2' }
+          ]),
+          getSubscriptionAttributes: vi
+            .fn()
+            .mockResolvedValueOnce({
+              Protocol: 'sqs',
+              FilterPolicy: '{"eventType":["order.created"]}',
+              FilterPolicyScope: 'MessageBody'
+            })
+            .mockResolvedValueOnce({
+              Protocol: 'sqs',
+              FilterPolicy: '{"eventType":["order.updated"]}'
+            })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-body', filterPolicyScope: 'MessageBody' }),
+          expect.objectContaining({
+            subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-default',
+            filterPolicyScope: 'MessageAttributes'
+          })
+        ])
+      );
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract preserves raw filter policy JSON in sidecar without modifying payload schema', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    const contract = [
+      'asyncapi: 2.6.0',
+      'channels:',
+      '  orders:',
+      '    publish:',
+      '      message:',
+      '        payload:',
+      '          type: object',
+      '          properties:',
+      '            orderId:',
+      '              type: string'
+    ].join('\n');
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), contract, 'utf8');
+      const rawFilterPolicy = '{"eventType":["order.created"],"priority":[{"numeric":[">",3]}]}';
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-1', protocol: 'sqs', endpoint: 'queue-1' }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'sqs',
+            FilterPolicy: rawFilterPolicy
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result.metadata.subscriptions[0]?.filterPolicyRaw).toBe(rawFilterPolicy);
+      if (result.resolved) {
+        expect(result.result.content).toContain('orderId');
+        expect(result.result.content).not.toContain('priority');
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

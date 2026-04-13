@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
 
 import type { SpecFormat } from '../../contracts.js';
 import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
@@ -51,6 +51,9 @@ interface SnsSubscriptionMetadata {
   RawMessageDelivery?: string;
   FilterPolicy?: string;
   FilterPolicyScope?: string;
+  filterPolicyScope?: 'MessageAttributes' | 'MessageBody';
+  filterPolicyRaw?: string;
+  messageAttributes?: Record<string, { dataType?: string }>;
   RedrivePolicy?: string;
   DeliveryPolicy?: string;
 }
@@ -58,6 +61,7 @@ interface SnsSubscriptionMetadata {
 interface SnsResolutionMetadata {
   contractOrigin: SnsContractOrigin;
   subscriptions: SnsSubscriptionMetadata[];
+  messageAttributes: Record<string, { dataType?: string }>;
   evidence: string[];
   subscriptionSummary: {
     topicArn: string;
@@ -73,6 +77,176 @@ function classifyDeliveryVariant(protocol: string | undefined, rawMessageDeliver
     return 'sns-envelope';
   }
   return (rawMessageDelivery ?? '').trim().toLowerCase() === 'true' ? 'raw-payload' : 'sns-envelope';
+}
+
+function normalizeFilterPolicyScope(value: string | undefined): 'MessageAttributes' | 'MessageBody' {
+  return (value ?? '').trim() === 'MessageBody' ? 'MessageBody' : 'MessageAttributes';
+}
+
+function parseMessageAttributes(rawValue: string | undefined): Record<string, { dataType?: string }> {
+  if (!rawValue) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const attributes: Record<string, { dataType?: string }> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        continue;
+      }
+      const record = value as Record<string, unknown>;
+      const dataType = typeof record.DataType === 'string' ? record.DataType : typeof record.dataType === 'string' ? record.dataType : undefined;
+      attributes[key] = dataType ? { dataType } : {};
+    }
+    return attributes;
+  } catch {
+    return {};
+  }
+}
+
+function mergeMessageAttributes(subscriptions: SnsSubscriptionMetadata[]): Record<string, { dataType?: string }> {
+  const merged: Record<string, { dataType?: string }> = {};
+  for (const subscription of subscriptions) {
+    if (!subscription.messageAttributes) {
+      continue;
+    }
+    for (const [name, attribute] of Object.entries(subscription.messageAttributes)) {
+      merged[name] = merged[name] ?? {};
+      if (!merged[name].dataType && attribute.dataType) {
+        merged[name].dataType = attribute.dataType;
+      }
+    }
+  }
+  return merged;
+}
+
+function toAsyncApiHeaderSchema(attribute: { dataType?: string }): Record<string, unknown> {
+  const normalized = (attribute.dataType ?? '').toLowerCase();
+  if (normalized.startsWith('number')) {
+    return { type: 'number' };
+  }
+  return { type: 'string' };
+}
+
+function hasExistingAsyncApiHeaders(document: unknown): boolean {
+  if (!document || typeof document !== 'object' || Array.isArray(document)) {
+    return false;
+  }
+  const root = document as Record<string, unknown>;
+  const channels = root.channels;
+  if (!channels || typeof channels !== 'object' || Array.isArray(channels)) {
+    return false;
+  }
+
+  for (const channel of Object.values(channels as Record<string, unknown>)) {
+    if (!channel || typeof channel !== 'object' || Array.isArray(channel)) {
+      continue;
+    }
+    for (const operationName of ['publish', 'subscribe']) {
+      const operation = (channel as Record<string, unknown>)[operationName];
+      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
+        continue;
+      }
+      const message = (operation as Record<string, unknown>).message;
+      if (!message || typeof message !== 'object' || Array.isArray(message)) {
+        continue;
+      }
+      const messageRecord = message as Record<string, unknown>;
+      if (messageRecord.headers) {
+        return true;
+      }
+      if (Array.isArray(messageRecord.oneOf)) {
+        for (const oneOfMessage of messageRecord.oneOf) {
+          if (oneOfMessage && typeof oneOfMessage === 'object' && !Array.isArray(oneOfMessage) && (oneOfMessage as Record<string, unknown>).headers) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function deriveAsyncApiHeaders(
+  content: string,
+  format: SpecFormat,
+  messageAttributes: Record<string, { dataType?: string }>
+): string {
+  if ((format !== 'asyncapi-yaml' && format !== 'asyncapi-json') || Object.keys(messageAttributes).length === 0) {
+    return content;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = format === 'asyncapi-json' ? JSON.parse(content) : parse(content);
+  } catch {
+    return content;
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || hasExistingAsyncApiHeaders(parsed)) {
+    return content;
+  }
+
+  const document = parsed as Record<string, unknown>;
+  const channels = document.channels;
+  if (!channels || typeof channels !== 'object' || Array.isArray(channels)) {
+    return content;
+  }
+
+  const headerRef = '#/components/schemas/SnsDerivedHeaders';
+  const components =
+    document.components && typeof document.components === 'object' && !Array.isArray(document.components)
+      ? (document.components as Record<string, unknown>)
+      : {};
+  const schemas =
+    components.schemas && typeof components.schemas === 'object' && !Array.isArray(components.schemas)
+      ? (components.schemas as Record<string, unknown>)
+      : {};
+  schemas.SnsDerivedHeaders = {
+    type: 'object',
+    properties: Object.fromEntries(
+      Object.entries(messageAttributes).map(([name, attribute]) => [name, toAsyncApiHeaderSchema(attribute)])
+    ),
+    additionalProperties: true
+  };
+  components.schemas = schemas;
+  document.components = components;
+
+  for (const channel of Object.values(channels as Record<string, unknown>)) {
+    if (!channel || typeof channel !== 'object' || Array.isArray(channel)) {
+      continue;
+    }
+    for (const operationName of ['publish', 'subscribe']) {
+      const operation = (channel as Record<string, unknown>)[operationName];
+      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
+        continue;
+      }
+      const message = (operation as Record<string, unknown>).message;
+      if (!message || typeof message !== 'object' || Array.isArray(message)) {
+        continue;
+      }
+      const messageRecord = message as Record<string, unknown>;
+      if (Array.isArray(messageRecord.oneOf)) {
+        for (const oneOfMessage of messageRecord.oneOf) {
+          if (oneOfMessage && typeof oneOfMessage === 'object' && !Array.isArray(oneOfMessage)) {
+            const record = oneOfMessage as Record<string, unknown>;
+            if (!record.headers) {
+              record.headers = { $ref: headerRef };
+            }
+          }
+        }
+      } else if (!messageRecord.headers) {
+        messageRecord.headers = { $ref: headerRef };
+      }
+    }
+  }
+
+  return format === 'asyncapi-json' ? JSON.stringify(document, null, 2) : stringify(document);
 }
 
 interface SnsProviderDependencies {
@@ -876,9 +1050,11 @@ export class SnsProvider implements SpecProvider {
     const finalEvidence = [...priorEvidence, ...subscriptionInspection.evidence];
     if (!resolvedExport || !resolvedOrigin) {
       finalEvidence.push(`No SNS contract found for ${topicArn}; manual review required`);
+      const messageAttributes = mergeMessageAttributes(subscriptionInspection.subscriptions);
       const metadata: SnsResolutionMetadata = {
         contractOrigin: 'manual-review',
         subscriptions: subscriptionInspection.subscriptions,
+        messageAttributes,
         evidence: finalEvidence,
         subscriptionSummary: {
           topicArn,
@@ -895,9 +1071,15 @@ export class SnsProvider implements SpecProvider {
       };
     }
 
+    const messageAttributes = mergeMessageAttributes(subscriptionInspection.subscriptions);
+    resolvedExport = {
+      ...resolvedExport,
+      content: deriveAsyncApiHeaders(resolvedExport.content, resolvedExport.format, messageAttributes)
+    };
     const metadata: SnsResolutionMetadata = {
       contractOrigin: resolvedOrigin,
       subscriptions: subscriptionInspection.subscriptions,
+      messageAttributes,
       evidence: finalEvidence,
       subscriptionSummary: {
         topicArn,
@@ -953,6 +1135,7 @@ export class SnsProvider implements SpecProvider {
       }
       try {
         const attributes = await this.client.getSubscriptionAttributes(subscriptionArn);
+        const parsedMessageAttributes = parseMessageAttributes(attributes.MessageAttributes);
         subscriptions.push({
           subscriptionArn,
           protocol: attributes.Protocol ?? summary.protocol,
@@ -961,6 +1144,9 @@ export class SnsProvider implements SpecProvider {
           RawMessageDelivery: attributes.RawMessageDelivery,
           FilterPolicy: attributes.FilterPolicy,
           FilterPolicyScope: attributes.FilterPolicyScope,
+          filterPolicyScope: normalizeFilterPolicyScope(attributes.FilterPolicyScope),
+          ...(attributes.FilterPolicy ? { filterPolicyRaw: attributes.FilterPolicy } : {}),
+          ...(Object.keys(parsedMessageAttributes).length > 0 ? { messageAttributes: parsedMessageAttributes } : {}),
           RedrivePolicy: attributes.RedrivePolicy,
           DeliveryPolicy: attributes.DeliveryPolicy
         });
