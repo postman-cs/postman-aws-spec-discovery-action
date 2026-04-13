@@ -260,22 +260,25 @@ export class SnsProvider implements SpecProvider {
     const candidates: SpecCandidate[] = [];
     for (const topic of topics) {
       const topicArn = topic.topicArn;
-      const topicName = topicNameFromArn(topicArn);
+      const arnDerivedTopicName = topicNameFromArn(topicArn);
       const attributes: Record<string, string> = await this.client
         .getTopicAttributes(topicArn)
         .catch((): Record<string, string> => ({}));
       const tags: Record<string, string> = await this.client
         .listTagsForResource(topicArn)
         .catch((): Record<string, string> => ({}));
+      const taggedServiceName = (tags['postman:project-name'] ?? '').trim();
+      const candidateName = taggedServiceName || arnDerivedTopicName;
 
       candidates.push({
         id: topicArn,
-        name: topicName,
+        name: candidateName,
         providerType: 'sns',
         tags,
         evidence: [`SNS topic discovered: ${topicArn}`],
         meta: {
           topicArn,
+          arnDerivedTopicName,
           ...(attributes.DisplayName ? { displayName: attributes.DisplayName } : {})
         }
       });

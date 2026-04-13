@@ -92813,17 +92813,20 @@ var SnsProvider = class {
     const candidates = [];
     for (const topic of topics) {
       const topicArn = topic.topicArn;
-      const topicName = topicNameFromArn(topicArn);
+      const arnDerivedTopicName = topicNameFromArn(topicArn);
       const attributes = await this.client.getTopicAttributes(topicArn).catch(() => ({}));
       const tags = await this.client.listTagsForResource(topicArn).catch(() => ({}));
+      const taggedServiceName = (tags["postman:project-name"] ?? "").trim();
+      const candidateName = taggedServiceName || arnDerivedTopicName;
       candidates.push({
         id: topicArn,
-        name: topicName,
+        name: candidateName,
         providerType: "sns",
         tags,
         evidence: [`SNS topic discovered: ${topicArn}`],
         meta: {
           topicArn,
+          arnDerivedTopicName,
           ...attributes.DisplayName ? { displayName: attributes.DisplayName } : {}
         }
       });

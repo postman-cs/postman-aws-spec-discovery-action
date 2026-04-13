@@ -412,12 +412,22 @@ describe('SnsProvider', () => {
     expect(client.probe).toHaveBeenCalledTimes(1);
   });
 
-  it('listCandidates returns topic ARN, ARN-derived name, tags, and display name metadata', async () => {
-    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+  it('listCandidates uses postman:project-name tag when present and falls back to ARN-derived name', async () => {
+    const taggedTopicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+    const untaggedTopicArn = 'arn:aws:sns:us-east-1:123456789012:billing-topic';
     const client = createSnsClientStub({
-      listTopics: vi.fn().mockResolvedValue([{ topicArn, name: 'ignored-name' }]),
-      getTopicAttributes: vi.fn().mockResolvedValue({ DisplayName: 'Orders Topic' }),
-      listTagsForResource: vi.fn().mockResolvedValue({ team: 'platform' })
+      listTopics: vi.fn().mockResolvedValue([
+        { topicArn: taggedTopicArn, name: 'ignored-name' },
+        { topicArn: untaggedTopicArn, name: 'ignored-name-too' }
+      ]),
+      getTopicAttributes: vi
+        .fn()
+        .mockResolvedValueOnce({ DisplayName: 'Orders Topic' })
+        .mockResolvedValueOnce({ DisplayName: 'Billing Topic' }),
+      listTagsForResource: vi
+        .fn()
+        .mockResolvedValueOnce({ 'postman:project-name': 'orders-service', team: 'platform' })
+        .mockResolvedValueOnce({ team: 'platform' })
     });
     const provider = new SnsProvider(client);
 
@@ -425,14 +435,27 @@ describe('SnsProvider', () => {
 
     expect(candidates).toEqual([
       {
-        id: topicArn,
-        name: 'orders-topic',
+        id: taggedTopicArn,
+        name: 'orders-service',
+        providerType: 'sns',
+        tags: { 'postman:project-name': 'orders-service', team: 'platform' },
+        evidence: [`SNS topic discovered: ${taggedTopicArn}`],
+        meta: {
+          topicArn: taggedTopicArn,
+          arnDerivedTopicName: 'orders-topic',
+          displayName: 'Orders Topic'
+        }
+      },
+      {
+        id: untaggedTopicArn,
+        name: 'billing-topic',
         providerType: 'sns',
         tags: { team: 'platform' },
-        evidence: [`SNS topic discovered: ${topicArn}`],
+        evidence: [`SNS topic discovered: ${untaggedTopicArn}`],
         meta: {
-          topicArn,
-          displayName: 'Orders Topic'
+          topicArn: untaggedTopicArn,
+          arnDerivedTopicName: 'billing-topic',
+          displayName: 'Billing Topic'
         }
       }
     ]);

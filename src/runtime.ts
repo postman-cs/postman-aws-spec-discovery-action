@@ -865,6 +865,7 @@ async function runMultiProviderDiscovery(
         }
         try {
           const result = await provider.exportSpec(candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+          // SNS provider may set candidate.name from postman:project-name; use candidate.name directly.
           const serviceName = candidate.name;
           const baseFolder = projectFolderName(serviceName);
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
