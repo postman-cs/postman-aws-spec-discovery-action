@@ -28,10 +28,13 @@ No GitHub token required. This action uses only AWS credentials for API access. 
 | CloudFormation (embedded specs) | OpenAPI JSON | IAM probe |
 | Glue Schema Registry | Avro / JSON Schema / Protobuf | IAM probe + IaC references |
 | SSM Parameter Store | Any (stored content or fetched URL content) | IAM probe for `/postman/specs/` path |
+| SNS Topics (contract resolver) | AsyncAPI / JSON Schema contracts | IAM probe + SNS IaC references + SSM fallback |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root and resolves API spec path or URL references automatically.
+
+SNS is handled as a contract resolver (not a native AWS spec exporter). For SNS topics, contract resolution precedence is: **repo-local AsyncAPI > repo-local JSON Schema > SSM registry > manual-review**.
 
 ## Security
 
@@ -83,6 +86,9 @@ Full IAM policy (all providers):
         "glue:ListSchemas",
         "glue:GetSchemaVersion",
         "glue:GetTags",
+        "sns:ListTopics",
+        "sns:GetTopicAttributes",
+        "sns:ListTagsForResource",
         "ssm:GetParametersByPath",
         "tag:GetResources"
       ],
@@ -93,6 +99,11 @@ Full IAM policy (all providers):
 ```
 
 You only need permissions for the providers you use. Providers you lack access to are silently skipped.
+
+Required IAM permissions for SNS contract discovery are:
+- `sns:ListTopics`
+- `sns:GetTopicAttributes`
+- `sns:ListTagsForResource`
 
 ## Inputs
 
@@ -148,13 +159,13 @@ These are auto-detected from CI environment variables. Override them only when a
 | --- | --- |
 | `resolution-json` | Full resolution payload |
 | `resolution-status` | `resolved` or `unresolved` |
-| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `manual-review`, or `discover-many` |
+| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `sns-contract`, `manual-review`, or `discover-many` |
 | `mapping-confidence` | Numeric confidence score |
 | `spec-path` | Resolved/generated spec path when available |
 | `gateway-id` | Selected gateway ID when available |
 | `service-name` | Resolved service name |
-| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`) |
-| `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`) |
+| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`, `sns`) |
+| `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`, `asyncapi-yaml`, `asyncapi-json`) |
 | `candidates-json` | JSON array of top candidates when resolution is ambiguous |
 | `services-json` | discover-many mode: JSON array of all discovered services |
 | `service-count` | discover-many mode: number of discovered services |
@@ -172,6 +183,8 @@ These are auto-detected from CI environment variables. Override them only when a
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
 | SSM Parameter Store | auto-detected | Any (spec content or fetched URL content) |
+| SNS (AsyncAPI contracts) | `asyncapi.yaml` or `asyncapi.json` | AsyncAPI |
+| SNS (JSON Schema contracts) | `schema.json` | JSON Schema |
 
 ## Usage
 
@@ -206,6 +219,26 @@ Exports specs from all discovered APIs across all available providers:
   with:
     aws-region: us-east-1
 ```
+
+### Event-driven repos (SNS contract resolution)
+
+For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI or JSON Schema and let `resolve-one` select the best source automatically:
+
+```yaml
+- id: resolve-events
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  env:
+    INPUT_MODE: resolve-one
+    INPUT_EXPECTED_SERVICE_NAME: orders-events
+  with:
+    aws-region: us-east-1
+```
+
+Resolution order for SNS topics is:
+1. Repo-local AsyncAPI (`asyncapi.yaml`, `asyncapi.yml`, `asyncapi.json`)
+2. Repo-local JSON Schema (`schema.json`, `*.schema.json`)
+3. SSM registry (`/postman/specs/{topic}/...`)
+4. `manual-review`
 
 ### GitLab / other CI
 
@@ -243,15 +276,19 @@ node dist/cli.cjs \
 4. **Naming heuristic** -- match the slugified repo name against API names
 5. **Full enumeration** -- only as a last resort, with soft truncation instead of hard failure
 
-**Repository signals**: The action scans IaC files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, and Pulumi.
+**Repository signals**: The action scans IaC files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, CDK, and Pulumi.
 
 CloudFormation / SAM:
-- `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`, `cdk.json`
+- `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`
 - Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`
 
 Terraform:
 - All `.tf` files (searched up to 4 directories deep, max 50 files)
 - Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`
+
+CDK:
+- Detected when `cdk.json` is present; scans TypeScript sources for AWS constructs
+- Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`
 
 Pulumi:
 - Detected when `Pulumi.yaml` is present; scans `.ts`, `.py`, and `.go` source files
