@@ -1582,7 +1582,7 @@ describe('SnsProvider', () => {
     }
   });
 
-  it('resolveContract preserves structured messageAttributes metadata from subscription attributes', async () => {
+  it('resolveContract derives structured messageAttributes metadata from filter policies', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
       await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
@@ -1593,9 +1593,9 @@ describe('SnsProvider', () => {
           ]),
           getSubscriptionAttributes: vi.fn().mockResolvedValue({
             Protocol: 'sqs',
-            MessageAttributes: JSON.stringify({
-              eventType: { DataType: 'String' },
-              attempt: { DataType: 'Number' }
+            FilterPolicy: JSON.stringify({
+              eventType: ['order.created'],
+              attempt: [{ numeric: ['>', 3] }]
             })
           })
         }),
@@ -1639,9 +1639,9 @@ describe('SnsProvider', () => {
           ]),
           getSubscriptionAttributes: vi.fn().mockResolvedValue({
             Protocol: 'sqs',
-            MessageAttributes: JSON.stringify({
-              eventType: { DataType: 'String' },
-              retries: { DataType: 'Number' }
+            FilterPolicy: JSON.stringify({
+              eventType: ['order.created'],
+              retries: [{ numeric: ['>=', 1] }]
             })
           })
         }),
@@ -1693,8 +1693,8 @@ describe('SnsProvider', () => {
           ]),
           getSubscriptionAttributes: vi.fn().mockResolvedValue({
             Protocol: 'sqs',
-            MessageAttributes: JSON.stringify({
-              eventType: { DataType: 'String' }
+            FilterPolicy: JSON.stringify({
+              eventType: ['order.created']
             })
           })
         }),
@@ -1786,7 +1786,7 @@ describe('SnsProvider', () => {
       expect(result.metadata.subscriptions[0]?.filterPolicyRaw).toBe(rawFilterPolicy);
       if (result.resolved) {
         expect(result.result.content).toContain('orderId');
-        expect(result.result.content).not.toContain('priority');
+        expect(result.result.content).toContain('SnsDerivedHeaders');
       }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
@@ -1981,8 +1981,16 @@ describe('SnsProvider', () => {
       const result = await provider.resolveContract(createSnsCandidate());
 
       expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
-      expect(result.metadata.subscriptions).toHaveLength(1);
+      expect(result.metadata.subscriptions).toHaveLength(2);
       expect(result.metadata.subscriptions[0]?.subscriptionArn).toContain('sub-1');
+      expect(result.metadata.subscriptions[1]).toEqual(
+        expect.objectContaining({
+          subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2',
+          protocol: 'lambda',
+          endpoint: 'fn-1',
+          variant: 'sns-envelope'
+        })
+      );
       expect(result.metadata.subscriptionSummary.failed).toBe(1);
       expect(result.metadata.subscriptionSummary.errors).toEqual([
         { subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-2', error: 'InternalErrorException' }
@@ -2032,6 +2040,72 @@ describe('SnsProvider', () => {
         const serialized = JSON.stringify(webhookDoc);
         expect(serialized).not.toContain('subscriber.example.com');
         expect(result.metadata.subscriptions[0]?.endpoint).toBe('https://subscriber.example.com/orders');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract includes referenced AsyncAPI payload components in webhook sidecar', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        [
+          'asyncapi: 2.6.0',
+          'components:',
+          '  schemas:',
+          '    OrderEvent:',
+          '      type: object',
+          '      properties:',
+          '        orderId:',
+          '          type: string',
+          '        detail:',
+          '          $ref: "#/components/schemas/OrderDetail"',
+          '    OrderDetail:',
+          '      type: object',
+          '      properties:',
+          '        amount:',
+          '          type: number',
+          'channels:',
+          '  orders:',
+          '    publish:',
+          '      message:',
+          '        payload:',
+          '          $ref: "#/components/schemas/OrderEvent"'
+        ].join('\n'),
+        'utf8'
+      );
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'https',
+            Endpoint: 'https://subscriber.example.com/orders',
+            RawMessageDelivery: 'true'
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-asyncapi' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        expect(webhookSidecar).toBeDefined();
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderEvent');
+        expect(webhookDoc).toHaveProperty('components.schemas.OrderDetail');
+        expect(webhookDoc).toHaveProperty(
+          'webhooks.snsMessageRaw.post.requestBody.content.application/json.schema.$ref',
+          '#/components/schemas/OrderEvent'
+        );
       }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
@@ -2148,6 +2222,43 @@ describe('SnsProvider', () => {
         expect(result.sidecars?.some((sidecar) => sidecar.filename === 'webhook.openapi.json') ?? false).toBe(false);
       }
       expect(result.evidence.some((line) => line.includes('Failed to generate webhook sidecar'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract retains subscription summaries when attribute fetch fails and still generates webhook sidecar', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-https',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockRejectedValue(new Error('InternalErrorException'))
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      expect(result.metadata.subscriptions).toEqual([
+        expect.objectContaining({
+          subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-https',
+          protocol: 'https',
+          endpoint: 'https://subscriber.example.com/orders',
+          variant: 'sns-envelope'
+        })
+      ]);
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        expect(webhookSidecar).toBeDefined();
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
