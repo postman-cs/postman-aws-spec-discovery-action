@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
   GetTopicAttributesCommand,
@@ -11,12 +14,16 @@ import { AppSyncProvider } from '../src/lib/providers/appsync.js';
 import { EventBridgeSchemasProvider } from '../src/lib/providers/eventbridge-schemas.js';
 import { CloudFormationProvider } from '../src/lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from '../src/lib/providers/glue.js';
+import { SnsProvider } from '../src/lib/providers/sns.js';
 import { SnsSdkClient } from '../src/lib/aws/sns-client.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import type { AppSyncSpecClient } from '../src/lib/aws/appsync-client.js';
 import type { EventBridgeSchemasSpecClient } from '../src/lib/aws/schemas-client.js';
 import type { CloudFormationSpecClient } from '../src/lib/aws/cloudformation-client.js';
 import type { GlueSchemaSpecClient } from '../src/lib/aws/glue-client.js';
+import type { SnsSpecClient } from '../src/lib/aws/sns-client.js';
+import type { SsmSpecClient } from '../src/lib/aws/ssm-client.js';
+import type { SpecCandidate } from '../src/lib/providers/types.js';
 
 const { snsSendMock } = vi.hoisted(() => ({
   snsSendMock: vi.fn()
@@ -90,6 +97,38 @@ function createGlueClientStub(overrides: Partial<GlueSchemaSpecClient> = {}): Gl
     getLatestSchemaVersion: vi.fn().mockResolvedValue({ content: '{}', dataFormat: 'JSON', versionNumber: 1 }),
     getTags: vi.fn().mockResolvedValue({}),
     probe: vi.fn().mockResolvedValue(true),
+    ...overrides
+  };
+}
+
+function createSnsClientStub(overrides: Partial<SnsSpecClient> = {}): SnsSpecClient {
+  return {
+    probe: vi.fn().mockResolvedValue(true),
+    listTopics: vi.fn().mockResolvedValue([]),
+    getTopicAttributes: vi.fn().mockResolvedValue({}),
+    listTagsForResource: vi.fn().mockResolvedValue({}),
+    ...overrides
+  };
+}
+
+function createSsmClientStub(overrides: Partial<SsmSpecClient> = {}): SsmSpecClient {
+  return {
+    listSpecParameters: vi.fn().mockResolvedValue([]),
+    probe: vi.fn().mockResolvedValue(true),
+    ...overrides
+  };
+}
+
+function createSnsCandidate(overrides: Partial<SpecCandidate> = {}): SpecCandidate {
+  return {
+    id: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+    name: 'orders-topic',
+    providerType: 'sns',
+    tags: {},
+    evidence: [],
+    meta: {
+      topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic'
+    },
     ...overrides
   };
 }
@@ -361,6 +400,217 @@ describe('GlueSchemaProvider', () => {
     );
     expect(result.format).toBe('protobuf');
     expect(result.filename).toBe('schema.proto');
+  });
+});
+
+describe('SnsProvider', () => {
+  it('probe delegates to SNS client', async () => {
+    const client = createSnsClientStub({ probe: vi.fn().mockResolvedValue(true) });
+    const provider = new SnsProvider(client);
+
+    await expect(provider.probe()).resolves.toBe(true);
+    expect(client.probe).toHaveBeenCalledTimes(1);
+  });
+
+  it('listCandidates returns topic ARN, ARN-derived name, tags, and display name metadata', async () => {
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+    const client = createSnsClientStub({
+      listTopics: vi.fn().mockResolvedValue([{ topicArn, name: 'ignored-name' }]),
+      getTopicAttributes: vi.fn().mockResolvedValue({ DisplayName: 'Orders Topic' }),
+      listTagsForResource: vi.fn().mockResolvedValue({ team: 'platform' })
+    });
+    const provider = new SnsProvider(client);
+
+    const candidates = await provider.listCandidates();
+
+    expect(candidates).toEqual([
+      {
+        id: topicArn,
+        name: 'orders-topic',
+        providerType: 'sns',
+        tags: { team: 'platform' },
+        evidence: [`SNS topic discovered: ${topicArn}`],
+        meta: {
+          topicArn,
+          displayName: 'Orders Topic'
+        }
+      }
+    ]);
+  });
+
+  it('listCandidates returns empty array when no topics are found', async () => {
+    const client = createSnsClientStub({ listTopics: vi.fn().mockResolvedValue([]) });
+    const provider = new SnsProvider(client);
+
+    await expect(provider.listCandidates()).resolves.toEqual([]);
+  });
+
+  it('listCandidates handles FIFO topics and keeps .fifo suffix', async () => {
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:billing-events.fifo';
+    const client = createSnsClientStub({
+      listTopics: vi.fn().mockResolvedValue([{ topicArn, name: 'ignored' }])
+    });
+    const provider = new SnsProvider(client);
+
+    const candidates = await provider.listCandidates();
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.name).toBe('billing-events.fifo');
+  });
+
+  it('exportSpec resolves AsyncAPI YAML from repo-local asyncapi.yaml', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.yaml'),
+        'asyncapi: 2.6.0\ninfo:\n  title: Orders Events\n  version: 1.0.0\nchannels: {}',
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('asyncapi-yaml');
+      expect(result.filename).toBe('asyncapi.yaml');
+      expect(result.content).toContain('asyncapi: 2.6.0');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec resolves AsyncAPI JSON from repo-local asyncapi.json', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'asyncapi.json'),
+        JSON.stringify({ asyncapi: '2.6.0', info: { title: 'Orders', version: '1.0.0' }, channels: {} }, null, 2),
+        'utf8'
+      );
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('asyncapi-json');
+      expect(result.filename).toBe('asyncapi.json');
+      expect(result.content).toContain('"asyncapi": "2.6.0"');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exportSpec skips malformed AsyncAPI and falls through to JSON Schema', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'info:\n  title: Missing asyncapi key', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('json-schema');
+      expect(result.filename).toBe('schema.json');
+      expect(result.evidence.some((line) => line.includes('Skipped malformed AsyncAPI file'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('enforces precedence: AsyncAPI over JSON Schema and SSM', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'asyncapi.yaml'), 'asyncapi: "2.6.0"\ninfo:\n  title: Orders\n  version: "1.0.0"\nchannels: {}', 'utf8');
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const ssmClient = createSsmClientStub({
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'orders-topic', key: 'content', value: '{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}' }
+        ])
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, ssmClient);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('asyncapi-yaml');
+      expect(ssmClient.listSpecParameters).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('enforces precedence: JSON Schema over SSM', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}', 'utf8');
+      const ssmClient = createSsmClientStub({
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'orders-topic', key: 'content', value: '{"asyncapi":"2.6.0","info":{"title":"from-ssm","version":"1.0.0"},"channels":{}}' }
+        ])
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, ssmClient);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('json-schema');
+      expect(ssmClient.listSpecParameters).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to SSM when no repo-local contract exists', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const ssmClient = createSsmClientStub({
+        listSpecParameters: vi.fn().mockResolvedValue([
+          {
+            serviceName: 'orders-topic',
+            key: 'content',
+            value: '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}'
+          }
+        ])
+      });
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, ssmClient);
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.format).toBe('json-schema');
+      expect(result.filename).toBe('schema.json');
+      expect(result.evidence.some((line) => line.includes('/postman/specs/orders-topic/'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns manual-review result when no contract can be resolved', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, createSsmClientStub());
+
+      const result = await provider.exportSpec(createSnsCandidate(), {});
+
+      expect(result.filename).toBe('manual-review.json');
+      expect(result.evidence.some((line) => line.includes('manual review'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('enforces path sandboxing for unsafe topic names', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      const provider = new SnsProvider(createSnsClientStub(), tempDir);
+
+      await expect(
+        provider.exportSpec(
+          createSnsCandidate({
+            id: 'arn:aws:sns:us-east-1:123456789012:../../escape',
+            name: '../../escape',
+            meta: { topicArn: 'arn:aws:sns:us-east-1:123456789012:../../escape' }
+          }),
+          {}
+        )
+      ).rejects.toThrow(/must stay within repo-root\/workspace/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 
