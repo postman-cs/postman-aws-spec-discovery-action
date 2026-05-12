@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 discovered-specs/
+postman-aws-spec-discovery-result.json
 
 # Build and TypeScript artifacts
 *.tsbuildinfo
