@@ -76,4 +76,9 @@ if (entrypoint && currentModulePath === entrypoint) {
 }
 
 export * from './runtime.js';
+export {
+  normalizeOpenApiYaml,
+  type OperationIdRename,
+  type NormalizeOpenApiResult
+} from './lib/spec/normalize-openapi.js';
 export const outputNames = contractOutputNames;
