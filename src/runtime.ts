@@ -19,6 +19,7 @@ import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
+import { normalizeOpenApiYaml, type OperationIdRename } from './lib/spec/normalize-openapi.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
 import { AppSyncProvider } from './lib/providers/appsync.js';
@@ -332,6 +333,42 @@ export async function defaultWriteSpecFile(outputPath: string, content: string):
   await writeFile(outputPath, content, 'utf8');
 }
 
+/**
+ * Apply post-export normalization to API Gateway specs and report any
+ * rewrites to the action log. We do this BEFORE the spec is written so
+ * the file landing in the repo (and downstream onboarding) is already
+ * valid OpenAPI.
+ *
+ * AWS Gateway can emit duplicate `operationId` values (e.g. method-name-only
+ * defaults like `update`, `get`) which the OpenAPI spec forbids and which
+ * the bootstrap action rejects with CONTRACT_SPEC_VALIDATION_FAILED.
+ * Failing here would be a regression vs the previous behaviour where the
+ * raw spec was written and the bootstrap action surfaced the error — so
+ * we treat any normalizer error as a no-op and proceed with the original.
+ */
+function normalizeApiGatewaySpec(
+  body: string,
+  candidate: { id: string; gatewayType?: GatewayType; name?: string },
+  reporter: Pick<ReporterLike, 'info' | 'warning'>
+): string {
+  let result: { content: string; renamed: OperationIdRename[]; normalized: boolean };
+  try {
+    result = normalizeOpenApiYaml(body);
+  } catch (error) {
+    reporter.warning(
+      userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error)}`)
+    );
+    return body;
+  }
+  if (!result.normalized || result.renamed.length === 0) return body;
+
+  for (const rename of result.renamed) {
+    const from = rename.original === null ? '<missing>' : rename.original;
+    reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+  }
+  return result.content;
+}
+
 async function selectStage(aws: AwsGatewayClient, candidate: GatewayCandidate, preferredStage: string | undefined): Promise<string | undefined> {
   if (preferredStage) {
     return preferredStage;
@@ -573,10 +610,11 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
         }
 
         const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
-        const specBody =
+        const rawSpecBody =
           candidate.gatewayType === 'REST'
             ? await dependencies.aws.exportRestApi(candidate.id, stage)
             : await dependencies.aws.exportHttpApi(candidate.id, stage);
+        const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         summary.exported += 1;
         discovered.push({
@@ -823,10 +861,15 @@ export async function runResolution(
     }
     const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, 'output-dir');
     try {
-      const body =
+      const rawBody =
         selectedSource.gatewayType === 'REST'
           ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? '')
           : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage);
+      const body = normalizeApiGatewaySpec(
+        rawBody,
+        { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
+        actionCore
+      );
       await writeSpecFile(absoluteSpecPath, body);
       selectedSource.specPath = relativeSpecPath;
     } catch (error) {
