@@ -1,0 +1,1854 @@
+openapi: "3.0.1"
+info:
+  title: "account"
+  description: "This api manages user accounts."
+  version: "v1.0"
+servers:
+- url: "https://dev-id.example.com/{basePath}"
+  variables:
+    basePath:
+      default: "account"
+paths:
+  /link:
+    post:
+      operationId: "link"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1LinkRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LoginResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/link"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /token/exchange/v3:
+    post:
+      operationId: "v3tokenexchange"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V3TokenExchangeRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2TokenExchangeResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v3/token/exchange"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /login:
+    post:
+      operationId: "login"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LoginResponse"
+        "421":
+          description: "421 response"
+          content: {}
+        "202":
+          description: "202 response"
+          content: {}
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "412":
+          description: "412 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+        "404":
+          description: "404 response"
+          content: {}
+        "429":
+          description: "429 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/login"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /update/{id}/v2:
+    get:
+      operationId: "update"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "200":
+          description: "200 response"
+          headers:
+            Cache-Control:
+              schema:
+                type: "string"
+            Pragma:
+              schema:
+                type: "string"
+            Expires:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1AccountResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/account/{id}"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "GET"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.id: "method.request.path.id"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /logout:
+    get:
+      operationId: "logout"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LogoutResponse"
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/logout"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "GET"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /link/v2:
+    post:
+      operationId: "linkv2"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1LinkRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LoginResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/link"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /token/exchange/v2:
+    post:
+      operationId: "tokenexchange"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2TokenExchangeResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/token/exchange"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /register/v2:
+    post:
+      operationId: "registerv2"
+      parameters:
+      - name: "X-Subscription-Product"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1RegisterResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+        "429":
+          description: "429 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/register"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /token/v2/{refreshToken}:
+    post:
+      operationId: "token"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Example-Id-Cache-Control"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "refreshToken"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2RefreshTokenResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "423":
+          description: "423 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/token/{refreshToken}"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.refreshToken: "method.request.path.refreshToken"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /test:
+    get:
+      operationId: "account"
+      responses:
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/test"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "GET"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /signout:
+    delete:
+      operationId: "signout"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/signout"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "DELETE"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /unlink:
+    post:
+      operationId: "unlink"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1UnLinkRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LoginResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/unlink"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /devicereg/sessions:
+    delete:
+      operationId: "devicereg"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1DeleteDeviceRegSessionsRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content: {}
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/devicereg/sessions"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "DELETE"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /update/{id}:
+    get:
+      operationId: "update"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "200":
+          description: "200 response"
+          headers:
+            Cache-Control:
+              schema:
+                type: "string"
+            Pragma:
+              schema:
+                type: "string"
+            Expires:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1AccountResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/account/{id}"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "GET"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.id: "method.request.path.id"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /login/v2:
+    post:
+      operationId: "loginv2"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2LoginResponse"
+        "421":
+          description: "421 response"
+          content: {}
+        "202":
+          description: "202 response"
+          content: {}
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "412":
+          description: "412 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+        "404":
+          description: "404 response"
+          content: {}
+        "429":
+          description: "429 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2LoginConflict"
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/login"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /login/v3:
+    post:
+      operationId: "loginv3"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2LoginResponse"
+        "421":
+          description: "421 response"
+          content: {}
+        "202":
+          description: "202 response"
+          content: {}
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "412":
+          description: "412 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+        "404":
+          description: "404 response"
+          content: {}
+        "429":
+          description: "429 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V2LoginConflict"
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v3/login"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /otp/token:
+    post:
+      operationId: "otpTokenVerify"
+      parameters:
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOTPRequest"
+        required: true
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JwtResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "424":
+          description: "424 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/otp/token"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /otp/login:
+    post:
+      operationId: "otpLogin"
+      parameters:
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOTPRequest"
+        required: true
+      responses:
+        "404":
+          description: "404 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendOTPResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "424":
+          description: "424 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/otp/login"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /unlink/v2:
+    post:
+      operationId: "unlinkv2"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1UnLinkRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LoginResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/unlink"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /logout/v2:
+    get:
+      operationId: "logoutv2"
+      parameters:
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "refresh_token_hint"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1LogoutResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v2/logout"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "GET"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+  /register:
+    post:
+      operationId: "register"
+      parameters:
+      - name: "X-Subscription-Product"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Access-Token"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "dma"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "X-Api-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1RegisterResponse"
+        "400":
+          description: "400 response"
+          content: {}
+        "401":
+          description: "401 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "403":
+          description: "403 response"
+          content: {}
+        "429":
+          description: "429 response"
+          content: {}
+        "409":
+          description: "409 response"
+          content: {}
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.nlb_uri}/account/v1/register"
+        connectionId: "${stageVariables.vpclink_id}"
+        httpMethod: "POST"
+        responses:
+          default:
+            statusCode: "200"
+        connectionType: "VPC_LINK"
+        passthroughBehavior: "when_no_match"
+        responseTransferMode: "BUFFERED"
+        type: "http_proxy"
+components:
+  schemas:
+    V1AccountResponse:
+      type: "object"
+      properties:
+        dateCreated:
+          type: "string"
+        profileId:
+          type: "string"
+        deviceId:
+          type: "string"
+        email:
+          type: "string"
+        accountType:
+          type: "string"
+        userType:
+          type: "string"
+        brand:
+          type: "string"
+        platform:
+          type: "string"
+        isVerified:
+          type: "boolean"
+        newsLetter:
+          type: "boolean"
+        hasSocialLogin:
+          type: "boolean"
+        hasEmail:
+          type: "boolean"
+        device:
+          type: "string"
+        viewerId:
+          type: "string"
+        dma:
+          type: "string"
+        ipAddress:
+          type: "string"
+        userAgent:
+          type: "string"
+        gender:
+          type: "string"
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        displayName:
+          type: "string"
+        politicalViews:
+          type: "string"
+        householdIncome:
+          type: "string"
+        picture:
+          type: "string"
+        birthdate:
+          type: "string"
+        newsletterOptIn:
+          type: "boolean"
+        profileComplete:
+          type: "boolean"
+        tvProviderStatus:
+          type: "string"
+          description: "user's status on tv provider selection"
+          enum:
+          - "not_indicated"
+          - "no_provider"
+          - "not_selected"
+          - "<MVPD ID>"
+        encryptedProfileId:
+          type: "string"
+    V1LoginRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+          description: "Identity Login- Email address associated with user account"
+        password:
+          type: "string"
+          description: "Identity Login- Password associated with user account"
+        userType:
+          type: "string"
+          description: "User Type for determining Login flow, will be inferred from\
+            \ body fields if not provided"
+        deviceId:
+          type: "string"
+          description: "Anonymous Login- Device Id or UUID for anonymous login"
+        device_id:
+          type: "string"
+          description: "Anonymous Login- Alias for deviceId"
+        idfv:
+          type: "string"
+          description: "Anonymous Login- Alias for deviceId"
+        anonymous:
+          type: "string"
+          description: "Anonymous Login- Alias for deviceId"
+        facebookToken:
+          type: "string"
+          description: "Social Login-"
+        appleToken:
+          type: "string"
+          description: "Apple Sign-in Token"
+        googleToken:
+          type: "string"
+          description: "Google Sign-in Token"
+        isTermsOfServiceAgreementNeeded:
+          type: "boolean"
+          description: "Indicates a user needs to accept the TOS before login is allowed"
+        clientId:
+          type: "string"
+          description: "clientId provided by client"
+        receipts:
+          type: "object"
+          properties:
+            appstore:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  receiptData:
+                    type: "string"
+            playstore:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  token:
+                    type: "string"
+                  subscriptionID:
+                    type: "string"
+                  packageName:
+                    type: "string"
+            amazonstore:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  receiptID:
+                    type: "string"
+                  userID:
+                    type: "string"
+        recaptchaToken:
+          type: "string"
+          description: "reCAPTCHA token to be validated when available"
+        rokuId:
+          type: "string"
+          description: "id generated by Roku cloud. Forwarded to the rokuauthn service.\
+            \ Required for Roku login flow."
+        rokuToken:
+          type: "string"
+          description: "token generated by Roku cloud. Forwarded to the rokuauthn\
+            \ service. Required for Roku login flow."
+        purchaseTransactionId:
+          type: "string"
+          description: "purchase transaction id for Roku Instant Login flow. Required\
+            \ for Roku Instant Login flow."
+      description: "Fields are required or optional based on login flow"
+    V2TokenExchangeResponse:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+          description: "JWT Access Token. This token has information regarding the\
+            \ session ID etc which holds most of the information of this user. Interaction\
+            \ required with Session Service to get data"
+        refreshToken:
+          type: "string"
+          description: "JWT Refresh Token. For security purposes, access tokens may\
+            \ be valid for a short amount of time. Once they expire, client applications\
+            \ can use a refresh token to refresh the access token"
+        idToken:
+          type: "string"
+          description: "JWT Token ID. Provide user profile information"
+        tokenExpiration:
+          type: "integer"
+          description: "time the token is alive. Format is Unix Epoch"
+          format: "int32"
+    V1RegisterResponse:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+          description: "JWT Token ID. This token has information regarding the session\
+            \ ID etc which holds most of the information of this user. Interaction\
+            \ required with Session Service to get data"
+        tokenExpiration:
+          type: "integer"
+          description: "time the token is alive. Format is Unix Epoch"
+          format: "int32"
+        accountType:
+          type: "string"
+          description: "type of account"
+        device:
+          type: "string"
+          description: "device type"
+        deviceId:
+          type: "string"
+          description: "ID of the Device"
+        brand:
+          type: "string"
+          description: "Site user signed up for"
+        hasEmail:
+          type: "boolean"
+          description: "if the user has an email account in the system"
+        hasSocialLogin:
+          type: "boolean"
+          description: "If the user has Social Login"
+        isVerified:
+          type: "boolean"
+          description: "if the user has verified the account"
+        ipAddress:
+          type: "string"
+          description: "IP address the user has signed in from"
+        platform:
+          type: "string"
+          description: "NA"
+        profileId:
+          type: "string"
+          description: "Account ID/User ID of the user"
+        userType:
+          type: "string"
+          description: "type of the user"
+        userAgent:
+          type: "string"
+          description: "User Agent for the device the user used to login"
+        dma:
+          type: "string"
+          description: "User DMA"
+        gender:
+          type: "string"
+          description: "specified as \"m\", \"f\" or \"o\""
+        viewerId:
+          type: "string"
+          description: "Viewer ID of the user signed into this profile"
+        birthdate:
+          type: "string"
+          description: "user birthdate (mm/dd/yyyy). people less that 13 yrs will\
+            \ be rejected"
+        email:
+          type: "string"
+          description: "user email"
+        firstName:
+          type: "string"
+          description: "firstname of the user"
+        lastName:
+          type: "string"
+          description: "last name of the user"
+        newsLetter:
+          type: "boolean"
+          description: "if user is subscribed to newsletter"
+        legacyId:
+          type: "string"
+          description: "legacyId for the migrated user (valid for migrated user only)"
+        legacyProvider:
+          type: "string"
+          description: "legacyProvider name (valid for migrated user only)"
+        politicalViews:
+          type: "string"
+          description: "politicalViews of the user"
+        householdIncome:
+          type: "string"
+          description: "householdIncome of the user"
+        picture:
+          type: "string"
+          description: "picture profile of the user"
+        displayName:
+          type: "string"
+          description: "displayName of the user"
+        mvpd:
+          type: "string"
+          description: "displayName of the user"
+        newsletterOptIn:
+          type: "boolean"
+          description: "subscribed to newsletterOptIn true or false"
+        profileComplete:
+          type: "boolean"
+          description: "profileComplete true or false"
+        hasFacebookLogin:
+          type: "boolean"
+          description: "hasFacebookLogin true or false"
+        linkedMVPD:
+          type: "string"
+          description: "MVPD the account is linked to"
+        unlinkedMVPD:
+          type: "string"
+          description: "MVPD the account was linked to"
+        encryptedProfileId:
+          type: "string"
+          description: "encrypted profile id"
+    SendOTPRequest:
+      required:
+      - "codeChallenge"
+      - "codeChallengeMethod"
+      - "email"
+      type: "object"
+      properties:
+        email:
+          type: "string"
+          format: "email"
+        codeChallenge:
+          type: "string"
+          description: "PKCE code challenge (BASE64URL(SHA256(code_verifier)))"
+        codeChallengeMethod:
+          type: "string"
+          description: "PKCE transformation method"
+          enum:
+          - "S256"
+        recaptchaToken:
+          type: "string"
+          description: "Google reCAPTCHA token"
+    V1DeleteDeviceRegSessionsRequest:
+      type: "object"
+      properties:
+        sids:
+          type: "array"
+          description: "Session IDs to be deleted"
+          items:
+            type: "string"
+        acccountInfo:
+          $ref: "#/components/schemas/V1LoginRequest"
+    V1LogoutResponse:
+      required:
+      - "status"
+      type: "object"
+      properties:
+        status:
+          type: "string"
+    V3TokenExchangeRequest:
+      type: "object"
+      properties:
+        clientID:
+          type: "string"
+          description: "OAuth2 client ID that will be linked to the new set of tokens\
+            \ issued"
+        refreshToken:
+          type: "string"
+          description: "JWT refresh token to be exchanged"
+    VerifyOTPRequest:
+      required:
+      - "codeVerifier"
+      - "loginRequestId"
+      - "otp"
+      type: "object"
+      properties:
+        loginRequestId:
+          type: "string"
+          description: "Login request identifier returned by the OTP login flow."
+        otp:
+          type: "string"
+          description: "One-time password received by the user."
+        codeVerifier:
+          type: "string"
+          description: "PKCE code verifier used to validate the original code challenge."
+    V1LinkRequest:
+      required:
+      - "email"
+      type: "object"
+      properties:
+        email:
+          type: "string"
+          description: "Account linking - Email address of user account"
+        password:
+          type: "string"
+          description: "Account linking - Password associated with user account"
+        facebookToken:
+          type: "string"
+          description: "Account linking - facebook token"
+        appleToken:
+          type: "string"
+          description: "Account linking - Apple token"
+        googleToken:
+          type: "string"
+          description: "Account linking - Google token"
+      description: "Fields are required or optional based on register flow"
+    SendOTPResponse:
+      type: "object"
+      properties:
+        loginRequestId:
+          type: "string"
+    V1UnLinkRequest:
+      required:
+      - "email"
+      type: "object"
+      properties:
+        email:
+          type: "string"
+          description: "Account linking - Email address of user account"
+        facebookToken:
+          type: "string"
+          description: "Account linking - facebook token"
+        appleToken:
+          type: "string"
+          description: "Account linking - Apple token"
+        googleToken:
+          type: "string"
+          description: "Account linking - Google token"
+    V1RegisterRequest:
+      required:
+      - "email"
+      - "password"
+      type: "object"
+      properties:
+        email:
+          type: "string"
+          description: "Email address"
+        password:
+          type: "string"
+          description: "Identity Login- Password associated with user account"
+        deviceId:
+          type: "string"
+          description: "Device Id or UUID for anonymous login"
+        device_id:
+          type: "string"
+          description: "Alias for deviceId"
+        idfv:
+          type: "string"
+          description: "Alias for deviceId"
+        anonymous:
+          type: "string"
+          description: "Alias for deviceId"
+        facebookToken:
+          type: "string"
+          description: "Social Login-"
+        appleToken:
+          type: "string"
+          description: "Apple Sign-in Token"
+        firstName:
+          type: "string"
+          description: "First name"
+        lastName:
+          type: "string"
+          description: "Last name"
+        gender:
+          type: "string"
+          description: "Gender"
+          enum:
+          - "f"
+          - "m"
+          - "n"
+          - "o"
+          - "memale"
+          - "male"
+          - "non-binary"
+          - "unspecified"
+        birthdate:
+          type: "string"
+          description: "Birthday, formats YYYY-MM-DD or RFC3339. People less than\
+            \ 16 yrs will be rejected"
+        dob:
+          type: "string"
+          description: "Alias for birthdate"
+        politicalViews:
+          type: "string"
+          description: "Newsletter param, political viewes"
+        householdIncome:
+          type: "string"
+          description: "Newsletter param, houshold income"
+        picture:
+          type: "string"
+          description: "Newsletter param, picture"
+        displayName:
+          type: "string"
+          description: "Newsletter param, user display name, should be unique"
+        newsletterOptIn:
+          type: "boolean"
+          description: "Newsletter param, if user is subscribed to newsletter"
+        profileComplete:
+          type: "boolean"
+          description: "Newsletter param, shows whether profile is completed"
+        recaptchaToken:
+          type: "string"
+          description: "reCAPTCHA token to be validated when available"
+    V2LoginConflict:
+      type: "object"
+      properties:
+        sessions:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              sid:
+                type: "string"
+              device:
+                type: "string"
+              ip:
+                type: "string"
+              platform:
+                type: "string"
+      description: "The source of the conflict"
+    JwtResponse:
+      type: "object"
+      properties:
+        jwt:
+          type: "string"
+          description: "Access token JWT"
+        refresh_token:
+          type: "string"
+          description: "Refresh token"
+        id_token:
+          type: "string"
+          description: "ID token JWT"
+        jwt_expire:
+          type: "integer"
+          description: "Access token expiration time (Unix timestamp)"
+          format: "int64"
+        token_type:
+          type: "string"
+          description: "Token type (e.g. \"Bearer\")"
+        scope:
+          type: "string"
+          description: "Authorized scopes"
+    V1LoginResponse:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+          description: "JWT Token ID. This token has information regarding the session\
+            \ ID etc which holds most of the information of this user. Interaction\
+            \ required with Session Service to get data"
+        tokenExpiration:
+          type: "integer"
+          description: "time the token is alive. Format is Unix Epoch"
+          format: "int32"
+        accountType:
+          type: "string"
+          description: "type of account"
+        device:
+          type: "string"
+          description: "device type"
+        deviceId:
+          type: "string"
+          description: "ID of the Device"
+        brand:
+          type: "string"
+          description: "Site user signed up for"
+        hasEmail:
+          type: "boolean"
+          description: "if the user has an email account in the system"
+        hasSocialLogin:
+          type: "boolean"
+          description: "If the user has Social Login"
+        isVerified:
+          type: "boolean"
+          description: "if the user has verified the account"
+        ipAddress:
+          type: "string"
+          description: "IP address the user has signed in from"
+        platform:
+          type: "string"
+          description: "NA"
+        profileId:
+          type: "string"
+          description: "Account ID/User ID of the user"
+        userType:
+          type: "string"
+          description: "type of the user"
+        userAgent:
+          type: "string"
+          description: "User Agent for the device the user used to login"
+        dma:
+          type: "string"
+          description: "User DMA"
+        gender:
+          type: "string"
+          description: "specified as \"m\", \"f\" or \"o\""
+        viewerId:
+          type: "string"
+          description: "Viewer ID of the user signed into this profile"
+        birthdate:
+          type: "string"
+          description: "user birthdate (mm/dd/yyyy). people less that 13 yrs will\
+            \ be rejected"
+        email:
+          type: "string"
+          description: "user email"
+        firstName:
+          type: "string"
+          description: "firstname of the user"
+        lastName:
+          type: "string"
+          description: "last name of the user"
+        newsLetter:
+          type: "boolean"
+          description: "if user is subscribed to newsletter"
+        legacyId:
+          type: "string"
+          description: "legacyId for the migrated user (valid for migrated user only)"
+        legacyProvider:
+          type: "string"
+          description: "legacyProvider name (valid for migrated user only)"
+        politicalViews:
+          type: "string"
+          description: "politicalViews of the user"
+        householdIncome:
+          type: "string"
+          description: "householdIncome of the user"
+        picture:
+          type: "string"
+          description: "picture profile of the user"
+        displayName:
+          type: "string"
+          description: "displayName of the user"
+        mvpd:
+          type: "string"
+          description: "displayName of the user"
+        newsletterOptIn:
+          type: "boolean"
+          description: "subscribed to newsletterOptIn true or false"
+        profileComplete:
+          type: "boolean"
+          description: "profileComplete true or false"
+        hasFacebookLogin:
+          type: "boolean"
+          description: "hasFacebookLogin true or false"
+        linkedMVPD:
+          type: "string"
+          description: "MVPD the account is linked to"
+        unlinkedMVPD:
+          type: "string"
+          description: "MVPD the account was linked to"
+        encryptedProfileId:
+          type: "string"
+          description: "encrypted profile id"
+    V2RefreshTokenResponse:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+          description: "JWT Token ID. This token has information regarding the session\
+            \ ID etc which holds most of the information of this user. Interaction\
+            \ required with Session Service to get data"
+        refreshToken:
+          type: "string"
+          description: "JWT Refresh Token. For security purposes, access tokens may\
+            \ be valid for a short amount of time. Once they expire, client applications\
+            \ can use a refresh token to \"refresh\" the access token"
+        tokenType:
+          type: "string"
+          description: "Define the type of access token used with OAuth 2.0."
+        scope:
+          type: "string"
+          description: "Define the type of protected resources that the client can\
+            \ access"
+        tokenExpiration:
+          type: "integer"
+          description: "time the token is alive. Format is Unix Epoch"
+          format: "int32"
+    V2LoginResponse:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+          description: "JWT Token ID. This token has information regarding the session\
+            \ ID etc which holds most of the information of this user. Interaction\
+            \ required with Session Service to get data"
+        refreshToken:
+          type: "string"
+          description: "JWT Refresh Token. For security purposes, access tokens may\
+            \ be valid for a short amount of time. Once they expire, client applications\
+            \ can use a refresh token to refresh the access token"
+        idToken:
+          type: "string"
+          description: "JWT Token ID. Provide user profile information"
+        tokenExpiration:
+          type: "integer"
+          description: "time the token is alive. Format is Unix Epoch"
+          format: "int32"
+        accountType:
+          type: "string"
+          description: "type of account"
+        device:
+          type: "string"
+          description: "device type"
+        deviceId:
+          type: "string"
+          description: "ID of the Device"
+        brand:
+          type: "string"
+          description: "Site user signed up for"
+        hasEmail:
+          type: "boolean"
+          description: "if the user has an email account in the system"
+        hasSocialLogin:
+          type: "boolean"
+          description: "If the user has Social Login"
+        isVerified:
+          type: "boolean"
+          description: "if the user has verified the account"
+        ipAddress:
+          type: "string"
+          description: "IP address the user has signed in from"
+        platform:
+          type: "string"
+          description: "NA"
+        profileId:
+          type: "string"
+          description: "Account ID/User ID of the user"
+        userType:
+          type: "string"
+          description: "type of the user"
+        userAgent:
+          type: "string"
+          description: "User Agent for the device the user used to login"
+        dma:
+          type: "string"
+          description: "User DMA"
+        gender:
+          type: "string"
+          description: "specified as \"m\", \"f\" or \"o\""
+        viewerId:
+          type: "string"
+          description: "Viewer ID of the user signed into this profile"
+        birthdate:
+          type: "string"
+          description: "user birthdate (mm/dd/yyyy). people less that 13 yrs will\
+            \ be rejected"
+        email:
+          type: "string"
+          description: "user email"
+        firstName:
+          type: "string"
+          description: "firstname of the user"
+        lastName:
+          type: "string"
+          description: "last name of the user"
+        newsLetter:
+          type: "boolean"
+          description: "if user is subscribed to newsletter"
+        legacyId:
+          type: "string"
+          description: "legacyId for the migrated user (valid for migrated user only)"
+        legacyProvider:
+          type: "string"
+          description: "legacyProvider name (valid for migrated user only)"
+        politicalViews:
+          type: "string"
+          description: "politicalViews of the user"
+        householdIncome:
+          type: "string"
+          description: "householdIncome of the user"
+        picture:
+          type: "string"
+          description: "picture profile of the user"
+        displayName:
+          type: "string"
+          description: "displayName of the user"
+        mvpd:
+          type: "string"
+          description: "displayName of the user"
+        newsletterOptIn:
+          type: "boolean"
+          description: "subscribed to newsletterOptIn true or false"
+        profileComplete:
+          type: "boolean"
+          description: "profileComplete true or false"
+        hasFacebookLogin:
+          type: "boolean"
+          description: "hasFacebookLogin true or false"
+        linkedMVPD:
+          type: "string"
+          description: "MVPD the account is linked to"
+        unlinkedMVPD:
+          type: "string"
+          description: "MVPD the account was linked to"
+        encryptedProfileId:
+          type: "string"
+          description: "encrypted profile id"
+x-amazon-apigateway-security-policy: "TLS_1_0"

@@ -3495,8 +3495,8 @@ var init_NormalizedSchema = __esm({
         return translateTraits(this.traits);
       }
       getKeySchema() {
-        const [isDoc, isMap] = [this.isDocumentSchema(), this.isMapSchema()];
-        if (!isDoc && !isMap) {
+        const [isDoc, isMap2] = [this.isDocumentSchema(), this.isMapSchema()];
+        if (!isDoc && !isMap2) {
           throw new Error(`@smithy/core/schema - cannot get key for non-map: ${this.getName(true)}`);
         }
         const schema = this.getSchema();
@@ -3505,10 +3505,10 @@ var init_NormalizedSchema = __esm({
       }
       getValueSchema() {
         const sc = this.getSchema();
-        const [isDoc, isMap, isList] = [this.isDocumentSchema(), this.isMapSchema(), this.isListSchema()];
-        const memberSchema = typeof sc === "number" ? 63 & sc : sc && typeof sc === "object" && (isMap || isList) ? sc[3 + sc[0]] : isDoc ? 15 : void 0;
+        const [isDoc, isMap2, isList] = [this.isDocumentSchema(), this.isMapSchema(), this.isListSchema()];
+        const memberSchema = typeof sc === "number" ? 63 & sc : sc && typeof sc === "object" && (isMap2 || isList) ? sc[3 + sc[0]] : isDoc ? 15 : void 0;
         if (memberSchema != null) {
-          return member([memberSchema, 0], isMap ? "value" : "member");
+          return member([memberSchema, 0], isMap2 ? "value" : "member");
         }
         throw new Error(`@smithy/core/schema - ${this.getName(true)} has no value member.`);
       }
@@ -66104,9 +66104,9 @@ var require_identity = __commonJS({
     var NODE_TYPE = /* @__PURE__ */ Symbol.for("yaml.node.type");
     var isAlias = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === ALIAS;
     var isDocument = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === DOC;
-    var isMap = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
+    var isMap2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
     var isPair = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === PAIR;
-    var isScalar = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
+    var isScalar2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
     var isSeq = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SEQ;
     function isCollection(node) {
       if (node && typeof node === "object")
@@ -66128,7 +66128,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node) => (isScalar(node) || isCollection(node)) && !!node.anchor;
+    var hasAnchor = (node) => (isScalar2(node) || isCollection(node)) && !!node.anchor;
     exports2.ALIAS = ALIAS;
     exports2.DOC = DOC;
     exports2.MAP = MAP;
@@ -66140,10 +66140,10 @@ var require_identity = __commonJS({
     exports2.isAlias = isAlias;
     exports2.isCollection = isCollection;
     exports2.isDocument = isDocument;
-    exports2.isMap = isMap;
+    exports2.isMap = isMap2;
     exports2.isNode = isNode;
     exports2.isPair = isPair;
-    exports2.isScalar = isScalar;
+    exports2.isScalar = isScalar2;
     exports2.isSeq = isSeq;
   }
 });
@@ -70245,9 +70245,9 @@ var require_resolve_flow_collection = __commonJS({
     var blockMsg = "Block collections are not allowed within flow collections";
     var isBlock = (token) => token && (token.type === "block-map" || token.type === "block-seq");
     function resolveFlowCollection({ composeNode, composeEmptyNode }, ctx, fc, onError, tag2) {
-      const isMap = fc.start.source === "{";
-      const fcName = isMap ? "flow map" : "flow sequence";
-      const NodeClass = tag2?.nodeClass ?? (isMap ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
+      const isMap2 = fc.start.source === "{";
+      const fcName = isMap2 ? "flow map" : "flow sequence";
+      const NodeClass = tag2?.nodeClass ?? (isMap2 ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
       const coll = new NodeClass(ctx.schema);
       coll.flow = true;
       const atRoot = ctx.atRoot;
@@ -70283,7 +70283,7 @@ var require_resolve_flow_collection = __commonJS({
             offset = props.end;
             continue;
           }
-          if (!isMap && ctx.options.strict && utilContainsNewline.containsNewline(key))
+          if (!isMap2 && ctx.options.strict && utilContainsNewline.containsNewline(key))
             onError(
               key,
               // checked by containsNewline()
@@ -70323,7 +70323,7 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep && !props.found) {
+        if (!isMap2 && !sep && !props.found) {
           const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
@@ -70346,7 +70346,7 @@ var require_resolve_flow_collection = __commonJS({
             startOnNewline: false
           });
           if (valueProps.found) {
-            if (!isMap && !props.found && ctx.options.strict) {
+            if (!isMap2 && !props.found && ctx.options.strict) {
               if (sep)
                 for (const st of sep) {
                   if (st === valueProps.found)
@@ -70378,7 +70378,7 @@ var require_resolve_flow_collection = __commonJS({
           const pair = new Pair.Pair(keyNode, valueNode);
           if (ctx.options.keepSourceTokens)
             pair.srcToken = collItem;
-          if (isMap) {
+          if (isMap2) {
             const map2 = coll;
             if (utilMapIncludes.mapIncludes(ctx, map2.items, keyNode))
               onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
@@ -70394,7 +70394,7 @@ var require_resolve_flow_collection = __commonJS({
           offset = valueNode ? valueNode.range[2] : valueProps.end;
         }
       }
-      const expectedEnd = isMap ? "}" : "]";
+      const expectedEnd = isMap2 ? "}" : "]";
       const [ce, ...ee] = fc.end;
       let cePos = offset;
       if (ce?.source === expectedEnd)
@@ -71677,7 +71677,7 @@ var require_cst = __commonJS({
     var FLOW_END = "";
     var SCALAR = "";
     var isCollection = (token) => !!token && "items" in token;
-    var isScalar = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
+    var isScalar2 = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
     function prettyToken(token) {
       switch (token) {
         case BOM:
@@ -71761,7 +71761,7 @@ var require_cst = __commonJS({
     exports2.FLOW_END = FLOW_END;
     exports2.SCALAR = SCALAR;
     exports2.isCollection = isCollection;
-    exports2.isScalar = isScalar;
+    exports2.isScalar = isScalar2;
     exports2.prettyToken = prettyToken;
     exports2.tokenType = tokenType;
   }
@@ -73274,7 +73274,7 @@ var require_public_api = __commonJS({
         return docs;
       return Object.assign([], { empty: true }, composer$1.streamInfo());
     }
-    function parseDocument(source, options = {}) {
+    function parseDocument2(source, options = {}) {
       const { lineCounter: lineCounter2, prettyErrors } = parseOptions(options);
       const parser$1 = new parser.Parser(lineCounter2?.addNewLine);
       const composer$1 = new composer.Composer(options);
@@ -73300,7 +73300,7 @@ var require_public_api = __commonJS({
       } else if (options === void 0 && reviver && typeof reviver === "object") {
         options = reviver;
       }
-      const doc = parseDocument(src, options);
+      const doc = parseDocument2(src, options);
       if (!doc)
         return null;
       doc.warnings.forEach((warning) => log.warn(doc.options.logLevel, warning));
@@ -73336,7 +73336,7 @@ var require_public_api = __commonJS({
     }
     exports2.parse = parse5;
     exports2.parseAllDocuments = parseAllDocuments2;
-    exports2.parseDocument = parseDocument;
+    exports2.parseDocument = parseDocument2;
     exports2.stringify = stringify2;
   }
 });
@@ -92263,6 +92263,93 @@ function resolveServiceCandidate(gateways, signals) {
   return best;
 }
 
+// src/lib/spec/normalize-openapi.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+var HTTP_METHODS = /* @__PURE__ */ new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
+function normalizeOpenApiYaml(content) {
+  const passthrough = { content, renamed: [], normalized: false };
+  let doc;
+  try {
+    doc = (0, import_yaml2.parseDocument)(content, { prettyErrors: false });
+  } catch {
+    return passthrough;
+  }
+  if (doc.errors.length > 0) return passthrough;
+  if (!(0, import_yaml2.isMap)(doc.contents)) return passthrough;
+  const paths = doc.get("paths", true);
+  if (!(0, import_yaml2.isMap)(paths)) return passthrough;
+  const seen = /* @__PURE__ */ new Set();
+  const renamed = [];
+  for (const pathPair of paths.items) {
+    const pathKey = scalarString(pathPair.key);
+    if (pathKey === void 0) continue;
+    const pathItem = pathPair.value;
+    if (!(0, import_yaml2.isMap)(pathItem)) continue;
+    for (const methodPair of pathItem.items) {
+      const method = scalarString(methodPair.key);
+      if (method === void 0) continue;
+      const methodLower = method.toLowerCase();
+      if (!HTTP_METHODS.has(methodLower)) continue;
+      const operation2 = methodPair.value;
+      if (!(0, import_yaml2.isMap)(operation2)) continue;
+      const opIdNode = operation2.get("operationId", true);
+      const originalId = (0, import_yaml2.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
+      const base = originalId && originalId.trim().length > 0 ? originalId : synthesizeOperationId(methodLower, pathKey);
+      let finalId = base;
+      if (seen.has(base)) {
+        const suffix = slugifyPath(pathKey);
+        let candidate = suffix.length > 0 ? `${base}_${suffix}` : `${base}_${methodLower}`;
+        let counter = 2;
+        while (seen.has(candidate)) {
+          candidate = suffix.length > 0 ? `${base}_${suffix}_${counter}` : `${base}_${methodLower}_${counter}`;
+          counter += 1;
+        }
+        finalId = candidate;
+      }
+      seen.add(finalId);
+      if (finalId !== originalId) {
+        renamed.push({ path: pathKey, method: methodLower, original: originalId, renamed: finalId });
+        setOperationId(operation2, finalId);
+      }
+    }
+  }
+  if (renamed.length === 0) {
+    return { content, renamed: [], normalized: true };
+  }
+  return { content: String(doc), renamed, normalized: true };
+}
+function scalarString(node) {
+  if ((0, import_yaml2.isScalar)(node) && typeof node.value === "string") return node.value;
+  if (typeof node === "string") return node;
+  return void 0;
+}
+function setOperationId(operation2, value) {
+  const existing = operation2.get("operationId", true);
+  if ((0, import_yaml2.isScalar)(existing)) {
+    existing.value = value;
+    return;
+  }
+  operation2.set("operationId", value);
+}
+function synthesizeOperationId(method, pathKey) {
+  const pascal = pathKey.split("/").filter((segment) => segment.length > 0).map(stripTemplate).map(toPascalCase).join("");
+  return pascal.length > 0 ? `${method}${pascal}` : method;
+}
+function stripTemplate(segment) {
+  if (segment.startsWith("{") && segment.endsWith("}")) {
+    return segment.slice(1, -1);
+  }
+  return segment;
+}
+function toPascalCase(segment) {
+  const cleaned = segment.replace(/[^A-Za-z0-9]+/g, " ").trim();
+  if (cleaned.length === 0) return "";
+  return cleaned.split(/\s+/).map((word) => word.length === 0 ? "" : word[0].toUpperCase() + word.slice(1)).join("");
+}
+function slugifyPath(pathKey) {
+  return pathKey.split("/").filter((segment) => segment.length > 0).map(stripTemplate).map((segment) => segment.replace(/[^A-Za-z0-9]+/g, "_")).filter((segment) => segment.length > 0).join("_");
+}
+
 // src/lib/providers/registry.ts
 var PROBE_TIMEOUT_MS = 3e3;
 function withTimeout(promise, ms) {
@@ -92333,13 +92420,23 @@ var ApiGatewayProvider = class {
   async exportSpec(candidate, options) {
     const gatewayType = candidate.meta.gatewayType;
     const stage = options.stage ?? candidate.meta.stage;
-    const content = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : await this.client.exportHttpApi(candidate.id, stage);
+    const rawContent = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : await this.client.exportHttpApi(candidate.id, stage);
+    const normalized = safeNormalizeOpenApi(rawContent);
+    const evidence = [`Exported ${gatewayType} API ${candidate.id} via API Gateway`];
+    if (normalized.renamed.length > 0) {
+      evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
+      if (this.options.onOperationIdRenamed) {
+        for (const rename of normalized.renamed) {
+          this.options.onOperationIdRenamed({ ...rename, candidateId: candidate.id });
+        }
+      }
+    }
     return {
-      content,
+      content: normalized.content,
       format: "openapi-yaml",
       filename: "index.yaml",
       stage,
-      evidence: [`Exported ${gatewayType} API ${candidate.id} via API Gateway`]
+      evidence
     };
   }
   toCandidate(api, gatewayType) {
@@ -92353,6 +92450,14 @@ var ApiGatewayProvider = class {
     };
   }
 };
+function safeNormalizeOpenApi(content) {
+  try {
+    const result = normalizeOpenApiYaml(content);
+    return { content: result.content, renamed: result.renamed };
+  } catch {
+    return { content, renamed: [] };
+  }
+}
 
 // src/lib/providers/appsync.ts
 var AppSyncProvider = class {
@@ -92435,7 +92540,7 @@ var EventBridgeSchemasProvider = class {
 };
 
 // src/lib/providers/cloudformation.ts
-var import_yaml2 = __toESM(require_dist(), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
 var CFN_CUSTOM_TAGS = [
   "!Ref",
   "!Sub",
@@ -92513,7 +92618,7 @@ var CloudFormationProvider = class {
         process.emitWarning = (() => {
         });
         try {
-          template = (0, import_yaml2.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+          template = (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
         } finally {
           process.emitWarning = originalWarn;
         }
@@ -92741,12 +92846,12 @@ var SsmProvider = class {
 var import_node_child_process = require("node:child_process");
 var import_promises6 = require("node:fs/promises");
 var import_node_path7 = __toESM(require("node:path"), 1);
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
 var import_promises4 = require("node:fs/promises");
 var import_node_path4 = __toESM(require("node:path"), 1);
-var import_yaml3 = __toESM(require_dist(), 1);
+var import_yaml4 = __toESM(require_dist(), 1);
 async function detectCatalogApis(repoRoot) {
   const candidates = ["catalog-info.yaml", "catalog-info.yml"];
   let content;
@@ -92760,7 +92865,7 @@ async function detectCatalogApis(repoRoot) {
   if (!content) return void 0;
   let docs;
   try {
-    docs = (0, import_yaml3.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+    docs = (0, import_yaml4.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
   } catch {
     return void 0;
   }
@@ -92808,7 +92913,7 @@ function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
 // src/lib/providers/sns-code-derived.ts
 var import_promises5 = require("node:fs/promises");
 var import_node_path6 = __toESM(require("node:path"), 1);
-var import_yaml4 = __toESM(require_dist(), 1);
+var import_yaml5 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
 var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
@@ -92941,7 +93046,7 @@ function parseStaticJavaSnsAnnotation(content, topicHints) {
 }
 function detectAsyncApiFormat(content, filePath) {
   try {
-    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
     if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
       return void 0;
     }
@@ -93309,7 +93414,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
   }
   let parsed;
   try {
-    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml6.parse)(content);
   } catch {
     return content;
   }
@@ -93361,7 +93466,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
       }
     }
   }
-  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml5.stringify)(document);
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml6.stringify)(document);
 }
 var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
 var SPEC_POINTER_FILENAME = "spec-pointer.json";
@@ -93506,7 +93611,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
     if (!content) continue;
     let parsed;
     try {
-      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
     } catch {
       continue;
     }
@@ -93561,7 +93666,7 @@ function detectFormat2(content, filenameHint) {
   } catch {
   }
   try {
-    const parsed = (0, import_yaml5.parse)(trimmed);
+    const parsed = (0, import_yaml6.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
@@ -93573,7 +93678,7 @@ function parseStructuredDocument(value) {
   try {
     return JSON.parse(value);
   } catch {
-    return (0, import_yaml5.parse)(value);
+    return (0, import_yaml6.parse)(value);
   }
 }
 function getSchemaByRef(document, ref) {
@@ -93799,7 +93904,7 @@ function canonicalPayloadSchema(canonical) {
   }
   if (canonical.format === "asyncapi-yaml") {
     try {
-      return extractAsyncApiPayloadSchema((0, import_yaml5.parse)(canonical.content));
+      return extractAsyncApiPayloadSchema((0, import_yaml6.parse)(canonical.content));
     } catch {
       return { payloadSchema: { type: "object" } };
     }
@@ -94018,7 +94123,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
         evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
@@ -95002,6 +95107,23 @@ async function defaultWriteSpecFile(outputPath, content) {
   await (0, import_promises7.mkdir)(import_node_path8.default.dirname(outputPath), { recursive: true });
   await (0, import_promises7.writeFile)(outputPath, content, "utf8");
 }
+function normalizeApiGatewaySpec(body, candidate, reporter) {
+  let result;
+  try {
+    result = normalizeOpenApiYaml(body);
+  } catch (error2) {
+    reporter.warning(
+      userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error2)}`)
+    );
+    return body;
+  }
+  if (!result.normalized || result.renamed.length === 0) return body;
+  for (const rename of result.renamed) {
+    const from = rename.original === null ? "<missing>" : rename.original;
+    reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+  }
+  return result.content;
+}
 async function selectStage(aws, candidate, preferredStage) {
   if (preferredStage) {
     return preferredStage;
@@ -95216,7 +95338,8 @@ async function runDiscovery(inputs, dependencies) {
           continue;
         }
         const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
-        const specBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
+        const rawSpecBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
+        const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         summary.exported += 1;
         discovered.push({
@@ -95424,7 +95547,12 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
     const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, "output-dir");
     try {
-      const body = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
+      const rawBody = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
+      const body = normalizeApiGatewaySpec(
+        rawBody,
+        { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
+        actionCore
+      );
       await writeSpecFile(absoluteSpecPath, body);
       selectedSource.specPath = relativeSpecPath;
     } catch (error2) {
