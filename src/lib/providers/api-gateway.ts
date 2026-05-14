@@ -1,10 +1,23 @@
 import type { GatewayType } from '../../contracts.js';
 import type { AwsGatewayClient, HttpApiSummary, RestApiSummary } from '../aws/client.js';
+import { normalizeOpenApiYaml } from '../spec/normalize-openapi.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 export interface ApiGatewayProviderOptions {
   includeV2: boolean;
   apiFilter?: RegExp;
+  /**
+   * Optional hook invoked for each rewritten operationId so callers can
+   * log the diff. We pass the original method/path so the message stays
+   * actionable even when nothing else about the candidate is logged.
+   */
+  onOperationIdRenamed?: (rename: {
+    path: string;
+    method: string;
+    original: string | null;
+    renamed: string;
+    candidateId: string;
+  }) => void;
 }
 
 export class ApiGatewayProvider implements SpecProvider {
@@ -45,17 +58,28 @@ export class ApiGatewayProvider implements SpecProvider {
     const gatewayType = candidate.meta.gatewayType as GatewayType;
     const stage = options.stage ?? candidate.meta.stage;
 
-    const content =
+    const rawContent =
       gatewayType === 'REST'
         ? await this.client.exportRestApi(candidate.id, stage ?? '')
         : await this.client.exportHttpApi(candidate.id, stage);
 
+    const normalized = safeNormalizeOpenApi(rawContent);
+    const evidence = [`Exported ${gatewayType} API ${candidate.id} via API Gateway`];
+    if (normalized.renamed.length > 0) {
+      evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
+      if (this.options.onOperationIdRenamed) {
+        for (const rename of normalized.renamed) {
+          this.options.onOperationIdRenamed({ ...rename, candidateId: candidate.id });
+        }
+      }
+    }
+
     return {
-      content,
+      content: normalized.content,
       format: 'openapi-yaml',
       filename: 'index.yaml',
       stage,
-      evidence: [`Exported ${gatewayType} API ${candidate.id} via API Gateway`]
+      evidence
     };
   }
 
@@ -68,5 +92,18 @@ export class ApiGatewayProvider implements SpecProvider {
       evidence: [],
       meta: { gatewayType }
     };
+  }
+}
+
+// Run the normalizer but treat any unexpected error as a soft fail.
+// If we throw here the export step fails outright, which is strictly
+// worse than letting the original spec through and letting bootstrap's
+// validator surface the underlying problem.
+function safeNormalizeOpenApi(content: string): { content: string; renamed: { path: string; method: string; original: string | null; renamed: string }[] } {
+  try {
+    const result = normalizeOpenApiYaml(content);
+    return { content: result.content, renamed: result.renamed };
+  } catch {
+    return { content, renamed: [] };
   }
 }
