@@ -71,6 +71,31 @@ When a topic has HTTP or HTTPS subscriptions, a supplementary **webhook sidecar*
 - **resolve-one**: API Gateway and SNS are peer sources when SNS IaC signals are present. The resolver compares the best API Gateway and SNS candidates by confidence, selects the higher-confidence source, and applies deterministic tie-breaks: repo-local SNS origins (`repo-asyncapi`, `repo-json-schema`) win ties, while SSM-backed SNS contracts lose ties to API Gateway. Topics whose resolution produces a `manual-review` result are skipped (the next topic is tried).
 - **discover-many**: SNS runs alongside all other providers. Every discovered topic gets exported, including those that produce `manual-review` results.
 
+### OpenAPI normalization (API Gateway exports)
+
+API Gateway populates `operationId` from each integration's request name,
+which is often the bare HTTP method (`get`, `update`, `post`) or omitted
+entirely. That yields specs with duplicate or missing `operationId` values,
+which fail OpenAPI 3.x validation (every operation must have a unique
+`operationId`) and are rejected downstream by the Postman bootstrap action
+with `CONTRACT_SPEC_VALIDATION_FAILED`.
+
+After every API Gateway export the action runs a deterministic normalizer
+on the OpenAPI document before writing it to disk:
+
+- Operations whose `operationId` is empty get one synthesized from method
+  and path (e.g. `getV1OrdersOrderId`).
+- The first occurrence of any `operationId` is preserved verbatim, so
+  existing references stay valid.
+- Subsequent duplicates are renamed `<base>_<slugifiedPath>`
+  (e.g. `update` -> `update_v1_account`). Further collisions fall back to
+  a numeric tiebreaker (`update_v1_account_2`).
+
+Every rewrite is logged with the path and method so the diff against the
+raw AWS export is visible in the action run. Normalization is best-effort:
+if the document is not OpenAPI (or fails to parse), the raw spec is written
+unchanged and the bootstrap action's validator remains the source of truth.
+
 ## Security
 
 This action is read-only against AWS APIs and does not mutate AWS resources.
