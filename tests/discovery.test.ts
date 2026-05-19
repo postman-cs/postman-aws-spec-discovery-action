@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,7 +7,7 @@ import type { DiscoveredService } from '../src/contracts.js';
 import { readActionInputs, resolveInputs, runDiscovery, runAction } from '../src/index.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import { parseCliArgs, toDotenv } from '../src/cli.js';
-import { findExistingRepoSpec } from '../src/lib/repo/specs.js';
+import { findExistingRepoSpec, findExistingRepoSpecTyped } from '../src/lib/repo/specs.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
 import { chooseSource } from '../src/lib/resolve/source-selector.js';
@@ -1353,6 +1353,160 @@ describe('SNS runtime integration', () => {
   });
 });
 
+describe('provider-agnostic resolve-one', () => {
+  function createGenericProvider(type: Exclude<SpecProvider['type'], 'api-gateway' | 'sns'>, format = 'graphql-sdl'): SpecProvider {
+    return {
+      type,
+      probe: vi.fn().mockResolvedValue(true),
+      listCandidates: vi.fn().mockResolvedValue([
+        {
+          id: `${type}/orders-api`,
+          name: 'orders-api',
+          providerType: type,
+          tags: {},
+          evidence: [`${type} candidate`],
+          meta: {}
+        }
+      ]),
+      exportSpec: vi.fn().mockResolvedValue({
+        content: format === 'graphql-sdl' ? 'type Query { ok: String }' : '{"type":"object"}',
+        format,
+        filename: format === 'graphql-sdl' ? 'schema.graphql' : 'index.json',
+        evidence: [`${type} exported`]
+      })
+    } as SpecProvider;
+  }
+
+  it.each([
+    ['appsync', 'appsync-schema', 'graphql-sdl'],
+    ['eventbridge-schemas', 'eventbridge-schema', 'json-schema'],
+    ['cloudformation', 'cfn-embedded', 'openapi-json'],
+    ['glue', 'glue-schema', 'json-schema'],
+    ['ssm', 'ssm-registry', 'openapi-json'],
+    ['lambda-url', 'lambda-url-export', 'openapi-yaml']
+  ] as const)('selects %s candidates in resolve-one', async (providerType, sourceType, format) => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'provider-resolution-'));
+    try {
+      const writes = new Map<string, string>();
+      const provider = createGenericProvider(providerType, format);
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders-api',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        async (outputPath, content) => {
+          writes.set(outputPath.replace(/\\/g, '/'), content);
+        },
+        { providers: [provider] }
+      );
+
+      expect(result.sourceType).toBe(sourceType);
+      expect(result.providerType).toBe(providerType);
+      expect(result.specFormat).toBe(format);
+      expect([...writes.keys()].some((file) => file.includes('/discovered-specs/orders-api/'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('uses API Gateway custom domain mappings as resolution evidence', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'domain-resolution-'));
+    try {
+      await writeFile(path.join(tempDir, 'README.md'), 'Production API: https://api.orders.test/v1', 'utf8');
+      const awsClient = createAwsClientStub({
+        listRestDomainMappings: vi.fn().mockResolvedValue([
+          { domainName: 'api.orders.test', apiId: 'rest-1', basePath: 'v1', stage: 'prod', gatewayType: 'REST' }
+        ]),
+        getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-api' }),
+        getRestTags: vi.fn().mockResolvedValue({}),
+        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        awsClient,
+        createCoreStub().core,
+        vi.fn().mockResolvedValue(undefined)
+      );
+
+      expect(result.sourceType).toBe('gateway-export');
+      expect(result.gatewayId).toBe('rest-1');
+      expect(result.evidence).toContain('Matched API Gateway custom domain api.orders.test to API rest-1');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('routes explicit WebSocket API Gateway IDs to manual review instead of OpenAPI export', async () => {
+    const result = await runResolution(
+      {
+        mode: 'resolve-one',
+        awsRegion: 'us-east-1',
+        repoRoot: '.',
+        repoContext: { provider: 'github', repoSlug: 'postman/ws-api' },
+        expectedServiceName: 'ws-api',
+        expectedGatewayIds: ['ws-1'],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: true,
+        preflightPermissionProbe: true,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: true
+      },
+      createAwsClientStub({
+        getHttpApi: vi.fn().mockResolvedValue({ id: 'ws-1', name: 'ws-api', protocolType: 'WEBSOCKET' }),
+        getHttpTags: vi.fn().mockResolvedValue({})
+      }),
+      createCoreStub().core,
+      vi.fn().mockResolvedValue(undefined)
+    );
+
+    expect(result.sourceType).toBe('manual-review');
+    expect(result.evidence).toContain('API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required');
+  });
+});
+
 describe('runAction', () => {
   it('emits resolution outputs in resolve-one mode', async () => {
     const { core, outputs } = createCoreStub({
@@ -1544,6 +1698,26 @@ describe('hardening helpers', () => {
       const result = await findExistingRepoSpec(tempDir);
 
       expect(result).toBe('openapi.json');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('finds common non-OpenAPI repo spec artifacts with formats', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-spec-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'packages', 'orders'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'packages', 'orders', 'asyncapi.yaml'),
+        'asyncapi: "2.6.0"\ninfo:\n  title: Orders\n  version: "1.0.0"\nchannels: {}',
+        'utf8'
+      );
+
+      const result = await findExistingRepoSpecTyped(tempDir);
+
+      expect(result?.path).toBe('packages/orders/asyncapi.yaml');
+      expect(result?.type).toBe('asyncapi');
+      expect(result?.format).toBe('asyncapi-yaml');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

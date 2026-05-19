@@ -1,6 +1,8 @@
 import {
   APIGatewayClient,
   GetExportCommand,
+  GetBasePathMappingsCommand,
+  GetDomainNamesCommand as GetRestDomainNamesCommand,
   GetRestApiCommand,
   GetRestApisCommand,
   GetStagesCommand as GetRestStagesCommand,
@@ -10,8 +12,10 @@ import {
 import {
   ApiGatewayV2Client,
   ExportApiCommand,
+  GetApiMappingsCommand,
   GetApiCommand,
   GetApisCommand,
+  GetDomainNamesCommand as GetHttpDomainNamesCommand,
   GetStagesCommand as GetHttpStagesCommand,
   GetTagsCommand as GetHttpTagsCommand
 } from '@aws-sdk/client-apigatewayv2';
@@ -29,6 +33,14 @@ export interface HttpApiSummary {
   protocolType: string;
 }
 
+export interface GatewayDomainMapping {
+  domainName: string;
+  apiId: string;
+  basePath?: string;
+  stage?: string;
+  gatewayType: 'REST' | 'HTTP' | 'WEBSOCKET';
+}
+
 export interface AwsGatewayClient {
   listRestApis(): Promise<RestApiSummary[]>;
   listHttpApis(): Promise<HttpApiSummary[]>;
@@ -42,6 +54,9 @@ export interface AwsGatewayClient {
   exportHttpApi(apiId: string, stage?: string): Promise<string>;
   getCallerIdentity(): Promise<{ accountId?: string; arn?: string }>;
   probeApiGatewayReadAccess(): Promise<void>;
+  probeHttpApiGatewayReadAccess?(): Promise<void>;
+  listRestDomainMappings?(): Promise<GatewayDomainMapping[]>;
+  listHttpDomainMappings?(): Promise<GatewayDomainMapping[]>;
 }
 
 export interface AwsClientOptions {
@@ -164,6 +179,75 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       nextToken = response.NextToken;
     } while (nextToken);
     return items;
+  }
+
+  public async listRestDomainMappings(): Promise<GatewayDomainMapping[]> {
+    const mappings: GatewayDomainMapping[] = [];
+    let position: string | undefined;
+    do {
+      const domains = await this.restClient.send(new GetRestDomainNamesCommand({ position }));
+      for (const domain of domains.items ?? []) {
+        const domainName = domain.domainName;
+        if (!domainName) continue;
+        let basePathPosition: string | undefined;
+        do {
+          const response = await this.restClient.send(
+            new GetBasePathMappingsCommand({
+              domainName,
+              position: basePathPosition
+            })
+          );
+          for (const mapping of response.items ?? []) {
+            if (!mapping.restApiId) continue;
+            mappings.push({
+              domainName,
+              apiId: mapping.restApiId,
+              basePath: mapping.basePath,
+              stage: mapping.stage,
+              gatewayType: 'REST'
+            });
+          }
+          basePathPosition = response.position;
+        } while (basePathPosition);
+      }
+      position = domains.position;
+    } while (position);
+    return mappings;
+  }
+
+  public async listHttpDomainMappings(): Promise<GatewayDomainMapping[]> {
+    const mappings: GatewayDomainMapping[] = [];
+    let nextToken: string | undefined;
+    do {
+      const domains = await this.httpClient.send(new GetHttpDomainNamesCommand({ NextToken: nextToken }));
+      for (const domain of domains.Items ?? []) {
+        const domainName = domain.DomainName;
+        if (!domainName) continue;
+        let mappingToken: string | undefined;
+        do {
+          const response = await this.httpClient.send(
+            new GetApiMappingsCommand({
+              DomainName: domainName,
+              NextToken: mappingToken
+            })
+          );
+          for (const mapping of response.Items ?? []) {
+            if (!mapping.ApiId) continue;
+            const api = await this.getHttpApi(mapping.ApiId).catch(() => undefined);
+            mappings.push({
+              domainName,
+              apiId: mapping.ApiId,
+              basePath: mapping.ApiMappingKey,
+              stage: mapping.Stage,
+              gatewayType: api?.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP'
+            });
+          }
+          mappingToken = response.NextToken;
+        } while (mappingToken);
+      }
+      nextToken = domains.NextToken;
+    } while (nextToken);
+    return mappings;
   }
 
   public async getRestApi(apiId: string): Promise<RestApiSummary | undefined> {
@@ -295,6 +379,14 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
     await this.restClient.send(
       new GetRestApisCommand({
         limit: 1
+      })
+    );
+  }
+
+  public async probeHttpApiGatewayReadAccess(): Promise<void> {
+    await this.httpClient.send(
+      new GetApisCommand({
+        MaxResults: '1'
       })
     );
   }

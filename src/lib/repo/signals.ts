@@ -8,6 +8,8 @@ export interface RepoSignals {
   serviceHints: string[];
   explicitGatewayIdHints: string[];
   inferredGatewayIdHints: string[];
+  customDomainHints?: string[];
+  lambdaUrlHints?: string[];
   evidence: string[];
   /** Providers hinted at by repo contents (IaC files, schema files, etc.). */
   providerHints?: ProviderType[];
@@ -31,6 +33,40 @@ function extractGatewayIds(content: string): string[] {
       if (value) {
         matches.push(value);
       }
+    }
+  }
+  return unique(matches);
+}
+
+function extractCustomDomainHints(content: string): string[] {
+  const matches: string[] = [];
+  const urlPattern = /https?:\/\/([a-z0-9][a-z0-9.-]+\.[a-z]{2,})(?:[/:?#]|$)/gi;
+  for (const match of content.matchAll(urlPattern)) {
+    const host = (match[1] ?? '').trim().toLowerCase();
+    if (!host || host.includes('amazonaws.com') || host.includes('example.com') || host.endsWith('.on.aws')) {
+      continue;
+    }
+    matches.push(host);
+  }
+
+  const envPattern = /\b(?:API_CUSTOM_DOMAIN|CUSTOM_DOMAIN|API_DOMAIN|DOMAIN_NAME|DomainName|domainName)\s*[:=]\s*["']?([a-z0-9][a-z0-9.-]+\.[a-z]{2,})\b/gi;
+  for (const match of content.matchAll(envPattern)) {
+    const host = (match[1] ?? '').trim().toLowerCase();
+    if (host && !host.includes('amazonaws.com') && !host.includes('example.com') && !host.endsWith('.on.aws')) {
+      matches.push(host);
+    }
+  }
+
+  return unique(matches);
+}
+
+function extractLambdaUrlHints(content: string): string[] {
+  const matches: string[] = [];
+  const urlPattern = /\b([a-z0-9-]+\.lambda-url\.[a-z0-9-]+\.on\.aws)\b/gi;
+  for (const match of content.matchAll(urlPattern)) {
+    const host = (match[1] ?? '').trim().toLowerCase();
+    if (host) {
+      matches.push(host);
     }
   }
   return unique(matches);
@@ -86,6 +122,16 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /aws\.apigatewayv2\.Api/i, provider: 'api-gateway' },
   { pattern: /aws\.appsync\.GraphQLApi/i, provider: 'appsync' },
   { pattern: /aws\.sns\.Topic/i, provider: 'sns' },
+
+  // Lambda Function URL patterns
+  { pattern: /AWS::Lambda::Url\b/i, provider: 'lambda-url' },
+  { pattern: /\bFunctionUrlConfig\s*:/i, provider: 'lambda-url' },
+  { pattern: /resource\s+"aws_lambda_function_url"/i, provider: 'lambda-url' },
+  { pattern: /\.addFunctionUrl\s*\(/i, provider: 'lambda-url' },
+  { pattern: /aws-cdk-lib\/aws-lambda[^"']*FunctionUrl/i, provider: 'lambda-url' },
+  { pattern: /\bFunctionUrlAuthType\b/i, provider: 'lambda-url' },
+  { pattern: /aws\.lambda\.FunctionUrl/i, provider: 'lambda-url' },
+  { pattern: /\.lambda-url\.[a-z0-9-]+\.on\.aws/i, provider: 'lambda-url' },
 ];
 
 function detectSnsEventBridgeBridgePattern(content: string): boolean {
@@ -143,6 +189,8 @@ export async function collectRepoSignals(
     inferServiceNameFromRepoSlug(repoSlug) ?? ''
   ]);
   const inferredGatewayHints: string[] = [];
+  const customDomainHints: string[] = [];
+  const lambdaUrlHints: string[] = [];
   const evidence: string[] = [];
   const providerHintSet = new Set<ProviderType>();
   const snsEvidenceRoots = new Set<string>();
@@ -166,6 +214,17 @@ export async function collectRepoSignals(
       if (extracted.length > 0) {
         inferredGatewayHints.push(...extracted);
         evidence.push(`Found gateway ID hints in ${file}`);
+      }
+      const domains = extractCustomDomainHints(content);
+      if (domains.length > 0) {
+        customDomainHints.push(...domains);
+        evidence.push(`Found API custom domain hints in ${file}`);
+      }
+      const lambdaHosts = extractLambdaUrlHints(content);
+      if (lambdaHosts.length > 0) {
+        lambdaUrlHints.push(...lambdaHosts);
+        providerHintSet.add('lambda-url');
+        evidence.push(`Found Lambda Function URL host hints in ${file}`);
       }
       if (shouldDetectProviderHintsForFile(file)) {
         for (const hint of detectProviderHints(content)) {
@@ -209,6 +268,17 @@ export async function collectRepoSignals(
       inferredGatewayHints.push(...extracted);
       evidence.push(`Found gateway ID hints in ${filePath}`);
     }
+    const domains = extractCustomDomainHints(content);
+    if (domains.length > 0) {
+      customDomainHints.push(...domains);
+      evidence.push(`Found API custom domain hints in ${toEvidencePath(repoRoot, filePath)}`);
+    }
+    const lambdaHosts = extractLambdaUrlHints(content);
+    if (lambdaHosts.length > 0) {
+      lambdaUrlHints.push(...lambdaHosts);
+      providerHintSet.add('lambda-url');
+      evidence.push(`Found Lambda Function URL host hints in ${toEvidencePath(repoRoot, filePath)}`);
+    }
     for (const hint of detectProviderHints(content)) {
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
@@ -230,6 +300,17 @@ export async function collectRepoSignals(
     for (const filePath of cdkFiles) {
       const content = await readFile(filePath, 'utf8').catch(() => '');
       if (!content) continue;
+      const domains = extractCustomDomainHints(content);
+      if (domains.length > 0) {
+        customDomainHints.push(...domains);
+        evidence.push(`Found API custom domain hints in ${toEvidencePath(repoRoot, filePath)}`);
+      }
+      const lambdaHosts = extractLambdaUrlHints(content);
+      if (lambdaHosts.length > 0) {
+        lambdaUrlHints.push(...lambdaHosts);
+        providerHintSet.add('lambda-url');
+        evidence.push(`Found Lambda Function URL host hints in ${toEvidencePath(repoRoot, filePath)}`);
+      }
       for (const hint of detectProviderHints(content)) {
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
@@ -254,6 +335,17 @@ export async function collectRepoSignals(
     for (const filePath of pulumiFiles) {
       const content = await readFile(filePath, 'utf8').catch(() => '');
       if (!content) continue;
+      const domains = extractCustomDomainHints(content);
+      if (domains.length > 0) {
+        customDomainHints.push(...domains);
+        evidence.push(`Found API custom domain hints in ${toEvidencePath(repoRoot, filePath)}`);
+      }
+      const lambdaHosts = extractLambdaUrlHints(content);
+      if (lambdaHosts.length > 0) {
+        lambdaUrlHints.push(...lambdaHosts);
+        providerHintSet.add('lambda-url');
+        evidence.push(`Found Lambda Function URL host hints in ${toEvidencePath(repoRoot, filePath)}`);
+      }
       for (const hint of detectProviderHints(content)) {
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
@@ -293,6 +385,8 @@ export async function collectRepoSignals(
     serviceHints: unique(serviceHints),
     explicitGatewayIdHints: unique(expectedGatewayIds),
     inferredGatewayIdHints: unique(inferredGatewayHints),
+    customDomainHints: unique(customDomainHints),
+    lambdaUrlHints: unique(lambdaUrlHints),
     evidence: unique(evidence),
     providerHints: [...providerHintSet]
   };

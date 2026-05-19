@@ -17,6 +17,7 @@ import { AppSyncProvider } from '../src/lib/providers/appsync.js';
 import { EventBridgeSchemasProvider } from '../src/lib/providers/eventbridge-schemas.js';
 import { CloudFormationProvider } from '../src/lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from '../src/lib/providers/glue.js';
+import { LambdaUrlProvider } from '../src/lib/providers/lambda-url.js';
 import { SnsProvider } from '../src/lib/providers/sns.js';
 import { resolveCodeDerivedContract } from '../src/lib/providers/sns-code-derived.js';
 import { SnsSdkClient } from '../src/lib/aws/sns-client.js';
@@ -25,6 +26,7 @@ import type { AppSyncSpecClient } from '../src/lib/aws/appsync-client.js';
 import type { EventBridgeSchemasSpecClient } from '../src/lib/aws/schemas-client.js';
 import type { CloudFormationSpecClient } from '../src/lib/aws/cloudformation-client.js';
 import type { GlueSchemaSpecClient } from '../src/lib/aws/glue-client.js';
+import type { LambdaSpecClient } from '../src/lib/aws/lambda-client.js';
 import type { SnsSpecClient } from '../src/lib/aws/sns-client.js';
 import type { SsmSpecClient } from '../src/lib/aws/ssm-client.js';
 import type { SpecCandidate } from '../src/lib/providers/types.js';
@@ -105,6 +107,16 @@ function createGlueClientStub(overrides: Partial<GlueSchemaSpecClient> = {}): Gl
   };
 }
 
+function createLambdaClientStub(overrides: Partial<LambdaSpecClient> = {}): LambdaSpecClient {
+  return {
+    listFunctions: vi.fn().mockResolvedValue([]),
+    getFunctionUrlConfig: vi.fn().mockResolvedValue(undefined),
+    getTags: vi.fn().mockResolvedValue({}),
+    probe: vi.fn().mockResolvedValue(true),
+    ...overrides
+  };
+}
+
 function createSnsClientStub(overrides: Partial<SnsSpecClient> = {}): SnsSpecClient {
   return {
     probe: vi.fn().mockResolvedValue(true),
@@ -164,7 +176,7 @@ describe('ProviderRegistry', () => {
 });
 
 describe('ApiGatewayProvider', () => {
-  it('lists REST and HTTP candidates including WebSocket', async () => {
+  it('lists REST and HTTP candidates and skips WebSocket OpenAPI export candidates', async () => {
     const client = createGatewayClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'my-rest' }]),
       listHttpApis: vi.fn().mockResolvedValue([
@@ -175,8 +187,8 @@ describe('ApiGatewayProvider', () => {
     const provider = new ApiGatewayProvider(client, { includeV2: true });
 
     const candidates = await provider.listCandidates();
-    expect(candidates).toHaveLength(3);
-    expect(candidates.map((c) => c.meta.gatewayType)).toEqual(['REST', 'HTTP', 'WEBSOCKET']);
+    expect(candidates).toHaveLength(2);
+    expect(candidates.map((c) => c.meta.gatewayType)).toEqual(['REST', 'HTTP']);
   });
 
   it('filters out v2 APIs when includeV2 is false', async () => {
@@ -189,6 +201,22 @@ describe('ApiGatewayProvider', () => {
     const candidates = await provider.listCandidates();
     expect(candidates).toHaveLength(1);
     expect(candidates[0]?.meta.gatewayType).toBe('REST');
+  });
+
+  it('treats HTTP API access as available when REST probing is denied', async () => {
+    const client = createGatewayClientStub({
+      probeApiGatewayReadAccess: vi.fn().mockRejectedValue(new Error('rest denied')),
+      probeHttpApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
+      listRestApis: vi.fn().mockRejectedValue(new Error('rest denied')),
+      listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'my-http', protocolType: 'HTTP' }])
+    });
+    const provider = new ApiGatewayProvider(client, { includeV2: true });
+
+    await expect(provider.probe()).resolves.toBe(true);
+    const candidates = await provider.listCandidates();
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.id).toBe('http-1');
   });
 
   it('exports REST API spec', async () => {
@@ -269,9 +297,22 @@ describe('EventBridgeSchemasProvider', () => {
       { id: 'reg/schema', name: 'OrderCreated', providerType: 'eventbridge-schemas', tags: {}, evidence: [], meta: { registryName: 'custom', schemaName: 'OrderCreated', arn: 'arn:1' } },
       {}
     );
-    expect(result.format).toBe('json-schema');
+    expect(result.format).toBe('openapi-json');
     expect(result.filename).toBe('index.json');
     expect(result.content).toContain('openapi');
+  });
+
+  it('keeps JSON Schema content labeled as json-schema', async () => {
+    const client = createSchemasClientStub({
+      describeSchema: vi.fn().mockResolvedValue({ content: '{"type":"object","properties":{}}', schemaVersion: '1' })
+    });
+    const provider = new EventBridgeSchemasProvider(client);
+
+    const result = await provider.exportSpec(
+      { id: 'reg/schema', name: 'OrderCreated', providerType: 'eventbridge-schemas', tags: {}, evidence: [], meta: { registryName: 'custom', schemaName: 'OrderCreated', arn: 'arn:1' } },
+      {}
+    );
+    expect(result.format).toBe('json-schema');
   });
 });
 
@@ -317,6 +358,69 @@ describe('CloudFormationProvider', () => {
     expect(JSON.parse(result.content)).toHaveProperty('openapi', '3.0.1');
   });
 
+  it('extracts OpenAPI spec from local SAM DefinitionUri', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'cfn-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'openapi.yaml'), 'openapi: 3.0.1\ninfo:\n  title: local\n  version: "1.0"\npaths: {}', 'utf8');
+      const template = JSON.stringify({
+        Resources: {
+          MyApi: {
+            Type: 'AWS::Serverless::Api',
+            Properties: {
+              DefinitionUri: './openapi.yaml'
+            }
+          }
+        }
+      });
+      const client = createCfnClientStub({
+        getTemplate: vi.fn().mockResolvedValue(template)
+      });
+      const provider = new CloudFormationProvider(client, tempDir);
+
+      const result = await provider.exportSpec(
+        { id: 'stack/MyApi', name: 'MyApi', providerType: 'cloudformation', tags: {}, evidence: [], meta: { stackName: 'my-stack', logicalId: 'MyApi', physicalId: 'rest-1', resourceType: 'AWS::Serverless::Api' } },
+        {}
+      );
+
+      expect(result.content).toContain('openapi: 3.0.1');
+      expect(result.format).toBe('openapi-yaml');
+      expect(result.filename).toBe('index.yaml');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('extracts OpenAPI spec from S3 BodyS3Location when an S3 client is available', async () => {
+    const template = JSON.stringify({
+      Resources: {
+        MyApi: {
+          Type: 'AWS::ApiGateway::RestApi',
+          Properties: {
+            BodyS3Location: {
+              Bucket: 'spec-bucket',
+              Key: 'orders/openapi.json'
+            }
+          }
+        }
+      }
+    });
+    const client = createCfnClientStub({
+      getTemplate: vi.fn().mockResolvedValue(template)
+    });
+    const s3Client = {
+      getObject: vi.fn().mockResolvedValue('{"openapi":"3.0.1","info":{"title":"s3","version":"1.0"},"paths":{}}')
+    };
+    const provider = new CloudFormationProvider(client, '.', s3Client);
+
+    const result = await provider.exportSpec(
+      { id: 'stack/MyApi', name: 'MyApi', providerType: 'cloudformation', tags: {}, evidence: [], meta: { stackName: 'my-stack', logicalId: 'MyApi', physicalId: 'rest-1', resourceType: 'AWS::ApiGateway::RestApi' } },
+      {}
+    );
+
+    expect(s3Client.getObject).toHaveBeenCalledWith('spec-bucket', 'orders/openapi.json', undefined);
+    expect(JSON.parse(result.content)).toHaveProperty('openapi', '3.0.1');
+  });
+
   it('throws when no embedded spec found', async () => {
     const template = JSON.stringify({
       Resources: {
@@ -336,7 +440,7 @@ describe('CloudFormationProvider', () => {
         { id: 'stack/MyApi', name: 'MyApi', providerType: 'cloudformation', tags: {}, evidence: [], meta: { stackName: 'my-stack', logicalId: 'MyApi', physicalId: 'rest-1', resourceType: 'AWS::ApiGateway::RestApi' } },
         {}
       )
-    ).rejects.toThrow(/No embedded OpenAPI spec/);
+    ).rejects.toThrow(/No embedded or referenced OpenAPI spec/);
   });
 });
 
@@ -406,6 +510,57 @@ describe('GlueSchemaProvider', () => {
     );
     expect(result.format).toBe('protobuf');
     expect(result.filename).toBe('schema.proto');
+  });
+});
+
+describe('LambdaUrlProvider', () => {
+  it('lists functions with configured Function URLs', async () => {
+    const client = createLambdaClientStub({
+      listFunctions: vi.fn().mockResolvedValue([
+        { name: 'orders-fn', arn: 'arn:aws:lambda:us-east-1:123456789012:function:orders-fn', runtime: 'nodejs24.x' },
+        { name: 'worker-fn', arn: 'arn:aws:lambda:us-east-1:123456789012:function:worker-fn', runtime: 'nodejs24.x' }
+      ]),
+      getFunctionUrlConfig: vi
+        .fn()
+        .mockResolvedValueOnce({
+          functionArn: 'arn:aws:lambda:us-east-1:123456789012:function:orders-fn',
+          functionUrl: 'https://abc.lambda-url.us-east-1.on.aws/',
+          authType: 'NONE'
+        })
+        .mockResolvedValueOnce(undefined),
+      getTags: vi.fn().mockResolvedValue({ Name: 'orders-api' })
+    });
+    const provider = new LambdaUrlProvider(client);
+
+    const candidates = await provider.listCandidates();
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.providerType).toBe('lambda-url');
+    expect(candidates[0]?.name).toBe('orders-fn');
+  });
+
+  it('synthesizes OpenAPI for Function URL candidates', async () => {
+    const provider = new LambdaUrlProvider(createLambdaClientStub());
+
+    const result = await provider.exportSpec(
+      {
+        id: 'orders-fn',
+        name: 'orders-fn',
+        providerType: 'lambda-url',
+        tags: { Name: 'orders-api' },
+        evidence: [],
+        meta: {
+          functionArn: 'arn:aws:lambda:us-east-1:123456789012:function:orders-fn',
+          functionUrl: 'https://abc.lambda-url.us-east-1.on.aws/',
+          authType: 'AWS_IAM'
+        }
+      },
+      {}
+    );
+
+    expect(result.format).toBe('openapi-yaml');
+    expect(result.filename).toBe('index.yaml');
+    expect(result.content).toContain('x-aws-lambda-function-url-auth-type: "AWS_IAM"');
   });
 });
 

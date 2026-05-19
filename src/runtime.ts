@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -6,13 +6,17 @@ import {
   type ActionMode,
   type DiscoveredService,
   type GatewayType,
-  type ResolutionResult
+  type ProviderType,
+  type ResolutionResult,
+  type SourceType,
+  type SpecFormat
 } from './contracts.js';
-import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
+import { parseAwsError, type AwsGatewayClient, type GatewayDomainMapping, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
 import { AppSyncSdkClient } from './lib/aws/appsync-client.js';
 import { EventBridgeSchemasSdkClient } from './lib/aws/schemas-client.js';
 import { CloudFormationSdkClient, type CloudFormationSpecClient } from './lib/aws/cloudformation-client.js';
 import { GlueSchemaSdkClient } from './lib/aws/glue-client.js';
+import { LambdaSdkClient } from './lib/aws/lambda-client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
 import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
@@ -26,10 +30,12 @@ import { AppSyncProvider } from './lib/providers/appsync.js';
 import { EventBridgeSchemasProvider } from './lib/providers/eventbridge-schemas.js';
 import { CloudFormationProvider } from './lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from './lib/providers/glue.js';
+import { LambdaUrlProvider } from './lib/providers/lambda-url.js';
 import { SsmProvider } from './lib/providers/ssm.js';
 import { SnsProvider } from './lib/providers/sns.js';
 import { SsmSdkClient } from './lib/aws/ssm-client.js';
 import { SnsSdkClient } from './lib/aws/sns-client.js';
+import { S3SdkClient } from './lib/aws/s3-client.js';
 import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-client.js';
 import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
 import { detectCatalogApis } from './lib/repo/catalog.js';
@@ -108,6 +114,7 @@ export interface ExecutionResult {
 }
 
 export interface ResolutionDependencies {
+  providers?: SpecProvider[];
   snsProvider?: SnsResolutionProvider;
   createSnsProvider?: (dependencies: {
     fetchSpecFromUrl: typeof fetchSpecFromUrl;
@@ -385,15 +392,26 @@ function filterCandidates(restApis: RestApiSummary[], httpApis: HttpApiSummary[]
   const rest: GatewayCandidate[] = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: 'REST' }));
   const http: GatewayCandidate[] = includeV2
     ? httpApis
-        .filter((api) => !api.protocolType || api.protocolType === 'HTTP' || api.protocolType === 'WEBSOCKET')
+        .filter((api) => !api.protocolType || api.protocolType === 'HTTP')
         .map((api) => ({
           id: api.id,
           name: api.name,
-          gatewayType: (api.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP') as GatewayType
+          gatewayType: 'HTTP' as GatewayType
         }))
     : [];
   const all = [...rest, ...http];
   return apiFilter ? all.filter((api) => apiFilter.test(api.name)) : all;
+}
+
+function uniqueGatewayCandidates(candidates: GatewayCandidate[]): GatewayCandidate[] {
+  const seen = new Set<string>();
+  const unique: GatewayCandidate[] = [];
+  for (const candidate of candidates) {
+    if (seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    unique.push(candidate);
+  }
+  return unique;
 }
 
 async function lookupCandidatesByIds(inputs: ResolvedInputs, awsClient: AwsGatewayClient, actionCore: Pick<ReporterLike, 'warning'>): Promise<GatewayCandidate[]> {
@@ -431,8 +449,98 @@ async function lookupCandidatesByIds(inputs: ResolvedInputs, awsClient: AwsGatew
   return candidates;
 }
 
+async function safeListRestApis(awsClient: AwsGatewayClient, actionCore: Pick<ReporterLike, 'warning'>): Promise<RestApiSummary[]> {
+  try {
+    return await awsClient.listRestApis();
+  } catch (error) {
+    actionCore.warning(userSafeWarning(`Skipping REST API enumeration: ${formatUserSafeError(error)}`));
+    return [];
+  }
+}
+
+async function safeListHttpApis(inputs: ResolvedInputs, awsClient: AwsGatewayClient, actionCore: Pick<ReporterLike, 'warning'>): Promise<HttpApiSummary[]> {
+  if (!inputs.includeV2) {
+    return [];
+  }
+  try {
+    return await awsClient.listHttpApis();
+  } catch (error) {
+    actionCore.warning(userSafeWarning(`Skipping HTTP API enumeration: ${formatUserSafeError(error)}`));
+    return [];
+  }
+}
+
+async function lookupCandidatesByCustomDomains(
+  hints: string[],
+  awsClient: AwsGatewayClient,
+  actionCore: Pick<ReporterLike, 'warning'>
+): Promise<{ candidates: GatewayCandidate[]; ids: string[]; evidence: string[] }> {
+  const normalizedHints = new Set(hints.map((hint) => hint.toLowerCase()).filter(Boolean));
+  if (normalizedHints.size === 0) {
+    return { candidates: [], ids: [], evidence: [] };
+  }
+
+  const mappings: GatewayDomainMapping[] = [];
+  if (awsClient.listRestDomainMappings) {
+    try {
+      mappings.push(...await awsClient.listRestDomainMappings());
+    } catch (error) {
+      actionCore.warning(userSafeWarning(`Failed reading API Gateway REST custom domains: ${formatUserSafeError(error)}`));
+    }
+  }
+  if (awsClient.listHttpDomainMappings) {
+    try {
+      mappings.push(...await awsClient.listHttpDomainMappings());
+    } catch (error) {
+      actionCore.warning(userSafeWarning(`Failed reading API Gateway HTTP custom domains: ${formatUserSafeError(error)}`));
+    }
+  }
+
+  const matched = mappings.filter((mapping) => normalizedHints.has(mapping.domainName.toLowerCase()));
+  const candidates: GatewayCandidate[] = [];
+  const evidence: string[] = [];
+  for (const mapping of matched) {
+    if (mapping.gatewayType === 'REST') {
+      const api = await awsClient.getRestApi(mapping.apiId).catch(() => undefined);
+      candidates.push({ id: mapping.apiId, name: api?.name ?? mapping.domainName, gatewayType: 'REST' });
+    } else {
+      const api = await awsClient.getHttpApi(mapping.apiId).catch(() => undefined);
+      candidates.push({
+        id: mapping.apiId,
+        name: api?.name ?? mapping.domainName,
+        gatewayType: mapping.gatewayType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP'
+      });
+    }
+    evidence.push(`Matched API Gateway custom domain ${mapping.domainName} to API ${mapping.apiId}`);
+  }
+
+  return {
+    candidates,
+    ids: [...new Set(candidates.map((candidate) => candidate.id))],
+    evidence
+  };
+}
+
 function inferFallbackServiceName(inputs: ResolvedInputs): string | undefined {
   return inputs.expectedServiceName ?? inputs.repoContext.repoSlug?.split('/').pop()?.trim() ?? inputs.repoContext.repoUrl?.split('/').pop()?.trim();
+}
+
+function catalogFormatFor(type: string | undefined, reference: string | undefined): { format?: SpecFormat; filename: string } {
+  const normalizedType = (type ?? '').toLowerCase();
+  const normalizedRef = (reference ?? '').toLowerCase();
+  if (normalizedType === 'graphql' || normalizedRef.endsWith('.graphql') || normalizedRef.endsWith('.gql')) {
+    return { format: 'graphql-sdl', filename: 'schema.graphql' };
+  }
+  if (normalizedType === 'asyncapi' || normalizedRef.includes('asyncapi')) {
+    return { format: normalizedRef.endsWith('.json') ? 'asyncapi-json' : 'asyncapi-yaml', filename: normalizedRef.endsWith('.json') ? 'asyncapi.json' : 'asyncapi.yaml' };
+  }
+  if (normalizedType === 'grpc' || normalizedRef.endsWith('.proto')) {
+    return { format: 'protobuf', filename: 'schema.proto' };
+  }
+  if (normalizedRef.endsWith('.json')) {
+    return { format: 'openapi-json', filename: 'index.json' };
+  }
+  return { format: 'openapi-yaml', filename: 'index.yaml' };
 }
 
 function normalizeSnsName(value: string): string {
@@ -475,6 +583,163 @@ function sortSnsCandidates(candidates: SpecCandidate[], serviceHints: string[]):
     }
     return left.name.localeCompare(right.name);
   });
+}
+
+interface ProviderResolutionCandidate {
+  provider: SpecProvider;
+  candidate: SpecCandidate;
+  confidence: number;
+  sourceType: SourceType;
+  evidence: string[];
+}
+
+function sourceTypeForProvider(providerType: ProviderType): SourceType | undefined {
+  switch (providerType) {
+    case 'appsync':
+      return 'appsync-schema';
+    case 'eventbridge-schemas':
+      return 'eventbridge-schema';
+    case 'cloudformation':
+      return 'cfn-embedded';
+    case 'glue':
+      return 'glue-schema';
+    case 'ssm':
+      return 'ssm-registry';
+    case 'lambda-url':
+      return 'lambda-url-export';
+    case 'api-gateway':
+      return 'gateway-export';
+    case 'sns':
+      return 'sns-contract';
+  }
+}
+
+function scoreProviderCandidate(
+  candidate: SpecCandidate,
+  provider: SpecProvider,
+  signals: Awaited<ReturnType<typeof collectRepoSignals>>
+): ProviderResolutionCandidate | undefined {
+  const sourceType = sourceTypeForProvider(provider.type);
+  if (!sourceType || provider.type === 'api-gateway' || provider.type === 'sns') {
+    return undefined;
+  }
+
+  const evidence = [...signals.evidence, ...candidate.evidence];
+  const serviceHints = signals.serviceHints.map((hint) => hint.toLowerCase()).filter(Boolean);
+  const candidateName = candidate.name.toLowerCase();
+  const candidateId = candidate.id.toLowerCase();
+  const tagValues = Object.values(candidate.tags).map((value) => value.toLowerCase());
+  let confidence = 35;
+
+  if (signals.providerHints?.includes(provider.type)) {
+    confidence += 25;
+    evidence.push(`Repo signals include ${provider.type} provider hint`);
+  }
+
+  for (const hint of serviceHints) {
+    if (candidateName === hint || candidateId === hint) {
+      confidence += 45;
+      evidence.push(`Candidate ${candidate.id} exactly matches service hint ${hint}`);
+    } else if (candidateName.includes(hint) || candidateId.includes(hint) || hint.includes(candidateName)) {
+      confidence += 25;
+      evidence.push(`Candidate ${candidate.id} matches service hint ${hint}`);
+    }
+    if (tagValues.some((tag) => tag.includes(hint))) {
+      confidence += 25;
+      evidence.push(`Candidate ${candidate.id} tags match service hint ${hint}`);
+    }
+  }
+
+  if (signals.explicitGatewayIdHints.includes(candidate.id)) {
+    confidence += 50;
+    evidence.push(`Candidate ${candidate.id} matched explicit id hint`);
+  }
+
+  return {
+    provider,
+    candidate,
+    confidence: Math.min(confidence, 100),
+    sourceType,
+    evidence
+  };
+}
+
+async function collectProviderResolutionCandidates(
+  providers: SpecProvider[],
+  signals: Awaited<ReturnType<typeof collectRepoSignals>>,
+  actionCore: Pick<ReporterLike, 'warning'>
+): Promise<ProviderResolutionCandidate[]> {
+  const results: ProviderResolutionCandidate[] = [];
+  for (const provider of providers.filter((item) => item.type !== 'api-gateway' && item.type !== 'sns')) {
+    let candidates: SpecCandidate[];
+    try {
+      candidates = await provider.listCandidates();
+    } catch (error) {
+      actionCore.warning(userSafeWarning(`Failed listing candidates from ${provider.type}: ${formatUserSafeError(error)}`));
+      continue;
+    }
+    for (const candidate of candidates) {
+      const scored = scoreProviderCandidate(candidate, provider, signals);
+      if (scored) {
+        results.push(scored);
+      }
+    }
+  }
+  return results.sort(
+    (left, right) =>
+      right.confidence - left.confidence ||
+      left.provider.type.localeCompare(right.provider.type) ||
+      left.candidate.id.localeCompare(right.candidate.id)
+  );
+}
+
+function shouldPreferProviderCandidate(candidate: ProviderResolutionCandidate | undefined, selectedSource: ResolutionResult): boolean {
+  if (!candidate || candidate.confidence < 40) return false;
+  if (selectedSource.sourceType === 'repo-spec') return false;
+  if (selectedSource.status === 'unresolved') return true;
+  return candidate.confidence > selectedSource.confidence;
+}
+
+function serviceNameForProviderCandidate(candidate: SpecCandidate): string {
+  return (candidate.tags['postman:project-name'] ?? '').trim() || (candidate.tags.Name ?? '').trim() || candidate.name;
+}
+
+async function exportProviderResolutionCandidate(
+  resolved: ProviderResolutionCandidate,
+  inputs: ResolvedInputs,
+  writeSpecFile: (outputPath: string, content: string) => Promise<void>
+): Promise<ResolutionResult> {
+  const serviceName = serviceNameForProviderCandidate(resolved.candidate);
+  const result = await resolved.provider.exportSpec(resolved.candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
+  const relativeProviderDir = path.join(inputs.outputDir, projectFolderName(serviceName || 'service')).replace(/\\/g, '/');
+  const relativeProviderPath = path.join(relativeProviderDir, result.filename).replace(/\\/g, '/');
+  const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
+  const relativeMetadataPath = metadataSidecar ? path.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, '/') : undefined;
+
+  if (!inputs.dryRun) {
+    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
+    await writeSpecFile(absoluteSpecPath, result.content);
+    for (const sidecar of result.sidecars ?? []) {
+      const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
+      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
+      await writeSpecFile(absoluteSidecarPath, sidecar.content);
+    }
+  }
+
+  return {
+    status: 'resolved',
+    sourceType: resolved.sourceType,
+    serviceName,
+    confidence: resolved.confidence,
+    specPath: relativeProviderPath,
+    gatewayId: resolved.candidate.id,
+    gatewayType: (resolved.candidate.meta.gatewayType ?? 'REST') as GatewayType,
+    providerType: resolved.provider.type,
+    specFormat: result.format,
+    metadataPath: relativeMetadataPath,
+    stage: result.stage,
+    evidence: [...resolved.evidence, ...result.evidence, ...(inputs.dryRun ? ['Dry run enabled; skipped provider spec file write'] : [])]
+  };
 }
 
 function collectSnsEventBridgeBridgeEvidence(signals: Awaited<ReturnType<typeof collectRepoSignals>>): string[] {
@@ -544,7 +809,13 @@ async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDepen
   }
   const identity = await dependencies.aws.getCallerIdentity();
   if (inputs.preflightPermissionProbe) {
-    await dependencies.aws.probeApiGatewayReadAccess();
+    try {
+      await dependencies.aws.probeApiGatewayReadAccess();
+    } catch (error) {
+      dependencies.core.warning(
+        userSafeWarning(`API Gateway REST preflight probe failed; other provider discovery will continue: ${formatUserSafeError(error)}`)
+      );
+    }
   }
   const accountSuffix = identity.accountId ? identity.accountId.slice(-4) : 'unknown';
   dependencies.core.info(
@@ -555,7 +826,7 @@ async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDepen
 export async function runDiscovery(inputs: ResolvedInputs, dependencies: DiscoveryDependencies): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary }> {
   const restStart = Date.now();
   const restApis = await dependencies.core.group('Discover REST APIs', async () => {
-    const items = await dependencies.aws.listRestApis();
+    const items = await safeListRestApis(dependencies.aws, dependencies.core);
     dependencies.core.info(`Found ${items.length} REST API(s) in ${Date.now() - restStart}ms`);
     return items;
   });
@@ -565,7 +836,7 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
       dependencies.core.info('Skipping HTTP API discovery because include-v2=false');
       return [] as HttpApiSummary[];
     }
-    const items = await dependencies.aws.listHttpApis();
+    const items = await safeListHttpApis(inputs, dependencies.aws, dependencies.core);
     dependencies.core.info(`Found ${items.length} HTTP API(s) in ${Date.now() - httpStart}ms`);
     return items;
   });
@@ -648,22 +919,46 @@ export async function runResolution(
 ): Promise<ResolutionResult> {
   // Check for Backstage catalog-info.yaml first -- it may reference a spec path
   const catalogApis = await detectCatalogApis(inputs.repoRoot);
-  const catalogSpecPath = catalogApis?.[0]?.specPath;
-  const catalogSpecUrl = catalogApis?.[0]?.specUrl;
+  const catalogApi = catalogApis?.[0];
+  const catalogSpecPath = catalogApi?.specPath;
+  const catalogSpecUrl = catalogApi?.specUrl;
 
   const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
-  let existingSpecPath = catalogSpecPath ?? repoSpec?.path;
+  let existingSpecPath: string | undefined;
+  let existingSpecFormat: SpecFormat | undefined;
+  let existingSpecEvidence: string[] | undefined;
+
+  if (catalogSpecPath) {
+    const resolvedCatalogPath = resolvePathWithinRoot(inputs.repoRoot, catalogSpecPath, 'catalog-spec-path');
+    const catalogStat = await stat(resolvedCatalogPath).catch(() => undefined);
+    if (catalogStat?.isFile()) {
+      existingSpecPath = catalogSpecPath.replace(/\\/g, '/');
+      existingSpecFormat = catalogFormatFor(catalogApi?.type, catalogSpecPath).format;
+      existingSpecEvidence = [`Resolved from Backstage catalog local ${catalogApi?.type ?? 'api'} definition`];
+    } else {
+      actionCore.warning(userSafeWarning(`Backstage catalog spec path ${catalogSpecPath} was not found; continuing discovery`));
+    }
+  }
+
+  if (!existingSpecPath && repoSpec) {
+    existingSpecPath = repoSpec.path;
+    existingSpecFormat = repoSpec.format;
+    existingSpecEvidence = repoSpec.evidence;
+  }
 
   // If Backstage catalog references a remote URL and no local spec exists, fetch it
   if (!existingSpecPath && catalogSpecUrl) {
     try {
       actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
       const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15000 });
-      const folderName = catalogApis?.[0]?.name ?? 'catalog-api';
-      const targetPath = path.join(inputs.outputDir, folderName, 'index.yaml');
-      const absolutePath = path.resolve(inputs.repoRoot, targetPath);
+      const folderName = catalogApi?.name ?? 'catalog-api';
+      const catalogFormat = catalogFormatFor(catalogApi?.type, catalogSpecUrl);
+      const targetPath = path.join(inputs.outputDir, folderName, catalogFormat.filename);
+      const absolutePath = resolvePathWithinRoot(inputs.repoRoot, targetPath, 'output-dir');
       await writeSpecFile(absolutePath, fetched.content);
       existingSpecPath = targetPath.replace(/\\/g, '/');
+      existingSpecFormat = catalogFormat.format;
+      existingSpecEvidence = [`Resolved from Backstage catalog remote ${catalogApi?.type ?? 'api'} definition`];
       actionCore.info(`Fetched remote spec from catalog URL and saved to ${existingSpecPath}`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
@@ -672,21 +967,28 @@ export async function runResolution(
   }
 
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
+  const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
+  const enrichedSignals = {
+    ...signals,
+    inferredGatewayIdHints: [...new Set([...signals.inferredGatewayIdHints, ...domainResolution.ids])],
+    evidence: [...new Set([...signals.evidence, ...domainResolution.evidence])]
+  };
   const narrowedCandidates =
     inputs.expectedGatewayIds.length > 0
       ? await actionCore.group('Resolve API candidates by explicit gateway ID', async () =>
           lookupCandidatesByIds(inputs, awsClient, actionCore)
         )
       : filterCandidates(
-          await actionCore.group('Resolve REST API candidates', async () => awsClient.listRestApis()),
-          await actionCore.group('Resolve HTTP API candidates', async () => (inputs.includeV2 ? awsClient.listHttpApis() : [] as HttpApiSummary[])),
+          await actionCore.group('Resolve REST API candidates', async () => safeListRestApis(awsClient, actionCore)),
+          await actionCore.group('Resolve HTTP API candidates', async () => safeListHttpApis(inputs, awsClient, actionCore)),
           inputs.includeV2,
           inputs.apiFilter
         );
 
   // If too many candidates, try progressive narrowing before failing
-  let finalCandidates = narrowedCandidates;
-  if (inputs.maxCandidates > 0 && narrowedCandidates.length > inputs.maxCandidates) {
+  let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
+  if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
+    const candidateCountBeforeNarrowing = finalCandidates.length;
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
       let cfnClient: CloudFormationSpecClient | undefined;
@@ -695,15 +997,15 @@ export async function runResolution(
       try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
 
       return runNarrowingPipeline(
-        { repoSlug: inputs.repoContext.repoSlug, serviceHints: signals.serviceHints, signals, cfnClient, taggingClient },
-        narrowedCandidates.map((c) => ({ id: c.id, name: c.name }))
+        { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },
+        finalCandidates.map((c) => ({ id: c.id, name: c.name }))
       );
     });
 
     if (narrowingResult) {
       const narrowedIds = new Set(narrowingResult.gatewayIds);
-      finalCandidates = narrowedCandidates.filter((c) => narrowedIds.has(c.id));
-      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${narrowedCandidates.length} candidates to ${finalCandidates.length}`);
+      finalCandidates = finalCandidates.filter((c) => narrowedIds.has(c.id));
+      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${candidateCountBeforeNarrowing} candidates to ${finalCandidates.length}`);
     }
 
     // If still over limit after narrowing, warn instead of hard-fail
@@ -728,7 +1030,7 @@ export async function runResolution(
     gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
 
-  const resolvedCandidate = resolveServiceCandidate(gateways, signals);
+  const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
 
   let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
   let resolvedSnsExport: SpecExportResult | undefined;
@@ -740,7 +1042,7 @@ export async function runResolution(
         sidecars?: Array<{ filename: string; content: string }>;
       }
     | undefined;
-  const shouldAttemptSns = signals.providerHints?.includes('sns') ?? false;
+  const shouldAttemptSns = enrichedSignals.providerHints?.includes('sns') ?? false;
   if (shouldAttemptSns) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const snsRuntimeDependencies = {
@@ -769,8 +1071,8 @@ export async function runResolution(
       snsManualReviewEvidence.push('Detected sns provider hints but SNS provider probe was unavailable');
     }
 
-    const sortedSnsCandidates = sortSnsCandidates(snsCandidates, signals.serviceHints);
-    const bridgeEvidence = collectSnsEventBridgeBridgeEvidence(signals);
+    const sortedSnsCandidates = sortSnsCandidates(snsCandidates, enrichedSignals.serviceHints);
+    const bridgeEvidence = collectSnsEventBridgeBridgeEvidence(enrichedSignals);
     const candidatesToTry =
       inputs.maxCandidates > 0 && sortedSnsCandidates.length > inputs.maxCandidates
         ? sortedSnsCandidates.slice(0, inputs.maxCandidates)
@@ -779,7 +1081,7 @@ export async function runResolution(
     for (const candidate of candidatesToTry) {
       try {
         const contract = await snsProvider.resolveContract(candidate, {
-          serviceHints: signals.serviceHints,
+          serviceHints: enrichedSignals.serviceHints,
           bridgeEvidence
         });
         if (!contract.resolved) {
@@ -807,7 +1109,7 @@ export async function runResolution(
           confidence:
             contract.origin === 'eventbridge-derived'
               ? 55
-              : Math.max(60, scoreSnsCandidate(candidate, signals.serviceHints)),
+              : Math.max(60, scoreSnsCandidate(candidate, enrichedSignals.serviceHints)),
           origin: contract.origin,
           specFormat: format,
           variantCount: contract.variantCount,
@@ -828,12 +1130,39 @@ export async function runResolution(
     }
   }
 
+  const providerCandidates = await collectProviderResolutionCandidates(
+    resolutionDependencies.providers ?? [],
+    enrichedSignals,
+    actionCore
+  );
+
   const selectedSource = chooseSource({
     existingSpecPath,
+    existingSpecFormat,
+    existingSpecEvidence,
     candidate: resolvedCandidate,
     snsCandidate: resolvedSnsCandidate,
     fallbackServiceName: inferFallbackServiceName(inputs)
   });
+  const preferredProviderCandidate = providerCandidates[0];
+  if (shouldPreferProviderCandidate(preferredProviderCandidate, selectedSource)) {
+    const exportFailures: string[] = [];
+    for (const candidate of providerCandidates) {
+      if (!shouldPreferProviderCandidate(candidate, selectedSource)) {
+        break;
+      }
+      try {
+        return await exportProviderResolutionCandidate(candidate, inputs, writeSpecFile);
+      } catch (error) {
+        exportFailures.push(
+          `Failed exporting ${candidate.provider.type} candidate ${candidate.candidate.id}: ${formatUserSafeError(error)}`
+        );
+      }
+    }
+    if (selectedSource.status === 'unresolved') {
+      return toManualReviewResult(selectedSource, exportFailures);
+    }
+  }
   if (selectedSource.sourceType === 'repo-spec') {
     return selectedSource;
   }
@@ -841,6 +1170,11 @@ export async function runResolution(
     const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
     if (!selectedGateway) {
       return toManualReviewResult(selectedSource, ['Selected gateway could not be reloaded for export']);
+    }
+    if (selectedGateway.gatewayType === 'WEBSOCKET') {
+      return toManualReviewResult(selectedSource, [
+        'API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required'
+      ]);
     }
     let stageSelection: ResolutionStageSelection;
     try {
@@ -952,10 +1286,11 @@ export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGate
   registry.register(new ApiGatewayProvider(awsClient, { includeV2: inputs.includeV2, apiFilter: inputs.apiFilter }));
   registry.register(new AppSyncProvider(new AppSyncSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new EventBridgeSchemasProvider(new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts)));
-  registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new S3SdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new LambdaUrlProvider(new LambdaSdkClient(inputs.awsRegion, sdkOpts)));
 
   return registry;
 }
@@ -1188,7 +1523,15 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
     };
   }
 
-  const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile);
+  const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+  const providers = dependencies.providerRegistry
+    ? registry.all()
+    : await dependencies.core.group('Probe available providers', async () => {
+        const available = await registry.probeAvailable();
+        dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+        return available;
+      });
+  const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, { providers });
   return {
     mode: inputs.mode,
     discovered: [],

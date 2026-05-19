@@ -1,8 +1,10 @@
-import type { ResolutionResult, ResolvedServiceCandidate } from '../../contracts.js';
+import type { ResolutionResult, ResolvedServiceCandidate, SpecFormat } from '../../contracts.js';
 import type { SnsContractOrigin } from '../providers/sns.js';
 
 export interface SourceSelectionInput {
   existingSpecPath?: string;
+  existingSpecFormat?: SpecFormat;
+  existingSpecEvidence?: string[];
   candidate?: ResolvedServiceCandidate;
   snsCandidate?: SnsResolvedCandidate;
   fallbackServiceName?: string;
@@ -55,8 +57,12 @@ export function chooseSource(input: SourceSelectionInput): ResolutionResult {
       specPath: input.existingSpecPath,
       gatewayId: input.candidate?.gatewayId,
       gatewayType: input.candidate?.gatewayType,
+      specFormat: input.existingSpecFormat,
       stage: input.candidate?.stage,
-      evidence: ['Resolved from existing repository specification', ...(input.candidate?.evidence ?? [])]
+      evidence: [
+        ...(input.existingSpecEvidence?.length ? input.existingSpecEvidence : ['Resolved from existing repository specification']),
+        ...(input.candidate?.evidence ?? [])
+      ]
     };
   }
 

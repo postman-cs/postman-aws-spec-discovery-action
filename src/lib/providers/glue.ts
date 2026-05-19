@@ -36,7 +36,7 @@ export class GlueSchemaProvider implements SpecProvider {
           name: schema.name,
           providerType: 'glue',
           tags: {},
-          evidence: [`Glue schema in registry ${registry.name}`],
+          evidence: [`Glue Schema Registry schema in registry ${registry.name}`],
           meta: {
             registryName: registry.name,
             schemaName: schema.name,
@@ -60,7 +60,7 @@ export class GlueSchemaProvider implements SpecProvider {
       format,
       filename,
       evidence: [
-        `Exported Glue schema ${candidate.name} v${version.versionNumber} (${version.dataFormat}) from registry ${candidate.meta.registryName}`
+        `Exported Glue Schema Registry schema ${candidate.name} v${version.versionNumber} (${version.dataFormat}) from registry ${candidate.meta.registryName}`
       ]
     };
   }

@@ -32,7 +32,7 @@ describe('action contract', () => {
     'resolution-json': 'JSON resolution result describing status, source type, confidence, and evidence.',
     'resolution-status': 'Resolution status: resolved or unresolved.',
     'source-type':
-      'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, manual-review, or discover-many.',
+      'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, lambda-url-export, manual-review, or discover-many.',
     'mapping-confidence': 'Numeric confidence score for selected service candidate.',
     'spec-path': 'Path to resolved or generated specification when available.',
     'gateway-id': 'Resolved API Gateway ID when available.',
@@ -43,9 +43,9 @@ describe('action contract', () => {
     'candidates-json':
       'JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering.',
     'provider-type':
-      'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, or ssm.',
+      'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, ssm, or lambda-url.',
     'spec-format':
-      'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf.'
+      'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
   } as const;
 
   it('keeps action.yml aligned with declared contract', () => {

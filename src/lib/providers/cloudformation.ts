@@ -1,7 +1,11 @@
 import { parse } from 'yaml';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import type { CloudFormationSpecClient } from '../aws/cloudformation-client.js';
+import type { S3SpecClient } from '../aws/s3-client.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
+import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 
 interface TemplateResource {
   Type: string;
@@ -19,18 +23,98 @@ const CFN_CUSTOM_TAGS = [
   '!Condition'
 ].map((tag) => ({ tag, identify: () => false, resolve: (_v: unknown) => _v }));
 
-function extractEmbeddedSpec(resource: TemplateResource): string | undefined {
+interface S3Location {
+  bucket: string;
+  key: string;
+  version?: string;
+}
+
+interface ExtractedSpec {
+  content: string;
+  format: SpecExportResult['format'];
+  filename: string;
+}
+
+function isOpenApiDocument(value: unknown): boolean {
+  return Boolean(value && typeof value === 'object' && ((value as Record<string, unknown>).openapi || (value as Record<string, unknown>).swagger));
+}
+
+function detectOpenApiContent(content: string): boolean {
+  try {
+    const parsed = content.trim().startsWith('{') ? JSON.parse(content) : parse(content, { customTags: CFN_CUSTOM_TAGS as never[] });
+    return isOpenApiDocument(parsed);
+  } catch {
+    return false;
+  }
+}
+
+function openApiFormatForContent(content: string): Pick<ExtractedSpec, 'format' | 'filename'> {
+  return content.trim().startsWith('{')
+    ? { format: 'openapi-json', filename: 'index.json' }
+    : { format: 'openapi-yaml', filename: 'index.yaml' };
+}
+
+function parseS3Uri(uri: string): S3Location | undefined {
+  if (!uri.startsWith('s3://')) return undefined;
+  const withoutScheme = uri.slice('s3://'.length);
+  const [bucket, ...rest] = withoutScheme.split('/');
+  const key = rest.join('/');
+  if (!bucket || !key) return undefined;
+  return { bucket, key };
+}
+
+function parseS3Location(value: unknown): S3Location | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const bucket = typeof record.Bucket === 'string' ? record.Bucket : typeof record.bucket === 'string' ? record.bucket : undefined;
+  const key = typeof record.Key === 'string' ? record.Key : typeof record.key === 'string' ? record.key : undefined;
+  const version =
+    typeof record.Version === 'string'
+      ? record.Version
+      : typeof record.VersionId === 'string'
+        ? record.VersionId
+        : typeof record.version === 'string'
+          ? record.version
+          : undefined;
+  return bucket && key ? { bucket, key, version } : undefined;
+}
+
+async function readReferencedSpec(repoRoot: string, s3Client: S3SpecClient | undefined, value: unknown): Promise<string | undefined> {
+  if (typeof value === 'string') {
+    const s3 = parseS3Uri(value);
+    if (s3) {
+      if (!s3Client) return undefined;
+      return s3Client.getObject(s3.bucket, s3.key, s3.version);
+    }
+    if (/^https?:\/\//i.test(value)) {
+      return undefined;
+    }
+    const localPath = resolvePathWithinRoot(path.resolve(repoRoot), value, 'definition-uri');
+    return readFile(localPath, 'utf8');
+  }
+
+  const s3 = parseS3Location(value);
+  if (s3 && s3Client) {
+    return s3Client.getObject(s3.bucket, s3.key, s3.version);
+  }
+  return undefined;
+}
+
+async function extractEmbeddedSpec(resource: TemplateResource, repoRoot: string, s3Client?: S3SpecClient): Promise<ExtractedSpec | undefined> {
   const props = resource.Properties;
   if (!props) return undefined;
 
   // SAM resources use DefinitionBody, CloudFormation uses Body
   const body = props.DefinitionBody ?? props.Body;
-  if (!body || typeof body !== 'object') return undefined;
-
-  const doc = body as Record<string, unknown>;
-  if (doc.openapi || doc.swagger) {
+  if (body && typeof body === 'object' && isOpenApiDocument(body)) {
     // It's an inline OpenAPI/Swagger spec -- serialize it back
-    return JSON.stringify(body, null, 2);
+    return { content: JSON.stringify(body, null, 2), format: 'openapi-json', filename: 'index.json' };
+  }
+
+  const ref = props.DefinitionUri ?? props.BodyS3Location;
+  const referenced = await readReferencedSpec(repoRoot, s3Client, ref);
+  if (referenced && detectOpenApiContent(referenced)) {
+    return { content: referenced, ...openApiFormatForContent(referenced) };
   }
 
   return undefined;
@@ -39,7 +123,11 @@ function extractEmbeddedSpec(resource: TemplateResource): string | undefined {
 export class CloudFormationProvider implements SpecProvider {
   public readonly type = 'cloudformation' as const;
 
-  public constructor(private readonly client: CloudFormationSpecClient) {}
+  public constructor(
+    private readonly client: CloudFormationSpecClient,
+    private readonly repoRoot = '.',
+    private readonly s3Client?: S3SpecClient
+  ) {}
 
   public async probe(): Promise<boolean> {
     return this.client.probe();
@@ -102,15 +190,15 @@ export class CloudFormationProvider implements SpecProvider {
       throw new Error(`Resource ${logicalId} not found in stack ${stackName} template`);
     }
 
-    const spec = extractEmbeddedSpec(resource);
+    const spec = await extractEmbeddedSpec(resource, this.repoRoot, this.s3Client);
     if (!spec) {
-      throw new Error(`No embedded OpenAPI spec found in ${candidate.meta.resourceType} resource ${logicalId} of stack ${stackName}`);
+      throw new Error(`No embedded or referenced OpenAPI spec found in ${candidate.meta.resourceType} resource ${logicalId} of stack ${stackName}`);
     }
 
     return {
-      content: spec,
-      format: 'openapi-json',
-      filename: 'index.json',
+      content: spec.content,
+      format: spec.format,
+      filename: spec.filename,
       evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`]
     };
   }
