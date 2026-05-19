@@ -34,6 +34,7 @@ spec:
       const result = await detectCatalogApis(tempDir);
       expect(result).toHaveLength(1);
       expect(result?.[0]?.name).toBe('payments-api');
+      expect(result?.[0]?.type).toBe('openapi');
       expect(result?.[0]?.specPath).toBe('./openapi.yaml');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
@@ -57,6 +58,7 @@ spec:
       );
       const result = await detectCatalogApis(tempDir);
       expect(result).toHaveLength(1);
+      expect(result?.[0]?.type).toBe('openapi');
       expect(result?.[0]?.specUrl).toBe('https://api.example.com/openapi.json');
       expect(result?.[0]?.specPath).toBeUndefined();
     } finally {
@@ -82,7 +84,33 @@ spec:
       );
       const result = await detectCatalogApis(tempDir);
       expect(result).toHaveLength(1);
+      expect(result?.[0]?.type).toBe('graphql');
       expect(result?.[0]?.specPath).toBe('./schema.graphql');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('extracts $json reference from definition', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-test-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        `apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: async-api
+spec:
+  type: asyncapi
+  definition:
+    $json: ./asyncapi.json
+`,
+        'utf8'
+      );
+      const result = await detectCatalogApis(tempDir);
+      expect(result).toHaveLength(1);
+      expect(result?.[0]?.type).toBe('asyncapi');
+      expect(result?.[0]?.specPath).toBe('./asyncapi.json');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -139,8 +167,8 @@ spec:
 
       const result = await detectCatalogApis(tempDir);
       expect(result).toEqual([
-        { name: 'orders-api', specUrl: 'https://example.com/orders.asyncapi.yaml', specPath: undefined },
-        { name: 'billing-api', specPath: './billing/openapi.yaml', specUrl: undefined }
+        { name: 'orders-api', type: undefined, specUrl: 'https://example.com/orders.asyncapi.yaml', specPath: undefined },
+        { name: 'billing-api', type: undefined, specPath: './billing/openapi.yaml', specUrl: undefined }
       ]);
     } finally {
       await rm(tempDir, { recursive: true, force: true });

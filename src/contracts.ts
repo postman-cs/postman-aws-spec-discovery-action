@@ -17,7 +17,7 @@ export interface AwsSpecDiscoveryActionContract {
   outputs: Record<string, ActionOutputContract>;
 }
 
-export type GatewayType = 'REST' | 'HTTP' | 'WEBSOCKET' | 'SNS';
+export type GatewayType = 'REST' | 'HTTP' | 'WEBSOCKET' | 'SNS' | 'LAMBDA_URL';
 
 export type ActionMode = 'resolve-one' | 'discover-many';
 
@@ -32,6 +32,7 @@ export type SourceType =
   | 'glue-schema'
   | 'sns-contract'
   | 'ssm-registry'
+  | 'lambda-url-export'
   | 'manual-review'
   | 'discover-many';
 
@@ -42,7 +43,8 @@ export type ProviderType =
   | 'cloudformation'
   | 'glue'
   | 'sns'
-  | 'ssm';
+  | 'ssm'
+  | 'lambda-url';
 
 export type SpecFormat =
   | 'openapi-yaml'
@@ -51,6 +53,8 @@ export type SpecFormat =
   | 'asyncapi-yaml'
   | 'asyncapi-json'
   | 'json-schema'
+  | 'postman-collection'
+  | 'smithy'
   | 'avro'
   | 'protobuf';
 
@@ -127,7 +131,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'source-type': {
       description:
-        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, manual-review, or discover-many.'
+        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, lambda-url-export, manual-review, or discover-many.'
     },
     'mapping-confidence': {
       description: 'Numeric confidence score for selected service candidate.'
@@ -157,11 +161,11 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'provider-type': {
       description:
-        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, or ssm.'
+        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, ssm, or lambda-url.'
     },
     'spec-format': {
       description:
-        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, avro, or protobuf.'
+        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
     },
     'contract-origin': {
       description:

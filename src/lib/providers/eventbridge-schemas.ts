@@ -1,6 +1,18 @@
 import type { EventBridgeSchemasSpecClient } from '../aws/schemas-client.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
+function detectSchemaFormat(content: string): Pick<SpecExportResult, 'format' | 'filename'> {
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    if (parsed.openapi || parsed.swagger) {
+      return { format: 'openapi-json', filename: 'index.json' };
+    }
+  } catch {
+    // EventBridge schema content is usually JSON; leave non-JSON as JSON Schema fallback.
+  }
+  return { format: 'json-schema', filename: 'index.json' };
+}
+
 export class EventBridgeSchemasProvider implements SpecProvider {
   public readonly type = 'eventbridge-schemas' as const;
 
@@ -47,11 +59,12 @@ export class EventBridgeSchemasProvider implements SpecProvider {
     // ExportSchema only supports JSONSchemaDraft4 as output type, so it fails
     // for schemas stored as OpenApi3. DescribeSchema works for all types.
     const { content } = await this.client.describeSchema(registryName, schemaName);
+    const detected = detectSchemaFormat(content);
 
     return {
       content,
-      format: 'json-schema',
-      filename: 'index.json',
+      format: detected.format,
+      filename: detected.filename,
       evidence: [`Exported EventBridge schema ${schemaName} from registry ${registryName}`]
     };
   }

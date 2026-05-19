@@ -11,10 +11,20 @@ function detectFormat(content: string, key: string): { format: SpecFormat; filen
   try {
     const parsed = JSON.parse(trimmed);
     if (parsed.openapi || parsed.swagger) return { format: 'openapi-json', filename: 'index.json' };
+    if (parsed.asyncapi) return { format: 'asyncapi-json', filename: 'asyncapi.json' };
+    if (parsed.info?.schema?.includes?.('schema.getpostman.com/json/collection')) {
+      return { format: 'postman-collection', filename: 'collection.postman_collection.json' };
+    }
     if (parsed.$schema || parsed.type === 'object' || parsed.type === 'record') return { format: 'json-schema', filename: 'schema.json' };
   } catch { /* not JSON */ }
   if (trimmed.startsWith('openapi:') || trimmed.startsWith('swagger:')) {
     return { format: 'openapi-yaml', filename: 'index.yaml' };
+  }
+  if (trimmed.startsWith('asyncapi:')) {
+    return { format: 'asyncapi-yaml', filename: 'asyncapi.yaml' };
+  }
+  if (key.endsWith('.proto') || /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(trimmed)) {
+    return { format: 'protobuf', filename: 'schema.proto' };
   }
   return { format: 'openapi-json', filename: 'index.json' };
 }

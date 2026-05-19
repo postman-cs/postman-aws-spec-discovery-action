@@ -22,6 +22,8 @@ export interface ApiGatewayProviderOptions {
 
 export class ApiGatewayProvider implements SpecProvider {
   public readonly type = 'api-gateway' as const;
+  private restReadable: boolean | undefined;
+  private v2Readable: boolean | undefined;
 
   public constructor(
     private readonly client: AwsGatewayClient,
@@ -29,22 +31,61 @@ export class ApiGatewayProvider implements SpecProvider {
   ) {}
 
   public async probe(): Promise<boolean> {
-    try {
-      await this.client.probeApiGatewayReadAccess();
-      return true;
-    } catch {
-      return false;
+    const checks: Promise<boolean>[] = [
+      (async () => {
+        try {
+          await this.client.probeApiGatewayReadAccess();
+          this.restReadable = true;
+          return true;
+        } catch {
+          this.restReadable = false;
+          return false;
+        }
+      })()
+    ];
+
+    if (this.options.includeV2 && this.client.probeHttpApiGatewayReadAccess) {
+      checks.push((async () => {
+        try {
+          await this.client.probeHttpApiGatewayReadAccess?.();
+          this.v2Readable = true;
+          return true;
+        } catch {
+          this.v2Readable = false;
+          return false;
+        }
+      })());
     }
+
+    return (await Promise.all(checks)).some(Boolean);
   }
 
   public async listCandidates(): Promise<SpecCandidate[]> {
-    const restApis = await this.client.listRestApis();
-    const httpApis = this.options.includeV2 ? await this.client.listHttpApis() : [];
+    let restApis: RestApiSummary[] = [];
+    let httpApis: HttpApiSummary[] = [];
+
+    if (this.restReadable !== false) {
+      try {
+        restApis = await this.client.listRestApis();
+      } catch {
+        restApis = [];
+        this.restReadable = false;
+      }
+    }
+
+    if (this.options.includeV2 && this.v2Readable !== false) {
+      try {
+        httpApis = await this.client.listHttpApis();
+      } catch {
+        httpApis = [];
+        this.v2Readable = false;
+      }
+    }
 
     const rest = restApis.map((api) => this.toCandidate(api, 'REST'));
     const http = httpApis
-      .filter((api) => !api.protocolType || api.protocolType === 'HTTP' || api.protocolType === 'WEBSOCKET')
-      .map((api) => this.toCandidate(api, api.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP'));
+      .filter((api) => !api.protocolType || api.protocolType === 'HTTP')
+      .map((api) => this.toCandidate(api, 'HTTP'));
 
     const all = [...rest, ...http];
     if (this.options.apiFilter) {
@@ -56,6 +97,9 @@ export class ApiGatewayProvider implements SpecProvider {
 
   public async exportSpec(candidate: SpecCandidate, options: ExportOptions): Promise<SpecExportResult> {
     const gatewayType = candidate.meta.gatewayType as GatewayType;
+    if (gatewayType === 'WEBSOCKET') {
+      throw new Error('API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required');
+    }
     const stage = options.stage ?? candidate.meta.stage;
 
     const rawContent =

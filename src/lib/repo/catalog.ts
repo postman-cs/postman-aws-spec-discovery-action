@@ -4,6 +4,7 @@ import { parseAllDocuments } from 'yaml';
 
 export interface CatalogApiRef {
   name: string;
+  type?: string;
   specPath?: string;
   specUrl?: string;
 }
@@ -53,6 +54,7 @@ export async function detectCatalogApis(repoRoot: string): Promise<CatalogApiRef
 
     const name = doc.metadata?.name ?? '';
     if (!name) continue;
+    const type = typeof doc.spec?.type === 'string' ? doc.spec.type : undefined;
 
     const def = doc.spec?.definition;
     let specPath: string | undefined;
@@ -65,17 +67,17 @@ export async function detectCatalogApis(repoRoot: string): Promise<CatalogApiRef
         specPath = def;
       }
     } else if (def && typeof def === 'object') {
-      const textRef = def.$text;
-      if (typeof textRef === 'string') {
-        if (textRef.startsWith('http://') || textRef.startsWith('https://')) {
-          specUrl = textRef;
+      const ref = typeof def.$text === 'string' ? def.$text : typeof def.$json === 'string' ? def.$json : undefined;
+      if (typeof ref === 'string') {
+        if (ref.startsWith('http://') || ref.startsWith('https://')) {
+          specUrl = ref;
         } else {
-          specPath = textRef;
+          specPath = ref;
         }
       }
     }
 
-    apis.push({ name, specPath, specUrl });
+    apis.push({ name, type, specPath, specUrl });
   }
 
   return apis.length > 0 ? apis : undefined;
