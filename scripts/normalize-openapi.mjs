@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global console, process */
 // Standalone CLI for the OpenAPI operationId normalizer.
 //
 // Usage:

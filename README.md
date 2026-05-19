@@ -29,6 +29,7 @@ No GitHub token required. This action uses only AWS credentials for API access. 
 | Glue Schema Registry | Avro / JSON Schema / Protobuf | IAM probe + IaC references |
 | SSM Parameter Store | Any (stored content or fetched URL content) | IAM probe for `/postman/specs/` path |
 | SNS Topics (contract resolver) | AsyncAPI / JSON Schema contracts | IAM probe + SNS IaC references + SSM fallback |
+| Lambda Function URLs | OpenAPI 3.0 YAML (synthesized) | IAM probe + IaC references / `lambda-url` URL pattern |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
@@ -146,6 +147,9 @@ Full IAM policy (all providers):
         "glue:ListSchemas",
         "glue:GetSchemaVersion",
         "glue:GetTags",
+        "lambda:ListFunctions",
+        "lambda:GetFunctionUrlConfig",
+        "lambda:ListTags",
         "sns:ListTopics",
         "sns:GetTopicAttributes",
         "sns:ListTagsForResource",
@@ -225,12 +229,12 @@ These are auto-detected from CI environment variables. Override them only when a
 | --- | --- |
 | `resolution-json` | Full resolution payload |
 | `resolution-status` | `resolved` or `unresolved` |
-| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `sns-contract`, `manual-review`, or `discover-many` |
+| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `sns-contract`, `lambda-url-export`, `manual-review`, or `discover-many` |
 | `mapping-confidence` | Numeric confidence score |
 | `spec-path` | Resolved/generated spec path when available |
 | `gateway-id` | Selected gateway ID when available |
 | `service-name` | Resolved service name |
-| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`, `sns`) |
+| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`, `sns`, `lambda-url`) |
 | `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`, `asyncapi-yaml`, `asyncapi-json`) |
 | `candidates-json` | JSON array of top candidates when resolution is ambiguous |
 | `services-json` | discover-many mode: JSON array of all discovered services |
@@ -252,6 +256,7 @@ These are auto-detected from CI environment variables. Override them only when a
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
 | SSM Parameter Store | auto-detected | Any (spec content or fetched URL content) |
+| Lambda Function URL | `index.yaml` | OpenAPI 3.0 YAML (synthesized) |
 | SNS (AsyncAPI YAML) | `asyncapi.yaml` | AsyncAPI YAML |
 | SNS (AsyncAPI JSON) | `asyncapi.json` | AsyncAPI JSON |
 | SNS (JSON Schema) | `schema.json` | JSON Schema |
@@ -266,7 +271,7 @@ These are auto-detected from CI environment variables. Override them only when a
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
   with:
     aws-region: us-east-1
 ```
@@ -275,7 +280,7 @@ These are auto-detected from CI environment variables. Override them only when a
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
   with:
     aws-region: us-east-1
     gateway-id: abc123def4
@@ -287,7 +292,7 @@ Exports specs from all discovered APIs across all available providers:
 
 ```yaml
 - id: discover
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
   env:
     INPUT_MODE: discover-many
   with:
@@ -302,7 +307,7 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
 
 ```yaml
 - id: resolve-events
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
   env:
     INPUT_MODE: resolve-one
     INPUT_EXPECTED_SERVICE_NAME: orders-events
@@ -316,7 +321,7 @@ In `resolve-one`, API Gateway and SNS are evaluated together when the repo has S
 
 ```yaml
 - id: discover-all
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.4.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
   env:
     INPUT_MODE: discover-many
   with:
@@ -418,25 +423,27 @@ When using `--dotenv-path`, the CLI writes all action outputs as environment var
 
 CloudFormation / SAM:
 - `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`
-- Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`, `AWS::SNS::Topic`, `AWS::SNS::Subscription`
+- Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`, `AWS::SNS::Topic`, `AWS::SNS::Subscription`, `AWS::Lambda::Url`, `FunctionUrlConfig`
 - SNS-specific patterns: `Type: SNS` (SAM event bindings), `arn:aws:sns:` (topic ARN references)
 
 Terraform:
 - All `.tf` files (searched up to 4 directories deep, max 50 files)
-- Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`, `aws_sns_topic`, `aws_sns_topic_subscription`
+- Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`, `aws_sns_topic`, `aws_sns_topic_subscription`, `aws_lambda_function_url`
 
 CDK:
 - Detected when `cdk.json` is present; scans TypeScript sources for AWS constructs
-- Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`
+- Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`, `aws-cdk-lib/aws-lambda`
+- Lambda URL patterns: `addFunctionUrl(`, `FunctionUrlAuthType`
 - SNS-specific patterns: `new sns.Topic(`, `sns.Topic.fromTopicArn(`, `SnsEventSource`
 
 Pulumi:
 - Detected when `Pulumi.yaml` is present; scans `.ts`, `.py`, and `.go` source files
-- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`, `aws.sns.Topic`
+- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`, `aws.sns.Topic`, `aws.lambda.FunctionUrl`
 
 Additional signal sources:
 - `.graphql` / `.gql` files in common locations (`schema.graphql`, `graphql/schema.graphql`, `src/schema.graphql`) for AppSync hints
 - `.github/workflows/deploy.yml`, `.gitlab-ci.yml`, and `README.md` are scanned for embedded gateway IDs
+- Lambda Function URL hosts matching `{id}.lambda-url.{region}.on.aws` are scanned as Lambda URL evidence
 - When SNS IaC signals are detected, the action also scans nearby directories for AsyncAPI and JSON Schema files as contract evidence
 
 **Gateway ID extraction**: The action extracts API Gateway IDs from repo files using these patterns:
@@ -444,6 +451,8 @@ Additional signal sources:
 - CLI flags: `--rest-api-id {id}`, `--api-id {id}`
 - ARN paths: `restapis/{id}`
 - Environment variables: `REST_API_ID={id}`, `HTTP_API_ID={id}`, `API_GATEWAY_ID={id}`
+
+**Lambda Function URL behavior**: Lambda Function URLs do not have an AWS-native OpenAPI export. When a function URL is discovered, the action synthesizes an OpenAPI 3.0 YAML file with the function URL as the server, a catch-all `/{proxy}` path for common HTTP methods, an AWS SigV4 security scheme when `AuthType=AWS_IAM`, and `x-aws-*` extensions for the function ARN, auth type, invoke mode, and CORS config. In `resolve-one`, Lambda URL candidates are scored with other providers; API Gateway wins exact-confidence ties because it has a native export.
 
 **Existing specs**: The action checks 22 specific file paths before calling AWS. If a valid OpenAPI or GraphQL spec is found at any of these locations, it is used directly:
 

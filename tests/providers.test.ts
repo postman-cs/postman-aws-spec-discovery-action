@@ -537,6 +537,7 @@ describe('LambdaUrlProvider', () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0]?.providerType).toBe('lambda-url');
     expect(candidates[0]?.name).toBe('orders-fn');
+    expect(candidates[0]?.meta.gatewayType).toBe('LAMBDA_URL');
   });
 
   it('synthesizes OpenAPI for Function URL candidates', async () => {
@@ -561,6 +562,8 @@ describe('LambdaUrlProvider', () => {
     expect(result.format).toBe('openapi-yaml');
     expect(result.filename).toBe('index.yaml');
     expect(result.content).toContain('x-aws-lambda-function-url-auth-type: "AWS_IAM"');
+    expect(result.content).toContain('  /{proxy}:');
+    expect(result.content).toContain('      - name: proxy');
   });
 });
 

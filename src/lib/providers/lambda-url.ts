@@ -32,7 +32,8 @@ export class LambdaUrlProvider implements SpecProvider {
           authType: config.authType,
           invokeMode: config.invokeMode ?? '',
           corsJson: config.cors ? JSON.stringify(config.cors) : '',
-          runtime: fn.runtime ?? ''
+          runtime: fn.runtime ?? '',
+          gatewayType: 'LAMBDA_URL'
         }
       });
     }
@@ -141,7 +142,7 @@ export function synthesizeLambdaUrlOpenApi(args: SynthesizeArgs): string {
   }
 
   lines.push('paths:');
-  lines.push("  /{proxy+}:");
+  lines.push("  /{proxy}:");
   lines.push('    parameters:');
   lines.push('      - name: proxy');
   lines.push('        in: path');

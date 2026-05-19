@@ -558,3 +558,72 @@ describe('SNS provider patterns via collectRepoSignals', () => {
     expect(signals.evidence.some((entry) => entry.includes('Detected SNS/EventBridge bridge pattern'))).toBe(true);
   });
 });
+
+describe('Lambda Function URL provider patterns via collectRepoSignals', () => {
+  it('detects lambda-url from CloudFormation AWS::Lambda::Url', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      ['Resources:', '  FnUrl:', '    Type: AWS::Lambda::Url'].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+  });
+
+  it('detects lambda-url from SAM FunctionUrlConfig', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      [
+        'Resources:',
+        '  Handler:',
+        '    Type: AWS::Serverless::Function',
+        '    Properties:',
+        '      FunctionUrlConfig:',
+        '        AuthType: NONE',
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+  });
+
+  it('detects lambda-url from Terraform aws_lambda_function_url resource', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'main.tf'),
+      'resource "aws_lambda_function_url" "orders" { function_name = aws_lambda_function.orders.function_name authorization_type = "NONE" }',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+  });
+
+  it('detects lambda-url from CDK addFunctionUrl usage', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(path.join(root, 'stack.ts'), 'handler.addFunctionUrl({ authType: lambda.FunctionUrlAuthType.NONE });');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+  });
+
+  it('detects lambda-url from Pulumi aws.lambda.FunctionUrl usage', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'Pulumi.yaml'), 'name: my-stack\nruntime: nodejs\n');
+    await writeFile(path.join(root, 'index.ts'), 'const url = new aws.lambda.FunctionUrl("orders", { authorizationType: "NONE" });');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+  });
+
+  it('extracts Lambda Function URL host hints from README', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'README.md'), 'Smoke test https://abc123.lambda-url.us-east-1.on.aws/orders');
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('lambda-url');
+    expect(signals.lambdaUrlHints).toContain('abc123.lambda-url.us-east-1.on.aws');
+  });
+});
