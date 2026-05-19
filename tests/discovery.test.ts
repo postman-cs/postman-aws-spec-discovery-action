@@ -1426,6 +1426,84 @@ describe('provider-agnostic resolve-one', () => {
     }
   });
 
+  it('prefers Lambda Function URL candidates whose host appears in repo signals', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'lambda-url-resolution-'));
+    try {
+      await writeFile(path.join(tempDir, 'README.md'), 'Production URL: https://selected.lambda-url.us-east-1.on.aws/orders');
+      const writes = new Map<string, string>();
+      const provider: SpecProvider = {
+        type: 'lambda-url',
+        probe: vi.fn().mockResolvedValue(true),
+        listCandidates: vi.fn().mockResolvedValue([
+          {
+            id: 'other-fn',
+            name: 'other-fn',
+            providerType: 'lambda-url',
+            tags: {},
+            evidence: ['other lambda url'],
+            meta: {
+              gatewayType: 'LAMBDA_URL',
+              functionUrl: 'https://other.lambda-url.us-east-1.on.aws/'
+            }
+          },
+          {
+            id: 'selected-fn',
+            name: 'selected-fn',
+            providerType: 'lambda-url',
+            tags: {},
+            evidence: ['selected lambda url'],
+            meta: {
+              gatewayType: 'LAMBDA_URL',
+              functionUrl: 'https://selected.lambda-url.us-east-1.on.aws/'
+            }
+          }
+        ]),
+        exportSpec: vi.fn().mockResolvedValue({
+          content: 'openapi: 3.0.3',
+          format: 'openapi-yaml',
+          filename: 'index.yaml',
+          evidence: ['lambda url exported']
+        })
+      };
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/unrelated-service' },
+          expectedServiceName: 'unrelated-service',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        async (outputPath, content) => {
+          writes.set(outputPath.replace(/\\/g, '/'), content);
+        },
+        { providers: [provider] }
+      );
+
+      expect(result.sourceType).toBe('lambda-url-export');
+      expect(result.gatewayId).toBe('selected-fn');
+      expect(result.gatewayType).toBe('LAMBDA_URL');
+      expect(result.evidence).toContain('Candidate selected-fn matched Lambda Function URL host hint selected.lambda-url.us-east-1.on.aws');
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/selected-fn/index.yaml'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('uses API Gateway custom domain mappings as resolution evidence', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'domain-resolution-'));
     try {

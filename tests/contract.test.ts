@@ -101,6 +101,9 @@ describe('action contract', () => {
     expect(contractsSource).toContain("| 'sns-contract'");
     expect(contractsSource).toContain("| 'asyncapi-yaml'");
     expect(contractsSource).toContain("| 'asyncapi-json'");
+    expect(contractsSource).toContain("| 'lambda-url'");
+    expect(contractsSource).toContain("| 'lambda-url-export'");
+    expect(contractsSource).toContain("| 'LAMBDA_URL'");
   });
 
   it('includes sns values in output descriptions', () => {
@@ -117,6 +120,36 @@ describe('action contract', () => {
     expect(actionOutputs['contract-origin'].description).toContain('ssm-content');
     expect(actionOutputs['contract-metadata-path'].description.length).toBeGreaterThan(0);
     expect(actionOutputs['variant-count'].description.length).toBeGreaterThan(0);
+    expect(actionOutputs['provider-type'].description).toContain('lambda-url');
+    expect(actionOutputs['source-type'].description).toContain('lambda-url-export');
+  });
+
+  it('typechecks discovered service and resolution result for lambda-url', () => {
+    const discoveredService = {
+      serviceName: 'orders-api',
+      specPath: 'discovered-specs/orders-api/index.yaml',
+      gatewayId: 'orders-fn',
+      gatewayType: 'LAMBDA_URL',
+      stage: '',
+      providerType: 'lambda-url',
+      specFormat: 'openapi-yaml'
+    } satisfies DiscoveredService;
+
+    const resolution = {
+      status: 'resolved',
+      sourceType: 'lambda-url-export',
+      serviceName: 'orders-api',
+      confidence: 90,
+      specPath: 'discovered-specs/orders-api/index.yaml',
+      gatewayId: 'orders-fn',
+      gatewayType: 'LAMBDA_URL',
+      providerType: 'lambda-url',
+      specFormat: 'openapi-yaml',
+      evidence: ['Resolved Lambda Function URL']
+    } satisfies ResolutionResult;
+
+    expect(discoveredService.providerType).toBe('lambda-url');
+    expect(resolution.sourceType).toBe('lambda-url-export');
   });
 
   it('typechecks discovered service and resolution result for sns', () => {

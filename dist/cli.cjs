@@ -120432,7 +120432,8 @@ var LambdaUrlProvider = class {
           authType: config.authType,
           invokeMode: config.invokeMode ?? "",
           corsJson: config.cors ? JSON.stringify(config.cors) : "",
-          runtime: fn.runtime ?? ""
+          runtime: fn.runtime ?? "",
+          gatewayType: "LAMBDA_URL"
         }
       });
     }
@@ -120521,7 +120522,7 @@ function synthesizeLambdaUrlOpenApi(args) {
     }
   }
   lines.push("paths:");
-  lines.push("  /{proxy+}:");
+  lines.push("  /{proxy}:");
   lines.push("    parameters:");
   lines.push("      - name: proxy");
   lines.push("        in: path");
@@ -123281,6 +123282,13 @@ function scoreProviderCandidate(candidate, provider, signals) {
     confidence += 50;
     evidence.push(`Candidate ${candidate.id} matched explicit id hint`);
   }
+  if (provider.type === "lambda-url") {
+    const functionUrlHost = hostnameFromUrl(candidate.meta.functionUrl);
+    if (functionUrlHost && (signals.lambdaUrlHints ?? []).some((hint) => hint.toLowerCase() === functionUrlHost)) {
+      confidence += 60;
+      evidence.push(`Candidate ${candidate.id} matched Lambda Function URL host hint ${functionUrlHost}`);
+    }
+  }
   return {
     provider,
     candidate,
@@ -123288,6 +123296,14 @@ function scoreProviderCandidate(candidate, provider, signals) {
     sourceType,
     evidence
   };
+}
+function hostnameFromUrl(raw) {
+  if (!raw) return void 0;
+  try {
+    return new URL(raw).hostname.toLowerCase();
+  } catch {
+    return void 0;
+  }
 }
 async function collectProviderResolutionCandidates(providers, signals, actionCore) {
   const results = [];

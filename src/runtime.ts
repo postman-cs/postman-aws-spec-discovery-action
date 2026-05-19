@@ -655,6 +655,14 @@ function scoreProviderCandidate(
     evidence.push(`Candidate ${candidate.id} matched explicit id hint`);
   }
 
+  if (provider.type === 'lambda-url') {
+    const functionUrlHost = hostnameFromUrl(candidate.meta.functionUrl);
+    if (functionUrlHost && (signals.lambdaUrlHints ?? []).some((hint) => hint.toLowerCase() === functionUrlHost)) {
+      confidence += 60;
+      evidence.push(`Candidate ${candidate.id} matched Lambda Function URL host hint ${functionUrlHost}`);
+    }
+  }
+
   return {
     provider,
     candidate,
@@ -662,6 +670,15 @@ function scoreProviderCandidate(
     sourceType,
     evidence
   };
+}
+
+function hostnameFromUrl(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
 }
 
 async function collectProviderResolutionCandidates(

@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file.
 
 The format follows Keep a Changelog and this project uses Semantic Versioning.
 
+## [0.7.0] - 2026-05-19
+
+### Added
+- Lambda Function URL discovery via `lambda:ListFunctions`, `lambda:GetFunctionUrlConfig`, and `lambda:ListTags`, with synthesized OpenAPI 3.0 YAML output and CloudFormation/SAM, Terraform, CDK, Pulumi, and `lambda-url` hostname signal detection.
+
 ## [0.3.0] - 2026-03-23
 
 ### Added

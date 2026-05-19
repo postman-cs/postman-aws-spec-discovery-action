@@ -23,6 +23,13 @@
       "enum": [
         "repo-spec",
         "gateway-export",
+        "appsync-schema",
+        "eventbridge-schema",
+        "cfn-embedded",
+        "glue-schema",
+        "sns-contract",
+        "ssm-registry",
+        "lambda-url-export",
         "manual-review",
         "discover-many"
       ]
@@ -44,7 +51,38 @@
       "type": "string",
       "enum": [
         "REST",
-        "HTTP"
+        "HTTP",
+        "WEBSOCKET",
+        "SNS",
+        "LAMBDA_URL"
+      ]
+    },
+    "providerType": {
+      "type": "string",
+      "enum": [
+        "api-gateway",
+        "appsync",
+        "eventbridge-schemas",
+        "cloudformation",
+        "glue",
+        "sns",
+        "ssm",
+        "lambda-url"
+      ]
+    },
+    "specFormat": {
+      "type": "string",
+      "enum": [
+        "openapi-yaml",
+        "openapi-json",
+        "graphql-sdl",
+        "asyncapi-yaml",
+        "asyncapi-json",
+        "json-schema",
+        "postman-collection",
+        "smithy",
+        "avro",
+        "protobuf"
       ]
     },
     "stage": {
