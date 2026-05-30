@@ -1,6 +1,6 @@
 {
   "name": "@postman-cse/onboarding-aws-spec-discovery",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Discover and export API specs from AWS services with zero-config auto-detection.",
   "type": "module",
   "main": "dist/index.cjs",
