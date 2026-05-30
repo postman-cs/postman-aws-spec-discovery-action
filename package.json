@@ -8,7 +8,7 @@
     "postman-aws-spec-discovery": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/cli.cjs",
+    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs",
     "check:dist": "npm run build && git diff --exit-code -- dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -28,39 +28,42 @@
     "access": "public"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@aws-sdk/client-api-gateway": "^3.1014.0",
-    "@aws-sdk/client-apigatewayv2": "^3.1014.0",
-    "@aws-sdk/client-appsync": "^3.1015.0",
-    "@aws-sdk/client-cloudformation": "^3.1015.0",
-    "@aws-sdk/client-glue": "^3.1015.0",
-    "@aws-sdk/client-lambda": "^3.1015.0",
-    "@aws-sdk/client-resource-groups-tagging-api": "^3.1015.0",
-    "@aws-sdk/client-s3": "^3.1015.0",
-    "@aws-sdk/client-schemas": "^3.1015.0",
-    "@aws-sdk/client-sns": "^3.1029.0",
-    "@aws-sdk/client-ssm": "^3.1015.0",
-    "@aws-sdk/client-sts": "^3.1014.0",
-    "@smithy/node-http-handler": "^4.4.5"
+    "@actions/core": "^3.0.1",
+    "@aws-sdk/client-api-gateway": "^3.1057.0",
+    "@aws-sdk/client-apigatewayv2": "^3.1057.0",
+    "@aws-sdk/client-appsync": "^3.1057.0",
+    "@aws-sdk/client-cloudformation": "^3.1057.0",
+    "@aws-sdk/client-glue": "^3.1057.0",
+    "@aws-sdk/client-lambda": "^3.1057.0",
+    "@aws-sdk/client-resource-groups-tagging-api": "^3.1057.0",
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/client-schemas": "^3.1057.0",
+    "@aws-sdk/client-sns": "^3.1057.0",
+    "@aws-sdk/client-ssm": "^3.1057.0",
+    "@aws-sdk/client-sts": "^3.1057.0",
+    "@smithy/node-http-handler": "^4.7.5",
+    "yaml": "^2.9.0"
   },
   "overrides": {
     "undici": "^6.24.0",
     "picomatch": ">=4.0.4"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.3.5",
-    "esbuild": "^0.27.3",
-    "eslint": "^10.1.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2",
-    "vitest": "^4.0.18",
-    "yaml": "^2.8.2"
+    "@types/node": "^24.12.4",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.4.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0",
+    "vitest": "^4.1.7"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/postman-cs/postman-aws-spec-discovery-action"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
