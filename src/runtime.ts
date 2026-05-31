@@ -392,11 +392,11 @@ function filterCandidates(restApis: RestApiSummary[], httpApis: HttpApiSummary[]
   const rest: GatewayCandidate[] = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: 'REST' }));
   const http: GatewayCandidate[] = includeV2
     ? httpApis
-        .filter((api) => !api.protocolType || api.protocolType === 'HTTP')
+        .filter((api) => !api.protocolType || api.protocolType === 'HTTP' || api.protocolType === 'WEBSOCKET')
         .map((api) => ({
           id: api.id,
           name: api.name,
-          gatewayType: 'HTTP' as GatewayType
+          gatewayType: api.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' as GatewayType : 'HTTP' as GatewayType
         }))
     : [];
   const all = [...rest, ...http];
@@ -791,8 +791,11 @@ async function resolveStageSelection(aws: AwsGatewayClient, candidate: GatewayCa
     return { evidence: [], error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}` };
   }
   if (stages.length === 0) {
-    if (candidate.gatewayType === 'HTTP') {
-      return { useLatestConfig: true, evidence: ['No deployed stage found; exporting latest HTTP API configuration without stage'] };
+    if (candidate.gatewayType === 'HTTP' || candidate.gatewayType === 'WEBSOCKET') {
+      return {
+        useLatestConfig: true,
+        evidence: [`No deployed stage found; exporting latest ${candidate.gatewayType} API configuration without stage`]
+      };
     }
     return { evidence: [], error: `No stages were found for REST API ${candidate.id}` };
   }
@@ -877,7 +880,7 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
     for (const candidate of selectedCandidates) {
       try {
         const stage = await selectStage(dependencies.aws, candidate, inputs.stage);
-        if (!stage) {
+        if (!stage && candidate.gatewayType !== 'WEBSOCKET') {
           summary.skipped += 1;
           dependencies.core.warning(userSafeWarning(`Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`));
           continue;
@@ -898,10 +901,13 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
         }
 
         const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
+        const exportedStage = stage ?? '';
         const rawSpecBody =
           candidate.gatewayType === 'REST'
-            ? await dependencies.aws.exportRestApi(candidate.id, stage)
-            : await dependencies.aws.exportHttpApi(candidate.id, stage);
+            ? await dependencies.aws.exportRestApi(candidate.id, exportedStage)
+            : candidate.gatewayType === 'WEBSOCKET'
+              ? await dependencies.aws.exportWebSocketApi(candidate.id, stage)
+              : await dependencies.aws.exportHttpApi(candidate.id, stage);
         const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         summary.exported += 1;
@@ -910,7 +916,7 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
-          stage,
+          stage: exportedStage,
           providerType: 'api-gateway',
           specFormat: 'openapi-yaml'
         });
@@ -1188,11 +1194,6 @@ export async function runResolution(
     if (!selectedGateway) {
       return toManualReviewResult(selectedSource, ['Selected gateway could not be reloaded for export']);
     }
-    if (selectedGateway.gatewayType === 'WEBSOCKET') {
-      return toManualReviewResult(selectedSource, [
-        'API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required'
-      ]);
-    }
     let stageSelection: ResolutionStageSelection;
     try {
       stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
@@ -1215,7 +1216,9 @@ export async function runResolution(
       const rawBody =
         selectedSource.gatewayType === 'REST'
           ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? '')
-          : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage);
+          : selectedSource.gatewayType === 'WEBSOCKET'
+            ? await awsClient.exportWebSocketApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage)
+            : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage);
       const body = normalizeApiGatewaySpec(
         rawBody,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
@@ -1223,6 +1226,14 @@ export async function runResolution(
       );
       await writeSpecFile(absoluteSpecPath, body);
       selectedSource.specPath = relativeSpecPath;
+      selectedSource.providerType = 'api-gateway';
+      selectedSource.specFormat = 'openapi-yaml';
+      if (selectedSource.gatewayType === 'WEBSOCKET') {
+        selectedSource.evidence = [
+          ...selectedSource.evidence,
+          `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${selectedSource.gatewayId}`
+        ];
+      }
     } catch (error) {
       const parsed = parseAwsError(error);
       if (isManualReviewExportError(parsed)) {

@@ -1,0 +1,11 @@
+name: deploy
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: aws apigateway get-export --rest-api-id abcdef1234 --stage-name prod --export-type oas30 out.yaml
+        env:
+          API_CUSTOM_DOMAIN: api.validation.example.test
+          LAMBDA_URL: abcdefghij.lambda-url.us-east-1.on.aws

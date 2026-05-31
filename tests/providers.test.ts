@@ -57,6 +57,7 @@ function createGatewayClientStub(overrides: Partial<AwsGatewayClient> = {}): Aws
     getHttpTags: vi.fn().mockResolvedValue({}),
     exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
     exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+    exportWebSocketApi: vi.fn().mockResolvedValue('openapi: 3.0.3'),
     getCallerIdentity: vi.fn().mockResolvedValue({ accountId: '123456789012', arn: 'arn:aws:iam::123456789012:role/test' }),
     probeApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
     ...overrides
@@ -176,7 +177,7 @@ describe('ProviderRegistry', () => {
 });
 
 describe('ApiGatewayProvider', () => {
-  it('lists REST and HTTP candidates and skips WebSocket OpenAPI export candidates', async () => {
+  it('lists REST, HTTP, and WebSocket candidates', async () => {
     const client = createGatewayClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'my-rest' }]),
       listHttpApis: vi.fn().mockResolvedValue([
@@ -187,8 +188,8 @@ describe('ApiGatewayProvider', () => {
     const provider = new ApiGatewayProvider(client, { includeV2: true });
 
     const candidates = await provider.listCandidates();
-    expect(candidates).toHaveLength(2);
-    expect(candidates.map((c) => c.meta.gatewayType)).toEqual(['REST', 'HTTP']);
+    expect(candidates).toHaveLength(3);
+    expect(candidates.map((c) => c.meta.gatewayType)).toEqual(['REST', 'HTTP', 'WEBSOCKET']);
   });
 
   it('filters out v2 APIs when includeV2 is false', async () => {
@@ -232,6 +233,32 @@ describe('ApiGatewayProvider', () => {
     expect(result.format).toBe('openapi-yaml');
     expect(result.filename).toBe('index.yaml');
     expect(result.content).toContain('openapi');
+  });
+
+  it('exports partial WebSocket API OpenAPI spec', async () => {
+    const client = createGatewayClientStub({
+      exportWebSocketApi: vi.fn().mockResolvedValue([
+        'openapi: 3.0.3',
+        'info:',
+        '  title: ws-api',
+        '  version: "1.0.0"',
+        'paths:',
+        '  /sendMessage:',
+        '    post:',
+        '      x-amazon-apigateway-route-key: sendMessage'
+      ].join('\n'))
+    });
+    const provider = new ApiGatewayProvider(client, { includeV2: true });
+
+    const result = await provider.exportSpec(
+      { id: 'ws-1', name: 'ws-api', providerType: 'api-gateway', tags: {}, evidence: [], meta: { gatewayType: 'WEBSOCKET' } },
+      { stage: 'prod' }
+    );
+
+    expect(result.format).toBe('openapi-yaml');
+    expect(result.filename).toBe('index.yaml');
+    expect(result.content).toContain('x-amazon-apigateway-route-key: sendMessage');
+    expect(result.evidence).toContain('Synthesized partial OpenAPI 3.0 spec for WebSocket API ws-1');
   });
 });
 

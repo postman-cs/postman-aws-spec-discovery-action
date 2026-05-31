@@ -18,20 +18,26 @@ No GitHub token required. This action uses only AWS credentials for API access. 
 
 ## Supported providers
 
-| Provider | Spec format | Auto-detected via |
-| --- | --- | --- |
-| API Gateway REST | OpenAPI 3.0 YAML | IAM probe |
-| API Gateway HTTP | OpenAPI 3.0 YAML | IAM probe |
-| API Gateway WebSocket | OpenAPI 3.0 YAML | IAM probe |
-| AppSync GraphQL | GraphQL SDL | IAM probe + `.graphql` files in repo |
-| EventBridge Schema Registry | JSON Schema / OpenAPI | IAM probe + IaC references |
-| CloudFormation (embedded specs) | OpenAPI JSON | IAM probe |
-| Glue Schema Registry | Avro / JSON Schema / Protobuf | IAM probe + IaC references |
-| SSM Parameter Store | Any (stored content or fetched URL content) | IAM probe for `/postman/specs/` path |
-| SNS Topics (contract resolver) | AsyncAPI / JSON Schema contracts | IAM probe + SNS IaC references + SSM fallback |
-| Lambda Function URLs | OpenAPI 3.0 YAML (synthesized) | IAM probe + IaC references / `lambda-url` URL pattern |
+The action resolves the best available contract artifact first, then records whether that artifact is already OpenAPI or can be represented as a partial OpenAPI 3.x surface. Partial derivations are intentionally conservative: they preserve the discoverable transport shape without inventing undocumented business endpoints.
+
+| Provider | Primary artifact | OpenAPI derivation | Auto-detected via |
+| --- | --- | --- | --- |
+| Repo-local specs | OpenAPI, Swagger, GraphQL SDL, AsyncAPI, Postman, protobuf, Smithy | Full OpenAPI for OpenAPI 3.x; partial OpenAPI 3.x for Swagger and native API formats | Known spec paths |
+| Backstage catalog | Local or remote `catalog-info.yaml` / `catalog-info.yml` API definitions | Full OpenAPI for OpenAPI refs; partial OpenAPI 3.1 for GraphQL refs | Repo root catalog file |
+| API Gateway REST | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
+| API Gateway HTTP | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
+| API Gateway WebSocket | Route metadata | Partial OpenAPI 3.0 YAML synthesized from routes | Explicit gateway ID |
+| AppSync GraphQL | GraphQL SDL | Partial OpenAPI 3.1 GraphQL endpoint | IAM probe + `.graphql` files in repo |
+| EventBridge Schema Registry | JSON Schema or OpenApi3 schema content | Full OpenAPI for OpenApi3 schemas; partial OpenAPI 3.1 for JSON Schema | IAM probe + IaC references |
+| CloudFormation embedded specs | Embedded or referenced OpenAPI body | Full OpenAPI 3.0/3.1 when the template contains OpenAPI | IAM probe |
+| Glue Schema Registry | Avro, JSON Schema, or protobuf | Partial OpenAPI 3.1 request surface | IAM probe + IaC references |
+| SSM Parameter Store | Stored content, fetched URL content, or pointer artifact | Full OpenAPI for OpenAPI content; partial OpenAPI 3.1 for supported native content and pointer artifacts | IAM probe for `/postman/specs/` path |
+| SNS Topics | AsyncAPI / JSON Schema contracts plus sidecars | Partial OpenAPI 3.1 from contracts; OpenAPI 3.1 webhook sidecar for HTTP/S subscriptions | IAM probe + SNS IaC references + SSM fallback |
+| Lambda Function URLs | Synthesized function URL contract | Full OpenAPI 3.0 YAML | IAM probe + IaC references / `lambda-url` URL pattern |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
+
+The validation suite for this repository lives in [`validation/`](validation/README.md). It includes fixture inputs, runbooks, sanitized evidence, and live AWS checks for every provider above.
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root and resolves API spec path or URL references automatically.
 
@@ -264,6 +270,8 @@ These are auto-detected from CI environment variables. Override them only when a
 | SNS (no contract found) | `manual-review.json` | JSON Schema |
 | SNS (metadata sidecar) | `sns-resolution-metadata.json` | JSON |
 | SNS (webhook sidecar) | `webhook.openapi.json` | OpenAPI 3.1 JSON |
+
+Native artifacts are preserved as the primary output. When the primary output is not OpenAPI, the validation suite proves the action can still derive a conservative OpenAPI 3.x representation for downstream onboarding and review. See [`validation/evidence/README.md`](validation/evidence/README.md) for the current evidence ledger.
 
 ## Usage
 

@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: Validation OpenAPI 3.0
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: OK

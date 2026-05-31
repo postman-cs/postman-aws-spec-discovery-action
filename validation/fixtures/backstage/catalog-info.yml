@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: validation-graphql
+spec:
+  type: graphql
+  lifecycle: production
+  owner: validation
+  definition: ../repo-spec/schema.graphql

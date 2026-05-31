@@ -369,6 +369,19 @@ describe('SNS provider patterns via collectRepoSignals', () => {
     expect(signals.inferredGatewayIdHints).toContain('abc123def4');
   });
 
+  it('detects explicit README SNS/EventBridge bridge descriptions', async () => {
+    const root = await makeTempDir();
+    await writeFile(
+      path.join(root, 'README.md'),
+      'SNS bridge: messages are delivered to Lambda and then published to EventBridge.',
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('sns');
+    expect(signals.providerHints).toContain('eventbridge-schemas');
+    expect(signals.evidence.some((entry) => entry.includes('Detected SNS/EventBridge bridge pattern'))).toBe(true);
+  });
+
   it('detects sns from Terraform aws_sns_topic resource', async () => {
     const root = await makeTempDir();
     await writeFile(
@@ -404,6 +417,26 @@ describe('SNS provider patterns via collectRepoSignals', () => {
 
     const signals = await collectRepoSignals(root);
     expect(signals.providerHints).toContain('sns');
+  });
+
+  it('detects api-gateway and appsync from CDK TypeScript source when cdk.json exists', async () => {
+    const root = await makeTempDir();
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }));
+    await writeFile(
+      path.join(root, 'stack.ts'),
+      [
+        "import * as apigateway from 'aws-cdk-lib/aws-apigateway';",
+        "import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';",
+        "import * as appsync from 'aws-cdk-lib/aws-appsync';",
+        'new apigateway.RestApi(this, "OrdersRestApi");',
+        'new apigatewayv2.HttpApi(this, "OrdersHttpApi");',
+        'new appsync.GraphqlApi(this, "OrdersGraphqlApi", {});',
+      ].join('\n'),
+    );
+
+    const signals = await collectRepoSignals(root);
+    expect(signals.providerHints).toContain('api-gateway');
+    expect(signals.providerHints).toContain('appsync');
   });
 
   it('detects sns from CDK sns.Topic.fromTopicArn usage when cdk.json exists', async () => {
