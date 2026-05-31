@@ -32,6 +32,18 @@ npm run build       # Bundle to dist/ (esbuild)
 
 This action ships bundled JavaScript in `dist/`. After any source change, run `npm run build` and include the updated `dist/` files in your commit. CI enforces this with `npm run check:dist`.
 
+## Release E2E Status
+
+This repo is not directly blocked by the central live release e2e gate in Phase
+1. The current `postman-actions-e2e` pipeline exercises the lower-level
+`resolve-service-token`, `bootstrap`, `repo-sync`, and `smoke-flow` CLI actions;
+it does not yet run AWS spec discovery as the released artifact.
+
+Do not describe an AWS spec discovery release as live-e2e-gated until the
+harness includes real AWS discovery coverage and this repo's release workflow
+waits on that gate. Continue to run the live SNS integration tests when changing
+SNS provider logic, signals, or runtime integration.
+
 ## Commit Messages
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits must follow this format:
