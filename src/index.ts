@@ -81,4 +81,18 @@ export {
   type OperationIdRename,
   type NormalizeOpenApiResult
 } from './lib/spec/normalize-openapi.js';
+export { collectRepoSignals } from './lib/repo/signals.js';
+export { LambdaUrlProvider } from './lib/providers/lambda-url.js';
+export { CloudFormationProvider } from './lib/providers/cloudformation.js';
+export type { LambdaSpecClient } from './lib/aws/lambda-client.js';
+export {
+  synthesizeWebSocketOpenApi,
+  type WebSocketOpenApiInput,
+  type WebSocketRouteSummary
+} from './lib/spec/websocket-openapi.js';
+export {
+  deriveOpenApiDocument,
+  type OpenApiDerivationInput,
+  type OpenApiDerivationResult
+} from './lib/spec/oas-derivation.js';
 export const outputNames = contractOutputNames;

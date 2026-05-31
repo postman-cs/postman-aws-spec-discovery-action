@@ -1,0 +1,19 @@
+{
+  "stackName": "spec-discovery-validation",
+  "region": "us-east-1",
+  "accountId": "123456789012",
+  "status": "CREATE_COMPLETE",
+  "outputs": {
+    "RestApiId": "redacted",
+    "HttpApiId": "redacted",
+    "WebSocketApiId": "redacted",
+    "GraphqlApiId": "redacted",
+    "SchemaRegistryName": "spec-discovery-validation-registry",
+    "GlueRegistryName": "spec-discovery-validation-glue-registry",
+    "LambdaFunctionName": "spec-discovery-validation-lambda-url",
+    "LambdaFunctionUrl": "https://redacted.lambda-url.us-east-1.on.aws/",
+    "SnsTestTopicArn": "arn:aws:sns:us-east-1:123456789012:SpecDiscoveryValidationTopic",
+    "SnsUrlTopicArn": "arn:aws:sns:us-east-1:123456789012:SpecDiscoveryValidationUrlTopic",
+    "SnsSubscriptionTopicArn": "arn:aws:sns:us-east-1:123456789012:SpecDiscoveryValidationSubscribedTopic"
+  }
+}

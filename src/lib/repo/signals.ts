@@ -110,6 +110,12 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /resource\s+"aws_glue_schema"/i, provider: 'glue' },
 
   // CDK TypeScript patterns
+  { pattern: /aws-cdk-lib\/aws-apigateway/i, provider: 'api-gateway' },
+  { pattern: /aws-cdk-lib\/aws-apigatewayv2/i, provider: 'api-gateway' },
+  { pattern: /new\s+apigateway\.RestApi\s*\(/i, provider: 'api-gateway' },
+  { pattern: /new\s+apigatewayv2\.(?:HttpApi|WebSocketApi|Api)\s*\(/i, provider: 'api-gateway' },
+  { pattern: /aws-cdk-lib\/aws-appsync/i, provider: 'appsync' },
+  { pattern: /new\s+appsync\.GraphqlApi\s*\(/i, provider: 'appsync' },
   { pattern: /aws-cdk-lib\/aws-sns/i, provider: 'sns' },
   { pattern: /new\s+sns\.Topic\s*\(/i, provider: 'sns' },
   { pattern: /sns\.Topic\.fromTopicArn\s*\(/i, provider: 'sns' },
@@ -135,14 +141,14 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
 ];
 
 function detectSnsEventBridgeBridgePattern(content: string): boolean {
-  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource/i.test(
+  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource|\bSNS\s+bridge\b|\bSNS[-\s/]+to[-\s/]+EventBridge\b/i.test(
     content
   );
-  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda/i.test(
+  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda|\bLambda\b/i.test(
     content
   );
   const hasEventBridge =
-    /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\./i.test(
+    /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\.|\bEventBridge\b/i.test(
       content
     );
   return hasSns && hasLambda && hasEventBridge;
@@ -239,6 +245,11 @@ export async function collectRepoSignals(
           providerHintSet.add('sns');
           providerHintSet.add('eventbridge-schemas');
         }
+      }
+      if (!shouldDetectProviderHintsForFile(file) && detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${file}`);
+        providerHintSet.add('sns');
+        providerHintSet.add('eventbridge-schemas');
       }
     } catch {
       // Optional file.

@@ -59,6 +59,7 @@ function createAwsClientStub(overrides: Partial<AwsGatewayClient> = {}): AwsGate
     getHttpTags: vi.fn().mockResolvedValue({}),
     exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
     exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+    exportWebSocketApi: vi.fn().mockResolvedValue('openapi: 3.0.3'),
     getCallerIdentity: vi.fn().mockResolvedValue({
       accountId: '123456789012',
       arn: 'arn:aws:iam::123456789012:role/test'
@@ -201,7 +202,8 @@ describe('runDiscovery', () => {
         }
         return `openapi: 3.0.1\ninfo:\n  title: ${id}`;
       }),
-      exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: http')
+      exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: http'),
+      exportWebSocketApi: vi.fn().mockResolvedValue('openapi: 3.0.3\ninfo:\n  title: websocket')
     };
 
     const result = await runDiscovery(
@@ -287,7 +289,8 @@ describe('runDiscovery', () => {
       }),
       probeApiGatewayReadAccess: vi.fn().mockResolvedValue(undefined),
       exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
-      exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+      exportHttpApi: vi.fn().mockResolvedValue('openapi: 3.0.1'),
+      exportWebSocketApi: vi.fn().mockResolvedValue('openapi: 3.0.3')
     };
 
     const result = await runDiscovery(
@@ -1551,46 +1554,71 @@ describe('provider-agnostic resolve-one', () => {
     }
   });
 
-  it('routes explicit WebSocket API Gateway IDs to manual review instead of OpenAPI export', async () => {
-    const result = await runResolution(
-      {
-        mode: 'resolve-one',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'github', repoSlug: 'postman/ws-api' },
-        expectedServiceName: 'ws-api',
-        expectedGatewayIds: ['ws-1'],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 50,
-        dryRun: false,
-        preflightChecks: true,
-        preflightPermissionProbe: true,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: true
-      },
-      createAwsClientStub({
-        getHttpApi: vi.fn().mockResolvedValue({ id: 'ws-1', name: 'ws-api', protocolType: 'WEBSOCKET' }),
-        getHttpTags: vi.fn().mockResolvedValue({})
-      }),
-      createCoreStub().core,
-      vi.fn().mockResolvedValue(undefined)
-    );
+  it('routes explicit WebSocket API Gateway IDs to partial OpenAPI export', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'ws-resolution-'));
+    const written = new Map<string, string>();
+    try {
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/ws-api' },
+          expectedServiceName: 'ws-api',
+          expectedGatewayIds: ['ws-1'],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub({
+          getHttpApi: vi.fn().mockResolvedValue({ id: 'ws-1', name: 'ws-api', protocolType: 'WEBSOCKET' }),
+          getHttpTags: vi.fn().mockResolvedValue({}),
+          exportWebSocketApi: vi.fn().mockResolvedValue([
+            'openapi: 3.0.3',
+            'info:',
+            '  title: ws-api',
+            '  version: "1.0.0"',
+            'paths:',
+            '  /sendMessage:',
+            '    post:',
+            '      x-amazon-apigateway-route-key: sendMessage'
+          ].join('\n'))
+        }),
+        createCoreStub().core,
+        async (outputPath: string, content: string) => {
+          written.set(outputPath.replace(/\\/g, '/'), content);
+        }
+      );
 
-    expect(result.sourceType).toBe('manual-review');
-    expect(result.evidence).toContain('API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required');
+      expect(result.status).toBe('resolved');
+      expect(result.sourceType).toBe('gateway-export');
+      expect(result.providerType).toBe('api-gateway');
+      expect(result.specFormat).toBe('openapi-yaml');
+      expect(result.gatewayType).toBe('WEBSOCKET');
+      expect(result.evidence).toContain('Synthesized partial OpenAPI 3.0 spec for WebSocket API ws-1');
+      expect([...written.values()].some((content) => content.includes('x-amazon-apigateway-route-key: sendMessage'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 
 describe('runAction', () => {
   it('emits resolution outputs in resolve-one mode', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'run-action-resolution-'));
     const { core, outputs } = createCoreStub({
       'aws-region': 'us-east-1',
       'gateway-id': 'rest-1'
     });
+    const previousWorkspace = process.env.GITHUB_WORKSPACE;
 
     const written = new Map<string, string>();
     const awsClient = createAwsClientStub({
@@ -1600,29 +1628,43 @@ describe('runAction', () => {
       exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: billing')
     });
 
-    const result = await runAction(core, {
-      createAwsClient: () => awsClient,
-      writeSpecFile: async (outputPath: string, content: string) => {
-        written.set(outputPath.replace(/\\/g, '/'), content);
-      }
-    });
+    try {
+      process.env.GITHUB_WORKSPACE = tempDir;
+      const result = await runAction(core, {
+        createAwsClient: () => awsClient,
+        writeSpecFile: async (outputPath: string, content: string) => {
+          written.set(outputPath.replace(/\\/g, '/'), content);
+        }
+      });
 
-    expect(result).toHaveLength(0);
-    expect(outputs['resolution-status']).toBe('resolved');
-    expect(outputs['source-type']).toBe('gateway-export');
-    expect(outputs['service-name']).toBe('billing');
-    expect(outputs['gateway-id']).toBe('rest-1');
-    expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
-    expect(outputs['export-summary-json']).toContain('"attempted":0');
-    expect([...written.keys()].some((entry) => entry.endsWith('/discovered-specs/billing/index.yaml'))).toBe(true);
-    expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
+      expect(result).toHaveLength(0);
+      expect(outputs['resolution-status']).toBe('resolved');
+      expect(outputs['source-type']).toBe('gateway-export');
+      expect(outputs['service-name']).toBe('billing');
+      expect(outputs['gateway-id']).toBe('rest-1');
+      expect(outputs['spec-path']).toContain('discovered-specs/billing/index.yaml');
+      expect(outputs['provider-type']).toBe('api-gateway');
+      expect(outputs['spec-format']).toBe('openapi-yaml');
+      expect(outputs['export-summary-json']).toContain('"attempted":0');
+      expect([...written.keys()].some((entry) => entry.endsWith('/discovered-specs/billing/index.yaml'))).toBe(true);
+      expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
+    } finally {
+      if (previousWorkspace === undefined) {
+        delete process.env.GITHUB_WORKSPACE;
+      } else {
+        process.env.GITHUB_WORKSPACE = previousWorkspace;
+      }
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('downgrades export bad request errors to manual review', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'run-action-manual-review-'));
     const { core, outputs } = createCoreStub({
       'aws-region': 'us-east-1',
       'gateway-id': 'http-1'
     });
+    const previousWorkspace = process.env.GITHUB_WORKSPACE;
 
     const awsClient = createAwsClientStub({
       getRestApi: vi.fn().mockResolvedValue(undefined),
@@ -1636,12 +1678,22 @@ describe('runAction', () => {
       )
     });
 
-    await runAction(core, {
-      createAwsClient: () => awsClient
-    });
+    try {
+      process.env.GITHUB_WORKSPACE = tempDir;
+      await runAction(core, {
+        createAwsClient: () => awsClient
+      });
 
-    expect(outputs['resolution-status']).toBe('unresolved');
-    expect(outputs['source-type']).toBe('manual-review');
+      expect(outputs['resolution-status']).toBe('unresolved');
+      expect(outputs['source-type']).toBe('manual-review');
+    } finally {
+      if (previousWorkspace === undefined) {
+        delete process.env.GITHUB_WORKSPACE;
+      } else {
+        process.env.GITHUB_WORKSPACE = previousWorkspace;
+      }
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('propagates provider-type and spec-format for non-gateway resolve-one results', () => {

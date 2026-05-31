@@ -1,0 +1,20 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: validation-local-openapi
+spec:
+  type: openapi
+  lifecycle: production
+  owner: validation
+  definition: ../repo-spec/openapi-3.0.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: validation-remote-openapi
+spec:
+  type: openapi
+  lifecycle: production
+  owner: validation
+  definition:
+    $text: https://example.com/openapi.yaml

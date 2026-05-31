@@ -35874,7 +35874,7 @@ var require_dist_cjs21 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command2.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetRouteResponses", {}).n("ApiGatewayV2Client", "GetRouteResponsesCommand").sc(schemas_0.GetRouteResponses$).build() {
     };
-    var GetRoutesCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command2, cs, config2, o2) {
+    var GetRoutesCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command2, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command2.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetRoutes", {}).n("ApiGatewayV2Client", "GetRoutesCommand").sc(schemas_0.GetRoutes$).build() {
     };
@@ -36090,7 +36090,7 @@ var require_dist_cjs21 = __commonJS({
       GetRouteCommand,
       GetRouteResponseCommand,
       GetRouteResponsesCommand,
-      GetRoutesCommand,
+      GetRoutesCommand: GetRoutesCommand2,
       GetRoutingRuleCommand,
       GetStageCommand,
       GetStagesCommand,
@@ -36311,7 +36311,7 @@ var require_dist_cjs21 = __commonJS({
     exports2.GetRouteCommand = GetRouteCommand;
     exports2.GetRouteResponseCommand = GetRouteResponseCommand;
     exports2.GetRouteResponsesCommand = GetRouteResponsesCommand;
-    exports2.GetRoutesCommand = GetRoutesCommand;
+    exports2.GetRoutesCommand = GetRoutesCommand2;
     exports2.GetRoutingRuleCommand = GetRoutingRuleCommand;
     exports2.GetStageCommand = GetStageCommand;
     exports2.GetStagesCommand = GetStagesCommand;
@@ -114586,6 +114586,78 @@ var import_client_api_gateway = __toESM(require_dist_cjs20(), 1);
 var import_client_apigatewayv2 = __toESM(require_dist_cjs21(), 1);
 var import_node_http_handler5 = __toESM(require_dist_cjs9(), 1);
 var import_client_sts = __toESM(require_dist_cjs22(), 1);
+
+// src/lib/spec/websocket-openapi.ts
+var DEFAULT_ROUTES = [
+  { routeKey: "$connect" },
+  { routeKey: "$disconnect" },
+  { routeKey: "$default" }
+];
+function synthesizeWebSocketOpenApi(input) {
+  const routes = input.routes.length > 0 ? input.routes : DEFAULT_ROUTES;
+  const lines = [
+    "openapi: 3.0.3",
+    "info:",
+    `  title: ${quoteYaml(input.apiName || input.apiId)}`,
+    '  version: "1.0.0"',
+    '  description: "Partial OpenAPI description synthesized from API Gateway WebSocket routes."',
+    "servers:",
+    `  - url: ${quoteYaml(serverUrl(input))}`,
+    '    description: "API Gateway WebSocket endpoint"',
+    `x-amazon-apigateway-api-id: ${quoteYaml(input.apiId)}`,
+    'x-amazon-apigateway-protocol: "WEBSOCKET"',
+    `x-amazon-apigateway-route-selection-expression: ${quoteYaml(input.routeSelectionExpression || "$request.body.action")}`,
+    "paths:"
+  ];
+  for (const route of routes) {
+    const routeKey = route.routeKey || "$default";
+    const path11 = routePath(routeKey);
+    lines.push(`  ${quoteYaml(path11)}:`);
+    lines.push("    post:");
+    lines.push(`      operationId: ${operationId(route)}`);
+    lines.push(`      summary: ${quoteYaml(`WebSocket route ${routeKey}`)}`);
+    lines.push(`      x-amazon-apigateway-route-key: ${quoteYaml(routeKey)}`);
+    if (route.authorizationType) {
+      lines.push(`      x-amazon-apigateway-authorization-type: ${quoteYaml(route.authorizationType)}`);
+    }
+    if (route.target) {
+      lines.push(`      x-amazon-apigateway-target: ${quoteYaml(route.target)}`);
+    }
+    lines.push("      requestBody:");
+    lines.push("        required: false");
+    lines.push("        content:");
+    lines.push("          application/json:");
+    lines.push("            schema:");
+    lines.push("              type: object");
+    lines.push("              additionalProperties: true");
+    lines.push("      responses:");
+    lines.push('        "200":');
+    lines.push("          description: WebSocket route accepted");
+  }
+  return `${lines.join("\n")}
+`;
+}
+function serverUrl(input) {
+  const base = `wss://${input.apiId}.execute-api.${input.region}.amazonaws.com`;
+  return input.stage ? `${base}/${input.stage}` : base;
+}
+function routePath(routeKey) {
+  if (routeKey.startsWith("$")) {
+    return `/${routeKey}`;
+  }
+  return `/${routeKey.replace(/\s+/g, "-")}`;
+}
+function operationId(route) {
+  const raw = route.operationName?.trim() || route.routeKey || "default";
+  const clean = raw.replace(/^\$/, "").replace(/[^a-zA-Z0-9]+/g, " ").trim();
+  const words = clean ? clean.split(/\s+/) : ["default"];
+  return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
+}
+function quoteYaml(value) {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+// src/lib/aws/client.ts
 function toErrorMessage(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
 }
@@ -114677,7 +114749,8 @@ var AwsApiGatewaySdkClient = class {
         items.push({
           id: item.ApiId,
           name: (item.Name ?? "").trim() || item.ApiId,
-          protocolType: (item.ProtocolType ?? "").trim().toUpperCase()
+          protocolType: (item.ProtocolType ?? "").trim().toUpperCase(),
+          routeSelectionExpression: item.RouteSelectionExpression
         });
       }
       nextToken = response.NextToken;
@@ -114786,7 +114859,8 @@ var AwsApiGatewaySdkClient = class {
       return {
         id: response.ApiId,
         name: (response.Name ?? "").trim() || response.ApiId,
-        protocolType: (response.ProtocolType ?? "").trim().toUpperCase()
+        protocolType: (response.ProtocolType ?? "").trim().toUpperCase(),
+        routeSelectionExpression: response.RouteSelectionExpression
       };
     } catch (error2) {
       const message = parseAwsError(error2).message;
@@ -114855,6 +114929,39 @@ var AwsApiGatewaySdkClient = class {
       })
     );
     return await readExportBody(response.body);
+  }
+  async exportWebSocketApi(apiId, stage) {
+    const api = await this.getHttpApi(apiId);
+    const routes = [];
+    let nextToken;
+    do {
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetRoutesCommand({
+          ApiId: apiId,
+          NextToken: nextToken
+        })
+      );
+      for (const route of response.Items ?? []) {
+        if (!route.RouteKey) {
+          continue;
+        }
+        routes.push({
+          routeKey: route.RouteKey,
+          authorizationType: route.AuthorizationType,
+          operationName: route.OperationName,
+          target: route.Target
+        });
+      }
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return synthesizeWebSocketOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      routeSelectionExpression: api?.routeSelectionExpression,
+      routes
+    });
   }
   async getCallerIdentity() {
     const response = await this.stsClient.send(new import_client_sts.GetCallerIdentityCommand({}));
@@ -115835,6 +115942,12 @@ var PROVIDER_PATTERNS = [
   { pattern: /resource\s+"aws_cloudwatch_event_bus"/i, provider: "eventbridge-schemas" },
   { pattern: /resource\s+"aws_glue_schema"/i, provider: "glue" },
   // CDK TypeScript patterns
+  { pattern: /aws-cdk-lib\/aws-apigateway/i, provider: "api-gateway" },
+  { pattern: /aws-cdk-lib\/aws-apigatewayv2/i, provider: "api-gateway" },
+  { pattern: /new\s+apigateway\.RestApi\s*\(/i, provider: "api-gateway" },
+  { pattern: /new\s+apigatewayv2\.(?:HttpApi|WebSocketApi|Api)\s*\(/i, provider: "api-gateway" },
+  { pattern: /aws-cdk-lib\/aws-appsync/i, provider: "appsync" },
+  { pattern: /new\s+appsync\.GraphqlApi\s*\(/i, provider: "appsync" },
   { pattern: /aws-cdk-lib\/aws-sns/i, provider: "sns" },
   { pattern: /new\s+sns\.Topic\s*\(/i, provider: "sns" },
   { pattern: /sns\.Topic\.fromTopicArn\s*\(/i, provider: "sns" },
@@ -115857,13 +115970,13 @@ var PROVIDER_PATTERNS = [
   { pattern: /\.lambda-url\.[a-z0-9-]+\.on\.aws/i, provider: "lambda-url" }
 ];
 function detectSnsEventBridgeBridgePattern(content) {
-  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource/i.test(
+  const hasSns = /AWS::SNS::Topic|AWS::SNS::Subscription|\bType\s*:\s*SNS\b|arn:aws:sns:|resource\s+"aws_sns_topic"|resource\s+"aws_sns_topic_subscription"|aws-cdk-lib\/aws-sns|SnsEventSource|\bSNS\s+bridge\b|\bSNS[-\s/]+to[-\s/]+EventBridge\b/i.test(
     content
   );
-  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda/i.test(
+  const hasLambda = /AWS::Lambda::Function|AWS::Serverless::Function|resource\s+"aws_lambda_function"|protocol\s*=\s*"lambda"|SnsEventSource|aws-lambda|\bLambda\b/i.test(
     content
   );
-  const hasEventBridge = /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\./i.test(
+  const hasEventBridge = /AWS::Events::EventBus|AWS::Events::Rule|AWS::Serverless::EventBridgeRule|resource\s+"aws_cloudwatch_event_bus"|resource\s+"aws_cloudwatch_event_rule"|resource\s+"aws_schemas_schema"|aws-cdk-lib\/aws-events|new\s+events\.|\bEventBridge\b/i.test(
     content
   );
   return hasSns && hasLambda && hasEventBridge;
@@ -115943,6 +116056,11 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add("sns");
           providerHintSet.add("eventbridge-schemas");
         }
+      }
+      if (!shouldDetectProviderHintsForFile(file) && detectSnsEventBridgeBridgePattern(content)) {
+        evidence.push(`Detected SNS/EventBridge bridge pattern in ${file}`);
+        providerHintSet.add("sns");
+        providerHintSet.add("eventbridge-schemas");
       }
     } catch {
     }
@@ -116446,7 +116564,7 @@ var ApiGatewayProvider = class {
       }
     }
     const rest = restApis.map((api) => this.toCandidate(api, "REST"));
-    const http = httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP").map((api) => this.toCandidate(api, "HTTP"));
+    const http = httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP" || api.protocolType === "WEBSOCKET").map((api) => this.toCandidate(api, api.protocolType === "WEBSOCKET" ? "WEBSOCKET" : "HTTP"));
     const all = [...rest, ...http];
     if (this.options.apiFilter) {
       const filter = this.options.apiFilter;
@@ -116456,13 +116574,12 @@ var ApiGatewayProvider = class {
   }
   async exportSpec(candidate, options) {
     const gatewayType = candidate.meta.gatewayType;
-    if (gatewayType === "WEBSOCKET") {
-      throw new Error("API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required");
-    }
     const stage = options.stage ?? candidate.meta.stage;
-    const rawContent = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : await this.client.exportHttpApi(candidate.id, stage);
+    const rawContent = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : gatewayType === "WEBSOCKET" ? await this.client.exportWebSocketApi(candidate.id, stage) : await this.client.exportHttpApi(candidate.id, stage);
     const normalized = safeNormalizeOpenApi(rawContent);
-    const evidence = [`Exported ${gatewayType} API ${candidate.id} via API Gateway`];
+    const evidence = [
+      gatewayType === "WEBSOCKET" ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}` : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
+    ];
     if (normalized.renamed.length > 0) {
       evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
       if (this.options.onOperationIdRenamed) {
@@ -116905,16 +117022,16 @@ function synthesizeLambdaUrlOpenApi(args) {
   const lines = [];
   lines.push("openapi: 3.0.3");
   lines.push("info:");
-  lines.push(`  title: ${quoteYaml(args.title)}`);
-  lines.push(`  description: ${quoteYaml(`Synthesized specification for Lambda Function URL (${args.authType}). Lambda functions accept any path and method; this spec uses a catch-all path.`)}`);
+  lines.push(`  title: ${quoteYaml2(args.title)}`);
+  lines.push(`  description: ${quoteYaml2(`Synthesized specification for Lambda Function URL (${args.authType}). Lambda functions accept any path and method; this spec uses a catch-all path.`)}`);
   lines.push('  version: "1.0.0"');
   lines.push("servers:");
-  lines.push(`  - url: ${quoteYaml(stripTrailingSlash(args.functionUrl))}`);
-  lines.push(`    description: ${quoteYaml("Lambda Function URL endpoint")}`);
-  lines.push(`x-aws-lambda-function-arn: ${quoteYaml(args.functionArn)}`);
-  lines.push(`x-aws-lambda-function-url-auth-type: ${quoteYaml(args.authType)}`);
+  lines.push(`  - url: ${quoteYaml2(stripTrailingSlash(args.functionUrl))}`);
+  lines.push(`    description: ${quoteYaml2("Lambda Function URL endpoint")}`);
+  lines.push(`x-aws-lambda-function-arn: ${quoteYaml2(args.functionArn)}`);
+  lines.push(`x-aws-lambda-function-url-auth-type: ${quoteYaml2(args.authType)}`);
   if (args.invokeMode) {
-    lines.push(`x-aws-lambda-invoke-mode: ${quoteYaml(args.invokeMode)}`);
+    lines.push(`x-aws-lambda-invoke-mode: ${quoteYaml2(args.invokeMode)}`);
   }
   if (args.cors) {
     lines.push("x-aws-cors:");
@@ -116924,25 +117041,25 @@ function synthesizeLambdaUrlOpenApi(args) {
     if (args.cors.allowOrigins?.length) {
       lines.push("  allowOrigins:");
       for (const origin of args.cors.allowOrigins) {
-        lines.push(`    - ${quoteYaml(origin)}`);
+        lines.push(`    - ${quoteYaml2(origin)}`);
       }
     }
     if (args.cors.allowMethods?.length) {
       lines.push("  allowMethods:");
       for (const method of args.cors.allowMethods) {
-        lines.push(`    - ${quoteYaml(method)}`);
+        lines.push(`    - ${quoteYaml2(method)}`);
       }
     }
     if (args.cors.allowHeaders?.length) {
       lines.push("  allowHeaders:");
       for (const header of args.cors.allowHeaders) {
-        lines.push(`    - ${quoteYaml(header)}`);
+        lines.push(`    - ${quoteYaml2(header)}`);
       }
     }
     if (args.cors.exposeHeaders?.length) {
       lines.push("  exposeHeaders:");
       for (const header of args.cors.exposeHeaders) {
-        lines.push(`    - ${quoteYaml(header)}`);
+        lines.push(`    - ${quoteYaml2(header)}`);
       }
     }
     if (args.cors.maxAge !== void 0) {
@@ -116960,7 +117077,7 @@ function synthesizeLambdaUrlOpenApi(args) {
   lines.push("          type: string");
   for (const method of STANDARD_METHODS) {
     lines.push(`    ${method}:`);
-    lines.push(`      summary: ${quoteYaml(`${method.toUpperCase()} request handled by Lambda`)}`);
+    lines.push(`      summary: ${quoteYaml2(`${method.toUpperCase()} request handled by Lambda`)}`);
     lines.push(`      operationId: ${method}LambdaUrl`);
     if (args.authType === "AWS_IAM") {
       lines.push("      security:");
@@ -117005,7 +117122,7 @@ function synthesizeLambdaUrlOpenApi(args) {
 function stripTrailingSlash(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
-function quoteYaml(value) {
+function quoteYaml2(value) {
   const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   return `"${escaped}"`;
 }
@@ -119491,10 +119608,10 @@ async function selectStage(aws, candidate, preferredStage) {
 }
 function filterCandidates(restApis, httpApis, includeV2, apiFilter) {
   const rest = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: "REST" }));
-  const http = includeV2 ? httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP").map((api) => ({
+  const http = includeV2 ? httpApis.filter((api) => !api.protocolType || api.protocolType === "HTTP" || api.protocolType === "WEBSOCKET").map((api) => ({
     id: api.id,
     name: api.name,
-    gatewayType: "HTTP"
+    gatewayType: api.protocolType === "WEBSOCKET" ? "WEBSOCKET" : "HTTP"
   })) : [];
   const all = [...rest, ...http];
   return apiFilter ? all.filter((api) => apiFilter.test(api.name)) : all;
@@ -119827,8 +119944,11 @@ async function resolveStageSelection(aws, candidate, preferredStage) {
     return { evidence: [], error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}` };
   }
   if (stages.length === 0) {
-    if (candidate.gatewayType === "HTTP") {
-      return { useLatestConfig: true, evidence: ["No deployed stage found; exporting latest HTTP API configuration without stage"] };
+    if (candidate.gatewayType === "HTTP" || candidate.gatewayType === "WEBSOCKET") {
+      return {
+        useLatestConfig: true,
+        evidence: [`No deployed stage found; exporting latest ${candidate.gatewayType} API configuration without stage`]
+      };
     }
     return { evidence: [], error: `No stages were found for REST API ${candidate.id}` };
   }
@@ -119905,7 +120025,7 @@ async function runDiscovery(inputs, dependencies) {
     for (const candidate of selectedCandidates) {
       try {
         const stage = await selectStage(dependencies.aws, candidate, inputs.stage);
-        if (!stage) {
+        if (!stage && candidate.gatewayType !== "WEBSOCKET") {
           summary.skipped += 1;
           dependencies.core.warning(userSafeWarning(`Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`));
           continue;
@@ -119923,7 +120043,8 @@ async function runDiscovery(inputs, dependencies) {
           continue;
         }
         const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
-        const rawSpecBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
+        const exportedStage = stage ?? "";
+        const rawSpecBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, exportedStage) : candidate.gatewayType === "WEBSOCKET" ? await dependencies.aws.exportWebSocketApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
         const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
         await dependencies.writeSpecFile(absoluteSpecPath, specBody);
         summary.exported += 1;
@@ -119932,7 +120053,7 @@ async function runDiscovery(inputs, dependencies) {
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
-          stage,
+          stage: exportedStage,
           providerType: "api-gateway",
           specFormat: "openapi-yaml"
         });
@@ -120168,11 +120289,6 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!selectedGateway) {
       return toManualReviewResult(selectedSource, ["Selected gateway could not be reloaded for export"]);
     }
-    if (selectedGateway.gatewayType === "WEBSOCKET") {
-      return toManualReviewResult(selectedSource, [
-        "API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required"
-      ]);
-    }
     let stageSelection;
     try {
       stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
@@ -120192,7 +120308,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
     const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, "output-dir");
     try {
-      const rawBody = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
+      const rawBody = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : selectedSource.gatewayType === "WEBSOCKET" ? await awsClient.exportWebSocketApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage) : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
       const body = normalizeApiGatewaySpec(
         rawBody,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
@@ -120200,6 +120316,14 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       );
       await writeSpecFile(absoluteSpecPath, body);
       selectedSource.specPath = relativeSpecPath;
+      selectedSource.providerType = "api-gateway";
+      selectedSource.specFormat = "openapi-yaml";
+      if (selectedSource.gatewayType === "WEBSOCKET") {
+        selectedSource.evidence = [
+          ...selectedSource.evidence,
+          `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${selectedSource.gatewayId}`
+        ];
+      }
     } catch (error2) {
       const parsed = parseAwsError(error2);
       if (isManualReviewExportError(parsed)) {

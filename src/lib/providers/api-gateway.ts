@@ -84,8 +84,8 @@ export class ApiGatewayProvider implements SpecProvider {
 
     const rest = restApis.map((api) => this.toCandidate(api, 'REST'));
     const http = httpApis
-      .filter((api) => !api.protocolType || api.protocolType === 'HTTP')
-      .map((api) => this.toCandidate(api, 'HTTP'));
+      .filter((api) => !api.protocolType || api.protocolType === 'HTTP' || api.protocolType === 'WEBSOCKET')
+      .map((api) => this.toCandidate(api, api.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP'));
 
     const all = [...rest, ...http];
     if (this.options.apiFilter) {
@@ -97,18 +97,21 @@ export class ApiGatewayProvider implements SpecProvider {
 
   public async exportSpec(candidate: SpecCandidate, options: ExportOptions): Promise<SpecExportResult> {
     const gatewayType = candidate.meta.gatewayType as GatewayType;
-    if (gatewayType === 'WEBSOCKET') {
-      throw new Error('API Gateway WebSocket APIs cannot be exported as OpenAPI automatically; manual review required');
-    }
     const stage = options.stage ?? candidate.meta.stage;
 
     const rawContent =
       gatewayType === 'REST'
         ? await this.client.exportRestApi(candidate.id, stage ?? '')
-        : await this.client.exportHttpApi(candidate.id, stage);
+        : gatewayType === 'WEBSOCKET'
+          ? await this.client.exportWebSocketApi(candidate.id, stage)
+          : await this.client.exportHttpApi(candidate.id, stage);
 
     const normalized = safeNormalizeOpenApi(rawContent);
-    const evidence = [`Exported ${gatewayType} API ${candidate.id} via API Gateway`];
+    const evidence = [
+      gatewayType === 'WEBSOCKET'
+        ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}`
+        : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
+    ];
     if (normalized.renamed.length > 0) {
       evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
       if (this.options.onOperationIdRenamed) {

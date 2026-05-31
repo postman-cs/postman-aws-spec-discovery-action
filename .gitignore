@@ -2,6 +2,10 @@ node_modules/
 coverage/
 discovered-specs/
 postman-aws-spec-discovery-result.json
+validation/evidence/*.local.json
+validation/evidence/*.local.md
+validation/tmp/
+validation/.cache/
 
 # Build and TypeScript artifacts
 *.tsbuildinfo

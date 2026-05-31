@@ -16,11 +16,13 @@ import {
   GetApiCommand,
   GetApisCommand,
   GetDomainNamesCommand as GetHttpDomainNamesCommand,
+  GetRoutesCommand,
   GetStagesCommand as GetHttpStagesCommand,
   GetTagsCommand as GetHttpTagsCommand
 } from '@aws-sdk/client-apigatewayv2';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import { synthesizeWebSocketOpenApi, type WebSocketRouteSummary } from '../spec/websocket-openapi.js';
 
 export interface RestApiSummary {
   id: string;
@@ -31,6 +33,7 @@ export interface HttpApiSummary {
   id: string;
   name: string;
   protocolType: string;
+  routeSelectionExpression?: string;
 }
 
 export interface GatewayDomainMapping {
@@ -52,6 +55,7 @@ export interface AwsGatewayClient {
   getHttpTags(apiId: string): Promise<Record<string, string>>;
   exportRestApi(apiId: string, stage: string): Promise<string>;
   exportHttpApi(apiId: string, stage?: string): Promise<string>;
+  exportWebSocketApi(apiId: string, stage?: string): Promise<string>;
   getCallerIdentity(): Promise<{ accountId?: string; arn?: string }>;
   probeApiGatewayReadAccess(): Promise<void>;
   probeHttpApiGatewayReadAccess?(): Promise<void>;
@@ -173,7 +177,8 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         items.push({
           id: item.ApiId,
           name: (item.Name ?? '').trim() || item.ApiId,
-          protocolType: (item.ProtocolType ?? '').trim().toUpperCase()
+          protocolType: (item.ProtocolType ?? '').trim().toUpperCase(),
+          routeSelectionExpression: item.RouteSelectionExpression
         });
       }
       nextToken = response.NextToken;
@@ -286,7 +291,8 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       return {
         id: response.ApiId,
         name: (response.Name ?? '').trim() || response.ApiId,
-        protocolType: (response.ProtocolType ?? '').trim().toUpperCase()
+        protocolType: (response.ProtocolType ?? '').trim().toUpperCase(),
+        routeSelectionExpression: response.RouteSelectionExpression
       };
     } catch (error) {
       const message = parseAwsError(error).message;
@@ -365,6 +371,41 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       })
     );
     return await readExportBody(response.body);
+  }
+
+  public async exportWebSocketApi(apiId: string, stage?: string): Promise<string> {
+    const api = await this.getHttpApi(apiId);
+    const routes: WebSocketRouteSummary[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetRoutesCommand({
+          ApiId: apiId,
+          NextToken: nextToken
+        })
+      );
+      for (const route of response.Items ?? []) {
+        if (!route.RouteKey) {
+          continue;
+        }
+        routes.push({
+          routeKey: route.RouteKey,
+          authorizationType: route.AuthorizationType,
+          operationName: route.OperationName,
+          target: route.Target
+        });
+      }
+      nextToken = response.NextToken;
+    } while (nextToken);
+
+    return synthesizeWebSocketOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      routeSelectionExpression: api?.routeSelectionExpression,
+      routes
+    });
   }
 
   public async getCallerIdentity(): Promise<{ accountId?: string; arn?: string }> {
