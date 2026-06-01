@@ -58,6 +58,12 @@ export type SpecFormat =
   | 'avro'
   | 'protobuf';
 
+export type DerivedOpenApiVersion = '3.0.3' | '3.1.0';
+
+export type DerivedOpenApiCompleteness = 'full' | 'partial';
+
+export type DerivedOpenApiFormat = 'openapi-json' | 'openapi-yaml';
+
 export interface ResolvedServiceCandidate {
   serviceName: string;
   gatewayId: string;
@@ -82,6 +88,11 @@ export interface ResolutionResult {
   metadataPath?: string;
   variantCount?: number;
   stage?: string;
+  derivedOpenApiPath?: string;
+  derivedOpenApiVersion?: DerivedOpenApiVersion;
+  derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
+  derivedOpenApiFormat?: DerivedOpenApiFormat;
+  derivedOpenApiEvidence?: string[];
   evidence: string[];
 }
 
@@ -96,6 +107,11 @@ export interface DiscoveredService {
   contractOrigin?: SnsContractOrigin;
   metadataPath?: string;
   variantCount?: number;
+  derivedOpenApiPath?: string;
+  derivedOpenApiVersion?: DerivedOpenApiVersion;
+  derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
+  derivedOpenApiFormat?: DerivedOpenApiFormat;
+  derivedOpenApiEvidence?: string[];
 }
 
 export const actionContract: AwsSpecDiscoveryActionContract = {
@@ -176,6 +192,21 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'variant-count': {
       description: 'Number of SNS delivery variants discovered when available.'
+    },
+    'derived-openapi-path': {
+      description: 'Path to the canonical derived OpenAPI JSON sidecar when available.'
+    },
+    'derived-openapi-version': {
+      description: 'OpenAPI version of the derived sidecar when available.'
+    },
+    'derived-openapi-completeness': {
+      description: 'Derived OpenAPI completeness: full or partial.'
+    },
+    'derived-openapi-format': {
+      description: 'Format of the derived OpenAPI sidecar, currently openapi-json.'
+    },
+    'derived-openapi-evidence-json': {
+      description: 'JSON array of evidence entries explaining derived OpenAPI quality and limitations.'
     }
   }
 };

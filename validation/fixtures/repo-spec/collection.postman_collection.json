@@ -5,11 +5,47 @@
   },
   "item": [
     {
-      "name": "Health",
+      "name": "Create order",
       "request": {
-        "method": "GET",
-        "url": "https://api.example.com/health"
-      }
+        "method": "POST",
+        "url": {
+          "raw": "https://api.example.com/orders?status=open",
+          "path": [
+            "orders"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "open"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "X-Trace-Id",
+            "value": "trace-123"
+          }
+        ],
+        "auth": {
+          "type": "bearer"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\":\"ord_123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "created",
+          "code": 201,
+          "body": "{\"id\":\"ord_123\",\"status\":\"created\"}"
+        }
+      ]
     }
   ]
 }

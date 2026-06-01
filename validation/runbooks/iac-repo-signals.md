@@ -1,6 +1,6 @@
 # IaC and Repo Signal Validation
 
-Surfaces: CloudFormation/SAM, Terraform, CDK, Pulumi, GraphQL files, workflow files, README gateway IDs, custom domains, Lambda URL hosts, SNS/EventBridge bridge patterns, and SNS contract files.
+Surfaces: CloudFormation/SAM, Terraform, CDK, Pulumi, GraphQL files, workflow files, Serverless config variants, README gateway IDs, custom domains, Lambda URL hosts, SNS/EventBridge bridge patterns, and SNS contract files.
 
 ## Fixtures
 
@@ -15,7 +15,7 @@ node validation/scripts/validate-iac-signals.mjs
 node validation/scripts/run-cli-surface.mjs --surface iac-signals --keep-workspace true
 ```
 
-`validate-iac-signals.mjs` runs the bundled `collectRepoSignals` implementation against the CloudFormation/SAM, Terraform, CDK, Pulumi, workflow, README, GraphQL, Lambda URL host, SNS/EventBridge bridge, and SNS contract fixtures. It writes detailed local output to the gitignored `validation/evidence/iac-repo-signals-matrix.local.json` file and refreshes the IaC/repo signal matrix section in `validation/evidence/README.md`.
+`validate-iac-signals.mjs` runs the bundled `collectRepoSignals` implementation against the CloudFormation/SAM, Terraform, CDK, Pulumi, workflow, Serverless config, README, GraphQL, Lambda URL host, SNS/EventBridge bridge, and SNS contract fixtures. It writes detailed local output to the gitignored `validation/evidence/iac-repo-signals-matrix.local.json` file and refreshes the IaC/repo signal matrix section in `validation/evidence/README.md`.
 
 ## Expected Evidence
 

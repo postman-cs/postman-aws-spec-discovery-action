@@ -22,9 +22,9 @@ The action resolves the best available contract artifact first, then records whe
 
 | Provider | Primary artifact | OpenAPI derivation | Auto-detected via |
 | --- | --- | --- | --- |
-| Repo-local specs | OpenAPI, Swagger, GraphQL SDL, AsyncAPI, Postman, protobuf, Smithy | Full OpenAPI for OpenAPI 3.x; partial OpenAPI 3.x for Swagger and native API formats | Known spec paths |
+| Repo-local specs | OpenAPI, Swagger, GraphQL SDL, AsyncAPI, Postman, JSON Schema, Avro, protobuf, Smithy | Full OpenAPI for OpenAPI 3.x; partial OpenAPI 3.x for Swagger and native API formats. GraphQL derivation preserves operation names, variable shapes, and schema components; AsyncAPI derivation preserves channel payload schemas, examples, and channel/direction metadata; Postman derivation preserves request parameters, JSON examples, auth metadata, and response examples; JSON Schema and Avro derivation preserves named component schemas with `$ref` request bodies. | Known spec paths |
 | Backstage catalog | Local or remote `catalog-info.yaml` / `catalog-info.yml` API definitions | Full OpenAPI for OpenAPI refs; partial OpenAPI 3.1 for GraphQL refs | Repo root catalog file |
-| API Gateway REST | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
+| API Gateway REST | AWS OpenAPI export, with model/method fallback for known export limitations | Full OpenAPI 3.0 YAML from native export; partial OpenAPI 3.0 YAML from fallback synthesis | IAM probe |
 | API Gateway HTTP | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
 | API Gateway WebSocket | Route metadata | Partial OpenAPI 3.0 YAML synthesized from routes | Explicit gateway ID |
 | AppSync GraphQL | GraphQL SDL | Partial OpenAPI 3.1 GraphQL endpoint | IAM probe + `.graphql` files in repo |
@@ -33,7 +33,7 @@ The action resolves the best available contract artifact first, then records whe
 | Glue Schema Registry | Avro, JSON Schema, or protobuf | Partial OpenAPI 3.1 request surface | IAM probe + IaC references |
 | SSM Parameter Store | Stored content, fetched URL content, or pointer artifact | Full OpenAPI for OpenAPI content; partial OpenAPI 3.1 for supported native content and pointer artifacts | IAM probe for `/postman/specs/` path |
 | SNS Topics | AsyncAPI / JSON Schema contracts plus sidecars | Partial OpenAPI 3.1 from contracts; OpenAPI 3.1 webhook sidecar for HTTP/S subscriptions | IAM probe + SNS IaC references + SSM fallback |
-| Lambda Function URLs | Synthesized function URL contract | Full OpenAPI 3.0 YAML | IAM probe + IaC references / `lambda-url` URL pattern |
+| Lambda Function URLs | Synthesized function URL contract | Partial OpenAPI 3.0 YAML synthesized as a catch-all URL surface | IAM probe + IaC references / `lambda-url` URL pattern |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
@@ -71,7 +71,7 @@ Every SNS resolution emits a **metadata sidecar** (`sns-resolution-metadata.json
 - message attributes and filter policy scope
 - variant count
 
-When a topic has HTTP or HTTPS subscriptions, a supplementary **webhook sidecar** (`webhook.openapi.json`) is emitted. This is an OpenAPI 3.1 document describing the HTTP callback payload shape, including whether delivery is raw or wrapped. The webhook sidecar is supplementary; the canonical SNS contract remains primary.
+When a topic has HTTP or HTTPS subscriptions, a supplementary **webhook sidecar** (`webhook.openapi.json`) is emitted. This is an OpenAPI 3.1 document describing the HTTP callback payload shape, including whether delivery is raw or wrapped. Webhook operations also carry SNS-specific `x-sns-*` extensions for delivery variant, filter policy, filter policy scope, delivery policy, and redrive policy when those subscription attributes are available. The webhook sidecar is supplementary; the canonical SNS contract remains primary.
 
 ### SNS mode behavior
 
@@ -248,6 +248,11 @@ These are auto-detected from CI environment variables. Override them only when a
 | `contract-origin` | SNS contract provenance: `repo-asyncapi`, `repo-json-schema`, `generated-asyncapi`, `ssm-content`, `ssm-url`, `catalog-url`, `eventbridge-derived`, `code-derived`, or `manual-review` |
 | `contract-metadata-path` | Path to SNS resolution metadata sidecar when available |
 | `variant-count` | Number of SNS delivery variants discovered when available |
+| `derived-openapi-path` | Path to the canonical derived OpenAPI JSON sidecar when available. Blank in discover-many; per-service values are in `services-json`. |
+| `derived-openapi-version` | OpenAPI version of the derived sidecar when available |
+| `derived-openapi-completeness` | `full` for OpenAPI 3.x/native OpenAPI exports, `partial` for synthesized or native-to-OpenAPI derivations |
+| `derived-openapi-format` | Format of the canonical derived sidecar, currently `openapi-json` |
+| `derived-openapi-evidence-json` | JSON array explaining the derivation quality and limitations |
 | `export-summary-json` | discover-many summary: attempted/exported/failed/skipped |
 
 ## Output file formats
@@ -270,8 +275,9 @@ These are auto-detected from CI environment variables. Override them only when a
 | SNS (no contract found) | `manual-review.json` | JSON Schema |
 | SNS (metadata sidecar) | `sns-resolution-metadata.json` | JSON |
 | SNS (webhook sidecar) | `webhook.openapi.json` | OpenAPI 3.1 JSON |
+| Canonical derived OpenAPI sidecar | `openapi.derived.json` | OpenAPI JSON |
 
-Native artifacts are preserved as the primary output. When the primary output is not OpenAPI, the validation suite proves the action can still derive a conservative OpenAPI 3.x representation for downstream onboarding and review. See [`validation/evidence/README.md`](validation/evidence/README.md) for the current evidence ledger.
+Native artifacts are preserved as the primary output. The action also emits `openapi.derived.json` when it can represent the selected artifact as OpenAPI for downstream onboarding and review. Canonical derived sidecars are always parseable JSON; GraphQL-derived sidecars preserve operation names, variable shapes, and schema components, AsyncAPI-derived sidecars preserve channel payload schemas, examples, and `x-asyncapi-*` channel metadata, Postman-derived sidecars preserve request parameters, JSON examples, auth metadata, and response examples when present, and JSON Schema/Avro-derived sidecars preserve named component schemas with `$ref` request bodies. Provider-specific sidecars such as SNS `webhook.openapi.json` remain separate. See [`validation/evidence/README.md`](validation/evidence/README.md) for the current evidence ledger.
 
 ## Usage
 
@@ -407,13 +413,18 @@ node dist/cli.cjs \
 
 ### CLI environment variables
 
-When using `--dotenv-path`, the CLI writes all action outputs as environment variables. SNS-specific variables include:
+When using `--dotenv-path`, the CLI writes action outputs as environment variables. Additional SNS and derived OpenAPI variables include:
 
 | Variable | Description |
 | --- | --- |
 | `POSTMAN_AWS_SPEC_CONTRACT_ORIGIN` | SNS contract provenance (e.g. `repo-asyncapi`, `ssm-url`, `code-derived`) |
 | `POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH` | Path to `sns-resolution-metadata.json` sidecar |
 | `POSTMAN_AWS_SPEC_VARIANT_COUNT` | Number of SNS delivery variants discovered |
+| `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_PATH` | Path to `openapi.derived.json` when available |
+| `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_VERSION` | OpenAPI version of the derived sidecar |
+| `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_COMPLETENESS` | `full` or `partial` derivation quality |
+| `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT` | Derived sidecar format, currently `openapi-json` |
+| `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON` | JSON array of derivation evidence |
 
 ## How auto-detection works
 
@@ -427,7 +438,7 @@ When using `--dotenv-path`, the CLI writes all action outputs as environment var
 4. **Naming heuristic** -- match the slugified repo name against API names
 5. **Full enumeration** -- only as a last resort, with soft truncation instead of hard failure
 
-**Repository signals**: The action scans IaC files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, CDK, and Pulumi.
+**Repository signals**: The action scans bounded IaC, workflow, and service config files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, CDK, and Pulumi.
 
 CloudFormation / SAM:
 - `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`
@@ -450,7 +461,7 @@ Pulumi:
 
 Additional signal sources:
 - `.graphql` / `.gql` files in common locations (`schema.graphql`, `graphql/schema.graphql`, `src/schema.graphql`) for AppSync hints
-- `.github/workflows/deploy.yml`, `.gitlab-ci.yml`, and `README.md` are scanned for embedded gateway IDs
+- GitHub Actions workflows, `.gitlab-ci.yml`, CircleCI, Buildkite, Serverless variants, `samconfig.toml`, OpenAPI generator configs, and `README.md` are scanned for embedded gateway IDs, custom domains, and provider hints
 - Lambda Function URL hosts matching `{id}.lambda-url.{region}.on.aws` are scanned as Lambda URL evidence
 - When SNS IaC signals are detected, the action also scans nearby directories for AsyncAPI and JSON Schema files as contract evidence
 
@@ -462,20 +473,26 @@ Additional signal sources:
 
 **Lambda Function URL behavior**: Lambda Function URLs do not have an AWS-native OpenAPI export. When a function URL is discovered, the action synthesizes an OpenAPI 3.0 YAML file with the function URL as the server, a catch-all `/{proxy}` path for common HTTP methods, an AWS SigV4 security scheme when `AuthType=AWS_IAM`, and `x-aws-*` extensions for the function ARN, auth type, invoke mode, and CORS config. In `resolve-one`, Lambda URL candidates are scored with other providers; API Gateway wins exact-confidence ties because it has a native export.
 
-**Existing specs**: The action checks 22 specific file paths before calling AWS. If a valid OpenAPI or GraphQL spec is found at any of these locations, it is used directly:
+**Existing specs**: The action checks known spec paths, then performs a bounded deterministic scan of common documentation and service roots before calling AWS. If a valid OpenAPI, Swagger, GraphQL, AsyncAPI, Postman collection, protobuf, or Smithy artifact is found, it is used as the primary artifact and `openapi.derived.json` is emitted when a derived OpenAPI representation is available.
 
 ```
 openapi.yaml          openapi.yml          openapi.json
+api.yaml              api.yml              api.json
+oas.yaml              oas.yml              oas.json
 swagger.yaml          swagger.yml          swagger.json
+openapi.v1.yaml       swagger.v2.yaml
 spec/openapi.yaml     spec/openapi.yml     spec/openapi.json
 api/openapi.yaml      api/openapi.yml      api/openapi.json
 docs/openapi.yaml     docs/openapi.yml     docs/openapi.json
+reference/openapi.v1.yaml    public/openapi.yaml
 schema.graphql        schema.gql
 graphql/schema.graphql    graphql/schema.gql
 api/schema.graphql    src/schema.graphql
+asyncapi.yaml         asyncapi.yml         asyncapi.json
+smithy-build.json
 ```
 
-Files are validated before use -- OpenAPI files must contain an `openapi` or `swagger` top-level key, and GraphQL files must contain a `type Query` or `schema {}` block.
+Files are validated before use. OpenAPI files must contain an `openapi` or `swagger` top-level key, GraphQL files must contain a `type Query` or `schema {}` block, and native API formats are parsed conservatively before derivation.
 
 ### Candidate scoring
 

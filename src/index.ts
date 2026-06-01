@@ -90,6 +90,7 @@ export {
   type WebSocketOpenApiInput,
   type WebSocketRouteSummary
 } from './lib/spec/websocket-openapi.js';
+export { synthesizeRestApiFallbackOpenApi } from './lib/spec/rest-api-fallback-openapi.js';
 export {
   deriveOpenApiDocument,
   type OpenApiDerivationInput,

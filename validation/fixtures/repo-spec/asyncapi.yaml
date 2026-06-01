@@ -6,8 +6,19 @@ channels:
   validation-topic:
     subscribe:
       message:
+        name: ValidationEvent
         payload:
-          type: object
-          properties:
-            id:
-              type: string
+          $ref: '#/components/schemas/ValidationEvent'
+        examples:
+          - name: sample-event
+            payload:
+              id: evt_123
+components:
+  schemas:
+    ValidationEvent:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string

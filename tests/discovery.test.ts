@@ -245,7 +245,12 @@ describe('runDiscovery', () => {
         gatewayType: 'REST',
         stage: 'prod',
         providerType: 'api-gateway',
-        specFormat: 'openapi-yaml'
+        specFormat: 'openapi-yaml',
+        derivedOpenApiPath: 'discovered-specs/payments-core/openapi.derived.json',
+        derivedOpenApiVersion: '3.0.3',
+        derivedOpenApiCompleteness: 'full',
+        derivedOpenApiFormat: 'openapi-json',
+        derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x']
       },
       {
         serviceName: 'checkout-service',
@@ -254,7 +259,12 @@ describe('runDiscovery', () => {
         gatewayType: 'HTTP',
         stage: '$default',
         providerType: 'api-gateway',
-        specFormat: 'openapi-yaml'
+        specFormat: 'openapi-yaml',
+        derivedOpenApiPath: 'discovered-specs/checkout-service/openapi.derived.json',
+        derivedOpenApiVersion: '3.0.3',
+        derivedOpenApiCompleteness: 'full',
+        derivedOpenApiFormat: 'openapi-json',
+        derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x']
       }
     ]);
 
@@ -263,6 +273,12 @@ describe('runDiscovery', () => {
     ).toBe(true);
     expect(
       [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/checkout-service/index.yaml'))
+    ).toBe(true);
+    expect(
+      [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/payments-core/openapi.derived.json'))
+    ).toBe(true);
+    expect(
+      [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/checkout-service/openapi.derived.json'))
     ).toBe(true);
     expect(warnings.some((message) => message.includes('simulated export failure'))).toBe(true);
     expect(result.summary.failed).toBe(1);
@@ -586,8 +602,9 @@ describe('SNS runtime integration', () => {
   it('keeps existing repo spec precedence over gateway and SNS', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-resolution-'));
     try {
-      await writeFile(path.join(tempDir, 'openapi.yaml'), 'openapi: 3.0.0\ninfo:\n  title: Local', 'utf8');
+      await writeFile(path.join(tempDir, 'openapi.yaml'), 'openapi: 3.0.0\ninfo:\n  title: Local\n  version: "1.0.0"\npaths: {}\n', 'utf8');
       await writeFile(path.join(tempDir, 'template.yaml'), 'Resources:\n  Topic:\n    Type: AWS::SNS::Topic', 'utf8');
+      const writes = new Map<string, string>();
       const snsProvider = createSnsProviderStub({
         listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')])
       });
@@ -613,11 +630,18 @@ describe('SNS runtime integration', () => {
         },
         createAwsClientStub({ getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-api' }) }),
         createCoreStub().core,
-        vi.fn().mockResolvedValue(undefined),
+        async (outputPath, content) => {
+          writes.set(outputPath.replace(/\\/g, '/'), content);
+        },
         { snsProvider }
       );
       expect(result.sourceType).toBe('repo-spec');
       expect(result.specPath).toBe('openapi.yaml');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      const derived = [...writes.entries()].find(([file]) => file.endsWith('/discovered-specs/orders-api/openapi.derived.json'));
+      expect(derived).toBeDefined();
+      expect(JSON.parse(derived?.[1] ?? '{}')).toMatchObject({ openapi: '3.0.0' });
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1424,6 +1448,14 @@ describe('provider-agnostic resolve-one', () => {
       expect(result.providerType).toBe(providerType);
       expect(result.specFormat).toBe(format);
       expect([...writes.keys()].some((file) => file.includes('/discovered-specs/orders-api/'))).toBe(true);
+      const derived = [...writes.entries()].find(([file]) => file.endsWith('/discovered-specs/orders-api/openapi.derived.json'));
+      expect(derived).toBeDefined();
+      expect(JSON.parse(derived?.[1] ?? '{}')).toHaveProperty('openapi');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      if (providerType === 'lambda-url') {
+        expect(result.derivedOpenApiCompleteness).toBe('partial');
+      }
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1603,6 +1635,7 @@ describe('provider-agnostic resolve-one', () => {
       expect(result.providerType).toBe('api-gateway');
       expect(result.specFormat).toBe('openapi-yaml');
       expect(result.gatewayType).toBe('WEBSOCKET');
+      expect(result.derivedOpenApiCompleteness).toBe('partial');
       expect(result.evidence).toContain('Synthesized partial OpenAPI 3.0 spec for WebSocket API ws-1');
       expect([...written.values()].some((content) => content.includes('x-amazon-apigateway-route-key: sendMessage'))).toBe(true);
     } finally {
@@ -1696,6 +1729,68 @@ describe('runAction', () => {
     }
   });
 
+  it('uses REST API Gateway model fallback when native export hits a known limitation', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'run-action-rest-fallback-'));
+    const { core, outputs } = createCoreStub({
+      'aws-region': 'us-east-1',
+      'gateway-id': 'rest-1'
+    });
+    const previousWorkspace = process.env.GITHUB_WORKSPACE;
+    const written = new Map<string, string>();
+
+    const awsClient = createAwsClientStub({
+      getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-rest' }),
+      getRestTags: vi.fn().mockResolvedValue({}),
+      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      exportRestApi: vi.fn().mockRejectedValue(
+        Object.assign(new Error('Only found non-JSON body models for REST API export'), {
+          name: 'BadRequestException'
+        })
+      ),
+      exportRestApiFallback: vi.fn().mockResolvedValue([
+        'openapi: 3.0.3',
+        'info:',
+        '  title: orders-rest',
+        '  version: "1.0.0"',
+        'paths:',
+        '  /orders:',
+        '    post:',
+        '      operationId: createOrder',
+        '      responses:',
+        '        "200":',
+        '          description: Response',
+        'x-postman-discovery:',
+        '  apiGatewayFallback: true'
+      ].join('\n'))
+    });
+
+    try {
+      process.env.GITHUB_WORKSPACE = tempDir;
+      await runAction(core, {
+        createAwsClient: () => awsClient,
+        writeSpecFile: async (outputPath: string, content: string) => {
+          written.set(outputPath.replace(/\\/g, '/'), content);
+        }
+      });
+
+      expect(outputs['resolution-status']).toBe('resolved');
+      expect(outputs['source-type']).toBe('gateway-export');
+      expect(outputs['spec-path']).toContain('discovered-specs/orders-rest/index.yaml');
+      expect(outputs['derived-openapi-completeness']).toBe('partial');
+      expect(JSON.parse(outputs['resolution-json'] ?? '{}').evidence).toEqual(
+        expect.arrayContaining([expect.stringContaining('fallback')])
+      );
+      expect([...written.values()].some((content) => content.includes('apiGatewayFallback: true'))).toBe(true);
+    } finally {
+      if (previousWorkspace === undefined) {
+        delete process.env.GITHUB_WORKSPACE;
+      } else {
+        process.env.GITHUB_WORKSPACE = previousWorkspace;
+      }
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('propagates provider-type and spec-format for non-gateway resolve-one results', () => {
     const outputs = buildExecutionOutputs({
       mode: 'resolve-one',
@@ -1722,6 +1817,63 @@ describe('runAction', () => {
     expect(outputs['contract-origin']).toBe('repo-asyncapi');
     expect(outputs['contract-metadata-path']).toBe('discovered-specs/orders-topic/sns-resolution-metadata.json');
     expect(outputs['variant-count']).toBe('2');
+  });
+
+  it('emits derived OpenAPI scalar outputs in resolve-one mode', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: {
+        status: 'resolved',
+        sourceType: 'repo-spec',
+        serviceName: 'orders-api',
+        confidence: 100,
+        specPath: 'openapi.yaml',
+        specFormat: 'openapi-yaml',
+        derivedOpenApiPath: 'discovered-specs/orders-api/openapi.derived.json',
+        derivedOpenApiVersion: '3.0.3',
+        derivedOpenApiCompleteness: 'full',
+        derivedOpenApiFormat: 'openapi-json',
+        derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x'],
+        evidence: ['Resolved from repository specification openapi.yaml']
+      }
+    });
+
+    expect(outputs['derived-openapi-path']).toBe('discovered-specs/orders-api/openapi.derived.json');
+    expect(outputs['derived-openapi-version']).toBe('3.0.3');
+    expect(outputs['derived-openapi-completeness']).toBe('full');
+    expect(outputs['derived-openapi-format']).toBe('openapi-json');
+    expect(JSON.parse(outputs['derived-openapi-evidence-json'] ?? '[]')).toEqual(['Source artifact is already OpenAPI 3.x']);
+  });
+
+  it('keeps discover-many derived OpenAPI scalar outputs blank while preserving per-service metadata', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'discover-many',
+      discovered: [
+        {
+          serviceName: 'orders-api',
+          specPath: 'discovered-specs/orders-api/index.yaml',
+          gatewayId: 'rest-1',
+          gatewayType: 'REST',
+          stage: 'prod',
+          providerType: 'api-gateway',
+          specFormat: 'openapi-yaml',
+          derivedOpenApiPath: 'discovered-specs/orders-api/openapi.derived.json',
+          derivedOpenApiVersion: '3.0.3',
+          derivedOpenApiCompleteness: 'full',
+          derivedOpenApiFormat: 'openapi-json',
+          derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x']
+        }
+      ]
+    });
+
+    expect(outputs['derived-openapi-path']).toBe('');
+    expect(outputs['derived-openapi-version']).toBe('');
+    expect(outputs['derived-openapi-completeness']).toBe('');
+    expect(outputs['derived-openapi-format']).toBe('');
+    expect(outputs['derived-openapi-evidence-json']).toBe('');
+    const services = JSON.parse(outputs['services-json'] ?? '[]') as Array<{ derivedOpenApiPath?: string }>;
+    expect(services[0]?.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
   });
 
   it.each([
@@ -1853,6 +2005,59 @@ describe('hardening helpers', () => {
     }
   });
 
+  it('finds versioned and alternate OpenAPI spec filenames in reference docs', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-spec-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'docs', 'reference'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'docs', 'reference', 'openapi.v1.yaml'),
+        'openapi: 3.0.3\ninfo:\n  title: Reference\n  version: "1.0.0"\npaths: {}',
+        'utf8'
+      );
+
+      const result = await findExistingRepoSpecTyped(tempDir);
+
+      expect(result?.path).toBe('docs/reference/openapi.v1.yaml');
+      expect(result?.format).toBe('openapi-yaml');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('collects provider hints from non-deploy workflow and serverless config files', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-signal-test-'));
+    try {
+      await mkdir(path.join(tempDir, '.github', 'workflows'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, '.github', 'workflows', 'release.yml'),
+        'env:\n  API_URL: https://abc123def4.execute-api.us-east-1.amazonaws.com/prod\n  CUSTOM_DOMAIN: api.orders.example.test\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'serverless.ts'),
+        [
+          'export default {',
+          '  functions: { handler: { events: [{ sns: "orders-topic" }] } },',
+          '  resources: { Resources: { Url: { Type: "AWS::Lambda::Url" } } }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const signals = await collectRepoSignals(tempDir, 'postman/orders', undefined, []);
+
+      expect(signals.inferredGatewayIdHints).toContain('abc123def4');
+      expect(signals.customDomainHints).toContain('api.orders.example.test');
+      expect(signals.providerHints).toEqual(expect.arrayContaining(['sns', 'lambda-url']));
+      expect(signals.evidence).toEqual(expect.arrayContaining([
+        expect.stringContaining('.github/workflows/release.yml'),
+        expect.stringContaining('serverless.ts')
+      ]));
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('extracts only contextual gateway IDs from repo files', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-signal-test-'));
     try {
@@ -1892,7 +2097,12 @@ describe('hardening helpers', () => {
       'service-count': '0',
       'contract-origin': 'repo-asyncapi',
       'contract-metadata-path': 'discovered-specs/payments/sns-resolution-metadata.json',
-      'variant-count': '2'
+      'variant-count': '2',
+      'derived-openapi-path': 'discovered-specs/payments/openapi.derived.json',
+      'derived-openapi-version': '3.0.3',
+      'derived-openapi-completeness': 'full',
+      'derived-openapi-format': 'openapi-json',
+      'derived-openapi-evidence-json': '["Source artifact is already OpenAPI 3.x"]'
     });
 
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_RESOLUTION_STATUS=');
@@ -1900,5 +2110,10 @@ describe('hardening helpers', () => {
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_CONTRACT_ORIGIN=');
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH=');
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_VARIANT_COUNT=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_PATH=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_VERSION=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_COMPLETENESS=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT=');
+    expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON=');
   });
 });

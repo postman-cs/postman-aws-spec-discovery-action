@@ -1,5 +1,6 @@
-import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { parse as parseYaml } from 'yaml';
 
 import {
   actionContract,
@@ -24,6 +25,7 @@ import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
 import { normalizeOpenApiYaml, type OperationIdRename } from './lib/spec/normalize-openapi.js';
+import { deriveOpenApiDocument, type OpenApiDerivationResult } from './lib/spec/oas-derivation.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
 import { AppSyncProvider } from './lib/providers/appsync.js';
@@ -340,6 +342,109 @@ export async function defaultWriteSpecFile(outputPath: string, content: string):
   await writeFile(outputPath, content, 'utf8');
 }
 
+type DerivedOpenApiMetadata = Pick<
+  ResolutionResult,
+  'derivedOpenApiPath' | 'derivedOpenApiVersion' | 'derivedOpenApiCompleteness' | 'derivedOpenApiFormat' | 'derivedOpenApiEvidence'
+>;
+
+interface ArtifactSidecar {
+  filename: string;
+  content: string;
+}
+
+interface ResolvedArtifactWriteInput {
+  repoRoot: string;
+  relativeDir: string;
+  native?: {
+    relativePath: string;
+    content: string;
+  };
+  sidecars?: ArtifactSidecar[];
+  derivation?: {
+    content: string;
+    format: SpecFormat;
+    title?: string;
+    forceCompleteness?: 'partial';
+  };
+  dryRun: boolean;
+  writeSpecFile(outputPath: string, content: string): Promise<void>;
+}
+
+const CANONICAL_DERIVED_OPENAPI_FILENAME = 'openapi.derived.json';
+const CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME = 'openapi.derived-2.json';
+
+function derivedOpenApiFilename(sidecars: ArtifactSidecar[] = []): string {
+  return sidecars.some((sidecar) => sidecar.filename === CANONICAL_DERIVED_OPENAPI_FILENAME)
+    ? CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME
+    : CANONICAL_DERIVED_OPENAPI_FILENAME;
+}
+
+function normalizeDerivedOpenApiJson(derivation: OpenApiDerivationResult): { content: string; evidence: string[] } {
+  try {
+    const parsed = derivation.format === 'openapi-yaml'
+      ? parseYaml(derivation.content)
+      : JSON.parse(derivation.content);
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('derived OpenAPI document did not parse to an object');
+    }
+    return { content: `${JSON.stringify(parsed, null, 2)}\n`, evidence: derivation.evidence };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return {
+      content: '',
+      evidence: [...derivation.evidence, `Skipped derived OpenAPI sidecar because canonical JSON serialization failed: ${detail}`]
+    };
+  }
+}
+
+async function writeResolvedArtifactWithDerivedOpenApi(input: ResolvedArtifactWriteInput): Promise<DerivedOpenApiMetadata> {
+  if (!input.dryRun && input.native) {
+    const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, 'output-dir');
+    await input.writeSpecFile(absoluteSpecPath, input.native.content);
+  }
+
+  if (!input.dryRun) {
+    for (const sidecar of input.sidecars ?? []) {
+      const relativeSidecarPath = path.join(input.relativeDir, sidecar.filename).replace(/\\/g, '/');
+      const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, 'output-dir');
+      await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
+    }
+  }
+
+  if (!input.derivation) {
+    return {};
+  }
+
+  const derived = deriveOpenApiDocument(input.derivation);
+  const completeness = input.derivation.forceCompleteness ?? derived.completeness;
+  const normalized = normalizeDerivedOpenApiJson(derived);
+  if (!normalized.content) {
+    return {
+      derivedOpenApiVersion: derived.version,
+      derivedOpenApiCompleteness: completeness,
+      derivedOpenApiFormat: 'openapi-json',
+      derivedOpenApiEvidence: normalized.evidence
+    };
+  }
+
+  const filename = derivedOpenApiFilename(input.sidecars);
+  const relativeDerivedPath = path.join(input.relativeDir, filename).replace(/\\/g, '/');
+  if (!input.dryRun) {
+    const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, 'output-dir');
+    await input.writeSpecFile(absoluteDerivedPath, normalized.content);
+  }
+
+  return {
+    derivedOpenApiPath: relativeDerivedPath,
+    derivedOpenApiVersion: derived.version,
+    derivedOpenApiCompleteness: completeness,
+    derivedOpenApiFormat: 'openapi-json',
+    derivedOpenApiEvidence: input.dryRun
+      ? [...normalized.evidence, 'Dry run enabled; skipped derived OpenAPI sidecar write']
+      : normalized.evidence
+  };
+}
+
 /**
  * Apply post-export normalization to API Gateway specs and report any
  * rewrites to the action log. We do this BEFORE the spec is written so
@@ -374,6 +479,36 @@ function normalizeApiGatewaySpec(
     reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
   }
   return result.content;
+}
+
+async function exportApiGatewaySpecBody(
+  aws: AwsGatewayClient,
+  candidate: { id: string; gatewayType?: GatewayType },
+  stage: string | undefined
+): Promise<{ content: string; fallback: boolean; evidence: string[] }> {
+  try {
+    const content =
+      candidate.gatewayType === 'REST'
+        ? await aws.exportRestApi(candidate.id, stage ?? '')
+        : candidate.gatewayType === 'WEBSOCKET'
+          ? await aws.exportWebSocketApi(candidate.id, stage)
+          : await aws.exportHttpApi(candidate.id, stage);
+    return { content, fallback: false, evidence: [] };
+  } catch (error) {
+    const parsed = parseAwsError(error);
+    if (candidate.gatewayType === 'REST' && aws.exportRestApiFallback && isRestExportFallbackError(parsed)) {
+      const content = await aws.exportRestApiFallback(candidate.id, stage);
+      return {
+        content,
+        fallback: true,
+        evidence: [
+          `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed`,
+          formatUserSafeError(error)
+        ]
+      };
+    }
+    throw error;
+  }
 }
 
 async function selectStage(aws: AwsGatewayClient, candidate: GatewayCandidate, preferredStage: string | undefined): Promise<string | undefined> {
@@ -732,16 +867,20 @@ async function exportProviderResolutionCandidate(
   const relativeProviderPath = path.join(relativeProviderDir, result.filename).replace(/\\/g, '/');
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
   const relativeMetadataPath = metadataSidecar ? path.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, '/') : undefined;
-
-  if (!inputs.dryRun) {
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
-    await writeSpecFile(absoluteSpecPath, result.content);
-    for (const sidecar of result.sidecars ?? []) {
-      const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
-      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
-      await writeSpecFile(absoluteSidecarPath, sidecar.content);
-    }
-  }
+  const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+    repoRoot: inputs.repoRoot,
+    relativeDir: relativeProviderDir,
+    native: { relativePath: relativeProviderPath, content: result.content },
+    sidecars: result.sidecars,
+    derivation: {
+      content: result.content,
+      format: result.format,
+      title: serviceName,
+      forceCompleteness: result.derivedOpenApiCompleteness === 'partial' || resolved.provider.type === 'lambda-url' ? 'partial' : undefined
+    },
+    dryRun: inputs.dryRun,
+    writeSpecFile
+  });
 
   return {
     status: 'resolved',
@@ -755,6 +894,7 @@ async function exportProviderResolutionCandidate(
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...(inputs.dryRun ? ['Dry run enabled; skipped provider spec file write'] : [])]
   };
 }
@@ -819,6 +959,10 @@ function isKnownRestExportLimitation(message: string): boolean {
 }
 
 function isManualReviewExportError(error: { name?: string; message: string }): boolean {
+  return error.name === 'BadRequestException' || isKnownRestExportLimitation(error.message);
+}
+
+function isRestExportFallbackError(error: { name?: string; message: string }): boolean {
   return error.name === 'BadRequestException' || isKnownRestExportLimitation(error.message);
 }
 
@@ -900,16 +1044,22 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           continue;
         }
 
-        const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
         const exportedStage = stage ?? '';
-        const rawSpecBody =
-          candidate.gatewayType === 'REST'
-            ? await dependencies.aws.exportRestApi(candidate.id, exportedStage)
-            : candidate.gatewayType === 'WEBSOCKET'
-              ? await dependencies.aws.exportWebSocketApi(candidate.id, stage)
-              : await dependencies.aws.exportHttpApi(candidate.id, stage);
-        const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
-        await dependencies.writeSpecFile(absoluteSpecPath, specBody);
+        const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
+        const specBody = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+          repoRoot: resolvedRoot,
+          relativeDir: path.dirname(relativeSpecPath).replace(/\\/g, '/'),
+          native: { relativePath: relativeSpecPath, content: specBody },
+          derivation: {
+            content: specBody,
+            format: 'openapi-yaml',
+            title: serviceName,
+            forceCompleteness: candidate.gatewayType === 'WEBSOCKET' || exported.fallback ? 'partial' : undefined
+          },
+          dryRun: inputs.dryRun,
+          writeSpecFile: dependencies.writeSpecFile
+        });
         summary.exported += 1;
         discovered.push({
           serviceName,
@@ -918,8 +1068,12 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           gatewayType: candidate.gatewayType,
           stage: exportedStage,
           providerType: 'api-gateway',
-          specFormat: 'openapi-yaml'
+          specFormat: 'openapi-yaml',
+          ...derivedOpenApi
         });
+        for (const evidence of exported.evidence) {
+          dependencies.core.info(evidence);
+        }
         dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
       } catch (error) {
         summary.failed += 1;
@@ -1187,7 +1341,33 @@ export async function runResolution(
     }
   }
   if (selectedSource.sourceType === 'repo-spec') {
-    return selectedSource;
+    if (!selectedSource.specPath || !selectedSource.specFormat) {
+      return selectedSource;
+    }
+    const relativeProviderDir = path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service')).replace(/\\/g, '/');
+    try {
+      const absoluteRepoSpecPath = resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, 'repo-spec-path');
+      const content = await readFile(absoluteRepoSpecPath, 'utf8');
+      const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+        repoRoot: inputs.repoRoot,
+        relativeDir: relativeProviderDir,
+        derivation: {
+          content,
+          format: selectedSource.specFormat,
+          title: selectedSource.serviceName
+        },
+        dryRun: inputs.dryRun,
+        writeSpecFile
+      });
+      return { ...selectedSource, ...derivedOpenApi };
+    } catch (error) {
+      return {
+        ...selectedSource,
+        derivedOpenApiEvidence: [
+          `Skipped derived OpenAPI sidecar for repo spec ${selectedSource.specPath}: ${formatUserSafeError(error)}`
+        ]
+      };
+    }
   }
   if (selectedSource.sourceType === 'gateway-export' && selectedSource.gatewayId) {
     const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
@@ -1211,28 +1391,44 @@ export async function runResolution(
       selectedSource.evidence = [...selectedSource.evidence, 'Dry run enabled; skipped export and file write'];
       return selectedSource;
     }
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, 'output-dir');
     try {
-      const rawBody =
+      const exported = await exportApiGatewaySpecBody(
+        awsClient,
+        { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType },
         selectedSource.gatewayType === 'REST'
-          ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? '')
-          : selectedSource.gatewayType === 'WEBSOCKET'
-            ? await awsClient.exportWebSocketApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage)
-            : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? undefined : selectedSource.stage);
+          ? selectedSource.stage
+          : stageSelection.useLatestConfig ? undefined : selectedSource.stage
+      );
       const body = normalizeApiGatewaySpec(
-        rawBody,
+        exported.content,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
         actionCore
       );
-      await writeSpecFile(absoluteSpecPath, body);
+      const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+        repoRoot: inputs.repoRoot,
+        relativeDir: path.dirname(relativeSpecPath).replace(/\\/g, '/'),
+        native: { relativePath: relativeSpecPath, content: body },
+        derivation: {
+          content: body,
+          format: 'openapi-yaml',
+          title: selectedSource.serviceName,
+          forceCompleteness: selectedSource.gatewayType === 'WEBSOCKET' || exported.fallback ? 'partial' : undefined
+        },
+        dryRun: inputs.dryRun,
+        writeSpecFile
+      });
       selectedSource.specPath = relativeSpecPath;
       selectedSource.providerType = 'api-gateway';
       selectedSource.specFormat = 'openapi-yaml';
+      Object.assign(selectedSource, derivedOpenApi);
       if (selectedSource.gatewayType === 'WEBSOCKET') {
         selectedSource.evidence = [
           ...selectedSource.evidence,
           `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${selectedSource.gatewayId}`
         ];
+      }
+      if (exported.evidence.length > 0) {
+        selectedSource.evidence = [...selectedSource.evidence, ...exported.evidence];
       }
     } catch (error) {
       const parsed = parseAwsError(error);
@@ -1254,26 +1450,30 @@ export async function runResolution(
     const relativeProviderPath = path.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, '/');
     const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
     const relativeMetadataPath = metadataSidecar ? path.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, '/') : undefined;
+    const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+      repoRoot: inputs.repoRoot,
+      relativeDir: relativeProviderDir,
+      native: { relativePath: relativeProviderPath, content: resolvedSnsExport.content },
+      sidecars: resolvedSnsExport.sidecars,
+      derivation: { content: resolvedSnsExport.content, format: resolvedSnsExport.format, title: selectedSource.serviceName },
+      dryRun: inputs.dryRun,
+      writeSpecFile
+    });
     if (inputs.dryRun) {
       return {
         ...selectedSource,
         specPath: relativeProviderPath,
         metadataPath: relativeMetadataPath,
+        ...derivedOpenApi,
         evidence: [...selectedSource.evidence, 'Dry run enabled; skipped SNS contract file write']
       };
-    }
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, 'output-dir');
-    await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
-    for (const sidecar of resolvedSnsExport.sidecars ?? []) {
-      const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
-      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
-      await writeSpecFile(absoluteSidecarPath, sidecar.content);
     }
     return {
       ...selectedSource,
       specPath: relativeProviderPath,
       metadataPath: relativeMetadataPath,
-      variantCount: selectedSource.variantCount
+      variantCount: selectedSource.variantCount,
+      ...derivedOpenApi
     };
   }
 
@@ -1377,14 +1577,21 @@ async function runMultiProviderDiscovery(
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
           const relativeSpecPath = path.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, '/');
-          const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, 'output-dir');
-
-          await dependencies.writeSpecFile(absoluteSpecPath, result.content);
-          for (const sidecar of result.sidecars ?? []) {
-            const relativeSidecarPath = path.join(inputs.outputDir, folderName, sidecar.filename).replace(/\\/g, '/');
-            const absoluteSidecarPath = resolvePathWithinRoot(resolvedRoot, relativeSidecarPath, 'output-dir');
-            await dependencies.writeSpecFile(absoluteSidecarPath, sidecar.content);
-          }
+          const relativeProviderDir = path.join(inputs.outputDir, folderName).replace(/\\/g, '/');
+          const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: resolvedRoot,
+            relativeDir: relativeProviderDir,
+            native: { relativePath: relativeSpecPath, content: result.content },
+            sidecars: result.sidecars,
+            derivation: {
+              content: result.content,
+              format: result.format,
+              title: serviceName,
+              forceCompleteness: result.derivedOpenApiCompleteness === 'partial' || provider.type === 'lambda-url' ? 'partial' : undefined
+            },
+            dryRun: inputs.dryRun,
+            writeSpecFile: dependencies.writeSpecFile
+          });
           summary.exported += 1;
 
           const gatewayType = (candidate.meta.gatewayType ?? (provider.type === 'sns' ? 'SNS' : 'REST')) as GatewayType;
@@ -1410,11 +1617,12 @@ async function runMultiProviderDiscovery(
             gatewayType,
             stage: result.stage ?? '',
             providerType: provider.type,
-            specFormat: result.format,
-            contractOrigin,
-            variantCount,
-            metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined
-          });
+	            specFormat: result.format,
+	            contractOrigin,
+	            variantCount,
+	            metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined,
+	            ...derivedOpenApi
+	          });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
         } catch (error) {
           summary.failed += 1;
@@ -1460,7 +1668,12 @@ export function buildExecutionOutputs(result: {
       'spec-format': discovered.length > 0 ? (discovered[0]?.specFormat ?? '') : '',
       'contract-origin': '',
       'contract-metadata-path': '',
-      'variant-count': ''
+      'variant-count': '',
+      'derived-openapi-path': '',
+      'derived-openapi-version': '',
+      'derived-openapi-completeness': '',
+      'derived-openapi-format': '',
+      'derived-openapi-evidence-json': ''
     };
   }
 
@@ -1487,7 +1700,12 @@ export function buildExecutionOutputs(result: {
     'spec-format': resolution.specFormat ?? '',
     'contract-origin': resolution.contractOrigin ?? '',
     'contract-metadata-path': resolution.metadataPath ?? '',
-    'variant-count': resolution.variantCount !== undefined ? String(resolution.variantCount) : ''
+    'variant-count': resolution.variantCount !== undefined ? String(resolution.variantCount) : '',
+    'derived-openapi-path': resolution.derivedOpenApiPath ?? '',
+    'derived-openapi-version': resolution.derivedOpenApiVersion ?? '',
+    'derived-openapi-completeness': resolution.derivedOpenApiCompleteness ?? '',
+    'derived-openapi-format': resolution.derivedOpenApiFormat ?? '',
+    'derived-openapi-evidence-json': JSON.stringify(resolution.derivedOpenApiEvidence ?? [])
   };
 }
 

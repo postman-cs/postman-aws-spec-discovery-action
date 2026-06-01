@@ -9,6 +9,8 @@ import { TextDecoder } from 'node:util';
 import {
   APIGatewayClient,
   GetExportCommand,
+  GetModelsCommand,
+  GetResourcesCommand,
   GetRestApiCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand
@@ -22,6 +24,10 @@ import {
   ApiGatewayV2Client,
   ExportApiCommand,
   GetApiCommand,
+  GetAuthorizersCommand,
+  GetIntegrationsCommand,
+  GetModelsCommand as GetWebSocketModelsCommand,
+  GetRouteResponsesCommand,
   GetRoutesCommand,
   GetStagesCommand as GetHttpStagesCommand,
   GetTagsCommand as GetHttpTagsCommand
@@ -64,6 +70,7 @@ const {
   LambdaUrlProvider,
   CloudFormationProvider,
   deriveOpenApiDocument,
+  synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi
 } = await import(distEntry);
 const manifest = JSON.parse(await readFile(path.join(repoRoot, manifestPath), 'utf8'));
@@ -146,6 +153,53 @@ class TargetedApiGatewayClient {
     return await readBody(response.body);
   }
 
+  async exportRestApiFallback(apiId, stage) {
+    const [api, resources, models] = await Promise.all([
+      this.getRestApi(apiId),
+      this.listRestResourcesWithMethods(apiId),
+      this.listRestModels(apiId)
+    ]);
+    return synthesizeRestApiFallbackOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      resources,
+      models
+    });
+  }
+
+  async listRestResourcesWithMethods(apiId) {
+    const resources = [];
+    let position;
+    do {
+      const response = await sendWithBackoff(this.rest, new GetResourcesCommand({
+        restApiId: apiId,
+        position,
+        limit: 500,
+        embed: ['methods']
+      }));
+      resources.push(...(response.items ?? []));
+      position = response.position;
+    } while (position);
+    return resources;
+  }
+
+  async listRestModels(apiId) {
+    const models = [];
+    let position;
+    do {
+      const response = await sendWithBackoff(this.rest, new GetModelsCommand({
+        restApiId: apiId,
+        position,
+        limit: 500
+      }));
+      models.push(...(response.items ?? []));
+      position = response.position;
+    } while (position);
+    return models;
+  }
+
   async exportHttpApi(apiId, stage) {
     const response = await sendWithBackoff(this.v2, new ExportApiCommand({
       ApiId: apiId,
@@ -158,22 +212,35 @@ class TargetedApiGatewayClient {
   }
 
   async exportWebSocketApi(apiId, stage) {
-    const api = await this.getHttpApi(apiId);
-    const routes = [];
-    let nextToken;
-    do {
-      const response = await sendWithBackoff(this.v2, new GetRoutesCommand({ ApiId: apiId, NextToken: nextToken }));
-      for (const route of response.Items ?? []) {
-        if (!route.RouteKey) continue;
-        routes.push({
-          routeKey: route.RouteKey,
-          authorizationType: route.AuthorizationType,
-          operationName: route.OperationName,
-          target: route.Target
-        });
-      }
-      nextToken = response.NextToken;
-    } while (nextToken);
+    const [api, routeItems, integrations, authorizers, models] = await Promise.all([
+      this.getHttpApi(apiId),
+      this.listWebSocketRoutes(apiId),
+      this.listWebSocketIntegrations(apiId),
+      this.listWebSocketAuthorizers(apiId),
+      this.listWebSocketModels(apiId)
+    ]);
+    const integrationById = new Map(integrations.filter((integration) => integration.IntegrationId).map((integration) => [integration.IntegrationId, integration]));
+    const authorizerById = new Map(authorizers.filter((authorizer) => authorizer.AuthorizerId).map((authorizer) => [authorizer.AuthorizerId, authorizer]));
+    const routes = await Promise.all(routeItems.filter((route) => route.RouteKey).map(async (route) => {
+      const integrationId = integrationIdFromTarget(route.Target);
+      return {
+        routeKey: route.RouteKey,
+        routeId: route.RouteId,
+        apiKeyRequired: route.ApiKeyRequired,
+        authorizationType: route.AuthorizationType,
+        authorizationScopes: route.AuthorizationScopes,
+        authorizerId: route.AuthorizerId,
+        operationName: route.OperationName,
+        modelSelectionExpression: route.ModelSelectionExpression,
+        requestModels: route.RequestModels,
+        requestParameters: route.RequestParameters,
+        routeResponseSelectionExpression: route.RouteResponseSelectionExpression,
+        target: route.Target,
+        integration: mapWebSocketIntegration(integrationId ? integrationById.get(integrationId) : undefined),
+        authorizer: mapWebSocketAuthorizer(route.AuthorizerId ? authorizerById.get(route.AuthorizerId) : undefined),
+        routeResponses: route.RouteId ? mapWebSocketRouteResponses(await this.listWebSocketRouteResponses(apiId, route.RouteId)) : []
+      };
+    }));
 
     return synthesizeWebSocketOpenApi({
       apiId,
@@ -181,9 +248,111 @@ class TargetedApiGatewayClient {
       region: this.region,
       stage,
       routeSelectionExpression: api?.routeSelectionExpression,
-      routes
+      routes,
+      models: mapWebSocketModels(models)
     });
   }
+
+  async listWebSocketRoutes(apiId) {
+    const routes = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(this.v2, new GetRoutesCommand({ ApiId: apiId, NextToken: nextToken }));
+      routes.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return routes;
+  }
+
+  async listWebSocketIntegrations(apiId) {
+    const integrations = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(this.v2, new GetIntegrationsCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
+      integrations.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return integrations;
+  }
+
+  async listWebSocketAuthorizers(apiId) {
+    const authorizers = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(this.v2, new GetAuthorizersCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
+      authorizers.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return authorizers;
+  }
+
+  async listWebSocketModels(apiId) {
+    const models = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(this.v2, new GetWebSocketModelsCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
+      models.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return models;
+  }
+
+  async listWebSocketRouteResponses(apiId, routeId) {
+    const routeResponses = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(this.v2, new GetRouteResponsesCommand({ ApiId: apiId, RouteId: routeId, MaxResults: '500', NextToken: nextToken }));
+      routeResponses.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return routeResponses;
+  }
+}
+
+function integrationIdFromTarget(target) {
+  return /^integrations\/([^/]+)$/.exec(target ?? '')?.[1];
+}
+
+function mapWebSocketIntegration(integration) {
+  if (!integration) return undefined;
+  return {
+    integrationId: integration.IntegrationId,
+    integrationType: integration.IntegrationType,
+    integrationUri: integration.IntegrationUri,
+    integrationMethod: integration.IntegrationMethod,
+    requestParameters: integration.RequestParameters,
+    requestTemplates: integration.RequestTemplates,
+    templateSelectionExpression: integration.TemplateSelectionExpression,
+    timeoutInMillis: integration.TimeoutInMillis
+  };
+}
+
+function mapWebSocketAuthorizer(authorizer) {
+  if (!authorizer) return undefined;
+  return {
+    authorizerId: authorizer.AuthorizerId,
+    authorizerType: authorizer.AuthorizerType,
+    authorizerUri: authorizer.AuthorizerUri,
+    identitySource: authorizer.IdentitySource
+  };
+}
+
+function mapWebSocketRouteResponses(routeResponses) {
+  return routeResponses.map((routeResponse) => ({
+    routeResponseId: routeResponse.RouteResponseId,
+    routeResponseKey: routeResponse.RouteResponseKey,
+    modelSelectionExpression: routeResponse.ModelSelectionExpression,
+    responseModels: routeResponse.ResponseModels,
+    responseParameters: routeResponse.ResponseParameters
+  }));
+}
+
+function mapWebSocketModels(models) {
+  return models.filter((model) => model.Name).map((model) => ({
+    name: model.Name,
+    contentType: model.ContentType,
+    schema: typeof model.Schema === 'string' ? model.Schema : JSON.stringify(model.Schema ?? {})
+  }));
 }
 
 async function sendWithBackoff(client, command) {
@@ -366,6 +535,26 @@ async function inspectGeneratedArtifacts(workspace, result, testCase) {
       checks.push({ name: `OAS derivation ${oas.version} ${oas.completeness}`, passed: true });
     }
   }
+  if (result.resolution?.derivedOpenApiPath) {
+    const content = await readFile(path.join(workspace, result.resolution.derivedOpenApiPath), 'utf8').catch(() => '');
+    let parsed;
+    try {
+      parsed = content ? JSON.parse(content) : undefined;
+    } catch {
+      parsed = undefined;
+    }
+    checks.push({
+      name: 'canonical derived OpenAPI sidecar parses as JSON',
+      passed: Boolean(parsed?.openapi)
+    });
+    checks.push({
+      name: 'canonical derived OpenAPI sidecar metadata is present',
+      passed:
+        result.resolution.derivedOpenApiFormat === 'openapi-json' &&
+        Boolean(result.resolution.derivedOpenApiVersion) &&
+        Boolean(result.resolution.derivedOpenApiCompleteness)
+    });
+  }
   if (testCase.sidecarMarkers?.length) {
     for (const [sidecarPath, markers] of testCase.sidecarMarkers) {
       const content = await readFile(path.join(workspace, sidecarPath), 'utf8').catch(() => '');
@@ -421,6 +610,37 @@ async function runRuntimeGatewayCase(testCase) {
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
+}
+
+async function runLiveRestFallbackCase(testCase) {
+  const caseStartedAt = Date.now();
+  const content = await new TargetedApiGatewayClient(region).exportRestApiFallback(testCase.gatewayId, 'prod');
+  const oas = deriveOpenApiDocument({ content, format: 'openapi-yaml', title: testCase.name });
+  const artifactChecks = [
+    { name: 'fallback spec contains OpenAPI', passed: content.includes('openapi: 3.0.3') },
+    { name: 'fallback spec contains live /health resource', passed: content.includes('/health') },
+    { name: 'fallback spec carries fallback marker', passed: content.includes('apiGatewayFallback: true') },
+    { name: 'fallback spec derives OpenAPI 3.x', passed: Boolean(oas.version.startsWith('3.')) }
+  ];
+  const resolution = {
+    status: 'resolved',
+    sourceType: 'gateway-export',
+    gatewayType: 'REST',
+    providerType: 'api-gateway',
+    specFormat: 'openapi-yaml',
+    derivedOpenApiVersion: oas.version,
+    derivedOpenApiCompleteness: 'partial'
+  };
+  return {
+    name: testCase.name,
+    passed: assertExpectation(testCase, { resolution, outputs: {} }) && artifactChecks.every((check) => check.passed),
+    expected: testCase.expect,
+    resolution: sanitizeDeep(resolution),
+    outputs: {},
+    artifactChecks,
+    elapsedMs: Date.now() - caseStartedAt,
+    runner: 'live-sdk'
+  };
 }
 
 function selectedProviderRegistry(inputs, testCase) {
@@ -495,6 +715,12 @@ const gatewayCases = [
     oasDerivation: true
   },
   {
+    name: 'api-gateway-rest-fallback',
+    gatewayId: outputs.RestApiId,
+    expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', providerType: 'api-gateway', specFormat: 'openapi-yaml' },
+    runner: runLiveRestFallbackCase
+  },
+  {
     name: 'api-gateway-http',
     gatewayId: outputs.HttpApiId,
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'HTTP', specFormat: 'openapi-yaml' },
@@ -506,9 +732,21 @@ const gatewayCases = [
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'WEBSOCKET', providerType: 'api-gateway', specFormat: 'openapi-yaml' },
     specMarkers: [
       'openapi: 3.0.3',
-      'x-amazon-apigateway-protocol: "WEBSOCKET"',
+      'x-amazon-apigateway-protocol: WEBSOCKET',
       'x-amazon-apigateway-route-selection-expression',
-      'x-amazon-apigateway-route-key'
+      'x-amazon-apigateway-route-key',
+      '/sendMessage:',
+      'operationId: sendOrderMessage',
+      'OrderMessage:',
+      'OrderAck:',
+      'x-amazon-apigateway-model-selection-expression',
+      'x-amazon-apigateway-request-models',
+      '#/components/schemas/OrderMessage',
+      'x-amazon-apigateway-integration',
+      'httpMethod: POST',
+      'x-amazon-apigateway-route-response-selection-expression',
+      'x-amazon-apigateway-route-responses',
+      'responseModels'
     ],
     oasDerivation: true
   }
@@ -616,7 +854,21 @@ const providerCases = [
     metadataOrigin: 'ssm-content',
     oasDerivation: true,
     sidecarMarkers: [
-      ['discovered-specs/SpecDiscoveryValidationSubscribedTopic/webhook.openapi.json', ['"openapi": "3.1.0"', '"webhooks"', 'snsMessageWrapped']]
+      [
+        'discovered-specs/SpecDiscoveryValidationSubscribedTopic/webhook.openapi.json',
+        [
+          '"openapi": "3.1.0"',
+          '"webhooks"',
+          'snsMessageWrapped',
+          '"x-sns-delivery-variant": "sns-envelope"',
+          '"x-sns-filter-policy"',
+          '"eventType"',
+          '"order.created"',
+          '"x-sns-filter-policy-scope": "MessageBody"',
+          '"x-sns-delivery-policy"',
+          '"x-sns-redrive-policy"'
+        ]
+      ]
     ]
   }
 ].filter((testCase) => testCase.expectedServiceName);
@@ -637,7 +889,7 @@ async function mapWithConcurrency(items, limit, fn) {
 
 const startedAt = Date.now();
 const allCases = [
-  ...gatewayCases.map((testCase) => ({ testCase, runner: runRuntimeGatewayCase })),
+  ...gatewayCases.map((testCase) => ({ testCase, runner: testCase.runner ?? runRuntimeGatewayCase })),
   ...providerCases.map((testCase) => ({ testCase, runner: runRuntimeProviderCase }))
 ];
 const results = await mapWithConcurrency(allCases, 5, ({ testCase, runner }) => runner(testCase));
@@ -663,10 +915,13 @@ const summary = [
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
   '',
-  '| Case | Runner | Source Type | Provider | Format | Elapsed ms | Result |',
-  '| --- | --- | --- | --- | --- | ---: | --- |',
+  '| Case | Runner | Source Type | Provider | Format | Derived OAS | Elapsed ms | Result |',
+  '| --- | --- | --- | --- | --- | --- | ---: | --- |',
   ...results.map((result) => {
-    return `| ${result.name} | ${result.runner} | ${valueFor(result, 'sourceType')} | ${valueFor(result, 'providerType')} | ${valueFor(result, 'specFormat')} | ${result.elapsedMs} | ${result.passed ? 'pass' : 'fail'} |`;
+    const derived = [valueFor(result, 'derivedOpenApiVersion'), valueFor(result, 'derivedOpenApiCompleteness')]
+      .filter(Boolean)
+      .join(' ');
+    return `| ${result.name} | ${result.runner} | ${valueFor(result, 'sourceType')} | ${valueFor(result, 'providerType')} | ${valueFor(result, 'specFormat')} | ${derived} | ${result.elapsedMs} | ${result.passed ? 'pass' : 'fail'} |`;
   })
 ].join('\n');
 
