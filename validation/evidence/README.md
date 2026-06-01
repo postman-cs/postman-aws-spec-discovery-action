@@ -11,7 +11,7 @@ Captured on 2026-06-01. Generated matrix sections in this document are refreshed
 - `validate-repo-spec-matrix.mjs` for repo-local and Backstage contract discovery.
 - `validate-live-aws-surfaces.mjs` for live AWS provider validation.
 - `validate-iac-signals.mjs` for IaC and repo-signal discovery.
-- `validate-p3-surfaces.mjs` for fixture-only P3 AWS-derived surfaces.
+- `validate-p3-surfaces.mjs` for supplemental P3 AWS-derived fixture coverage.
 - `capture-live-manifest.mjs` for the sanitized live resource summary.
 
 ## Coverage
@@ -30,22 +30,22 @@ Captured on 2026-06-01. Generated matrix sections in this document are refreshed
 | SSM registry | `/postman/specs/{service}/content` resolves inline content. `/postman/specs/{service}/spec-url` fetches remote content or emits a pointer artifact on fetch failure. | The live AWS matrix passed `ssm-registry`, `ssm-url-registry`, and `ssm-url-pointer` with AsyncAPI, JSON Schema, and pointer-style OpenAPI artifacts. |
 | SNS contracts | SNS topics resolve durable contracts through repo, generated, SSM, catalog, EventBridge-derived, code-derived, and manual-review origins. Metadata sidecars are emitted. HTTP/S subscriptions emit an OpenAPI 3.1 webhook sidecar with `x-sns-*` extensions for delivery variant, filter policy, filter policy scope, delivery policy, and redrive policy when AWS exposes those attributes. | The live AWS matrix passed `sns-ssm-content` and `sns-webhook-sidecar` with `source-type=sns-contract`, `provider-type=sns`, `spec-format=asyncapi-yaml`, `contractOrigin=ssm-content`, partial OpenAPI 3.1 derivation, and `webhook.openapi.json` markers for the SNS extension fields. |
 | Lambda Function URL | Lambda Function URLs synthesize OpenAPI 3.0 YAML with server URL, catch-all path, standard methods, and AWS auth metadata. | The live AWS matrix passed the `lambda-url` case with `source-type=lambda-url-export`, `provider-type=lambda-url`, `gatewayType=LAMBDA_URL`, and `spec-format=openapi-yaml`. |
-| P3 AWS-derived surfaces | AppSync Events, EventBridge rules/pipes/API destinations, Bedrock Agent action groups, ALB listener rules, Lambda event source mappings, Verified Permissions schemas, and Step Functions ASL definitions emit partial OpenAPI JSON evidence without inventing business endpoints. | `validate-p3-surfaces.mjs` passed 9 fixture cases. Current status: fixture-only / official-doc-backed, not live-validated. |
+| P3 AWS-derived surfaces | AppSync Events, EventBridge rules/pipes/API destinations, Bedrock Agent action groups, ALB listener rules, Lambda event source mappings, Verified Permissions schemas, and Step Functions ASL definitions emit partial OpenAPI JSON evidence without inventing business endpoints. | The live AWS matrix passed `appsync-events`, `eventbridge-rule`, `eventbridge-pipe`, `eventbridge-api-destination`, `bedrock-action-group`, `alb-listener-rule`, `lambda-event-source`, `verified-permissions`, and `step-functions`. `validate-p3-surfaces.mjs` also passed 9 supplemental fixture cases. |
 | IaC and repo signals | CloudFormation/SAM, Terraform, CDK, Pulumi, workflow, serverless config, Helm/Kubernetes Ingress, docker-compose, ECS task definitions, `application.yml`, `appsettings.json`, README, GraphQL, Lambda URL, SNS/EventBridge bridge, and SNS contract fixtures produce provider hints, URL hints, custom domains, and contract file signals. | `validate-iac-signals.mjs` passed 8 cases. Signal-discovered `asyncapi.yaml` and `schema.graphql` fixtures both derive OpenAPI 3.x. |
 
 ## Live AWS Status
 
-The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`, and `validate-live-aws-surfaces.mjs` passed 14 live AWS cases. P3 AWS-derived surfaces are intentionally labeled fixture-only / official-doc-backed until dedicated live resources are added.
+The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`, and `validate-live-aws-surfaces.mjs` passed 23 live AWS cases, including all AWS-derived P3 surfaces.
 
 <!-- evidence:live-resource-summary:start -->
 ## Live Resource Summary
 
-- Captured at: 2026-06-01T19:35:20.688Z
+- Captured at: 2026-06-01T20:47:21.705Z
 - Stack: spec-discovery-validation
 - Region: us-east-1
 - Account: XXXXXXXXXXXX
 - Status: UPDATE_COMPLETE
-- Output keys: GlueRegistryName, GraphqlApiId, HttpApiId, LambdaFunctionName, LambdaFunctionUrl, RestApiId, SchemaRegistryName, SnsSubscriptionTopicArn, SnsTestTopicArn, SnsUrlTopicArn, WebSocketApiId
+- Output keys: AlbListenerRuleArn, AppSyncEventApiId, AppSyncEventApiName, AppSyncEventChannelNamespaceName, BedrockActionGroupName, BedrockAgentId, EventBridgeApiDestinationName, EventBridgePipeName, EventBridgeRuleName, GlueRegistryName, GraphqlApiId, HttpApiId, LambdaEventSourceMappingId, LambdaFunctionName, LambdaFunctionUrl, RestApiId, SchemaRegistryName, SnsSubscriptionTopicArn, SnsTestTopicArn, SnsUrlTopicArn, StepFunctionsStateMachineArn, StepFunctionsStateMachineName, VerifiedPermissionsPolicyStoreId, WebSocketApiId
 
 Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-resource-summary:end -->
@@ -53,7 +53,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-06-01T19:35:17.583Z
+- Captured at: 2026-06-01T20:47:14.021Z
 - Cases: 15
 - Passed: 15
 - Failed: 0
@@ -80,36 +80,45 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-aws-surfaces:start -->
 ## Live AWS Surface Evidence
 
-- Captured at: 2026-06-01T19:35:31.117Z
-- Elapsed ms: 10133
+- Captured at: 2026-06-01T20:48:13.606Z
+- Elapsed ms: 9773
 - Stack: spec-discovery-validation
 - Region: us-east-1
-- Cases: 14
-- Passed: 14
+- Cases: 23
+- Passed: 23
 - Failed: 0
 
 | Case | Runner | Source Type | Provider | Format | Derived OAS | Elapsed ms | Result |
 | --- | --- | --- | --- | --- | --- | ---: | --- |
-| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 full | 742 | pass |
-| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml | 3.0.3 partial | 331 | pass |
-| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 full | 1212 | pass |
-| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 partial | 1502 | pass |
-| appsync | runtime | appsync-schema | appsync | graphql-sdl | 3.1.0 partial | 1007 | pass |
-| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json | 3.0.3 full | 702 | pass |
-| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json | 3.0.3 full | 794 | pass |
-| glue-schema | runtime | glue-schema | glue | avro | 3.1.0 partial | 840 | pass |
-| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml | 3.1.0 partial | 796 | pass |
-| ssm-url-registry | runtime | ssm-registry | ssm | json-schema | 3.1.0 partial | 1267 | pass |
-| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json | 3.1.0 partial | 848 | pass |
-| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml | 3.0.3 partial | 674 | pass |
-| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml | 3.1.0 partial | 7400 | pass |
-| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml | 3.1.0 partial | 8278 | pass |
+| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 full | 687 | pass |
+| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml | 3.0.3 partial | 309 | pass |
+| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 full | 1196 | pass |
+| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml | 3.0.3 partial | 1315 | pass |
+| appsync | runtime | appsync-schema | appsync | graphql-sdl | 3.1.0 partial | 560 | pass |
+| appsync-events | runtime | appsync-event-api | appsync-events | openapi-json | 3.1.0 partial | 399 | pass |
+| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json | 3.0.3 full | 724 | pass |
+| eventbridge-rule | runtime | eventbridge-surface | eventbridge | openapi-json | 3.1.0 partial | 464 | pass |
+| eventbridge-pipe | runtime | eventbridge-surface | eventbridge | openapi-json | 3.1.0 partial | 372 | pass |
+| eventbridge-api-destination | runtime | eventbridge-surface | eventbridge | openapi-json | 3.1.0 partial | 339 | pass |
+| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json | 3.0.3 full | 691 | pass |
+| glue-schema | runtime | glue-schema | glue | avro | 3.1.0 partial | 772 | pass |
+| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml | 3.1.0 partial | 591 | pass |
+| ssm-url-registry | runtime | ssm-registry | ssm | json-schema | 3.1.0 partial | 1045 | pass |
+| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json | 3.1.0 partial | 657 | pass |
+| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml | 3.0.3 partial | 689 | pass |
+| lambda-event-source | runtime | lambda-event-source | lambda-event-source | openapi-json | 3.1.0 partial | 699 | pass |
+| verified-permissions | runtime | verified-permissions-schema | verified-permissions | openapi-json | 3.1.0 partial | 303 | pass |
+| step-functions | runtime | step-functions-asl | step-functions | openapi-json | 3.1.0 partial | 648 | pass |
+| alb-listener-rule | runtime | alb-listener-rule | alb-listener-rule | openapi-json | 3.1.0 partial | 362 | pass |
+| bedrock-action-group | runtime | bedrock-action-group | bedrock-action-group | openapi-json | 3.0.3 partial | 784 | pass |
+| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml | 3.1.0 partial | 6982 | pass |
+| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml | 3.1.0 partial | 7189 | pass |
 <!-- evidence:live-aws-surfaces:end -->
 
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-06-01T19:35:17.867Z
+- Captured at: 2026-06-01T20:47:14.231Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -129,11 +138,11 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-06-01T19:35:18.108Z
+- Captured at: 2026-06-01T20:47:14.411Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
-- Live status: fixture-only / official-doc-backed, not live-validated
+- Scope: supplemental fixture coverage for AWS-derived surfaces; live AWS coverage is recorded in the Live AWS Surface Evidence section.
 
 | Case | Provider Type | Artifact | Completeness | Result |
 | --- | --- | --- | --- | --- |

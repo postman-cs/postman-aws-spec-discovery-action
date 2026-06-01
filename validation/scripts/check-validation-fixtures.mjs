@@ -73,7 +73,7 @@ const markerChecks = [
   ['validation/fixtures/iac/deployment/docker-compose.yml', 'abc123def4.execute-api'],
   ['validation/fixtures/iac/deployment/spring/application.yml', 'lambda-url.us-east-1.on.aws'],
   ['validation/fixtures/iac/readme/README.md', 'lambda-url.us-east-1.on.aws'],
-  ['validation/runbooks/aws-derived-surfaces.md', 'fixture-only / official-doc-backed']
+  ['validation/runbooks/aws-derived-surfaces.md', 'live-validated against dedicated resources']
 ];
 
 const missing = [];

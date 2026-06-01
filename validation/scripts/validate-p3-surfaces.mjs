@@ -177,7 +177,7 @@ const summary = [
   `- Cases: ${results.length}`,
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
-  '- Live status: fixture-only / official-doc-backed, not live-validated',
+  '- Scope: supplemental fixture coverage for AWS-derived surfaces; live AWS coverage is recorded in the Live AWS Surface Evidence section.',
   '',
   '| Case | Provider Type | Artifact | Completeness | Result |',
   '| --- | --- | --- | --- | --- |',

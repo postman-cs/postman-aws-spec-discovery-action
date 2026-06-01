@@ -28,23 +28,23 @@ The action resolves the best available contract artifact first, then records whe
 | API Gateway HTTP | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
 | API Gateway WebSocket | Route metadata, request models, integrations, authorizers when present, and route responses | Partial OpenAPI 3.0 YAML synthesized from API Gateway v2 metadata with component schemas and API Gateway extensions | Explicit gateway ID |
 | AppSync GraphQL | GraphQL SDL | Partial OpenAPI 3.1 GraphQL endpoint | IAM probe + `.graphql` files in repo |
-| AppSync Events | Event API channel namespaces | Partial OpenAPI 3.1 webhooks for publish/subscribe namespaces. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| AppSync Events | Event API channel namespaces | Partial OpenAPI 3.1 webhooks for publish/subscribe namespaces, live-validated against AppSync Event API resources. | IAM probe |
 | EventBridge Schema Registry | JSON Schema or OpenApi3 schema content | Full OpenAPI for OpenApi3 schemas; partial OpenAPI 3.1 for JSON Schema | IAM probe + IaC references |
-| EventBridge rules, pipes, and API destinations | Event patterns, filters, targets, and HTTP destinations | Partial OpenAPI 3.1 webhooks or HTTP operations with EventBridge extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| EventBridge rules, pipes, and API destinations | Event patterns, filters, targets, and HTTP destinations | Partial OpenAPI 3.1 webhooks or HTTP operations with EventBridge extensions, live-validated against rules, pipes, and API destinations. | IAM probe |
 | CloudFormation embedded specs | Embedded or referenced OpenAPI body | Full OpenAPI 3.0/3.1 when the template contains OpenAPI | IAM probe |
 | Glue Schema Registry | Avro, JSON Schema, or protobuf | Partial OpenAPI 3.1 request surface | IAM probe + IaC references |
-| Bedrock Agent action groups | Inline or S3 OpenAPI action group schema | OpenAPI JSON with Bedrock action group metadata; marked partial because Bedrock supports a subset of OpenAPI. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
-| ALB listener rules | Host, path, method, header, query, and action conditions | Partial OpenAPI 3.1 HTTP paths with ALB rule extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| Bedrock Agent action groups | Inline or S3 OpenAPI action group schema | OpenAPI JSON with Bedrock action group metadata; marked partial because Bedrock supports a subset of OpenAPI. Live-validated against an inline OpenAPI action group. | IAM probe |
+| ALB listener rules | Host, path, method, header, query, and action conditions | Partial OpenAPI 3.1 HTTP paths with ALB rule extensions, live-validated against an ALB listener rule. | IAM probe |
 | SSM Parameter Store | Stored content, fetched URL content, or pointer artifact | Full OpenAPI for OpenAPI content; partial OpenAPI 3.1 for supported native content and pointer artifacts | IAM probe for `/postman/specs/` path |
 | SNS Topics | AsyncAPI / JSON Schema contracts plus sidecars | Partial OpenAPI 3.1 from contracts; OpenAPI 3.1 webhook sidecar for HTTP/S subscriptions | IAM probe + SNS IaC references + SSM fallback |
 | Lambda Function URLs | Synthesized function URL contract | Partial OpenAPI 3.0 YAML synthesized as a catch-all URL surface | IAM probe + IaC references / `lambda-url` URL pattern |
-| Lambda event source mappings | Event source mapping filters, source, target function, and batch settings | Partial OpenAPI 3.1 webhooks with Lambda mapping/filter extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
-| Verified Permissions schemas | Cedar schema metadata | OpenAPI 3.1 metadata document with no invented HTTP paths. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
-| Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| Lambda event source mappings | Event source mapping filters, source, target function, and batch settings | Partial OpenAPI 3.1 webhooks with Lambda mapping/filter extensions, live-validated against an SQS event source mapping. | IAM probe |
+| Verified Permissions schemas | Cedar schema metadata | OpenAPI 3.1 metadata document with no invented HTTP paths, live-validated against a policy store schema. | IAM probe |
+| Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata, live-validated against a Standard state machine. | IAM probe |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
-The validation suite for this repository lives in [`validation/`](validation/README.md). It includes fixture inputs, runbooks, sanitized evidence, live AWS checks for live-supported surfaces, and explicit fixture-only labels for P3 surfaces that are not yet live-validated.
+The validation suite for this repository lives in [`validation/`](validation/README.md). It includes fixture inputs, runbooks, sanitized evidence, and live AWS checks for every AWS-derived discovery surface documented above.
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root or bounded nested service directories and resolves API spec path or URL references automatically.
 
