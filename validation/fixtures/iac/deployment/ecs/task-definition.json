@@ -1,0 +1,12 @@
+{
+  "containerDefinitions": [
+    {
+      "environment": [
+        {
+          "name": "PUBLIC_API_URL",
+          "value": "https://bcdef12345.execute-api.us-east-1.amazonaws.com/prod"
+        }
+      ]
+    }
+  ]
+}

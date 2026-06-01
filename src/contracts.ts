@@ -27,24 +27,38 @@ export type SourceType =
   | 'repo-spec'
   | 'gateway-export'
   | 'appsync-schema'
+  | 'appsync-event-api'
   | 'eventbridge-schema'
+  | 'eventbridge-surface'
   | 'cfn-embedded'
   | 'glue-schema'
+  | 'bedrock-action-group'
+  | 'alb-listener-rule'
   | 'sns-contract'
   | 'ssm-registry'
   | 'lambda-url-export'
+  | 'lambda-event-source'
+  | 'verified-permissions-schema'
+  | 'step-functions-asl'
   | 'manual-review'
   | 'discover-many';
 
 export type ProviderType =
   | 'api-gateway'
   | 'appsync'
+  | 'appsync-events'
   | 'eventbridge-schemas'
+  | 'eventbridge'
   | 'cloudformation'
   | 'glue'
+  | 'bedrock-action-group'
+  | 'alb-listener-rule'
   | 'sns'
   | 'ssm'
-  | 'lambda-url';
+  | 'lambda-url'
+  | 'lambda-event-source'
+  | 'verified-permissions'
+  | 'step-functions';
 
 export type SpecFormat =
   | 'openapi-yaml'
@@ -147,7 +161,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'source-type': {
       description:
-        'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, lambda-url-export, manual-review, or discover-many.'
+        'Resolved source type: repo-spec, gateway-export, appsync-schema, appsync-event-api, eventbridge-schema, eventbridge-surface, cfn-embedded, glue-schema, bedrock-action-group, alb-listener-rule, sns-contract, ssm-registry, lambda-url-export, lambda-event-source, verified-permissions-schema, step-functions-asl, manual-review, or discover-many.'
     },
     'mapping-confidence': {
       description: 'Numeric confidence score for selected service candidate.'
@@ -177,7 +191,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'provider-type': {
       description:
-        'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, ssm, or lambda-url.'
+        'Provider that resolved the spec: api-gateway, appsync, appsync-events, eventbridge-schemas, eventbridge, cloudformation, glue, bedrock-action-group, alb-listener-rule, sns, ssm, lambda-url, lambda-event-source, verified-permissions, or step-functions.'
     },
     'spec-format': {
       description:

@@ -82,9 +82,24 @@ export {
   type NormalizeOpenApiResult
 } from './lib/spec/normalize-openapi.js';
 export { collectRepoSignals } from './lib/repo/signals.js';
+export { detectCatalogApis } from './lib/repo/catalog.js';
 export { LambdaUrlProvider } from './lib/providers/lambda-url.js';
 export { CloudFormationProvider } from './lib/providers/cloudformation.js';
+export { AppSyncEventsProvider } from './lib/providers/appsync-events.js';
+export { EventBridgeSurfaceProvider } from './lib/providers/eventbridge-surfaces.js';
+export { BedrockActionGroupProvider } from './lib/providers/bedrock-action-groups.js';
+export { AlbListenerRulesProvider } from './lib/providers/alb-listener-rules.js';
+export { LambdaEventSourceProvider } from './lib/providers/lambda-event-source.js';
+export { VerifiedPermissionsProvider } from './lib/providers/verified-permissions.js';
+export { StepFunctionsProvider } from './lib/providers/step-functions.js';
 export type { LambdaSpecClient } from './lib/aws/lambda-client.js';
+export type { AppSyncEventsSpecClient } from './lib/aws/appsync-events-client.js';
+export type { EventBridgeSurfaceSpecClient } from './lib/aws/eventbridge-client.js';
+export type { BedrockActionGroupsSpecClient } from './lib/aws/bedrock-agent-client.js';
+export type { AlbListenerRulesSpecClient } from './lib/aws/alb-client.js';
+export type { LambdaEventSourceSpecClient } from './lib/aws/lambda-event-source-client.js';
+export type { VerifiedPermissionsSpecClient } from './lib/aws/verified-permissions-client.js';
+export type { StepFunctionsSpecClient } from './lib/aws/step-functions-client.js';
 export {
   synthesizeWebSocketOpenApi,
   type WebSocketOpenApiInput,

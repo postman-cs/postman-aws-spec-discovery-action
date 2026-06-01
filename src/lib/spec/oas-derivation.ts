@@ -410,13 +410,21 @@ function postmanToOpenApi(content: string, title: string): OpenApiDocument {
 
 function protobufToOpenApi(content: string, title: string): OpenApiDocument {
   const document = baseDocument(title);
-  const servicePattern = /service\s+([A-Za-z_][\w]*)\s*\{([\s\S]*?)\}/g;
-  for (const serviceMatch of content.matchAll(servicePattern)) {
-    const serviceName = serviceMatch[1] ?? 'Service';
-    const body = serviceMatch[2] ?? '';
-    for (const rpcMatch of body.matchAll(/rpc\s+([A-Za-z_][\w]*)\s*\(/g)) {
-      const methodName = rpcMatch[1] ?? 'Method';
-      addRpcPath(document, serviceName, methodName);
+  const parsed = parseProtobuf(content);
+  if (Object.keys(parsed.messages).length > 0) {
+    document.components = { schemas: parsed.messages };
+  }
+  for (const service of parsed.services) {
+    for (const rpc of service.rpcs) {
+      addRpcPath(document, service.name, rpc.name, {
+        input: parsed.messages[rpc.input] ? rpc.input : undefined,
+        output: parsed.messages[rpc.output] ? rpc.output : undefined,
+        extensions: {
+          'x-protobuf-package': parsed.packageName,
+          'x-protobuf-service': service.name,
+          'x-protobuf-method': rpc.name
+        }
+      });
     }
   }
   if (Object.keys(document.paths).length === 0) {
@@ -427,23 +435,246 @@ function protobufToOpenApi(content: string, title: string): OpenApiDocument {
 
 function smithyToOpenApi(content: string, title: string): OpenApiDocument {
   const document = baseDocument(title);
-  const serviceName = content.match(/\bservice\s+([A-Za-z_][\w]*)/)?.[1] ?? 'SmithyService';
-  const operations = new Set<string>();
-  const serviceBody = content.match(/\bservice\s+[A-Za-z_][\w]*\s*\{([\s\S]*?)\}/)?.[1] ?? '';
-  for (const operation of serviceBody.match(/operations\s*:\s*\[([^\]]+)\]/)?.[1]?.split(',') ?? []) {
-    const name = operation.trim().replace(/^#/, '');
-    if (name) operations.add(name);
+  const parsed = parseSmithy(content);
+  if (Object.keys(parsed.structures).length > 0) {
+    document.components = { schemas: parsed.structures };
   }
-  for (const operationMatch of content.matchAll(/\boperation\s+([A-Za-z_][\w]*)/g)) {
-    operations.add(operationMatch[1] ?? '');
-  }
-  for (const operation of [...operations].filter(Boolean)) {
-    addRpcPath(document, serviceName, operation);
+  const service = parsed.service ?? { name: 'SmithyService', operations: Object.keys(parsed.operations) };
+  for (const operationName of service.operations) {
+    const operation = parsed.operations[operationName] ?? { name: operationName, errors: [] };
+    addRpcPath(document, service.name, operation.name, {
+      input: operation.input && parsed.structures[operation.input] ? operation.input : undefined,
+      output: operation.output && parsed.structures[operation.output] ? operation.output : undefined,
+      errors: operation.errors.filter((error) => Boolean(parsed.structures[error])),
+      extensions: {
+        'x-smithy-namespace': parsed.namespace,
+        'x-smithy-service': service.name,
+        'x-smithy-operation': operation.name,
+        'x-smithy-errors': operation.errors.length > 0 ? operation.errors : undefined
+      }
+    });
   }
   if (Object.keys(document.paths).length === 0) {
-    document.paths[`/${serviceName}`] = { post: { operationId: safeOperationName(serviceName), responses: { '200': { description: 'Response' } } } };
+    document.paths[`/${service.name}`] = { post: { operationId: safeOperationName(service.name), responses: { '200': { description: 'Response' } } } };
   }
   return document;
+}
+
+interface ParsedBlock {
+  name: string;
+  body: string;
+}
+
+interface ParsedProtoRpc {
+  name: string;
+  input: string;
+  output: string;
+}
+
+interface ParsedProtoService {
+  name: string;
+  rpcs: ParsedProtoRpc[];
+}
+
+interface ParsedProtobuf {
+  packageName?: string;
+  services: ParsedProtoService[];
+  messages: Record<string, unknown>;
+}
+
+interface ParsedSmithyOperation {
+  name: string;
+  input?: string;
+  output?: string;
+  errors: string[];
+}
+
+interface ParsedSmithyService {
+  name: string;
+  operations: string[];
+}
+
+interface ParsedSmithy {
+  namespace?: string;
+  service?: ParsedSmithyService;
+  operations: Record<string, ParsedSmithyOperation>;
+  structures: Record<string, unknown>;
+}
+
+function parseProtobuf(content: string): ParsedProtobuf {
+  const sanitized = stripLineComments(content);
+  const packageName = sanitized.match(/\bpackage\s+([A-Za-z_][\w.]*)\s*;/)?.[1];
+  const messages = Object.fromEntries(readNamedBlocks(sanitized, 'message').map((block) => [block.name, protoMessageSchema(block.body)]));
+  const services = readNamedBlocks(sanitized, 'service').map((block) => ({
+    name: block.name,
+    rpcs: parseProtoRpcs(block.body)
+  }));
+  return { packageName, services, messages };
+}
+
+function parseProtoRpcs(body: string): ParsedProtoRpc[] {
+  const rpcs: ParsedProtoRpc[] = [];
+  for (const match of body.matchAll(/\brpc\s+([A-Za-z_][\w]*)\s*\(\s*(?:stream\s+)?([A-Za-z_][\w.]*)\s*\)\s*returns\s*\(\s*(?:stream\s+)?([A-Za-z_][\w.]*)\s*\)/g)) {
+    rpcs.push({
+      name: match[1] ?? 'Method',
+      input: unqualifiedName(match[2] ?? ''),
+      output: unqualifiedName(match[3] ?? '')
+    });
+  }
+  return rpcs;
+}
+
+function protoMessageSchema(body: string): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (const statement of body.split(';')) {
+    const match = statement.trim().match(/^(repeated\s+)?([A-Za-z_][\w.]*)\s+([A-Za-z_][\w]*)\s*=/);
+    if (!match) continue;
+    const repeated = Boolean(match[1]);
+    const typeName = match[2] ?? 'string';
+    const fieldName = match[3] ?? 'field';
+    const fieldSchema = protoFieldSchema(typeName);
+    properties[fieldName] = repeated ? { type: 'array', items: fieldSchema } : fieldSchema;
+  }
+  return { type: 'object', properties };
+}
+
+function protoFieldSchema(typeName: string): Record<string, unknown> {
+  switch (unqualifiedName(typeName)) {
+    case 'double':
+    case 'float':
+      return { type: 'number' };
+    case 'int32':
+    case 'int64':
+    case 'uint32':
+    case 'uint64':
+    case 'sint32':
+    case 'sint64':
+    case 'fixed32':
+    case 'fixed64':
+    case 'sfixed32':
+    case 'sfixed64':
+      return { type: 'integer' };
+    case 'bool':
+      return { type: 'boolean' };
+    case 'string':
+      return { type: 'string' };
+    case 'bytes':
+      return { type: 'string', format: 'byte' };
+    default:
+      return { $ref: `#/components/schemas/${unqualifiedName(typeName)}` };
+  }
+}
+
+function parseSmithy(content: string): ParsedSmithy {
+  const sanitized = stripLineComments(content);
+  const namespace = sanitized.match(/\bnamespace\s+([A-Za-z_][\w.]*)/)?.[1];
+  const structures = Object.fromEntries(readNamedBlocks(sanitized, 'structure').map((block) => [block.name, smithyStructureSchema(block.body)]));
+  const operations = Object.fromEntries(
+    readNamedBlocks(sanitized, 'operation').map((block) => {
+      const operation = smithyOperation(block.name, block.body);
+      return [operation.name, operation];
+    })
+  );
+  const serviceBlock = readNamedBlocks(sanitized, 'service')[0];
+  const service = serviceBlock ? {
+    name: serviceBlock.name,
+    operations: parseSmithyList(serviceBlock.body.match(/\boperations\s*:\s*\[([^\]]*)\]/)?.[1] ?? '')
+  } : undefined;
+  return { namespace, service, operations, structures };
+}
+
+function smithyOperation(name: string, body: string): ParsedSmithyOperation {
+  return {
+    name,
+    input: body.match(/\binput\s*:\s*#?([A-Za-z_][\w.]*)/)?.[1],
+    output: body.match(/\boutput\s*:\s*#?([A-Za-z_][\w.]*)/)?.[1],
+    errors: parseSmithyList(body.match(/\berrors\s*:\s*\[([^\]]*)\]/)?.[1] ?? '')
+  };
+}
+
+function smithyStructureSchema(body: string): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  const required: string[] = [];
+  let requiredNext = false;
+  for (const rawLine of body.split('\n')) {
+    const line = rawLine.trim().replace(/,$/, '');
+    if (!line) continue;
+    if (line === '@required') {
+      requiredNext = true;
+      continue;
+    }
+    const match = line.match(/^([A-Za-z_][\w]*)\s*:\s*#?([A-Za-z_][\w.]*)/);
+    if (!match) continue;
+    const memberName = match[1] ?? 'member';
+    properties[memberName] = smithyShapeSchema(match[2] ?? 'String');
+    if (requiredNext) {
+      required.push(memberName);
+      requiredNext = false;
+    }
+  }
+  return { type: 'object', ...(required.length > 0 ? { required } : {}), properties };
+}
+
+function smithyShapeSchema(typeName: string): Record<string, unknown> {
+  switch (unqualifiedName(typeName)) {
+    case 'String':
+    case 'Blob':
+    case 'Timestamp':
+      return { type: 'string' };
+    case 'Integer':
+    case 'Long':
+    case 'Short':
+    case 'Byte':
+      return { type: 'integer' };
+    case 'Float':
+    case 'Double':
+    case 'BigDecimal':
+    case 'BigInteger':
+      return { type: 'number' };
+    case 'Boolean':
+      return { type: 'boolean' };
+    default:
+      return { $ref: `#/components/schemas/${unqualifiedName(typeName)}` };
+  }
+}
+
+function parseSmithyList(value: string): string[] {
+  return value.split(',').map((item) => item.trim().replace(/^#/, '')).filter(Boolean);
+}
+
+function readNamedBlocks(content: string, keyword: 'message' | 'service' | 'operation' | 'structure'): ParsedBlock[] {
+  const blocks: ParsedBlock[] = [];
+  const pattern = new RegExp(`\\b${keyword}\\s+([A-Za-z_][\\w]*)\\s*\\{`, 'g');
+  for (const match of content.matchAll(pattern)) {
+    const name = match[1] ?? keyword;
+    const openBrace = (match.index ?? 0) + match[0].length - 1;
+    const closeBrace = matchingBrace(content, openBrace);
+    if (closeBrace > openBrace) {
+      blocks.push({ name, body: content.slice(openBrace + 1, closeBrace) });
+    }
+  }
+  return blocks;
+}
+
+function matchingBrace(content: string, openBrace: number): number {
+  let depth = 0;
+  for (let index = openBrace; index < content.length; index += 1) {
+    const char = content[index];
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+function stripLineComments(content: string): string {
+  return content.replace(/\/\/.*$/gm, '');
+}
+
+function unqualifiedName(value: string): string {
+  return value.split('.').filter(Boolean).pop() ?? value;
 }
 
 function schemaToOpenApi(content: string, title: string, format: 'avro' | 'json-schema' = 'json-schema'): OpenApiDocument {
@@ -572,22 +803,59 @@ function emptyPartial(title: string): OpenApiDocument {
   return document;
 }
 
-function addRpcPath(document: OpenApiDocument, serviceName: string, methodName: string): void {
+function addRpcPath(
+  document: OpenApiDocument,
+  serviceName: string,
+  methodName: string,
+  options: {
+    input?: string;
+    output?: string;
+    errors?: string[];
+    extensions?: Record<string, unknown>;
+  } = {}
+): void {
   document.paths[`/${serviceName}/${methodName}`] = {
     post: {
       operationId: safeOperationName(`${serviceName} ${methodName}`),
       summary: `${serviceName}.${methodName}`,
+      ...compactRecord(options.extensions ?? {}),
       requestBody: {
         required: false,
         content: {
           'application/json': {
-            schema: { type: 'object', additionalProperties: true }
+            schema: options.input ? { $ref: `#/components/schemas/${options.input}` } : { type: 'object', additionalProperties: true }
           }
         }
       },
-      responses: { '200': { description: 'Response' } }
+      responses: rpcResponses(options.output, options.errors ?? [])
     }
   };
+}
+
+function rpcResponses(output: string | undefined, errors: string[]): Record<string, unknown> {
+  const responses: Record<string, unknown> = {
+    '200': {
+      description: 'Response',
+      ...(output ? {
+        content: {
+          'application/json': {
+            schema: { $ref: `#/components/schemas/${output}` }
+          }
+        }
+      } : {})
+    }
+  };
+  if (errors.length > 0) {
+    responses.default = {
+      description: 'Error response',
+      content: {
+        'application/json': {
+          schema: { oneOf: errors.map((error) => ({ $ref: `#/components/schemas/${error}` })) }
+        }
+      }
+    };
+  }
+  return responses;
 }
 
 interface PostmanDerivedRequest {
@@ -783,6 +1051,10 @@ function openApiVersion(content: string): '3.0.3' | '3.1.0' | undefined {
 
 function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function compactRecord(value: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
 }
 
 function arrayValue(value: unknown): unknown[] {

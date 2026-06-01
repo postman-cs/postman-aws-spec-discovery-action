@@ -77,6 +77,7 @@ describe('synthesizeWebSocketOpenApi', () => {
     const document = parse(content);
     const operation = document.paths['/sendMessage'].post;
 
+    expect(operation.operationId).toBe('sendOrderMessage');
     expect(document.components.schemas.OrderMessage.required).toEqual(['orderId']);
     expect(document.components.schemas.OrderAck.properties.accepted.type).toBe('boolean');
     expect(operation.requestBody.content['application/json'].schema).toEqual({ $ref: '#/components/schemas/OrderMessage' });

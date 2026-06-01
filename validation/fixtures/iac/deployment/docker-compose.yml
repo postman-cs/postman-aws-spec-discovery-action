@@ -1,0 +1,4 @@
+services:
+  api:
+    environment:
+      API_URL: https://abc123def4.execute-api.us-east-1.amazonaws.com/prod

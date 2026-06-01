@@ -1,2 +1,5 @@
 name: validation-spec-discovery
-runtime: nodejs
+runtime: yaml
+resources:
+  api:
+    type: aws:apigatewayv2/api:Api

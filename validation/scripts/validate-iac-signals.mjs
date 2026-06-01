@@ -7,7 +7,7 @@ import { updateEvidenceReadmeSection } from './lib/evidence-readme.mjs';
 
 const repoRoot = process.cwd();
 const distEntry = path.join(repoRoot, 'dist', 'index.cjs');
-const { collectRepoSignals, deriveOpenApiDocument } = await import(distEntry);
+const { collectRepoSignals, deriveOpenApiDocument, detectCatalogApis } = await import(distEntry);
 
 function arg(name, fallback) {
   const prefix = `--${name}=`;
@@ -102,6 +102,34 @@ const cases = [
     expectedGatewayIds: ['abc123def4'],
     expectedCustomDomains: ['api.orders.example.test'],
     expectedEvidence: ['.github/workflows/release.yml', 'serverless.ts']
+  },
+  {
+    name: 'nested-backstage',
+    setup: async (workspace) => {
+      await copyFixture(workspace, 'validation/fixtures/iac/backstage/services/orders/catalog-info.yaml', 'services/orders/catalog-info.yaml');
+      await copyFixture(workspace, 'validation/fixtures/iac/backstage/services/orders/openapi.yaml', 'services/orders/openapi.yaml');
+    },
+    expectedCatalogRefs: [{ name: 'orders-api', specPath: 'services/orders/openapi.yaml' }],
+    expectedEvidence: []
+  },
+  {
+    name: 'deployment-configs',
+    setup: async (workspace) => {
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/helm/orders/templates/ingress.yaml', 'helm/orders/templates/ingress.yaml');
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/k8s/ingress.yaml', 'k8s/ingress.yaml');
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/docker-compose.yml', 'docker-compose.yml');
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/ecs/task-definition.json', 'ecs/task-definition.json');
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/spring/application.yml', 'src/main/resources/application.yml');
+      await copyFixture(workspace, 'validation/fixtures/iac/deployment/dotnet/appsettings.json', 'src/Orders/appsettings.json');
+      await copyFixture(workspace, 'validation/fixtures/iac/cdk/cdk.json', 'cdk.json');
+      await copyFixture(workspace, 'validation/fixtures/iac/cdk/lib/app.py', 'lib/app.py');
+      await copyFixture(workspace, 'validation/fixtures/iac/pulumi/Pulumi.yaml', 'Pulumi.yaml');
+    },
+    expectedProviders: ['api-gateway', 'lambda-url'],
+    expectedGatewayIds: ['abc123def4', 'bcdef12345', 'cdef123456'],
+    expectedCustomDomains: ['api.orders.example.test', 'orders.internal.example.test'],
+    expectedLambdaUrlHosts: ['orders-lambda.lambda-url.us-east-1.on.aws'],
+    expectedEvidence: ['helm/orders/templates/ingress.yaml', 'docker-compose.yml', 'ecs/task-definition.json', 'application.yml', 'appsettings.json', 'lib/app.py', 'Pulumi.yaml']
   }
 ];
 
@@ -118,12 +146,19 @@ async function runCase(testCase) {
   try {
     await testCase.setup(workspace);
     const signals = await collectRepoSignals(workspace, 'validation/service', undefined, []);
+    const catalogRefs = await detectCatalogApis(workspace) ?? [];
     const checks = [
       { name: 'provider hints', passed: containsAll(signals.providerHints ?? [], testCase.expectedProviders ?? []) },
       { name: 'gateway id hints', passed: containsAll(signals.inferredGatewayIdHints ?? [], testCase.expectedGatewayIds ?? []) },
       { name: 'custom domain hints', passed: containsAll(signals.customDomainHints ?? [], testCase.expectedCustomDomains ?? []) },
       { name: 'lambda url hosts', passed: containsAll(signals.lambdaUrlHints ?? [], testCase.expectedLambdaUrlHosts ?? []) },
-      { name: 'evidence markers', passed: evidenceContains(signals.evidence ?? [], testCase.expectedEvidence ?? []) }
+      { name: 'evidence markers', passed: evidenceContains(signals.evidence ?? [], testCase.expectedEvidence ?? []) },
+      {
+        name: 'catalog refs',
+        passed: (testCase.expectedCatalogRefs ?? []).every((expected) =>
+          catalogRefs.some((actual) => actual.name === expected.name && actual.specPath === expected.specPath)
+        )
+      }
     ];
     for (const derivation of testCase.expectedOasDerivations ?? []) {
       const content = await readFile(path.join(workspace, derivation.path), 'utf8');
@@ -140,6 +175,7 @@ async function runCase(testCase) {
       inferredGatewayIdHints: signals.inferredGatewayIdHints ?? [],
       customDomainHints: signals.customDomainHints ?? [],
       lambdaUrlHints: signals.lambdaUrlHints ?? [],
+      catalogRefs,
       evidence: signals.evidence ?? [],
       checks,
       passed: checks.every((check) => check.passed)

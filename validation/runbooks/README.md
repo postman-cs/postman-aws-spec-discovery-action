@@ -16,6 +16,7 @@ npm run build
 node validation/scripts/check-validation-fixtures.mjs
 node validation/scripts/validate-repo-spec-matrix.mjs
 node validation/scripts/validate-iac-signals.mjs
+node validation/scripts/validate-p3-surfaces.mjs
 node validation/scripts/capture-live-manifest.mjs --stack-name spec-discovery-validation --region us-east-1
 node validation/scripts/validate-live-aws-surfaces.mjs
 ```

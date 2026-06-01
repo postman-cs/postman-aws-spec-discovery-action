@@ -57,6 +57,14 @@ function extractCustomDomainHints(content: string): string[] {
     }
   }
 
+  const hostPattern = /\b(?:host|hostname|domain|domainName)\s*[:=]\s*["']?([a-z0-9][a-z0-9.-]+\.[a-z]{2,})\b/gi;
+  for (const match of content.matchAll(hostPattern)) {
+    const host = (match[1] ?? '').trim().toLowerCase();
+    if (host && !host.includes('amazonaws.com') && !host.includes('example.com') && !host.endsWith('.on.aws')) {
+      matches.push(host);
+    }
+  }
+
   return unique(matches);
 }
 
@@ -113,8 +121,13 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   // CDK TypeScript patterns
   { pattern: /aws-cdk-lib\/aws-apigateway/i, provider: 'api-gateway' },
   { pattern: /aws-cdk-lib\/aws-apigatewayv2/i, provider: 'api-gateway' },
+  { pattern: /aws_cdk\.aws_apigateway/i, provider: 'api-gateway' },
+  { pattern: /aws_cdk.*aws_apigatewayv2/i, provider: 'api-gateway' },
+  { pattern: /software\.amazon\.awscdk\.services\.apigateway/i, provider: 'api-gateway' },
+  { pattern: /Amazon\.CDK\.AWS\.APIGateway/i, provider: 'api-gateway' },
   { pattern: /new\s+apigateway\.RestApi\s*\(/i, provider: 'api-gateway' },
   { pattern: /new\s+apigatewayv2\.(?:HttpApi|WebSocketApi|Api)\s*\(/i, provider: 'api-gateway' },
+  { pattern: /\b(?:RestApi|HttpApi|WebSocketApi|CfnApi)\s*\(/i, provider: 'api-gateway' },
   { pattern: /aws-cdk-lib\/aws-appsync/i, provider: 'appsync' },
   { pattern: /new\s+appsync\.GraphqlApi\s*\(/i, provider: 'appsync' },
   { pattern: /aws-cdk-lib\/aws-sns/i, provider: 'sns' },
@@ -127,6 +140,9 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   // Pulumi resource constructors (TypeScript/Python/Go)
   { pattern: /aws\.apigateway\.RestApi/i, provider: 'api-gateway' },
   { pattern: /aws\.apigatewayv2\.Api/i, provider: 'api-gateway' },
+  { pattern: /aws:apigatewayv2\/api:Api/i, provider: 'api-gateway' },
+  { pattern: /Aws\.ApiGatewayV2\.Api/i, provider: 'api-gateway' },
+  { pattern: /com\.pulumi\.aws\.apigatewayv2\.Api/i, provider: 'api-gateway' },
   { pattern: /aws\.appsync\.GraphQLApi/i, provider: 'appsync' },
   { pattern: /aws\.sns\.Topic/i, provider: 'sns' },
 
@@ -204,12 +220,32 @@ function isKnownSignalConfigFile(relativePath: string): boolean {
     basename === 'tsoa.json' ||
     basename === 'openapi-generator.json' ||
     basename === 'openapi-generator.yaml' ||
-    basename === 'openapi-generator.yml'
+    basename === 'openapi-generator.yml' ||
+    basename === 'pulumi.yaml' ||
+    basename === 'docker-compose.yml' ||
+    basename === 'docker-compose.yaml' ||
+    basename === 'compose.yml' ||
+    basename === 'compose.yaml' ||
+    basename === 'values.yaml' ||
+    basename === 'values.yml' ||
+    basename === 'chart.yaml' ||
+    basename === 'chart.yml' ||
+    basename === 'task-definition.json' ||
+    basename === 'ecs-task-definition.json' ||
+    basename === 'ecs-service.json' ||
+    basename === 'service-definition.json' ||
+    basename === 'application.yml' ||
+    basename === 'application.yaml' ||
+    basename === 'application.properties' ||
+    /^appsettings(?:\.[^.]+)?\.json$/.test(basename) ||
+    /(^|\/)(?:helm|charts)\/.+\.ya?ml$/.test(normalized) ||
+    /(^|\/)(?:k8s|kubernetes|manifests)\/.+\.ya?ml$/.test(normalized) ||
+    /(^|\/)ecs\/.+\.json$/.test(normalized)
   );
 }
 
 async function collectInspectFiles(repoRoot: string): Promise<string[]> {
-  const discovered = await findIaCFiles(repoRoot, ['.yml', '.yaml', '.json', '.ts', '.js', '.toml']);
+  const discovered = await findIaCFiles(repoRoot, ['.yml', '.yaml', '.json', '.ts', '.js', '.toml', '.properties']);
   const discoveredRelative = discovered
     .map((filePath) => path.relative(repoRoot, filePath).replace(/\\/g, '/'))
     .filter(isKnownSignalConfigFile);
@@ -340,7 +376,7 @@ export async function collectRepoSignals(
   const cdkJson = path.resolve(repoRoot, 'cdk.json');
   try {
     await readFile(cdkJson, 'utf8');
-    const cdkFiles = await findIaCFiles(repoRoot, ['.ts']);
+    const cdkFiles = await findIaCFiles(repoRoot, ['.ts', '.js', '.py', '.java', '.cs']);
     for (const filePath of cdkFiles) {
       const content = await readFile(filePath, 'utf8').catch(() => '');
       if (!content) continue;
@@ -374,8 +410,12 @@ export async function collectRepoSignals(
 
   const pulumiYaml = path.resolve(repoRoot, 'Pulumi.yaml');
   try {
-    await readFile(pulumiYaml, 'utf8');
-    const pulumiFiles = await findIaCFiles(repoRoot, ['.ts', '.py', '.go']);
+    const pulumiContent = await readFile(pulumiYaml, 'utf8');
+    for (const hint of detectProviderHints(pulumiContent)) {
+      providerHintSet.add(hint);
+      evidence.push(`Detected ${hint} provider hint in Pulumi.yaml`);
+    }
+    const pulumiFiles = await findIaCFiles(repoRoot, ['.ts', '.py', '.go', '.java', '.cs']);
     for (const filePath of pulumiFiles) {
       const content = await readFile(filePath, 'utf8').catch(() => '');
       if (!content) continue;

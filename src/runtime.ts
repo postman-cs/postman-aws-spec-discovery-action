@@ -18,6 +18,13 @@ import { EventBridgeSchemasSdkClient } from './lib/aws/schemas-client.js';
 import { CloudFormationSdkClient, type CloudFormationSpecClient } from './lib/aws/cloudformation-client.js';
 import { GlueSchemaSdkClient } from './lib/aws/glue-client.js';
 import { LambdaSdkClient } from './lib/aws/lambda-client.js';
+import { AppSyncEventsSdkClient } from './lib/aws/appsync-events-client.js';
+import { EventBridgeSurfaceSdkClient } from './lib/aws/eventbridge-client.js';
+import { BedrockActionGroupsSdkClient } from './lib/aws/bedrock-agent-client.js';
+import { AlbListenerRulesSdkClient } from './lib/aws/alb-client.js';
+import { LambdaEventSourceSdkClient } from './lib/aws/lambda-event-source-client.js';
+import { VerifiedPermissionsSdkClient } from './lib/aws/verified-permissions-client.js';
+import { StepFunctionsSdkClient } from './lib/aws/step-functions-client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
 import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
@@ -33,6 +40,13 @@ import { EventBridgeSchemasProvider } from './lib/providers/eventbridge-schemas.
 import { CloudFormationProvider } from './lib/providers/cloudformation.js';
 import { GlueSchemaProvider } from './lib/providers/glue.js';
 import { LambdaUrlProvider } from './lib/providers/lambda-url.js';
+import { AppSyncEventsProvider } from './lib/providers/appsync-events.js';
+import { EventBridgeSurfaceProvider } from './lib/providers/eventbridge-surfaces.js';
+import { BedrockActionGroupProvider } from './lib/providers/bedrock-action-groups.js';
+import { AlbListenerRulesProvider } from './lib/providers/alb-listener-rules.js';
+import { LambdaEventSourceProvider } from './lib/providers/lambda-event-source.js';
+import { VerifiedPermissionsProvider } from './lib/providers/verified-permissions.js';
+import { StepFunctionsProvider } from './lib/providers/step-functions.js';
 import { SsmProvider } from './lib/providers/ssm.js';
 import { SnsProvider } from './lib/providers/sns.js';
 import { SsmSdkClient } from './lib/aws/ssm-client.js';
@@ -732,16 +746,30 @@ function sourceTypeForProvider(providerType: ProviderType): SourceType | undefin
   switch (providerType) {
     case 'appsync':
       return 'appsync-schema';
+    case 'appsync-events':
+      return 'appsync-event-api';
     case 'eventbridge-schemas':
       return 'eventbridge-schema';
+    case 'eventbridge':
+      return 'eventbridge-surface';
     case 'cloudformation':
       return 'cfn-embedded';
     case 'glue':
       return 'glue-schema';
+    case 'bedrock-action-group':
+      return 'bedrock-action-group';
+    case 'alb-listener-rule':
+      return 'alb-listener-rule';
     case 'ssm':
       return 'ssm-registry';
     case 'lambda-url':
       return 'lambda-url-export';
+    case 'lambda-event-source':
+      return 'lambda-event-source';
+    case 'verified-permissions':
+      return 'verified-permissions-schema';
+    case 'step-functions':
+      return 'step-functions-asl';
     case 'api-gateway':
       return 'gateway-export';
     case 'sns':
@@ -1104,6 +1132,8 @@ export async function runResolution(
   let existingSpecPath: string | undefined;
   let existingSpecFormat: SpecFormat | undefined;
   let existingSpecEvidence: string[] | undefined;
+  let existingSpecContent: string | undefined;
+  let existingSpecShouldWriteNative = false;
 
   if (catalogSpecPath) {
     const resolvedCatalogPath = resolvePathWithinRoot(inputs.repoRoot, catalogSpecPath, 'catalog-spec-path');
@@ -1131,12 +1161,12 @@ export async function runResolution(
       const folderName = catalogApi?.name ?? 'catalog-api';
       const catalogFormat = catalogFormatFor(catalogApi?.type, catalogSpecUrl);
       const targetPath = path.join(inputs.outputDir, folderName, catalogFormat.filename);
-      const absolutePath = resolvePathWithinRoot(inputs.repoRoot, targetPath, 'output-dir');
-      await writeSpecFile(absolutePath, fetched.content);
       existingSpecPath = targetPath.replace(/\\/g, '/');
       existingSpecFormat = catalogFormat.format;
       existingSpecEvidence = [`Resolved from Backstage catalog remote ${catalogApi?.type ?? 'api'} definition`];
-      actionCore.info(`Fetched remote spec from catalog URL and saved to ${existingSpecPath}`);
+      existingSpecContent = fetched.content;
+      existingSpecShouldWriteNative = true;
+      actionCore.info(`Fetched remote spec from catalog URL for ${existingSpecPath}`);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
@@ -1344,13 +1374,17 @@ export async function runResolution(
     if (!selectedSource.specPath || !selectedSource.specFormat) {
       return selectedSource;
     }
-    const relativeProviderDir = path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service')).replace(/\\/g, '/');
+    const relativeProviderDir = (
+      existingSpecShouldWriteNative
+        ? path.dirname(selectedSource.specPath)
+        : path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'))
+    ).replace(/\\/g, '/');
     try {
-      const absoluteRepoSpecPath = resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, 'repo-spec-path');
-      const content = await readFile(absoluteRepoSpecPath, 'utf8');
+      const content = existingSpecContent ?? await readFile(resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, 'repo-spec-path'), 'utf8');
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: relativeProviderDir,
+        native: existingSpecShouldWriteNative ? { relativePath: selectedSource.specPath, content } : undefined,
         derivation: {
           content,
           format: selectedSource.specFormat,
@@ -1388,6 +1422,10 @@ export async function runResolution(
     const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'));
     if (inputs.dryRun) {
       selectedSource.specPath = relativeSpecPath;
+      selectedSource.derivedOpenApiPath = path.join(path.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, '/');
+      selectedSource.derivedOpenApiFormat = 'openapi-json';
+      selectedSource.derivedOpenApiCompleteness = selectedSource.gatewayType === 'WEBSOCKET' ? 'partial' : undefined;
+      selectedSource.derivedOpenApiEvidence = ['Dry run enabled; skipped API Gateway export and derived OpenAPI sidecar write'];
       selectedSource.evidence = [...selectedSource.evidence, 'Dry run enabled; skipped export and file write'];
       return selectedSource;
     }
@@ -1513,12 +1551,19 @@ export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGate
 
   registry.register(new ApiGatewayProvider(awsClient, { includeV2: inputs.includeV2, apiFilter: inputs.apiFilter }));
   registry.register(new AppSyncProvider(new AppSyncSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new AppSyncEventsProvider(new AppSyncEventsSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new EventBridgeSchemasProvider(new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new EventBridgeSurfaceProvider(new EventBridgeSurfaceSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new CloudFormationProvider(new CloudFormationSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new S3SdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new BedrockActionGroupProvider(new BedrockActionGroupsSdkClient(inputs.awsRegion, sdkOpts), new S3SdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new AlbListenerRulesProvider(new AlbListenerRulesSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new LambdaUrlProvider(new LambdaSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new LambdaEventSourceProvider(new LambdaEventSourceSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new VerifiedPermissionsProvider(new VerifiedPermissionsSdkClient(inputs.awsRegion, sdkOpts)));
+  registry.register(new StepFunctionsProvider(new StepFunctionsSdkClient(inputs.awsRegion, sdkOpts)));
 
   return registry;
 }
