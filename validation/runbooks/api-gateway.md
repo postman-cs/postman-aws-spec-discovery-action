@@ -26,4 +26,4 @@ node validation/scripts/run-cli-surface.mjs --surface discover-many --region us-
 - REST API exports OpenAPI 3.0 YAML.
 - REST API fallback reads live resources, methods, and models and synthesizes partial OpenAPI 3.0 YAML when native export hits a known API Gateway export limitation.
 - HTTP API exports OpenAPI 3.0 YAML.
-- WebSocket API resolves as API Gateway v2 and writes partial OpenAPI 3.0 YAML synthesized from live WebSocket route metadata.
+- WebSocket API resolves as API Gateway v2 and writes partial OpenAPI 3.0 YAML synthesized from live route metadata, request models, component schemas, integration metadata, authorizers when present, and route responses.

@@ -33,7 +33,7 @@ describe('action contract', () => {
     'resolution-json': 'JSON resolution result describing status, source type, confidence, and evidence.',
     'resolution-status': 'Resolution status: resolved or unresolved.',
     'source-type':
-      'Resolved source type: repo-spec, gateway-export, appsync-schema, eventbridge-schema, cfn-embedded, glue-schema, sns-contract, ssm-registry, lambda-url-export, manual-review, or discover-many.',
+      'Resolved source type: repo-spec, gateway-export, appsync-schema, appsync-event-api, eventbridge-schema, eventbridge-surface, cfn-embedded, glue-schema, bedrock-action-group, alb-listener-rule, sns-contract, ssm-registry, lambda-url-export, lambda-event-source, verified-permissions-schema, step-functions-asl, manual-review, or discover-many.',
     'mapping-confidence': 'Numeric confidence score for selected service candidate.',
     'spec-path': 'Path to resolved or generated specification when available.',
     'gateway-id': 'Resolved API Gateway ID when available.',
@@ -44,7 +44,7 @@ describe('action contract', () => {
     'candidates-json':
       'JSON array of top candidates when resolution is ambiguous. Useful for downstream decision-making or Job Summary rendering.',
     'provider-type':
-      'Provider that resolved the spec: api-gateway, appsync, eventbridge-schemas, cloudformation, glue, sns, ssm, or lambda-url.',
+      'Provider that resolved the spec: api-gateway, appsync, appsync-events, eventbridge-schemas, eventbridge, cloudformation, glue, bedrock-action-group, alb-listener-rule, sns, ssm, lambda-url, lambda-event-source, verified-permissions, or step-functions.',
     'spec-format':
       'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
   } as const;

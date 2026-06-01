@@ -20,18 +20,30 @@ const required = [
   'validation/fixtures/backstage/catalog-info.yaml',
   'validation/fixtures/backstage/catalog-info.yml',
   'validation/fixtures/aws/live-stack.yaml',
+  'validation/fixtures/aws/p3-surfaces.json',
   'validation/fixtures/iac/cloudformation/template.yaml',
   'validation/fixtures/iac/cloudformation/lambda-url.yaml',
   'validation/fixtures/iac/terraform/main.tf',
   'validation/fixtures/iac/cdk/cdk.json',
   'validation/fixtures/iac/cdk/lib/app.ts',
+  'validation/fixtures/iac/cdk/lib/app.py',
   'validation/fixtures/iac/pulumi/Pulumi.yaml',
   'validation/fixtures/iac/pulumi/index.ts',
+  'validation/fixtures/iac/backstage/services/orders/catalog-info.yaml',
+  'validation/fixtures/iac/backstage/services/orders/openapi.yaml',
+  'validation/fixtures/iac/deployment/helm/orders/templates/ingress.yaml',
+  'validation/fixtures/iac/deployment/k8s/ingress.yaml',
+  'validation/fixtures/iac/deployment/docker-compose.yml',
+  'validation/fixtures/iac/deployment/ecs/task-definition.json',
+  'validation/fixtures/iac/deployment/spring/application.yml',
+  'validation/fixtures/iac/deployment/dotnet/appsettings.json',
   'validation/fixtures/iac/workflow/deploy.yml',
   'validation/fixtures/iac/readme/README.md',
   'validation/fixtures/iac/graphql/schema.graphql',
+  'validation/runbooks/aws-derived-surfaces.md',
   'validation/scripts/validate-repo-spec-matrix.mjs',
   'validation/scripts/validate-iac-signals.mjs',
+  'validation/scripts/validate-p3-surfaces.mjs',
   'validation/scripts/validate-live-aws-surfaces.mjs'
 ];
 
@@ -47,11 +59,21 @@ const markerChecks = [
   ['validation/fixtures/repo-spec/service.proto', 'syntax = "proto3"'],
   ['validation/fixtures/repo-spec/model.smithy', '$version: "2"'],
   ['validation/fixtures/aws/live-stack.yaml', 'Name: OrderMessage'],
+  ['validation/fixtures/aws/p3-surfaces.json', '"orders-rule"'],
+  ['validation/fixtures/aws/p3-surfaces.json', '"orders-pipe"'],
+  ['validation/fixtures/aws/p3-surfaces.json', '"orders-workflow"'],
   ['validation/fixtures/aws/live-stack.yaml', 'RouteResponseKey:'],
   ['validation/fixtures/aws/live-stack.yaml', 'FilterPolicyScope: MessageBody'],
   ['validation/fixtures/aws/live-stack.yaml', 'RedrivePolicy:'],
   ['validation/fixtures/iac/terraform/main.tf', 'aws_lambda_function_url'],
-  ['validation/fixtures/iac/readme/README.md', 'lambda-url.us-east-1.on.aws']
+  ['validation/fixtures/iac/cdk/lib/app.py', 'aws_apigatewayv2'],
+  ['validation/fixtures/iac/pulumi/Pulumi.yaml', 'aws:apigatewayv2/api:Api'],
+  ['validation/fixtures/iac/backstage/services/orders/catalog-info.yaml', 'kind: API'],
+  ['validation/fixtures/iac/deployment/helm/orders/templates/ingress.yaml', 'api.orders.example.test'],
+  ['validation/fixtures/iac/deployment/docker-compose.yml', 'abc123def4.execute-api'],
+  ['validation/fixtures/iac/deployment/spring/application.yml', 'lambda-url.us-east-1.on.aws'],
+  ['validation/fixtures/iac/readme/README.md', 'lambda-url.us-east-1.on.aws'],
+  ['validation/runbooks/aws-derived-surfaces.md', 'fixture-only / official-doc-backed']
 ];
 
 const missing = [];

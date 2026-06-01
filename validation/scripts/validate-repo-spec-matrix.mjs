@@ -98,13 +98,25 @@ const cases = [
     name: 'protobuf',
     source: 'validation/fixtures/repo-spec/service.proto',
     target: 'service.proto',
-    expectedFormat: 'protobuf'
+    expectedFormat: 'protobuf',
+    expectedDerivedRpc: {
+      path: '/ValidationService/GetItem',
+      input: 'GetItemRequest',
+      output: 'GetItemResponse',
+      inputProperty: 'id'
+    }
   },
   {
     name: 'smithy',
     source: 'validation/fixtures/repo-spec/model.smithy',
     target: 'model.smithy',
-    expectedFormat: 'smithy'
+    expectedFormat: 'smithy',
+    expectedDerivedRpc: {
+      path: '/ValidationService/GetItem',
+      input: 'GetItemInput',
+      output: 'GetItemOutput',
+      inputProperty: 'id'
+    }
   },
   {
     name: 'smithy-build',
@@ -289,6 +301,7 @@ async function runCase(testCase) {
       matchesExpectedDerivedGraphql(derivedDocument, testCase.expectedDerivedGraphql) &&
       matchesExpectedDerivedPostman(derivedDocument, testCase.expectedDerivedPostman) &&
       matchesExpectedDerivedSchema(derivedDocument, testCase.expectedDerivedSchema) &&
+      matchesExpectedDerivedRpc(derivedDocument, testCase.expectedDerivedRpc) &&
       Boolean(oas?.content.includes('"openapi": "3.') || oas?.content.includes('openapi: 3.')) &&
       (!testCase.expectedEvidence || evidence.some((entry) => entry.includes(testCase.expectedEvidence)));
 
@@ -357,6 +370,17 @@ function matchesExpectedDerivedSchema(derivedDocument, expected) {
     derivedDocument?.paths?.[expected.path]?.post?.requestBody?.content?.['application/json']?.schema?.$ref ===
       `#/components/schemas/${expected.component}` &&
     Boolean(derivedDocument?.components?.schemas?.[expected.component]?.properties?.[expected.property])
+  );
+}
+
+function matchesExpectedDerivedRpc(derivedDocument, expected) {
+  if (!expected) return true;
+  const operation = derivedDocument?.paths?.[expected.path]?.post;
+  return (
+    operation?.requestBody?.content?.['application/json']?.schema?.$ref === `#/components/schemas/${expected.input}` &&
+    operation?.responses?.['200']?.content?.['application/json']?.schema?.$ref === `#/components/schemas/${expected.output}` &&
+    Boolean(derivedDocument?.components?.schemas?.[expected.input]?.properties?.[expected.inputProperty]) &&
+    Boolean(derivedDocument?.components?.schemas?.[expected.output])
   );
 }
 

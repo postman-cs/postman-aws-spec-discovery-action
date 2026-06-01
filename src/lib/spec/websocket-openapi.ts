@@ -150,7 +150,10 @@ function operationId(route: WebSocketRouteSummary): string {
   const clean = raw.replace(/^\$/, '').replace(/[^a-zA-Z0-9]+/g, ' ').trim();
   const words = clean ? clean.split(/\s+/) : ['default'];
   return words
-    .map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`)
+    .map((word, index) => {
+      const normalized = `${word.slice(0, 1).toLowerCase()}${word.slice(1)}`;
+      return index === 0 ? normalized : `${normalized.slice(0, 1).toUpperCase()}${normalized.slice(1)}`;
+    })
     .join('');
 }
 

@@ -223,4 +223,91 @@ describe('deriveOpenApiDocument', () => {
     });
     expect(avroDocument.components.schemas.OrderEvent.properties.total.type).toBe('number');
   });
+
+  it('derives protobuf message schemas and RPC request/response bodies', () => {
+    const result = deriveOpenApiDocument({
+      content: [
+        'syntax = "proto3";',
+        'package validation.orders;',
+        'service OrderService {',
+        '  rpc CreateOrder (CreateOrderRequest) returns (Order);',
+        '}',
+        'message CreateOrderRequest {',
+        '  string id = 1;',
+        '  repeated string item_ids = 2;',
+        '  int32 quantity = 3;',
+        '}',
+        'message Order {',
+        '  string id = 1;',
+        '  bool accepted = 2;',
+        '}'
+      ].join('\n'),
+      format: 'protobuf',
+      title: 'Orders Proto'
+    });
+
+    const document = JSON.parse(result.content);
+    const operation = document.paths['/OrderService/CreateOrder'].post;
+
+    expect(operation.requestBody.content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/CreateOrderRequest'
+    });
+    expect(operation.responses['200'].content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/Order'
+    });
+    expect(operation['x-protobuf-package']).toBe('validation.orders');
+    expect(document.components.schemas.CreateOrderRequest.properties.item_ids).toEqual({
+      type: 'array',
+      items: { type: 'string' }
+    });
+    expect(document.components.schemas.CreateOrderRequest.properties.quantity.type).toBe('integer');
+    expect(document.components.schemas.Order.properties.accepted.type).toBe('boolean');
+  });
+
+  it('derives Smithy operation inputs, outputs, errors, and required members', () => {
+    const result = deriveOpenApiDocument({
+      content: [
+        '$version: "2"',
+        'namespace validation',
+        'service Orders {',
+        '  operations: [CreateOrder]',
+        '}',
+        'operation CreateOrder {',
+        '  input: CreateOrderInput,',
+        '  output: CreateOrderOutput,',
+        '  errors: [OrderError]',
+        '}',
+        'structure CreateOrderInput {',
+        '  @required',
+        '  id: String,',
+        '  quantity: Integer',
+        '}',
+        'structure CreateOrderOutput {',
+        '  accepted: Boolean',
+        '}',
+        'structure OrderError {',
+        '  message: String',
+        '}'
+      ].join('\n'),
+      format: 'smithy',
+      title: 'Orders Smithy'
+    });
+
+    const document = JSON.parse(result.content);
+    const operation = document.paths['/Orders/CreateOrder'].post;
+
+    expect(operation.requestBody.content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/CreateOrderInput'
+    });
+    expect(operation.responses['200'].content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/CreateOrderOutput'
+    });
+    expect(operation.responses.default.content['application/json'].schema.oneOf).toEqual([
+      { $ref: '#/components/schemas/OrderError' }
+    ]);
+    expect(operation['x-smithy-errors']).toEqual(['OrderError']);
+    expect(document.components.schemas.CreateOrderInput.required).toEqual(['id']);
+    expect(document.components.schemas.CreateOrderInput.properties.quantity.type).toBe('integer');
+    expect(document.components.schemas.CreateOrderOutput.properties.accepted.type).toBe('boolean');
+  });
 });

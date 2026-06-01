@@ -23,23 +23,30 @@ The action resolves the best available contract artifact first, then records whe
 | Provider | Primary artifact | OpenAPI derivation | Auto-detected via |
 | --- | --- | --- | --- |
 | Repo-local specs | OpenAPI, Swagger, GraphQL SDL, AsyncAPI, Postman, JSON Schema, Avro, protobuf, Smithy | Full OpenAPI for OpenAPI 3.x; partial OpenAPI 3.x for Swagger and native API formats. GraphQL derivation preserves operation names, variable shapes, and schema components; AsyncAPI derivation preserves channel payload schemas, examples, and channel/direction metadata; Postman derivation preserves request parameters, JSON examples, auth metadata, and response examples; JSON Schema and Avro derivation preserves named component schemas with `$ref` request bodies. | Known spec paths |
-| Backstage catalog | Local or remote `catalog-info.yaml` / `catalog-info.yml` API definitions | Full OpenAPI for OpenAPI refs; partial OpenAPI 3.1 for GraphQL refs | Repo root catalog file |
+| Backstage catalog | Local or remote `catalog-info.yaml` / `catalog-info.yml` API definitions | Full OpenAPI for OpenAPI refs; partial OpenAPI 3.1 for GraphQL refs | Root or nested catalog file |
 | API Gateway REST | AWS OpenAPI export, with model/method fallback for known export limitations | Full OpenAPI 3.0 YAML from native export; partial OpenAPI 3.0 YAML from fallback synthesis | IAM probe |
 | API Gateway HTTP | AWS OpenAPI export | Full OpenAPI 3.0 YAML | IAM probe |
-| API Gateway WebSocket | Route metadata | Partial OpenAPI 3.0 YAML synthesized from routes | Explicit gateway ID |
+| API Gateway WebSocket | Route metadata, request models, integrations, authorizers when present, and route responses | Partial OpenAPI 3.0 YAML synthesized from API Gateway v2 metadata with component schemas and API Gateway extensions | Explicit gateway ID |
 | AppSync GraphQL | GraphQL SDL | Partial OpenAPI 3.1 GraphQL endpoint | IAM probe + `.graphql` files in repo |
+| AppSync Events | Event API channel namespaces | Partial OpenAPI 3.1 webhooks for publish/subscribe namespaces. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
 | EventBridge Schema Registry | JSON Schema or OpenApi3 schema content | Full OpenAPI for OpenApi3 schemas; partial OpenAPI 3.1 for JSON Schema | IAM probe + IaC references |
+| EventBridge rules, pipes, and API destinations | Event patterns, filters, targets, and HTTP destinations | Partial OpenAPI 3.1 webhooks or HTTP operations with EventBridge extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
 | CloudFormation embedded specs | Embedded or referenced OpenAPI body | Full OpenAPI 3.0/3.1 when the template contains OpenAPI | IAM probe |
 | Glue Schema Registry | Avro, JSON Schema, or protobuf | Partial OpenAPI 3.1 request surface | IAM probe + IaC references |
+| Bedrock Agent action groups | Inline or S3 OpenAPI action group schema | OpenAPI JSON with Bedrock action group metadata; marked partial because Bedrock supports a subset of OpenAPI. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| ALB listener rules | Host, path, method, header, query, and action conditions | Partial OpenAPI 3.1 HTTP paths with ALB rule extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
 | SSM Parameter Store | Stored content, fetched URL content, or pointer artifact | Full OpenAPI for OpenAPI content; partial OpenAPI 3.1 for supported native content and pointer artifacts | IAM probe for `/postman/specs/` path |
 | SNS Topics | AsyncAPI / JSON Schema contracts plus sidecars | Partial OpenAPI 3.1 from contracts; OpenAPI 3.1 webhook sidecar for HTTP/S subscriptions | IAM probe + SNS IaC references + SSM fallback |
 | Lambda Function URLs | Synthesized function URL contract | Partial OpenAPI 3.0 YAML synthesized as a catch-all URL surface | IAM probe + IaC references / `lambda-url` URL pattern |
+| Lambda event source mappings | Event source mapping filters, source, target function, and batch settings | Partial OpenAPI 3.1 webhooks with Lambda mapping/filter extensions. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| Verified Permissions schemas | Cedar schema metadata | OpenAPI 3.1 metadata document with no invented HTTP paths. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
+| Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata. Fixture-only / official-doc-backed, not live-validated. | IAM probe |
 
 Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
 
-The validation suite for this repository lives in [`validation/`](validation/README.md). It includes fixture inputs, runbooks, sanitized evidence, and live AWS checks for every provider above.
+The validation suite for this repository lives in [`validation/`](validation/README.md). It includes fixture inputs, runbooks, sanitized evidence, live AWS checks for live-supported surfaces, and explicit fixture-only labels for P3 surfaces that are not yet live-validated.
 
-The action also detects Backstage `catalog-info.yaml` files in the repo root and resolves API spec path or URL references automatically.
+The action also detects Backstage `catalog-info.yaml` files in the repo root or bounded nested service directories and resolves API spec path or URL references automatically.
 
 SNS is handled as a **contract resolver**, not an AWS spec exporter. SNS has no native exportable API specification, so the provider resolves durable event contracts through a 9-level precedence chain. For each discovered SNS topic, the resolution chain is:
 
@@ -139,7 +146,14 @@ Full IAM policy (all providers):
         "appsync:ListGraphqlApis",
         "appsync:GetGraphqlApi",
         "appsync:GetIntrospectionSchema",
+        "appsync:ListApis",
+        "appsync:ListChannelNamespaces",
         "appsync:ListTagsForResource",
+        "events:ListRules",
+        "events:ListTargetsByRule",
+        "events:ListApiDestinations",
+        "pipes:ListPipes",
+        "pipes:DescribePipe",
         "schemas:ListRegistries",
         "schemas:ListSchemas",
         "schemas:DescribeSchema",
@@ -153,9 +167,22 @@ Full IAM policy (all providers):
         "glue:ListSchemas",
         "glue:GetSchemaVersion",
         "glue:GetTags",
+        "bedrock:ListAgents",
+        "bedrock:ListAgentActionGroups",
+        "bedrock:GetAgentActionGroup",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:DescribeRules",
         "lambda:ListFunctions",
         "lambda:GetFunctionUrlConfig",
+        "lambda:ListEventSourceMappings",
+        "lambda:GetEventSourceMapping",
         "lambda:ListTags",
+        "verifiedpermissions:ListPolicyStores",
+        "verifiedpermissions:GetSchema",
+        "states:ListStateMachines",
+        "states:DescribeStateMachine",
+        "s3:GetObject",
         "sns:ListTopics",
         "sns:GetTopicAttributes",
         "sns:ListTagsForResource",
@@ -235,12 +262,12 @@ These are auto-detected from CI environment variables. Override them only when a
 | --- | --- |
 | `resolution-json` | Full resolution payload |
 | `resolution-status` | `resolved` or `unresolved` |
-| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `eventbridge-schema`, `cfn-embedded`, `glue-schema`, `ssm-registry`, `sns-contract`, `lambda-url-export`, `manual-review`, or `discover-many` |
+| `source-type` | `repo-spec`, `gateway-export`, `appsync-schema`, `appsync-event-api`, `eventbridge-schema`, `eventbridge-surface`, `cfn-embedded`, `glue-schema`, `bedrock-action-group`, `alb-listener-rule`, `ssm-registry`, `sns-contract`, `lambda-url-export`, `lambda-event-source`, `verified-permissions-schema`, `step-functions-asl`, `manual-review`, or `discover-many` |
 | `mapping-confidence` | Numeric confidence score |
 | `spec-path` | Resolved/generated spec path when available |
 | `gateway-id` | Selected gateway ID when available |
 | `service-name` | Resolved service name |
-| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `eventbridge-schemas`, `cloudformation`, `glue`, `ssm`, `sns`, `lambda-url`) |
+| `provider-type` | Provider that resolved the spec (`api-gateway`, `appsync`, `appsync-events`, `eventbridge-schemas`, `eventbridge`, `cloudformation`, `glue`, `bedrock-action-group`, `alb-listener-rule`, `ssm`, `sns`, `lambda-url`, `lambda-event-source`, `verified-permissions`, `step-functions`) |
 | `spec-format` | Format of the spec (`openapi-yaml`, `openapi-json`, `graphql-sdl`, `json-schema`, `avro`, `protobuf`, `asyncapi-yaml`, `asyncapi-json`) |
 | `candidates-json` | JSON array of top candidates when resolution is ambiguous |
 | `services-json` | discover-many mode: JSON array of all discovered services |
@@ -261,13 +288,20 @@ These are auto-detected from CI environment variables. Override them only when a
 | --- | --- | --- |
 | API Gateway (REST/HTTP/WebSocket) | `index.yaml` | OpenAPI 3.0 YAML |
 | AppSync | `schema.graphql` | GraphQL SDL |
+| AppSync Events | `index.json` | OpenAPI 3.1 JSON (partial) |
 | EventBridge Schema Registry | `index.json` | JSON Schema |
+| EventBridge rules/pipes/API destinations | `index.json` | OpenAPI 3.1 JSON (partial) |
 | CloudFormation (embedded) | `index.json` | OpenAPI JSON |
 | Glue (Avro) | `schema.avsc` | Avro |
 | Glue (JSON Schema) | `schema.json` | JSON Schema |
 | Glue (Protobuf) | `schema.proto` | Protocol Buffers |
+| Bedrock Agent action group | `index.json` | OpenAPI JSON with Bedrock metadata |
+| ALB listener rule | `index.json` | OpenAPI 3.1 JSON (partial) |
 | SSM Parameter Store | auto-detected | Any (spec content or fetched URL content) |
 | Lambda Function URL | `index.yaml` | OpenAPI 3.0 YAML (synthesized) |
+| Lambda event source mapping | `index.json` | OpenAPI 3.1 JSON (partial) |
+| Verified Permissions schema | `index.json` | OpenAPI 3.1 JSON metadata |
+| Step Functions ASL | `index.json` | OpenAPI 3.1 JSON (partial) |
 | SNS (AsyncAPI YAML) | `asyncapi.yaml` | AsyncAPI YAML |
 | SNS (AsyncAPI JSON) | `asyncapi.json` | AsyncAPI JSON |
 | SNS (JSON Schema) | `schema.json` | JSON Schema |
@@ -450,18 +484,18 @@ Terraform:
 - Resource types: `aws_api_gateway_rest_api`, `aws_apigatewayv2_api`, `aws_appsync_graphql_api`, `aws_schemas_schema`, `aws_cloudwatch_event_bus`, `aws_glue_schema`, `aws_sns_topic`, `aws_sns_topic_subscription`, `aws_lambda_function_url`
 
 CDK:
-- Detected when `cdk.json` is present; scans TypeScript sources for AWS constructs
-- Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`, `aws-cdk-lib/aws-lambda`
+- Detected when `cdk.json` is present; scans TypeScript, JavaScript, Python, Java, and C# sources for AWS constructs
+- Resource constructors: `aws-cdk-lib/aws-apigateway`, `aws-cdk-lib/aws-apigatewayv2`, Python `aws_cdk.aws_apigateway*`, Java `software.amazon.awscdk.services.apigateway*`, C# `Amazon.CDK.AWS.APIGateway*`, `aws-cdk-lib/aws-appsync`, `aws-cdk-lib/aws-events`, `aws-cdk-lib/aws-sns`, `aws-cdk-lib/aws-lambda`
 - Lambda URL patterns: `addFunctionUrl(`, `FunctionUrlAuthType`
 - SNS-specific patterns: `new sns.Topic(`, `sns.Topic.fromTopicArn(`, `SnsEventSource`
 
 Pulumi:
-- Detected when `Pulumi.yaml` is present; scans `.ts`, `.py`, and `.go` source files
-- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`, `aws.sns.Topic`, `aws.lambda.FunctionUrl`
+- Detected when `Pulumi.yaml` is present; scans YAML resources plus `.ts`, `.py`, `.go`, `.java`, and `.cs` source files
+- Resource constructors: `aws.apigateway.RestApi`, `aws.apigatewayv2.Api`, `aws:apigatewayv2/api:Api`, `.NET Aws.ApiGatewayV2.Api`, Java `com.pulumi.aws.apigatewayv2.Api`, `aws.appsync.GraphQLApi`, `aws.sns.Topic`, `aws.lambda.FunctionUrl`
 
 Additional signal sources:
 - `.graphql` / `.gql` files in common locations (`schema.graphql`, `graphql/schema.graphql`, `src/schema.graphql`) for AppSync hints
-- GitHub Actions workflows, `.gitlab-ci.yml`, CircleCI, Buildkite, Serverless variants, `samconfig.toml`, OpenAPI generator configs, and `README.md` are scanned for embedded gateway IDs, custom domains, and provider hints
+- GitHub Actions workflows, `.gitlab-ci.yml`, CircleCI, Buildkite, Serverless variants, `samconfig.toml`, Helm/Kubernetes Ingress manifests, docker-compose, ECS task/service JSON, `application.yml`, `appsettings.json`, OpenAPI generator configs, and `README.md` are scanned for embedded gateway IDs, custom domains, Lambda URL hosts, and provider hints
 - Lambda Function URL hosts matching `{id}.lambda-url.{region}.on.aws` are scanned as Lambda URL evidence
 - When SNS IaC signals are detected, the action also scans nearby directories for AsyncAPI and JSON Schema files as contract evidence
 
@@ -553,7 +587,7 @@ When no explicit `stage` input is provided, the action selects a stage automatic
 3. If no match is found, the result is `manual-review` with the available stages listed in evidence
 4. For HTTP APIs with no deployed stages, the latest API configuration is exported without a stage
 
-**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` (or `catalog-info.yml`) is present in the repo root with `kind: API` entities, the action resolves spec references automatically. Both simple string definitions and `$text` references are supported. Multi-document YAML files with multiple `kind: API` entities are parsed; in `resolve-one` mode the first API's spec reference is used.
+**Backstage catalog-info.yaml**: If a Backstage `catalog-info.yaml` (or `catalog-info.yml`) is present in the repo root or a bounded nested service/package/app directory with `kind: API` entities, the action resolves spec references automatically. Both simple string definitions and `$text` references are supported. Local paths are resolved relative to the catalog file that declared them. Multi-document YAML files with multiple `kind: API` entities are parsed; in `resolve-one` mode the first API's spec reference is used.
 
 Supported definition formats:
 
@@ -586,7 +620,7 @@ spec:
   definition: https://payments.example.com/openapi.yaml
 ```
 
-With that file committed at the repo root, the action resolves the spec URL automatically. No extra action inputs are required.
+With that file committed at the repo root or inside a bounded service directory, the action resolves the spec URL automatically. No extra action inputs are required.
 
 **SSM Parameter Store**: If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. Stored content is used directly; HTTPS URLs are fetched automatically. This is the recommended zero-config way to register specs for services that run on EKS, ECS, or behind ALBs.
 

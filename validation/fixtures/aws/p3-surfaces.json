@@ -1,0 +1,208 @@
+{
+  "eventBridge": {
+    "rules": [
+      {
+        "name": "orders-rule",
+        "arn": "arn:aws:events:us-east-1:123456789012:rule/orders-rule",
+        "eventBusName": "default",
+        "eventPattern": "{\"source\":[\"orders.service\"],\"detail-type\":[\"OrderCreated\"]}",
+        "state": "ENABLED"
+      }
+    ],
+    "targets": [
+      {
+        "id": "api",
+        "arn": "arn:aws:events:us-east-1:123456789012:api-destination/orders-destination",
+        "httpParameters": {
+          "headerParameters": {
+            "X-Trace-Id": "$.id"
+          },
+          "queryStringParameters": {
+            "source": "eventbridge"
+          }
+        }
+      }
+    ],
+    "pipes": [
+      {
+        "name": "orders-pipe",
+        "arn": "arn:aws:pipes:us-east-1:123456789012:pipe/orders-pipe",
+        "source": "arn:aws:sqs:us-east-1:123456789012:orders",
+        "target": "arn:aws:lambda:us-east-1:123456789012:function:orders"
+      }
+    ],
+    "pipeDetail": {
+      "name": "orders-pipe",
+      "arn": "arn:aws:pipes:us-east-1:123456789012:pipe/orders-pipe",
+      "source": "arn:aws:sqs:us-east-1:123456789012:orders",
+      "target": "arn:aws:lambda:us-east-1:123456789012:function:orders",
+      "filterCriteria": {
+        "filters": [
+          {
+            "pattern": "{\"body\":{\"type\":[\"order.created\"]}}"
+          }
+        ]
+      }
+    },
+    "apiDestinations": [
+      {
+        "name": "orders-destination",
+        "arn": "arn:aws:events:us-east-1:123456789012:api-destination/orders-destination",
+        "invocationEndpoint": "https://api.example.com/orders",
+        "httpMethod": "POST",
+        "connectionArn": "arn:aws:events:us-east-1:123456789012:connection/orders",
+        "invocationRateLimitPerSecond": 25
+      }
+    ]
+  },
+  "bedrock": {
+    "agents": [
+      {
+        "agentId": "agent-1",
+        "agentName": "orders-agent",
+        "latestAgentVersion": "DRAFT"
+      }
+    ],
+    "actionGroups": [
+      {
+        "agentId": "agent-1",
+        "agentVersion": "DRAFT",
+        "actionGroupId": "ag-1",
+        "actionGroupName": "orders-api"
+      }
+    ],
+    "detail": {
+      "agentId": "agent-1",
+      "agentVersion": "DRAFT",
+      "actionGroupId": "ag-1",
+      "actionGroupName": "orders-api",
+      "apiSchema": {
+        "payload": "{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"Orders\",\"version\":\"1.0.0\"},\"paths\":{\"/orders\":{\"post\":{\"responses\":{\"200\":{\"description\":\"ok\"}}}}}}"
+      }
+    }
+  },
+  "appSyncEvents": {
+    "apis": [
+      {
+        "apiId": "evt-1",
+        "name": "orders-events",
+        "apiArn": "arn:aws:appsync:us-east-1:123456789012:apis/evt-1",
+        "dns": {
+          "realtime": "abc.appsync-realtime-api.us-east-1.amazonaws.com"
+        }
+      }
+    ],
+    "channelNamespaces": [
+      {
+        "apiId": "evt-1",
+        "name": "orders",
+        "channelNamespaceArn": "arn:aws:appsync:us-east-1:123456789012:apis/evt-1/channelNamespace/orders",
+        "publishAuthModes": [
+          {
+            "authType": "API_KEY"
+          }
+        ],
+        "subscribeAuthModes": [
+          {
+            "authType": "AWS_IAM"
+          }
+        ]
+      }
+    ]
+  },
+  "alb": {
+    "rules": [
+      {
+        "ruleArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener-rule/app/orders/abc/def/rule",
+        "priority": "10",
+        "loadBalancerDnsName": "orders-alb.example.com",
+        "conditions": [
+          {
+            "field": "host-header",
+            "values": [
+              "api.example.com"
+            ]
+          },
+          {
+            "field": "path-pattern",
+            "values": [
+              "/orders/*"
+            ]
+          },
+          {
+            "field": "http-request-method",
+            "values": [
+              "GET",
+              "POST"
+            ]
+          },
+          {
+            "field": "query-string",
+            "queryString": [
+              {
+                "key": "status",
+                "value": "open"
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "type": "forward",
+            "targetGroupArn": "arn:aws:elasticloadbalancing:targetgroup/orders"
+          }
+        ]
+      }
+    ]
+  },
+  "lambdaEventSource": {
+    "mappings": [
+      {
+        "uuid": "esm-1",
+        "eventSourceArn": "arn:aws:sqs:us-east-1:123456789012:orders",
+        "functionArn": "arn:aws:lambda:us-east-1:123456789012:function:orders",
+        "state": "Enabled",
+        "batchSize": 10,
+        "filterCriteria": {
+          "filters": [
+            {
+              "pattern": "{\"body\":{\"type\":[\"order.created\"]}}"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "verifiedPermissions": {
+    "stores": [
+      {
+        "policyStoreId": "store-1",
+        "arn": "arn:aws:verifiedpermissions:us-east-1:123456789012:policy-store/store-1",
+        "description": "orders auth"
+      }
+    ],
+    "schema": {
+      "policyStoreId": "store-1",
+      "schema": "{\"Orders\":{\"entityTypes\":{\"User\":{\"shape\":{\"type\":\"Record\",\"attributes\":{}}}}}}",
+      "namespaces": [
+        "Orders"
+      ]
+    }
+  },
+  "stepFunctions": {
+    "stateMachines": [
+      {
+        "name": "orders-workflow",
+        "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:orders-workflow",
+        "type": "STANDARD"
+      }
+    ],
+    "detail": {
+      "name": "orders-workflow",
+      "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:orders-workflow",
+      "type": "STANDARD",
+      "definition": "{\"StartAt\":\"Validate\",\"States\":{\"Validate\":{\"Type\":\"Pass\",\"End\":true}}}",
+      "revisionId": "rev-1"
+    }
+  }
+}

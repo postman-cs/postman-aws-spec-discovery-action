@@ -7,6 +7,7 @@ import type { DiscoveredService } from '../src/contracts.js';
 import { readActionInputs, resolveInputs, runDiscovery, runAction } from '../src/index.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import { parseCliArgs, toDotenv } from '../src/cli.js';
+import { detectCatalogApis } from '../src/lib/repo/catalog.js';
 import { findExistingRepoSpec, findExistingRepoSpecTyped } from '../src/lib/repo/specs.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
@@ -377,6 +378,121 @@ describe('runDiscovery', () => {
     expect(result.summary.skipped).toBeGreaterThan(0);
     expect(aws.exportRestApi).not.toHaveBeenCalled();
   });
+
+  it('predicts API Gateway native and derived paths in resolve-one dry-run without exporting', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'gateway-dry-run-'));
+    try {
+      const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+      const aws = createAwsClientStub({
+        getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-api' }),
+        getRestTags: vi.fn().mockResolvedValue({}),
+        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders-api',
+          expectedGatewayIds: ['rest-1'],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        aws,
+        createCoreStub().core,
+        writeSpecFile
+      );
+
+      expect(result.sourceType).toBe('gateway-export');
+      expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
+      expect(aws.exportRestApi).not.toHaveBeenCalled();
+      expect(writeSpecFile).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('routes Backstage remote specs through the shared writer and writes nothing in dry-run', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-remote-dry-run-'));
+    const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        'openapi: 3.0.3\ninfo:\n  title: Orders\n  version: "1.0.0"\npaths: {}\n',
+        { status: 200, headers: { 'content-type': 'application/yaml' } }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  type: openapi',
+          '  definition:',
+          '    $text: https://example.com/openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: undefined,
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        writeSpecFile
+      );
+
+      expect(result.sourceType).toBe('repo-spec');
+      expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.com/openapi.yaml',
+        expect.objectContaining({ redirect: 'follow' })
+      );
+      expect(writeSpecFile).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('SNS runtime integration', () => {
@@ -504,6 +620,49 @@ describe('SNS runtime integration', () => {
       expect(result.sourceType).toBe('sns-contract');
       expect(result.providerType).toBe('sns');
       expect(result.specFormat).toBe('asyncapi-yaml');
+    });
+  });
+
+  it('predicts SNS native and derived paths in resolve-one dry-run without writing files', async () => {
+    await withSnsSignals(async (tempDir) => {
+      const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+      const snsProvider = createSnsProviderStub({
+        listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
+        resolveContract: vi.fn().mockResolvedValue(createResolvedSnsContract('asyncapi-yaml', 'repo-asyncapi'))
+      });
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: 'orders',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        writeSpecFile,
+        { snsProvider }
+      );
+
+      expect(result.sourceType).toBe('sns-contract');
+      expect(result.specPath).toBe('discovered-specs/orders-topic/asyncapi.yaml');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-topic/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      expect(result.evidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
+      expect(writeSpecFile).not.toHaveBeenCalled();
     });
   });
 
@@ -915,15 +1074,30 @@ describe('SNS runtime integration', () => {
     });
   });
 
-  it('registers sns in buildProviderRegistry after ssm', () => {
+  it('registers all AWS providers in buildProviderRegistry with sns after ssm', () => {
     const inputs = resolveInputs({
       INPUT_AWS_REGION: 'us-east-1'
     });
     const registry = buildProviderRegistry(inputs, createAwsClientStub());
     const providerTypes = registry.all().map((provider) => provider.type);
 
-    expect(registry.get('sns')).toBeDefined();
-    expect(providerTypes).toContain('sns');
+    expect(providerTypes).toEqual([
+      'api-gateway',
+      'appsync',
+      'appsync-events',
+      'eventbridge-schemas',
+      'eventbridge',
+      'cloudformation',
+      'glue',
+      'bedrock-action-group',
+      'alb-listener-rule',
+      'ssm',
+      'sns',
+      'lambda-url',
+      'lambda-event-source',
+      'verified-permissions',
+      'step-functions'
+    ]);
     expect(providerTypes.indexOf('ssm')).toBeLessThan(providerTypes.indexOf('sns'));
   });
 
@@ -1407,10 +1581,17 @@ describe('provider-agnostic resolve-one', () => {
   it.each([
     ['appsync', 'appsync-schema', 'graphql-sdl'],
     ['eventbridge-schemas', 'eventbridge-schema', 'json-schema'],
+    ['eventbridge', 'eventbridge-surface', 'openapi-json'],
+    ['appsync-events', 'appsync-event-api', 'openapi-json'],
     ['cloudformation', 'cfn-embedded', 'openapi-json'],
     ['glue', 'glue-schema', 'json-schema'],
+    ['bedrock-action-group', 'bedrock-action-group', 'openapi-json'],
+    ['alb-listener-rule', 'alb-listener-rule', 'openapi-json'],
     ['ssm', 'ssm-registry', 'openapi-json'],
-    ['lambda-url', 'lambda-url-export', 'openapi-yaml']
+    ['lambda-url', 'lambda-url-export', 'openapi-yaml'],
+    ['lambda-event-source', 'lambda-event-source', 'openapi-json'],
+    ['verified-permissions', 'verified-permissions-schema', 'openapi-json'],
+    ['step-functions', 'step-functions-asl', 'openapi-json']
   ] as const)('selects %s candidates in resolve-one', async (providerType, sourceType, format) => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'provider-resolution-'));
     try {
@@ -2052,6 +2233,110 @@ describe('hardening helpers', () => {
       expect(signals.evidence).toEqual(expect.arrayContaining([
         expect.stringContaining('.github/workflows/release.yml'),
         expect.stringContaining('serverless.ts')
+      ]));
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects nested Backstage catalog API references within bounded service directories', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-catalog-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'services', 'orders'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'services', 'orders', 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  type: openapi',
+          '  definition:',
+          '    $text: ./openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const apis = await detectCatalogApis(tempDir);
+
+      expect(apis?.[0]).toEqual({
+        name: 'orders-api',
+        type: 'openapi',
+        specPath: 'services/orders/openapi.yaml',
+        specUrl: undefined
+      });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('collects provider hints from deployment configs and CDK/Pulumi language variants', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-expanded-signal-test-'));
+    try {
+      await mkdir(path.join(tempDir, 'helm', 'orders', 'templates'), { recursive: true });
+      await mkdir(path.join(tempDir, 'k8s'), { recursive: true });
+      await mkdir(path.join(tempDir, 'ecs'), { recursive: true });
+      await mkdir(path.join(tempDir, 'src', 'main', 'resources'), { recursive: true });
+      await mkdir(path.join(tempDir, 'src', 'Orders'), { recursive: true });
+      await mkdir(path.join(tempDir, 'lib'), { recursive: true });
+      await writeFile(path.join(tempDir, 'cdk.json'), '{"app":"python app.py"}', 'utf8');
+      await writeFile(path.join(tempDir, 'Pulumi.yaml'), 'name: orders\nruntime: yaml\n', 'utf8');
+      await writeFile(
+        path.join(tempDir, 'helm', 'orders', 'templates', 'ingress.yaml'),
+        'kind: Ingress\nspec:\n  rules:\n    - host: api.orders.example.test\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'k8s', 'ingress.yaml'),
+        'apiVersion: networking.k8s.io/v1\nkind: Ingress\nspec:\n  rules:\n    - host: orders.internal.example.test\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'docker-compose.yml'),
+        'services:\n  api:\n    environment:\n      API_URL: https://abc123def4.execute-api.us-east-1.amazonaws.com/prod\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'ecs', 'task-definition.json'),
+        '{"containerDefinitions":[{"environment":[{"name":"PUBLIC_API_URL","value":"https://bcdef12345.execute-api.us-east-1.amazonaws.com/prod"}]}]}',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'src', 'main', 'resources', 'application.yml'),
+        'service:\n  callback-url: https://orders-lambda.lambda-url.us-east-1.on.aws/\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'src', 'Orders', 'appsettings.json'),
+        '{"ApiGateway":{"Url":"https://cdef123456.execute-api.us-east-1.amazonaws.com/prod"}}',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'lib', 'app.py'),
+        'from aws_cdk import aws_apigatewayv2 as apigatewayv2\napi = apigatewayv2.CfnApi(self, "Api", protocol_type="HTTP")\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'Pulumi.yaml'),
+        'name: orders\nruntime: yaml\nresources:\n  api:\n    type: aws:apigatewayv2/api:Api\n',
+        'utf8'
+      );
+
+      const signals = await collectRepoSignals(tempDir, 'postman/orders', undefined, []);
+
+      expect(signals.providerHints).toContain('api-gateway');
+      expect(signals.inferredGatewayIdHints).toEqual(expect.arrayContaining(['abc123def4', 'bcdef12345', 'cdef123456']));
+      expect(signals.customDomainHints).toEqual(expect.arrayContaining(['api.orders.example.test', 'orders.internal.example.test']));
+      expect(signals.lambdaUrlHints).toContain('orders-lambda.lambda-url.us-east-1.on.aws');
+      expect(signals.evidence).toEqual(expect.arrayContaining([
+        expect.stringContaining('helm/orders/templates/ingress.yaml'),
+        expect.stringContaining('docker-compose.yml'),
+        expect.stringContaining('ecs/task-definition.json'),
+        expect.stringContaining('application.yml'),
+        expect.stringContaining('appsettings.json'),
+        expect.stringContaining('lib/app.py'),
+        expect.stringContaining('Pulumi.yaml')
       ]));
     } finally {
       await rm(tempDir, { recursive: true, force: true });
