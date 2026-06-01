@@ -10,7 +10,7 @@ This runbook covers P3 discovery surfaces that derive partial OpenAPI evidence f
 - Verified Permissions schemas
 - Step Functions ASL definitions
 
-Current status: fixture-only / official-doc-backed, not live-validated.
+Current status: live-validated against dedicated resources in the `spec-discovery-validation` stack. Fixture validation remains as deterministic supplemental coverage for provider-specific metadata shapes.
 
 ## Reproduce
 
@@ -18,11 +18,29 @@ Run from the repository root:
 
 ```bash
 npm run build
+ALB_VPC_ID=$(aws ec2 describe-vpcs \
+  --region us-east-1 \
+  --filters Name=is-default,Values=true \
+  --query 'Vpcs[0].VpcId' \
+  --output text)
+ALB_SUBNET_IDS=$(aws ec2 describe-subnets \
+  --region us-east-1 \
+  --filters Name=vpc-id,Values="$ALB_VPC_ID" Name=default-for-az,Values=true \
+  --query 'Subnets[0:2].SubnetId' \
+  --output text | tr '\t' ',')
+aws cloudformation deploy \
+  --template-file validation/fixtures/aws/live-stack.yaml \
+  --stack-name spec-discovery-validation \
+  --region us-east-1 \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides AlbVpcId="$ALB_VPC_ID" AlbSubnetIds="$ALB_SUBNET_IDS"
+node validation/scripts/capture-live-manifest.mjs --stack-name spec-discovery-validation --region us-east-1
+node validation/scripts/validate-live-aws-surfaces.mjs
 node validation/scripts/check-validation-fixtures.mjs
 node validation/scripts/validate-p3-surfaces.mjs
 ```
 
-The script reads `validation/fixtures/aws/p3-surfaces.json`, runs each provider through the packaged `dist/index.cjs` exports, and refreshes the `P3 Surface Fixture Evidence` section in `validation/evidence/README.md`.
+The live stack creates dedicated resources for AppSync Events, EventBridge rules/pipes/API destinations, Bedrock Agent action groups, ALB listener rules, Lambda event source mappings, Verified Permissions schemas, and Step Functions ASL definitions. `capture-live-manifest.mjs` records sanitized stack outputs, `validate-live-aws-surfaces.mjs` proves live AWS derivation, and `validate-p3-surfaces.mjs` refreshes supplemental fixture coverage.
 
 ## Expected Artifacts
 
@@ -36,8 +54,6 @@ All P3 AWS-derived surfaces emit `index.json` as partial OpenAPI JSON:
 - Lambda event source mappings preserve filter criteria and batch/source settings.
 - Verified Permissions emits authorization schema metadata with empty `paths`.
 - Step Functions emits a partial execution-start operation with ASL metadata.
-
-Do not claim live AWS support for these surfaces until dedicated live resources are added to `validation/fixtures/aws/live-stack.yaml` and `validate-live-aws-surfaces.mjs`.
 
 ## Official Source Backing
 

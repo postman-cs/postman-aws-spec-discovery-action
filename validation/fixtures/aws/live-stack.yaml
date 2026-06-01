@@ -4,6 +4,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Live resources for AWS spec discovery validation
 
+Parameters:
+  AlbVpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Existing VPC used only for the internal ALB validation resource.
+  AlbSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least two existing subnet IDs in different Availability Zones for the internal ALB validation resource.
+
 Resources:
   TestRestApi:
     Type: AWS::ApiGateway::RestApi
@@ -236,6 +244,17 @@ Resources:
               - Effect: Allow
                 Action: sns:ConfirmSubscription
                 Resource: !Ref SpecDiscoverySubscriptionTopic
+        - PolicyName: consume-validation-sqs-events
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource: !GetAtt SpecDiscoveryLambdaEventSourceQueue.Arn
 
   TestLambdaFunction:
     Type: AWS::Lambda::Function
@@ -534,6 +553,377 @@ Resources:
       Type: String
       Value: openapi-yaml
 
+  TestEventApi:
+    Type: AWS::AppSync::Api
+    Properties:
+      Name: spec-discovery-validation-events
+      EventConfig:
+        AuthProviders:
+          - AuthType: AWS_IAM
+        ConnectionAuthModes:
+          - AuthType: AWS_IAM
+        DefaultPublishAuthModes:
+          - AuthType: AWS_IAM
+        DefaultSubscribeAuthModes:
+          - AuthType: AWS_IAM
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-validation-events
+
+  TestEventChannelNamespace:
+    Type: AWS::AppSync::ChannelNamespace
+    Properties:
+      ApiId: !GetAtt TestEventApi.ApiId
+      Name: orders
+      PublishAuthModes:
+        - AuthType: AWS_IAM
+      SubscribeAuthModes:
+        - AuthType: AWS_IAM
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-validation-events
+
+  TestEventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: spec-discovery-validation-orders-rule
+      Description: Live validation rule for AWS spec discovery metadata derivation.
+      EventPattern:
+        source:
+          - spec.discovery.validation
+        detail-type:
+          - Order Created
+        detail:
+          eventType:
+            - order.created
+      State: DISABLED
+      Targets:
+        - Arn: !GetAtt TestLambdaFunction.Arn
+          Id: LambdaValidationTarget
+
+  TestEventBridgeRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TestLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt TestEventBridgeRule.Arn
+
+  TestEventBridgeConnection:
+    Type: AWS::Events::Connection
+    Properties:
+      Name: spec-discovery-validation-orders-connection
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: x-api-key
+          ApiKeyValue: validation-key
+
+  TestEventBridgeApiDestination:
+    Type: AWS::Events::ApiDestination
+    Properties:
+      Name: spec-discovery-validation-orders-destination
+      ConnectionArn: !GetAtt TestEventBridgeConnection.Arn
+      InvocationEndpoint: https://example.com/orders
+      HttpMethod: POST
+      InvocationRateLimitPerSecond: 5
+
+  SpecDiscoveryPipeQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SpecDiscoveryValidationPipeQueue
+
+  SpecDiscoveryPipeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: pipe-source-and-target
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource: !GetAtt SpecDiscoveryPipeQueue.Arn
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt TestLambdaFunction.Arn
+
+  TestEventBridgePipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      Name: spec-discovery-validation-orders-pipe
+      RoleArn: !GetAtt SpecDiscoveryPipeRole.Arn
+      Source: !GetAtt SpecDiscoveryPipeQueue.Arn
+      SourceParameters:
+        FilterCriteria:
+          Filters:
+            - Pattern: '{"body":{"eventType":["order.created"]}}'
+        SqsQueueParameters:
+          BatchSize: 1
+      Target: !GetAtt TestLambdaFunction.Arn
+      DesiredState: STOPPED
+
+  SpecDiscoveryLambdaEventSourceQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SpecDiscoveryValidationLambdaEventSourceQueue
+
+  TestLambdaEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      FunctionName: !Ref TestLambdaFunction
+      EventSourceArn: !GetAtt SpecDiscoveryLambdaEventSourceQueue.Arn
+      BatchSize: 5
+      Enabled: false
+      FilterCriteria:
+        Filters:
+          - Pattern: '{"body":{"eventType":["order.created"]}}'
+
+  TestVerifiedPermissionsPolicyStore:
+    Type: AWS::VerifiedPermissions::PolicyStore
+    Properties:
+      Description: spec-discovery-validation-authz
+      ValidationSettings:
+        Mode: STRICT
+      Schema:
+        CedarJson: |
+          {
+            "SpecDiscovery": {
+              "entityTypes": {
+                "User": {
+                  "shape": {
+                    "type": "Record",
+                    "attributes": {
+                      "id": {
+                        "type": "String"
+                      }
+                    }
+                  }
+                },
+                "Order": {
+                  "shape": {
+                    "type": "Record",
+                    "attributes": {
+                      "orderId": {
+                        "type": "String"
+                      }
+                    }
+                  }
+                }
+              },
+              "actions": {
+                "ViewOrder": {
+                  "appliesTo": {
+                    "principalTypes": [
+                      "User"
+                    ],
+                    "resourceTypes": [
+                      "Order"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+
+  TestStepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+
+  TestStepFunctionsStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: spec-discovery-validation-orders-workflow
+      StateMachineType: STANDARD
+      RoleArn: !GetAtt TestStepFunctionsRole.Arn
+      DefinitionString: |
+        {
+          "Comment": "Live validation state machine for AWS spec discovery metadata derivation.",
+          "StartAt": "ValidateOrder",
+          "States": {
+            "ValidateOrder": {
+              "Type": "Pass",
+              "Result": {
+                "status": "validated"
+              },
+              "End": true
+            }
+          }
+        }
+
+  TestAlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for spec discovery validation ALB.
+      VpcId: !Ref AlbVpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/8
+
+  TestApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: spec-discovery-validation-alb
+      Type: application
+      Scheme: internal
+      SecurityGroups:
+        - !Ref TestAlbSecurityGroup
+      Subnets: !Ref AlbSubnetIds
+
+  TestAlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref TestApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '404'
+            ContentType: application/json
+            MessageBody: '{"status":"not-found"}'
+
+  TestAlbListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref TestAlbListener
+      Priority: 10
+      Conditions:
+        - Field: host-header
+          HostHeaderConfig:
+            Values:
+              - orders.internal.example.com
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - /orders/*
+        - Field: http-request-method
+          HttpRequestMethodConfig:
+            Values:
+              - GET
+              - POST
+        - Field: query-string
+          QueryStringConfig:
+            Values:
+              - Key: status
+                Value: open
+      Actions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '200'
+            ContentType: application/json
+            MessageBody: '{"status":"ok"}'
+
+  TestBedrockAgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: invoke-foundation-models
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/*
+
+  TestBedrockAgent:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: spec_discovery_validation_agent
+      Description: Live validation agent for AWS spec discovery action group derivation.
+      AgentResourceRoleArn: !GetAtt TestBedrockAgentRole.Arn
+      FoundationModel: anthropic.claude-3-haiku-20240307-v1:0
+      Instruction: Validate order API metadata for the AWS spec discovery live validation stack without calling external systems.
+      AutoPrepare: false
+      ActionGroups:
+        - ActionGroupName: orders_api
+          Description: Inline OpenAPI action group for live validation.
+          ActionGroupState: ENABLED
+          ActionGroupExecutor:
+            CustomControl: RETURN_CONTROL
+          ApiSchema:
+            Payload: |
+              {
+                "openapi": "3.0.0",
+                "info": {
+                  "title": "Orders Action Group",
+                  "version": "1.0.0",
+                  "description": "Validation API for deriving Bedrock Agent action group OpenAPI metadata."
+                },
+                "paths": {
+                  "/orders": {
+                    "post": {
+                      "operationId": "createOrder",
+                      "summary": "Create an order",
+                      "description": "Create an order for the validation fixture and return the accepted order identifier.",
+                      "requestBody": {
+                        "required": true,
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "orderId": {
+                                  "type": "string",
+                                  "description": "Unique order identifier."
+                                }
+                              },
+                              "required": [
+                                "orderId"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "responses": {
+                        "200": {
+                          "description": "Order accepted",
+                          "content": {
+                            "application/json": {
+                              "schema": {
+                                "type": "object",
+                                "properties": {
+                                  "accepted": {
+                                    "type": "boolean",
+                                    "description": "Whether the order was accepted."
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
 Outputs:
   RestApiId:
     Value: !Ref TestRestApi
@@ -557,3 +947,29 @@ Outputs:
     Value: !Ref SpecDiscoveryUrlTopic
   SnsSubscriptionTopicArn:
     Value: !Ref SpecDiscoverySubscriptionTopic
+  AppSyncEventApiId:
+    Value: !GetAtt TestEventApi.ApiId
+  AppSyncEventApiName:
+    Value: spec-discovery-validation-events
+  AppSyncEventChannelNamespaceName:
+    Value: orders
+  EventBridgeRuleName:
+    Value: !Ref TestEventBridgeRule
+  EventBridgePipeName:
+    Value: !Ref TestEventBridgePipe
+  EventBridgeApiDestinationName:
+    Value: !Ref TestEventBridgeApiDestination
+  LambdaEventSourceMappingId:
+    Value: !Ref TestLambdaEventSourceMapping
+  VerifiedPermissionsPolicyStoreId:
+    Value: !Ref TestVerifiedPermissionsPolicyStore
+  StepFunctionsStateMachineArn:
+    Value: !Ref TestStepFunctionsStateMachine
+  StepFunctionsStateMachineName:
+    Value: spec-discovery-validation-orders-workflow
+  AlbListenerRuleArn:
+    Value: !Ref TestAlbListenerRule
+  BedrockAgentId:
+    Value: !GetAtt TestBedrockAgent.AgentId
+  BedrockActionGroupName:
+    Value: orders_api

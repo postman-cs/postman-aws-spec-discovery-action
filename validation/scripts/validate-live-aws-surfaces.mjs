@@ -7,6 +7,17 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { TextDecoder } from 'node:util';
 import {
+  AppSyncClient,
+  GetApiCommand as GetAppSyncApiCommand,
+  GetChannelNamespaceCommand
+} from '@aws-sdk/client-appsync';
+import {
+  BedrockAgentClient,
+  GetAgentActionGroupCommand,
+  GetAgentCommand,
+  ListAgentActionGroupsCommand
+} from '@aws-sdk/client-bedrock-agent';
+import {
   APIGatewayClient,
   GetExportCommand,
   GetModelsCommand,
@@ -21,6 +32,21 @@ import {
   ListStackResourcesCommand
 } from '@aws-sdk/client-cloudformation';
 import {
+  DescribeLoadBalancersCommand,
+  DescribeRulesCommand,
+  ElasticLoadBalancingV2Client
+} from '@aws-sdk/client-elastic-load-balancing-v2';
+import {
+  DescribeApiDestinationCommand,
+  DescribeRuleCommand,
+  EventBridgeClient,
+  ListTargetsByRuleCommand
+} from '@aws-sdk/client-eventbridge';
+import {
+  DescribePipeCommand,
+  PipesClient
+} from '@aws-sdk/client-pipes';
+import {
   ApiGatewayV2Client,
   ExportApiCommand,
   GetApiCommand,
@@ -34,11 +60,21 @@ import {
 } from '@aws-sdk/client-apigatewayv2';
 import {
   LambdaClient,
+  GetEventSourceMappingCommand,
   GetFunctionCommand,
   GetFunctionUrlConfigCommand,
   ListTagsCommand
 } from '@aws-sdk/client-lambda';
+import {
+  DescribeStateMachineCommand,
+  SFNClient
+} from '@aws-sdk/client-sfn';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import {
+  GetPolicyStoreCommand,
+  GetSchemaCommand,
+  VerifiedPermissionsClient
+} from '@aws-sdk/client-verifiedpermissions';
 import { updateEvidenceReadmeSection } from './lib/evidence-readme.mjs';
 
 const repoRoot = process.cwd();
@@ -67,8 +103,15 @@ const {
   execute,
   resolveInputs,
   defaultWriteSpecFile,
+  AlbListenerRulesProvider,
+  AppSyncEventsProvider,
+  BedrockActionGroupProvider,
   LambdaUrlProvider,
+  EventBridgeSurfaceProvider,
   CloudFormationProvider,
+  LambdaEventSourceProvider,
+  StepFunctionsProvider,
+  VerifiedPermissionsProvider,
   deriveOpenApiDocument,
   synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi
@@ -473,6 +516,385 @@ class TargetedCloudFormationClient {
   }
 }
 
+class TargetedAppSyncEventsClient {
+  constructor(targetRegion, apiId, namespaceName) {
+    this.apiId = apiId;
+    this.namespaceName = namespaceName;
+    this.client = new AppSyncClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listEventApis() {
+    if (!this.apiId) return [];
+    const response = await sendWithBackoff(this.client, new GetAppSyncApiCommand({ apiId: this.apiId }));
+    const api = response.api;
+    if (!api?.apiId) return [];
+    return [{
+      apiId: api.apiId,
+      name: api.name ?? this.apiId,
+      apiArn: api.apiArn,
+      dns: api.dns,
+      tags: api.tags
+    }];
+  }
+
+  async listChannelNamespaces(apiId) {
+    if (!this.namespaceName) return [];
+    const response = await sendWithBackoff(
+      this.client,
+      new GetChannelNamespaceCommand({ apiId, name: this.namespaceName })
+    );
+    const namespace = response.channelNamespace;
+    if (!namespace?.name) return [];
+    return [{
+      apiId: namespace.apiId ?? apiId,
+      name: namespace.name,
+      channelNamespaceArn: namespace.channelNamespaceArn,
+      publishAuthModes: namespace.publishAuthModes,
+      subscribeAuthModes: namespace.subscribeAuthModes,
+      codeHandlers: namespace.codeHandlers,
+      tags: namespace.tags
+    }];
+  }
+}
+
+class TargetedEventBridgeSurfaceClient {
+  constructor(targetRegion, { ruleName, pipeName, apiDestinationName } = {}) {
+    this.ruleName = ruleName;
+    this.pipeName = pipeName;
+    this.apiDestinationName = apiDestinationName;
+    this.events = new EventBridgeClient({ region: targetRegion, maxAttempts: 2 });
+    this.pipes = new PipesClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listRules() {
+    if (!this.ruleName) return [];
+    const rule = await sendWithBackoff(this.events, new DescribeRuleCommand({ Name: this.ruleName }));
+    return [{
+      name: rule.Name ?? this.ruleName,
+      arn: rule.Arn ?? this.ruleName,
+      eventBusName: rule.EventBusName,
+      eventPattern: rule.EventPattern,
+      scheduleExpression: rule.ScheduleExpression,
+      state: rule.State,
+      description: rule.Description
+    }];
+  }
+
+  async listTargetsByRule(ruleName, eventBusName) {
+    if (!this.ruleName || ruleName !== this.ruleName) return [];
+    const targets = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(
+        this.events,
+        new ListTargetsByRuleCommand({
+          Rule: ruleName,
+          EventBusName: eventBusName,
+          NextToken: nextToken,
+          Limit: 100
+        })
+      );
+      targets.push(...(response.Targets ?? []).filter((target) => target.Id && target.Arn).map((target) => ({
+        id: target.Id,
+        arn: target.Arn,
+        input: target.Input,
+        inputPath: target.InputPath,
+        inputTransformerJson: target.InputTransformer ? JSON.stringify(target.InputTransformer) : undefined,
+        httpParameters: target.HttpParameters ? {
+          headerParameters: target.HttpParameters.HeaderParameters,
+          pathParameterValues: target.HttpParameters.PathParameterValues,
+          queryStringParameters: target.HttpParameters.QueryStringParameters
+        } : undefined
+      })));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return targets;
+  }
+
+  async listPipes() {
+    if (!this.pipeName) return [];
+    return [await this.describePipe(this.pipeName)];
+  }
+
+  async describePipe(name) {
+    const pipe = await sendWithBackoff(this.pipes, new DescribePipeCommand({ Name: name }));
+    return {
+      name: pipe.Name ?? name,
+      arn: pipe.Arn ?? name,
+      source: pipe.Source,
+      target: pipe.Target,
+      enrichment: pipe.Enrichment,
+      desiredState: pipe.DesiredState,
+      currentState: pipe.CurrentState,
+      filterCriteria: pipe.SourceParameters?.FilterCriteria
+        ? {
+            filters: pipe.SourceParameters.FilterCriteria.Filters?.map((filter) => ({ pattern: filter.Pattern }))
+          }
+        : undefined,
+      sourceParametersJson: pipe.SourceParameters ? JSON.stringify(pipe.SourceParameters) : undefined,
+      targetParametersJson: pipe.TargetParameters ? JSON.stringify(pipe.TargetParameters) : undefined,
+      enrichmentParametersJson: pipe.EnrichmentParameters ? JSON.stringify(pipe.EnrichmentParameters) : undefined,
+      roleArn: pipe.RoleArn,
+      tags: pipe.Tags
+    };
+  }
+
+  async listApiDestinations() {
+    if (!this.apiDestinationName) return [];
+    const destination = await sendWithBackoff(
+      this.events,
+      new DescribeApiDestinationCommand({ Name: this.apiDestinationName })
+    );
+    if (!destination.Name || !destination.InvocationEndpoint || !destination.HttpMethod) return [];
+    return [{
+      name: destination.Name,
+      arn: destination.ApiDestinationArn ?? destination.Name,
+      invocationEndpoint: destination.InvocationEndpoint,
+      httpMethod: destination.HttpMethod,
+      connectionArn: destination.ConnectionArn,
+      invocationRateLimitPerSecond: destination.InvocationRateLimitPerSecond,
+      state: destination.ApiDestinationState
+    }];
+  }
+}
+
+class TargetedBedrockActionGroupsClient {
+  constructor(targetRegion, agentId, actionGroupName) {
+    this.agentId = agentId;
+    this.actionGroupName = actionGroupName;
+    this.client = new BedrockAgentClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listAgents() {
+    if (!this.agentId) return [];
+    const response = await sendWithBackoff(this.client, new GetAgentCommand({ agentId: this.agentId }));
+    const agent = response.agent;
+    if (!agent?.agentId) return [];
+    return [{
+      agentId: agent.agentId,
+      agentName: agent.agentName ?? this.agentId,
+      latestAgentVersion: agent.agentVersion ?? 'DRAFT'
+    }];
+  }
+
+  async listActionGroups(agentId, agentVersion) {
+    if (!this.actionGroupName) return [];
+    const groups = [];
+    let nextToken;
+    do {
+      const response = await sendWithBackoff(
+        this.client,
+        new ListAgentActionGroupsCommand({
+          agentId,
+          agentVersion,
+          nextToken,
+          maxResults: 100
+        })
+      );
+      groups.push(...(response.actionGroupSummaries ?? [])
+        .filter((group) => group.actionGroupId && group.actionGroupName === this.actionGroupName)
+        .map((group) => ({
+          agentId,
+          agentVersion,
+          actionGroupId: group.actionGroupId,
+          actionGroupName: group.actionGroupName,
+          description: group.description,
+          actionGroupState: group.actionGroupState
+        })));
+      nextToken = response.nextToken;
+    } while (nextToken);
+    return groups;
+  }
+
+  async getActionGroup(agentId, agentVersion, actionGroupId) {
+    const response = await sendWithBackoff(
+      this.client,
+      new GetAgentActionGroupCommand({ agentId, agentVersion, actionGroupId })
+    );
+    const group = response.agentActionGroup;
+    return {
+      agentId: group?.agentId ?? agentId,
+      agentVersion: group?.agentVersion ?? agentVersion,
+      actionGroupId: group?.actionGroupId ?? actionGroupId,
+      actionGroupName: group?.actionGroupName ?? actionGroupId,
+      description: group?.description,
+      actionGroupState: group?.actionGroupState,
+      apiSchema: group?.apiSchema ? {
+        payload: group.apiSchema.payload,
+        s3: group.apiSchema.s3 ? {
+          s3BucketName: group.apiSchema.s3.s3BucketName,
+          s3ObjectKey: group.apiSchema.s3.s3ObjectKey
+        } : undefined
+      } : undefined,
+      executorLambdaArn: group?.actionGroupExecutor?.lambda
+    };
+  }
+}
+
+class TargetedAlbListenerRulesClient {
+  constructor(targetRegion, ruleArn) {
+    this.ruleArn = ruleArn;
+    this.client = new ElasticLoadBalancingV2Client({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listRules() {
+    if (!this.ruleArn) return [];
+    const response = await sendWithBackoff(this.client, new DescribeRulesCommand({ RuleArns: [this.ruleArn] }));
+    const rule = response.Rules?.[0];
+    if (!rule?.RuleArn) return [];
+    const listenerArn = listenerArnFromRuleArn(rule.RuleArn);
+    const loadBalancerArn = listenerArn ? loadBalancerArnFromListenerArn(listenerArn) : undefined;
+    const loadBalancer = loadBalancerArn
+      ? (await sendWithBackoff(
+          this.client,
+          new DescribeLoadBalancersCommand({ LoadBalancerArns: [loadBalancerArn] })
+        ).catch(() => ({ LoadBalancers: [] }))).LoadBalancers?.[0]
+      : undefined;
+    return [{
+      ruleArn: rule.RuleArn,
+      priority: rule.Priority,
+      listenerArn,
+      loadBalancerArn,
+      loadBalancerDnsName: loadBalancer?.DNSName,
+      conditions: (rule.Conditions ?? []).map(mapAlbCondition),
+      actions: (rule.Actions ?? []).map(mapAlbAction)
+    }];
+  }
+}
+
+class TargetedLambdaEventSourceClient {
+  constructor(targetRegion, mappingId) {
+    this.mappingId = mappingId;
+    this.client = new LambdaClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listEventSourceMappings() {
+    if (!this.mappingId) return [];
+    return [await this.getEventSourceMapping(this.mappingId)];
+  }
+
+  async getEventSourceMapping(uuid) {
+    const mapping = await sendWithBackoff(this.client, new GetEventSourceMappingCommand({ UUID: uuid }));
+    return mapLambdaEventSourceMapping(mapping, uuid);
+  }
+}
+
+class TargetedVerifiedPermissionsClient {
+  constructor(targetRegion, policyStoreId) {
+    this.policyStoreId = policyStoreId;
+    this.client = new VerifiedPermissionsClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listPolicyStores() {
+    if (!this.policyStoreId) return [];
+    const store = await sendWithBackoff(this.client, new GetPolicyStoreCommand({ policyStoreId: this.policyStoreId }));
+    return [{
+      policyStoreId: store.policyStoreId ?? this.policyStoreId,
+      arn: store.arn ?? '',
+      description: store.description
+    }];
+  }
+
+  async getSchema(policyStoreId) {
+    const response = await sendWithBackoff(this.client, new GetSchemaCommand({ policyStoreId }));
+    return {
+      policyStoreId: response.policyStoreId ?? policyStoreId,
+      schema: response.schema,
+      namespaces: response.namespaces
+    };
+  }
+}
+
+class TargetedStepFunctionsClient {
+  constructor(targetRegion, stateMachineArn) {
+    this.stateMachineArn = stateMachineArn;
+    this.client = new SFNClient({ region: targetRegion, maxAttempts: 2 });
+  }
+
+  async probe() { return true; }
+
+  async listStateMachines() {
+    if (!this.stateMachineArn) return [];
+    const detail = await this.describeStateMachine(this.stateMachineArn);
+    return [{
+      name: detail.name,
+      arn: detail.arn,
+      type: detail.type
+    }];
+  }
+
+  async describeStateMachine(arn) {
+    const response = await sendWithBackoff(this.client, new DescribeStateMachineCommand({ stateMachineArn: arn }));
+    return {
+      name: response.name ?? arn.split(':').pop() ?? arn,
+      arn: response.stateMachineArn ?? arn,
+      type: response.type,
+      definition: response.definition ?? '{}',
+      status: response.status,
+      revisionId: response.revisionId
+    };
+  }
+}
+
+function listenerArnFromRuleArn(ruleArn) {
+  const marker = ':listener-rule/';
+  if (!ruleArn.includes(marker)) return undefined;
+  return ruleArn.replace(marker, ':listener/').replace(/\/[^/]+$/, '');
+}
+
+function loadBalancerArnFromListenerArn(listenerArn) {
+  const marker = ':listener/';
+  if (!listenerArn.includes(marker)) return undefined;
+  return listenerArn.replace(marker, ':loadbalancer/').replace(/\/[^/]+$/, '');
+}
+
+function mapAlbCondition(condition) {
+  return {
+    field: condition.Field,
+    values: condition.Values ?? condition.HostHeaderConfig?.Values ?? condition.PathPatternConfig?.Values ??
+      condition.HttpRequestMethodConfig?.Values ?? condition.SourceIpConfig?.Values,
+    httpHeaderName: condition.HttpHeaderConfig?.HttpHeaderName,
+    queryString: condition.QueryStringConfig?.Values?.map((item) => ({ key: item.Key, value: item.Value }))
+  };
+}
+
+function mapAlbAction(action) {
+  return {
+    type: action.Type,
+    targetGroupArn: action.TargetGroupArn,
+    redirectJson: action.RedirectConfig ? JSON.stringify(action.RedirectConfig) : undefined,
+    fixedResponseJson: action.FixedResponseConfig ? JSON.stringify(action.FixedResponseConfig) : undefined
+  };
+}
+
+function mapLambdaEventSourceMapping(mapping, fallbackUuid) {
+  return {
+    uuid: mapping.UUID ?? fallbackUuid,
+    eventSourceArn: mapping.EventSourceArn,
+    functionArn: mapping.FunctionArn,
+    state: mapping.State,
+    batchSize: mapping.BatchSize,
+    maximumBatchingWindowInSeconds: mapping.MaximumBatchingWindowInSeconds,
+    filterCriteria: mapping.FilterCriteria ? {
+      filters: mapping.FilterCriteria.Filters?.map((filter) => ({ pattern: filter.Pattern }))
+    } : undefined,
+    topics: mapping.Topics,
+    queues: mapping.Queues
+  };
+}
+
 async function readBody(body) {
   if (typeof body === 'string') return body;
   if (body instanceof Uint8Array) return new TextDecoder().decode(body);
@@ -669,7 +1091,7 @@ async function runRuntimeProviderCase(testCase) {
       INPUT_EXPECTED_SERVICE_NAME: testCase.expectedServiceName,
       INPUT_PREFLIGHT_CHECKS: 'false',
       INPUT_REQUEST_TIMEOUT_MS: '10000',
-      INPUT_MAX_ATTEMPTS: '1',
+      INPUT_MAX_ATTEMPTS: '2',
       INPUT_MAX_CANDIDATES: '5'
     });
     const result = await execute(inputs, {
@@ -761,10 +1183,69 @@ const providerCases = [
     oasDerivation: true
   },
   {
+    name: 'appsync-events',
+    expectedServiceName: outputs.AppSyncEventApiName,
+    providers: [new AppSyncEventsProvider(
+      new TargetedAppSyncEventsClient(region, outputs.AppSyncEventApiId, outputs.AppSyncEventChannelNamespaceName)
+    )],
+    expect: { status: 'resolved', sourceType: 'appsync-event-api', providerType: 'appsync-events', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-appsync-events"',
+      '"x-aws-appsync-channel-namespace"',
+      '"orders.publish"',
+      '"orders.subscribe"',
+      '"operationId": "publishOrdersAppSyncEvent"'
+    ],
+    oasDerivation: true
+  },
+  {
     name: 'eventbridge-schemas',
     expectedServiceName: 'spec-discovery-validation.OrderCreated',
     providerTypes: ['eventbridge-schemas'],
     expect: { status: 'resolved', sourceType: 'eventbridge-schema', providerType: 'eventbridge-schemas', specFormat: 'openapi-json' },
+    oasDerivation: true
+  },
+  {
+    name: 'eventbridge-rule',
+    expectedServiceName: outputs.EventBridgeRuleName,
+    providers: [new EventBridgeSurfaceProvider(
+      new TargetedEventBridgeSurfaceClient(region, { ruleName: outputs.EventBridgeRuleName })
+    )],
+    expect: { status: 'resolved', sourceType: 'eventbridge-surface', providerType: 'eventbridge', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-eventbridge-rule"',
+      '"x-aws-eventbridge-event-pattern"',
+      '"x-aws-eventbridge-targets"',
+      '"order.created"'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'eventbridge-pipe',
+    expectedServiceName: outputs.EventBridgePipeName,
+    providers: [new EventBridgeSurfaceProvider(
+      new TargetedEventBridgeSurfaceClient(region, { pipeName: outputs.EventBridgePipeName })
+    )],
+    expect: { status: 'resolved', sourceType: 'eventbridge-surface', providerType: 'eventbridge', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-eventbridge-pipe"',
+      '"x-aws-eventbridge-filter-criteria"',
+      'order.created'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'eventbridge-api-destination',
+    expectedServiceName: outputs.EventBridgeApiDestinationName,
+    providers: [new EventBridgeSurfaceProvider(
+      new TargetedEventBridgeSurfaceClient(region, { apiDestinationName: outputs.EventBridgeApiDestinationName })
+    )],
+    expect: { status: 'resolved', sourceType: 'eventbridge-surface', providerType: 'eventbridge', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-eventbridge-api-destination"',
+      '"/orders"',
+      '"invocationRateLimitPerSecond": 5'
+    ],
     oasDerivation: true
   },
   {
@@ -815,6 +1296,83 @@ const providerCases = [
       'postLambdaUrl',
       'x-aws-lambda-function-url-auth-type: "AWS_IAM"',
       'awsSigV4'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'lambda-event-source',
+    expectedServiceName: outputs.LambdaEventSourceMappingId ? `lambda-event-source-${outputs.LambdaEventSourceMappingId}` : undefined,
+    providers: [new LambdaEventSourceProvider(
+      new TargetedLambdaEventSourceClient(region, outputs.LambdaEventSourceMappingId)
+    )],
+    expect: { status: 'resolved', sourceType: 'lambda-event-source', providerType: 'lambda-event-source', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-lambda-event-source-mapping"',
+      '"x-aws-lambda-filter-criteria"',
+      'order.created',
+      '"batchSize": 5'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'verified-permissions',
+    expectedServiceName: 'spec-discovery-validation-authz',
+    providers: [new VerifiedPermissionsProvider(
+      new TargetedVerifiedPermissionsClient(region, outputs.VerifiedPermissionsPolicyStoreId)
+    )],
+    expect: { status: 'resolved', sourceType: 'verified-permissions-schema', providerType: 'verified-permissions', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"paths": {}',
+      '"x-aws-verified-permissions"',
+      '"cedarSchema"',
+      '"SpecDiscovery"',
+      '"ViewOrder"'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'step-functions',
+    expectedServiceName: outputs.StepFunctionsStateMachineName,
+    providers: [new StepFunctionsProvider(
+      new TargetedStepFunctionsClient(region, outputs.StepFunctionsStateMachineArn)
+    )],
+    expect: { status: 'resolved', sourceType: 'step-functions-asl', providerType: 'step-functions', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-stepfunctions"',
+      '"/step-functions/spec-discovery-validation-orders-workflow/executions"',
+      '"ValidateOrder"',
+      '"status": "validated"'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'alb-listener-rule',
+    expectedServiceName: outputs.AlbListenerRuleArn ? 'alb-rule-10' : undefined,
+    providers: [new AlbListenerRulesProvider(
+      new TargetedAlbListenerRulesClient(region, outputs.AlbListenerRuleArn)
+    )],
+    expect: { status: 'resolved', sourceType: 'alb-listener-rule', providerType: 'alb-listener-rule', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-alb-listener-rule"',
+      '"/orders/{proxy}"',
+      '"orders.internal.example.com"',
+      '"status"',
+      '"open"'
+    ],
+    oasDerivation: true
+  },
+  {
+    name: 'bedrock-action-group',
+    expectedServiceName: outputs.BedrockActionGroupName,
+    providers: [new BedrockActionGroupProvider(
+      new TargetedBedrockActionGroupsClient(region, outputs.BedrockAgentId, outputs.BedrockActionGroupName)
+    )],
+    expect: { status: 'resolved', sourceType: 'bedrock-action-group', providerType: 'bedrock-action-group', specFormat: 'openapi-json' },
+    specMarkers: [
+      '"x-aws-bedrock-agent-action-group"',
+      '"actionGroupName": "orders_api"',
+      '"/orders"',
+      '"operationId": "createOrder"'
     ],
     oasDerivation: true
   },

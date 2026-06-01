@@ -27,19 +27,19 @@ The validation package is intended to answer three questions:
 | API Gateway HTTP | AWS OpenAPI export | Full OpenAPI 3.0 YAML | `runbooks/api-gateway.md` | `evidence/README.md` |
 | API Gateway WebSocket | Route metadata, request models, integrations, authorizers when present, and route responses | Partial OpenAPI 3.0 YAML with component schemas and API Gateway extensions | `runbooks/api-gateway.md` | `evidence/README.md` |
 | AppSync | GraphQL SDL | Partial OpenAPI 3.1 | `runbooks/appsync.md` | `evidence/README.md` |
-| AppSync Events | Event API channel namespaces | Partial OpenAPI 3.1 webhooks; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| AppSync Events | Event API channel namespaces | Partial OpenAPI 3.1 webhooks; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
 | EventBridge Schemas | OpenApi3 or JSON Schema content | Full for OpenApi3; partial for JSON Schema | `runbooks/eventbridge-schemas.md` | `evidence/README.md` |
-| EventBridge rules, pipes, and API destinations | Event patterns, filter criteria, targets, and HTTP destinations | Partial OpenAPI 3.1 webhooks or HTTP operations; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| EventBridge rules, pipes, and API destinations | Event patterns, filter criteria, targets, and HTTP destinations | Partial OpenAPI 3.1 webhooks or HTTP operations; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
 | CloudFormation embedded specs | Embedded or referenced OpenAPI body | Full OpenAPI | `runbooks/cloudformation.md` | `evidence/README.md` |
 | Glue Schema Registry | Avro, JSON Schema, or protobuf | Partial OpenAPI 3.1 | `runbooks/glue.md` | `evidence/README.md` |
-| Bedrock Agent action groups | Inline or S3 OpenAPI schemas | OpenAPI JSON with Bedrock metadata; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
-| ALB listener rules | Host, path, method, header, query, and action conditions | Partial OpenAPI 3.1 HTTP paths; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| Bedrock Agent action groups | Inline or S3 OpenAPI schemas | OpenAPI JSON with Bedrock metadata; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| ALB listener rules | Host, path, method, header, query, and action conditions | Partial OpenAPI 3.1 HTTP paths; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
 | SSM registry | Inline content, URL content, or pointer artifact | Full for OpenAPI; partial for supported native content and pointer artifacts | `runbooks/ssm.md` | `evidence/README.md` |
 | SNS contracts | AsyncAPI / JSON Schema plus sidecars | Partial OpenAPI 3.1 and webhook OpenAPI 3.1 sidecar with SNS delivery/filter/delivery-policy/redrive extensions | `runbooks/sns.md` | `evidence/README.md` |
 | Lambda Function URL | Synthesized URL contract | Partial OpenAPI 3.0 YAML catch-all surface | `runbooks/lambda-url.md` | `evidence/README.md` |
-| Lambda event source mappings | Event source mapping filters and batch/source metadata | Partial OpenAPI 3.1 webhooks; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
-| Verified Permissions schemas | Cedar authorization schema metadata | OpenAPI 3.1 metadata document with no inferred endpoints; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
-| Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata; fixture-only / official-doc-backed, not live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| Lambda event source mappings | Event source mapping filters and batch/source metadata | Partial OpenAPI 3.1 webhooks; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| Verified Permissions schemas | Cedar authorization schema metadata | OpenAPI 3.1 metadata document with no inferred endpoints; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
+| Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata; live-validated | `runbooks/aws-derived-surfaces.md` | `evidence/README.md` |
 | IaC/repo signals | Provider, URL, and domain hints from IaC, workflows, Serverless, deployment configs, docs, and contract/schema files | Partial OpenAPI from discovered AsyncAPI/GraphQL artifacts | `runbooks/iac-repo-signals.md` | `evidence/README.md` |
 
 ## Live AWS Resources
@@ -51,6 +51,8 @@ validation/evidence/live-resource-manifest.local.json
 ```
 
 That file is gitignored. Commit only the sanitized evidence summary in `evidence/README.md`.
+
+The stack includes dedicated live resources for API Gateway, AppSync, AppSync Events, EventBridge Schemas, EventBridge rules/pipes/API destinations, CloudFormation, Glue, SSM, SNS, Lambda Function URLs, Lambda event source mappings, Verified Permissions, Step Functions, ALB listener rules, and Bedrock Agent action groups.
 
 ## Reproduce The Full Validation Set
 
@@ -69,11 +71,23 @@ node validation/scripts/validate-live-aws-surfaces.mjs
 To create or refresh the live AWS stack:
 
 ```bash
+ALB_VPC_ID=$(aws ec2 describe-vpcs \
+  --region us-east-1 \
+  --filters Name=is-default,Values=true \
+  --query 'Vpcs[0].VpcId' \
+  --output text)
+ALB_SUBNET_IDS=$(aws ec2 describe-subnets \
+  --region us-east-1 \
+  --filters Name=vpc-id,Values="$ALB_VPC_ID" Name=default-for-az,Values=true \
+  --query 'Subnets[0:2].SubnetId' \
+  --output text | tr '\t' ',')
+
 aws cloudformation deploy \
   --template-file validation/fixtures/aws/live-stack.yaml \
   --stack-name spec-discovery-validation \
   --region us-east-1 \
-  --capabilities CAPABILITY_IAM
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides AlbVpcId="$ALB_VPC_ID" AlbSubnetIds="$ALB_SUBNET_IDS"
 ```
 
 ## Reading The Evidence
