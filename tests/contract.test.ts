@@ -14,6 +14,7 @@ import { resolveInputs } from '../src/index.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const contractsSource = readFileSync(resolve(repoRoot, 'src/contracts.ts'), 'utf8');
+const readmeSource = readFileSync(resolve(repoRoot, 'README.md'), 'utf8');
 const actionManifest = parse(
   readFileSync(resolve(repoRoot, 'action.yml'), 'utf8')
 ) as {
@@ -47,6 +48,13 @@ describe('action contract', () => {
     'spec-format':
       'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
   } as const;
+  const expectedDerivedOpenApiOutputs = [
+    'derived-openapi-path',
+    'derived-openapi-version',
+    'derived-openapi-completeness',
+    'derived-openapi-format',
+    'derived-openapi-evidence-json'
+  ];
 
   it('keeps action.yml aligned with declared contract', () => {
     expect(Object.keys(actionManifest.inputs)).toEqual(contractInputNames);
@@ -124,6 +132,14 @@ describe('action contract', () => {
     expect(actionOutputs['source-type'].description).toContain('lambda-url-export');
   });
 
+  it('declares additive derived OpenAPI outputs in the contract and action manifest', () => {
+    for (const outputName of expectedDerivedOpenApiOutputs) {
+      expect(actionContract.outputs[outputName]?.description.length).toBeGreaterThan(0);
+      expect((actionManifest.outputs as Record<string, { description: string }>)[outputName]?.description.length).toBeGreaterThan(0);
+      expect(readmeSource).toContain(`\`${outputName}\``);
+    }
+  });
+
   it('typechecks discovered service and resolution result for lambda-url', () => {
     const discoveredService = {
       serviceName: 'orders-api',
@@ -132,7 +148,12 @@ describe('action contract', () => {
       gatewayType: 'LAMBDA_URL',
       stage: '',
       providerType: 'lambda-url',
-      specFormat: 'openapi-yaml'
+      specFormat: 'openapi-yaml',
+      derivedOpenApiPath: 'discovered-specs/orders-api/openapi.derived.json',
+      derivedOpenApiVersion: '3.0.3',
+      derivedOpenApiCompleteness: 'partial',
+      derivedOpenApiFormat: 'openapi-json',
+      derivedOpenApiEvidence: ['Synthesized Lambda Function URL catch-all OpenAPI sidecar']
     } satisfies DiscoveredService;
 
     const resolution = {
@@ -145,11 +166,17 @@ describe('action contract', () => {
       gatewayType: 'LAMBDA_URL',
       providerType: 'lambda-url',
       specFormat: 'openapi-yaml',
+      derivedOpenApiPath: 'discovered-specs/orders-api/openapi.derived.json',
+      derivedOpenApiVersion: '3.0.3',
+      derivedOpenApiCompleteness: 'partial',
+      derivedOpenApiFormat: 'openapi-json',
+      derivedOpenApiEvidence: ['Synthesized Lambda Function URL catch-all OpenAPI sidecar'],
       evidence: ['Resolved Lambda Function URL']
     } satisfies ResolutionResult;
 
     expect(discoveredService.providerType).toBe('lambda-url');
     expect(resolution.sourceType).toBe('lambda-url-export');
+    expect(resolution.derivedOpenApiFormat).toBe('openapi-json');
   });
 
   it('typechecks discovered service and resolution result for sns', () => {

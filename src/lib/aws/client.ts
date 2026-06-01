@@ -3,11 +3,15 @@ import {
   GetExportCommand,
   GetBasePathMappingsCommand,
   GetDomainNamesCommand as GetRestDomainNamesCommand,
+  GetModelsCommand,
+  GetResourcesCommand,
   GetRestApiCommand,
   GetRestApisCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand,
-  paginateGetRestApis
+  paginateGetRestApis,
+  type Model,
+  type Resource
 } from '@aws-sdk/client-api-gateway';
 import {
   ApiGatewayV2Client,
@@ -15,14 +19,30 @@ import {
   GetApiMappingsCommand,
   GetApiCommand,
   GetApisCommand,
+  GetAuthorizersCommand,
   GetDomainNamesCommand as GetHttpDomainNamesCommand,
+  GetIntegrationsCommand,
+  GetModelsCommand as GetWebSocketModelsCommand,
+  GetRouteResponsesCommand,
   GetRoutesCommand,
   GetStagesCommand as GetHttpStagesCommand,
-  GetTagsCommand as GetHttpTagsCommand
+  GetTagsCommand as GetHttpTagsCommand,
+  type Authorizer,
+  type Integration,
+  type Model as WebSocketModel,
+  type Route,
+  type RouteResponse
 } from '@aws-sdk/client-apigatewayv2';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
-import { synthesizeWebSocketOpenApi, type WebSocketRouteSummary } from '../spec/websocket-openapi.js';
+import {
+  synthesizeWebSocketOpenApi,
+  type WebSocketAuthorizerSummary,
+  type WebSocketIntegrationSummary,
+  type WebSocketModelSummary,
+  type WebSocketRouteResponseSummary
+} from '../spec/websocket-openapi.js';
+import { synthesizeRestApiFallbackOpenApi } from '../spec/rest-api-fallback-openapi.js';
 
 export interface RestApiSummary {
   id: string;
@@ -54,6 +74,7 @@ export interface AwsGatewayClient {
   getRestTags(apiId: string): Promise<Record<string, string>>;
   getHttpTags(apiId: string): Promise<Record<string, string>>;
   exportRestApi(apiId: string, stage: string): Promise<string>;
+  exportRestApiFallback?(apiId: string, stage?: string): Promise<string>;
   exportHttpApi(apiId: string, stage?: string): Promise<string>;
   exportWebSocketApi(apiId: string, stage?: string): Promise<string>;
   getCallerIdentity(): Promise<{ accountId?: string; arn?: string }>;
@@ -125,6 +146,59 @@ async function readExportBody(body: unknown): Promise<string> {
 function isAwsNotFoundError(message: string): boolean {
   const lowered = message.toLowerCase();
   return lowered.includes('notfoundexception') || lowered.includes('not found');
+}
+
+function integrationIdFromTarget(target: string | undefined): string | undefined {
+  const match = /^integrations\/([^/]+)$/.exec(target ?? '');
+  return match?.[1];
+}
+
+function mapWebSocketIntegration(integration: Integration | undefined): WebSocketIntegrationSummary | undefined {
+  if (!integration) {
+    return undefined;
+  }
+  return {
+    integrationId: integration.IntegrationId,
+    integrationType: integration.IntegrationType,
+    integrationUri: integration.IntegrationUri,
+    integrationMethod: integration.IntegrationMethod,
+    requestParameters: integration.RequestParameters,
+    requestTemplates: integration.RequestTemplates,
+    templateSelectionExpression: integration.TemplateSelectionExpression,
+    timeoutInMillis: integration.TimeoutInMillis
+  };
+}
+
+function mapWebSocketAuthorizer(authorizer: Authorizer | undefined): WebSocketAuthorizerSummary | undefined {
+  if (!authorizer) {
+    return undefined;
+  }
+  return {
+    authorizerId: authorizer.AuthorizerId,
+    authorizerType: authorizer.AuthorizerType,
+    authorizerUri: authorizer.AuthorizerUri,
+    identitySource: authorizer.IdentitySource
+  };
+}
+
+function mapWebSocketRouteResponses(routeResponses: RouteResponse[]): WebSocketRouteResponseSummary[] {
+  return routeResponses.map((routeResponse) => ({
+    routeResponseId: routeResponse.RouteResponseId,
+    routeResponseKey: routeResponse.RouteResponseKey,
+    modelSelectionExpression: routeResponse.ModelSelectionExpression,
+    responseModels: routeResponse.ResponseModels,
+    responseParameters: routeResponse.ResponseParameters
+  }));
+}
+
+function mapWebSocketModels(models: WebSocketModel[]): WebSocketModelSummary[] {
+  return models
+    .filter((model): model is WebSocketModel & { Name: string } => Boolean(model.Name))
+    .map((model) => ({
+      name: model.Name,
+      contentType: model.ContentType,
+      schema: model.Schema
+    }));
 }
 
 export class AwsApiGatewaySdkClient implements AwsGatewayClient {
@@ -360,6 +434,57 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
     return await readExportBody(response.body);
   }
 
+  public async exportRestApiFallback(apiId: string, stage?: string): Promise<string> {
+    const [api, resources, models] = await Promise.all([
+      this.getRestApi(apiId),
+      this.listRestResourcesWithMethods(apiId),
+      this.listRestModels(apiId)
+    ]);
+    return synthesizeRestApiFallbackOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      resources,
+      models
+    });
+  }
+
+  private async listRestResourcesWithMethods(apiId: string): Promise<Resource[]> {
+    const resources: Resource[] = [];
+    let position: string | undefined;
+    do {
+      const response = await this.restClient.send(
+        new GetResourcesCommand({
+          restApiId: apiId,
+          position,
+          limit: 500,
+          embed: ['methods']
+        })
+      );
+      resources.push(...(response.items ?? []));
+      position = response.position;
+    } while (position);
+    return resources;
+  }
+
+  private async listRestModels(apiId: string): Promise<Model[]> {
+    const models: Model[] = [];
+    let position: string | undefined;
+    do {
+      const response = await this.restClient.send(
+        new GetModelsCommand({
+          restApiId: apiId,
+          position,
+          limit: 500
+        })
+      );
+      models.push(...(response.items ?? []));
+      position = response.position;
+    } while (position);
+    return models;
+  }
+
   public async exportHttpApi(apiId: string, stage?: string): Promise<string> {
     const response = await this.httpClient.send(
       new ExportApiCommand({
@@ -374,8 +499,61 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   }
 
   public async exportWebSocketApi(apiId: string, stage?: string): Promise<string> {
-    const api = await this.getHttpApi(apiId);
-    const routes: WebSocketRouteSummary[] = [];
+    const [api, routeItems, integrations, authorizers, models] = await Promise.all([
+      this.getHttpApi(apiId),
+      this.listWebSocketRoutes(apiId),
+      this.listWebSocketIntegrations(apiId),
+      this.listWebSocketAuthorizers(apiId),
+      this.listWebSocketModels(apiId)
+    ]);
+    const integrationById = new Map(
+      integrations
+        .filter((integration): integration is Integration & { IntegrationId: string } => Boolean(integration.IntegrationId))
+        .map((integration) => [integration.IntegrationId, integration])
+    );
+    const authorizerById = new Map(
+      authorizers
+        .filter((authorizer): authorizer is Authorizer & { AuthorizerId: string } => Boolean(authorizer.AuthorizerId))
+        .map((authorizer) => [authorizer.AuthorizerId, authorizer])
+    );
+    const routes = await Promise.all(
+      routeItems
+        .filter((route): route is Route & { RouteKey: string } => Boolean(route.RouteKey))
+        .map(async (route) => {
+          const integrationId = integrationIdFromTarget(route.Target);
+          return {
+            routeKey: route.RouteKey,
+            routeId: route.RouteId,
+            apiKeyRequired: route.ApiKeyRequired,
+            authorizationType: route.AuthorizationType,
+            authorizationScopes: route.AuthorizationScopes,
+            authorizerId: route.AuthorizerId,
+            operationName: route.OperationName,
+            modelSelectionExpression: route.ModelSelectionExpression,
+            requestModels: route.RequestModels,
+            requestParameters: route.RequestParameters,
+            routeResponseSelectionExpression: route.RouteResponseSelectionExpression,
+            target: route.Target,
+            integration: mapWebSocketIntegration(integrationId ? integrationById.get(integrationId) : undefined),
+            authorizer: mapWebSocketAuthorizer(route.AuthorizerId ? authorizerById.get(route.AuthorizerId) : undefined),
+            routeResponses: route.RouteId ? mapWebSocketRouteResponses(await this.listWebSocketRouteResponses(apiId, route.RouteId)) : []
+          };
+        })
+    );
+
+    return synthesizeWebSocketOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      routeSelectionExpression: api?.routeSelectionExpression,
+      routes,
+      models: mapWebSocketModels(models)
+    });
+  }
+
+  private async listWebSocketRoutes(apiId: string): Promise<Route[]> {
+    const routes: Route[] = [];
     let nextToken: string | undefined;
     do {
       const response = await this.httpClient.send(
@@ -384,28 +562,79 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
           NextToken: nextToken
         })
       );
-      for (const route of response.Items ?? []) {
-        if (!route.RouteKey) {
-          continue;
-        }
-        routes.push({
-          routeKey: route.RouteKey,
-          authorizationType: route.AuthorizationType,
-          operationName: route.OperationName,
-          target: route.Target
-        });
-      }
+      routes.push(...(response.Items ?? []));
       nextToken = response.NextToken;
     } while (nextToken);
+    return routes;
+  }
 
-    return synthesizeWebSocketOpenApi({
-      apiId,
-      apiName: api?.name ?? apiId,
-      region: this.region,
-      stage,
-      routeSelectionExpression: api?.routeSelectionExpression,
-      routes
-    });
+  private async listWebSocketIntegrations(apiId: string): Promise<Integration[]> {
+    const integrations: Integration[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetIntegrationsCommand({
+          ApiId: apiId,
+          MaxResults: '500',
+          NextToken: nextToken
+        })
+      );
+      integrations.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return integrations;
+  }
+
+  private async listWebSocketAuthorizers(apiId: string): Promise<Authorizer[]> {
+    const authorizers: Authorizer[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetAuthorizersCommand({
+          ApiId: apiId,
+          MaxResults: '500',
+          NextToken: nextToken
+        })
+      );
+      authorizers.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return authorizers;
+  }
+
+  private async listWebSocketModels(apiId: string): Promise<WebSocketModel[]> {
+    const models: WebSocketModel[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetWebSocketModelsCommand({
+          ApiId: apiId,
+          MaxResults: '500',
+          NextToken: nextToken
+        })
+      );
+      models.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return models;
+  }
+
+  private async listWebSocketRouteResponses(apiId: string, routeId: string): Promise<RouteResponse[]> {
+    const routeResponses: RouteResponse[] = [];
+    let nextToken: string | undefined;
+    do {
+      const response = await this.httpClient.send(
+        new GetRouteResponsesCommand({
+          ApiId: apiId,
+          RouteId: routeId,
+          MaxResults: '500',
+          NextToken: nextToken
+        })
+      );
+      routeResponses.push(...(response.Items ?? []));
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return routeResponses;
   }
 
   public async getCallerIdentity(): Promise<{ accountId?: string; arn?: string }> {

@@ -12,6 +12,8 @@ const required = [
   'validation/fixtures/repo-spec/schema.graphql',
   'validation/fixtures/repo-spec/asyncapi.yaml',
   'validation/fixtures/repo-spec/collection.postman_collection.json',
+  'validation/fixtures/repo-spec/order.schema.json',
+  'validation/fixtures/repo-spec/order.avsc',
   'validation/fixtures/repo-spec/service.proto',
   'validation/fixtures/repo-spec/model.smithy',
   'validation/fixtures/repo-spec/smithy-build.json',
@@ -40,8 +42,14 @@ const markerChecks = [
   ['validation/fixtures/repo-spec/schema.graphql', 'type Query'],
   ['validation/fixtures/repo-spec/asyncapi.yaml', 'asyncapi: 2.6.0'],
   ['validation/fixtures/repo-spec/collection.postman_collection.json', 'schema.getpostman.com/json/collection'],
+  ['validation/fixtures/repo-spec/order.schema.json', '"title": "OrderCreated"'],
+  ['validation/fixtures/repo-spec/order.avsc', '"name": "OrderEvent"'],
   ['validation/fixtures/repo-spec/service.proto', 'syntax = "proto3"'],
   ['validation/fixtures/repo-spec/model.smithy', '$version: "2"'],
+  ['validation/fixtures/aws/live-stack.yaml', 'Name: OrderMessage'],
+  ['validation/fixtures/aws/live-stack.yaml', 'RouteResponseKey:'],
+  ['validation/fixtures/aws/live-stack.yaml', 'FilterPolicyScope: MessageBody'],
+  ['validation/fixtures/aws/live-stack.yaml', 'RedrivePolicy:'],
   ['validation/fixtures/iac/terraform/main.tf', 'aws_lambda_function_url'],
   ['validation/fixtures/iac/readme/README.md', 'lambda-url.us-east-1.on.aws']
 ];

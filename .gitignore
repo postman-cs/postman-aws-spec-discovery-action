@@ -34,6 +34,7 @@ pnpm-debug.log*
 *.swo
 
 # Tooling / local state
+.hkd/
 .omc/
 .cache/
 tmp/

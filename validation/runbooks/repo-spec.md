@@ -1,6 +1,6 @@
 # repo-spec Validation
 
-Surfaces: OpenAPI/Swagger, GraphQL SDL, AsyncAPI, Postman collection, protobuf, Smithy.
+Surfaces: OpenAPI/Swagger, versioned/reference OpenAPI filenames, GraphQL SDL, AsyncAPI, Postman collection, JSON Schema, Avro, protobuf, Smithy.
 
 ## Fixtures
 
@@ -24,5 +24,10 @@ node validation/scripts/run-cli-surface.mjs --surface repo-asyncapi --keep-works
 - `resolution-status=resolved`
 - `source-type=repo-spec`
 - `spec-format` matches the fixture format
-- OAS column records full OpenAPI 3.0/3.1 for OpenAPI sources or partial OpenAPI 3.0/3.1 for converted native API formats
+- Derived OAS column records full OpenAPI 3.0/3.1 for OpenAPI sources or partial OpenAPI 3.0/3.1 for converted native API formats
 - `spec-path` points at the repo fixture rather than generated AWS output
+- `derived-openapi-path` points at a canonical `openapi.derived.json` sidecar that parses as JSON
+- The GraphQL case preserves the operation name, required variable, and schema component in the derived `/graphql` request shape
+- The AsyncAPI case preserves the channel payload schema `$ref`, example payload, channel name, and subscribe direction in the derived webhook operation
+- The Postman case preserves query and header parameters, JSON request example, auth type, and response example in the derived path operation
+- The JSON Schema and Avro cases preserve named OpenAPI components and use `$ref` request body schemas on stable derived paths

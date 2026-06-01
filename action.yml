@@ -49,6 +49,16 @@ outputs:
     description: "Path to SNS resolution metadata sidecar when available."
   variant-count:
     description: "Number of SNS delivery variants discovered when available."
+  derived-openapi-path:
+    description: "Path to the canonical derived OpenAPI JSON sidecar when available."
+  derived-openapi-version:
+    description: "OpenAPI version of the derived sidecar when available."
+  derived-openapi-completeness:
+    description: "Derived OpenAPI completeness: full or partial."
+  derived-openapi-format:
+    description: "Format of the derived OpenAPI sidecar, currently openapi-json."
+  derived-openapi-evidence-json:
+    description: "JSON array of evidence entries explaining derived OpenAPI quality and limitations."
 runs:
   using: node24
   main: dist/index.cjs

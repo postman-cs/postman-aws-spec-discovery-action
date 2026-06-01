@@ -1,5 +1,5 @@
 import type { GatewayType } from '../../contracts.js';
-import type { AwsGatewayClient, HttpApiSummary, RestApiSummary } from '../aws/client.js';
+import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from '../aws/client.js';
 import { normalizeOpenApiYaml } from '../spec/normalize-openapi.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
@@ -99,16 +99,13 @@ export class ApiGatewayProvider implements SpecProvider {
     const gatewayType = candidate.meta.gatewayType as GatewayType;
     const stage = options.stage ?? candidate.meta.stage;
 
-    const rawContent =
-      gatewayType === 'REST'
-        ? await this.client.exportRestApi(candidate.id, stage ?? '')
-        : gatewayType === 'WEBSOCKET'
-          ? await this.client.exportWebSocketApi(candidate.id, stage)
-          : await this.client.exportHttpApi(candidate.id, stage);
+    const exported = await this.exportApiGatewayContent(candidate, gatewayType, stage);
 
-    const normalized = safeNormalizeOpenApi(rawContent);
+    const normalized = safeNormalizeOpenApi(exported.content);
     const evidence = [
-      gatewayType === 'WEBSOCKET'
+      exported.fallback
+        ? `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed`
+        : gatewayType === 'WEBSOCKET'
         ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}`
         : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
     ];
@@ -126,8 +123,30 @@ export class ApiGatewayProvider implements SpecProvider {
       format: 'openapi-yaml',
       filename: 'index.yaml',
       stage,
+      derivedOpenApiCompleteness: exported.fallback || gatewayType === 'WEBSOCKET' ? 'partial' : undefined,
       evidence
     };
+  }
+
+  private async exportApiGatewayContent(
+    candidate: SpecCandidate,
+    gatewayType: GatewayType,
+    stage?: string
+  ): Promise<{ content: string; fallback: boolean }> {
+    try {
+      const content =
+        gatewayType === 'REST'
+          ? await this.client.exportRestApi(candidate.id, stage ?? '')
+          : gatewayType === 'WEBSOCKET'
+            ? await this.client.exportWebSocketApi(candidate.id, stage)
+            : await this.client.exportHttpApi(candidate.id, stage);
+      return { content, fallback: false };
+    } catch (error) {
+      if (gatewayType === 'REST' && this.client.exportRestApiFallback && isRestExportFallbackError(error)) {
+        return { content: await this.client.exportRestApiFallback(candidate.id, stage), fallback: true };
+      }
+      throw error;
+    }
   }
 
   private toCandidate(api: RestApiSummary | HttpApiSummary, gatewayType: GatewayType): SpecCandidate {
@@ -140,6 +159,16 @@ export class ApiGatewayProvider implements SpecProvider {
       meta: { gatewayType }
     };
   }
+}
+
+function isRestExportFallbackError(error: unknown): boolean {
+  const parsed = parseAwsError(error);
+  return parsed.name === 'BadRequestException' || isKnownRestExportLimitation(parsed.message);
+}
+
+function isKnownRestExportLimitation(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return lowered.includes('non-json body models') || lowered.includes('json body models are not found');
 }
 
 // Run the normalizer but treat any unexpected error as a soft fail.

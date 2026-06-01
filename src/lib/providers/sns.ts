@@ -894,6 +894,83 @@ function buildWebhookPayloadSchema(rawDelivery: boolean, baseSchema: unknown): u
   };
 }
 
+function parseSnsPolicyExtension(value: string | undefined): unknown | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return trimmed;
+  }
+}
+
+function distinctExtensionValues(values: unknown[]): unknown[] {
+  const seen = new Set<string>();
+  const distinct: unknown[] = [];
+  for (const value of values) {
+    if (value === undefined) {
+      continue;
+    }
+    const key = JSON.stringify(value);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    distinct.push(value);
+  }
+  return distinct;
+}
+
+function addSingularOrPluralExtension(
+  target: Record<string, unknown>,
+  singularName: string,
+  pluralName: string,
+  values: unknown[]
+): void {
+  const distinct = distinctExtensionValues(values);
+  if (distinct.length === 1) {
+    target[singularName] = distinct[0];
+  } else if (distinct.length > 1) {
+    target[pluralName] = distinct;
+  }
+}
+
+function snsWebhookOperationExtensions(rawDelivery: boolean, subscriptions: SnsSubscriptionMetadata[]): Record<string, unknown> {
+  const extensions: Record<string, unknown> = {
+    'x-sns-raw-delivery': rawDelivery,
+    'x-sns-delivery-variant': rawDelivery ? 'raw-payload' : 'sns-envelope'
+  };
+
+  addSingularOrPluralExtension(
+    extensions,
+    'x-sns-filter-policy',
+    'x-sns-filter-policies',
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.filterPolicyRaw ?? subscription.FilterPolicy))
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    'x-sns-filter-policy-scope',
+    'x-sns-filter-policy-scopes',
+    subscriptions.map((subscription) => subscription.FilterPolicyScope ?? subscription.filterPolicyScope)
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    'x-sns-redrive-policy',
+    'x-sns-redrive-policies',
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.RedrivePolicy))
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    'x-sns-delivery-policy',
+    'x-sns-delivery-policies',
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.DeliveryPolicy))
+  );
+
+  return extensions;
+}
+
 function buildWebhookSidecar(
   canonical: SpecExportResult,
   subscriptions: SnsSubscriptionMetadata[]
@@ -913,10 +990,11 @@ function buildWebhookSidecar(
 
   for (const rawDelivery of variants) {
     const webhookName = rawDelivery ? 'snsMessageRaw' : 'snsMessageWrapped';
+    const variantSubscriptions = httpSubscriptions.filter((subscription) => (subscription.variant === 'raw-payload') === rawDelivery);
     webhooks[webhookName] = {
       post: {
         operationId: webhookName,
-        'x-sns-raw-delivery': rawDelivery,
+        ...snsWebhookOperationExtensions(rawDelivery, variantSubscriptions),
         requestBody: {
           required: true,
           content: {
@@ -1639,7 +1717,8 @@ export class SnsProvider implements SpecProvider {
     const subscriptions: SnsSubscriptionMetadata[] = [];
     for (const summary of summaries) {
       const subscriptionArn = summary.subscriptionArn;
-      if (!subscriptionArn) {
+      if (!subscriptionArn || subscriptionArn === 'PendingConfirmation') {
+        evidence.push(`Skipped pending confirmation SNS subscription for topic ${topicArn}`);
         continue;
       }
       try {

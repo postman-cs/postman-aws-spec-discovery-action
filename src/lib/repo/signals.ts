@@ -87,6 +87,7 @@ const PROVIDER_PATTERNS: { pattern: RegExp; provider: ProviderType }[] = [
   { pattern: /AWS::SNS::Topic/i, provider: 'sns' },
   { pattern: /AWS::SNS::Subscription/i, provider: 'sns' },
   { pattern: /\bType\s*:\s*SNS\b/i, provider: 'sns' },
+  { pattern: /\bsns\s*:/i, provider: 'sns' },
   { pattern: /arn:aws:sns:/i, provider: 'sns' },
   { pattern: /AWS::Events::EventBus/i, provider: 'eventbridge-schemas' },
   { pattern: /AWS::Events::Rule/i, provider: 'eventbridge-schemas' },
@@ -174,6 +175,47 @@ function shouldDetectProviderHintsForFile(filePath: string): boolean {
   return ext !== '.md' && ext !== '.markdown';
 }
 
+const FIXED_INSPECT_FILES = [
+  '.github/workflows/deploy.yml',
+  '.gitlab-ci.yml',
+  'template.yaml',
+  'template.yml',
+  'serverless.yml',
+  'serverless.yaml',
+  'cdk.json',
+  'README.md'
+];
+
+function isKnownSignalConfigFile(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, '/').toLowerCase();
+  const basename = path.basename(normalized);
+  return (
+    /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) ||
+    normalized === '.gitlab-ci.yml' ||
+    normalized === '.circleci/config.yml' ||
+    normalized === '.buildkite/pipeline.yml' ||
+    /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename) ||
+    /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) ||
+    basename === 'samconfig.toml' ||
+    basename === 'redocly.yaml' ||
+    basename === 'redocly.yml' ||
+    basename === 'swagger-jsdoc.js' ||
+    basename === 'swagger-jsdoc.ts' ||
+    basename === 'tsoa.json' ||
+    basename === 'openapi-generator.json' ||
+    basename === 'openapi-generator.yaml' ||
+    basename === 'openapi-generator.yml'
+  );
+}
+
+async function collectInspectFiles(repoRoot: string): Promise<string[]> {
+  const discovered = await findIaCFiles(repoRoot, ['.yml', '.yaml', '.json', '.ts', '.js', '.toml']);
+  const discoveredRelative = discovered
+    .map((filePath) => path.relative(repoRoot, filePath).replace(/\\/g, '/'))
+    .filter(isKnownSignalConfigFile);
+  return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
+}
+
 function isSnsEventContractFile(filePath: string): boolean {
   const lower = path.basename(filePath).toLowerCase();
   return (
@@ -201,16 +243,7 @@ export async function collectRepoSignals(
   const providerHintSet = new Set<ProviderType>();
   const snsEvidenceRoots = new Set<string>();
 
-  const inspectFiles = [
-    '.github/workflows/deploy.yml',
-    '.gitlab-ci.yml',
-    'template.yaml',
-    'template.yml',
-    'serverless.yml',
-    'serverless.yaml',
-    'cdk.json',
-    'README.md'
-  ];
+  const inspectFiles = await collectInspectFiles(repoRoot);
 
   for (const file of inspectFiles) {
     const fullPath = path.resolve(repoRoot, file);
@@ -237,7 +270,7 @@ export async function collectRepoSignals(
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === 'sns') {
-            snsEvidenceRoots.add(repoRoot);
+            snsEvidenceRoots.add(path.dirname(fullPath));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {

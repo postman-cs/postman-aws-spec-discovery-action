@@ -102,7 +102,12 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_FORMAT: outputs['spec-format'] ?? '',
     POSTMAN_AWS_SPEC_CONTRACT_ORIGIN: outputs['contract-origin'] ?? '',
     POSTMAN_AWS_SPEC_CONTRACT_METADATA_PATH: outputs['contract-metadata-path'] ?? '',
-    POSTMAN_AWS_SPEC_VARIANT_COUNT: outputs['variant-count'] ?? ''
+    POSTMAN_AWS_SPEC_VARIANT_COUNT: outputs['variant-count'] ?? '',
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_PATH: outputs['derived-openapi-path'] ?? '',
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_VERSION: outputs['derived-openapi-version'] ?? '',
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_COMPLETENESS: outputs['derived-openapi-completeness'] ?? '',
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT: outputs['derived-openapi-format'] ?? '',
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON: outputs['derived-openapi-evidence-json'] ?? ''
   };
 
   return Object.entries(envPairs)

@@ -967,7 +967,7 @@ var require_util = __commonJS({
     var net = require("node:net");
     var { Blob: Blob2 } = require("node:buffer");
     var nodeUtil = require("node:util");
-    var { stringify: stringify2 } = require("node:querystring");
+    var { stringify: stringify4 } = require("node:querystring");
     var { EventEmitter: EE } = require("node:events");
     var { InvalidArgumentError } = require_errors();
     var { headerNameLowerCasedRecord } = require_constants();
@@ -1027,7 +1027,7 @@ var require_util = __commonJS({
       if (url.includes("?") || url.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify2(queryParams);
+      const stringified = stringify4(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -15970,7 +15970,7 @@ var require_util6 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify2(cookie) {
+    function stringify4(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -16024,7 +16024,7 @@ var require_util6 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify: stringify2
+      stringify: stringify4
     };
   }
 });
@@ -16174,7 +16174,7 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify: stringify2 } = require_util6();
+    var { stringify: stringify4 } = require_util6();
     var { webidl } = require_webidl();
     var { Headers: Headers2 } = require_headers();
     function getCookies(headers) {
@@ -16217,7 +16217,7 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       webidl.brandCheck(headers, Headers2, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify2(cookie);
+      const str = stringify4(cookie);
       if (str) {
         headers.append("Set-Cookie", str);
       }
@@ -48911,7 +48911,7 @@ var require_dist_cjs20 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetAuthorizer", {}).n("APIGatewayClient", "GetAuthorizerCommand").sc(schemas_0.GetAuthorizer$).build() {
     };
-    var GetAuthorizersCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetAuthorizersCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetAuthorizers", {}).n("APIGatewayClient", "GetAuthorizersCommand").sc(schemas_0.GetAuthorizers$).build() {
     };
@@ -48999,7 +48999,7 @@ var require_dist_cjs20 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetModel", {}).n("APIGatewayClient", "GetModelCommand").sc(schemas_0.GetModel$).build() {
     };
-    var GetModelsCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetModelsCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetModels", {}).n("APIGatewayClient", "GetModelsCommand").sc(schemas_0.GetModels$).build() {
     };
@@ -49019,7 +49019,7 @@ var require_dist_cjs20 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetResource", {}).n("APIGatewayClient", "GetResourceCommand").sc(schemas_0.GetResource$).build() {
     };
-    var GetResourcesCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetResourcesCommand3 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("BackplaneControlService", "GetResources", {}).n("APIGatewayClient", "GetResourcesCommand").sc(schemas_0.GetResources$).build() {
     };
@@ -49232,8 +49232,8 @@ var require_dist_cjs20 = __commonJS({
     var paginateGetClientCertificates = core.createPaginator(APIGatewayClient2, GetClientCertificatesCommand, "position", "position", "limit");
     var paginateGetDeployments = core.createPaginator(APIGatewayClient2, GetDeploymentsCommand, "position", "position", "limit");
     var paginateGetDomainNames = core.createPaginator(APIGatewayClient2, GetDomainNamesCommand, "position", "position", "limit");
-    var paginateGetModels = core.createPaginator(APIGatewayClient2, GetModelsCommand, "position", "position", "limit");
-    var paginateGetResources = core.createPaginator(APIGatewayClient2, GetResourcesCommand2, "position", "position", "limit");
+    var paginateGetModels = core.createPaginator(APIGatewayClient2, GetModelsCommand2, "position", "position", "limit");
+    var paginateGetResources = core.createPaginator(APIGatewayClient2, GetResourcesCommand3, "position", "position", "limit");
     var paginateGetRestApis2 = core.createPaginator(APIGatewayClient2, GetRestApisCommand2, "position", "position", "limit");
     var paginateGetUsage = core.createPaginator(APIGatewayClient2, GetUsageCommand, "position", "position", "limit");
     var paginateGetUsagePlanKeys = core.createPaginator(APIGatewayClient2, GetUsagePlanKeysCommand, "position", "position", "limit");
@@ -49285,7 +49285,7 @@ var require_dist_cjs20 = __commonJS({
       GetApiKeyCommand,
       GetApiKeysCommand,
       GetAuthorizerCommand,
-      GetAuthorizersCommand,
+      GetAuthorizersCommand: GetAuthorizersCommand2,
       GetBasePathMappingCommand,
       GetBasePathMappingsCommand: GetBasePathMappingsCommand2,
       GetClientCertificateCommand,
@@ -49307,12 +49307,12 @@ var require_dist_cjs20 = __commonJS({
       GetMethodCommand,
       GetMethodResponseCommand,
       GetModelCommand,
-      GetModelsCommand,
+      GetModelsCommand: GetModelsCommand2,
       GetModelTemplateCommand,
       GetRequestValidatorCommand,
       GetRequestValidatorsCommand,
       GetResourceCommand,
-      GetResourcesCommand: GetResourcesCommand2,
+      GetResourcesCommand: GetResourcesCommand3,
       GetRestApiCommand: GetRestApiCommand2,
       GetRestApisCommand: GetRestApisCommand2,
       GetSdkCommand,
@@ -49616,7 +49616,7 @@ var require_dist_cjs20 = __commonJS({
     exports2.GetApiKeyCommand = GetApiKeyCommand;
     exports2.GetApiKeysCommand = GetApiKeysCommand;
     exports2.GetAuthorizerCommand = GetAuthorizerCommand;
-    exports2.GetAuthorizersCommand = GetAuthorizersCommand;
+    exports2.GetAuthorizersCommand = GetAuthorizersCommand2;
     exports2.GetBasePathMappingCommand = GetBasePathMappingCommand;
     exports2.GetBasePathMappingsCommand = GetBasePathMappingsCommand2;
     exports2.GetClientCertificateCommand = GetClientCertificateCommand;
@@ -49639,11 +49639,11 @@ var require_dist_cjs20 = __commonJS({
     exports2.GetMethodResponseCommand = GetMethodResponseCommand;
     exports2.GetModelCommand = GetModelCommand;
     exports2.GetModelTemplateCommand = GetModelTemplateCommand;
-    exports2.GetModelsCommand = GetModelsCommand;
+    exports2.GetModelsCommand = GetModelsCommand2;
     exports2.GetRequestValidatorCommand = GetRequestValidatorCommand;
     exports2.GetRequestValidatorsCommand = GetRequestValidatorsCommand;
     exports2.GetResourceCommand = GetResourceCommand;
-    exports2.GetResourcesCommand = GetResourcesCommand2;
+    exports2.GetResourcesCommand = GetResourcesCommand3;
     exports2.GetRestApiCommand = GetRestApiCommand2;
     exports2.GetRestApisCommand = GetRestApisCommand2;
     exports2.GetSdkCommand = GetSdkCommand;
@@ -54434,7 +54434,7 @@ var require_dist_cjs21 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetAuthorizer", {}).n("ApiGatewayV2Client", "GetAuthorizerCommand").sc(schemas_0.GetAuthorizer$).build() {
     };
-    var GetAuthorizersCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetAuthorizersCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetAuthorizers", {}).n("ApiGatewayV2Client", "GetAuthorizersCommand").sc(schemas_0.GetAuthorizers$).build() {
     };
@@ -54466,7 +54466,7 @@ var require_dist_cjs21 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetIntegrationResponses", {}).n("ApiGatewayV2Client", "GetIntegrationResponsesCommand").sc(schemas_0.GetIntegrationResponses$).build() {
     };
-    var GetIntegrationsCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetIntegrationsCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetIntegrations", {}).n("ApiGatewayV2Client", "GetIntegrationsCommand").sc(schemas_0.GetIntegrations$).build() {
     };
@@ -54474,7 +54474,7 @@ var require_dist_cjs21 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetModel", {}).n("ApiGatewayV2Client", "GetModelCommand").sc(schemas_0.GetModel$).build() {
     };
-    var GetModelsCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetModelsCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetModels", {}).n("ApiGatewayV2Client", "GetModelsCommand").sc(schemas_0.GetModels$).build() {
     };
@@ -54510,7 +54510,7 @@ var require_dist_cjs21 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetRouteResponse", {}).n("ApiGatewayV2Client", "GetRouteResponseCommand").sc(schemas_0.GetRouteResponse$).build() {
     };
-    var GetRouteResponsesCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetRouteResponsesCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ApiGatewayV2", "GetRouteResponses", {}).n("ApiGatewayV2Client", "GetRouteResponsesCommand").sc(schemas_0.GetRouteResponses$).build() {
     };
@@ -54710,7 +54710,7 @@ var require_dist_cjs21 = __commonJS({
       GetApiMappingsCommand: GetApiMappingsCommand2,
       GetApisCommand: GetApisCommand2,
       GetAuthorizerCommand,
-      GetAuthorizersCommand,
+      GetAuthorizersCommand: GetAuthorizersCommand2,
       GetDeploymentCommand,
       GetDeploymentsCommand,
       GetDomainNameCommand,
@@ -54718,9 +54718,9 @@ var require_dist_cjs21 = __commonJS({
       GetIntegrationCommand,
       GetIntegrationResponseCommand,
       GetIntegrationResponsesCommand,
-      GetIntegrationsCommand,
+      GetIntegrationsCommand: GetIntegrationsCommand2,
       GetModelCommand,
-      GetModelsCommand,
+      GetModelsCommand: GetModelsCommand2,
       GetModelTemplateCommand,
       GetPortalCommand,
       GetPortalProductCommand,
@@ -54729,7 +54729,7 @@ var require_dist_cjs21 = __commonJS({
       GetProductRestEndpointPageCommand,
       GetRouteCommand,
       GetRouteResponseCommand,
-      GetRouteResponsesCommand,
+      GetRouteResponsesCommand: GetRouteResponsesCommand2,
       GetRoutesCommand: GetRoutesCommand2,
       GetRoutingRuleCommand,
       GetStageCommand,
@@ -54931,7 +54931,7 @@ var require_dist_cjs21 = __commonJS({
     exports2.GetApiMappingsCommand = GetApiMappingsCommand2;
     exports2.GetApisCommand = GetApisCommand2;
     exports2.GetAuthorizerCommand = GetAuthorizerCommand;
-    exports2.GetAuthorizersCommand = GetAuthorizersCommand;
+    exports2.GetAuthorizersCommand = GetAuthorizersCommand2;
     exports2.GetDeploymentCommand = GetDeploymentCommand;
     exports2.GetDeploymentsCommand = GetDeploymentsCommand;
     exports2.GetDomainNameCommand = GetDomainNameCommand;
@@ -54939,10 +54939,10 @@ var require_dist_cjs21 = __commonJS({
     exports2.GetIntegrationCommand = GetIntegrationCommand;
     exports2.GetIntegrationResponseCommand = GetIntegrationResponseCommand;
     exports2.GetIntegrationResponsesCommand = GetIntegrationResponsesCommand;
-    exports2.GetIntegrationsCommand = GetIntegrationsCommand;
+    exports2.GetIntegrationsCommand = GetIntegrationsCommand2;
     exports2.GetModelCommand = GetModelCommand;
     exports2.GetModelTemplateCommand = GetModelTemplateCommand;
-    exports2.GetModelsCommand = GetModelsCommand;
+    exports2.GetModelsCommand = GetModelsCommand2;
     exports2.GetPortalCommand = GetPortalCommand;
     exports2.GetPortalProductCommand = GetPortalProductCommand;
     exports2.GetPortalProductSharingPolicyCommand = GetPortalProductSharingPolicyCommand;
@@ -54950,7 +54950,7 @@ var require_dist_cjs21 = __commonJS({
     exports2.GetProductRestEndpointPageCommand = GetProductRestEndpointPageCommand;
     exports2.GetRouteCommand = GetRouteCommand;
     exports2.GetRouteResponseCommand = GetRouteResponseCommand;
-    exports2.GetRouteResponsesCommand = GetRouteResponsesCommand;
+    exports2.GetRouteResponsesCommand = GetRouteResponsesCommand2;
     exports2.GetRoutesCommand = GetRoutesCommand2;
     exports2.GetRoutingRuleCommand = GetRoutingRuleCommand;
     exports2.GetStageCommand = GetStageCommand;
@@ -58152,7 +58152,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag2));
       return props.join(" ");
     }
-    function stringify2(item, ctx, onComment, onChompKeep) {
+    function stringify4(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -58181,7 +58181,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports2.createStringifyContext = createStringifyContext;
-    exports2.stringify = stringify2;
+    exports2.stringify = stringify4;
   }
 });
 
@@ -58191,7 +58191,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar = require_Scalar();
-    var stringify2 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -58213,7 +58213,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify2.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify4.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -58265,7 +58265,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify2.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify4.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -58406,7 +58406,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge2 = require_merge();
-    var stringify2 = require_stringify();
+    var stringify4 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map3, { key, value }) {
@@ -58442,7 +58442,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify2.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify4.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node of ctx.anchors.keys())
           strCtx.anchors.add(node.anchor);
@@ -58509,12 +58509,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify2 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify3 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify3(collection, ctx, options);
+      const stringify5 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify5(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -58539,7 +58539,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify2.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify4.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -58606,7 +58606,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify2.stringify(item, itemCtx, () => comment = null);
+        let str = stringify4.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i5 < items.length - 1) {
           str += ",";
@@ -59967,7 +59967,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify2 = require_stringify();
+    var stringify4 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -59982,7 +59982,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify2.createStringifyContext(doc, options);
+      const ctx = stringify4.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -60004,7 +60004,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify2.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify4.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -60012,7 +60012,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify2.stringify(doc.contents, ctx));
+        lines.push(stringify4.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -62147,7 +62147,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports2) {
     "use strict";
-    var stringify2 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify4 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -62200,7 +62200,7 @@ var require_cst_stringify = __commonJS({
         res += stringifyToken(value);
       return res;
     }
-    exports2.stringify = stringify2;
+    exports2.stringify = stringify4;
   }
 });
 
@@ -63930,7 +63930,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify2(value, replacer, options) {
+    function stringify4(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -63955,7 +63955,7 @@ var require_public_api = __commonJS({
     exports2.parse = parse7;
     exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument2;
-    exports2.stringify = stringify2;
+    exports2.stringify = stringify4;
   }
 });
 
@@ -120704,11 +120704,11 @@ var require_toStream = __commonJS({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse5, build;
+var validate, parse6, build;
 var init_arn = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
     validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse5 = (arn) => {
+    parse6 = (arn) => {
       const segments = arn.split(":");
       if (segments.length < 6 || segments[0] !== "arn")
         throw new Error("Malformed ARN");
@@ -120771,7 +120771,7 @@ var util_exports = {};
 __export(util_exports, {
   build: () => build,
   formatUrl: () => formatUrl,
-  parse: () => parse5,
+  parse: () => parse6,
   validate: () => validate
 });
 var init_util2 = __esm({
@@ -133103,7 +133103,7 @@ var require_dist_cjs38 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ResourceGroupsTaggingAPI_20170126", "GetComplianceSummary", {}).n("ResourceGroupsTaggingAPIClient", "GetComplianceSummaryCommand").sc(schemas_0.GetComplianceSummary$).build() {
     };
-    var GetResourcesCommand2 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+    var GetResourcesCommand3 = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("ResourceGroupsTaggingAPI_20170126", "GetResources", {}).n("ResourceGroupsTaggingAPIClient", "GetResourcesCommand").sc(schemas_0.GetResources$).build() {
     };
@@ -133132,14 +133132,14 @@ var require_dist_cjs38 = __commonJS({
     }).s("ResourceGroupsTaggingAPI_20170126", "UntagResources", {}).n("ResourceGroupsTaggingAPIClient", "UntagResourcesCommand").sc(schemas_0.UntagResources$).build() {
     };
     var paginateGetComplianceSummary = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetComplianceSummaryCommand, "PaginationToken", "PaginationToken", "MaxResults");
-    var paginateGetResources = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetResourcesCommand2, "PaginationToken", "PaginationToken", "ResourcesPerPage");
+    var paginateGetResources = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetResourcesCommand3, "PaginationToken", "PaginationToken", "ResourcesPerPage");
     var paginateGetTagKeys = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetTagKeysCommand, "PaginationToken", "PaginationToken", "");
     var paginateGetTagValues = core.createPaginator(ResourceGroupsTaggingAPIClient2, GetTagValuesCommand, "PaginationToken", "PaginationToken", "");
     var paginateListRequiredTags = core.createPaginator(ResourceGroupsTaggingAPIClient2, ListRequiredTagsCommand, "NextToken", "NextToken", "MaxResults");
     var commands5 = {
       DescribeReportCreationCommand,
       GetComplianceSummaryCommand,
-      GetResourcesCommand: GetResourcesCommand2,
+      GetResourcesCommand: GetResourcesCommand3,
       GetTagKeysCommand,
       GetTagValuesCommand,
       ListRequiredTagsCommand,
@@ -133177,7 +133177,7 @@ var require_dist_cjs38 = __commonJS({
     exports2.DescribeReportCreationCommand = DescribeReportCreationCommand;
     exports2.ErrorCode = ErrorCode;
     exports2.GetComplianceSummaryCommand = GetComplianceSummaryCommand;
-    exports2.GetResourcesCommand = GetResourcesCommand2;
+    exports2.GetResourcesCommand = GetResourcesCommand3;
     exports2.GetTagKeysCommand = GetTagKeysCommand;
     exports2.GetTagValuesCommand = GetTagValuesCommand;
     exports2.GroupByAttribute = GroupByAttribute;
@@ -133229,6 +133229,7 @@ __export(index_exports, {
   runAction: () => runAction,
   runDiscovery: () => runDiscovery,
   runResolution: () => runResolution,
+  synthesizeRestApiFallbackOpenApi: () => synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi: () => synthesizeWebSocketOpenApi
 });
 module.exports = __toCommonJS(index_exports);
@@ -135579,6 +135580,21 @@ var actionContract = {
     },
     "variant-count": {
       description: "Number of SNS delivery variants discovered when available."
+    },
+    "derived-openapi-path": {
+      description: "Path to the canonical derived OpenAPI JSON sidecar when available."
+    },
+    "derived-openapi-version": {
+      description: "OpenAPI version of the derived sidecar when available."
+    },
+    "derived-openapi-completeness": {
+      description: "Derived OpenAPI completeness: full or partial."
+    },
+    "derived-openapi-format": {
+      description: "Format of the derived OpenAPI sidecar, currently openapi-json."
+    },
+    "derived-openapi-evidence-json": {
+      description: "JSON array of evidence entries explaining derived OpenAPI quality and limitations."
     }
   }
 };
@@ -135592,6 +135608,7 @@ var import_node_http_handler5 = __toESM(require_dist_cjs9(), 1);
 var import_client_sts = __toESM(require_dist_cjs22(), 1);
 
 // src/lib/spec/websocket-openapi.ts
+var import_yaml = __toESM(require_dist(), 1);
 var DEFAULT_ROUTES = [
   { routeKey: "$connect" },
   { routeKey: "$disconnect" },
@@ -135599,47 +135616,65 @@ var DEFAULT_ROUTES = [
 ];
 function synthesizeWebSocketOpenApi(input) {
   const routes = input.routes.length > 0 ? input.routes : DEFAULT_ROUTES;
-  const lines = [
-    "openapi: 3.0.3",
-    "info:",
-    `  title: ${quoteYaml(input.apiName || input.apiId)}`,
-    '  version: "1.0.0"',
-    '  description: "Partial OpenAPI description synthesized from API Gateway WebSocket routes."',
-    "servers:",
-    `  - url: ${quoteYaml(serverUrl(input))}`,
-    '    description: "API Gateway WebSocket endpoint"',
-    `x-amazon-apigateway-api-id: ${quoteYaml(input.apiId)}`,
-    'x-amazon-apigateway-protocol: "WEBSOCKET"',
-    `x-amazon-apigateway-route-selection-expression: ${quoteYaml(input.routeSelectionExpression || "$request.body.action")}`,
-    "paths:"
-  ];
+  const document = {
+    openapi: "3.0.3",
+    info: {
+      title: input.apiName || input.apiId,
+      version: "1.0.0",
+      description: "Partial OpenAPI description synthesized from API Gateway WebSocket routes."
+    },
+    servers: [
+      {
+        url: serverUrl(input),
+        description: "API Gateway WebSocket endpoint"
+      }
+    ],
+    "x-amazon-apigateway-api-id": input.apiId,
+    "x-amazon-apigateway-protocol": "WEBSOCKET",
+    "x-amazon-apigateway-route-selection-expression": input.routeSelectionExpression || "$request.body.action",
+    paths: {}
+  };
+  const schemas = modelSchemas(input.models ?? []);
+  if (Object.keys(schemas).length > 0) {
+    document.components = { schemas };
+  }
   for (const route of routes) {
     const routeKey = route.routeKey || "$default";
     const path15 = routePath(routeKey);
-    lines.push(`  ${quoteYaml(path15)}:`);
-    lines.push("    post:");
-    lines.push(`      operationId: ${operationId(route)}`);
-    lines.push(`      summary: ${quoteYaml(`WebSocket route ${routeKey}`)}`);
-    lines.push(`      x-amazon-apigateway-route-key: ${quoteYaml(routeKey)}`);
-    if (route.authorizationType) {
-      lines.push(`      x-amazon-apigateway-authorization-type: ${quoteYaml(route.authorizationType)}`);
-    }
-    if (route.target) {
-      lines.push(`      x-amazon-apigateway-target: ${quoteYaml(route.target)}`);
-    }
-    lines.push("      requestBody:");
-    lines.push("        required: false");
-    lines.push("        content:");
-    lines.push("          application/json:");
-    lines.push("            schema:");
-    lines.push("              type: object");
-    lines.push("              additionalProperties: true");
-    lines.push("      responses:");
-    lines.push('        "200":');
-    lines.push("          description: WebSocket route accepted");
+    document.paths[path15] = {
+      post: routeOperation(route, routeKey)
+    };
   }
-  return `${lines.join("\n")}
-`;
+  return (0, import_yaml.stringify)(document, { lineWidth: 0 });
+}
+function routeOperation(route, routeKey) {
+  return omitUndefined({
+    operationId: operationId(route),
+    summary: `WebSocket route ${routeKey}`,
+    "x-amazon-apigateway-route-key": routeKey,
+    "x-amazon-apigateway-route-id": route.routeId,
+    "x-amazon-apigateway-api-key-required": route.apiKeyRequired,
+    "x-amazon-apigateway-authorization-type": route.authorizationType,
+    "x-amazon-apigateway-authorization-scopes": route.authorizationScopes,
+    "x-amazon-apigateway-authorizer-id": route.authorizerId,
+    "x-amazon-apigateway-authorizer": authorizerExtension(route.authorizer),
+    "x-amazon-apigateway-model-selection-expression": route.modelSelectionExpression,
+    "x-amazon-apigateway-request-models": route.requestModels,
+    "x-amazon-apigateway-request-parameters": route.requestParameters,
+    "x-amazon-apigateway-route-response-selection-expression": route.routeResponseSelectionExpression,
+    "x-amazon-apigateway-route-responses": routeResponseExtensions(route.routeResponses),
+    "x-amazon-apigateway-target": route.target,
+    "x-amazon-apigateway-integration": integrationExtension(route.integration),
+    requestBody: {
+      required: false,
+      content: requestBodyContent(route.requestModels)
+    },
+    responses: {
+      "200": {
+        description: "WebSocket route accepted"
+      }
+    }
+  });
 }
 function serverUrl(input) {
   const base = `wss://${input.apiId}.execute-api.${input.region}.amazonaws.com`;
@@ -135657,8 +135692,205 @@ function operationId(route) {
   const words = clean ? clean.split(/\s+/) : ["default"];
   return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
 }
-function quoteYaml(value) {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+function requestBodyContent(requestModels) {
+  const entries = Object.entries(requestModels ?? {});
+  if (entries.length === 0) {
+    return {
+      "application/json": {
+        schema: { type: "object", additionalProperties: true }
+      }
+    };
+  }
+  return Object.fromEntries(
+    entries.map(([contentType, modelName]) => [
+      contentType,
+      {
+        schema: { $ref: `#/components/schemas/${modelName}` }
+      }
+    ])
+  );
+}
+function integrationExtension(integration) {
+  if (!integration) return void 0;
+  return omitUndefined({
+    integrationId: integration.integrationId,
+    type: integration.integrationType,
+    uri: integration.integrationUri,
+    httpMethod: integration.integrationMethod,
+    requestParameters: integration.requestParameters,
+    requestTemplates: integration.requestTemplates,
+    templateSelectionExpression: integration.templateSelectionExpression,
+    timeoutInMillis: integration.timeoutInMillis
+  });
+}
+function authorizerExtension(authorizer) {
+  if (!authorizer) return void 0;
+  return omitUndefined({
+    authorizerId: authorizer.authorizerId,
+    type: authorizer.authorizerType,
+    uri: authorizer.authorizerUri,
+    identitySource: authorizer.identitySource
+  });
+}
+function routeResponseExtensions(routeResponses) {
+  const responses = (routeResponses ?? []).map((response) => omitUndefined({
+    routeResponseId: response.routeResponseId,
+    routeResponseKey: response.routeResponseKey,
+    modelSelectionExpression: response.modelSelectionExpression,
+    responseModels: response.responseModels,
+    responseParameters: response.responseParameters
+  })).filter((response) => Object.keys(response).length > 0);
+  return responses.length > 0 ? responses : void 0;
+}
+function modelSchemas(models) {
+  const schemas = {};
+  for (const model of models) {
+    if (!model.name) continue;
+    schemas[model.name] = parseModelSchema(model.schema);
+  }
+  return schemas;
+}
+function parseModelSchema(schema) {
+  if (!schema?.trim()) {
+    return { type: "object", additionalProperties: true };
+  }
+  try {
+    return JSON.parse(schema);
+  } catch {
+    return { type: "object", additionalProperties: true };
+  }
+}
+function omitUndefined(input) {
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== void 0));
+}
+
+// src/lib/spec/rest-api-fallback-openapi.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+function synthesizeRestApiFallbackOpenApi(input) {
+  const document = {
+    openapi: "3.0.3",
+    info: {
+      title: input.apiName || input.apiId,
+      version: "1.0.0"
+    },
+    servers: [
+      {
+        url: `https://${input.apiId}.execute-api.${input.region}.amazonaws.com${input.stage ? `/${input.stage}` : ""}`
+      }
+    ],
+    paths: {},
+    "x-postman-discovery": {
+      apiGatewayFallback: true,
+      completeness: "partial",
+      evidence: "Synthesized from API Gateway REST resources, methods, and models after native export failed"
+    }
+  };
+  const components = restApiComponents(input.models);
+  if (Object.keys(components).length > 0) {
+    document.components = { schemas: components };
+  }
+  const paths = document.paths;
+  for (const resource of input.resources) {
+    if (!resource.path || resource.path === "/") continue;
+    const pathItem = recordValue(paths[resource.path]);
+    for (const [methodName, method] of Object.entries(resource.resourceMethods ?? {})) {
+      const lowerMethod = methodName.toLowerCase();
+      pathItem[lowerMethod] = restApiOperation(resource.path, lowerMethod, method);
+    }
+    if (Object.keys(pathItem).length > 0) {
+      paths[resource.path] = pathItem;
+    }
+  }
+  if (Object.keys(paths).length === 0) {
+    paths["/{proxy+}"] = {
+      "x-postman-discovery-note": "No REST methods were returned by API Gateway fallback resource inspection"
+    };
+  }
+  return (0, import_yaml2.stringify)(document);
+}
+function restApiComponents(models) {
+  const schemas = {};
+  for (const model of models) {
+    if (!model.name || !model.schema || model.name === "Empty") continue;
+    const parsed = parseJson(model.schema);
+    if (parsed && typeof parsed === "object") {
+      schemas[model.name] = parsed;
+    }
+  }
+  return schemas;
+}
+function restApiOperation(pathName, methodName, method) {
+  return {
+    operationId: method.operationName || safeOperationName(`${methodName} ${pathName}`),
+    ...method.authorizationType && method.authorizationType !== "NONE" ? { security: [{ [method.authorizationType]: [] }] } : {},
+    ...method.authorizationType ? { "x-amazon-apigateway-authorization-type": method.authorizationType } : {},
+    ...method.apiKeyRequired ? { "x-api-key-required": true } : {},
+    parameters: restApiParameters(method.requestParameters),
+    ...Object.keys(method.requestModels ?? {}).length > 0 ? { requestBody: restApiRequestBody(method.requestModels ?? {}) } : {},
+    responses: restApiResponses(method.methodResponses ?? {}),
+    ...method.methodIntegration ? { "x-amazon-apigateway-integration": restApiIntegration(method.methodIntegration) } : {}
+  };
+}
+function restApiParameters(parameters) {
+  return Object.entries(parameters ?? {}).map(([name, required]) => {
+    const match = name.match(/^method\.request\.(querystring|header|path)\.(.+)$/);
+    const location = match?.[1] === "querystring" ? "query" : match?.[1] ?? "query";
+    return {
+      name: match?.[2] ?? name,
+      in: location,
+      required: Boolean(required) || location === "path",
+      schema: { type: "string" }
+    };
+  });
+}
+function restApiRequestBody(requestModels) {
+  const content = {};
+  for (const [mediaType, modelName] of Object.entries(requestModels)) {
+    content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
+  }
+  return { required: false, content };
+}
+function restApiResponses(methodResponses) {
+  if (Object.keys(methodResponses).length === 0) {
+    return { "200": { description: "Response" } };
+  }
+  const responses = {};
+  for (const [statusCode, response] of Object.entries(methodResponses)) {
+    const models = response.responseModels ?? {};
+    const content = {};
+    for (const [mediaType, modelName] of Object.entries(models)) {
+      content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
+    }
+    responses[response.statusCode || statusCode] = {
+      description: "Response",
+      ...Object.keys(content).length > 0 ? { content } : {}
+    };
+  }
+  return responses;
+}
+function restApiIntegration(integration) {
+  return {
+    ...integration.type ? { type: integration.type.toLowerCase() } : {},
+    ...integration.httpMethod ? { httpMethod: integration.httpMethod } : {},
+    ...integration.uri ? { uri: integration.uri } : {},
+    ...integration.connectionType ? { connectionType: integration.connectionType } : {},
+    ...integration.requestParameters ? { requestParameters: integration.requestParameters } : {}
+  };
+}
+function parseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return void 0;
+  }
+}
+function recordValue(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function safeOperationName(value) {
+  const words = value.replace(/^\//, "").replace(/[^A-Za-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "operation";
+  return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
 }
 
 // src/lib/aws/client.ts
@@ -135703,6 +135935,52 @@ async function readExportBody(body) {
 function isAwsNotFoundError(message) {
   const lowered = message.toLowerCase();
   return lowered.includes("notfoundexception") || lowered.includes("not found");
+}
+function integrationIdFromTarget(target) {
+  const match = /^integrations\/([^/]+)$/.exec(target ?? "");
+  return match?.[1];
+}
+function mapWebSocketIntegration(integration) {
+  if (!integration) {
+    return void 0;
+  }
+  return {
+    integrationId: integration.IntegrationId,
+    integrationType: integration.IntegrationType,
+    integrationUri: integration.IntegrationUri,
+    integrationMethod: integration.IntegrationMethod,
+    requestParameters: integration.RequestParameters,
+    requestTemplates: integration.RequestTemplates,
+    templateSelectionExpression: integration.TemplateSelectionExpression,
+    timeoutInMillis: integration.TimeoutInMillis
+  };
+}
+function mapWebSocketAuthorizer(authorizer) {
+  if (!authorizer) {
+    return void 0;
+  }
+  return {
+    authorizerId: authorizer.AuthorizerId,
+    authorizerType: authorizer.AuthorizerType,
+    authorizerUri: authorizer.AuthorizerUri,
+    identitySource: authorizer.IdentitySource
+  };
+}
+function mapWebSocketRouteResponses(routeResponses) {
+  return routeResponses.map((routeResponse) => ({
+    routeResponseId: routeResponse.RouteResponseId,
+    routeResponseKey: routeResponse.RouteResponseKey,
+    modelSelectionExpression: routeResponse.ModelSelectionExpression,
+    responseModels: routeResponse.ResponseModels,
+    responseParameters: routeResponse.ResponseParameters
+  }));
+}
+function mapWebSocketModels(models) {
+  return models.filter((model) => Boolean(model.Name)).map((model) => ({
+    name: model.Name,
+    contentType: model.ContentType,
+    schema: model.Schema
+  }));
 }
 var AwsApiGatewaySdkClient = class {
   constructor(region, options = {}) {
@@ -135922,6 +136200,54 @@ var AwsApiGatewaySdkClient = class {
     );
     return await readExportBody(response.body);
   }
+  async exportRestApiFallback(apiId, stage) {
+    const [api, resources, models] = await Promise.all([
+      this.getRestApi(apiId),
+      this.listRestResourcesWithMethods(apiId),
+      this.listRestModels(apiId)
+    ]);
+    return synthesizeRestApiFallbackOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      resources,
+      models
+    });
+  }
+  async listRestResourcesWithMethods(apiId) {
+    const resources = [];
+    let position;
+    do {
+      const response = await this.restClient.send(
+        new import_client_api_gateway.GetResourcesCommand({
+          restApiId: apiId,
+          position,
+          limit: 500,
+          embed: ["methods"]
+        })
+      );
+      resources.push(...response.items ?? []);
+      position = response.position;
+    } while (position);
+    return resources;
+  }
+  async listRestModels(apiId) {
+    const models = [];
+    let position;
+    do {
+      const response = await this.restClient.send(
+        new import_client_api_gateway.GetModelsCommand({
+          restApiId: apiId,
+          position,
+          limit: 500
+        })
+      );
+      models.push(...response.items ?? []);
+      position = response.position;
+    } while (position);
+    return models;
+  }
   async exportHttpApi(apiId, stage) {
     const response = await this.httpClient.send(
       new import_client_apigatewayv2.ExportApiCommand({
@@ -135935,7 +136261,52 @@ var AwsApiGatewaySdkClient = class {
     return await readExportBody(response.body);
   }
   async exportWebSocketApi(apiId, stage) {
-    const api = await this.getHttpApi(apiId);
+    const [api, routeItems, integrations, authorizers, models] = await Promise.all([
+      this.getHttpApi(apiId),
+      this.listWebSocketRoutes(apiId),
+      this.listWebSocketIntegrations(apiId),
+      this.listWebSocketAuthorizers(apiId),
+      this.listWebSocketModels(apiId)
+    ]);
+    const integrationById = new Map(
+      integrations.filter((integration) => Boolean(integration.IntegrationId)).map((integration) => [integration.IntegrationId, integration])
+    );
+    const authorizerById = new Map(
+      authorizers.filter((authorizer) => Boolean(authorizer.AuthorizerId)).map((authorizer) => [authorizer.AuthorizerId, authorizer])
+    );
+    const routes = await Promise.all(
+      routeItems.filter((route) => Boolean(route.RouteKey)).map(async (route) => {
+        const integrationId = integrationIdFromTarget(route.Target);
+        return {
+          routeKey: route.RouteKey,
+          routeId: route.RouteId,
+          apiKeyRequired: route.ApiKeyRequired,
+          authorizationType: route.AuthorizationType,
+          authorizationScopes: route.AuthorizationScopes,
+          authorizerId: route.AuthorizerId,
+          operationName: route.OperationName,
+          modelSelectionExpression: route.ModelSelectionExpression,
+          requestModels: route.RequestModels,
+          requestParameters: route.RequestParameters,
+          routeResponseSelectionExpression: route.RouteResponseSelectionExpression,
+          target: route.Target,
+          integration: mapWebSocketIntegration(integrationId ? integrationById.get(integrationId) : void 0),
+          authorizer: mapWebSocketAuthorizer(route.AuthorizerId ? authorizerById.get(route.AuthorizerId) : void 0),
+          routeResponses: route.RouteId ? mapWebSocketRouteResponses(await this.listWebSocketRouteResponses(apiId, route.RouteId)) : []
+        };
+      })
+    );
+    return synthesizeWebSocketOpenApi({
+      apiId,
+      apiName: api?.name ?? apiId,
+      region: this.region,
+      stage,
+      routeSelectionExpression: api?.routeSelectionExpression,
+      routes,
+      models: mapWebSocketModels(models)
+    });
+  }
+  async listWebSocketRoutes(apiId) {
     const routes = [];
     let nextToken;
     do {
@@ -135945,27 +136316,75 @@ var AwsApiGatewaySdkClient = class {
           NextToken: nextToken
         })
       );
-      for (const route of response.Items ?? []) {
-        if (!route.RouteKey) {
-          continue;
-        }
-        routes.push({
-          routeKey: route.RouteKey,
-          authorizationType: route.AuthorizationType,
-          operationName: route.OperationName,
-          target: route.Target
-        });
-      }
+      routes.push(...response.Items ?? []);
       nextToken = response.NextToken;
     } while (nextToken);
-    return synthesizeWebSocketOpenApi({
-      apiId,
-      apiName: api?.name ?? apiId,
-      region: this.region,
-      stage,
-      routeSelectionExpression: api?.routeSelectionExpression,
-      routes
-    });
+    return routes;
+  }
+  async listWebSocketIntegrations(apiId) {
+    const integrations = [];
+    let nextToken;
+    do {
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetIntegrationsCommand({
+          ApiId: apiId,
+          MaxResults: "500",
+          NextToken: nextToken
+        })
+      );
+      integrations.push(...response.Items ?? []);
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return integrations;
+  }
+  async listWebSocketAuthorizers(apiId) {
+    const authorizers = [];
+    let nextToken;
+    do {
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetAuthorizersCommand({
+          ApiId: apiId,
+          MaxResults: "500",
+          NextToken: nextToken
+        })
+      );
+      authorizers.push(...response.Items ?? []);
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return authorizers;
+  }
+  async listWebSocketModels(apiId) {
+    const models = [];
+    let nextToken;
+    do {
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetModelsCommand({
+          ApiId: apiId,
+          MaxResults: "500",
+          NextToken: nextToken
+        })
+      );
+      models.push(...response.Items ?? []);
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return models;
+  }
+  async listWebSocketRouteResponses(apiId, routeId) {
+    const routeResponses = [];
+    let nextToken;
+    do {
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetRouteResponsesCommand({
+          ApiId: apiId,
+          RouteId: routeId,
+          MaxResults: "500",
+          NextToken: nextToken
+        })
+      );
+      routeResponses.push(...response.Items ?? []);
+      nextToken = response.NextToken;
+    } while (nextToken);
+    return routeResponses;
   }
   async getCallerIdentity() {
     const response = await this.stsClient.send(new import_client_sts.GetCallerIdentityCommand({}));
@@ -136054,36 +136473,36 @@ var ProviderRegistry = class {
 };
 
 // src/lib/spec/normalize-openapi.ts
-var import_yaml = __toESM(require_dist(), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
 var HTTP_METHODS = /* @__PURE__ */ new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
 function normalizeOpenApiYaml(content) {
   const passthrough = { content, renamed: [], normalized: false };
   let doc;
   try {
-    doc = (0, import_yaml.parseDocument)(content, { prettyErrors: false });
+    doc = (0, import_yaml3.parseDocument)(content, { prettyErrors: false });
   } catch {
     return passthrough;
   }
   if (doc.errors.length > 0) return passthrough;
-  if (!(0, import_yaml.isMap)(doc.contents)) return passthrough;
+  if (!(0, import_yaml3.isMap)(doc.contents)) return passthrough;
   const paths = doc.get("paths", true);
-  if (!(0, import_yaml.isMap)(paths)) return passthrough;
+  if (!(0, import_yaml3.isMap)(paths)) return passthrough;
   const seen = /* @__PURE__ */ new Set();
   const renamed = [];
   for (const pathPair of paths.items) {
     const pathKey = scalarString(pathPair.key);
     if (pathKey === void 0) continue;
     const pathItem = pathPair.value;
-    if (!(0, import_yaml.isMap)(pathItem)) continue;
+    if (!(0, import_yaml3.isMap)(pathItem)) continue;
     for (const methodPair of pathItem.items) {
       const method = scalarString(methodPair.key);
       if (method === void 0) continue;
       const methodLower = method.toLowerCase();
       if (!HTTP_METHODS.has(methodLower)) continue;
       const operation2 = methodPair.value;
-      if (!(0, import_yaml.isMap)(operation2)) continue;
+      if (!(0, import_yaml3.isMap)(operation2)) continue;
       const opIdNode = operation2.get("operationId", true);
-      const originalId = (0, import_yaml.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
+      const originalId = (0, import_yaml3.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
       const base = originalId && originalId.trim().length > 0 ? originalId : synthesizeOperationId(methodLower, pathKey);
       let finalId = base;
       if (seen.has(base)) {
@@ -136109,13 +136528,13 @@ function normalizeOpenApiYaml(content) {
   return { content: String(doc), renamed, normalized: true };
 }
 function scalarString(node) {
-  if ((0, import_yaml.isScalar)(node) && typeof node.value === "string") return node.value;
+  if ((0, import_yaml3.isScalar)(node) && typeof node.value === "string") return node.value;
   if (typeof node === "string") return node;
   return void 0;
 }
 function setOperationId(operation2, value) {
   const existing = operation2.get("operationId", true);
-  if ((0, import_yaml.isScalar)(existing)) {
+  if ((0, import_yaml3.isScalar)(existing)) {
     existing.value = value;
     return;
   }
@@ -136209,10 +136628,10 @@ var ApiGatewayProvider = class {
   async exportSpec(candidate, options) {
     const gatewayType = candidate.meta.gatewayType;
     const stage = options.stage ?? candidate.meta.stage;
-    const rawContent = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : gatewayType === "WEBSOCKET" ? await this.client.exportWebSocketApi(candidate.id, stage) : await this.client.exportHttpApi(candidate.id, stage);
-    const normalized = safeNormalizeOpenApi(rawContent);
+    const exported = await this.exportApiGatewayContent(candidate, gatewayType, stage);
+    const normalized = safeNormalizeOpenApi(exported.content);
     const evidence = [
-      gatewayType === "WEBSOCKET" ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}` : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
+      exported.fallback ? `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed` : gatewayType === "WEBSOCKET" ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}` : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
     ];
     if (normalized.renamed.length > 0) {
       evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
@@ -136227,8 +136646,20 @@ var ApiGatewayProvider = class {
       format: "openapi-yaml",
       filename: "index.yaml",
       stage,
+      derivedOpenApiCompleteness: exported.fallback || gatewayType === "WEBSOCKET" ? "partial" : void 0,
       evidence
     };
+  }
+  async exportApiGatewayContent(candidate, gatewayType, stage) {
+    try {
+      const content = gatewayType === "REST" ? await this.client.exportRestApi(candidate.id, stage ?? "") : gatewayType === "WEBSOCKET" ? await this.client.exportWebSocketApi(candidate.id, stage) : await this.client.exportHttpApi(candidate.id, stage);
+      return { content, fallback: false };
+    } catch (error3) {
+      if (gatewayType === "REST" && this.client.exportRestApiFallback && isRestExportFallbackError(error3)) {
+        return { content: await this.client.exportRestApiFallback(candidate.id, stage), fallback: true };
+      }
+      throw error3;
+    }
   }
   toCandidate(api, gatewayType) {
     return {
@@ -136241,6 +136672,14 @@ var ApiGatewayProvider = class {
     };
   }
 };
+function isRestExportFallbackError(error3) {
+  const parsed = parseAwsError(error3);
+  return parsed.name === "BadRequestException" || isKnownRestExportLimitation(parsed.message);
+}
+function isKnownRestExportLimitation(message) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("non-json body models") || lowered.includes("json body models are not found");
+}
 function safeNormalizeOpenApi(content) {
   try {
     const result = normalizeOpenApiYaml(content);
@@ -136253,6 +136692,7 @@ function safeNormalizeOpenApi(content) {
 // src/runtime.ts
 var import_promises11 = require("node:fs/promises");
 var import_node_path16 = __toESM(require("node:path"), 1);
+var import_yaml10 = __toESM(require_dist(), 1);
 
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs23(), 1);
@@ -136729,11 +137169,17 @@ function detectRepoContext(input, env2 = process.env) {
 // src/lib/repo/specs.ts
 var import_promises4 = require("node:fs/promises");
 var import_node_path8 = __toESM(require("node:path"), 1);
-var import_yaml2 = __toESM(require_dist(), 1);
+var import_yaml4 = __toESM(require_dist(), 1);
 var DIRECT_SPEC_CANDIDATES = [
   "openapi.yaml",
   "openapi.yml",
   "openapi.json",
+  "api.yaml",
+  "api.yml",
+  "api.json",
+  "oas.yaml",
+  "oas.yml",
+  "oas.json",
   "swagger.yaml",
   "swagger.yml",
   "swagger.json",
@@ -136771,6 +137217,8 @@ var COMMON_SCAN_DIRS = [
   "apis",
   "api-docs",
   "docs",
+  "reference",
+  "public",
   "spec",
   "specs",
   "contracts",
@@ -136802,7 +137250,7 @@ var MAX_SPEC_SCAN_FILES = 200;
 var MAX_SPEC_SCAN_DEPTH = 6;
 function isLikelyOpenApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml2.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -136817,7 +137265,7 @@ function isLikelyGraphqlSchema(content) {
 }
 function isLikelyAsyncApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml2.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -136910,7 +137358,7 @@ function detectRepoSpec(candidate, content) {
 }
 function isSpecLikeFilename(filename) {
   const lower = filename.toLowerCase();
-  return lower === "openapi.yaml" || lower === "openapi.yml" || lower === "openapi.json" || lower === "swagger.yaml" || lower === "swagger.yml" || lower === "swagger.json" || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower === "schema.graphql" || lower === "schema.gql" || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json";
+  return /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower === "schema.graphql" || lower === "schema.gql" || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json";
 }
 async function collectSpecCandidates(repoRoot) {
   const candidates = /* @__PURE__ */ new Set();
@@ -136963,14 +137411,15 @@ function specCandidateScore(candidate) {
   const basename3 = import_node_path8.default.basename(normalized);
   let score = 0;
   if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename3 !== "smithy-build.json") score += 200;
-  if (basename3.startsWith("openapi") || basename3.startsWith("swagger")) score += 90;
+  if (/^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 90;
+  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 85;
   if (basename3.startsWith("asyncapi")) score += 80;
   if (basename3 === "schema.graphql" || basename3 === "schema.gql") score += 75;
   if (basename3.endsWith(".postman_collection.json")) score += 60;
   if (basename3.endsWith(".proto")) score += 50;
   if (basename3.endsWith(".smithy")) score += 70;
   if (basename3 === "smithy-build.json") score += 30;
-  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy)\//.test(normalized)) score += 20;
+  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|reference|public)\//.test(normalized)) score += 20;
   if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
   return score;
 }
@@ -137083,6 +137532,7 @@ var PROVIDER_PATTERNS = [
   { pattern: /AWS::SNS::Topic/i, provider: "sns" },
   { pattern: /AWS::SNS::Subscription/i, provider: "sns" },
   { pattern: /\bType\s*:\s*SNS\b/i, provider: "sns" },
+  { pattern: /\bsns\s*:/i, provider: "sns" },
   { pattern: /arn:aws:sns:/i, provider: "sns" },
   { pattern: /AWS::Events::EventBus/i, provider: "eventbridge-schemas" },
   { pattern: /AWS::Events::Rule/i, provider: "eventbridge-schemas" },
@@ -137160,6 +137610,26 @@ function shouldDetectProviderHintsForFile(filePath) {
   const ext = import_node_path10.default.extname(filePath).toLowerCase();
   return ext !== ".md" && ext !== ".markdown";
 }
+var FIXED_INSPECT_FILES = [
+  ".github/workflows/deploy.yml",
+  ".gitlab-ci.yml",
+  "template.yaml",
+  "template.yml",
+  "serverless.yml",
+  "serverless.yaml",
+  "cdk.json",
+  "README.md"
+];
+function isKnownSignalConfigFile(relativePath2) {
+  const normalized = relativePath2.replace(/\\/g, "/").toLowerCase();
+  const basename3 = import_node_path10.default.basename(normalized);
+  return /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) || normalized === ".gitlab-ci.yml" || normalized === ".circleci/config.yml" || normalized === ".buildkite/pipeline.yml" || /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename3) || /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) || basename3 === "samconfig.toml" || basename3 === "redocly.yaml" || basename3 === "redocly.yml" || basename3 === "swagger-jsdoc.js" || basename3 === "swagger-jsdoc.ts" || basename3 === "tsoa.json" || basename3 === "openapi-generator.json" || basename3 === "openapi-generator.yaml" || basename3 === "openapi-generator.yml";
+}
+async function collectInspectFiles(repoRoot) {
+  const discovered = await findIaCFiles(repoRoot, [".yml", ".yaml", ".json", ".ts", ".js", ".toml"]);
+  const discoveredRelative = discovered.map((filePath) => import_node_path10.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
+  return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
+}
 function isSnsEventContractFile(filePath) {
   const lower = import_node_path10.default.basename(filePath).toLowerCase();
   return lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".schema.json");
@@ -137175,16 +137645,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   const evidence = [];
   const providerHintSet = /* @__PURE__ */ new Set();
   const snsEvidenceRoots = /* @__PURE__ */ new Set();
-  const inspectFiles = [
-    ".github/workflows/deploy.yml",
-    ".gitlab-ci.yml",
-    "template.yaml",
-    "template.yml",
-    "serverless.yml",
-    "serverless.yaml",
-    "cdk.json",
-    "README.md"
-  ];
+  const inspectFiles = await collectInspectFiles(repoRoot);
   for (const file of inspectFiles) {
     const fullPath = import_node_path10.default.resolve(repoRoot, file);
     try {
@@ -137210,7 +137671,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === "sns") {
-            snsEvidenceRoots.add(repoRoot);
+            snsEvidenceRoots.add(import_node_path10.default.dirname(fullPath));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -137541,6 +138002,691 @@ function resolveServiceCandidate(gateways, signals) {
   return best;
 }
 
+// src/lib/spec/oas-derivation.ts
+var import_yaml5 = __toESM(require_dist(), 1);
+function deriveOpenApiDocument(input) {
+  const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
+  if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
+    return jsonResult(swaggerToOpenApi(input.content, title), "3.0.3", "Converted Swagger 2.0 paths to OpenAPI 3.0");
+  }
+  if (input.format === "openapi-json" || input.format === "openapi-yaml") {
+    const version = openApiVersion(input.content);
+    if (!version) {
+      return jsonResult(schemaToOpenApi(input.content, title), "3.1.0", "Wrapped mislabeled non-OAS artifact in partial OpenAPI 3.1");
+    }
+    return {
+      content: input.content,
+      format: input.format,
+      version,
+      completeness: "full",
+      evidence: ["Source artifact is already OpenAPI 3.x"]
+    };
+  }
+  switch (input.format) {
+    case "graphql-sdl":
+      return jsonResult(graphqlToOpenApi(input.content, title), "3.1.0", "Synthesized GraphQL POST endpoint as partial OpenAPI 3.1");
+    case "asyncapi-json":
+    case "asyncapi-yaml":
+      return jsonResult(asyncApiToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI 3.1 webhooks from AsyncAPI channels");
+    case "postman-collection":
+      return jsonResult(postmanToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI paths from Postman collection requests");
+    case "protobuf":
+      return jsonResult(protobufToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI RPC paths from protobuf service methods");
+    case "smithy":
+      return jsonResult(smithyToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI paths from Smithy service operations");
+    case "avro":
+    case "json-schema":
+      return jsonResult(schemaToOpenApi(input.content, title, input.format), "3.1.0", `Wrapped ${input.format} schema in a partial OpenAPI 3.1 request path`);
+    default:
+      return jsonResult(emptyPartial(title), "3.1.0", `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
+  }
+}
+function jsonResult(document, version, evidence) {
+  return {
+    content: `${JSON.stringify(document, null, 2)}
+`,
+    format: "openapi-json",
+    version,
+    completeness: "partial",
+    evidence: [evidence]
+  };
+}
+function baseDocument(title, version = "3.1.0") {
+  return {
+    openapi: version,
+    info: {
+      title,
+      version: "1.0.0"
+    },
+    paths: {}
+  };
+}
+function graphqlToOpenApi(content, title) {
+  const document = baseDocument(title);
+  const graphqlTypes = parseGraphqlTypes(content);
+  const operations = graphqlOperations(graphqlTypes);
+  const operationNames = operations.map((operation2) => operation2.name);
+  const variables = operations.map((operation2) => operation2.variables).filter(Boolean);
+  const components = graphqlComponents(graphqlTypes);
+  if (Object.keys(components).length > 0) {
+    document.components = { schemas: components };
+  }
+  const requestSchema = {
+    type: "object",
+    required: ["query"],
+    properties: {
+      query: { type: "string" },
+      operationName: operationNames.length > 0 ? { type: "string", enum: operationNames } : { type: "string" },
+      variables: variables.length > 0 ? { oneOf: variables } : { type: "object", additionalProperties: true }
+    }
+  };
+  document.paths["/graphql"] = {
+    post: {
+      operationId: "executeGraphql",
+      summary: operationNames.length > 0 ? `Execute GraphQL operations: ${operationNames.join(", ")}` : "Execute GraphQL operation",
+      ...operations.length > 0 ? { "x-graphql-operations": operations } : {},
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: requestSchema
+          }
+        }
+      },
+      responses: { "200": { description: "GraphQL response" } }
+    }
+  };
+  return document;
+}
+function parseGraphqlTypes(content) {
+  const types = {};
+  for (const match of content.matchAll(/\b(type|input)\s+([A-Za-z_][\w]*)\s*\{([\s\S]*?)\}/g)) {
+    const kind = match[1] === "input" ? "input" : "type";
+    const name = match[2] ?? "";
+    const body = match[3] ?? "";
+    if (!name) continue;
+    types[name] = { kind, fields: parseGraphqlFields(body) };
+  }
+  return types;
+}
+function parseGraphqlFields(body) {
+  const fields = [];
+  for (const match of body.matchAll(/([A-Za-z_][\w]*)\s*(?:\(([^)]*)\))?\s*:\s*([A-Za-z_][\w]*!?|\[[A-Za-z_][\w]*!?\]!?)/g)) {
+    fields.push({
+      name: match[1] ?? "field",
+      args: parseGraphqlArgs(match[2] ?? ""),
+      type: match[3] ?? "String"
+    });
+  }
+  return fields;
+}
+function parseGraphqlArgs(args) {
+  return args.split(",").map((arg) => arg.trim()).filter(Boolean).map((arg) => {
+    const match = arg.match(/^([A-Za-z_][\w]*)\s*:\s*([A-Za-z_][\w]*!?|\[[A-Za-z_][\w]*!?\]!?)/);
+    return match ? { name: match[1] ?? "arg", type: match[2] ?? "String" } : void 0;
+  }).filter((arg) => Boolean(arg));
+}
+function graphqlOperations(types) {
+  const operations = [];
+  for (const [operationType, typeName] of [["query", "Query"], ["mutation", "Mutation"]]) {
+    for (const field of types[typeName]?.fields ?? []) {
+      operations.push({
+        type: operationType,
+        name: field.name,
+        returnType: graphqlTypeName(field.type),
+        variables: graphqlVariablesSchema(field.name, field.args)
+      });
+    }
+  }
+  return operations;
+}
+function graphqlVariablesSchema(operationName, args) {
+  const properties = {};
+  const required = [];
+  for (const arg of args) {
+    properties[arg.name] = graphqlTypeToSchema(arg.type);
+    if (isGraphqlRequired(arg.type)) {
+      required.push(arg.name);
+    }
+  }
+  return {
+    title: `${operationName} variables`,
+    type: "object",
+    ...required.length > 0 ? { required } : {},
+    properties
+  };
+}
+function graphqlComponents(types) {
+  const schemas = {};
+  for (const [name, type] of Object.entries(types)) {
+    if (name === "Query" || name === "Mutation") continue;
+    const properties = {};
+    const required = [];
+    for (const field of type.fields) {
+      properties[field.name] = graphqlTypeToSchema(field.type);
+      if (isGraphqlRequired(field.type)) {
+        required.push(field.name);
+      }
+    }
+    schemas[name] = {
+      type: "object",
+      ...required.length > 0 ? { required } : {},
+      properties
+    };
+  }
+  return schemas;
+}
+function graphqlTypeToSchema(type) {
+  const isList = type.includes("[");
+  const cleanType = graphqlTypeName(type);
+  const scalar = graphqlScalarSchema(cleanType);
+  const schema = scalar ?? { $ref: `#/components/schemas/${cleanType}` };
+  return isList ? { type: "array", items: schema } : schema;
+}
+function graphqlScalarSchema(type) {
+  switch (type) {
+    case "ID":
+    case "String":
+      return { type: "string" };
+    case "Int":
+      return { type: "integer" };
+    case "Float":
+      return { type: "number" };
+    case "Boolean":
+      return { type: "boolean" };
+    default:
+      return void 0;
+  }
+}
+function graphqlTypeName(type) {
+  return type.replaceAll("!", "").replaceAll("[", "").replaceAll("]", "");
+}
+function isGraphqlRequired(type) {
+  return type.trim().endsWith("!");
+}
+function asyncApiToOpenApi(content, title) {
+  const parsed = parseStructured(content);
+  const document = baseDocument(title);
+  document.webhooks = {};
+  const components = recordValue2(parsed.components);
+  const schemas = recordValue2(components.schemas);
+  if (Object.keys(schemas).length > 0) {
+    document.components = { schemas: cloneJsonValue(schemas) };
+  }
+  const channels = recordValue2(parsed.channels);
+  for (const channelName of Object.keys(channels)) {
+    const channel = recordValue2(channels[channelName]);
+    const operations = asyncApiChannelOperations(channel);
+    for (const [index, operation2] of operations.entries()) {
+      const webhookName = operations.length === 1 ? safeWebhookName(channelName) : safeWebhookName(`${channelName}_${operation2.direction}`);
+      document.webhooks[webhookName] = {
+        post: asyncApiWebhookOperation(channelName, operation2.direction, operation2.operation, components, index)
+      };
+    }
+  }
+  if (Object.keys(document.webhooks).length === 0) {
+    document.webhooks.event = document.webhooks.event ?? {
+      post: { operationId: "receiveEvent", responses: { "200": { description: "Event accepted" } } }
+    };
+  }
+  return document;
+}
+function asyncApiChannelOperations(channel) {
+  const operations = [];
+  for (const direction of ["subscribe", "publish"]) {
+    const operation2 = recordValue2(channel[direction]);
+    if (Object.keys(operation2).length > 0) {
+      operations.push({ direction, operation: operation2 });
+    }
+  }
+  return operations;
+}
+function asyncApiWebhookOperation(channelName, direction, operation2, components, index) {
+  const message = asyncApiMessage(operation2.message, components);
+  const media = {
+    schema: asyncApiPayloadSchema(message)
+  };
+  const examples = asyncApiExamples(message.examples);
+  if (Object.keys(examples).length > 0) {
+    media.examples = examples;
+  }
+  return {
+    operationId: safeOperationName2(`${direction} ${channelName} ${index === 0 ? "" : index + 1}`),
+    summary: stringValue(operation2.summary) || stringValue(message.summary) || `${direction === "subscribe" ? "Receive" : "Publish"} ${channelName}`,
+    "x-asyncapi-channel": channelName,
+    "x-asyncapi-operation": direction,
+    requestBody: {
+      required: false,
+      content: {
+        "application/json": media
+      }
+    },
+    responses: { "200": { description: "Event accepted" } }
+  };
+}
+function asyncApiMessage(messageValue, components) {
+  if (Array.isArray(messageValue)) {
+    return asyncApiMessage(messageValue[0], components);
+  }
+  const message = recordValue2(messageValue);
+  const ref = stringValue(message.$ref);
+  if (ref.startsWith("#/components/messages/")) {
+    const name = ref.slice("#/components/messages/".length);
+    return recordValue2(recordValue2(components.messages)[name]);
+  }
+  return message;
+}
+function asyncApiPayloadSchema(message) {
+  const payload2 = message.payload;
+  if (payload2 && typeof payload2 === "object") {
+    return cloneJsonValue(payload2);
+  }
+  return { type: "object", additionalProperties: true };
+}
+function asyncApiExamples(examplesValue) {
+  const examples = {};
+  for (const [index, example] of arrayValue(examplesValue).entries()) {
+    const record = recordValue2(example);
+    const name = stringValue(record.name) || `example${index + 1}`;
+    const value = "payload" in record ? record.payload : record;
+    examples[name] = {
+      ...stringValue(record.summary) ? { summary: stringValue(record.summary) } : {},
+      value: cloneJsonValue(value)
+    };
+  }
+  return examples;
+}
+function postmanToOpenApi(content, title) {
+  const parsed = parseStructured(content);
+  const document = baseDocument(stringValue(recordValue2(parsed.info).name) || title);
+  for (const request of postmanRequests(parsed.item)) {
+    const method = request.method.toLowerCase();
+    const path15 = request.path;
+    const operation2 = {
+      operationId: safeOperationName2(`${method} ${path15}`),
+      summary: request.name,
+      responses: postmanResponsesToOpenApi(request.responses)
+    };
+    const parameters = [...request.queryParams, ...request.headers];
+    if (parameters.length > 0) {
+      operation2.parameters = parameters;
+    }
+    if (request.authType) {
+      operation2["x-postman-auth-type"] = request.authType;
+    }
+    if (request.body) {
+      operation2.requestBody = {
+        required: false,
+        content: {
+          [request.body.mediaType]: {
+            schema: schemaFromExample(request.body.example),
+            example: request.body.example
+          }
+        }
+      };
+    }
+    document.paths[path15] = {
+      ...recordValue2(document.paths[path15]),
+      [method]: operation2
+    };
+  }
+  if (Object.keys(document.paths).length === 0) {
+    document.paths["/postman-request"] = { post: { operationId: "postmanRequest", responses: { "200": { description: "Response" } } } };
+  }
+  return document;
+}
+function protobufToOpenApi(content, title) {
+  const document = baseDocument(title);
+  const servicePattern = /service\s+([A-Za-z_][\w]*)\s*\{([\s\S]*?)\}/g;
+  for (const serviceMatch of content.matchAll(servicePattern)) {
+    const serviceName = serviceMatch[1] ?? "Service";
+    const body = serviceMatch[2] ?? "";
+    for (const rpcMatch of body.matchAll(/rpc\s+([A-Za-z_][\w]*)\s*\(/g)) {
+      const methodName = rpcMatch[1] ?? "Method";
+      addRpcPath(document, serviceName, methodName);
+    }
+  }
+  if (Object.keys(document.paths).length === 0) {
+    document.paths["/protobuf"] = { post: { operationId: "protobufRequest", responses: { "200": { description: "Response" } } } };
+  }
+  return document;
+}
+function smithyToOpenApi(content, title) {
+  const document = baseDocument(title);
+  const serviceName = content.match(/\bservice\s+([A-Za-z_][\w]*)/)?.[1] ?? "SmithyService";
+  const operations = /* @__PURE__ */ new Set();
+  const serviceBody = content.match(/\bservice\s+[A-Za-z_][\w]*\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+  for (const operation2 of serviceBody.match(/operations\s*:\s*\[([^\]]+)\]/)?.[1]?.split(",") ?? []) {
+    const name = operation2.trim().replace(/^#/, "");
+    if (name) operations.add(name);
+  }
+  for (const operationMatch of content.matchAll(/\boperation\s+([A-Za-z_][\w]*)/g)) {
+    operations.add(operationMatch[1] ?? "");
+  }
+  for (const operation2 of [...operations].filter(Boolean)) {
+    addRpcPath(document, serviceName, operation2);
+  }
+  if (Object.keys(document.paths).length === 0) {
+    document.paths[`/${serviceName}`] = { post: { operationId: safeOperationName2(serviceName), responses: { "200": { description: "Response" } } } };
+  }
+  return document;
+}
+function schemaToOpenApi(content, title, format2 = "json-schema") {
+  const parsed = parseStructured(content);
+  const schema = format2 === "avro" ? avroToJsonSchema(parsed) : Object.keys(parsed).length > 0 ? parsed : { type: "object", additionalProperties: true };
+  const name = schemaComponentName(parsed, title);
+  const document = baseDocument(title);
+  document.components = {
+    schemas: {
+      [name]: schema
+    }
+  };
+  document.paths[`/${kebabCase(name)}`] = {
+    post: {
+      operationId: `submit${pascalCase(name)}`,
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: { $ref: `#/components/schemas/${name}` }
+          }
+        }
+      },
+      responses: { "202": { description: "Accepted" } }
+    }
+  };
+  return document;
+}
+function schemaComponentName(parsed, title) {
+  return stringValue(parsed.title) || stringValue(parsed.name) || schemaNameFromId(stringValue(parsed.$id) || stringValue(parsed.id)) || pascalCase(title) || "Schema";
+}
+function schemaNameFromId(id) {
+  if (!id) return void 0;
+  const candidate = id.split(/[/#]/).filter(Boolean).pop() ?? "";
+  const safe = pascalCase(candidate);
+  return safe === "Operation" ? void 0 : safe;
+}
+function avroToJsonSchema(schema) {
+  const record = recordValue2(schema);
+  if (stringValue(record.type) === "record") {
+    const properties = {};
+    const required = [];
+    for (const field of arrayValue(record.fields)) {
+      const fieldRecord = recordValue2(field);
+      const name = stringValue(fieldRecord.name);
+      if (!name) continue;
+      properties[name] = avroFieldTypeToJsonSchema(fieldRecord.type);
+      if (fieldRecord.default === void 0 && !avroTypeAllowsNull(fieldRecord.type)) {
+        required.push(name);
+      }
+    }
+    return {
+      type: "object",
+      ...required.length > 0 ? { required } : {},
+      properties
+    };
+  }
+  return Object.keys(record).length > 0 ? cloneJsonValue(record) : { type: "object", additionalProperties: true };
+}
+function avroFieldTypeToJsonSchema(type) {
+  if (Array.isArray(type)) {
+    const nonNull = type.find((entry) => entry !== "null") ?? "string";
+    return avroFieldTypeToJsonSchema(nonNull);
+  }
+  if (typeof type === "string") {
+    switch (type) {
+      case "string":
+      case "enum":
+        return { type: "string" };
+      case "int":
+      case "long":
+        return { type: "integer" };
+      case "float":
+      case "double":
+        return { type: "number" };
+      case "boolean":
+        return { type: "boolean" };
+      case "bytes":
+        return { type: "string", format: "byte" };
+      default:
+        return { type: "object", additionalProperties: true };
+    }
+  }
+  const record = recordValue2(type);
+  if (stringValue(record.type) === "array") {
+    return { type: "array", items: avroFieldTypeToJsonSchema(record.items) };
+  }
+  if (stringValue(record.type) === "record") {
+    return avroToJsonSchema(record);
+  }
+  return { type: "object", additionalProperties: true };
+}
+function avroTypeAllowsNull(type) {
+  return Array.isArray(type) && type.includes("null");
+}
+function swaggerToOpenApi(content, title) {
+  const parsed = parseStructured(content);
+  const document = baseDocument(stringValue(recordValue2(parsed.info).title) || title, "3.0.3");
+  const paths = recordValue2(parsed.paths);
+  for (const [pathName, pathItem] of Object.entries(paths)) {
+    document.paths[pathName] = pathItem;
+  }
+  return document;
+}
+function emptyPartial(title) {
+  const document = baseDocument(title);
+  document.paths["/artifact"] = {
+    post: {
+      operationId: "submitArtifact",
+      responses: { "202": { description: "Accepted" } }
+    }
+  };
+  return document;
+}
+function addRpcPath(document, serviceName, methodName) {
+  document.paths[`/${serviceName}/${methodName}`] = {
+    post: {
+      operationId: safeOperationName2(`${serviceName} ${methodName}`),
+      summary: `${serviceName}.${methodName}`,
+      requestBody: {
+        required: false,
+        content: {
+          "application/json": {
+            schema: { type: "object", additionalProperties: true }
+          }
+        }
+      },
+      responses: { "200": { description: "Response" } }
+    }
+  };
+}
+function postmanRequests(items, parentName = "") {
+  if (!Array.isArray(items)) return [];
+  const requests = [];
+  for (const item of items) {
+    const record = recordValue2(item);
+    const name = stringValue(record.name) || parentName || "Request";
+    if (record.request) {
+      const request = recordValue2(record.request);
+      requests.push({
+        name,
+        method: stringValue(request.method) || "GET",
+        path: postmanPath(request.url),
+        queryParams: postmanQueryParameters(request.url),
+        headers: postmanHeaderParameters(request.header),
+        authType: stringValue(recordValue2(request.auth).type),
+        body: postmanRequestBody(request.body),
+        responses: postmanResponses(record.response)
+      });
+    }
+    requests.push(...postmanRequests(record.item, name));
+  }
+  return requests;
+}
+function postmanPath(url) {
+  if (typeof url === "string") {
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname || "/";
+    } catch {
+      return url.startsWith("/") ? url : `/${url}`;
+    }
+  }
+  const record = recordValue2(url);
+  const path15 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
+  if (!path15) return "/";
+  if (/^https?:\/\//i.test(path15)) {
+    try {
+      return new URL(path15).pathname || "/";
+    } catch {
+      return "/";
+    }
+  }
+  return path15.startsWith("/") ? path15 : `/${path15}`;
+}
+function postmanQueryParameters(url) {
+  const record = recordValue2(url);
+  const query = Array.isArray(record.query) ? record.query : [];
+  return query.map((entry) => recordValue2(entry)).filter((entry) => stringValue(entry.key)).map((entry) => ({
+    name: stringValue(entry.key),
+    in: "query",
+    required: false,
+    schema: { type: "string" },
+    ...stringValue(entry.value) ? { example: stringValue(entry.value) } : {}
+  }));
+}
+function postmanHeaderParameters(headers) {
+  return arrayValue(headers).map((entry) => recordValue2(entry)).filter((entry) => stringValue(entry.key)).map((entry) => ({
+    name: stringValue(entry.key),
+    in: "header",
+    required: false,
+    schema: { type: "string" },
+    ...stringValue(entry.value) ? { example: stringValue(entry.value) } : {}
+  }));
+}
+function postmanRequestBody(bodyValue) {
+  const body = recordValue2(bodyValue);
+  if (!body.mode) return void 0;
+  if (stringValue(body.mode) === "raw") {
+    const raw = stringValue(body.raw);
+    return { mediaType: postmanRawMediaType(body), example: parseJsonOrString(raw) };
+  }
+  return void 0;
+}
+function postmanRawMediaType(body) {
+  const language = stringValue(recordValue2(recordValue2(body.options).raw).language).toLowerCase();
+  return language === "json" ? "application/json" : "text/plain";
+}
+function postmanResponses(responsesValue) {
+  return arrayValue(responsesValue).map((response) => {
+    const record = recordValue2(response);
+    const code = Number(record.code);
+    const rawBody = stringValue(record.body);
+    return {
+      name: stringValue(record.name) || "Response",
+      code: Number.isFinite(code) ? String(code) : "200",
+      ...rawBody ? { body: parseJsonOrString(rawBody) } : {}
+    };
+  });
+}
+function postmanResponsesToOpenApi(responses) {
+  if (responses.length === 0) {
+    return { "200": { description: "Response" } };
+  }
+  const result = {};
+  for (const response of responses) {
+    result[response.code] = {
+      description: response.name,
+      ...response.body !== void 0 ? {
+        content: {
+          "application/json": {
+            schema: schemaFromExample(response.body),
+            example: response.body
+          }
+        }
+      } : {}
+    };
+  }
+  return result;
+}
+function parseJsonOrString(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+function schemaFromExample(value) {
+  if (Array.isArray(value)) {
+    return { type: "array", items: value.length > 0 ? schemaFromExample(value[0]) : {} };
+  }
+  if (value && typeof value === "object") {
+    const properties = {};
+    for (const [key, nestedValue] of Object.entries(value)) {
+      properties[key] = schemaFromExample(nestedValue);
+    }
+    return { type: "object", properties };
+  }
+  switch (typeof value) {
+    case "number":
+      return Number.isInteger(value) ? { type: "integer" } : { type: "number" };
+    case "boolean":
+      return { type: "boolean" };
+    case "string":
+      return { type: "string" };
+    default:
+      return {};
+  }
+}
+function parseStructured(content) {
+  try {
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    return recordValue2(parsed);
+  } catch {
+    return {};
+  }
+}
+function titleFromContent(content) {
+  const parsed = parseStructured(content);
+  const infoTitle = stringValue(recordValue2(parsed.info).title);
+  if (infoTitle) return infoTitle;
+  return stringValue(parsed.name);
+}
+function openApiVersion(content) {
+  const parsed = parseStructured(content);
+  const version = stringValue(parsed.openapi);
+  if (version.startsWith("3.1")) return "3.1.0";
+  if (version.startsWith("3.")) return "3.0.3";
+  return void 0;
+}
+function recordValue2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function arrayValue(value) {
+  return Array.isArray(value) ? value : [];
+}
+function stringValue(value) {
+  return typeof value === "string" ? value : "";
+}
+function cloneJsonValue(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function safeOperationName2(value) {
+  const words = value.replace(/^\//, "").replace(/[^A-Za-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "operation";
+  return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
+}
+function safeWebhookName(value) {
+  return value.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "event";
+}
+function pascalCase(value) {
+  const camel = safeOperationName2(value);
+  return `${camel.slice(0, 1).toUpperCase()}${camel.slice(1)}`;
+}
+function kebabCase(value) {
+  return value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "schema";
+}
+
 // src/lib/providers/appsync.ts
 var AppSyncProvider = class {
   constructor(client) {
@@ -137635,7 +138781,7 @@ var EventBridgeSchemasProvider = class {
 };
 
 // src/lib/providers/cloudformation.ts
-var import_yaml3 = __toESM(require_dist(), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
 var import_promises7 = require("node:fs/promises");
 var import_node_path12 = __toESM(require("node:path"), 1);
 
@@ -137677,7 +138823,7 @@ function isOpenApiDocument(value) {
 }
 function detectOpenApiContent(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml3.parse)(content, { customTags: CFN_CUSTOM_TAGS });
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml6.parse)(content, { customTags: CFN_CUSTOM_TAGS });
     return isOpenApiDocument(parsed);
   } catch {
     return false;
@@ -137786,7 +138932,7 @@ var CloudFormationProvider = class {
         process.emitWarning = (() => {
         });
         try {
-          template = (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+          template = (0, import_yaml6.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
         } finally {
           process.emitWarning = originalWarn;
         }
@@ -137947,16 +139093,16 @@ function synthesizeLambdaUrlOpenApi(args) {
   const lines = [];
   lines.push("openapi: 3.0.3");
   lines.push("info:");
-  lines.push(`  title: ${quoteYaml2(args.title)}`);
-  lines.push(`  description: ${quoteYaml2(`Synthesized specification for Lambda Function URL (${args.authType}). Lambda functions accept any path and method; this spec uses a catch-all path.`)}`);
+  lines.push(`  title: ${quoteYaml(args.title)}`);
+  lines.push(`  description: ${quoteYaml(`Synthesized specification for Lambda Function URL (${args.authType}). Lambda functions accept any path and method; this spec uses a catch-all path.`)}`);
   lines.push('  version: "1.0.0"');
   lines.push("servers:");
-  lines.push(`  - url: ${quoteYaml2(stripTrailingSlash(args.functionUrl))}`);
-  lines.push(`    description: ${quoteYaml2("Lambda Function URL endpoint")}`);
-  lines.push(`x-aws-lambda-function-arn: ${quoteYaml2(args.functionArn)}`);
-  lines.push(`x-aws-lambda-function-url-auth-type: ${quoteYaml2(args.authType)}`);
+  lines.push(`  - url: ${quoteYaml(stripTrailingSlash(args.functionUrl))}`);
+  lines.push(`    description: ${quoteYaml("Lambda Function URL endpoint")}`);
+  lines.push(`x-aws-lambda-function-arn: ${quoteYaml(args.functionArn)}`);
+  lines.push(`x-aws-lambda-function-url-auth-type: ${quoteYaml(args.authType)}`);
   if (args.invokeMode) {
-    lines.push(`x-aws-lambda-invoke-mode: ${quoteYaml2(args.invokeMode)}`);
+    lines.push(`x-aws-lambda-invoke-mode: ${quoteYaml(args.invokeMode)}`);
   }
   if (args.cors) {
     lines.push("x-aws-cors:");
@@ -137966,25 +139112,25 @@ function synthesizeLambdaUrlOpenApi(args) {
     if (args.cors.allowOrigins?.length) {
       lines.push("  allowOrigins:");
       for (const origin of args.cors.allowOrigins) {
-        lines.push(`    - ${quoteYaml2(origin)}`);
+        lines.push(`    - ${quoteYaml(origin)}`);
       }
     }
     if (args.cors.allowMethods?.length) {
       lines.push("  allowMethods:");
       for (const method of args.cors.allowMethods) {
-        lines.push(`    - ${quoteYaml2(method)}`);
+        lines.push(`    - ${quoteYaml(method)}`);
       }
     }
     if (args.cors.allowHeaders?.length) {
       lines.push("  allowHeaders:");
       for (const header of args.cors.allowHeaders) {
-        lines.push(`    - ${quoteYaml2(header)}`);
+        lines.push(`    - ${quoteYaml(header)}`);
       }
     }
     if (args.cors.exposeHeaders?.length) {
       lines.push("  exposeHeaders:");
       for (const header of args.cors.exposeHeaders) {
-        lines.push(`    - ${quoteYaml2(header)}`);
+        lines.push(`    - ${quoteYaml(header)}`);
       }
     }
     if (args.cors.maxAge !== void 0) {
@@ -138002,7 +139148,7 @@ function synthesizeLambdaUrlOpenApi(args) {
   lines.push("          type: string");
   for (const method of STANDARD_METHODS) {
     lines.push(`    ${method}:`);
-    lines.push(`      summary: ${quoteYaml2(`${method.toUpperCase()} request handled by Lambda`)}`);
+    lines.push(`      summary: ${quoteYaml(`${method.toUpperCase()} request handled by Lambda`)}`);
     lines.push(`      operationId: ${method}LambdaUrl`);
     if (args.authType === "AWS_IAM") {
       lines.push("      security:");
@@ -138047,7 +139193,7 @@ function synthesizeLambdaUrlOpenApi(args) {
 function stripTrailingSlash(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
-function quoteYaml2(value) {
+function quoteYaml(value) {
   const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   return `"${escaped}"`;
 }
@@ -138207,12 +139353,12 @@ var SsmProvider = class {
 var import_node_child_process = require("node:child_process");
 var import_promises10 = require("node:fs/promises");
 var import_node_path15 = __toESM(require("node:path"), 1);
-var import_yaml6 = __toESM(require_dist(), 1);
+var import_yaml9 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
 var import_promises8 = require("node:fs/promises");
 var import_node_path13 = __toESM(require("node:path"), 1);
-var import_yaml4 = __toESM(require_dist(), 1);
+var import_yaml7 = __toESM(require_dist(), 1);
 async function detectCatalogApis(repoRoot) {
   const candidates = ["catalog-info.yaml", "catalog-info.yml"];
   let content;
@@ -138226,7 +139372,7 @@ async function detectCatalogApis(repoRoot) {
   if (!content) return void 0;
   let docs;
   try {
-    docs = (0, import_yaml4.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+    docs = (0, import_yaml7.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
   } catch {
     return void 0;
   }
@@ -138263,7 +139409,7 @@ async function detectCatalogApis(repoRoot) {
 // src/lib/providers/sns-code-derived.ts
 var import_promises9 = require("node:fs/promises");
 var import_node_path14 = __toESM(require("node:path"), 1);
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_yaml8 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
 var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
@@ -138396,7 +139542,7 @@ function parseStaticJavaSnsAnnotation(content, topicHints) {
 }
 function detectAsyncApiFormat(content, filePath) {
   try {
-    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
       return void 0;
     }
@@ -138764,7 +139910,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
   }
   let parsed;
   try {
-    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml6.parse)(content);
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml9.parse)(content);
   } catch {
     return content;
   }
@@ -138816,7 +139962,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
       }
     }
   }
-  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml6.stringify)(document);
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml9.stringify)(document);
 }
 var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
 var SPEC_POINTER_FILENAME = "spec-pointer.json";
@@ -138961,7 +140107,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
     if (!content) continue;
     let parsed;
     try {
-      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
     } catch {
       continue;
     }
@@ -139016,7 +140162,7 @@ function detectFormat2(content, filenameHint) {
   } catch {
   }
   try {
-    const parsed = (0, import_yaml6.parse)(trimmed);
+    const parsed = (0, import_yaml9.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
@@ -139028,7 +140174,7 @@ function parseStructuredDocument(value) {
   try {
     return JSON.parse(value);
   } catch {
-    return (0, import_yaml6.parse)(value);
+    return (0, import_yaml9.parse)(value);
   }
 }
 function getSchemaByRef(document, ref) {
@@ -139254,7 +140400,7 @@ function canonicalPayloadSchema(canonical) {
   }
   if (canonical.format === "asyncapi-yaml") {
     try {
-      return extractAsyncApiPayloadSchema((0, import_yaml6.parse)(canonical.content));
+      return extractAsyncApiPayloadSchema((0, import_yaml9.parse)(canonical.content));
     } catch {
       return { payloadSchema: { type: "object" } };
     }
@@ -139279,6 +140425,72 @@ function buildWebhookPayloadSchema(rawDelivery, baseSchema) {
     additionalProperties: true
   };
 }
+function parseSnsPolicyExtension(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return void 0;
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return trimmed;
+  }
+}
+function distinctExtensionValues(values) {
+  const seen = /* @__PURE__ */ new Set();
+  const distinct = [];
+  for (const value of values) {
+    if (value === void 0) {
+      continue;
+    }
+    const key = JSON.stringify(value);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    distinct.push(value);
+  }
+  return distinct;
+}
+function addSingularOrPluralExtension(target, singularName, pluralName, values) {
+  const distinct = distinctExtensionValues(values);
+  if (distinct.length === 1) {
+    target[singularName] = distinct[0];
+  } else if (distinct.length > 1) {
+    target[pluralName] = distinct;
+  }
+}
+function snsWebhookOperationExtensions(rawDelivery, subscriptions) {
+  const extensions = {
+    "x-sns-raw-delivery": rawDelivery,
+    "x-sns-delivery-variant": rawDelivery ? "raw-payload" : "sns-envelope"
+  };
+  addSingularOrPluralExtension(
+    extensions,
+    "x-sns-filter-policy",
+    "x-sns-filter-policies",
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.filterPolicyRaw ?? subscription.FilterPolicy))
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    "x-sns-filter-policy-scope",
+    "x-sns-filter-policy-scopes",
+    subscriptions.map((subscription) => subscription.FilterPolicyScope ?? subscription.filterPolicyScope)
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    "x-sns-redrive-policy",
+    "x-sns-redrive-policies",
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.RedrivePolicy))
+  );
+  addSingularOrPluralExtension(
+    extensions,
+    "x-sns-delivery-policy",
+    "x-sns-delivery-policies",
+    subscriptions.map((subscription) => parseSnsPolicyExtension(subscription.DeliveryPolicy))
+  );
+  return extensions;
+}
 function buildWebhookSidecar(canonical, subscriptions) {
   const httpSubscriptions = subscriptions.filter((subscription) => {
     const protocol = (subscription.protocol ?? "").toLowerCase();
@@ -139293,10 +140505,11 @@ function buildWebhookSidecar(canonical, subscriptions) {
   const webhooks = {};
   for (const rawDelivery of variants) {
     const webhookName = rawDelivery ? "snsMessageRaw" : "snsMessageWrapped";
+    const variantSubscriptions = httpSubscriptions.filter((subscription) => subscription.variant === "raw-payload" === rawDelivery);
     webhooks[webhookName] = {
       post: {
         operationId: webhookName,
-        "x-sns-raw-delivery": rawDelivery,
+        ...snsWebhookOperationExtensions(rawDelivery, variantSubscriptions),
         requestBody: {
           required: true,
           content: {
@@ -139473,7 +140686,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
         evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
@@ -139923,7 +141136,8 @@ var SnsProvider = class {
     const subscriptions = [];
     for (const summary2 of summaries) {
       const subscriptionArn = summary2.subscriptionArn;
-      if (!subscriptionArn) {
+      if (!subscriptionArn || subscriptionArn === "PendingConfirmation") {
+        evidence.push(`Skipped pending confirmation SNS subscription for topic ${topicArn}`);
         continue;
       }
       try {
@@ -140513,6 +141727,67 @@ async function defaultWriteSpecFile(outputPath, content) {
   await (0, import_promises11.mkdir)(import_node_path16.default.dirname(outputPath), { recursive: true });
   await (0, import_promises11.writeFile)(outputPath, content, "utf8");
 }
+var CANONICAL_DERIVED_OPENAPI_FILENAME = "openapi.derived.json";
+var CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME = "openapi.derived-2.json";
+function derivedOpenApiFilename(sidecars = []) {
+  return sidecars.some((sidecar) => sidecar.filename === CANONICAL_DERIVED_OPENAPI_FILENAME) ? CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME : CANONICAL_DERIVED_OPENAPI_FILENAME;
+}
+function normalizeDerivedOpenApiJson(derivation) {
+  try {
+    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml10.parse)(derivation.content) : JSON.parse(derivation.content);
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("derived OpenAPI document did not parse to an object");
+    }
+    return { content: `${JSON.stringify(parsed, null, 2)}
+`, evidence: derivation.evidence };
+  } catch (error3) {
+    const detail = error3 instanceof Error ? error3.message : String(error3);
+    return {
+      content: "",
+      evidence: [...derivation.evidence, `Skipped derived OpenAPI sidecar because canonical JSON serialization failed: ${detail}`]
+    };
+  }
+}
+async function writeResolvedArtifactWithDerivedOpenApi(input) {
+  if (!input.dryRun && input.native) {
+    const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, "output-dir");
+    await input.writeSpecFile(absoluteSpecPath, input.native.content);
+  }
+  if (!input.dryRun) {
+    for (const sidecar of input.sidecars ?? []) {
+      const relativeSidecarPath = import_node_path16.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
+      const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
+      await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
+    }
+  }
+  if (!input.derivation) {
+    return {};
+  }
+  const derived = deriveOpenApiDocument(input.derivation);
+  const completeness = input.derivation.forceCompleteness ?? derived.completeness;
+  const normalized = normalizeDerivedOpenApiJson(derived);
+  if (!normalized.content) {
+    return {
+      derivedOpenApiVersion: derived.version,
+      derivedOpenApiCompleteness: completeness,
+      derivedOpenApiFormat: "openapi-json",
+      derivedOpenApiEvidence: normalized.evidence
+    };
+  }
+  const filename = derivedOpenApiFilename(input.sidecars);
+  const relativeDerivedPath = import_node_path16.default.join(input.relativeDir, filename).replace(/\\/g, "/");
+  if (!input.dryRun) {
+    const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, "output-dir");
+    await input.writeSpecFile(absoluteDerivedPath, normalized.content);
+  }
+  return {
+    derivedOpenApiPath: relativeDerivedPath,
+    derivedOpenApiVersion: derived.version,
+    derivedOpenApiCompleteness: completeness,
+    derivedOpenApiFormat: "openapi-json",
+    derivedOpenApiEvidence: input.dryRun ? [...normalized.evidence, "Dry run enabled; skipped derived OpenAPI sidecar write"] : normalized.evidence
+  };
+}
 function normalizeApiGatewaySpec(body, candidate, reporter) {
   let result;
   try {
@@ -140529,6 +141804,26 @@ function normalizeApiGatewaySpec(body, candidate, reporter) {
     reporter.info(`operationId normalized: ${candidate.id} ${rename2.method.toUpperCase()} ${rename2.path} \`${from}\` -> \`${rename2.renamed}\``);
   }
   return result.content;
+}
+async function exportApiGatewaySpecBody(aws, candidate, stage) {
+  try {
+    const content = candidate.gatewayType === "REST" ? await aws.exportRestApi(candidate.id, stage ?? "") : candidate.gatewayType === "WEBSOCKET" ? await aws.exportWebSocketApi(candidate.id, stage) : await aws.exportHttpApi(candidate.id, stage);
+    return { content, fallback: false, evidence: [] };
+  } catch (error3) {
+    const parsed = parseAwsError(error3);
+    if (candidate.gatewayType === "REST" && aws.exportRestApiFallback && isRestExportFallbackError2(parsed)) {
+      const content = await aws.exportRestApiFallback(candidate.id, stage);
+      return {
+        content,
+        fallback: true,
+        evidence: [
+          `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed`,
+          formatUserSafeError(error3)
+        ]
+      };
+    }
+    throw error3;
+  }
 }
 async function selectStage(aws, candidate, preferredStage) {
   if (preferredStage) {
@@ -140826,15 +142121,20 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
   const relativeProviderPath = import_node_path16.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
   const relativeMetadataPath = metadataSidecar ? import_node_path16.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
-  if (!inputs.dryRun) {
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, "output-dir");
-    await writeSpecFile(absoluteSpecPath, result.content);
-    for (const sidecar of result.sidecars ?? []) {
-      const relativeSidecarPath = import_node_path16.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
-      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
-      await writeSpecFile(absoluteSidecarPath, sidecar.content);
-    }
-  }
+  const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+    repoRoot: inputs.repoRoot,
+    relativeDir: relativeProviderDir,
+    native: { relativePath: relativeProviderPath, content: result.content },
+    sidecars: result.sidecars,
+    derivation: {
+      content: result.content,
+      format: result.format,
+      title: serviceName,
+      forceCompleteness: result.derivedOpenApiCompleteness === "partial" || resolved.provider.type === "lambda-url" ? "partial" : void 0
+    },
+    dryRun: inputs.dryRun,
+    writeSpecFile
+  });
   return {
     status: "resolved",
     sourceType: resolved.sourceType,
@@ -140847,6 +142147,7 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...inputs.dryRun ? ["Dry run enabled; skipped provider spec file write"] : []]
   };
 }
@@ -140899,12 +142200,15 @@ async function resolveStageSelection(aws, candidate, preferredStage) {
 function toManualReviewResult(base, extraEvidence) {
   return { ...base, status: "unresolved", sourceType: "manual-review", evidence: [...base.evidence, ...extraEvidence] };
 }
-function isKnownRestExportLimitation(message) {
+function isKnownRestExportLimitation2(message) {
   const lowered = message.toLowerCase();
   return lowered.includes("non-json body models") || lowered.includes("json body models are not found");
 }
 function isManualReviewExportError(error3) {
-  return error3.name === "BadRequestException" || isKnownRestExportLimitation(error3.message);
+  return error3.name === "BadRequestException" || isKnownRestExportLimitation2(error3.message);
+}
+function isRestExportFallbackError2(error3) {
+  return error3.name === "BadRequestException" || isKnownRestExportLimitation2(error3.message);
 }
 async function runPreflight(inputs, dependencies) {
   if (!inputs.preflightChecks) {
@@ -140977,11 +142281,22 @@ async function runDiscovery(inputs, dependencies) {
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
           continue;
         }
-        const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
         const exportedStage = stage ?? "";
-        const rawSpecBody = candidate.gatewayType === "REST" ? await dependencies.aws.exportRestApi(candidate.id, exportedStage) : candidate.gatewayType === "WEBSOCKET" ? await dependencies.aws.exportWebSocketApi(candidate.id, stage) : await dependencies.aws.exportHttpApi(candidate.id, stage);
-        const specBody = normalizeApiGatewaySpec(rawSpecBody, candidate, dependencies.core);
-        await dependencies.writeSpecFile(absoluteSpecPath, specBody);
+        const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
+        const specBody = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+          repoRoot: resolvedRoot,
+          relativeDir: import_node_path16.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+          native: { relativePath: relativeSpecPath, content: specBody },
+          derivation: {
+            content: specBody,
+            format: "openapi-yaml",
+            title: serviceName,
+            forceCompleteness: candidate.gatewayType === "WEBSOCKET" || exported.fallback ? "partial" : void 0
+          },
+          dryRun: inputs.dryRun,
+          writeSpecFile: dependencies.writeSpecFile
+        });
         summary2.exported += 1;
         discovered.push({
           serviceName,
@@ -140990,8 +142305,12 @@ async function runDiscovery(inputs, dependencies) {
           gatewayType: candidate.gatewayType,
           stage: exportedStage,
           providerType: "api-gateway",
-          specFormat: "openapi-yaml"
+          specFormat: "openapi-yaml",
+          ...derivedOpenApi
         });
+        for (const evidence of exported.evidence) {
+          dependencies.core.info(evidence);
+        }
         dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
       } catch (error3) {
         summary2.failed += 1;
@@ -141217,7 +142536,33 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
   }
   if (selectedSource.sourceType === "repo-spec") {
-    return selectedSource;
+    if (!selectedSource.specPath || !selectedSource.specFormat) {
+      return selectedSource;
+    }
+    const relativeProviderDir = import_node_path16.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+    try {
+      const absoluteRepoSpecPath = resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, "repo-spec-path");
+      const content = await (0, import_promises11.readFile)(absoluteRepoSpecPath, "utf8");
+      const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+        repoRoot: inputs.repoRoot,
+        relativeDir: relativeProviderDir,
+        derivation: {
+          content,
+          format: selectedSource.specFormat,
+          title: selectedSource.serviceName
+        },
+        dryRun: inputs.dryRun,
+        writeSpecFile
+      });
+      return { ...selectedSource, ...derivedOpenApi };
+    } catch (error3) {
+      return {
+        ...selectedSource,
+        derivedOpenApiEvidence: [
+          `Skipped derived OpenAPI sidecar for repo spec ${selectedSource.specPath}: ${formatUserSafeError(error3)}`
+        ]
+      };
+    }
   }
   if (selectedSource.sourceType === "gateway-export" && selectedSource.gatewayId) {
     const selectedGateway = finalCandidates.find((candidate) => candidate.id === selectedSource.gatewayId);
@@ -141241,23 +142586,42 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       selectedSource.evidence = [...selectedSource.evidence, "Dry run enabled; skipped export and file write"];
       return selectedSource;
     }
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeSpecPath, "output-dir");
     try {
-      const rawBody = selectedSource.gatewayType === "REST" ? await awsClient.exportRestApi(selectedSource.gatewayId, selectedSource.stage ?? "") : selectedSource.gatewayType === "WEBSOCKET" ? await awsClient.exportWebSocketApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage) : await awsClient.exportHttpApi(selectedSource.gatewayId, stageSelection.useLatestConfig ? void 0 : selectedSource.stage);
+      const exported = await exportApiGatewaySpecBody(
+        awsClient,
+        { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType },
+        selectedSource.gatewayType === "REST" ? selectedSource.stage : stageSelection.useLatestConfig ? void 0 : selectedSource.stage
+      );
       const body = normalizeApiGatewaySpec(
-        rawBody,
+        exported.content,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
         actionCore
       );
-      await writeSpecFile(absoluteSpecPath, body);
+      const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+        repoRoot: inputs.repoRoot,
+        relativeDir: import_node_path16.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+        native: { relativePath: relativeSpecPath, content: body },
+        derivation: {
+          content: body,
+          format: "openapi-yaml",
+          title: selectedSource.serviceName,
+          forceCompleteness: selectedSource.gatewayType === "WEBSOCKET" || exported.fallback ? "partial" : void 0
+        },
+        dryRun: inputs.dryRun,
+        writeSpecFile
+      });
       selectedSource.specPath = relativeSpecPath;
       selectedSource.providerType = "api-gateway";
       selectedSource.specFormat = "openapi-yaml";
+      Object.assign(selectedSource, derivedOpenApi);
       if (selectedSource.gatewayType === "WEBSOCKET") {
         selectedSource.evidence = [
           ...selectedSource.evidence,
           `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${selectedSource.gatewayId}`
         ];
+      }
+      if (exported.evidence.length > 0) {
+        selectedSource.evidence = [...selectedSource.evidence, ...exported.evidence];
       }
     } catch (error3) {
       const parsed = parseAwsError(error3);
@@ -141279,26 +142643,30 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const relativeProviderPath = import_node_path16.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
     const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
     const relativeMetadataPath = metadataSidecar ? import_node_path16.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+    const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+      repoRoot: inputs.repoRoot,
+      relativeDir: relativeProviderDir,
+      native: { relativePath: relativeProviderPath, content: resolvedSnsExport.content },
+      sidecars: resolvedSnsExport.sidecars,
+      derivation: { content: resolvedSnsExport.content, format: resolvedSnsExport.format, title: selectedSource.serviceName },
+      dryRun: inputs.dryRun,
+      writeSpecFile
+    });
     if (inputs.dryRun) {
       return {
         ...selectedSource,
         specPath: relativeProviderPath,
         metadataPath: relativeMetadataPath,
+        ...derivedOpenApi,
         evidence: [...selectedSource.evidence, "Dry run enabled; skipped SNS contract file write"]
       };
-    }
-    const absoluteSpecPath = resolvePathWithinRoot(inputs.repoRoot, relativeProviderPath, "output-dir");
-    await writeSpecFile(absoluteSpecPath, resolvedSnsExport.content);
-    for (const sidecar of resolvedSnsExport.sidecars ?? []) {
-      const relativeSidecarPath = import_node_path16.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
-      const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
-      await writeSpecFile(absoluteSidecarPath, sidecar.content);
     }
     return {
       ...selectedSource,
       specPath: relativeProviderPath,
       metadataPath: relativeMetadataPath,
-      variantCount: selectedSource.variantCount
+      variantCount: selectedSource.variantCount,
+      ...derivedOpenApi
     };
   }
   if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
@@ -141386,13 +142754,21 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
           const relativeSpecPath = import_node_path16.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
-          const absoluteSpecPath = resolvePathWithinRoot(resolvedRoot, relativeSpecPath, "output-dir");
-          await dependencies.writeSpecFile(absoluteSpecPath, result.content);
-          for (const sidecar of result.sidecars ?? []) {
-            const relativeSidecarPath = import_node_path16.default.join(inputs.outputDir, folderName, sidecar.filename).replace(/\\/g, "/");
-            const absoluteSidecarPath = resolvePathWithinRoot(resolvedRoot, relativeSidecarPath, "output-dir");
-            await dependencies.writeSpecFile(absoluteSidecarPath, sidecar.content);
-          }
+          const relativeProviderDir = import_node_path16.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
+          const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: resolvedRoot,
+            relativeDir: relativeProviderDir,
+            native: { relativePath: relativeSpecPath, content: result.content },
+            sidecars: result.sidecars,
+            derivation: {
+              content: result.content,
+              format: result.format,
+              title: serviceName,
+              forceCompleteness: result.derivedOpenApiCompleteness === "partial" || provider.type === "lambda-url" ? "partial" : void 0
+            },
+            dryRun: inputs.dryRun,
+            writeSpecFile: dependencies.writeSpecFile
+          });
           summary2.exported += 1;
           const gatewayType = candidate.meta.gatewayType ?? (provider.type === "sns" ? "SNS" : "REST");
           const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
@@ -141416,7 +142792,8 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             specFormat: result.format,
             contractOrigin,
             variantCount,
-            metadataPath: metadataSidecar ? import_node_path16.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0
+            metadataPath: metadataSidecar ? import_node_path16.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
+            ...derivedOpenApi
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
         } catch (error3) {
@@ -141456,7 +142833,12 @@ function buildExecutionOutputs(result) {
       "spec-format": discovered.length > 0 ? discovered[0]?.specFormat ?? "" : "",
       "contract-origin": "",
       "contract-metadata-path": "",
-      "variant-count": ""
+      "variant-count": "",
+      "derived-openapi-path": "",
+      "derived-openapi-version": "",
+      "derived-openapi-completeness": "",
+      "derived-openapi-format": "",
+      "derived-openapi-evidence-json": ""
     };
   }
   const resolution = result.resolution ?? {
@@ -141482,7 +142864,12 @@ function buildExecutionOutputs(result) {
     "spec-format": resolution.specFormat ?? "",
     "contract-origin": resolution.contractOrigin ?? "",
     "contract-metadata-path": resolution.metadataPath ?? "",
-    "variant-count": resolution.variantCount !== void 0 ? String(resolution.variantCount) : ""
+    "variant-count": resolution.variantCount !== void 0 ? String(resolution.variantCount) : "",
+    "derived-openapi-path": resolution.derivedOpenApiPath ?? "",
+    "derived-openapi-version": resolution.derivedOpenApiVersion ?? "",
+    "derived-openapi-completeness": resolution.derivedOpenApiCompleteness ?? "",
+    "derived-openapi-format": resolution.derivedOpenApiFormat ?? "",
+    "derived-openapi-evidence-json": JSON.stringify(resolution.derivedOpenApiEvidence ?? [])
   };
 }
 async function execute(inputs, dependencies) {
@@ -141546,313 +142933,6 @@ async function execute(inputs, dependencies) {
   };
 }
 
-// src/lib/spec/oas-derivation.ts
-var import_yaml7 = __toESM(require_dist(), 1);
-function deriveOpenApiDocument(input) {
-  const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
-  if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
-    return jsonResult(swaggerToOpenApi(input.content, title), "3.0.3", "Converted Swagger 2.0 paths to OpenAPI 3.0");
-  }
-  if (input.format === "openapi-json" || input.format === "openapi-yaml") {
-    const version = openApiVersion(input.content);
-    if (!version) {
-      return jsonResult(schemaToOpenApi(input.content, title), "3.1.0", "Wrapped mislabeled non-OAS artifact in partial OpenAPI 3.1");
-    }
-    return {
-      content: input.content,
-      format: input.format,
-      version,
-      completeness: "full",
-      evidence: ["Source artifact is already OpenAPI 3.x"]
-    };
-  }
-  switch (input.format) {
-    case "graphql-sdl":
-      return jsonResult(graphqlToOpenApi(title), "3.1.0", "Synthesized GraphQL POST endpoint as partial OpenAPI 3.1");
-    case "asyncapi-json":
-    case "asyncapi-yaml":
-      return jsonResult(asyncApiToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI 3.1 webhooks from AsyncAPI channels");
-    case "postman-collection":
-      return jsonResult(postmanToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI paths from Postman collection requests");
-    case "protobuf":
-      return jsonResult(protobufToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI RPC paths from protobuf service methods");
-    case "smithy":
-      return jsonResult(smithyToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI paths from Smithy service operations");
-    case "avro":
-    case "json-schema":
-      return jsonResult(schemaToOpenApi(input.content, title), "3.1.0", `Wrapped ${input.format} schema in a partial OpenAPI 3.1 request path`);
-    default:
-      return jsonResult(emptyPartial(title), "3.1.0", `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
-  }
-}
-function jsonResult(document, version, evidence) {
-  return {
-    content: `${JSON.stringify(document, null, 2)}
-`,
-    format: "openapi-json",
-    version,
-    completeness: "partial",
-    evidence: [evidence]
-  };
-}
-function baseDocument(title, version = "3.1.0") {
-  return {
-    openapi: version,
-    info: {
-      title,
-      version: "1.0.0"
-    },
-    paths: {}
-  };
-}
-function graphqlToOpenApi(title) {
-  const document = baseDocument(title);
-  document.paths["/graphql"] = {
-    post: {
-      operationId: "executeGraphql",
-      summary: "Execute GraphQL operation",
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              required: ["query"],
-              properties: {
-                query: { type: "string" },
-                operationName: { type: "string" },
-                variables: { type: "object", additionalProperties: true }
-              }
-            }
-          }
-        }
-      },
-      responses: { "200": { description: "GraphQL response" } }
-    }
-  };
-  return document;
-}
-function asyncApiToOpenApi(content, title) {
-  const parsed = parseStructured(content);
-  const document = baseDocument(title);
-  document.webhooks = {};
-  const channels = recordValue(parsed.channels);
-  for (const channelName of Object.keys(channels)) {
-    const webhookName = safeWebhookName(channelName);
-    document.webhooks[webhookName] = {
-      post: {
-        operationId: `receive${pascalCase(webhookName)}`,
-        summary: `Receive ${channelName}`,
-        requestBody: {
-          required: false,
-          content: {
-            "application/json": {
-              schema: { type: "object", additionalProperties: true }
-            }
-          }
-        },
-        responses: { "200": { description: "Event accepted" } }
-      }
-    };
-  }
-  if (Object.keys(document.webhooks).length === 0) {
-    document.webhooks.event = document.webhooks.event ?? {
-      post: { operationId: "receiveEvent", responses: { "200": { description: "Event accepted" } } }
-    };
-  }
-  return document;
-}
-function postmanToOpenApi(content, title) {
-  const parsed = parseStructured(content);
-  const document = baseDocument(stringValue(recordValue(parsed.info).name) || title);
-  for (const request of postmanRequests(parsed.item)) {
-    const method = request.method.toLowerCase();
-    const path15 = request.path;
-    document.paths[path15] = {
-      ...recordValue(document.paths[path15]),
-      [method]: {
-        operationId: safeOperationName(`${method} ${path15}`),
-        summary: request.name,
-        responses: { "200": { description: "Response" } }
-      }
-    };
-  }
-  if (Object.keys(document.paths).length === 0) {
-    document.paths["/postman-request"] = { post: { operationId: "postmanRequest", responses: { "200": { description: "Response" } } } };
-  }
-  return document;
-}
-function protobufToOpenApi(content, title) {
-  const document = baseDocument(title);
-  const servicePattern = /service\s+([A-Za-z_][\w]*)\s*\{([\s\S]*?)\}/g;
-  for (const serviceMatch of content.matchAll(servicePattern)) {
-    const serviceName = serviceMatch[1] ?? "Service";
-    const body = serviceMatch[2] ?? "";
-    for (const rpcMatch of body.matchAll(/rpc\s+([A-Za-z_][\w]*)\s*\(/g)) {
-      const methodName = rpcMatch[1] ?? "Method";
-      addRpcPath(document, serviceName, methodName);
-    }
-  }
-  if (Object.keys(document.paths).length === 0) {
-    document.paths["/protobuf"] = { post: { operationId: "protobufRequest", responses: { "200": { description: "Response" } } } };
-  }
-  return document;
-}
-function smithyToOpenApi(content, title) {
-  const document = baseDocument(title);
-  const serviceName = content.match(/\bservice\s+([A-Za-z_][\w]*)/)?.[1] ?? "SmithyService";
-  const operations = /* @__PURE__ */ new Set();
-  const serviceBody = content.match(/\bservice\s+[A-Za-z_][\w]*\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-  for (const operation2 of serviceBody.match(/operations\s*:\s*\[([^\]]+)\]/)?.[1]?.split(",") ?? []) {
-    const name = operation2.trim().replace(/^#/, "");
-    if (name) operations.add(name);
-  }
-  for (const operationMatch of content.matchAll(/\boperation\s+([A-Za-z_][\w]*)/g)) {
-    operations.add(operationMatch[1] ?? "");
-  }
-  for (const operation2 of [...operations].filter(Boolean)) {
-    addRpcPath(document, serviceName, operation2);
-  }
-  if (Object.keys(document.paths).length === 0) {
-    document.paths[`/${serviceName}`] = { post: { operationId: safeOperationName(serviceName), responses: { "200": { description: "Response" } } } };
-  }
-  return document;
-}
-function schemaToOpenApi(content, title) {
-  const parsed = parseStructured(content);
-  const schema = Object.keys(parsed).length > 0 ? parsed : { type: "object", additionalProperties: true };
-  const name = stringValue(parsed.name) || safeOperationName(title) || "schema";
-  const document = baseDocument(title);
-  document.paths[`/${kebabCase(name)}`] = {
-    post: {
-      operationId: `submit${pascalCase(name)}`,
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema
-          }
-        }
-      },
-      responses: { "202": { description: "Accepted" } }
-    }
-  };
-  return document;
-}
-function swaggerToOpenApi(content, title) {
-  const parsed = parseStructured(content);
-  const document = baseDocument(stringValue(recordValue(parsed.info).title) || title, "3.0.3");
-  const paths = recordValue(parsed.paths);
-  for (const [pathName, pathItem] of Object.entries(paths)) {
-    document.paths[pathName] = pathItem;
-  }
-  return document;
-}
-function emptyPartial(title) {
-  const document = baseDocument(title);
-  document.paths["/artifact"] = {
-    post: {
-      operationId: "submitArtifact",
-      responses: { "202": { description: "Accepted" } }
-    }
-  };
-  return document;
-}
-function addRpcPath(document, serviceName, methodName) {
-  document.paths[`/${serviceName}/${methodName}`] = {
-    post: {
-      operationId: safeOperationName(`${serviceName} ${methodName}`),
-      summary: `${serviceName}.${methodName}`,
-      requestBody: {
-        required: false,
-        content: {
-          "application/json": {
-            schema: { type: "object", additionalProperties: true }
-          }
-        }
-      },
-      responses: { "200": { description: "Response" } }
-    }
-  };
-}
-function postmanRequests(items, parentName = "") {
-  if (!Array.isArray(items)) return [];
-  const requests = [];
-  for (const item of items) {
-    const record = recordValue(item);
-    const name = stringValue(record.name) || parentName || "Request";
-    if (record.request) {
-      const request = recordValue(record.request);
-      requests.push({ name, method: stringValue(request.method) || "GET", path: postmanPath(request.url) });
-    }
-    requests.push(...postmanRequests(record.item, name));
-  }
-  return requests;
-}
-function postmanPath(url) {
-  if (typeof url === "string") {
-    try {
-      const parsed = new URL(url);
-      return parsed.pathname || "/";
-    } catch {
-      return url.startsWith("/") ? url : `/${url}`;
-    }
-  }
-  const record = recordValue(url);
-  const path15 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
-  if (!path15) return "/";
-  if (/^https?:\/\//i.test(path15)) {
-    try {
-      return new URL(path15).pathname || "/";
-    } catch {
-      return "/";
-    }
-  }
-  return path15.startsWith("/") ? path15 : `/${path15}`;
-}
-function parseStructured(content) {
-  try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
-    return recordValue(parsed);
-  } catch {
-    return {};
-  }
-}
-function titleFromContent(content) {
-  const parsed = parseStructured(content);
-  const infoTitle = stringValue(recordValue(parsed.info).title);
-  if (infoTitle) return infoTitle;
-  return stringValue(parsed.name);
-}
-function openApiVersion(content) {
-  const parsed = parseStructured(content);
-  const version = stringValue(parsed.openapi);
-  if (version.startsWith("3.1")) return "3.1.0";
-  if (version.startsWith("3.")) return "3.0.3";
-  return void 0;
-}
-function recordValue(value) {
-  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-}
-function stringValue(value) {
-  return typeof value === "string" ? value : "";
-}
-function safeOperationName(value) {
-  const words = value.replace(/^\//, "").replace(/[^A-Za-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return "operation";
-  return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
-}
-function safeWebhookName(value) {
-  return value.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "event";
-}
-function pascalCase(value) {
-  const camel = safeOperationName(value);
-  return `${camel.slice(0, 1).toUpperCase()}${camel.slice(1)}`;
-}
-function kebabCase(value) {
-  return value.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "schema";
-}
-
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
   const inputs = readActionInputs(actionCore);
@@ -141906,6 +142986,7 @@ var outputNames = contractOutputNames;
   runAction,
   runDiscovery,
   runResolution,
+  synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi
 });
 /*! Bundled license information:

@@ -8,6 +8,12 @@ const DIRECT_SPEC_CANDIDATES = [
   'openapi.yaml',
   'openapi.yml',
   'openapi.json',
+  'api.yaml',
+  'api.yml',
+  'api.json',
+  'oas.yaml',
+  'oas.yml',
+  'oas.json',
   'swagger.yaml',
   'swagger.yml',
   'swagger.json',
@@ -46,6 +52,8 @@ const COMMON_SCAN_DIRS = [
   'apis',
   'api-docs',
   'docs',
+  'reference',
+  'public',
   'spec',
   'specs',
   'contracts',
@@ -214,12 +222,7 @@ function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch,
 function isSpecLikeFilename(filename: string): boolean {
   const lower = filename.toLowerCase();
   return (
-    lower === 'openapi.yaml' ||
-    lower === 'openapi.yml' ||
-    lower === 'openapi.json' ||
-    lower === 'swagger.yaml' ||
-    lower === 'swagger.yml' ||
-    lower === 'swagger.json' ||
+    /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) ||
     lower === 'asyncapi.yaml' ||
     lower === 'asyncapi.yml' ||
     lower === 'asyncapi.json' ||
@@ -287,14 +290,15 @@ function specCandidateScore(candidate: string): number {
   const basename = path.basename(normalized);
   let score = 0;
   if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename !== 'smithy-build.json') score += 200;
-  if (basename.startsWith('openapi') || basename.startsWith('swagger')) score += 90;
+  if (/^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 90;
+  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 85;
   if (basename.startsWith('asyncapi')) score += 80;
   if (basename === 'schema.graphql' || basename === 'schema.gql') score += 75;
   if (basename.endsWith('.postman_collection.json')) score += 60;
   if (basename.endsWith('.proto')) score += 50;
   if (basename.endsWith('.smithy')) score += 70;
   if (basename === 'smithy-build.json') score += 30;
-  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy)\//.test(normalized)) score += 20;
+  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|reference|public)\//.test(normalized)) score += 20;
   if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
   return score;
 }

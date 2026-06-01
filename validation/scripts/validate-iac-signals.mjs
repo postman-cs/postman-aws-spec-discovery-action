@@ -77,6 +77,31 @@ const cases = [
     expectedLambdaUrlHosts: ['abcdefghij.lambda-url.us-east-1.on.aws'],
     expectedEvidence: ['Detected SNS/EventBridge bridge pattern', 'Found GraphQL schema file'],
     expectedOasDerivations: [{ path: 'schema.graphql', format: 'graphql-sdl' }]
+  },
+  {
+    name: 'expanded-configs',
+    setup: async (workspace) => {
+      await mkdir(path.join(workspace, '.github/workflows'), { recursive: true });
+      await writeFile(
+        path.join(workspace, '.github/workflows/release.yml'),
+        'env:\n  API_URL: https://abc123def4.execute-api.us-east-1.amazonaws.com/prod\n  CUSTOM_DOMAIN: api.orders.example.test\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(workspace, 'serverless.ts'),
+        [
+          'export default {',
+          '  functions: { handler: { events: [{ sns: "orders-topic" }] } },',
+          '  resources: { Resources: { Url: { Type: "AWS::Lambda::Url" } } }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+    },
+    expectedProviders: ['sns', 'lambda-url'],
+    expectedGatewayIds: ['abc123def4'],
+    expectedCustomDomains: ['api.orders.example.test'],
+    expectedEvidence: ['.github/workflows/release.yml', 'serverless.ts']
   }
 ];
 

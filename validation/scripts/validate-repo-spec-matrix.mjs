@@ -23,6 +23,12 @@ const cases = [
     expectedFormat: 'openapi-json'
   },
   {
+    name: 'versioned-openapi-reference',
+    source: 'validation/fixtures/repo-spec/openapi-3.0.yaml',
+    target: 'docs/reference/openapi.v1.yaml',
+    expectedFormat: 'openapi-yaml'
+  },
+  {
     name: 'swagger-2.0-yaml',
     source: 'validation/fixtures/repo-spec/swagger-2.0.yaml',
     target: 'swagger.yaml',
@@ -32,19 +38,61 @@ const cases = [
     name: 'graphql-sdl',
     source: 'validation/fixtures/repo-spec/schema.graphql',
     target: 'schema.graphql',
-    expectedFormat: 'graphql-sdl'
+    expectedFormat: 'graphql-sdl',
+    expectedDerivedGraphql: {
+      operationName: 'item',
+      requiredVariable: 'id',
+      component: 'Item'
+    }
   },
   {
     name: 'asyncapi-yaml',
     source: 'validation/fixtures/repo-spec/asyncapi.yaml',
     target: 'asyncapi.yaml',
-    expectedFormat: 'asyncapi-yaml'
+    expectedFormat: 'asyncapi-yaml',
+    expectedDerivedWebhook: {
+      name: 'validation_topic',
+      channel: 'validation-topic',
+      operation: 'subscribe',
+      schemaRef: '#/components/schemas/ValidationEvent',
+      example: 'sample-event'
+    }
   },
   {
     name: 'postman-collection',
     source: 'validation/fixtures/repo-spec/collection.postman_collection.json',
     target: 'collection.postman_collection.json',
-    expectedFormat: 'postman-collection'
+    expectedFormat: 'postman-collection',
+    expectedDerivedPostman: {
+      path: '/orders',
+      method: 'post',
+      query: 'status',
+      header: 'X-Trace-Id',
+      authType: 'bearer',
+      responseCode: '201'
+    }
+  },
+  {
+    name: 'json-schema-derivation',
+    source: 'validation/fixtures/repo-spec/order.schema.json',
+    expectedFormat: 'json-schema',
+    derivationOnly: true,
+    expectedDerivedSchema: {
+      path: '/order-created',
+      component: 'OrderCreated',
+      property: 'id'
+    }
+  },
+  {
+    name: 'avro-derivation',
+    source: 'validation/fixtures/repo-spec/order.avsc',
+    expectedFormat: 'avro',
+    derivationOnly: true,
+    expectedDerivedSchema: {
+      path: '/order-event',
+      component: 'OrderEvent',
+      property: 'total'
+    }
   },
   {
     name: 'protobuf',
@@ -165,7 +213,29 @@ async function runCase(testCase) {
   const workspace = await mkdtemp(path.join(os.tmpdir(), `spec-discovery-validation-${testCase.name}-`));
   try {
     if (testCase.source) {
-      await cp(path.join(repoRoot, testCase.source), path.join(workspace, testCase.target));
+      await cp(path.join(repoRoot, testCase.source), path.join(workspace, testCase.target ?? path.basename(testCase.source)));
+    }
+    if (testCase.derivationOnly) {
+      const content = await readFile(path.join(repoRoot, testCase.source), 'utf8');
+      const oas = deriveOpenApiDocument({ content, format: testCase.expectedFormat, title: testCase.name });
+      const derivedDocument = JSON.parse(oas.content);
+      const passed =
+        Boolean(derivedDocument?.openapi) &&
+        oas.format === 'openapi-json' &&
+        oas.completeness === 'partial' &&
+        matchesExpectedDerivedSchema(derivedDocument, testCase.expectedDerivedSchema);
+      return {
+        name: testCase.name,
+        passed,
+        status: 'resolved',
+        sourceType: 'derivation-only',
+        specFormat: testCase.expectedFormat,
+        derivedOpenApiVersion: oas.version,
+        derivedOpenApiCompleteness: oas.completeness,
+        derivedOpenApiFormat: oas.format,
+        specPath: testCase.source,
+        evidence: oas.evidence
+      };
     }
     if (testCase.catalog) {
       await writeFile(path.join(workspace, testCase.catalog), `${testCase.catalogContent}\n`, 'utf8');
@@ -194,6 +264,15 @@ async function runCase(testCase) {
     const specContent = resolution?.specPath
       ? await readFile(path.join(workspace, resolution.specPath), 'utf8').catch(() => '')
       : '';
+    const derivedContent = resolution?.derivedOpenApiPath
+      ? await readFile(path.join(workspace, resolution.derivedOpenApiPath), 'utf8').catch(() => '')
+      : '';
+    let derivedDocument;
+    try {
+      derivedDocument = derivedContent ? JSON.parse(derivedContent) : undefined;
+    } catch {
+      derivedDocument = undefined;
+    }
     const oas = resolution?.specFormat && specContent
       ? deriveOpenApiDocument({ content: specContent, format: resolution.specFormat, title: testCase.name })
       : undefined;
@@ -201,6 +280,15 @@ async function runCase(testCase) {
       resolution?.status === 'resolved' &&
       resolution.sourceType === 'repo-spec' &&
       resolution.specFormat === testCase.expectedFormat &&
+      Boolean(resolution.derivedOpenApiPath) &&
+      resolution.derivedOpenApiFormat === 'openapi-json' &&
+      resolution.derivedOpenApiVersion === oas?.version &&
+      resolution.derivedOpenApiCompleteness === oas?.completeness &&
+      Boolean(derivedDocument?.openapi) &&
+      matchesExpectedDerivedWebhook(derivedDocument, testCase.expectedDerivedWebhook) &&
+      matchesExpectedDerivedGraphql(derivedDocument, testCase.expectedDerivedGraphql) &&
+      matchesExpectedDerivedPostman(derivedDocument, testCase.expectedDerivedPostman) &&
+      matchesExpectedDerivedSchema(derivedDocument, testCase.expectedDerivedSchema) &&
       Boolean(oas?.content.includes('"openapi": "3.') || oas?.content.includes('openapi: 3.')) &&
       (!testCase.expectedEvidence || evidence.some((entry) => entry.includes(testCase.expectedEvidence)));
 
@@ -212,12 +300,64 @@ async function runCase(testCase) {
       specFormat: resolution?.specFormat,
       oasVersion: oas?.version,
       oasCompleteness: oas?.completeness,
+      derivedOpenApiPath: resolution?.derivedOpenApiPath,
+      derivedOpenApiVersion: resolution?.derivedOpenApiVersion,
+      derivedOpenApiCompleteness: resolution?.derivedOpenApiCompleteness,
+      derivedOpenApiFormat: resolution?.derivedOpenApiFormat,
       specPath: resolution?.specPath,
       evidence
     };
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
+}
+
+function matchesExpectedDerivedWebhook(derivedDocument, expected) {
+  if (!expected) return true;
+  const operation = derivedDocument?.webhooks?.[expected.name]?.post;
+  const media = operation?.requestBody?.content?.['application/json'];
+  return (
+    operation?.['x-asyncapi-channel'] === expected.channel &&
+    operation?.['x-asyncapi-operation'] === expected.operation &&
+    media?.schema?.$ref === expected.schemaRef &&
+    Boolean(media?.examples?.[expected.example])
+  );
+}
+
+function matchesExpectedDerivedGraphql(derivedDocument, expected) {
+  if (!expected) return true;
+  const operation = derivedDocument?.paths?.['/graphql']?.post;
+  const schema = operation?.requestBody?.content?.['application/json']?.schema;
+  const variables = schema?.properties?.variables?.oneOf?.[0];
+  const operationNames = operation?.['x-graphql-operations']?.map((entry) => entry.name) ?? [];
+  return (
+    operationNames.includes(expected.operationName) &&
+    schema?.properties?.operationName?.enum?.includes(expected.operationName) &&
+    variables?.required?.includes(expected.requiredVariable) &&
+    Boolean(derivedDocument?.components?.schemas?.[expected.component])
+  );
+}
+
+function matchesExpectedDerivedPostman(derivedDocument, expected) {
+  if (!expected) return true;
+  const operation = derivedDocument?.paths?.[expected.path]?.[expected.method];
+  const params = operation?.parameters ?? [];
+  return (
+    params.some((param) => param.name === expected.query && param.in === 'query') &&
+    params.some((param) => param.name === expected.header && param.in === 'header') &&
+    operation?.['x-postman-auth-type'] === expected.authType &&
+    Boolean(operation?.requestBody?.content?.['application/json']?.example) &&
+    Boolean(operation?.responses?.[expected.responseCode]?.content?.['application/json']?.example)
+  );
+}
+
+function matchesExpectedDerivedSchema(derivedDocument, expected) {
+  if (!expected) return true;
+  return (
+    derivedDocument?.paths?.[expected.path]?.post?.requestBody?.content?.['application/json']?.schema?.$ref ===
+      `#/components/schemas/${expected.component}` &&
+    Boolean(derivedDocument?.components?.schemas?.[expected.component]?.properties?.[expected.property])
+  );
 }
 
 const results = [];
@@ -237,9 +377,9 @@ const summary = [
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
   '',
-  '| Case | Source Type | Spec Format | OAS | Result |',
+  '| Case | Source Type | Spec Format | Derived OAS | Result |',
   '| --- | --- | --- | --- | --- |',
-  ...results.map((result) => `| ${result.name} | ${result.sourceType ?? ''} | ${result.specFormat ?? ''} | ${result.oasVersion ?? ''} ${result.oasCompleteness ?? ''} | ${result.passed ? 'pass' : 'fail'} |`)
+  ...results.map((result) => `| ${result.name} | ${result.sourceType ?? ''} | ${result.specFormat ?? ''} | ${result.derivedOpenApiVersion ?? ''} ${result.derivedOpenApiCompleteness ?? ''} ${result.derivedOpenApiFormat ?? ''} | ${result.passed ? 'pass' : 'fail'} |`)
 ].join('\n');
 
 await updateEvidenceReadmeSection(summaryPath, 'repo-spec-matrix', summary);

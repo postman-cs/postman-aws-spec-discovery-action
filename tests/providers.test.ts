@@ -235,6 +235,28 @@ describe('ApiGatewayProvider', () => {
     expect(result.content).toContain('openapi');
   });
 
+  it('falls back to REST API models and methods when REST export hits a known limitation', async () => {
+    const client = createGatewayClientStub({
+      exportRestApi: vi.fn().mockRejectedValue(
+        Object.assign(new Error('Only found non-JSON body models for REST API export'), {
+          name: 'BadRequestException'
+        })
+      ),
+      exportRestApiFallback: vi.fn().mockResolvedValue('openapi: 3.0.3\nx-postman-discovery:\n  apiGatewayFallback: true')
+    });
+    const provider = new ApiGatewayProvider(client, { includeV2: true });
+
+    const result = await provider.exportSpec(
+      { id: 'rest-1', name: 'test', providerType: 'api-gateway', tags: {}, evidence: [], meta: { gatewayType: 'REST' } },
+      { stage: 'prod' }
+    );
+
+    expect(client.exportRestApiFallback).toHaveBeenCalledWith('rest-1', 'prod');
+    expect(result.derivedOpenApiCompleteness).toBe('partial');
+    expect(result.evidence).toEqual(expect.arrayContaining([expect.stringContaining('fallback')]));
+    expect(result.content).toContain('apiGatewayFallback: true');
+  });
+
   it('exports partial WebSocket API OpenAPI spec', async () => {
     const client = createGatewayClientStub({
       exportWebSocketApi: vi.fn().mockResolvedValue([
@@ -2541,6 +2563,87 @@ describe('SnsProvider', () => {
         expect(serialized).not.toContain('subscriber.example.com');
         expect(result.metadata.subscriptions[0]?.endpoint).toBe('https://subscriber.example.com/orders');
       }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract carries SNS subscription policies as webhook OpenAPI extensions', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object","properties":{"orderId":{"type":"string"}}}', 'utf8');
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes: vi.fn().mockResolvedValue({
+            Protocol: 'https',
+            Endpoint: 'https://subscriber.example.com/orders',
+            RawMessageDelivery: 'false',
+            FilterPolicy: '{"eventType":["order.created"]}',
+            FilterPolicyScope: 'MessageBody',
+            RedrivePolicy: '{"deadLetterTargetArn":"arn:aws:sqs:us-east-1:123456789012:dlq"}',
+            DeliveryPolicy: '{"healthyRetryPolicy":{"numRetries":3}}'
+          })
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+      expect(result).toMatchObject({ resolved: true, origin: 'repo-json-schema' });
+      if (result.resolved) {
+        const webhookSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'webhook.openapi.json');
+        const webhookDoc = JSON.parse(webhookSidecar?.content ?? '{}') as Record<string, unknown>;
+        const webhooks = webhookDoc.webhooks as Record<string, { post: Record<string, unknown> }>;
+        const post = webhooks.snsMessageWrapped.post;
+
+        expect(post['x-sns-delivery-variant']).toBe('sns-envelope');
+        expect(post['x-sns-filter-policy']).toEqual({ eventType: ['order.created'] });
+        expect(post['x-sns-filter-policy-scope']).toBe('MessageBody');
+        expect(post['x-sns-redrive-policy']).toEqual({ deadLetterTargetArn: 'arn:aws:sqs:us-east-1:123456789012:dlq' });
+        expect(post['x-sns-delivery-policy']).toEqual({ healthyRetryPolicy: { numRetries: 3 } });
+        expect(JSON.stringify(webhookDoc)).not.toContain('subscriber.example.com');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract skips pending confirmation subscriptions before reading attributes', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      await writeFile(path.join(tempDir, 'schema.json'), '{"type":"object"}', 'utf8');
+      const getSubscriptionAttributes = vi.fn().mockResolvedValue({
+        Protocol: 'https',
+        RawMessageDelivery: 'false'
+      });
+      const provider = new SnsProvider(
+        createSnsClientStub({
+          listSubscriptionsByTopic: vi.fn().mockResolvedValue([
+            { subscriptionArn: 'PendingConfirmation', protocol: 'https', endpoint: 'https://pending.example.com/sns' },
+            {
+              subscriptionArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http',
+              protocol: 'https',
+              endpoint: 'https://subscriber.example.com/orders'
+            }
+          ]),
+          getSubscriptionAttributes
+        }),
+        tempDir
+      );
+
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(getSubscriptionAttributes).toHaveBeenCalledTimes(1);
+      expect(getSubscriptionAttributes).toHaveBeenCalledWith('arn:aws:sns:us-east-1:123456789012:orders-topic:sub-http');
+      expect(result.metadata.subscriptions).toHaveLength(1);
+      expect(result.metadata.subscriptionSummary.errors).toEqual([]);
+      expect(result.evidence.some((line) => line.includes('pending confirmation'))).toBe(true);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
