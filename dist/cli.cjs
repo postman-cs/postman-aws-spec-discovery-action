@@ -148460,7 +148460,38 @@ async function runPreflight(inputs, dependencies) {
     dependencies.core.info("Preflight checks skipped by configuration");
     return;
   }
-  const identity = await dependencies.aws.getCallerIdentity();
+  let identity;
+  try {
+    identity = await dependencies.aws.getCallerIdentity();
+  } catch (error2) {
+    const parsed = parseAwsError(error2);
+    const name = parsed.name ?? "";
+    if (name === "ExpiredTokenException" || name === "ExpiredToken") {
+      throw new Error(
+        userSafeWarning(
+          "AWS credentials are expired; refresh the role/session (re-assume the role or rotate the access keys) and re-run."
+        ),
+        { cause: error2 }
+      );
+    }
+    if (name === "AccessDeniedException" || name === "AccessDenied") {
+      throw new Error(
+        userSafeWarning(
+          "The AWS identity cannot call sts:GetCallerIdentity; the credentials are malformed or the principal is denied STS. Check the role/keys and trust policy."
+        ),
+        { cause: error2 }
+      );
+    }
+    if (name === "CredentialsProviderError") {
+      throw new Error(
+        userSafeWarning(
+          "No AWS credentials were resolved from the provider chain (env, profile, OIDC, instance role). Configure credentials for this runner."
+        ),
+        { cause: error2 }
+      );
+    }
+    throw error2;
+  }
   if (inputs.preflightPermissionProbe) {
     try {
       await dependencies.aws.probeApiGatewayReadAccess();
