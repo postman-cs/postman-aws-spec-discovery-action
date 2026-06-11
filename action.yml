@@ -1,5 +1,9 @@
 name: postman-aws-spec-discovery-action
 description: Resolve the best API spec source for the current service repository.
+author: Postman
+branding:
+  icon: cloud
+  color: orange
 inputs:
   aws-region:
     description: AWS region used to resolve API Gateway resources
