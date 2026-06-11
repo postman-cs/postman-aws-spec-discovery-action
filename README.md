@@ -324,7 +324,7 @@ Native artifacts are preserved as the primary output. The action also emits `ope
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
   with:
     aws-region: us-east-1
 ```
@@ -333,7 +333,7 @@ Native artifacts are preserved as the primary output. The action also emits `ope
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
   with:
     aws-region: us-east-1
     gateway-id: abc123def4
@@ -345,7 +345,7 @@ Exports specs from all discovered APIs across all available providers:
 
 ```yaml
 - id: discover
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
   env:
     INPUT_MODE: discover-many
   with:
@@ -360,7 +360,7 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
 
 ```yaml
 - id: resolve-events
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
   env:
     INPUT_MODE: resolve-one
     INPUT_EXPECTED_SERVICE_NAME: orders-events
@@ -374,7 +374,7 @@ In `resolve-one`, API Gateway and SNS are evaluated together when the repo has S
 
 ```yaml
 - id: discover-all
-  uses: postman-cs/postman-aws-spec-discovery-action@v0.7.0
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
   env:
     INPUT_MODE: discover-many
   with:
