@@ -1,5 +1,5 @@
-name: Postman AWS Spec Discovery
-description: Zero-config discovery and export of API specs from AWS services using only your existing AWS credentials.
+name: 'Postman Onboarding: AWS Spec Discovery'
+description: Zero-config discovery and export of API specs from AWS services. Part of the Postman API Onboarding suite.
 author: Postman
 branding:
   icon: cloud
