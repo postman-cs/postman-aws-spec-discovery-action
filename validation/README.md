@@ -2,7 +2,7 @@
 
 This directory is the customer-facing validation package for the AWS spec discovery action. It documents how each discovery surface is exercised, what artifact the action emits, and whether that artifact is already OpenAPI or can be represented as a partial OpenAPI 3.x document.
 
-The validation package is intended to answer three questions:
+The package answers three questions:
 
 1. Which discovery surfaces are supported?
 2. How can a customer reproduce the behavior?
@@ -54,7 +54,7 @@ That file is gitignored. Commit only the sanitized evidence summary in `evidence
 
 The stack includes dedicated live resources for API Gateway, AppSync, AppSync Events, EventBridge Schemas, EventBridge rules/pipes/API destinations, CloudFormation, Glue, SSM, SNS, Lambda Function URLs, Lambda event source mappings, Verified Permissions, Step Functions, ALB listener rules, and Bedrock Agent action groups.
 
-## Reproduce The Full Validation Set
+## Reproduce the Full Validation Set
 
 Run from the action repository root:
 
@@ -90,7 +90,7 @@ aws cloudformation deploy \
   --parameter-overrides AlbVpcId="$ALB_VPC_ID" AlbSubnetIds="$ALB_SUBNET_IDS"
 ```
 
-## Reading The Evidence
+## Reading the Evidence
 
 - `evidence/README.md` is the single customer-facing evidence summary and coverage matrix for every discovery surface.
 - Raw matrix details are stored only in gitignored `*.local.json` files.
