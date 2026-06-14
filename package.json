@@ -1,6 +1,6 @@
 {
   "name": "@postman-cse/onboarding-aws-spec-discovery",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Discover AWS-hosted API specs and hand the result to Postman API onboarding.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -62,7 +62,7 @@
     "@aws-sdk/client-ssm": "^3.1057.0",
     "@aws-sdk/client-sts": "^3.1057.0",
     "@aws-sdk/client-verifiedpermissions": "^3.1057.0",
-    "@postman-cse/automation-telemetry-core": "^0.1.0",
+    "@postman-cse/automation-telemetry-core": "^0.2.0",
     "@smithy/node-http-handler": "^4.7.5",
     "undici": "^6.24.0",
     "yaml": "^2.9.0"
