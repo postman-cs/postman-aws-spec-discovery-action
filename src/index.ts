@@ -13,6 +13,7 @@ import {
   type InputReaderLike,
   type ReporterLike
 } from './runtime.js';
+import { createTelemetryContext } from './lib/telemetry.js';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
   setOutput(name: string, value: string): void;
@@ -26,6 +27,22 @@ export interface GitHubActionDependencies {
 }
 
 export async function runAction(
+  actionCore: CoreLike = core,
+  dependencies: GitHubActionDependencies = {}
+): Promise<DiscoveredService[]> {
+  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: actionCore });
+  telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
+  try {
+    const result = await runActionInner(actionCore, dependencies);
+    telemetry.emitCompletion('success');
+    return result;
+  } catch (error) {
+    telemetry.emitCompletion('failure');
+    throw error;
+  }
+}
+
+async function runActionInner(
   actionCore: CoreLike = core,
   dependencies: GitHubActionDependencies = {}
 ): Promise<DiscoveredService[]> {
