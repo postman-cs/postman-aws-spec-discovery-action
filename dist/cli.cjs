@@ -167727,7 +167727,10 @@ function detectCiContext(env2 = process.env) {
 var SCHEMA_VERSION = 1;
 var DEFAULT_TIMEOUT_MS2 = 1500;
 var DEFAULT_ENDPOINT = "https://events.pm-cse.dev/v1/events";
-var proxyDispatcher = new import_undici.EnvHttpProxyAgent();
+var proxyDispatcher;
+function getProxyDispatcher() {
+  return proxyDispatcher ??= new import_undici.EnvHttpProxyAgent();
+}
 function actionVersion() {
   return "1.0.3" ? "1.0.3" : "unknown";
 }
@@ -167777,9 +167780,10 @@ async function send(event, options) {
   const env2 = options.env ?? process.env;
   const endpoint = options.endpoint ?? env2.POSTMAN_ACTIONS_TELEMETRY_ENDPOINT ?? DEFAULT_ENDPOINT;
   const transport = options.transport ?? import_undici.fetch;
-  const dispatcher = options.dispatcher ?? proxyDispatcher;
+  const dispatcher = options.dispatcher ?? getProxyDispatcher();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS2);
+  timer.unref?.();
   const init = {
     method: "POST",
     headers: { "content-type": "application/json" },
