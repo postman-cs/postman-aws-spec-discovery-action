@@ -119,7 +119,7 @@ describe('action contract', () => {
   });
 
   it('documents OIDC IAM setup and avoids placeholder spec URLs in paste-runnable examples', () => {
-    const publicFixtureUrl = 'https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml';
+    const publicFixtureUrl = 'https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml';
 
     expect(readmeSource).toContain('id-token: write');
     expect(providersSource).toContain('sts:AssumeRoleWithWebIdentity');

@@ -295,12 +295,12 @@ spec:
 
 # Simple string -- remote URL
 spec:
-  definition: https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml
+  definition: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 
 # $text reference -- local path or remote URL
 spec:
   definition:
-    $text: https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml
+    $text: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 ```
 
 Example `catalog-info.yaml` using a remote OpenAPI document:
@@ -314,7 +314,7 @@ spec:
   type: openapi
   owner: api-platform
   lifecycle: production
-  definition: https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml
+  definition: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 ```
 
 With that file committed at the repo root or inside a bounded service directory, the action resolves the spec URL automatically. No extra action inputs are required.
@@ -326,7 +326,7 @@ If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postm
 Store your spec reference in SSM Parameter Store:
 
 ```
-/postman/specs/{service-name}/url       -> https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml
+/postman/specs/{service-name}/url       -> https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 /postman/specs/{service-name}/content   -> {"openapi":"3.0.0",...}
 /postman/specs/{service-name}/format    -> openapi-yaml
 ```
@@ -340,7 +340,7 @@ aws ssm put-parameter \
   --name /postman/specs/telecom-api/url \
   --type String \
   --overwrite \
-  --value https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml
+  --value https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 
 aws ssm put-parameter \
   --name /postman/specs/telecom-api/format \
@@ -357,10 +357,10 @@ If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversize
 
 ```json
 {
-  "specUrl": "https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml",
+  "specUrl": "https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml",
   "serviceName": "telecom-api",
   "registeredVia": "ssm-parameter-store",
-  "fetchError": "HTTP 503 fetching https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml"
+  "fetchError": "HTTP 503 fetching https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml"
 }
 ```
 
