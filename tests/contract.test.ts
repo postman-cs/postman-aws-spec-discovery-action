@@ -15,9 +15,23 @@ import { resolveInputs } from '../src/index.js';
 const repoRoot = resolve(import.meta.dirname, '..');
 const contractsSource = readFileSync(resolve(repoRoot, 'src/contracts.ts'), 'utf8');
 const readmeSource = readFileSync(resolve(repoRoot, 'README.md'), 'utf8');
+const providersSource = readFileSync(resolve(repoRoot, 'docs/providers.md'), 'utf8');
+const liveRunbookSource = readFileSync(resolve(repoRoot, 'docs/LIVE_TESTING_RUNBOOK.md'), 'utf8');
+const securitySource = readFileSync(resolve(repoRoot, 'SECURITY.md'), 'utf8');
+const supportSource = readFileSync(resolve(repoRoot, 'SUPPORT.md'), 'utf8');
+const releasePolicySource = readFileSync(resolve(repoRoot, 'RELEASE_POLICY.md'), 'utf8');
+const marketplaceDocs = [
+  readmeSource,
+  providersSource,
+  liveRunbookSource,
+  securitySource,
+  supportSource,
+  releasePolicySource
+].join('\n');
 const actionManifest = parse(
   readFileSync(resolve(repoRoot, 'action.yml'), 'utf8')
 ) as {
+  description: string;
   inputs: Record<string, { required?: boolean; default?: string }>;
   outputs: Record<string, unknown>;
 };
@@ -82,6 +96,58 @@ describe('action contract', () => {
     expect(actionContract.inputs['output-dir'].default).toBe('discovered-specs');
     expect(actionManifest.inputs['gateway-id'].default).toBe('');
     expect(actionManifest.inputs['output-dir'].default).toBe('discovered-specs');
+  });
+
+  it('keeps marketplace docs centered on action selection, region, and Postman handoff', () => {
+    expect(actionManifest.description).toContain('Postman onboarding');
+    expect((actionManifest.inputs['aws-region'] as { description: string }).description).toContain('AWS region');
+    expect((actionManifest.inputs['aws-region'] as { description: string }).description).toContain('discovery providers');
+    expect(actionContract.inputs['aws-region']?.description).toBe(
+      (actionManifest.inputs['aws-region'] as { description: string }).description
+    );
+    expect(actionContract.inputs['aws-region']?.description).toContain('AppSync');
+    expect(actionContract.inputs['aws-region']?.description).toContain('EventBridge');
+    expect(readmeSource).toContain('## Which action should I use?');
+    expect(readmeSource).toContain('## Region and Postman handoff');
+    expect(readmeSource).toContain('postman-cs/postman-resolve-service-token-action@v1');
+    expect(readmeSource).toContain('postman-cs/postman-api-onboarding-action@v1');
+    expect(readmeSource).toContain('postman-cs/postman-bootstrap-action@v1');
+    expect(readmeSource).toContain('postman-access-token: ${{ steps.postman_token.outputs.token }}');
+    expect(readmeSource).toContain('postman-team-id: ${{ steps.postman_token.outputs.team-id }}');
+    expect(readmeSource).toContain('credential-preflight: warn');
+    expect(readmeSource).toContain('credential-preflight: enforce');
+  });
+
+  it('documents OIDC IAM setup and avoids placeholder spec URLs in paste-runnable examples', () => {
+    const publicFixtureUrl = 'https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml';
+
+    expect(readmeSource).toContain('id-token: write');
+    expect(providersSource).toContain('sts:AssumeRoleWithWebIdentity');
+    expect(providersSource).toContain('token.actions.githubusercontent.com:sub');
+    expect(providersSource).toContain(publicFixtureUrl);
+    expect(liveRunbookSource).toContain('[Provider Discovery](providers.md#security-and-iam)');
+    expect(providersSource).not.toContain('payments.example.com/openapi');
+    expect(providersSource).not.toContain('api.example.com/openapi');
+  });
+
+  it('keeps credential docs on the service-token path with no public preflight opt-out', () => {
+    expect(securitySource).toContain('postman-resolve-service-token-action');
+    expect(securitySource).toContain('Postman CLI credential store created by `postman login`');
+    expect(marketplaceDocs).toContain('Downstream Postman credential preflight accepts `warn` and `enforce`');
+    expect(marketplaceDocs).not.toMatch(/credential-preflight[^.\n]*(off|disable|skip)/i);
+    expect(marketplaceDocs).not.toMatch(/browser[- ]token/i);
+    expect(marketplaceDocs).not.toMatch(/\bcustomer preview\b/i);
+    expect(marketplaceDocs).not.toMatch(/\binternal\b/i);
+  });
+
+  it('publishes support, security, and release policy guidance for the standalone listing', () => {
+    expect(readmeSource).toContain('[SUPPORT.md](SUPPORT.md)');
+    expect(readmeSource).toContain('[SECURITY.md](SECURITY.md)');
+    expect(readmeSource).toContain('[RELEASE_POLICY.md](RELEASE_POLICY.md)');
+    expect(supportSource).toContain('What to include');
+    expect(securitySource).toContain('Credential Matrix');
+    expect(releasePolicySource).toContain('Release checks');
+    expect(releasePolicySource).toContain('Git tags and GitHub releases are the public release identifiers');
   });
 
   it('parses simple and advanced env-driven values', () => {

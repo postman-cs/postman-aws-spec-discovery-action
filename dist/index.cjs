@@ -8750,7 +8750,7 @@ var require_env_http_proxy_agent = __commonJS({
       "https:": 443
     };
     var experimentalWarned = false;
-    var EnvHttpProxyAgent = class extends DispatcherBase {
+    var EnvHttpProxyAgent2 = class extends DispatcherBase {
       #noProxyValue = null;
       #noProxyEntries = null;
       #opts = null;
@@ -8869,7 +8869,7 @@ var require_env_http_proxy_agent = __commonJS({
         return process.env.no_proxy ?? process.env.NO_PROXY ?? "";
       }
     };
-    module2.exports = EnvHttpProxyAgent;
+    module2.exports = EnvHttpProxyAgent2;
   }
 });
 
@@ -18542,7 +18542,7 @@ var require_undici = __commonJS({
     var BalancedPool = require_balanced_pool();
     var Agent3 = require_agent();
     var ProxyAgent2 = require_proxy_agent();
-    var EnvHttpProxyAgent = require_env_http_proxy_agent();
+    var EnvHttpProxyAgent2 = require_env_http_proxy_agent();
     var RetryAgent = require_retry_agent();
     var errors = require_errors();
     var util = require_util();
@@ -18565,7 +18565,7 @@ var require_undici = __commonJS({
     module2.exports.BalancedPool = BalancedPool;
     module2.exports.Agent = Agent3;
     module2.exports.ProxyAgent = ProxyAgent2;
-    module2.exports.EnvHttpProxyAgent = EnvHttpProxyAgent;
+    module2.exports.EnvHttpProxyAgent = EnvHttpProxyAgent2;
     module2.exports.RetryAgent = RetryAgent;
     module2.exports.RetryHandler = RetryHandler;
     module2.exports.DecoratorHandler = DecoratorHandler;
@@ -32725,9 +32725,9 @@ var require_dist_cjs6 = __commonJS({
       sha256;
       uriEscapePath;
       applyChecksum;
-      constructor({ applyChecksum, credentials, region, service, sha256, uriEscapePath = true }) {
+      constructor({ applyChecksum, credentials, region, service, sha256: sha2562, uriEscapePath = true }) {
         this.service = service;
-        this.sha256 = sha256;
+        this.sha256 = sha2562;
         this.uriEscapePath = uriEscapePath;
         this.applyChecksum = typeof applyChecksum === "boolean" ? applyChecksum : true;
         this.regionProvider = client.normalizeProvider(region);
@@ -32884,13 +32884,13 @@ ${serde.toHex(hashedRequest)}`;
     };
     var SignatureV42 = class extends SignatureV4Base {
       headerFormatter = new HeaderFormatter();
-      constructor({ applyChecksum, credentials, region, service, sha256, uriEscapePath = true }) {
+      constructor({ applyChecksum, credentials, region, service, sha256: sha2562, uriEscapePath = true }) {
         super({
           applyChecksum,
           credentials,
           region,
           service,
-          sha256,
+          sha256: sha2562,
           uriEscapePath
         });
       }
@@ -33127,7 +33127,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
         configurable: true
       });
       config.credentials = inputCredentials;
-      const { signingEscapePath = true, systemClockOffset = config.systemClockOffset || 0, sha256 } = config;
+      const { signingEscapePath = true, systemClockOffset = config.systemClockOffset || 0, sha256: sha2562 } = config;
       let signer;
       if (config.signer) {
         signer = normalizeProvider2(config.signer);
@@ -33147,7 +33147,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
             credentials: config.credentials,
             region: config.signingRegion,
             service: config.signingName,
-            sha256,
+            sha256: sha2562,
             uriEscapePath: signingEscapePath
           };
           const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
@@ -33170,7 +33170,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
             credentials: config.credentials,
             region: config.signingRegion,
             service: config.signingName,
-            sha256,
+            sha256: sha2562,
             uriEscapePath: signingEscapePath
           };
           const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
@@ -161029,7 +161029,7 @@ var actionContract = {
   description: "Resolve the best API spec source for the current service repository.",
   inputs: {
     "aws-region": {
-      description: "AWS region used to resolve API Gateway resources",
+      description: "AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers.",
       required: true
     },
     "gateway-id": {
@@ -170166,8 +170166,217 @@ async function execute(inputs, dependencies) {
   };
 }
 
+// src/lib/telemetry.ts
+var import_node_crypto4 = require("node:crypto");
+var import_undici2 = __toESM(require_undici(), 1);
+
+// src/lib/ci-context.ts
+function norm(value) {
+  const trimmed = (value ?? "").trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+}
+function detectCiContext(env2 = process.env) {
+  if (norm(env2.GITHUB_ACTIONS)) {
+    const runnerEnv = norm(env2.RUNNER_ENVIRONMENT);
+    const runnerKind = runnerEnv === "github-hosted" ? "hosted" : runnerEnv === "self-hosted" ? "self-hosted" : "unknown";
+    return {
+      ciProvider: "github",
+      runId: norm(env2.GITHUB_RUN_ID),
+      runnerKind
+    };
+  }
+  if (norm(env2.GITLAB_CI)) {
+    return {
+      ciProvider: "gitlab",
+      runId: norm(env2.CI_PIPELINE_ID) ?? norm(env2.CI_PIPELINE_IID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.CIRCLECI)) {
+    return {
+      ciProvider: "circleci",
+      runId: norm(env2.CIRCLE_WORKFLOW_ID) ?? norm(env2.CIRCLE_BUILD_NUM),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.BUILDKITE)) {
+    const computeType = norm(env2.BUILDKITE_COMPUTE_TYPE);
+    const runnerKind = computeType === "hosted" ? "hosted" : computeType === "self-hosted" ? "self-hosted" : "unknown";
+    return {
+      ciProvider: "buildkite",
+      runId: norm(env2.BUILDKITE_BUILD_ID) ?? norm(env2.BUILDKITE_BUILD_NUMBER),
+      runnerKind
+    };
+  }
+  if (norm(env2.TF_BUILD)) {
+    return {
+      ciProvider: "azure",
+      runId: norm(env2.BUILD_BUILDID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.CODEBUILD_BUILD_ID)) {
+    return {
+      ciProvider: "codebuild",
+      runId: norm(env2.CODEBUILD_BUILD_ID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.BITBUCKET_BUILD_NUMBER)) {
+    return {
+      ciProvider: "bitbucket",
+      runId: norm(env2.BITBUCKET_BUILD_NUMBER),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.TEAMCITY_VERSION)) {
+    return {
+      ciProvider: "teamcity",
+      runId: norm(env2.BUILD_NUMBER),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.HARNESS_BUILD_ID)) {
+    return {
+      ciProvider: "harness",
+      runId: norm(env2.HARNESS_EXECUTION_ID) ?? norm(env2.HARNESS_BUILD_ID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.JENKINS_URL)) {
+    return {
+      ciProvider: "jenkins",
+      runId: norm(env2.BUILD_ID) ?? norm(env2.BUILD_NUMBER) ?? norm(env2.BUILD_TAG),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.ATC_EXTERNAL_URL) || norm(env2.BUILD_ID) && norm(env2.BUILD_PIPELINE_NAME)) {
+    return {
+      ciProvider: "concourse",
+      runId: norm(env2.BUILD_ID) ?? norm(env2.BUILD_NAME),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.CI)) {
+    return { ciProvider: "other", runnerKind: "unknown" };
+  }
+  return { ciProvider: "unknown", runnerKind: "unknown" };
+}
+
+// src/lib/telemetry.ts
+var SCHEMA_VERSION = 1;
+var DEFAULT_TIMEOUT_MS2 = 1500;
+var DEFAULT_ENDPOINT = "https://events.pm-cse.dev/v1/events";
+var proxyDispatcher = new import_undici2.EnvHttpProxyAgent();
+function actionVersion() {
+  return "1.0.3" ? "1.0.3" : "unknown";
+}
+function telemetryDisabled(env2) {
+  const flag = String(env2.POSTMAN_ACTIONS_TELEMETRY ?? "").trim().toLowerCase();
+  if (flag === "off" || flag === "0" || flag === "false" || flag === "no") {
+    return true;
+  }
+  const dnt = String(env2.DO_NOT_TRACK ?? "").trim().toLowerCase();
+  if (dnt && dnt !== "0" && dnt !== "false") {
+    return true;
+  }
+  return false;
+}
+function sha256(value) {
+  return (0, import_node_crypto4.createHash)("sha256").update(value).digest("hex");
+}
+var noticeShown = false;
+function maybeNotice(logger2) {
+  if (noticeShown || !logger2) {
+    return;
+  }
+  noticeShown = true;
+  logger2.info(
+    "note: postman-actions sends anonymous usage data (team id, action, CI provider). Disable with POSTMAN_ACTIONS_TELEMETRY=off or DO_NOT_TRACK=1."
+  );
+}
+function buildTelemetryEvent(action, teamId, outcome, env2, now) {
+  const ci = detectCiContext(env2);
+  const repo = detectRepoContext({}, env2);
+  const repoSource = repo.repoSlug ?? repo.repoUrl;
+  return {
+    schema_version: SCHEMA_VERSION,
+    event: "completion",
+    action,
+    action_version: actionVersion(),
+    team_id: teamId,
+    ci_provider: ci.ciProvider,
+    run_id: ci.runId,
+    runner_kind: ci.runnerKind,
+    repo_id: repoSource ? sha256(repoSource) : void 0,
+    outcome,
+    ts: now()
+  };
+}
+async function send(event, options) {
+  const env2 = options.env ?? process.env;
+  const endpoint = options.endpoint ?? env2.POSTMAN_ACTIONS_TELEMETRY_ENDPOINT ?? DEFAULT_ENDPOINT;
+  const transport = options.transport ?? import_undici2.fetch;
+  const dispatcher = options.dispatcher ?? proxyDispatcher;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS2);
+  const init = {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(event),
+    signal: controller.signal
+  };
+  init.dispatcher = dispatcher;
+  try {
+    await transport(endpoint, init);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function createTelemetryContext(options) {
+  const env2 = options.env ?? process.env;
+  const now = options.now ?? Date.now;
+  let teamId = "";
+  let emitted = false;
+  return {
+    setTeamId(value) {
+      if (value) {
+        teamId = String(value);
+      }
+    },
+    emitCompletion(outcome) {
+      if (emitted) {
+        return;
+      }
+      emitted = true;
+      try {
+        if (telemetryDisabled(env2) || !teamId) {
+          return;
+        }
+        const event = buildTelemetryEvent(options.action, teamId, outcome, env2, now);
+        maybeNotice(options.logger);
+        void send(event, options).catch(() => {
+        });
+      } catch {
+      }
+    }
+  };
+}
+
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
+  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: actionCore });
+  telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
+  try {
+    const result = await runActionInner(actionCore, dependencies);
+    telemetry.emitCompletion("success");
+    return result;
+  } catch (error3) {
+    telemetry.emitCompletion("failure");
+    throw error3;
+  }
+}
+async function runActionInner(actionCore = core_exports, dependencies = {}) {
   const inputs = readActionInputs(actionCore);
   const awsClient = dependencies.createAwsClient?.(inputs.awsRegion) ?? new AwsApiGatewaySdkClient(inputs.awsRegion, {
     requestTimeoutMs: inputs.requestTimeoutMs,

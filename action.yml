@@ -1,12 +1,12 @@
 name: 'Postman Onboarding: AWS Spec Discovery'
-description: Zero-config discovery and export of API specs from AWS services. Part of the Postman API Onboarding suite.
+description: Discover AWS-hosted API specs and expose a spec path for Postman onboarding. Part of the Postman API Onboarding suite.
 author: Postman
 branding:
   icon: cloud
   color: orange
 inputs:
   aws-region:
-    description: AWS region used to resolve API Gateway resources
+    description: AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers.
     required: true
   gateway-id:
     description: Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery.
