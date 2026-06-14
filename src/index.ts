@@ -13,7 +13,7 @@ import {
   type InputReaderLike,
   type ReporterLike
 } from './runtime.js';
-import { createTelemetryContext } from './lib/telemetry.js';
+import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
   setOutput(name: string, value: string): void;
