@@ -4,7 +4,7 @@ import path from 'node:path';
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
-import { createTelemetryContext } from './lib/telemetry.js';
+import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 interface CliConfig {
   inputEnv: NodeJS.ProcessEnv;
