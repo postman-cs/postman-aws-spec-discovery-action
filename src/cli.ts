@@ -4,6 +4,7 @@ import path from 'node:path';
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
+import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 interface CliConfig {
   inputEnv: NodeJS.ProcessEnv;
@@ -132,19 +133,28 @@ async function writeOptionalFile(filePath: string | undefined, content: string):
 export async function runCli(argv: string[] = process.argv.slice(2)): Promise<void> {
   const config = parseCliArgs(argv, process.env);
   const inputs = resolveInputs(config.inputEnv);
-  const result = await execute(inputs, {
-    core: new ConsoleReporter(),
-    aws: new AwsApiGatewaySdkClient(inputs.awsRegion, {
-      requestTimeoutMs: inputs.requestTimeoutMs,
-      maxAttempts: inputs.maxAttempts
-    }),
-    writeSpecFile: defaultWriteSpecFile
-  });
+  const reporter = new ConsoleReporter();
+  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: reporter });
+  telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
+  try {
+    const result = await execute(inputs, {
+      core: reporter,
+      aws: new AwsApiGatewaySdkClient(inputs.awsRegion, {
+        requestTimeoutMs: inputs.requestTimeoutMs,
+        maxAttempts: inputs.maxAttempts
+      }),
+      writeSpecFile: defaultWriteSpecFile
+    });
 
-  await writeOptionalFile(config.resultJsonPath, JSON.stringify(result, null, 2));
-  await writeOptionalFile(config.dotenvPath, toDotenv(result.outputs));
+    await writeOptionalFile(config.resultJsonPath, JSON.stringify(result, null, 2));
+    await writeOptionalFile(config.dotenvPath, toDotenv(result.outputs));
 
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    telemetry.emitCompletion('success');
+  } catch (error) {
+    telemetry.emitCompletion('failure');
+    throw error;
+  }
 }
 
 const currentModulePath = typeof __filename === 'string' ? __filename : '';

@@ -6,7 +6,7 @@ End-to-end integration tests that run the built CLI against real AWS resources. 
 
 ### AWS account
 
-You need an AWS account with sufficient IAM permissions. The minimum policy for all providers is documented in the project README under "Full IAM policy (all providers)." In addition to those read-only permissions, deploying the test stack requires:
+You need an AWS account with sufficient IAM permissions. The minimum policy for all providers is documented in [Provider Discovery](providers.md#security-and-iam). In addition to those read-only permissions, deploying the test stack requires:
 
 - `cloudformation:CreateStack`, `cloudformation:UpdateStack`, `cloudformation:DeleteStack`, `cloudformation:DescribeStacks`, `cloudformation:DescribeStackEvents`
 - `sqs:CreateQueue`, `sqs:DeleteQueue`, `sqs:SetQueueAttributes`, `sqs:GetQueueAttributes`

@@ -2,21 +2,40 @@
 
 [![CI](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml/badge.svg)](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/postman-cs/postman-aws-spec-discovery-action?sort=semver)](https://github.com/postman-cs/postman-aws-spec-discovery-action/releases) [![npm](https://img.shields.io/npm/v/%40postman-cse%2Fonboarding-aws-spec-discovery)](https://www.npmjs.com/package/@postman-cse/onboarding-aws-spec-discovery) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Zero-config discovery and export of API specs from AWS services using only your existing AWS credentials.
+Zero-config discovery and export of API specs from AWS services using only your existing AWS credentials. Use it when a service already runs on AWS and you need a source-of-truth [Spec Hub](https://learning.postman.com/docs/design-apis/specifications/overview/) specification that Postman onboarding can turn into deterministic collections, OpenAPI-backed contract checks, smoke tests, mocks, monitors, repo artifacts, and CI runs.
 
 Part of the [Postman API Onboarding suite](https://github.com/postman-cs/postman-api-onboarding-action).
 
-You usually set just `aws-region`. Repo identity comes from CI automatically, providers are auto-detected by probing your IAM permissions, and repo-first resolution prefers existing specs before calling AWS. No GitHub token required; the action is read-only against AWS APIs.
+You usually set just `aws-region`. Repo identity comes from CI automatically, providers are auto-detected by probing your IAM permissions, and repo-first resolution prefers existing specs before calling AWS. No GitHub token is required by this action; it is read-only against AWS APIs.
+
+## Which action should I use?
+
+| Need | Use |
+| --- | --- |
+| Mint a Postman service-account access token and resolve the team ID | [Postman Onboarding: Service Token](https://github.com/postman-cs/postman-resolve-service-token-action) |
+| Discover an OpenAPI, GraphQL, AsyncAPI, schema, or AWS-derived contract from the current AWS-backed repo | This action |
+| Run the full Postman onboarding path after a spec is found | [Postman API Onboarding](https://github.com/postman-cs/postman-api-onboarding-action) |
+| Only create or update the Postman workspace, spec, and generated collections | [Postman Onboarding: Workspace Bootstrap](https://github.com/postman-cs/postman-bootstrap-action) |
+| Apply a curated flow.yaml to the generated Smoke collection | [Postman Onboarding: Smoke Flow](https://github.com/postman-cs/postman-smoke-flow-action) |
+| Export Postman artifacts into the repository and wire CI assets | [Postman Onboarding: Repo Sync](https://github.com/postman-cs/postman-repo-sync-action) |
+| Link an already discovered Insights service to a workspace | [Postman Onboarding: Insights Linking](https://github.com/postman-cs/postman-insights-onboarding-action) |
+
+## Region and Postman handoff
+
+The first required choice is the AWS region. Set `aws-region` to the region that contains the API Gateway, AppSync, SNS, EventBridge, Lambda, SSM, or other provider resources you want to inspect. If the repo already contains a spec, the action can still resolve it before calling AWS, but AWS credentials must be valid because startup validates identity.
+
+For the Postman side, use `postman-resolve-service-token-action` to mint the access token and team ID from a [Postman service account](https://learning.postman.com/docs/administration/service-accounts/) PMAK, then pass this action's `spec-path` output into the composite onboarding action for [spec import](https://learning.postman.com/docs/design-apis/specifications/import-a-specification/). If you call bootstrap directly for an org-mode workspace, use bootstrap's `workspace-team-id` input for workspace creation. Downstream Postman credential preflight accepts `warn` and `enforce`; do not configure a public opt-out.
 
 ## Usage
 
 ```yaml
 jobs:
-  discover:
+  onboard-from-aws:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v5
 
@@ -25,13 +44,34 @@ jobs:
           role-to-assume: arn:aws:iam::123456789012:role/postman-spec-discovery
           aws-region: us-east-1
 
+      - id: postman_token
+        uses: postman-cs/postman-resolve-service-token-action@v1
+        with:
+          postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+          postman-region: us
+
       - id: resolve
         uses: postman-cs/postman-aws-spec-discovery-action@v1
         with:
           aws-region: us-east-1
+
+      - uses: postman-cs/postman-api-onboarding-action@v1
+        if: steps.resolve.outputs.resolution-status == 'resolved'
+        with:
+          postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+          postman-access-token: ${{ steps.postman_token.outputs.token }}
+          postman-team-id: ${{ steps.postman_token.outputs.team-id }}
+          postman-region: us
+          credential-preflight: warn
+          project-name: ${{ steps.resolve.outputs.service-name }}
+          spec-path: ${{ steps.resolve.outputs.spec-path }}
 ```
 
 The resolved spec lands in `discovered-specs/` and the step exposes `spec-path`, `service-name`, confidence, and provenance as outputs.
+
+The `id-token: write` permission is for AWS OIDC role assumption through `aws-actions/configure-aws-credentials`. `contents: write` and `actions: write` match the downstream composite action's default artifact commit and generated-workflow behavior. This AWS discovery action itself does not write repository contents or request a GitHub token. See [docs/providers.md](docs/providers.md#security-and-iam) for the minimum and full IAM policies.
+
+For EU Postman data residency, set `postman-region: eu` on both the service-token and downstream Postman action steps.
 
 ## Examples
 
@@ -85,9 +125,15 @@ Write generated specs somewhere other than `discovered-specs/`. The path must re
 
 ### Chaining into Postman API onboarding
 
-Feed the discovered spec straight into the [onboarding composite](https://github.com/postman-cs/postman-api-onboarding-action) via its `spec-path` input.
+Feed the discovered spec straight into the [onboarding composite](https://github.com/postman-cs/postman-api-onboarding-action) via its `spec-path` input. The service-token action is the primary way to supply the Postman access token and team ID.
 
 ```yaml
+- id: postman_token
+  uses: postman-cs/postman-resolve-service-token-action@v1
+  with:
+    postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+    postman-region: us
+
 - id: resolve
   uses: postman-cs/postman-aws-spec-discovery-action@v1
   with:
@@ -96,7 +142,39 @@ Feed the discovered spec straight into the [onboarding composite](https://github
 - uses: postman-cs/postman-api-onboarding-action@v1
   if: steps.resolve.outputs.resolution-status == 'resolved'
   with:
-    postman-api-key: ${{ secrets.POSTMAN_API_KEY }}
+    postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+    postman-access-token: ${{ steps.postman_token.outputs.token }}
+    postman-team-id: ${{ steps.postman_token.outputs.team-id }}
+    postman-region: us
+    credential-preflight: warn
+    project-name: ${{ steps.resolve.outputs.service-name }}
+    spec-path: ${{ steps.resolve.outputs.spec-path }}
+```
+
+### Chaining directly into workspace bootstrap
+
+Use the bootstrap action directly when you only need workspace/spec/collection creation and do not want repo sync or Insights linking. For org-mode workspace creation, provide bootstrap's `workspace-team-id` from your configured Postman sub-team.
+
+```yaml
+- id: postman_token
+  uses: postman-cs/postman-resolve-service-token-action@v1
+  with:
+    postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+    postman-region: us
+
+- id: resolve
+  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  with:
+    aws-region: us-east-1
+
+- uses: postman-cs/postman-bootstrap-action@v1
+  if: steps.resolve.outputs.resolution-status == 'resolved'
+  with:
+    postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
+    postman-access-token: ${{ steps.postman_token.outputs.token }}
+    workspace-team-id: ${{ vars.POSTMAN_WORKSPACE_TEAM_ID }}
+    postman-region: us
+    credential-preflight: enforce
     project-name: ${{ steps.resolve.outputs.service-name }}
     spec-path: ${{ steps.resolve.outputs.spec-path }}
 ```
@@ -134,7 +212,7 @@ CLI environment-variable outputs are documented in [docs/providers.md](docs/prov
 <!-- inputs-table:start -->
 | Name | Description | Required | Default |
 | --- | --- | --- | --- |
-| `aws-region` | AWS region used to resolve API Gateway resources | yes | n/a |
+| `aws-region` | AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers. | yes | n/a |
 | `gateway-id` | Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery. | no | n/a |
 | `stage` | Optional API Gateway stage override (for example prod or staging). | no | n/a |
 | `output-dir` | Directory under the repository root where generated specs are written. | no | `discovered-specs` |
@@ -202,6 +280,12 @@ SNS is handled as a contract resolver, since SNS has no native exportable spec. 
 
 ## Resources
 
+### Support, security, and releases
+
+- Support: [SUPPORT.md](SUPPORT.md)
+- Security reporting and credential guidance: [SECURITY.md](SECURITY.md)
+- Release and tag policy: [RELEASE_POLICY.md](RELEASE_POLICY.md)
+
 ### The suite
 
 | Action | Role |
@@ -224,6 +308,48 @@ SNS is handled as a contract resolver, since SNS has no native exportable spec. 
 - [Validation suite](validation/README.md): fixtures, runbooks, and sanitized evidence for every discovery surface
 - [Provider deep dive](docs/providers.md) and [SNS contract resolution](docs/sns-contract-resolution.md)
 - [Live testing runbook](docs/LIVE_TESTING_RUNBOOK.md)
+- Postman Learning Center: [Spec Hub](https://learning.postman.com/docs/design-apis/specifications/overview/), [import a specification](https://learning.postman.com/docs/design-apis/specifications/import-a-specification/), [cloud connectors](https://learning.postman.com/docs/api-catalog/connect/cloud/)
+
+
+## Telemetry
+
+This action sends a single non-identifying usage event when a run completes, so the
+Postman team can measure adoption across CI systems. The event contains the
+action name and version, your Postman team ID, the detected CI provider and
+runner kind, the run outcome, the CI run identifier, an event timestamp, and a one-way SHA-256 hash of the repository
+identifier. Each event also carries a schema version and a constant event marker (always `completion`). The Postman team ID is sent in the clear on a legitimate-interest
+basis to measure product adoption.
+
+The `events.pm-cse.dev` endpoint is operated by the Postman Customer Success
+Engineering team. Postman, Inc. processes these events only to measure
+onboarding adoption in aggregate, retains them only as aggregated counts for
+product-adoption trend analysis, and includes no payload field that identifies
+an individual person.
+
+It never sends API keys, access tokens, spec content, workspace or repository
+names, or any personal data. It is fire-and-forget with a hard
+timeout and can never block or fail your pipeline. Corporate HTTP and HTTPS
+proxies are honored through the standard `HTTPS_PROXY`, `HTTP_PROXY`, and
+`NO_PROXY` environment variables.
+
+Disable it by setting either environment variable in your CI:
+
+```sh
+POSTMAN_ACTIONS_TELEMETRY=off
+# or the cross-tool standard
+DO_NOT_TRACK=1
+```
+
+Telemetry is also skipped automatically when no Postman team ID can be resolved.
+
+This action holds no Postman credentials, so telemetry is present but inert
+unless a `POSTMAN_TEAM_ID` environment variable is supplied to attribute the
+run to a team.
+
+Events are sent over HTTPS to `https://events.pm-cse.dev/v1/events`. To
+allowlist this destination on a restricted network, or to route events to a
+collector you operate, set the `POSTMAN_ACTIONS_TELEMETRY_ENDPOINT` environment
+variable to your own URL.
 
 ## License
 
