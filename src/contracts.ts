@@ -133,7 +133,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
   description: 'Resolve the best API spec source for the current service repository.',
   inputs: {
     'aws-region': {
-      description: 'AWS region used to resolve API Gateway resources',
+      description: 'AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers.',
       required: true
     },
     'gateway-id': {

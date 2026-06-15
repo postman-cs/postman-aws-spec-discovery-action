@@ -1,7 +1,7 @@
 {
   "name": "@postman-cse/onboarding-aws-spec-discovery",
-  "version": "1.0.2",
-  "description": "Discover and export API specs from AWS services with zero-config auto-detection.",
+  "version": "1.0.4",
+  "description": "Discover AWS-hosted API specs and hand the result to Postman API onboarding.",
   "type": "module",
   "main": "dist/index.cjs",
   "bin": {
@@ -9,10 +9,15 @@
   },
   "files": [
     "action.yml",
-    "dist"
+    "dist",
+    "README.md",
+    "docs",
+    "SECURITY.md",
+    "SUPPORT.md",
+    "RELEASE_POLICY.md"
   ],
   "scripts": {
-    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs",
+    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --define:__ACTION_VERSION__=\\\"$npm_package_version\\\" --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --define:__ACTION_VERSION__=\\\"$npm_package_version\\\" --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs",
     "check:dist": "npm run build && git diff --exit-code -- dist",
     "docs:tables": "node scripts/render-action-tables.mjs",
     "lint": "eslint .",
@@ -25,8 +30,13 @@
     "github-action",
     "postman",
     "aws",
+    "aws-api-gateway",
+    "appsync",
+    "eventbridge",
+    "sns",
     "apigateway",
-    "openapi"
+    "openapi",
+    "api-onboarding"
   ],
   "license": "MIT",
   "publishConfig": {
@@ -52,7 +62,9 @@
     "@aws-sdk/client-ssm": "^3.1057.0",
     "@aws-sdk/client-sts": "^3.1057.0",
     "@aws-sdk/client-verifiedpermissions": "^3.1057.0",
+    "@postman-cse/automation-telemetry-core": "^0.2.0",
     "@smithy/node-http-handler": "^4.7.5",
+    "undici": "^6.24.0",
     "yaml": "^2.9.0"
   },
   "overrides": {

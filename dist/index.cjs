@@ -5,11 +5,20 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+var __esm = (fn, res, err) => function __init() {
+  if (err) throw err[0];
+  try {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  } catch (e5) {
+    throw err = [e5], e5;
+  }
 };
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e5) {
+    throw mod = 0, e5;
+  }
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -8750,7 +8759,7 @@ var require_env_http_proxy_agent = __commonJS({
       "https:": 443
     };
     var experimentalWarned = false;
-    var EnvHttpProxyAgent = class extends DispatcherBase {
+    var EnvHttpProxyAgent2 = class extends DispatcherBase {
       #noProxyValue = null;
       #noProxyEntries = null;
       #opts = null;
@@ -8869,7 +8878,7 @@ var require_env_http_proxy_agent = __commonJS({
         return process.env.no_proxy ?? process.env.NO_PROXY ?? "";
       }
     };
-    module2.exports = EnvHttpProxyAgent;
+    module2.exports = EnvHttpProxyAgent2;
   }
 });
 
@@ -9211,7 +9220,7 @@ var require_readable = __commonJS({
   "node_modules/undici/lib/api/readable.js"(exports2, module2) {
     "use strict";
     var assert = require("node:assert");
-    var { Readable: Readable6 } = require("node:stream");
+    var { Readable: Readable7 } = require("node:stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError, AbortError } = require_errors();
     var util = require_util();
     var { ReadableStreamFrom } = require_util();
@@ -9223,7 +9232,7 @@ var require_readable = __commonJS({
     var kContentLength = /* @__PURE__ */ Symbol("kContentLength");
     var noop = () => {
     };
-    var BodyReadable = class extends Readable6 {
+    var BodyReadable = class extends Readable7 {
       constructor({
         resume,
         abort,
@@ -9565,7 +9574,7 @@ var require_api_request = __commonJS({
   "node_modules/undici/lib/api/api-request.js"(exports2, module2) {
     "use strict";
     var assert = require("node:assert");
-    var { Readable: Readable6 } = require_readable();
+    var { Readable: Readable7 } = require_readable();
     var { InvalidArgumentError, RequestAbortedError } = require_errors();
     var util = require_util();
     var { getResolveErrorBodyCallback } = require_util3();
@@ -9660,7 +9669,7 @@ var require_api_request = __commonJS({
         const parsedHeaders = responseHeaders === "raw" ? util.parseHeaders(rawHeaders) : headers;
         const contentType = parsedHeaders["content-type"];
         const contentLength = parsedHeaders["content-length"];
-        const res = new Readable6({
+        const res = new Readable7({
           resume,
           abort,
           contentType,
@@ -9975,7 +9984,7 @@ var require_api_pipeline = __commonJS({
   "node_modules/undici/lib/api/api-pipeline.js"(exports2, module2) {
     "use strict";
     var {
-      Readable: Readable6,
+      Readable: Readable7,
       Duplex: Duplex2,
       PassThrough: PassThrough2
     } = require("node:stream");
@@ -9989,7 +9998,7 @@ var require_api_pipeline = __commonJS({
     var { addSignal, removeSignal } = require_abort_signal();
     var assert = require("node:assert");
     var kResume = /* @__PURE__ */ Symbol("resume");
-    var PipelineRequest = class extends Readable6 {
+    var PipelineRequest = class extends Readable7 {
       constructor() {
         super({ autoDestroy: true });
         this[kResume] = null;
@@ -10006,7 +10015,7 @@ var require_api_pipeline = __commonJS({
         callback(err);
       }
     };
-    var PipelineResponse = class extends Readable6 {
+    var PipelineResponse = class extends Readable7 {
       constructor(resume) {
         super({ autoDestroy: true });
         this[kResume] = resume;
@@ -13331,7 +13340,7 @@ var require_fetch = __commonJS({
       subresourceSet
     } = require_constants3();
     var EE = require("node:events");
-    var { Readable: Readable6, pipeline, finished } = require("node:stream");
+    var { Readable: Readable7, pipeline, finished } = require("node:stream");
     var { addAbortListener, isErrored, isReadable, bufferToLowerCasedHeaderName } = require_util();
     var { dataURLProcessor, serializeAMimeType, minimizeSupportedMimeType } = require_data_url();
     var { getGlobalDispatcher } = require_global2();
@@ -14232,7 +14241,7 @@ var require_fetch = __commonJS({
                 headersList.append(bufferToLowerCasedHeaderName(rawHeaders[i5]), rawHeaders[i5 + 1].toString("latin1"), true);
               }
               location = headersList.get("location", true);
-              this.body = new Readable6({ read: resume });
+              this.body = new Readable7({ read: resume });
               const decoders = [];
               const willFollow = location && request.redirect === "follow" && redirectStatusSet.has(status);
               if (request.method !== "HEAD" && request.method !== "CONNECT" && !nullBodyStatus.includes(status) && !willFollow) {
@@ -18542,7 +18551,7 @@ var require_undici = __commonJS({
     var BalancedPool = require_balanced_pool();
     var Agent3 = require_agent();
     var ProxyAgent2 = require_proxy_agent();
-    var EnvHttpProxyAgent = require_env_http_proxy_agent();
+    var EnvHttpProxyAgent2 = require_env_http_proxy_agent();
     var RetryAgent = require_retry_agent();
     var errors = require_errors();
     var util = require_util();
@@ -18565,7 +18574,7 @@ var require_undici = __commonJS({
     module2.exports.BalancedPool = BalancedPool;
     module2.exports.Agent = Agent3;
     module2.exports.ProxyAgent = ProxyAgent2;
-    module2.exports.EnvHttpProxyAgent = EnvHttpProxyAgent;
+    module2.exports.EnvHttpProxyAgent = EnvHttpProxyAgent2;
     module2.exports.RetryAgent = RetryAgent;
     module2.exports.RetryHandler = RetryHandler;
     module2.exports.DecoratorHandler = DecoratorHandler;
@@ -28895,7 +28904,7 @@ var init_constants4 = __esm({
     TRANSIENT_ERROR_CODES = ["TimeoutError", "RequestTimeout", "RequestTimeoutException"];
     TRANSIENT_ERROR_STATUS_CODES = [500, 502, 503, 504];
     NODEJS_TIMEOUT_ERROR_CODES = ["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"];
-    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND"];
+    NODEJS_NETWORK_ERROR_CODES = ["EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND", "EAI_AGAIN"];
   }
 });
 
@@ -29057,9 +29066,6 @@ function bindRetryMiddleware(isStreamingPayload2) {
           try {
             retryToken = await retryStrategy.refreshRetryTokenForRetry(retryToken, retryErrorInfo);
           } catch (refreshError) {
-            if (typeof refreshError.$backoff === "number") {
-              await cooldown(refreshError.$backoff);
-            }
             if (!lastError.$metadata) {
               lastError.$metadata = {};
             }
@@ -29069,8 +29075,10 @@ function bindRetryMiddleware(isStreamingPayload2) {
           }
           attempts = retryToken.getRetryCount();
           const delay = retryToken.getRetryDelay();
-          totalRetryDelay += delay;
-          await cooldown(delay);
+          totalRetryDelay += (retryToken?.$retryLog?.acquisitionDelay ?? 0) + delay;
+          if (delay > 0) {
+            await cooldown(delay);
+          }
         }
       }
     } else {
@@ -29305,6 +29313,9 @@ var init_DefaultRetryToken = __esm({
       count;
       cost;
       longPoll;
+      $retryLog = {
+        acquisitionDelay: 0
+      };
       constructor(delay, count, cost, longPoll) {
         this.delay = delay;
         this.count = count;
@@ -29356,8 +29367,8 @@ var init_StandardRetryStrategy = __esm({
     };
     StandardRetryStrategy = class {
       mode = RETRY_MODES.STANDARD;
-      capacity = INITIAL_RETRY_TOKENS;
       retryBackoffStrategy;
+      capacity = INITIAL_RETRY_TOKENS;
       maxAttemptsProvider;
       baseDelay;
       constructor(arg1) {
@@ -29391,13 +29402,17 @@ var init_StandardRetryStrategy = __esm({
             retryDelay = Math.max(delayFromErrorType, Math.min(errorInfo.retryAfterHint.getTime() - Date.now(), delayFromErrorType + 5e3));
           }
           if (!shouldRetry) {
-            throw Object.assign(new Error("No retry token available"), {
-              $backoff: Retry.v2026 && retryCode === refusal.capacity && isLongPoll ? retryDelay : 0
-            });
+            const longPollBackoff = Retry.v2026 && retryCode === refusal.capacity && isLongPoll ? retryDelay : 0;
+            if (longPollBackoff > 0) {
+              await new Promise((r5) => setTimeout(r5, longPollBackoff));
+            }
           } else {
             const capacityCost = this.getCapacityCost(errorType);
             this.capacity -= capacityCost;
-            return new DefaultRetryToken(retryDelay, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+            const nextToken = new DefaultRetryToken(0, token.getRetryCount() + 1, capacityCost, token.isLongPoll?.() ?? false);
+            await new Promise((r5) => setTimeout(r5, retryDelay));
+            nextToken.$retryLog.acquisitionDelay = retryDelay;
+            return nextToken;
           }
         }
         throw new Error("No retry token available");
@@ -29492,11 +29507,10 @@ var init_ConfiguredRetryStrategy = __esm({
         } else {
           this.computeNextBackoffDelay = computeNextBackoffDelay;
         }
-      }
-      async refreshRetryTokenForRetry(tokenToRenew, errorInfo) {
-        const token = await super.refreshRetryTokenForRetry(tokenToRenew, errorInfo);
-        token.getRetryDelay = () => this.computeNextBackoffDelay(token.getRetryCount());
-        return token;
+        this.retryBackoffStrategy.computeNextBackoffDelay = (completedAttempt) => {
+          const nextAttempt = completedAttempt + 1;
+          return this.computeNextBackoffDelay(nextAttempt);
+        };
       }
     };
   }
@@ -29696,6 +29710,7 @@ var init_configurations = __esm({
     init_AdaptiveRetryStrategy();
     init_StandardRetryStrategy();
     init_config3();
+    init_retries_2026_config();
     ENV_MAX_ATTEMPTS = "AWS_MAX_ATTEMPTS";
     CONFIG_MAX_ATTEMPTS = "max_attempts";
     NODE_MAX_ATTEMPT_CONFIG_OPTIONS = {
@@ -29721,13 +29736,27 @@ var init_configurations = __esm({
       },
       default: DEFAULT_MAX_ATTEMPTS
     };
-    resolveRetryConfig = (input) => {
+    resolveRetryConfig = (input, defaults) => {
       const { retryStrategy, retryMode } = input;
-      const maxAttempts = normalizeProvider(input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS);
+      const { defaultMaxAttempts = DEFAULT_MAX_ATTEMPTS, defaultBaseDelay = Retry.delay() } = defaults ?? {};
+      const maxAttemptsProvider = normalizeProvider(input.maxAttempts ?? defaultMaxAttempts);
       let controller = retryStrategy ? Promise.resolve(retryStrategy) : void 0;
-      const getDefault = async () => await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE ? new AdaptiveRetryStrategy(maxAttempts) : new StandardRetryStrategy(maxAttempts);
+      const getDefault = async () => {
+        const maxAttempts = await maxAttemptsProvider();
+        const adaptive = await normalizeProvider(retryMode)() === RETRY_MODES.ADAPTIVE;
+        if (adaptive) {
+          return new AdaptiveRetryStrategy(maxAttemptsProvider, {
+            maxAttempts,
+            baseDelay: defaultBaseDelay
+          });
+        }
+        return new StandardRetryStrategy({
+          maxAttempts,
+          baseDelay: defaultBaseDelay
+        });
+      };
       return Object.assign(input, {
-        maxAttempts,
+        maxAttempts: maxAttemptsProvider,
         retryStrategy: () => controller ??= getDefault()
       });
     };
@@ -32376,6 +32405,7 @@ var init_AwsSdkSigV4Signer = __esm({
             signingName = second?.signingName ?? signingName;
           }
         }
+        signingProperties._preRequestSystemClockOffset = config.systemClockOffset;
         const signedRequest = await signer.sign(httpRequest, {
           signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion,
@@ -32385,14 +32415,18 @@ var init_AwsSdkSigV4Signer = __esm({
       }
       errorHandler(signingProperties) {
         return (error3) => {
-          const serverTime = error3.ServerTime ?? getDateHeader(error3.$response);
+          const errorException = error3;
+          const serverTime = errorException.ServerTime ?? getDateHeader(errorException.$response);
           if (serverTime) {
             const config = throwSigningPropertyError("config", signingProperties.config);
-            const initialSystemClockOffset = config.systemClockOffset;
-            config.systemClockOffset = getUpdatedSystemClockOffset(serverTime, config.systemClockOffset);
-            const clockSkewCorrected = config.systemClockOffset !== initialSystemClockOffset;
-            if (clockSkewCorrected && error3.$metadata) {
-              error3.$metadata.clockSkewCorrected = true;
+            const preRequestOffset = signingProperties._preRequestSystemClockOffset;
+            const newOffset = getUpdatedSystemClockOffset(serverTime, config.systemClockOffset);
+            const isLocalCorrection = newOffset !== config.systemClockOffset;
+            const isConcurrentCorrection = preRequestOffset !== void 0 && preRequestOffset !== newOffset;
+            const clockSkewCorrected = isLocalCorrection || isConcurrentCorrection;
+            if (clockSkewCorrected && errorException.$metadata) {
+              config.systemClockOffset = newOffset;
+              errorException.$metadata.clockSkewCorrected = true;
             }
           }
           throw error3;
@@ -32425,6 +32459,7 @@ var init_AwsSdkSigV4ASigner = __esm({
         const { config, signer, signingRegion, signingRegionSet, signingName } = await validateSigningProperties(signingProperties);
         const configResolvedSigningRegionSet = await config.sigv4aSigningRegionSet?.();
         const multiRegionOverride = (configResolvedSigningRegionSet ?? signingRegionSet ?? [signingRegion]).join(",");
+        signingProperties._preRequestSystemClockOffset = config.systemClockOffset;
         const signedRequest = await signer.sign(httpRequest, {
           signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion: multiRegionOverride,
@@ -32725,9 +32760,9 @@ var require_dist_cjs6 = __commonJS({
       sha256;
       uriEscapePath;
       applyChecksum;
-      constructor({ applyChecksum, credentials, region, service, sha256, uriEscapePath = true }) {
+      constructor({ applyChecksum, credentials, region, service, sha256: sha2562, uriEscapePath = true }) {
         this.service = service;
-        this.sha256 = sha256;
+        this.sha256 = sha2562;
         this.uriEscapePath = uriEscapePath;
         this.applyChecksum = typeof applyChecksum === "boolean" ? applyChecksum : true;
         this.regionProvider = client.normalizeProvider(region);
@@ -32884,13 +32919,13 @@ ${serde.toHex(hashedRequest)}`;
     };
     var SignatureV42 = class extends SignatureV4Base {
       headerFormatter = new HeaderFormatter();
-      constructor({ applyChecksum, credentials, region, service, sha256, uriEscapePath = true }) {
+      constructor({ applyChecksum, credentials, region, service, sha256: sha2562, uriEscapePath = true }) {
         super({
           applyChecksum,
           credentials,
           region,
           service,
-          sha256,
+          sha256: sha2562,
           uriEscapePath
         });
       }
@@ -33127,7 +33162,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
         configurable: true
       });
       config.credentials = inputCredentials;
-      const { signingEscapePath = true, systemClockOffset = config.systemClockOffset || 0, sha256 } = config;
+      const { signingEscapePath = true, systemClockOffset = config.systemClockOffset || 0, sha256: sha2562 } = config;
       let signer;
       if (config.signer) {
         signer = normalizeProvider2(config.signer);
@@ -33147,7 +33182,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
             credentials: config.credentials,
             region: config.signingRegion,
             service: config.signingName,
-            sha256,
+            sha256: sha2562,
             uriEscapePath: signingEscapePath
           };
           const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
@@ -33170,7 +33205,7 @@ var init_resolveAwsSdkSigV4Config = __esm({
             credentials: config.credentials,
             region: config.signingRegion,
             service: config.signingName,
-            sha256,
+            sha256: sha2562,
             uriEscapePath: signingEscapePath
           };
           const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
@@ -33278,10 +33313,10 @@ var require_package = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-api-gateway",
       description: "AWS SDK for JavaScript Api Gateway Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-api-gateway",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -33300,14 +33335,14 @@ var require_package = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/middleware-sdk-api-gateway": "^3.972.14",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/middleware-sdk-api-gateway": "^3.972.17",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -33333,7 +33368,7 @@ var require_package = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -33744,8 +33779,8 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
 var require_dist_cjs9 = __commonJS({
   "node_modules/@smithy/node-http-handler/dist-cjs/index.js"(exports2) {
     "use strict";
-    var node_https = require("node:https");
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
+    var node_https = require("node:https");
     var node_stream = require("node:stream");
     var http2 = require("node:http2");
     function buildAbortError(abortSignal) {
@@ -34131,7 +34166,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           socketAcquisitionWarningTimeout,
           throwOnRequestTimeout,
           httpAgentProvider: async () => {
-            const { Agent: Agent3, request } = await import("node:http");
+            const node_http = await import("node:http");
+            const { Agent: Agent3, request } = node_http.default ?? node_http;
             hRequest = request;
             hAgent = Agent3;
             if (httpAgent instanceof hAgent || typeof httpAgent?.destroy === "function") {
@@ -34376,6 +34412,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
         return this.connectOptions === void 0 ? http2.connect(url) : http2.connect(url, this.connectOptions);
       }
     };
+    var { constants: constants3 } = http2;
     var NodeHttp2Handler = class _NodeHttp2Handler {
       config;
       configProvider;
@@ -34465,8 +34502,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           }
           const clientHttp2Stream = session.request({
             ...request.headers,
-            [http2.constants.HTTP2_HEADER_PATH]: path15,
-            [http2.constants.HTTP2_HEADER_METHOD]: method
+            [constants3.HTTP2_HEADER_PATH]: path15,
+            [constants3.HTTP2_HEADER_METHOD]: method
           });
           if (effectiveRequestTimeout) {
             clientHttp2Stream.setTimeout(effectiveRequestTimeout, () => {
@@ -34873,20 +34910,20 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.13",
+      version: "3.997.20",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
       types: "./dist-types/index.d.ts",
       scripts: {
         build: "yarn lint && concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline nested-clients",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
         "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
         clean: "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
-        lint: "node ../../scripts/validation/submodules-linter.js --pkg nested-clients",
+        lint: "node ../../scripts/validation/submodules-linter.js",
         test: "yarn g:vitest run",
         "test:watch": "yarn g:vitest watch"
       },
@@ -34896,19 +34933,19 @@ var init_package = __esm({
       sideEffects: false,
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.30",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.34",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -40552,13 +40589,41 @@ var init_schemas_0 = __esm({
       [0, 0]
     ];
     n0_registry.registerError(AuthorizationPendingException$, AuthorizationPendingException);
-    ExpiredTokenException$ = [-3, n0, _ETE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    ExpiredTokenException$ = [
+      -3,
+      n0,
+      _ETE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(ExpiredTokenException$, ExpiredTokenException);
-    InternalServerException$ = [-3, n0, _ISE, { [_e]: _se, [_hE]: 500 }, [_e, _ed], [0, 0]];
+    InternalServerException$ = [
+      -3,
+      n0,
+      _ISE,
+      { [_e]: _se, [_hE]: 500 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InternalServerException$, InternalServerException);
-    InvalidClientException$ = [-3, n0, _ICE, { [_e]: _c, [_hE]: 401 }, [_e, _ed], [0, 0]];
+    InvalidClientException$ = [
+      -3,
+      n0,
+      _ICE,
+      { [_e]: _c, [_hE]: 401 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidClientException$, InvalidClientException);
-    InvalidGrantException$ = [-3, n0, _IGE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    InvalidGrantException$ = [
+      -3,
+      n0,
+      _IGE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidGrantException$, InvalidGrantException);
     InvalidRequestException$ = [
       -3,
@@ -40569,9 +40634,23 @@ var init_schemas_0 = __esm({
       [0, 0, 0]
     ];
     n0_registry.registerError(InvalidRequestException$, InvalidRequestException);
-    InvalidScopeException$ = [-3, n0, _ISEn, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    InvalidScopeException$ = [
+      -3,
+      n0,
+      _ISEn,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(InvalidScopeException$, InvalidScopeException);
-    SlowDownException$ = [-3, n0, _SDE, { [_e]: _c, [_hE]: 400 }, [_e, _ed], [0, 0]];
+    SlowDownException$ = [
+      -3,
+      n0,
+      _SDE,
+      { [_e]: _c, [_hE]: 400 },
+      [_e, _ed],
+      [0, 0]
+    ];
     n0_registry.registerError(SlowDownException$, SlowDownException);
     UnauthorizedClientException$ = [
       -3,
@@ -40591,7 +40670,10 @@ var init_schemas_0 = __esm({
       [0, 0]
     ];
     n0_registry.registerError(UnsupportedGrantTypeException$, UnsupportedGrantTypeException);
-    errorTypeRegistries = [_s_registry, n0_registry];
+    errorTypeRegistries = [
+      _s_registry,
+      n0_registry
+    ];
     AccessToken = [0, n0, _AT, 8, 0];
     ClientSecret = [0, n0, _CS, 8, 0];
     CodeVerifier = [0, n0, _CV, 8, 0];
@@ -41398,15 +41480,46 @@ var init_schemas_02 = __esm({
     SSOServiceException$ = [-3, _s2, "SSOServiceException", 0, [], []];
     _s_registry2.registerError(SSOServiceException$, SSOServiceException);
     n0_registry2 = TypeRegistry.for(n02);
-    InvalidRequestException$2 = [-3, n02, _IRE2, { [_e2]: _c2, [_hE2]: 400 }, [_m], [0]];
+    InvalidRequestException$2 = [
+      -3,
+      n02,
+      _IRE2,
+      { [_e2]: _c2, [_hE2]: 400 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(InvalidRequestException$2, InvalidRequestException2);
-    ResourceNotFoundException$ = [-3, n02, _RNFE, { [_e2]: _c2, [_hE2]: 404 }, [_m], [0]];
+    ResourceNotFoundException$ = [
+      -3,
+      n02,
+      _RNFE,
+      { [_e2]: _c2, [_hE2]: 404 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(ResourceNotFoundException$, ResourceNotFoundException);
-    TooManyRequestsException$ = [-3, n02, _TMRE, { [_e2]: _c2, [_hE2]: 429 }, [_m], [0]];
+    TooManyRequestsException$ = [
+      -3,
+      n02,
+      _TMRE,
+      { [_e2]: _c2, [_hE2]: 429 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(TooManyRequestsException$, TooManyRequestsException);
-    UnauthorizedException$ = [-3, n02, _UE, { [_e2]: _c2, [_hE2]: 401 }, [_m], [0]];
+    UnauthorizedException$ = [
+      -3,
+      n02,
+      _UE,
+      { [_e2]: _c2, [_hE2]: 401 },
+      [_m],
+      [0]
+    ];
     n0_registry2.registerError(UnauthorizedException$, UnauthorizedException);
-    errorTypeRegistries2 = [_s_registry2, n0_registry2];
+    errorTypeRegistries2 = [
+      _s_registry2,
+      n0_registry2
+    ];
     AccessTokenType = [0, n02, _ATT, 8, 0];
     SecretAccessKeyType = [0, n02, _SAKT, 8, 0];
     SessionTokenType = [0, n02, _STT, 8, 0];
@@ -41416,11 +41529,7 @@ var init_schemas_02 = __esm({
       _GRCR,
       0,
       [_rN, _aI, _aT2],
-      [
-        [0, { [_hQ]: _rn }],
-        [0, { [_hQ]: _ai }],
-        [() => AccessTokenType, { [_hH]: _xasbt }]
-      ],
+      [[0, { [_hQ]: _rn }], [0, { [_hQ]: _ai }], [() => AccessTokenType, { [_hH]: _xasbt }]],
       3
     ];
     GetRoleCredentialsResponse$ = [
@@ -41770,8 +41879,11 @@ var require_dist_cjs13 = __commonJS({
             profile,
             filepath,
             configFilepath,
-            ignoreCache
-          })();
+            ignoreCache,
+            clientConfig,
+            parentClientConfig,
+            logger: logger2
+          })({ callerClientConfig });
           token = {
             accessToken: _token.token,
             expiresAt: new Date(_token.expiration).toISOString()
@@ -42022,7 +42134,7 @@ var init_bdd3 = __esm({
     g3 = "stringEquals";
     h3 = { [m]: "Endpoint" };
     i3 = { [m]: d3 };
-    j3 = { fn: f3, argv: [i3, "name"] };
+    j3 = { "fn": f3, "argv": [i3, "name"] };
     k3 = {};
     l = [{ [m]: "Region" }];
     _data3 = {
@@ -42257,15 +42369,50 @@ var init_schemas_03 = __esm({
     SigninServiceException$ = [-3, _s3, "SigninServiceException", 0, [], []];
     _s_registry3.registerError(SigninServiceException$, SigninServiceException);
     n0_registry3 = TypeRegistry.for(n03);
-    AccessDeniedException$2 = [-3, n03, _ADE2, { [_e3]: _c3 }, [_e3, _m2], [0, 0], 2];
+    AccessDeniedException$2 = [
+      -3,
+      n03,
+      _ADE2,
+      { [_e3]: _c3 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(AccessDeniedException$2, AccessDeniedException2);
-    InternalServerException$2 = [-3, n03, _ISE2, { [_e3]: _se2, [_hE3]: 500 }, [_e3, _m2], [0, 0], 2];
+    InternalServerException$2 = [
+      -3,
+      n03,
+      _ISE2,
+      { [_e3]: _se2, [_hE3]: 500 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(InternalServerException$2, InternalServerException2);
-    TooManyRequestsError$ = [-3, n03, _TMRE2, { [_e3]: _c3, [_hE3]: 429 }, [_e3, _m2], [0, 0], 2];
+    TooManyRequestsError$ = [
+      -3,
+      n03,
+      _TMRE2,
+      { [_e3]: _c3, [_hE3]: 429 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(TooManyRequestsError$, TooManyRequestsError);
-    ValidationException$ = [-3, n03, _VE, { [_e3]: _c3, [_hE3]: 400 }, [_e3, _m2], [0, 0], 2];
+    ValidationException$ = [
+      -3,
+      n03,
+      _VE,
+      { [_e3]: _c3, [_hE3]: 400 },
+      [_e3, _m2],
+      [0, 0],
+      2
+    ];
     n0_registry3.registerError(ValidationException$, ValidationException);
-    errorTypeRegistries3 = [_s_registry3, n0_registry3];
+    errorTypeRegistries3 = [
+      _s_registry3,
+      n0_registry3
+    ];
     RefreshToken2 = [0, n03, _RT2, 8, 0];
     AccessToken$ = [
       3,
@@ -42273,11 +42420,7 @@ var init_schemas_03 = __esm({
       _AT2,
       8,
       [_aKI2, _sAK2, _sT2],
-      [
-        [0, { [_jN]: _aKI2 }],
-        [0, { [_jN]: _sAK2 }],
-        [0, { [_jN]: _sT2 }]
-      ],
+      [[0, { [_jN]: _aKI2 }], [0, { [_jN]: _sAK2 }], [0, { [_jN]: _sT2 }]],
       3
     ];
     CreateOAuth2TokenRequest$ = [
@@ -42295,14 +42438,7 @@ var init_schemas_03 = __esm({
       _COATRB,
       0,
       [_cI2, _gT2, _co2, _rU2, _cV2, _rT2],
-      [
-        [0, { [_jN]: _cI2 }],
-        [0, { [_jN]: _gT2 }],
-        0,
-        [0, { [_jN]: _rU2 }],
-        [0, { [_jN]: _cV2 }],
-        [() => RefreshToken2, { [_jN]: _rT2 }]
-      ],
+      [[0, { [_jN]: _cI2 }], [0, { [_jN]: _gT2 }], 0, [0, { [_jN]: _rU2 }], [0, { [_jN]: _cV2 }], [() => RefreshToken2, { [_jN]: _rT2 }]],
       2
     ];
     CreateOAuth2TokenResponse$ = [
@@ -42320,13 +42456,7 @@ var init_schemas_03 = __esm({
       _COATRBr,
       0,
       [_aT3, _tT2, _eI2, _rT2, _iT2],
-      [
-        [() => AccessToken$, { [_jN]: _aT3 }],
-        [0, { [_jN]: _tT2 }],
-        [1, { [_jN]: _eI2 }],
-        [() => RefreshToken2, { [_jN]: _rT2 }],
-        [0, { [_jN]: _iT2 }]
-      ],
+      [[() => AccessToken$, { [_jN]: _aT3 }], [0, { [_jN]: _tT2 }], [1, { [_jN]: _eI2 }], [() => RefreshToken2, { [_jN]: _rT2 }], [0, { [_jN]: _iT2 }]],
       4
     ];
     CreateOAuth2Token$ = [
@@ -42937,22 +43067,22 @@ var require_dist_cjs15 = __commonJS({
     var signatureV4CrtContainer = {
       CrtSignerV4: null
     };
-    var SESSION_TOKEN_QUERY_PARAM = "X-Amz-S3session-Token";
-    var SESSION_TOKEN_HEADER = SESSION_TOKEN_QUERY_PARAM.toLowerCase();
-    var SignatureV4SignWithCredentials = class extends signatureV4.SignatureV4 {
+    var SESSION_TOKEN_QUERY_PARAM2 = "X-Amz-S3session-Token";
+    var SESSION_TOKEN_HEADER2 = SESSION_TOKEN_QUERY_PARAM2.toLowerCase();
+    var SignatureV4SignWithCredentials2 = class extends signatureV4.SignatureV4 {
       async signWithCredentials(requestToSign, credentials, options) {
         const credentialsWithoutSessionToken = getCredentialsWithoutSessionToken(credentials);
-        requestToSign.headers[SESSION_TOKEN_HEADER] = credentials.sessionToken;
+        requestToSign.headers[SESSION_TOKEN_HEADER2] = credentials.sessionToken;
         const privateAccess = this;
         setSingleOverride(privateAccess, credentialsWithoutSessionToken);
         return privateAccess.signRequest(requestToSign, options ?? {});
       }
       async presignWithCredentials(requestToSign, credentials, options) {
         const credentialsWithoutSessionToken = getCredentialsWithoutSessionToken(credentials);
-        delete requestToSign.headers[SESSION_TOKEN_HEADER];
-        requestToSign.headers[SESSION_TOKEN_QUERY_PARAM] = credentials.sessionToken;
+        delete requestToSign.headers[SESSION_TOKEN_HEADER2];
+        requestToSign.headers[SESSION_TOKEN_QUERY_PARAM2] = credentials.sessionToken;
         requestToSign.query = requestToSign.query ?? {};
-        requestToSign.query[SESSION_TOKEN_QUERY_PARAM] = credentials.sessionToken;
+        requestToSign.query[SESSION_TOKEN_QUERY_PARAM2] = credentials.sessionToken;
         const privateAccess = this;
         setSingleOverride(privateAccess, credentialsWithoutSessionToken);
         return this.presign(requestToSign, options);
@@ -42985,7 +43115,7 @@ var require_dist_cjs15 = __commonJS({
         return "none";
       }
       constructor(options) {
-        this.sigv4Signer = new SignatureV4SignWithCredentials(options);
+        this.sigv4Signer = new SignatureV4SignWithCredentials2(options);
         this.signerOptions = options;
       }
       async sign(requestToSign, options = {}) {
@@ -43057,7 +43187,7 @@ var require_dist_cjs15 = __commonJS({
       }
     };
     exports2.SignatureV4MultiRegion = SignatureV4MultiRegion3;
-    exports2.SignatureV4SignWithCredentials = SignatureV4SignWithCredentials;
+    exports2.SignatureV4SignWithCredentials = SignatureV4SignWithCredentials2;
     exports2.signatureV4CrtContainer = signatureV4CrtContainer;
   }
 });
@@ -43651,10 +43781,21 @@ var init_schemas_04 = __esm({
       [0]
     ];
     n0_registry4.registerError(RegionDisabledException$, RegionDisabledException);
-    errorTypeRegistries4 = [_s_registry4, n0_registry4];
+    errorTypeRegistries4 = [
+      _s_registry4,
+      n0_registry4
+    ];
     accessKeySecretType = [0, n04, _aKST, 8, 0];
     clientTokenType = [0, n04, _cTT, 8, 0];
-    AssumedRoleUser$ = [3, n04, _ARU, 0, [_ARI, _A], [0, 0], 2];
+    AssumedRoleUser$ = [
+      3,
+      n04,
+      _ARU,
+      0,
+      [_ARI, _A],
+      [0, 0],
+      2
+    ];
     AssumeRoleRequest$ = [
       3,
       n04,
@@ -43698,14 +43839,61 @@ var init_schemas_04 = __esm({
       [0, [() => accessKeySecretType, 0], 0, 4],
       4
     ];
-    PolicyDescriptorType$ = [3, n04, _PDT, 0, [_a], [0]];
-    ProvidedContext$ = [3, n04, _PCr, 0, [_PAr, _CA], [0, 0]];
-    Tag$ = [3, n04, _Ta, 0, [_K, _V], [0, 0], 2];
-    policyDescriptorListType = [1, n04, _pDLT, 0, () => PolicyDescriptorType$];
-    ProvidedContextsListType = [1, n04, _PCLT, 0, () => ProvidedContext$];
+    PolicyDescriptorType$ = [
+      3,
+      n04,
+      _PDT,
+      0,
+      [_a],
+      [0]
+    ];
+    ProvidedContext$ = [
+      3,
+      n04,
+      _PCr,
+      0,
+      [_PAr, _CA],
+      [0, 0]
+    ];
+    Tag$ = [
+      3,
+      n04,
+      _Ta,
+      0,
+      [_K, _V],
+      [0, 0],
+      2
+    ];
+    policyDescriptorListType = [
+      1,
+      n04,
+      _pDLT,
+      0,
+      () => PolicyDescriptorType$
+    ];
+    ProvidedContextsListType = [
+      1,
+      n04,
+      _PCLT,
+      0,
+      () => ProvidedContext$
+    ];
     tagKeyListType = 64 | 0;
-    tagListType = [1, n04, _tLT, 0, () => Tag$];
-    AssumeRole$ = [9, n04, _AR, 0, () => AssumeRoleRequest$, () => AssumeRoleResponse$];
+    tagListType = [
+      1,
+      n04,
+      _tLT,
+      0,
+      () => Tag$
+    ];
+    AssumeRole$ = [
+      9,
+      n04,
+      _AR,
+      0,
+      () => AssumeRoleRequest$,
+      () => AssumeRoleResponse$
+    ];
     AssumeRoleWithWebIdentity$ = [
       9,
       n04,
@@ -44598,9 +44786,18 @@ var require_dist_cjs19 = __commonJS({
       let activeLock;
       let passiveLock;
       let credentials;
+      let forceRefreshLock;
       const provider = async (options) => {
         if (options?.forceRefresh) {
-          return await chain2(options);
+          if (!forceRefreshLock) {
+            forceRefreshLock = chain2(options).then((c5) => {
+              credentials = c5;
+            }).finally(() => {
+              forceRefreshLock = void 0;
+            });
+          }
+          await forceRefreshLock;
+          return credentials;
         }
         if (credentials?.expiration) {
           if (credentials?.expiration?.getTime() < Date.now()) {
@@ -49794,10 +49991,10 @@ var require_package2 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-apigatewayv2",
       description: "AWS SDK for JavaScript Apigatewayv2 Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-apigatewayv2",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -49814,13 +50011,13 @@ var require_package2 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -49846,7 +50043,7 @@ var require_package2 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -55365,10 +55562,10 @@ var require_package3 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sts",
       description: "AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-sts",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "premove ./dist-types tsconfig.types.tsbuildinfo && tsc -p tsconfig.types.json",
@@ -55391,18 +55588,18 @@ var require_package3 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.30",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.34",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.1.6",
+        "@smithy/snapshot-testing": "^2.1.7",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -55426,7 +55623,7 @@ var require_package3 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -64069,10 +64266,10 @@ var require_package4 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-appsync",
       description: "AWS SDK for JavaScript Appsync Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-appsync",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -64089,13 +64286,13 @@ var require_package4 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -64121,7 +64318,7 @@ var require_package4 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -68563,10 +68760,10 @@ var require_package5 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-schemas",
       description: "AWS SDK for JavaScript Schemas Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-schemas",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -68583,13 +68780,13 @@ var require_package5 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -68615,7 +68812,7 @@ var require_package5 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -70630,10 +70827,10 @@ var require_package6 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-cloudformation",
       description: "AWS SDK for JavaScript Cloudformation Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-cloudformation",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -70652,13 +70849,13 @@ var require_package6 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -70684,7 +70881,7 @@ var require_package6 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -78080,10 +78277,10 @@ var require_package7 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-glue",
       description: "AWS SDK for JavaScript Glue Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-glue",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -78100,13 +78297,13 @@ var require_package7 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -78132,7 +78329,7 @@ var require_package7 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -78290,7 +78487,7 @@ var require_errors9 = __commonJS({
   "node_modules/@aws-sdk/client-glue/dist-cjs/models/errors.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.VersionMismatchException = exports2.MaterializedViewRefreshTaskStoppingException = exports2.MaterializedViewRefreshTaskNotRunningException = exports2.SchedulerNotRunningException = exports2.CrawlerStoppingException = exports2.CrawlerNotRunningException = exports2.ColumnStatisticsTaskStoppingException = exports2.ColumnStatisticsTaskNotRunningException = exports2.MLTransformNotReadyException = exports2.MaterializedViewRefreshTaskRunningException = exports2.SchedulerRunningException = exports2.NoScheduleException = exports2.IllegalBlueprintStateException = exports2.IllegalWorkflowStateException = exports2.ConcurrentRunsExceededException = exports2.PermissionTypeMismatchException = exports2.TargetResourceNotFound = exports2.ConditionCheckFailureException = exports2.InvalidIntegrationStateFault = exports2.IntegrationNotFoundFault = exports2.SchedulerTransitioningException = exports2.CrawlerRunningException = exports2.OperationNotSupportedException = exports2.ResourceNotFoundException = exports2.KMSKeyNotAccessibleFault = exports2.InternalServerException = exports2.IntegrationQuotaExceededFault = exports2.IntegrationConflictOperationFault = exports2.ConflictException = exports2.ValidationException = exports2.IdempotentParameterMismatchException = exports2.ColumnStatisticsTaskRunningException = exports2.FederatedResourceAlreadyExistsException = exports2.ConcurrentModificationException = exports2.IllegalSessionStateException = exports2.ThrottlingException = exports2.InvalidStateException = exports2.FederationSourceRetryableException = exports2.FederationSourceException = exports2.ResourceNotReadyException = exports2.ResourceNumberLimitExceededException = exports2.OperationTimeoutException = exports2.InvalidInputException = exports2.InternalServiceException = exports2.GlueEncryptionException = exports2.EntityNotFoundException = exports2.AlreadyExistsException = exports2.AccessDeniedException = void 0;
+    exports2.VersionMismatchException = exports2.MaterializedViewRefreshTaskStoppingException = exports2.MaterializedViewRefreshTaskNotRunningException = exports2.SchedulerNotRunningException = exports2.CrawlerStoppingException = exports2.CrawlerNotRunningException = exports2.ColumnStatisticsTaskStoppingException = exports2.ColumnStatisticsTaskNotRunningException = exports2.MLTransformNotReadyException = exports2.MaterializedViewRefreshTaskRunningException = exports2.SchedulerRunningException = exports2.NoScheduleException = exports2.IllegalBlueprintStateException = exports2.SessionBusyException = exports2.IllegalWorkflowStateException = exports2.ConcurrentRunsExceededException = exports2.PermissionTypeMismatchException = exports2.TargetResourceNotFound = exports2.ConditionCheckFailureException = exports2.InvalidIntegrationStateFault = exports2.IntegrationNotFoundFault = exports2.SchedulerTransitioningException = exports2.CrawlerRunningException = exports2.OperationNotSupportedException = exports2.ResourceNotFoundException = exports2.KMSKeyNotAccessibleFault = exports2.InternalServerException = exports2.IntegrationQuotaExceededFault = exports2.IntegrationConflictOperationFault = exports2.ConflictException = exports2.ValidationException = exports2.IdempotentParameterMismatchException = exports2.ColumnStatisticsTaskRunningException = exports2.FederatedResourceAlreadyExistsException = exports2.ConcurrentModificationException = exports2.IllegalSessionStateException = exports2.ThrottlingException = exports2.InvalidStateException = exports2.FederationSourceRetryableException = exports2.FederationSourceException = exports2.ResourceNotReadyException = exports2.ResourceNumberLimitExceededException = exports2.OperationTimeoutException = exports2.InvalidInputException = exports2.InternalServiceException = exports2.GlueEncryptionException = exports2.EntityNotFoundException = exports2.AlreadyExistsException = exports2.AccessDeniedException = void 0;
     var GlueServiceException_1 = require_GlueServiceException();
     var AccessDeniedException3 = class _AccessDeniedException extends GlueServiceException_1.GlueServiceException {
       name = "AccessDeniedException";
@@ -78825,6 +79022,21 @@ var require_errors9 = __commonJS({
       }
     };
     exports2.IllegalWorkflowStateException = IllegalWorkflowStateException;
+    var SessionBusyException = class _SessionBusyException extends GlueServiceException_1.GlueServiceException {
+      name = "SessionBusyException";
+      $fault = "client";
+      Message;
+      constructor(opts) {
+        super({
+          name: "SessionBusyException",
+          $fault: "client",
+          ...opts
+        });
+        Object.setPrototypeOf(this, _SessionBusyException.prototype);
+        this.Message = opts.Message;
+      }
+    };
+    exports2.SessionBusyException = SessionBusyException;
     var IllegalBlueprintStateException = class _IllegalBlueprintStateException extends GlueServiceException_1.GlueServiceException {
       name = "IllegalBlueprintStateException";
       $fault = "client";
@@ -79028,32 +79240,32 @@ var require_schemas_07 = __commonJS({
   "node_modules/@aws-sdk/client-glue/dist-cjs/schemas/schemas_0.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.errorTypeRegistries = exports2.VersionMismatchException$ = exports2.ValidationException$ = exports2.ThrottlingException$ = exports2.TargetResourceNotFound$ = exports2.SchedulerTransitioningException$ = exports2.SchedulerRunningException$ = exports2.SchedulerNotRunningException$ = exports2.ResourceNumberLimitExceededException$ = exports2.ResourceNotReadyException$ = exports2.ResourceNotFoundException$ = exports2.PermissionTypeMismatchException$ = exports2.OperationTimeoutException$ = exports2.OperationNotSupportedException$ = exports2.NoScheduleException$ = exports2.MLTransformNotReadyException$ = exports2.MaterializedViewRefreshTaskStoppingException$ = exports2.MaterializedViewRefreshTaskRunningException$ = exports2.MaterializedViewRefreshTaskNotRunningException$ = exports2.KMSKeyNotAccessibleFault$ = exports2.InvalidStateException$ = exports2.InvalidIntegrationStateFault$ = exports2.InvalidInputException$ = exports2.InternalServiceException$ = exports2.InternalServerException$ = exports2.IntegrationQuotaExceededFault$ = exports2.IntegrationNotFoundFault$ = exports2.IntegrationConflictOperationFault$ = exports2.IllegalWorkflowStateException$ = exports2.IllegalSessionStateException$ = exports2.IllegalBlueprintStateException$ = exports2.IdempotentParameterMismatchException$ = exports2.GlueEncryptionException$ = exports2.FederationSourceRetryableException$ = exports2.FederationSourceException$ = exports2.FederatedResourceAlreadyExistsException$ = exports2.EntityNotFoundException$ = exports2.CrawlerStoppingException$ = exports2.CrawlerRunningException$ = exports2.CrawlerNotRunningException$ = exports2.ConflictException$ = exports2.ConditionCheckFailureException$ = exports2.ConcurrentRunsExceededException$ = exports2.ConcurrentModificationException$ = exports2.ColumnStatisticsTaskStoppingException$ = exports2.ColumnStatisticsTaskRunningException$ = exports2.ColumnStatisticsTaskNotRunningException$ = exports2.AlreadyExistsException$ = exports2.AccessDeniedException$ = exports2.GlueServiceException$ = void 0;
-    exports2.BatchGetTriggersRequest$ = exports2.BatchGetTableOptimizerResponse$ = exports2.BatchGetTableOptimizerRequest$ = exports2.BatchGetTableOptimizerError$ = exports2.BatchGetTableOptimizerEntry$ = exports2.BatchGetPartitionResponse$ = exports2.BatchGetPartitionRequest$ = exports2.BatchGetJobsResponse$ = exports2.BatchGetJobsRequest$ = exports2.BatchGetDevEndpointsResponse$ = exports2.BatchGetDevEndpointsRequest$ = exports2.BatchGetDataQualityResultResponse$ = exports2.BatchGetDataQualityResultRequest$ = exports2.BatchGetCustomEntityTypesResponse$ = exports2.BatchGetCustomEntityTypesRequest$ = exports2.BatchGetCrawlersResponse$ = exports2.BatchGetCrawlersRequest$ = exports2.BatchGetBlueprintsResponse$ = exports2.BatchGetBlueprintsRequest$ = exports2.BatchDeleteTableVersionResponse$ = exports2.BatchDeleteTableVersionRequest$ = exports2.BatchDeleteTableResponse$ = exports2.BatchDeleteTableRequest$ = exports2.BatchDeletePartitionResponse$ = exports2.BatchDeletePartitionRequest$ = exports2.BatchDeleteConnectionResponse$ = exports2.BatchDeleteConnectionRequest$ = exports2.BatchCreatePartitionResponse$ = exports2.BatchCreatePartitionRequest$ = exports2.BasicCatalogTarget$ = exports2.BasicAuthenticationProperties$ = exports2.BasicAuthenticationCredentials$ = exports2.BackfillError$ = exports2.AutoDataQuality$ = exports2.AuthorizationCodeProperties$ = exports2.AuthenticationConfigurationInput$ = exports2.AuthenticationConfiguration$ = exports2.AuthConfiguration$ = exports2.AuditContext$ = exports2.AthenaConnectorSource$ = exports2.ApplyMapping$ = exports2.AnnotationError$ = exports2.AmazonRedshiftTarget$ = exports2.AmazonRedshiftSource$ = exports2.AmazonRedshiftNodeData$ = exports2.AmazonRedshiftAdvancedOption$ = exports2.AllowedValue$ = exports2.AggregateOperation$ = exports2.Aggregate$ = exports2.Action$ = void 0;
-    exports2.CodeGenNode$ = exports2.CodeGenEdge$ = exports2.CodeGenConfigurationNode$ = exports2.CloudWatchEncryption$ = exports2.ClientCredentialsProperties$ = exports2.Classifier$ = exports2.CheckSchemaVersionValidityResponse$ = exports2.CheckSchemaVersionValidityInput$ = exports2.CatalogTarget$ = exports2.CatalogSource$ = exports2.CatalogSchemaChangePolicy$ = exports2.CatalogPropertiesOutput$ = exports2.CatalogProperties$ = exports2.CatalogKinesisSource$ = exports2.CatalogKafkaSource$ = exports2.CatalogInput$ = exports2.CatalogImportStatus$ = exports2.CatalogIcebergSource$ = exports2.CatalogHudiSource$ = exports2.CatalogEntry$ = exports2.CatalogDeltaSource$ = exports2.Catalog$ = exports2.Capabilities$ = exports2.CancelStatementResponse$ = exports2.CancelStatementRequest$ = exports2.CancelMLTaskRunResponse$ = exports2.CancelMLTaskRunRequest$ = exports2.CancelDataQualityRulesetEvaluationRunResponse$ = exports2.CancelDataQualityRulesetEvaluationRunRequest$ = exports2.CancelDataQualityRuleRecommendationRunResponse$ = exports2.CancelDataQualityRuleRecommendationRunRequest$ = exports2.BooleanColumnStatisticsData$ = exports2.BlueprintRun$ = exports2.BlueprintDetails$ = exports2.Blueprint$ = exports2.BinaryColumnStatisticsData$ = exports2.BatchUpdatePartitionResponse$ = exports2.BatchUpdatePartitionRequestEntry$ = exports2.BatchUpdatePartitionRequest$ = exports2.BatchUpdatePartitionFailureEntry$ = exports2.BatchTableOptimizer$ = exports2.BatchStopJobRunSuccessfulSubmission$ = exports2.BatchStopJobRunResponse$ = exports2.BatchStopJobRunRequest$ = exports2.BatchStopJobRunError$ = exports2.BatchPutDataQualityStatisticAnnotationResponse$ = exports2.BatchPutDataQualityStatisticAnnotationRequest$ = exports2.BatchGetWorkflowsResponse$ = exports2.BatchGetWorkflowsRequest$ = exports2.BatchGetTriggersResponse$ = void 0;
-    exports2.CreateCsvClassifierRequest$ = exports2.CreateCrawlerResponse$ = exports2.CreateCrawlerRequest$ = exports2.CreateConnectionResponse$ = exports2.CreateConnectionRequest$ = exports2.CreateColumnStatisticsTaskSettingsResponse$ = exports2.CreateColumnStatisticsTaskSettingsRequest$ = exports2.CreateClassifierResponse$ = exports2.CreateClassifierRequest$ = exports2.CreateCatalogResponse$ = exports2.CreateCatalogRequest$ = exports2.CreateBlueprintResponse$ = exports2.CreateBlueprintRequest$ = exports2.CrawlsFilter$ = exports2.CrawlerTargets$ = exports2.CrawlerNodeDetails$ = exports2.CrawlerMetrics$ = exports2.CrawlerHistory$ = exports2.Crawler$ = exports2.Crawl$ = exports2.ConnectorProperty$ = exports2.ConnectorOAuth2Properties$ = exports2.ConnectorDataTarget$ = exports2.ConnectorDataSource$ = exports2.ConnectorAuthorizationCodeProperties$ = exports2.ConnectorAuthenticationConfiguration$ = exports2.ConnectionTypeVariant$ = exports2.ConnectionTypeBrief$ = exports2.ConnectionsList$ = exports2.ConnectionPropertiesConfiguration$ = exports2.ConnectionPasswordEncryption$ = exports2.ConnectionInput$ = exports2.Connection$ = exports2.ConfusionMatrix$ = exports2.ConfigurationObject$ = exports2.ConditionExpression$ = exports2.Condition$ = exports2.ComputeEnvironmentConfiguration$ = exports2.CompactionMetrics$ = exports2.CompactionConfiguration$ = exports2.ColumnStatisticsTaskSettings$ = exports2.ColumnStatisticsTaskRun$ = exports2.ColumnStatisticsError$ = exports2.ColumnStatisticsData$ = exports2.ColumnStatistics$ = exports2.ColumnRowFilter$ = exports2.ColumnImportance$ = exports2.ColumnError$ = exports2.Column$ = exports2.CodeGenNodeArg$ = void 0;
-    exports2.CreateXMLClassifierRequest$ = exports2.CreateWorkflowResponse$ = exports2.CreateWorkflowRequest$ = exports2.CreateUserDefinedFunctionResponse$ = exports2.CreateUserDefinedFunctionRequest$ = exports2.CreateUsageProfileResponse$ = exports2.CreateUsageProfileRequest$ = exports2.CreateTriggerResponse$ = exports2.CreateTriggerRequest$ = exports2.CreateTableResponse$ = exports2.CreateTableRequest$ = exports2.CreateTableOptimizerResponse$ = exports2.CreateTableOptimizerRequest$ = exports2.CreateSessionResponse$ = exports2.CreateSessionRequest$ = exports2.CreateSecurityConfigurationResponse$ = exports2.CreateSecurityConfigurationRequest$ = exports2.CreateScriptResponse$ = exports2.CreateScriptRequest$ = exports2.CreateSchemaResponse$ = exports2.CreateSchemaInput$ = exports2.CreateRegistryResponse$ = exports2.CreateRegistryInput$ = exports2.CreatePartitionResponse$ = exports2.CreatePartitionRequest$ = exports2.CreatePartitionIndexResponse$ = exports2.CreatePartitionIndexRequest$ = exports2.CreateMLTransformResponse$ = exports2.CreateMLTransformRequest$ = exports2.CreateJsonClassifierRequest$ = exports2.CreateJobResponse$ = exports2.CreateJobRequest$ = exports2.CreateIntegrationTablePropertiesResponse$ = exports2.CreateIntegrationTablePropertiesRequest$ = exports2.CreateIntegrationResponse$ = exports2.CreateIntegrationResourcePropertyResponse$ = exports2.CreateIntegrationResourcePropertyRequest$ = exports2.CreateIntegrationRequest$ = exports2.CreateIcebergTableInput$ = exports2.CreateGrokClassifierRequest$ = exports2.CreateGlueIdentityCenterConfigurationResponse$ = exports2.CreateGlueIdentityCenterConfigurationRequest$ = exports2.CreateDevEndpointResponse$ = exports2.CreateDevEndpointRequest$ = exports2.CreateDataQualityRulesetResponse$ = exports2.CreateDataQualityRulesetRequest$ = exports2.CreateDatabaseResponse$ = exports2.CreateDatabaseRequest$ = exports2.CreateCustomEntityTypeResponse$ = exports2.CreateCustomEntityTypeRequest$ = void 0;
-    exports2.DeleteColumnStatisticsTaskSettingsResponse$ = exports2.DeleteColumnStatisticsTaskSettingsRequest$ = exports2.DeleteColumnStatisticsForTableResponse$ = exports2.DeleteColumnStatisticsForTableRequest$ = exports2.DeleteColumnStatisticsForPartitionResponse$ = exports2.DeleteColumnStatisticsForPartitionRequest$ = exports2.DeleteClassifierResponse$ = exports2.DeleteClassifierRequest$ = exports2.DeleteCatalogResponse$ = exports2.DeleteCatalogRequest$ = exports2.DeleteBlueprintResponse$ = exports2.DeleteBlueprintRequest$ = exports2.DecimalNumber$ = exports2.DecimalColumnStatisticsData$ = exports2.DDBELTConnectionOptions$ = exports2.DDBELTCatalogAdditionalOptions$ = exports2.DateColumnStatisticsData$ = exports2.Datatype$ = exports2.DataSource$ = exports2.DataQualityTargetTable$ = exports2.DataQualityRulesetListDetails$ = exports2.DataQualityRulesetFilterCriteria$ = exports2.DataQualityRulesetEvaluationRunFilter$ = exports2.DataQualityRulesetEvaluationRunDescription$ = exports2.DataQualityRuleResult$ = exports2.DataQualityRuleRecommendationRunFilter$ = exports2.DataQualityRuleRecommendationRunDescription$ = exports2.DataQualityResultFilterCriteria$ = exports2.DataQualityResultDescription$ = exports2.DataQualityResult$ = exports2.DataQualityObservation$ = exports2.DataQualityMetricValues$ = exports2.DataQualityGlueTable$ = exports2.DataQualityEvaluationRunAdditionalRunOptions$ = exports2.DataQualityEncryption$ = exports2.DataQualityAnalyzerResult$ = exports2.DataQualityAggregatedMetrics$ = exports2.DatapointInclusionAnnotation$ = exports2.DataLakePrincipal$ = exports2.DataLakeAccessPropertiesOutput$ = exports2.DataLakeAccessProperties$ = exports2.DataCatalogEncryptionSettings$ = exports2.DatabaseInput$ = exports2.DatabaseIdentifier$ = exports2.Database$ = exports2.CustomEntityType$ = exports2.CustomCode$ = exports2.CustomAuthenticationProperties$ = exports2.CursorConfiguration$ = exports2.CsvClassifier$ = void 0;
-    exports2.DeleteTriggerResponse$ = exports2.DeleteTriggerRequest$ = exports2.DeleteTableVersionResponse$ = exports2.DeleteTableVersionRequest$ = exports2.DeleteTableResponse$ = exports2.DeleteTableRequest$ = exports2.DeleteTableOptimizerResponse$ = exports2.DeleteTableOptimizerRequest$ = exports2.DeleteSessionResponse$ = exports2.DeleteSessionRequest$ = exports2.DeleteSecurityConfigurationResponse$ = exports2.DeleteSecurityConfigurationRequest$ = exports2.DeleteSchemaVersionsResponse$ = exports2.DeleteSchemaVersionsInput$ = exports2.DeleteSchemaResponse$ = exports2.DeleteSchemaInput$ = exports2.DeleteResourcePolicyResponse$ = exports2.DeleteResourcePolicyRequest$ = exports2.DeleteRegistryResponse$ = exports2.DeleteRegistryInput$ = exports2.DeletePartitionResponse$ = exports2.DeletePartitionRequest$ = exports2.DeletePartitionIndexResponse$ = exports2.DeletePartitionIndexRequest$ = exports2.DeleteMLTransformResponse$ = exports2.DeleteMLTransformRequest$ = exports2.DeleteJobResponse$ = exports2.DeleteJobRequest$ = exports2.DeleteIntegrationTablePropertiesResponse$ = exports2.DeleteIntegrationTablePropertiesRequest$ = exports2.DeleteIntegrationResponse$ = exports2.DeleteIntegrationResourcePropertyResponse$ = exports2.DeleteIntegrationResourcePropertyRequest$ = exports2.DeleteIntegrationRequest$ = exports2.DeleteGlueIdentityCenterConfigurationResponse$ = exports2.DeleteGlueIdentityCenterConfigurationRequest$ = exports2.DeleteDevEndpointResponse$ = exports2.DeleteDevEndpointRequest$ = exports2.DeleteDataQualityRulesetResponse$ = exports2.DeleteDataQualityRulesetRequest$ = exports2.DeleteDatabaseResponse$ = exports2.DeleteDatabaseRequest$ = exports2.DeleteCustomEntityTypeResponse$ = exports2.DeleteCustomEntityTypeRequest$ = exports2.DeleteCrawlerResponse$ = exports2.DeleteCrawlerRequest$ = exports2.DeleteConnectionTypeResponse$ = exports2.DeleteConnectionTypeRequest$ = exports2.DeleteConnectionResponse$ = exports2.DeleteConnectionRequest$ = void 0;
-    exports2.Field$ = exports2.FederatedTable$ = exports2.FederatedDatabase$ = exports2.FederatedCatalog$ = exports2.ExtractedParameter$ = exports2.ExportLabelsTaskRunProperties$ = exports2.ExecutionProperty$ = exports2.ExecutionAttempt$ = exports2.EventBatchingCondition$ = exports2.EvaluationMetrics$ = exports2.EvaluateDataQualityMultiFrame$ = exports2.EvaluateDataQuality$ = exports2.ErrorDetails$ = exports2.ErrorDetail$ = exports2.EntityConfiguration$ = exports2.Entity$ = exports2.EncryptionConfiguration$ = exports2.EncryptionAtRest$ = exports2.Edge$ = exports2.DynamoDBTarget$ = exports2.DynamoDBELTConnectorSource$ = exports2.DynamoDBCatalogSource$ = exports2.DynamicTransform$ = exports2.DropNullFields$ = exports2.DropFields$ = exports2.DropDuplicates$ = exports2.DQStopJobOnFailureOptions$ = exports2.DQResultsPublishingOptions$ = exports2.DoubleColumnStatisticsData$ = exports2.DirectSchemaChangePolicy$ = exports2.DirectKinesisSource$ = exports2.DirectKafkaSource$ = exports2.DirectJDBCSource$ = exports2.DevEndpointCustomLibraries$ = exports2.DevEndpoint$ = exports2.DescribeIntegrationsResponse$ = exports2.DescribeIntegrationsRequest$ = exports2.DescribeInboundIntegrationsResponse$ = exports2.DescribeInboundIntegrationsRequest$ = exports2.DescribeEntityResponse$ = exports2.DescribeEntityRequest$ = exports2.DescribeConnectionTypeResponse$ = exports2.DescribeConnectionTypeRequest$ = exports2.DeltaTarget$ = exports2.DeleteWorkflowResponse$ = exports2.DeleteWorkflowRequest$ = exports2.DeleteUserDefinedFunctionResponse$ = exports2.DeleteUserDefinedFunctionRequest$ = exports2.DeleteUsageProfileResponse$ = exports2.DeleteUsageProfileRequest$ = void 0;
-    exports2.GetDatabasesRequest$ = exports2.GetDatabaseResponse$ = exports2.GetDatabaseRequest$ = exports2.GetCustomEntityTypeResponse$ = exports2.GetCustomEntityTypeRequest$ = exports2.GetCrawlersResponse$ = exports2.GetCrawlersRequest$ = exports2.GetCrawlerResponse$ = exports2.GetCrawlerRequest$ = exports2.GetCrawlerMetricsResponse$ = exports2.GetCrawlerMetricsRequest$ = exports2.GetConnectionsResponse$ = exports2.GetConnectionsRequest$ = exports2.GetConnectionsFilter$ = exports2.GetConnectionResponse$ = exports2.GetConnectionRequest$ = exports2.GetColumnStatisticsTaskSettingsResponse$ = exports2.GetColumnStatisticsTaskSettingsRequest$ = exports2.GetColumnStatisticsTaskRunsResponse$ = exports2.GetColumnStatisticsTaskRunsRequest$ = exports2.GetColumnStatisticsTaskRunResponse$ = exports2.GetColumnStatisticsTaskRunRequest$ = exports2.GetColumnStatisticsForTableResponse$ = exports2.GetColumnStatisticsForTableRequest$ = exports2.GetColumnStatisticsForPartitionResponse$ = exports2.GetColumnStatisticsForPartitionRequest$ = exports2.GetClassifiersResponse$ = exports2.GetClassifiersRequest$ = exports2.GetClassifierResponse$ = exports2.GetClassifierRequest$ = exports2.GetCatalogsResponse$ = exports2.GetCatalogsRequest$ = exports2.GetCatalogResponse$ = exports2.GetCatalogRequest$ = exports2.GetCatalogImportStatusResponse$ = exports2.GetCatalogImportStatusRequest$ = exports2.GetBlueprintRunsResponse$ = exports2.GetBlueprintRunsRequest$ = exports2.GetBlueprintRunResponse$ = exports2.GetBlueprintRunRequest$ = exports2.GetBlueprintResponse$ = exports2.GetBlueprintRequest$ = exports2.FindMatchesTaskRunProperties$ = exports2.FindMatchesParameters$ = exports2.FindMatchesMetrics$ = exports2.FilterValue$ = exports2.FilterExpression$ = exports2.Filter$ = exports2.FillMissingValues$ = exports2.FieldDefinition$ = void 0;
-    exports2.GetMLTransformsRequest$ = exports2.GetMLTransformResponse$ = exports2.GetMLTransformRequest$ = exports2.GetMLTaskRunsResponse$ = exports2.GetMLTaskRunsRequest$ = exports2.GetMLTaskRunResponse$ = exports2.GetMLTaskRunRequest$ = exports2.GetMaterializedViewRefreshTaskRunResponse$ = exports2.GetMaterializedViewRefreshTaskRunRequest$ = exports2.GetMappingResponse$ = exports2.GetMappingRequest$ = exports2.GetJobsResponse$ = exports2.GetJobsRequest$ = exports2.GetJobRunsResponse$ = exports2.GetJobRunsRequest$ = exports2.GetJobRunResponse$ = exports2.GetJobRunRequest$ = exports2.GetJobResponse$ = exports2.GetJobRequest$ = exports2.GetJobBookmarkResponse$ = exports2.GetJobBookmarkRequest$ = exports2.GetIntegrationTablePropertiesResponse$ = exports2.GetIntegrationTablePropertiesRequest$ = exports2.GetIntegrationResourcePropertyResponse$ = exports2.GetIntegrationResourcePropertyRequest$ = exports2.GetGlueIdentityCenterConfigurationResponse$ = exports2.GetGlueIdentityCenterConfigurationRequest$ = exports2.GetEntityRecordsResponse$ = exports2.GetEntityRecordsRequest$ = exports2.GetDevEndpointsResponse$ = exports2.GetDevEndpointsRequest$ = exports2.GetDevEndpointResponse$ = exports2.GetDevEndpointRequest$ = exports2.GetDataQualityRulesetResponse$ = exports2.GetDataQualityRulesetRequest$ = exports2.GetDataQualityRulesetEvaluationRunResponse$ = exports2.GetDataQualityRulesetEvaluationRunRequest$ = exports2.GetDataQualityRuleRecommendationRunResponse$ = exports2.GetDataQualityRuleRecommendationRunRequest$ = exports2.GetDataQualityResultResponse$ = exports2.GetDataQualityResultRequest$ = exports2.GetDataQualityModelResultResponse$ = exports2.GetDataQualityModelResultRequest$ = exports2.GetDataQualityModelResponse$ = exports2.GetDataQualityModelRequest$ = exports2.GetDataflowGraphResponse$ = exports2.GetDataflowGraphRequest$ = exports2.GetDataCatalogEncryptionSettingsResponse$ = exports2.GetDataCatalogEncryptionSettingsRequest$ = exports2.GetDatabasesResponse$ = void 0;
-    exports2.GetUnfilteredPartitionsMetadataRequest$ = exports2.GetUnfilteredPartitionMetadataResponse$ = exports2.GetUnfilteredPartitionMetadataRequest$ = exports2.GetTriggersResponse$ = exports2.GetTriggersRequest$ = exports2.GetTriggerResponse$ = exports2.GetTriggerRequest$ = exports2.GetTagsResponse$ = exports2.GetTagsRequest$ = exports2.GetTableVersionsResponse$ = exports2.GetTableVersionsRequest$ = exports2.GetTableVersionResponse$ = exports2.GetTableVersionRequest$ = exports2.GetTablesResponse$ = exports2.GetTablesRequest$ = exports2.GetTableResponse$ = exports2.GetTableRequest$ = exports2.GetTableOptimizerResponse$ = exports2.GetTableOptimizerRequest$ = exports2.GetStatementResponse$ = exports2.GetStatementRequest$ = exports2.GetSessionResponse$ = exports2.GetSessionRequest$ = exports2.GetSecurityConfigurationsResponse$ = exports2.GetSecurityConfigurationsRequest$ = exports2.GetSecurityConfigurationResponse$ = exports2.GetSecurityConfigurationRequest$ = exports2.GetSchemaVersionsDiffResponse$ = exports2.GetSchemaVersionsDiffInput$ = exports2.GetSchemaVersionResponse$ = exports2.GetSchemaVersionInput$ = exports2.GetSchemaResponse$ = exports2.GetSchemaInput$ = exports2.GetSchemaByDefinitionResponse$ = exports2.GetSchemaByDefinitionInput$ = exports2.GetResourcePolicyResponse$ = exports2.GetResourcePolicyRequest$ = exports2.GetResourcePoliciesResponse$ = exports2.GetResourcePoliciesRequest$ = exports2.GetRegistryResponse$ = exports2.GetRegistryInput$ = exports2.GetPlanResponse$ = exports2.GetPlanRequest$ = exports2.GetPartitionsResponse$ = exports2.GetPartitionsRequest$ = exports2.GetPartitionResponse$ = exports2.GetPartitionRequest$ = exports2.GetPartitionIndexesResponse$ = exports2.GetPartitionIndexesRequest$ = exports2.GetMLTransformsResponse$ = void 0;
-    exports2.IntegrationConfig$ = exports2.Integration$ = exports2.InboundIntegration$ = exports2.ImportLabelsTaskRunProperties$ = exports2.ImportCatalogToGlueResponse$ = exports2.ImportCatalogToGlueRequest$ = exports2.IcebergTarget$ = exports2.IcebergTableUpdate$ = exports2.IcebergStructField$ = exports2.IcebergSortOrder$ = exports2.IcebergSortField$ = exports2.IcebergSchema$ = exports2.IcebergRetentionMetrics$ = exports2.IcebergRetentionConfiguration$ = exports2.IcebergPartitionSpec$ = exports2.IcebergPartitionField$ = exports2.IcebergOrphanFileDeletionMetrics$ = exports2.IcebergOrphanFileDeletionConfiguration$ = exports2.IcebergOptimizationPropertiesOutput$ = exports2.IcebergOptimizationProperties$ = exports2.IcebergInput$ = exports2.IcebergEncryptedKey$ = exports2.IcebergCompactionMetrics$ = exports2.IcebergCompactionConfiguration$ = exports2.HudiTarget$ = exports2.GroupFilters$ = exports2.GrokClassifier$ = exports2.GovernedCatalogTarget$ = exports2.GovernedCatalogSource$ = exports2.GlueTable$ = exports2.GlueStudioSchemaColumn$ = exports2.GlueSchema$ = exports2.GluePolicy$ = exports2.GetWorkflowRunsResponse$ = exports2.GetWorkflowRunsRequest$ = exports2.GetWorkflowRunResponse$ = exports2.GetWorkflowRunRequest$ = exports2.GetWorkflowRunPropertiesResponse$ = exports2.GetWorkflowRunPropertiesRequest$ = exports2.GetWorkflowResponse$ = exports2.GetWorkflowRequest$ = exports2.GetUserDefinedFunctionsResponse$ = exports2.GetUserDefinedFunctionsRequest$ = exports2.GetUserDefinedFunctionResponse$ = exports2.GetUserDefinedFunctionRequest$ = exports2.GetUsageProfileResponse$ = exports2.GetUsageProfileRequest$ = exports2.GetUnfilteredTableMetadataResponse$ = exports2.GetUnfilteredTableMetadataRequest$ = exports2.GetUnfilteredPartitionsMetadataResponse$ = void 0;
-    exports2.ListDataQualityStatisticAnnotationsResponse$ = exports2.ListDataQualityStatisticAnnotationsRequest$ = exports2.ListDataQualityRulesetsResponse$ = exports2.ListDataQualityRulesetsRequest$ = exports2.ListDataQualityRulesetEvaluationRunsResponse$ = exports2.ListDataQualityRulesetEvaluationRunsRequest$ = exports2.ListDataQualityRuleRecommendationRunsResponse$ = exports2.ListDataQualityRuleRecommendationRunsRequest$ = exports2.ListDataQualityResultsResponse$ = exports2.ListDataQualityResultsRequest$ = exports2.ListCustomEntityTypesResponse$ = exports2.ListCustomEntityTypesRequest$ = exports2.ListCrawlsResponse$ = exports2.ListCrawlsRequest$ = exports2.ListCrawlersResponse$ = exports2.ListCrawlersRequest$ = exports2.ListConnectionTypesResponse$ = exports2.ListConnectionTypesRequest$ = exports2.ListColumnStatisticsTaskRunsResponse$ = exports2.ListColumnStatisticsTaskRunsRequest$ = exports2.ListBlueprintsResponse$ = exports2.ListBlueprintsRequest$ = exports2.LineageConfiguration$ = exports2.LastCrawlInfo$ = exports2.LastActiveDefinition$ = exports2.LakeFormationConfiguration$ = exports2.LabelingSetGenerationTaskRunProperties$ = exports2.KinesisStreamingSourceOptions$ = exports2.KeySchemaElement$ = exports2.KafkaStreamingSourceOptions$ = exports2.JWTBearerProperties$ = exports2.JsonClassifier$ = exports2.JoinColumn$ = exports2.Join$ = exports2.JobUpdate$ = exports2.JobRun$ = exports2.JobNodeDetails$ = exports2.JobCommand$ = exports2.JobBookmarksEncryption$ = exports2.JobBookmarkEntry$ = exports2.Job$ = exports2.JdbcTarget$ = exports2.JDBCConnectorTarget$ = exports2.JDBCConnectorSource$ = exports2.JDBCConnectorOptions$ = exports2.IntegrationResourcePropertyFilter$ = exports2.IntegrationResourceProperty$ = exports2.IntegrationPartition$ = exports2.IntegrationFilter$ = exports2.IntegrationError$ = void 0;
-    exports2.MySQLCatalogTarget$ = exports2.MySQLCatalogSource$ = exports2.MongoDBTarget$ = exports2.ModifyIntegrationResponse$ = exports2.ModifyIntegrationRequest$ = exports2.MLUserDataEncryption$ = exports2.MLTransform$ = exports2.MicrosoftSQLServerCatalogTarget$ = exports2.MicrosoftSQLServerCatalogSource$ = exports2.MetricBasedObservation$ = exports2.MetadataKeyValuePair$ = exports2.MetadataInfo$ = exports2.Merge$ = exports2.MaterializedViewRefreshTaskRun$ = exports2.MappingEntry$ = exports2.Mapping$ = exports2.LongColumnStatisticsData$ = exports2.Location$ = exports2.ListWorkflowsResponse$ = exports2.ListWorkflowsRequest$ = exports2.ListUsageProfilesResponse$ = exports2.ListUsageProfilesRequest$ = exports2.ListTriggersResponse$ = exports2.ListTriggersRequest$ = exports2.ListTableOptimizerRunsResponse$ = exports2.ListTableOptimizerRunsRequest$ = exports2.ListStatementsResponse$ = exports2.ListStatementsRequest$ = exports2.ListSessionsResponse$ = exports2.ListSessionsRequest$ = exports2.ListSchemaVersionsResponse$ = exports2.ListSchemaVersionsInput$ = exports2.ListSchemasResponse$ = exports2.ListSchemasInput$ = exports2.ListRegistriesResponse$ = exports2.ListRegistriesInput$ = exports2.ListMLTransformsResponse$ = exports2.ListMLTransformsRequest$ = exports2.ListMaterializedViewRefreshTaskRunsResponse$ = exports2.ListMaterializedViewRefreshTaskRunsRequest$ = exports2.ListJobsResponse$ = exports2.ListJobsRequest$ = exports2.ListIntegrationResourcePropertiesResponse$ = exports2.ListIntegrationResourcePropertiesRequest$ = exports2.ListEntitiesResponse$ = exports2.ListEntitiesRequest$ = exports2.ListDevEndpointsResponse$ = exports2.ListDevEndpointsRequest$ = exports2.ListDataQualityStatisticsResponse$ = exports2.ListDataQualityStatisticsRequest$ = void 0;
-    exports2.RecipeReference$ = exports2.RecipeAction$ = exports2.Recipe$ = exports2.QuerySessionContext$ = exports2.QuerySchemaVersionMetadataResponse$ = exports2.QuerySchemaVersionMetadataInput$ = exports2.PutWorkflowRunPropertiesResponse$ = exports2.PutWorkflowRunPropertiesRequest$ = exports2.PutSchemaVersionMetadataResponse$ = exports2.PutSchemaVersionMetadataInput$ = exports2.PutResourcePolicyResponse$ = exports2.PutResourcePolicyRequest$ = exports2.PutDataQualityProfileAnnotationResponse$ = exports2.PutDataQualityProfileAnnotationRequest$ = exports2.PutDataCatalogEncryptionSettingsResponse$ = exports2.PutDataCatalogEncryptionSettingsRequest$ = exports2.PropertyPredicate$ = exports2.Property$ = exports2.ProfileConfiguration$ = exports2.PrincipalPermissions$ = exports2.Predicate$ = exports2.Predecessor$ = exports2.PostgreSQLCatalogTarget$ = exports2.PostgreSQLCatalogSource$ = exports2.PIIDetection$ = exports2.PhysicalConnectionRequirements$ = exports2.PartitionValueList$ = exports2.PartitionInput$ = exports2.PartitionIndexDescriptor$ = exports2.PartitionIndex$ = exports2.PartitionError$ = exports2.Partition$ = exports2.PaginationConfiguration$ = exports2.OtherMetadataValueListItem$ = exports2.OrphanFileDeletionMetrics$ = exports2.OrphanFileDeletionConfiguration$ = exports2.Order$ = exports2.OracleSQLCatalogTarget$ = exports2.OracleSQLCatalogSource$ = exports2.Option$ = exports2.OpenTableFormatInput$ = exports2.OffsetConfiguration$ = exports2.OAuth2PropertiesInput$ = exports2.OAuth2Properties$ = exports2.OAuth2Credentials$ = exports2.OAuth2ClientApplication$ = exports2.NullValueField$ = exports2.NullCheckBoxList$ = exports2.NotificationProperty$ = exports2.Node$ = void 0;
-    exports2.S3JsonSource$ = exports2.S3IcebergDirectTarget$ = exports2.S3IcebergCatalogTarget$ = exports2.S3HyperDirectTarget$ = exports2.S3HudiSource$ = exports2.S3HudiDirectTarget$ = exports2.S3HudiCatalogTarget$ = exports2.S3GlueParquetTarget$ = exports2.S3ExcelSource$ = exports2.S3Encryption$ = exports2.S3DirectTarget$ = exports2.S3DirectSourceAdditionalOptions$ = exports2.S3DeltaSource$ = exports2.S3DeltaDirectTarget$ = exports2.S3DeltaCatalogTarget$ = exports2.S3CsvSource$ = exports2.S3CatalogTarget$ = exports2.S3CatalogSource$ = exports2.S3CatalogIcebergSource$ = exports2.S3CatalogHudiSource$ = exports2.S3CatalogDeltaSource$ = exports2.RunStatementResponse$ = exports2.RunStatementRequest$ = exports2.RunMetrics$ = exports2.RunIdentifier$ = exports2.Route$ = exports2.RetentionMetrics$ = exports2.RetentionConfiguration$ = exports2.ResumeWorkflowRunResponse$ = exports2.ResumeWorkflowRunRequest$ = exports2.RestConfiguration$ = exports2.ResponseExtractionMapping$ = exports2.ResponseConfiguration$ = exports2.ResourceUri$ = exports2.ResetJobBookmarkResponse$ = exports2.ResetJobBookmarkRequest$ = exports2.RenameField$ = exports2.RemoveSchemaVersionMetadataResponse$ = exports2.RemoveSchemaVersionMetadataInput$ = exports2.RelationalCatalogSource$ = exports2.RegistryListItem$ = exports2.RegistryId$ = exports2.RegisterSchemaVersionResponse$ = exports2.RegisterSchemaVersionInput$ = exports2.RegisterConnectionTypeResponse$ = exports2.RegisterConnectionTypeRequest$ = exports2.RedshiftTarget$ = exports2.RedshiftSource$ = exports2.RecrawlPolicy$ = exports2.RecipeStep$ = void 0;
-    exports2.StartDataQualityRulesetEvaluationRunResponse$ = exports2.StartDataQualityRulesetEvaluationRunRequest$ = exports2.StartDataQualityRuleRecommendationRunResponse$ = exports2.StartDataQualityRuleRecommendationRunRequest$ = exports2.StartCrawlerScheduleResponse$ = exports2.StartCrawlerScheduleRequest$ = exports2.StartCrawlerResponse$ = exports2.StartCrawlerRequest$ = exports2.StartColumnStatisticsTaskRunScheduleResponse$ = exports2.StartColumnStatisticsTaskRunScheduleRequest$ = exports2.StartColumnStatisticsTaskRunResponse$ = exports2.StartColumnStatisticsTaskRunRequest$ = exports2.StartBlueprintRunResponse$ = exports2.StartBlueprintRunRequest$ = exports2.SqlAlias$ = exports2.SplitFields$ = exports2.Spigot$ = exports2.SparkSQL$ = exports2.SparkConnectorTarget$ = exports2.SparkConnectorSource$ = exports2.SourceTableConfig$ = exports2.SourceProcessingProperties$ = exports2.SourceControlDetails$ = exports2.SourceConfiguration$ = exports2.SortCriterion$ = exports2.SnowflakeTarget$ = exports2.SnowflakeSource$ = exports2.SnowflakeNodeData$ = exports2.SkewedInfo$ = exports2.SessionCommand$ = exports2.Session$ = exports2.SerDeInfo$ = exports2.SelectFromCollection$ = exports2.SelectFields$ = exports2.Segment$ = exports2.SecurityConfiguration$ = exports2.SearchTablesResponse$ = exports2.SearchTablesRequest$ = exports2.SchemaVersionNumber$ = exports2.SchemaVersionListItem$ = exports2.SchemaVersionErrorItem$ = exports2.SchemaReference$ = exports2.SchemaListItem$ = exports2.SchemaId$ = exports2.SchemaColumn$ = exports2.SchemaChangePolicy$ = exports2.Schedule$ = exports2.S3Target$ = exports2.S3SourceAdditionalOptions$ = exports2.S3ParquetSource$ = void 0;
-    exports2.TableOptimizerConfiguration$ = exports2.TableOptimizer$ = exports2.TableInput$ = exports2.TableIdentifier$ = exports2.TableError$ = exports2.Table$ = exports2.SupportedDialect$ = exports2.StringColumnStatisticsData$ = exports2.StreamingDataPreviewOptions$ = exports2.StorageDescriptor$ = exports2.StopWorkflowRunResponse$ = exports2.StopWorkflowRunRequest$ = exports2.StopTriggerResponse$ = exports2.StopTriggerRequest$ = exports2.StopSessionResponse$ = exports2.StopSessionRequest$ = exports2.StopMaterializedViewRefreshTaskRunResponse$ = exports2.StopMaterializedViewRefreshTaskRunRequest$ = exports2.StopCrawlerScheduleResponse$ = exports2.StopCrawlerScheduleRequest$ = exports2.StopCrawlerResponse$ = exports2.StopCrawlerRequest$ = exports2.StopColumnStatisticsTaskRunScheduleResponse$ = exports2.StopColumnStatisticsTaskRunScheduleRequest$ = exports2.StopColumnStatisticsTaskRunResponse$ = exports2.StopColumnStatisticsTaskRunRequest$ = exports2.StatusDetails$ = exports2.StatisticSummary$ = exports2.StatisticModelResult$ = exports2.StatisticAnnotation$ = exports2.StatementOutputData$ = exports2.StatementOutput$ = exports2.Statement$ = exports2.StartWorkflowRunResponse$ = exports2.StartWorkflowRunRequest$ = exports2.StartTriggerResponse$ = exports2.StartTriggerRequest$ = exports2.StartMLLabelingSetGenerationTaskRunResponse$ = exports2.StartMLLabelingSetGenerationTaskRunRequest$ = exports2.StartMLEvaluationTaskRunResponse$ = exports2.StartMLEvaluationTaskRunRequest$ = exports2.StartMaterializedViewRefreshTaskRunResponse$ = exports2.StartMaterializedViewRefreshTaskRunRequest$ = exports2.StartJobRunResponse$ = exports2.StartJobRunRequest$ = exports2.StartingEventBatchCondition$ = exports2.StartImportLabelsTaskRunResponse$ = exports2.StartImportLabelsTaskRunRequest$ = exports2.StartExportLabelsTaskRunResponse$ = exports2.StartExportLabelsTaskRunRequest$ = void 0;
-    exports2.UpdateCsvClassifierRequest$ = exports2.UpdateCrawlerScheduleResponse$ = exports2.UpdateCrawlerScheduleRequest$ = exports2.UpdateCrawlerResponse$ = exports2.UpdateCrawlerRequest$ = exports2.UpdateConnectionResponse$ = exports2.UpdateConnectionRequest$ = exports2.UpdateColumnStatisticsTaskSettingsResponse$ = exports2.UpdateColumnStatisticsTaskSettingsRequest$ = exports2.UpdateColumnStatisticsForTableResponse$ = exports2.UpdateColumnStatisticsForTableRequest$ = exports2.UpdateColumnStatisticsForPartitionResponse$ = exports2.UpdateColumnStatisticsForPartitionRequest$ = exports2.UpdateClassifierResponse$ = exports2.UpdateClassifierRequest$ = exports2.UpdateCatalogResponse$ = exports2.UpdateCatalogRequest$ = exports2.UpdateBlueprintResponse$ = exports2.UpdateBlueprintRequest$ = exports2.UntagResourceResponse$ = exports2.UntagResourceRequest$ = exports2.Union$ = exports2.UnfilteredPartition$ = exports2.TriggerUpdate$ = exports2.TriggerNodeDetails$ = exports2.Trigger$ = exports2.TransformSortCriteria$ = exports2.TransformParameters$ = exports2.TransformFilterCriteria$ = exports2.TransformEncryption$ = exports2.TransformConfigParameter$ = exports2.TimestampFilter$ = exports2.TimestampedInclusionAnnotation$ = exports2.TestConnectionResponse$ = exports2.TestConnectionRequest$ = exports2.TestConnectionInput$ = exports2.TaskRunSortCriteria$ = exports2.TaskRunProperties$ = exports2.TaskRunFilterCriteria$ = exports2.TaskRun$ = exports2.TargetTableConfig$ = exports2.TargetRedshiftCatalog$ = exports2.TargetProcessingProperties$ = exports2.TagResourceResponse$ = exports2.TagResourceRequest$ = exports2.Tag$ = exports2.TableVersionError$ = exports2.TableVersion$ = exports2.TableStatus$ = exports2.TableOptimizerRun$ = void 0;
-    exports2.ViewDefinitionInput$ = exports2.ViewDefinition$ = exports2.UserDefinedFunctionInput$ = exports2.UserDefinedFunction$ = exports2.UsageProfileDefinition$ = exports2.UpsertRedshiftTargetOptions$ = exports2.UpdateXMLClassifierRequest$ = exports2.UpdateWorkflowResponse$ = exports2.UpdateWorkflowRequest$ = exports2.UpdateUserDefinedFunctionResponse$ = exports2.UpdateUserDefinedFunctionRequest$ = exports2.UpdateUsageProfileResponse$ = exports2.UpdateUsageProfileRequest$ = exports2.UpdateTriggerResponse$ = exports2.UpdateTriggerRequest$ = exports2.UpdateTableResponse$ = exports2.UpdateTableRequest$ = exports2.UpdateTableOptimizerResponse$ = exports2.UpdateTableOptimizerRequest$ = exports2.UpdateSourceControlFromJobResponse$ = exports2.UpdateSourceControlFromJobRequest$ = exports2.UpdateSchemaResponse$ = exports2.UpdateSchemaInput$ = exports2.UpdateRegistryResponse$ = exports2.UpdateRegistryInput$ = exports2.UpdatePartitionResponse$ = exports2.UpdatePartitionRequest$ = exports2.UpdateOpenTableFormatInput$ = exports2.UpdateMLTransformResponse$ = exports2.UpdateMLTransformRequest$ = exports2.UpdateJsonClassifierRequest$ = exports2.UpdateJobResponse$ = exports2.UpdateJobRequest$ = exports2.UpdateJobFromSourceControlResponse$ = exports2.UpdateJobFromSourceControlRequest$ = exports2.UpdateIntegrationTablePropertiesResponse$ = exports2.UpdateIntegrationTablePropertiesRequest$ = exports2.UpdateIntegrationResourcePropertyResponse$ = exports2.UpdateIntegrationResourcePropertyRequest$ = exports2.UpdateIcebergTableInput$ = exports2.UpdateIcebergInput$ = exports2.UpdateGrokClassifierRequest$ = exports2.UpdateGlueIdentityCenterConfigurationResponse$ = exports2.UpdateGlueIdentityCenterConfigurationRequest$ = exports2.UpdateDevEndpointResponse$ = exports2.UpdateDevEndpointRequest$ = exports2.UpdateDataQualityRulesetResponse$ = exports2.UpdateDataQualityRulesetRequest$ = exports2.UpdateDatabaseResponse$ = exports2.UpdateDatabaseRequest$ = void 0;
-    exports2.CreatePartitionIndex$ = exports2.CreatePartition$ = exports2.CreateMLTransform$ = exports2.CreateJob$ = exports2.CreateIntegrationTableProperties$ = exports2.CreateIntegrationResourceProperty$ = exports2.CreateIntegration$ = exports2.CreateGlueIdentityCenterConfiguration$ = exports2.CreateDevEndpoint$ = exports2.CreateDataQualityRuleset$ = exports2.CreateDatabase$ = exports2.CreateCustomEntityType$ = exports2.CreateCrawler$ = exports2.CreateConnection$ = exports2.CreateColumnStatisticsTaskSettings$ = exports2.CreateClassifier$ = exports2.CreateCatalog$ = exports2.CreateBlueprint$ = exports2.CheckSchemaVersionValidity$ = exports2.CancelStatement$ = exports2.CancelMLTaskRun$ = exports2.CancelDataQualityRulesetEvaluationRun$ = exports2.CancelDataQualityRuleRecommendationRun$ = exports2.BatchUpdatePartition$ = exports2.BatchStopJobRun$ = exports2.BatchPutDataQualityStatisticAnnotation$ = exports2.BatchGetWorkflows$ = exports2.BatchGetTriggers$ = exports2.BatchGetTableOptimizer$ = exports2.BatchGetPartition$ = exports2.BatchGetJobs$ = exports2.BatchGetDevEndpoints$ = exports2.BatchGetDataQualityResult$ = exports2.BatchGetCustomEntityTypes$ = exports2.BatchGetCrawlers$ = exports2.BatchGetBlueprints$ = exports2.BatchDeleteTableVersion$ = exports2.BatchDeleteTable$ = exports2.BatchDeletePartition$ = exports2.BatchDeleteConnection$ = exports2.BatchCreatePartition$ = exports2.TableOptimizerVpcConfiguration$ = exports2.XMLClassifier$ = exports2.WorkflowRunStatistics$ = exports2.WorkflowRun$ = exports2.WorkflowGraph$ = exports2.Workflow$ = exports2.ViewValidation$ = exports2.ViewRepresentationInput$ = exports2.ViewRepresentation$ = void 0;
-    exports2.GetBlueprint$ = exports2.DescribeIntegrations$ = exports2.DescribeInboundIntegrations$ = exports2.DescribeEntity$ = exports2.DescribeConnectionType$ = exports2.DeleteWorkflow$ = exports2.DeleteUserDefinedFunction$ = exports2.DeleteUsageProfile$ = exports2.DeleteTrigger$ = exports2.DeleteTableVersion$ = exports2.DeleteTableOptimizer$ = exports2.DeleteTable$ = exports2.DeleteSession$ = exports2.DeleteSecurityConfiguration$ = exports2.DeleteSchemaVersions$ = exports2.DeleteSchema$ = exports2.DeleteResourcePolicy$ = exports2.DeleteRegistry$ = exports2.DeletePartitionIndex$ = exports2.DeletePartition$ = exports2.DeleteMLTransform$ = exports2.DeleteJob$ = exports2.DeleteIntegrationTableProperties$ = exports2.DeleteIntegrationResourceProperty$ = exports2.DeleteIntegration$ = exports2.DeleteGlueIdentityCenterConfiguration$ = exports2.DeleteDevEndpoint$ = exports2.DeleteDataQualityRuleset$ = exports2.DeleteDatabase$ = exports2.DeleteCustomEntityType$ = exports2.DeleteCrawler$ = exports2.DeleteConnectionType$ = exports2.DeleteConnection$ = exports2.DeleteColumnStatisticsTaskSettings$ = exports2.DeleteColumnStatisticsForTable$ = exports2.DeleteColumnStatisticsForPartition$ = exports2.DeleteClassifier$ = exports2.DeleteCatalog$ = exports2.DeleteBlueprint$ = exports2.CreateWorkflow$ = exports2.CreateUserDefinedFunction$ = exports2.CreateUsageProfile$ = exports2.CreateTrigger$ = exports2.CreateTableOptimizer$ = exports2.CreateTable$ = exports2.CreateSession$ = exports2.CreateSecurityConfiguration$ = exports2.CreateScript$ = exports2.CreateSchema$ = exports2.CreateRegistry$ = void 0;
-    exports2.GetRegistry$ = exports2.GetPlan$ = exports2.GetPartitions$ = exports2.GetPartitionIndexes$ = exports2.GetPartition$ = exports2.GetMLTransforms$ = exports2.GetMLTransform$ = exports2.GetMLTaskRuns$ = exports2.GetMLTaskRun$ = exports2.GetMaterializedViewRefreshTaskRun$ = exports2.GetMapping$ = exports2.GetJobs$ = exports2.GetJobRuns$ = exports2.GetJobRun$ = exports2.GetJobBookmark$ = exports2.GetJob$ = exports2.GetIntegrationTableProperties$ = exports2.GetIntegrationResourceProperty$ = exports2.GetGlueIdentityCenterConfiguration$ = exports2.GetEntityRecords$ = exports2.GetDevEndpoints$ = exports2.GetDevEndpoint$ = exports2.GetDataQualityRulesetEvaluationRun$ = exports2.GetDataQualityRuleset$ = exports2.GetDataQualityRuleRecommendationRun$ = exports2.GetDataQualityResult$ = exports2.GetDataQualityModelResult$ = exports2.GetDataQualityModel$ = exports2.GetDataflowGraph$ = exports2.GetDataCatalogEncryptionSettings$ = exports2.GetDatabases$ = exports2.GetDatabase$ = exports2.GetCustomEntityType$ = exports2.GetCrawlers$ = exports2.GetCrawlerMetrics$ = exports2.GetCrawler$ = exports2.GetConnections$ = exports2.GetConnection$ = exports2.GetColumnStatisticsTaskSettings$ = exports2.GetColumnStatisticsTaskRuns$ = exports2.GetColumnStatisticsTaskRun$ = exports2.GetColumnStatisticsForTable$ = exports2.GetColumnStatisticsForPartition$ = exports2.GetClassifiers$ = exports2.GetClassifier$ = exports2.GetCatalogs$ = exports2.GetCatalogImportStatus$ = exports2.GetCatalog$ = exports2.GetBlueprintRuns$ = exports2.GetBlueprintRun$ = void 0;
-    exports2.ListSchemaVersions$ = exports2.ListSchemas$ = exports2.ListRegistries$ = exports2.ListMLTransforms$ = exports2.ListMaterializedViewRefreshTaskRuns$ = exports2.ListJobs$ = exports2.ListIntegrationResourceProperties$ = exports2.ListEntities$ = exports2.ListDevEndpoints$ = exports2.ListDataQualityStatistics$ = exports2.ListDataQualityStatisticAnnotations$ = exports2.ListDataQualityRulesets$ = exports2.ListDataQualityRulesetEvaluationRuns$ = exports2.ListDataQualityRuleRecommendationRuns$ = exports2.ListDataQualityResults$ = exports2.ListCustomEntityTypes$ = exports2.ListCrawls$ = exports2.ListCrawlers$ = exports2.ListConnectionTypes$ = exports2.ListColumnStatisticsTaskRuns$ = exports2.ListBlueprints$ = exports2.ImportCatalogToGlue$ = exports2.GetWorkflowRuns$ = exports2.GetWorkflowRunProperties$ = exports2.GetWorkflowRun$ = exports2.GetWorkflow$ = exports2.GetUserDefinedFunctions$ = exports2.GetUserDefinedFunction$ = exports2.GetUsageProfile$ = exports2.GetUnfilteredTableMetadata$ = exports2.GetUnfilteredPartitionsMetadata$ = exports2.GetUnfilteredPartitionMetadata$ = exports2.GetTriggers$ = exports2.GetTrigger$ = exports2.GetTags$ = exports2.GetTableVersions$ = exports2.GetTableVersion$ = exports2.GetTables$ = exports2.GetTableOptimizer$ = exports2.GetTable$ = exports2.GetStatement$ = exports2.GetSession$ = exports2.GetSecurityConfigurations$ = exports2.GetSecurityConfiguration$ = exports2.GetSchemaVersionsDiff$ = exports2.GetSchemaVersion$ = exports2.GetSchemaByDefinition$ = exports2.GetSchema$ = exports2.GetResourcePolicy$ = exports2.GetResourcePolicies$ = void 0;
-    exports2.UpdateColumnStatisticsForPartition$ = exports2.UpdateClassifier$ = exports2.UpdateCatalog$ = exports2.UpdateBlueprint$ = exports2.UntagResource$ = exports2.TestConnection$ = exports2.TagResource$ = exports2.StopWorkflowRun$ = exports2.StopTrigger$ = exports2.StopSession$ = exports2.StopMaterializedViewRefreshTaskRun$ = exports2.StopCrawlerSchedule$ = exports2.StopCrawler$ = exports2.StopColumnStatisticsTaskRunSchedule$ = exports2.StopColumnStatisticsTaskRun$ = exports2.StartWorkflowRun$ = exports2.StartTrigger$ = exports2.StartMLLabelingSetGenerationTaskRun$ = exports2.StartMLEvaluationTaskRun$ = exports2.StartMaterializedViewRefreshTaskRun$ = exports2.StartJobRun$ = exports2.StartImportLabelsTaskRun$ = exports2.StartExportLabelsTaskRun$ = exports2.StartDataQualityRulesetEvaluationRun$ = exports2.StartDataQualityRuleRecommendationRun$ = exports2.StartCrawlerSchedule$ = exports2.StartCrawler$ = exports2.StartColumnStatisticsTaskRunSchedule$ = exports2.StartColumnStatisticsTaskRun$ = exports2.StartBlueprintRun$ = exports2.SearchTables$ = exports2.RunStatement$ = exports2.ResumeWorkflowRun$ = exports2.ResetJobBookmark$ = exports2.RemoveSchemaVersionMetadata$ = exports2.RegisterSchemaVersion$ = exports2.RegisterConnectionType$ = exports2.QuerySchemaVersionMetadata$ = exports2.PutWorkflowRunProperties$ = exports2.PutSchemaVersionMetadata$ = exports2.PutResourcePolicy$ = exports2.PutDataQualityProfileAnnotation$ = exports2.PutDataCatalogEncryptionSettings$ = exports2.ModifyIntegration$ = exports2.ListWorkflows$ = exports2.ListUsageProfiles$ = exports2.ListTriggers$ = exports2.ListTableOptimizerRuns$ = exports2.ListStatements$ = exports2.ListSessions$ = void 0;
-    exports2.UpdateWorkflow$ = exports2.UpdateUserDefinedFunction$ = exports2.UpdateUsageProfile$ = exports2.UpdateTrigger$ = exports2.UpdateTableOptimizer$ = exports2.UpdateTable$ = exports2.UpdateSourceControlFromJob$ = exports2.UpdateSchema$ = exports2.UpdateRegistry$ = exports2.UpdatePartition$ = exports2.UpdateMLTransform$ = exports2.UpdateJobFromSourceControl$ = exports2.UpdateJob$ = exports2.UpdateIntegrationTableProperties$ = exports2.UpdateIntegrationResourceProperty$ = exports2.UpdateGlueIdentityCenterConfiguration$ = exports2.UpdateDevEndpoint$ = exports2.UpdateDataQualityRuleset$ = exports2.UpdateDatabase$ = exports2.UpdateCrawlerSchedule$ = exports2.UpdateCrawler$ = exports2.UpdateConnection$ = exports2.UpdateColumnStatisticsTaskSettings$ = exports2.UpdateColumnStatisticsForTable$ = void 0;
+    exports2.VersionMismatchException$ = exports2.ValidationException$ = exports2.ThrottlingException$ = exports2.TargetResourceNotFound$ = exports2.SessionBusyException$ = exports2.SchedulerTransitioningException$ = exports2.SchedulerRunningException$ = exports2.SchedulerNotRunningException$ = exports2.ResourceNumberLimitExceededException$ = exports2.ResourceNotReadyException$ = exports2.ResourceNotFoundException$ = exports2.PermissionTypeMismatchException$ = exports2.OperationTimeoutException$ = exports2.OperationNotSupportedException$ = exports2.NoScheduleException$ = exports2.MLTransformNotReadyException$ = exports2.MaterializedViewRefreshTaskStoppingException$ = exports2.MaterializedViewRefreshTaskRunningException$ = exports2.MaterializedViewRefreshTaskNotRunningException$ = exports2.KMSKeyNotAccessibleFault$ = exports2.InvalidStateException$ = exports2.InvalidIntegrationStateFault$ = exports2.InvalidInputException$ = exports2.InternalServiceException$ = exports2.InternalServerException$ = exports2.IntegrationQuotaExceededFault$ = exports2.IntegrationNotFoundFault$ = exports2.IntegrationConflictOperationFault$ = exports2.IllegalWorkflowStateException$ = exports2.IllegalSessionStateException$ = exports2.IllegalBlueprintStateException$ = exports2.IdempotentParameterMismatchException$ = exports2.GlueEncryptionException$ = exports2.FederationSourceRetryableException$ = exports2.FederationSourceException$ = exports2.FederatedResourceAlreadyExistsException$ = exports2.EntityNotFoundException$ = exports2.CrawlerStoppingException$ = exports2.CrawlerRunningException$ = exports2.CrawlerNotRunningException$ = exports2.ConflictException$ = exports2.ConditionCheckFailureException$ = exports2.ConcurrentRunsExceededException$ = exports2.ConcurrentModificationException$ = exports2.ColumnStatisticsTaskStoppingException$ = exports2.ColumnStatisticsTaskRunningException$ = exports2.ColumnStatisticsTaskNotRunningException$ = exports2.AlreadyExistsException$ = exports2.AccessDeniedException$ = exports2.GlueServiceException$ = void 0;
+    exports2.BatchGetTableOptimizerResponse$ = exports2.BatchGetTableOptimizerRequest$ = exports2.BatchGetTableOptimizerError$ = exports2.BatchGetTableOptimizerEntry$ = exports2.BatchGetPartitionResponse$ = exports2.BatchGetPartitionRequest$ = exports2.BatchGetJobsResponse$ = exports2.BatchGetJobsRequest$ = exports2.BatchGetDevEndpointsResponse$ = exports2.BatchGetDevEndpointsRequest$ = exports2.BatchGetDataQualityResultResponse$ = exports2.BatchGetDataQualityResultRequest$ = exports2.BatchGetCustomEntityTypesResponse$ = exports2.BatchGetCustomEntityTypesRequest$ = exports2.BatchGetCrawlersResponse$ = exports2.BatchGetCrawlersRequest$ = exports2.BatchGetBlueprintsResponse$ = exports2.BatchGetBlueprintsRequest$ = exports2.BatchDeleteTableVersionResponse$ = exports2.BatchDeleteTableVersionRequest$ = exports2.BatchDeleteTableResponse$ = exports2.BatchDeleteTableRequest$ = exports2.BatchDeletePartitionResponse$ = exports2.BatchDeletePartitionRequest$ = exports2.BatchDeleteConnectionResponse$ = exports2.BatchDeleteConnectionRequest$ = exports2.BatchCreatePartitionResponse$ = exports2.BatchCreatePartitionRequest$ = exports2.BasicCatalogTarget$ = exports2.BasicAuthenticationProperties$ = exports2.BasicAuthenticationCredentials$ = exports2.BackfillError$ = exports2.AutoDataQuality$ = exports2.AuthorizationCodeProperties$ = exports2.AuthenticationConfigurationInput$ = exports2.AuthenticationConfiguration$ = exports2.AuthConfiguration$ = exports2.AuditContext$ = exports2.AthenaConnectorSource$ = exports2.ApplyMapping$ = exports2.AnnotationError$ = exports2.AmazonRedshiftTarget$ = exports2.AmazonRedshiftSource$ = exports2.AmazonRedshiftNodeData$ = exports2.AmazonRedshiftAdvancedOption$ = exports2.AllowedValue$ = exports2.AggregateOperation$ = exports2.Aggregate$ = exports2.Action$ = exports2.errorTypeRegistries = void 0;
+    exports2.CodeGenEdge$ = exports2.CodeGenConfigurationNode$ = exports2.CloudWatchEncryption$ = exports2.ClientCredentialsProperties$ = exports2.Classifier$ = exports2.CheckSchemaVersionValidityResponse$ = exports2.CheckSchemaVersionValidityInput$ = exports2.CatalogTarget$ = exports2.CatalogSource$ = exports2.CatalogSchemaChangePolicy$ = exports2.CatalogPropertiesOutput$ = exports2.CatalogProperties$ = exports2.CatalogKinesisSource$ = exports2.CatalogKafkaSource$ = exports2.CatalogInput$ = exports2.CatalogImportStatus$ = exports2.CatalogIcebergSource$ = exports2.CatalogHudiSource$ = exports2.CatalogEntry$ = exports2.CatalogDeltaSource$ = exports2.Catalog$ = exports2.Capabilities$ = exports2.CancelStatementResponse$ = exports2.CancelStatementRequest$ = exports2.CancelMLTaskRunResponse$ = exports2.CancelMLTaskRunRequest$ = exports2.CancelDataQualityRulesetEvaluationRunResponse$ = exports2.CancelDataQualityRulesetEvaluationRunRequest$ = exports2.CancelDataQualityRuleRecommendationRunResponse$ = exports2.CancelDataQualityRuleRecommendationRunRequest$ = exports2.BooleanColumnStatisticsData$ = exports2.BlueprintRun$ = exports2.BlueprintDetails$ = exports2.Blueprint$ = exports2.BinaryColumnStatisticsData$ = exports2.BatchUpdatePartitionResponse$ = exports2.BatchUpdatePartitionRequestEntry$ = exports2.BatchUpdatePartitionRequest$ = exports2.BatchUpdatePartitionFailureEntry$ = exports2.BatchTableOptimizer$ = exports2.BatchStopJobRunSuccessfulSubmission$ = exports2.BatchStopJobRunResponse$ = exports2.BatchStopJobRunRequest$ = exports2.BatchStopJobRunError$ = exports2.BatchPutDataQualityStatisticAnnotationResponse$ = exports2.BatchPutDataQualityStatisticAnnotationRequest$ = exports2.BatchGetWorkflowsResponse$ = exports2.BatchGetWorkflowsRequest$ = exports2.BatchGetTriggersResponse$ = exports2.BatchGetTriggersRequest$ = void 0;
+    exports2.CreateCrawlerResponse$ = exports2.CreateCrawlerRequest$ = exports2.CreateConnectionResponse$ = exports2.CreateConnectionRequest$ = exports2.CreateColumnStatisticsTaskSettingsResponse$ = exports2.CreateColumnStatisticsTaskSettingsRequest$ = exports2.CreateClassifierResponse$ = exports2.CreateClassifierRequest$ = exports2.CreateCatalogResponse$ = exports2.CreateCatalogRequest$ = exports2.CreateBlueprintResponse$ = exports2.CreateBlueprintRequest$ = exports2.CrawlsFilter$ = exports2.CrawlerTargets$ = exports2.CrawlerNodeDetails$ = exports2.CrawlerMetrics$ = exports2.CrawlerHistory$ = exports2.Crawler$ = exports2.Crawl$ = exports2.ConnectorProperty$ = exports2.ConnectorOAuth2Properties$ = exports2.ConnectorDataTarget$ = exports2.ConnectorDataSource$ = exports2.ConnectorAuthorizationCodeProperties$ = exports2.ConnectorAuthenticationConfiguration$ = exports2.ConnectionTypeVariant$ = exports2.ConnectionTypeBrief$ = exports2.ConnectionsList$ = exports2.ConnectionPropertiesConfiguration$ = exports2.ConnectionPasswordEncryption$ = exports2.ConnectionInput$ = exports2.Connection$ = exports2.ConfusionMatrix$ = exports2.ConfigurationObject$ = exports2.ConditionExpression$ = exports2.Condition$ = exports2.ComputeEnvironmentConfiguration$ = exports2.CompactionMetrics$ = exports2.CompactionConfiguration$ = exports2.ColumnStatisticsTaskSettings$ = exports2.ColumnStatisticsTaskRun$ = exports2.ColumnStatisticsError$ = exports2.ColumnStatisticsData$ = exports2.ColumnStatistics$ = exports2.ColumnRowFilter$ = exports2.ColumnImportance$ = exports2.ColumnError$ = exports2.Column$ = exports2.CodeGenNodeArg$ = exports2.CodeGenNode$ = void 0;
+    exports2.CreateWorkflowResponse$ = exports2.CreateWorkflowRequest$ = exports2.CreateUserDefinedFunctionResponse$ = exports2.CreateUserDefinedFunctionRequest$ = exports2.CreateUsageProfileResponse$ = exports2.CreateUsageProfileRequest$ = exports2.CreateTriggerResponse$ = exports2.CreateTriggerRequest$ = exports2.CreateTableResponse$ = exports2.CreateTableRequest$ = exports2.CreateTableOptimizerResponse$ = exports2.CreateTableOptimizerRequest$ = exports2.CreateSessionResponse$ = exports2.CreateSessionRequest$ = exports2.CreateSecurityConfigurationResponse$ = exports2.CreateSecurityConfigurationRequest$ = exports2.CreateScriptResponse$ = exports2.CreateScriptRequest$ = exports2.CreateSchemaResponse$ = exports2.CreateSchemaInput$ = exports2.CreateRegistryResponse$ = exports2.CreateRegistryInput$ = exports2.CreatePartitionResponse$ = exports2.CreatePartitionRequest$ = exports2.CreatePartitionIndexResponse$ = exports2.CreatePartitionIndexRequest$ = exports2.CreateMLTransformResponse$ = exports2.CreateMLTransformRequest$ = exports2.CreateJsonClassifierRequest$ = exports2.CreateJobResponse$ = exports2.CreateJobRequest$ = exports2.CreateIntegrationTablePropertiesResponse$ = exports2.CreateIntegrationTablePropertiesRequest$ = exports2.CreateIntegrationResponse$ = exports2.CreateIntegrationResourcePropertyResponse$ = exports2.CreateIntegrationResourcePropertyRequest$ = exports2.CreateIntegrationRequest$ = exports2.CreateIcebergTableInput$ = exports2.CreateGrokClassifierRequest$ = exports2.CreateGlueIdentityCenterConfigurationResponse$ = exports2.CreateGlueIdentityCenterConfigurationRequest$ = exports2.CreateDevEndpointResponse$ = exports2.CreateDevEndpointRequest$ = exports2.CreateDataQualityRulesetResponse$ = exports2.CreateDataQualityRulesetRequest$ = exports2.CreateDatabaseResponse$ = exports2.CreateDatabaseRequest$ = exports2.CreateCustomEntityTypeResponse$ = exports2.CreateCustomEntityTypeRequest$ = exports2.CreateCsvClassifierRequest$ = void 0;
+    exports2.DeleteColumnStatisticsTaskSettingsRequest$ = exports2.DeleteColumnStatisticsForTableResponse$ = exports2.DeleteColumnStatisticsForTableRequest$ = exports2.DeleteColumnStatisticsForPartitionResponse$ = exports2.DeleteColumnStatisticsForPartitionRequest$ = exports2.DeleteClassifierResponse$ = exports2.DeleteClassifierRequest$ = exports2.DeleteCatalogResponse$ = exports2.DeleteCatalogRequest$ = exports2.DeleteBlueprintResponse$ = exports2.DeleteBlueprintRequest$ = exports2.DecimalNumber$ = exports2.DecimalColumnStatisticsData$ = exports2.DDBELTConnectionOptions$ = exports2.DDBELTCatalogAdditionalOptions$ = exports2.DateColumnStatisticsData$ = exports2.Datatype$ = exports2.DataSource$ = exports2.DataQualityTargetTable$ = exports2.DataQualityRulesetListDetails$ = exports2.DataQualityRulesetFilterCriteria$ = exports2.DataQualityRulesetEvaluationRunFilter$ = exports2.DataQualityRulesetEvaluationRunDescription$ = exports2.DataQualityRuleResult$ = exports2.DataQualityRuleRecommendationRunFilter$ = exports2.DataQualityRuleRecommendationRunDescription$ = exports2.DataQualityResultFilterCriteria$ = exports2.DataQualityResultDescription$ = exports2.DataQualityResult$ = exports2.DataQualityObservation$ = exports2.DataQualityMetricValues$ = exports2.DataQualityGlueTable$ = exports2.DataQualityEvaluationRunAdditionalRunOptions$ = exports2.DataQualityEncryption$ = exports2.DataQualityAnalyzerResult$ = exports2.DataQualityAggregatedMetrics$ = exports2.DatapointInclusionAnnotation$ = exports2.DataLakePrincipal$ = exports2.DataLakeAccessPropertiesOutput$ = exports2.DataLakeAccessProperties$ = exports2.DataCatalogEncryptionSettings$ = exports2.DatabaseInput$ = exports2.DatabaseIdentifier$ = exports2.Database$ = exports2.CustomEntityType$ = exports2.CustomCode$ = exports2.CustomAuthenticationProperties$ = exports2.CursorConfiguration$ = exports2.CsvClassifier$ = exports2.CreateXMLClassifierRequest$ = void 0;
+    exports2.DeleteTriggerRequest$ = exports2.DeleteTableVersionResponse$ = exports2.DeleteTableVersionRequest$ = exports2.DeleteTableResponse$ = exports2.DeleteTableRequest$ = exports2.DeleteTableOptimizerResponse$ = exports2.DeleteTableOptimizerRequest$ = exports2.DeleteSessionResponse$ = exports2.DeleteSessionRequest$ = exports2.DeleteSecurityConfigurationResponse$ = exports2.DeleteSecurityConfigurationRequest$ = exports2.DeleteSchemaVersionsResponse$ = exports2.DeleteSchemaVersionsInput$ = exports2.DeleteSchemaResponse$ = exports2.DeleteSchemaInput$ = exports2.DeleteResourcePolicyResponse$ = exports2.DeleteResourcePolicyRequest$ = exports2.DeleteRegistryResponse$ = exports2.DeleteRegistryInput$ = exports2.DeletePartitionResponse$ = exports2.DeletePartitionRequest$ = exports2.DeletePartitionIndexResponse$ = exports2.DeletePartitionIndexRequest$ = exports2.DeleteMLTransformResponse$ = exports2.DeleteMLTransformRequest$ = exports2.DeleteJobResponse$ = exports2.DeleteJobRequest$ = exports2.DeleteIntegrationTablePropertiesResponse$ = exports2.DeleteIntegrationTablePropertiesRequest$ = exports2.DeleteIntegrationResponse$ = exports2.DeleteIntegrationResourcePropertyResponse$ = exports2.DeleteIntegrationResourcePropertyRequest$ = exports2.DeleteIntegrationRequest$ = exports2.DeleteGlueIdentityCenterConfigurationResponse$ = exports2.DeleteGlueIdentityCenterConfigurationRequest$ = exports2.DeleteDevEndpointResponse$ = exports2.DeleteDevEndpointRequest$ = exports2.DeleteDataQualityRulesetResponse$ = exports2.DeleteDataQualityRulesetRequest$ = exports2.DeleteDatabaseResponse$ = exports2.DeleteDatabaseRequest$ = exports2.DeleteCustomEntityTypeResponse$ = exports2.DeleteCustomEntityTypeRequest$ = exports2.DeleteCrawlerResponse$ = exports2.DeleteCrawlerRequest$ = exports2.DeleteConnectionTypeResponse$ = exports2.DeleteConnectionTypeRequest$ = exports2.DeleteConnectionResponse$ = exports2.DeleteConnectionRequest$ = exports2.DeleteColumnStatisticsTaskSettingsResponse$ = void 0;
+    exports2.FederatedTable$ = exports2.FederatedDatabase$ = exports2.FederatedCatalog$ = exports2.ExtractedParameter$ = exports2.ExportLabelsTaskRunProperties$ = exports2.ExecutionProperty$ = exports2.ExecutionAttempt$ = exports2.EventBatchingCondition$ = exports2.EvaluationMetrics$ = exports2.EvaluateDataQualityMultiFrame$ = exports2.EvaluateDataQuality$ = exports2.ErrorDetails$ = exports2.ErrorDetail$ = exports2.EntityConfiguration$ = exports2.Entity$ = exports2.EncryptionConfiguration$ = exports2.EncryptionAtRest$ = exports2.Edge$ = exports2.DynamoDBTarget$ = exports2.DynamoDBELTConnectorSource$ = exports2.DynamoDBCatalogSource$ = exports2.DynamicTransform$ = exports2.DropNullFields$ = exports2.DropFields$ = exports2.DropDuplicates$ = exports2.DQStopJobOnFailureOptions$ = exports2.DQResultsPublishingOptions$ = exports2.DoubleColumnStatisticsData$ = exports2.DirectSchemaChangePolicy$ = exports2.DirectKinesisSource$ = exports2.DirectKafkaSource$ = exports2.DirectJDBCSource$ = exports2.DevEndpointCustomLibraries$ = exports2.DevEndpoint$ = exports2.DescribeIntegrationsResponse$ = exports2.DescribeIntegrationsRequest$ = exports2.DescribeInboundIntegrationsResponse$ = exports2.DescribeInboundIntegrationsRequest$ = exports2.DescribeEntityResponse$ = exports2.DescribeEntityRequest$ = exports2.DescribeConnectionTypeResponse$ = exports2.DescribeConnectionTypeRequest$ = exports2.DeltaTarget$ = exports2.DeleteWorkflowResponse$ = exports2.DeleteWorkflowRequest$ = exports2.DeleteUserDefinedFunctionResponse$ = exports2.DeleteUserDefinedFunctionRequest$ = exports2.DeleteUsageProfileResponse$ = exports2.DeleteUsageProfileRequest$ = exports2.DeleteTriggerResponse$ = void 0;
+    exports2.GetDashboardUrlResponse$ = exports2.GetDashboardUrlRequest$ = exports2.GetCustomEntityTypeResponse$ = exports2.GetCustomEntityTypeRequest$ = exports2.GetCrawlersResponse$ = exports2.GetCrawlersRequest$ = exports2.GetCrawlerResponse$ = exports2.GetCrawlerRequest$ = exports2.GetCrawlerMetricsResponse$ = exports2.GetCrawlerMetricsRequest$ = exports2.GetConnectionsResponse$ = exports2.GetConnectionsRequest$ = exports2.GetConnectionsFilter$ = exports2.GetConnectionResponse$ = exports2.GetConnectionRequest$ = exports2.GetColumnStatisticsTaskSettingsResponse$ = exports2.GetColumnStatisticsTaskSettingsRequest$ = exports2.GetColumnStatisticsTaskRunsResponse$ = exports2.GetColumnStatisticsTaskRunsRequest$ = exports2.GetColumnStatisticsTaskRunResponse$ = exports2.GetColumnStatisticsTaskRunRequest$ = exports2.GetColumnStatisticsForTableResponse$ = exports2.GetColumnStatisticsForTableRequest$ = exports2.GetColumnStatisticsForPartitionResponse$ = exports2.GetColumnStatisticsForPartitionRequest$ = exports2.GetClassifiersResponse$ = exports2.GetClassifiersRequest$ = exports2.GetClassifierResponse$ = exports2.GetClassifierRequest$ = exports2.GetCatalogsResponse$ = exports2.GetCatalogsRequest$ = exports2.GetCatalogResponse$ = exports2.GetCatalogRequest$ = exports2.GetCatalogImportStatusResponse$ = exports2.GetCatalogImportStatusRequest$ = exports2.GetBlueprintRunsResponse$ = exports2.GetBlueprintRunsRequest$ = exports2.GetBlueprintRunResponse$ = exports2.GetBlueprintRunRequest$ = exports2.GetBlueprintResponse$ = exports2.GetBlueprintRequest$ = exports2.FindMatchesTaskRunProperties$ = exports2.FindMatchesParameters$ = exports2.FindMatchesMetrics$ = exports2.FilterValue$ = exports2.FilterExpression$ = exports2.Filter$ = exports2.FillMissingValues$ = exports2.FieldDefinition$ = exports2.Field$ = void 0;
+    exports2.GetMLTaskRunsResponse$ = exports2.GetMLTaskRunsRequest$ = exports2.GetMLTaskRunResponse$ = exports2.GetMLTaskRunRequest$ = exports2.GetMaterializedViewRefreshTaskRunResponse$ = exports2.GetMaterializedViewRefreshTaskRunRequest$ = exports2.GetMappingResponse$ = exports2.GetMappingRequest$ = exports2.GetJobsResponse$ = exports2.GetJobsRequest$ = exports2.GetJobRunsResponse$ = exports2.GetJobRunsRequest$ = exports2.GetJobRunResponse$ = exports2.GetJobRunRequest$ = exports2.GetJobResponse$ = exports2.GetJobRequest$ = exports2.GetJobBookmarkResponse$ = exports2.GetJobBookmarkRequest$ = exports2.GetIntegrationTablePropertiesResponse$ = exports2.GetIntegrationTablePropertiesRequest$ = exports2.GetIntegrationResourcePropertyResponse$ = exports2.GetIntegrationResourcePropertyRequest$ = exports2.GetGlueIdentityCenterConfigurationResponse$ = exports2.GetGlueIdentityCenterConfigurationRequest$ = exports2.GetEntityRecordsResponse$ = exports2.GetEntityRecordsRequest$ = exports2.GetDevEndpointsResponse$ = exports2.GetDevEndpointsRequest$ = exports2.GetDevEndpointResponse$ = exports2.GetDevEndpointRequest$ = exports2.GetDataQualityRulesetResponse$ = exports2.GetDataQualityRulesetRequest$ = exports2.GetDataQualityRulesetEvaluationRunResponse$ = exports2.GetDataQualityRulesetEvaluationRunRequest$ = exports2.GetDataQualityRuleRecommendationRunResponse$ = exports2.GetDataQualityRuleRecommendationRunRequest$ = exports2.GetDataQualityResultResponse$ = exports2.GetDataQualityResultRequest$ = exports2.GetDataQualityModelResultResponse$ = exports2.GetDataQualityModelResultRequest$ = exports2.GetDataQualityModelResponse$ = exports2.GetDataQualityModelRequest$ = exports2.GetDataflowGraphResponse$ = exports2.GetDataflowGraphRequest$ = exports2.GetDataCatalogEncryptionSettingsResponse$ = exports2.GetDataCatalogEncryptionSettingsRequest$ = exports2.GetDatabasesResponse$ = exports2.GetDatabasesRequest$ = exports2.GetDatabaseResponse$ = exports2.GetDatabaseRequest$ = void 0;
+    exports2.GetTriggerResponse$ = exports2.GetTriggerRequest$ = exports2.GetTagsResponse$ = exports2.GetTagsRequest$ = exports2.GetTableVersionsResponse$ = exports2.GetTableVersionsRequest$ = exports2.GetTableVersionResponse$ = exports2.GetTableVersionRequest$ = exports2.GetTablesResponse$ = exports2.GetTablesRequest$ = exports2.GetTableResponse$ = exports2.GetTableRequest$ = exports2.GetTableOptimizerResponse$ = exports2.GetTableOptimizerRequest$ = exports2.GetStatementResponse$ = exports2.GetStatementRequest$ = exports2.GetSessionResponse$ = exports2.GetSessionRequest$ = exports2.GetSessionEndpointResponse$ = exports2.GetSessionEndpointRequest$ = exports2.GetSecurityConfigurationsResponse$ = exports2.GetSecurityConfigurationsRequest$ = exports2.GetSecurityConfigurationResponse$ = exports2.GetSecurityConfigurationRequest$ = exports2.GetSchemaVersionsDiffResponse$ = exports2.GetSchemaVersionsDiffInput$ = exports2.GetSchemaVersionResponse$ = exports2.GetSchemaVersionInput$ = exports2.GetSchemaResponse$ = exports2.GetSchemaInput$ = exports2.GetSchemaByDefinitionResponse$ = exports2.GetSchemaByDefinitionInput$ = exports2.GetResourcePolicyResponse$ = exports2.GetResourcePolicyRequest$ = exports2.GetResourcePoliciesResponse$ = exports2.GetResourcePoliciesRequest$ = exports2.GetRegistryResponse$ = exports2.GetRegistryInput$ = exports2.GetPlanResponse$ = exports2.GetPlanRequest$ = exports2.GetPartitionsResponse$ = exports2.GetPartitionsRequest$ = exports2.GetPartitionResponse$ = exports2.GetPartitionRequest$ = exports2.GetPartitionIndexesResponse$ = exports2.GetPartitionIndexesRequest$ = exports2.GetMLTransformsResponse$ = exports2.GetMLTransformsRequest$ = exports2.GetMLTransformResponse$ = exports2.GetMLTransformRequest$ = void 0;
+    exports2.ImportCatalogToGlueRequest$ = exports2.IcebergTarget$ = exports2.IcebergTableUpdate$ = exports2.IcebergStructField$ = exports2.IcebergSortOrder$ = exports2.IcebergSortField$ = exports2.IcebergSchema$ = exports2.IcebergRetentionMetrics$ = exports2.IcebergRetentionConfiguration$ = exports2.IcebergPartitionSpec$ = exports2.IcebergPartitionField$ = exports2.IcebergOrphanFileDeletionMetrics$ = exports2.IcebergOrphanFileDeletionConfiguration$ = exports2.IcebergOptimizationPropertiesOutput$ = exports2.IcebergOptimizationProperties$ = exports2.IcebergInput$ = exports2.IcebergEncryptedKey$ = exports2.IcebergCompactionMetrics$ = exports2.IcebergCompactionConfiguration$ = exports2.HudiTarget$ = exports2.GroupFilters$ = exports2.GrokClassifier$ = exports2.GovernedCatalogTarget$ = exports2.GovernedCatalogSource$ = exports2.GlueTable$ = exports2.GlueStudioSchemaColumn$ = exports2.GlueSchema$ = exports2.GluePolicy$ = exports2.GetWorkflowRunsResponse$ = exports2.GetWorkflowRunsRequest$ = exports2.GetWorkflowRunResponse$ = exports2.GetWorkflowRunRequest$ = exports2.GetWorkflowRunPropertiesResponse$ = exports2.GetWorkflowRunPropertiesRequest$ = exports2.GetWorkflowResponse$ = exports2.GetWorkflowRequest$ = exports2.GetUserDefinedFunctionsResponse$ = exports2.GetUserDefinedFunctionsRequest$ = exports2.GetUserDefinedFunctionResponse$ = exports2.GetUserDefinedFunctionRequest$ = exports2.GetUsageProfileResponse$ = exports2.GetUsageProfileRequest$ = exports2.GetUnfilteredTableMetadataResponse$ = exports2.GetUnfilteredTableMetadataRequest$ = exports2.GetUnfilteredPartitionsMetadataResponse$ = exports2.GetUnfilteredPartitionsMetadataRequest$ = exports2.GetUnfilteredPartitionMetadataResponse$ = exports2.GetUnfilteredPartitionMetadataRequest$ = exports2.GetTriggersResponse$ = exports2.GetTriggersRequest$ = void 0;
+    exports2.ListDataQualityRulesetEvaluationRunsRequest$ = exports2.ListDataQualityRuleRecommendationRunsResponse$ = exports2.ListDataQualityRuleRecommendationRunsRequest$ = exports2.ListDataQualityResultsResponse$ = exports2.ListDataQualityResultsRequest$ = exports2.ListCustomEntityTypesResponse$ = exports2.ListCustomEntityTypesRequest$ = exports2.ListCrawlsResponse$ = exports2.ListCrawlsRequest$ = exports2.ListCrawlersResponse$ = exports2.ListCrawlersRequest$ = exports2.ListConnectionTypesResponse$ = exports2.ListConnectionTypesRequest$ = exports2.ListColumnStatisticsTaskRunsResponse$ = exports2.ListColumnStatisticsTaskRunsRequest$ = exports2.ListBlueprintsResponse$ = exports2.ListBlueprintsRequest$ = exports2.LineageConfiguration$ = exports2.LastCrawlInfo$ = exports2.LastActiveDefinition$ = exports2.LakeFormationConfiguration$ = exports2.LabelingSetGenerationTaskRunProperties$ = exports2.KinesisStreamingSourceOptions$ = exports2.KeySchemaElement$ = exports2.KafkaStreamingSourceOptions$ = exports2.JWTBearerProperties$ = exports2.JsonClassifier$ = exports2.JoinColumn$ = exports2.Join$ = exports2.JobUpdate$ = exports2.JobRun$ = exports2.JobNodeDetails$ = exports2.JobCommand$ = exports2.JobBookmarksEncryption$ = exports2.JobBookmarkEntry$ = exports2.Job$ = exports2.JdbcTarget$ = exports2.JDBCConnectorTarget$ = exports2.JDBCConnectorSource$ = exports2.JDBCConnectorOptions$ = exports2.IntegrationResourcePropertyFilter$ = exports2.IntegrationResourceProperty$ = exports2.IntegrationPartition$ = exports2.IntegrationFilter$ = exports2.IntegrationError$ = exports2.IntegrationConfig$ = exports2.Integration$ = exports2.InboundIntegration$ = exports2.ImportLabelsTaskRunProperties$ = exports2.ImportCatalogToGlueResponse$ = void 0;
+    exports2.MLUserDataEncryption$ = exports2.MLTransform$ = exports2.MicrosoftSQLServerCatalogTarget$ = exports2.MicrosoftSQLServerCatalogSource$ = exports2.MetricBasedObservation$ = exports2.MetadataKeyValuePair$ = exports2.MetadataInfo$ = exports2.Merge$ = exports2.MaterializedViewRefreshTaskRun$ = exports2.MappingEntry$ = exports2.Mapping$ = exports2.LongColumnStatisticsData$ = exports2.Location$ = exports2.ListWorkflowsResponse$ = exports2.ListWorkflowsRequest$ = exports2.ListUsageProfilesResponse$ = exports2.ListUsageProfilesRequest$ = exports2.ListTriggersResponse$ = exports2.ListTriggersRequest$ = exports2.ListTableOptimizerRunsResponse$ = exports2.ListTableOptimizerRunsRequest$ = exports2.ListStatementsResponse$ = exports2.ListStatementsRequest$ = exports2.ListSessionsResponse$ = exports2.ListSessionsRequest$ = exports2.ListSchemaVersionsResponse$ = exports2.ListSchemaVersionsInput$ = exports2.ListSchemasResponse$ = exports2.ListSchemasInput$ = exports2.ListRegistriesResponse$ = exports2.ListRegistriesInput$ = exports2.ListMLTransformsResponse$ = exports2.ListMLTransformsRequest$ = exports2.ListMaterializedViewRefreshTaskRunsResponse$ = exports2.ListMaterializedViewRefreshTaskRunsRequest$ = exports2.ListJobsResponse$ = exports2.ListJobsRequest$ = exports2.ListIntegrationResourcePropertiesResponse$ = exports2.ListIntegrationResourcePropertiesRequest$ = exports2.ListEntitiesResponse$ = exports2.ListEntitiesRequest$ = exports2.ListDevEndpointsResponse$ = exports2.ListDevEndpointsRequest$ = exports2.ListDataQualityStatisticsResponse$ = exports2.ListDataQualityStatisticsRequest$ = exports2.ListDataQualityStatisticAnnotationsResponse$ = exports2.ListDataQualityStatisticAnnotationsRequest$ = exports2.ListDataQualityRulesetsResponse$ = exports2.ListDataQualityRulesetsRequest$ = exports2.ListDataQualityRulesetEvaluationRunsResponse$ = void 0;
+    exports2.QuerySchemaVersionMetadataInput$ = exports2.PutWorkflowRunPropertiesResponse$ = exports2.PutWorkflowRunPropertiesRequest$ = exports2.PutSchemaVersionMetadataResponse$ = exports2.PutSchemaVersionMetadataInput$ = exports2.PutResourcePolicyResponse$ = exports2.PutResourcePolicyRequest$ = exports2.PutDataQualityProfileAnnotationResponse$ = exports2.PutDataQualityProfileAnnotationRequest$ = exports2.PutDataCatalogEncryptionSettingsResponse$ = exports2.PutDataCatalogEncryptionSettingsRequest$ = exports2.PropertyPredicate$ = exports2.Property$ = exports2.ProfileConfiguration$ = exports2.PrincipalPermissions$ = exports2.Predicate$ = exports2.Predecessor$ = exports2.PostgreSQLCatalogTarget$ = exports2.PostgreSQLCatalogSource$ = exports2.PIIDetection$ = exports2.PhysicalConnectionRequirements$ = exports2.PartitionValueList$ = exports2.PartitionInput$ = exports2.PartitionIndexDescriptor$ = exports2.PartitionIndex$ = exports2.PartitionError$ = exports2.Partition$ = exports2.PaginationConfiguration$ = exports2.OtherMetadataValueListItem$ = exports2.OrphanFileDeletionMetrics$ = exports2.OrphanFileDeletionConfiguration$ = exports2.Order$ = exports2.OracleSQLCatalogTarget$ = exports2.OracleSQLCatalogSource$ = exports2.Option$ = exports2.OpenTableFormatInput$ = exports2.OffsetConfiguration$ = exports2.OAuth2PropertiesInput$ = exports2.OAuth2Properties$ = exports2.OAuth2Credentials$ = exports2.OAuth2ClientApplication$ = exports2.NullValueField$ = exports2.NullCheckBoxList$ = exports2.NotificationProperty$ = exports2.Node$ = exports2.MySQLCatalogTarget$ = exports2.MySQLCatalogSource$ = exports2.MongoDBTarget$ = exports2.ModifyIntegrationResponse$ = exports2.ModifyIntegrationRequest$ = void 0;
+    exports2.S3HudiDirectTarget$ = exports2.S3HudiCatalogTarget$ = exports2.S3GlueParquetTarget$ = exports2.S3ExcelSource$ = exports2.S3Encryption$ = exports2.S3DirectTarget$ = exports2.S3DirectSourceAdditionalOptions$ = exports2.S3DeltaSource$ = exports2.S3DeltaDirectTarget$ = exports2.S3DeltaCatalogTarget$ = exports2.S3CsvSource$ = exports2.S3CatalogTarget$ = exports2.S3CatalogSource$ = exports2.S3CatalogIcebergSource$ = exports2.S3CatalogHudiSource$ = exports2.S3CatalogDeltaSource$ = exports2.RunStatementResponse$ = exports2.RunStatementRequest$ = exports2.RunMetrics$ = exports2.RunIdentifier$ = exports2.Route$ = exports2.RetentionMetrics$ = exports2.RetentionConfiguration$ = exports2.ResumeWorkflowRunResponse$ = exports2.ResumeWorkflowRunRequest$ = exports2.RestConfiguration$ = exports2.ResponseExtractionMapping$ = exports2.ResponseConfiguration$ = exports2.ResourceUri$ = exports2.ResetJobBookmarkResponse$ = exports2.ResetJobBookmarkRequest$ = exports2.RenameField$ = exports2.RemoveSchemaVersionMetadataResponse$ = exports2.RemoveSchemaVersionMetadataInput$ = exports2.RelationalCatalogSource$ = exports2.RegistryListItem$ = exports2.RegistryId$ = exports2.RegisterSchemaVersionResponse$ = exports2.RegisterSchemaVersionInput$ = exports2.RegisterConnectionTypeResponse$ = exports2.RegisterConnectionTypeRequest$ = exports2.RedshiftTarget$ = exports2.RedshiftSource$ = exports2.RecrawlPolicy$ = exports2.RecipeStep$ = exports2.RecipeReference$ = exports2.RecipeAction$ = exports2.Recipe$ = exports2.QuerySessionContext$ = exports2.QuerySchemaVersionMetadataResponse$ = void 0;
+    exports2.StartCrawlerResponse$ = exports2.StartCrawlerRequest$ = exports2.StartColumnStatisticsTaskRunScheduleResponse$ = exports2.StartColumnStatisticsTaskRunScheduleRequest$ = exports2.StartColumnStatisticsTaskRunResponse$ = exports2.StartColumnStatisticsTaskRunRequest$ = exports2.StartBlueprintRunResponse$ = exports2.StartBlueprintRunRequest$ = exports2.SqlAlias$ = exports2.SplitFields$ = exports2.Spigot$ = exports2.SparkSQL$ = exports2.SparkConnectorTarget$ = exports2.SparkConnectorSource$ = exports2.SourceTableConfig$ = exports2.SourceProcessingProperties$ = exports2.SourceControlDetails$ = exports2.SourceConfiguration$ = exports2.SortCriterion$ = exports2.SnowflakeTarget$ = exports2.SnowflakeSource$ = exports2.SnowflakeNodeData$ = exports2.SkewedInfo$ = exports2.SessionEndpoint$ = exports2.SessionCommand$ = exports2.Session$ = exports2.SerDeInfo$ = exports2.SelectFromCollection$ = exports2.SelectFields$ = exports2.Segment$ = exports2.SecurityConfiguration$ = exports2.SearchTablesResponse$ = exports2.SearchTablesRequest$ = exports2.SchemaVersionNumber$ = exports2.SchemaVersionListItem$ = exports2.SchemaVersionErrorItem$ = exports2.SchemaReference$ = exports2.SchemaListItem$ = exports2.SchemaId$ = exports2.SchemaColumn$ = exports2.SchemaChangePolicy$ = exports2.Schedule$ = exports2.S3Target$ = exports2.S3SourceAdditionalOptions$ = exports2.S3ParquetSource$ = exports2.S3JsonSource$ = exports2.S3IcebergDirectTarget$ = exports2.S3IcebergCatalogTarget$ = exports2.S3HyperDirectTarget$ = exports2.S3HudiSource$ = void 0;
+    exports2.SupportedDialect$ = exports2.StringColumnStatisticsData$ = exports2.StreamingDataPreviewOptions$ = exports2.StorageDescriptor$ = exports2.StopWorkflowRunResponse$ = exports2.StopWorkflowRunRequest$ = exports2.StopTriggerResponse$ = exports2.StopTriggerRequest$ = exports2.StopSessionResponse$ = exports2.StopSessionRequest$ = exports2.StopMaterializedViewRefreshTaskRunResponse$ = exports2.StopMaterializedViewRefreshTaskRunRequest$ = exports2.StopCrawlerScheduleResponse$ = exports2.StopCrawlerScheduleRequest$ = exports2.StopCrawlerResponse$ = exports2.StopCrawlerRequest$ = exports2.StopColumnStatisticsTaskRunScheduleResponse$ = exports2.StopColumnStatisticsTaskRunScheduleRequest$ = exports2.StopColumnStatisticsTaskRunResponse$ = exports2.StopColumnStatisticsTaskRunRequest$ = exports2.StatusDetails$ = exports2.StatisticSummary$ = exports2.StatisticModelResult$ = exports2.StatisticAnnotation$ = exports2.StatementOutputData$ = exports2.StatementOutput$ = exports2.Statement$ = exports2.StartWorkflowRunResponse$ = exports2.StartWorkflowRunRequest$ = exports2.StartTriggerResponse$ = exports2.StartTriggerRequest$ = exports2.StartMLLabelingSetGenerationTaskRunResponse$ = exports2.StartMLLabelingSetGenerationTaskRunRequest$ = exports2.StartMLEvaluationTaskRunResponse$ = exports2.StartMLEvaluationTaskRunRequest$ = exports2.StartMaterializedViewRefreshTaskRunResponse$ = exports2.StartMaterializedViewRefreshTaskRunRequest$ = exports2.StartJobRunResponse$ = exports2.StartJobRunRequest$ = exports2.StartingEventBatchCondition$ = exports2.StartImportLabelsTaskRunResponse$ = exports2.StartImportLabelsTaskRunRequest$ = exports2.StartExportLabelsTaskRunResponse$ = exports2.StartExportLabelsTaskRunRequest$ = exports2.StartDataQualityRulesetEvaluationRunResponse$ = exports2.StartDataQualityRulesetEvaluationRunRequest$ = exports2.StartDataQualityRuleRecommendationRunResponse$ = exports2.StartDataQualityRuleRecommendationRunRequest$ = exports2.StartCrawlerScheduleResponse$ = exports2.StartCrawlerScheduleRequest$ = void 0;
+    exports2.UpdateConnectionRequest$ = exports2.UpdateColumnStatisticsTaskSettingsResponse$ = exports2.UpdateColumnStatisticsTaskSettingsRequest$ = exports2.UpdateColumnStatisticsForTableResponse$ = exports2.UpdateColumnStatisticsForTableRequest$ = exports2.UpdateColumnStatisticsForPartitionResponse$ = exports2.UpdateColumnStatisticsForPartitionRequest$ = exports2.UpdateClassifierResponse$ = exports2.UpdateClassifierRequest$ = exports2.UpdateCatalogResponse$ = exports2.UpdateCatalogRequest$ = exports2.UpdateBlueprintResponse$ = exports2.UpdateBlueprintRequest$ = exports2.UntagResourceResponse$ = exports2.UntagResourceRequest$ = exports2.Union$ = exports2.UnfilteredPartition$ = exports2.TriggerUpdate$ = exports2.TriggerNodeDetails$ = exports2.Trigger$ = exports2.TransformSortCriteria$ = exports2.TransformParameters$ = exports2.TransformFilterCriteria$ = exports2.TransformEncryption$ = exports2.TransformConfigParameter$ = exports2.TimestampFilter$ = exports2.TimestampedInclusionAnnotation$ = exports2.TestConnectionResponse$ = exports2.TestConnectionRequest$ = exports2.TestConnectionInput$ = exports2.TaskRunSortCriteria$ = exports2.TaskRunProperties$ = exports2.TaskRunFilterCriteria$ = exports2.TaskRun$ = exports2.TargetTableConfig$ = exports2.TargetRedshiftCatalog$ = exports2.TargetProcessingProperties$ = exports2.TagResourceResponse$ = exports2.TagResourceRequest$ = exports2.Tag$ = exports2.TableVersionError$ = exports2.TableVersion$ = exports2.TableStatus$ = exports2.TableOptimizerRun$ = exports2.TableOptimizerConfiguration$ = exports2.TableOptimizer$ = exports2.TableInput$ = exports2.TableIdentifier$ = exports2.TableError$ = exports2.Table$ = void 0;
+    exports2.UpdateXMLClassifierRequest$ = exports2.UpdateWorkflowResponse$ = exports2.UpdateWorkflowRequest$ = exports2.UpdateUserDefinedFunctionResponse$ = exports2.UpdateUserDefinedFunctionRequest$ = exports2.UpdateUsageProfileResponse$ = exports2.UpdateUsageProfileRequest$ = exports2.UpdateTriggerResponse$ = exports2.UpdateTriggerRequest$ = exports2.UpdateTableResponse$ = exports2.UpdateTableRequest$ = exports2.UpdateTableOptimizerResponse$ = exports2.UpdateTableOptimizerRequest$ = exports2.UpdateSourceControlFromJobResponse$ = exports2.UpdateSourceControlFromJobRequest$ = exports2.UpdateSchemaResponse$ = exports2.UpdateSchemaInput$ = exports2.UpdateRegistryResponse$ = exports2.UpdateRegistryInput$ = exports2.UpdatePartitionResponse$ = exports2.UpdatePartitionRequest$ = exports2.UpdateOpenTableFormatInput$ = exports2.UpdateMLTransformResponse$ = exports2.UpdateMLTransformRequest$ = exports2.UpdateJsonClassifierRequest$ = exports2.UpdateJobResponse$ = exports2.UpdateJobRequest$ = exports2.UpdateJobFromSourceControlResponse$ = exports2.UpdateJobFromSourceControlRequest$ = exports2.UpdateIntegrationTablePropertiesResponse$ = exports2.UpdateIntegrationTablePropertiesRequest$ = exports2.UpdateIntegrationResourcePropertyResponse$ = exports2.UpdateIntegrationResourcePropertyRequest$ = exports2.UpdateIcebergTableInput$ = exports2.UpdateIcebergInput$ = exports2.UpdateGrokClassifierRequest$ = exports2.UpdateGlueIdentityCenterConfigurationResponse$ = exports2.UpdateGlueIdentityCenterConfigurationRequest$ = exports2.UpdateDevEndpointResponse$ = exports2.UpdateDevEndpointRequest$ = exports2.UpdateDataQualityRulesetResponse$ = exports2.UpdateDataQualityRulesetRequest$ = exports2.UpdateDatabaseResponse$ = exports2.UpdateDatabaseRequest$ = exports2.UpdateCsvClassifierRequest$ = exports2.UpdateCrawlerScheduleResponse$ = exports2.UpdateCrawlerScheduleRequest$ = exports2.UpdateCrawlerResponse$ = exports2.UpdateCrawlerRequest$ = exports2.UpdateConnectionResponse$ = void 0;
+    exports2.CreateIntegration$ = exports2.CreateGlueIdentityCenterConfiguration$ = exports2.CreateDevEndpoint$ = exports2.CreateDataQualityRuleset$ = exports2.CreateDatabase$ = exports2.CreateCustomEntityType$ = exports2.CreateCrawler$ = exports2.CreateConnection$ = exports2.CreateColumnStatisticsTaskSettings$ = exports2.CreateClassifier$ = exports2.CreateCatalog$ = exports2.CreateBlueprint$ = exports2.CheckSchemaVersionValidity$ = exports2.CancelStatement$ = exports2.CancelMLTaskRun$ = exports2.CancelDataQualityRulesetEvaluationRun$ = exports2.CancelDataQualityRuleRecommendationRun$ = exports2.BatchUpdatePartition$ = exports2.BatchStopJobRun$ = exports2.BatchPutDataQualityStatisticAnnotation$ = exports2.BatchGetWorkflows$ = exports2.BatchGetTriggers$ = exports2.BatchGetTableOptimizer$ = exports2.BatchGetPartition$ = exports2.BatchGetJobs$ = exports2.BatchGetDevEndpoints$ = exports2.BatchGetDataQualityResult$ = exports2.BatchGetCustomEntityTypes$ = exports2.BatchGetCrawlers$ = exports2.BatchGetBlueprints$ = exports2.BatchDeleteTableVersion$ = exports2.BatchDeleteTable$ = exports2.BatchDeletePartition$ = exports2.BatchDeleteConnection$ = exports2.BatchCreatePartition$ = exports2.TableOptimizerVpcConfiguration$ = exports2.XMLClassifier$ = exports2.WorkflowRunStatistics$ = exports2.WorkflowRun$ = exports2.WorkflowGraph$ = exports2.Workflow$ = exports2.ViewValidation$ = exports2.ViewRepresentationInput$ = exports2.ViewRepresentation$ = exports2.ViewDefinitionInput$ = exports2.ViewDefinition$ = exports2.UserDefinedFunctionInput$ = exports2.UserDefinedFunction$ = exports2.UsageProfileDefinition$ = exports2.UpsertRedshiftTargetOptions$ = void 0;
+    exports2.DeleteUserDefinedFunction$ = exports2.DeleteUsageProfile$ = exports2.DeleteTrigger$ = exports2.DeleteTableVersion$ = exports2.DeleteTableOptimizer$ = exports2.DeleteTable$ = exports2.DeleteSession$ = exports2.DeleteSecurityConfiguration$ = exports2.DeleteSchemaVersions$ = exports2.DeleteSchema$ = exports2.DeleteResourcePolicy$ = exports2.DeleteRegistry$ = exports2.DeletePartitionIndex$ = exports2.DeletePartition$ = exports2.DeleteMLTransform$ = exports2.DeleteJob$ = exports2.DeleteIntegrationTableProperties$ = exports2.DeleteIntegrationResourceProperty$ = exports2.DeleteIntegration$ = exports2.DeleteGlueIdentityCenterConfiguration$ = exports2.DeleteDevEndpoint$ = exports2.DeleteDataQualityRuleset$ = exports2.DeleteDatabase$ = exports2.DeleteCustomEntityType$ = exports2.DeleteCrawler$ = exports2.DeleteConnectionType$ = exports2.DeleteConnection$ = exports2.DeleteColumnStatisticsTaskSettings$ = exports2.DeleteColumnStatisticsForTable$ = exports2.DeleteColumnStatisticsForPartition$ = exports2.DeleteClassifier$ = exports2.DeleteCatalog$ = exports2.DeleteBlueprint$ = exports2.CreateWorkflow$ = exports2.CreateUserDefinedFunction$ = exports2.CreateUsageProfile$ = exports2.CreateTrigger$ = exports2.CreateTableOptimizer$ = exports2.CreateTable$ = exports2.CreateSession$ = exports2.CreateSecurityConfiguration$ = exports2.CreateScript$ = exports2.CreateSchema$ = exports2.CreateRegistry$ = exports2.CreatePartitionIndex$ = exports2.CreatePartition$ = exports2.CreateMLTransform$ = exports2.CreateJob$ = exports2.CreateIntegrationTableProperties$ = exports2.CreateIntegrationResourceProperty$ = void 0;
+    exports2.GetMLTaskRuns$ = exports2.GetMLTaskRun$ = exports2.GetMaterializedViewRefreshTaskRun$ = exports2.GetMapping$ = exports2.GetJobs$ = exports2.GetJobRuns$ = exports2.GetJobRun$ = exports2.GetJobBookmark$ = exports2.GetJob$ = exports2.GetIntegrationTableProperties$ = exports2.GetIntegrationResourceProperty$ = exports2.GetGlueIdentityCenterConfiguration$ = exports2.GetEntityRecords$ = exports2.GetDevEndpoints$ = exports2.GetDevEndpoint$ = exports2.GetDataQualityRulesetEvaluationRun$ = exports2.GetDataQualityRuleset$ = exports2.GetDataQualityRuleRecommendationRun$ = exports2.GetDataQualityResult$ = exports2.GetDataQualityModelResult$ = exports2.GetDataQualityModel$ = exports2.GetDataflowGraph$ = exports2.GetDataCatalogEncryptionSettings$ = exports2.GetDatabases$ = exports2.GetDatabase$ = exports2.GetDashboardUrl$ = exports2.GetCustomEntityType$ = exports2.GetCrawlers$ = exports2.GetCrawlerMetrics$ = exports2.GetCrawler$ = exports2.GetConnections$ = exports2.GetConnection$ = exports2.GetColumnStatisticsTaskSettings$ = exports2.GetColumnStatisticsTaskRuns$ = exports2.GetColumnStatisticsTaskRun$ = exports2.GetColumnStatisticsForTable$ = exports2.GetColumnStatisticsForPartition$ = exports2.GetClassifiers$ = exports2.GetClassifier$ = exports2.GetCatalogs$ = exports2.GetCatalogImportStatus$ = exports2.GetCatalog$ = exports2.GetBlueprintRuns$ = exports2.GetBlueprintRun$ = exports2.GetBlueprint$ = exports2.DescribeIntegrations$ = exports2.DescribeInboundIntegrations$ = exports2.DescribeEntity$ = exports2.DescribeConnectionType$ = exports2.DeleteWorkflow$ = void 0;
+    exports2.ListDevEndpoints$ = exports2.ListDataQualityStatistics$ = exports2.ListDataQualityStatisticAnnotations$ = exports2.ListDataQualityRulesets$ = exports2.ListDataQualityRulesetEvaluationRuns$ = exports2.ListDataQualityRuleRecommendationRuns$ = exports2.ListDataQualityResults$ = exports2.ListCustomEntityTypes$ = exports2.ListCrawls$ = exports2.ListCrawlers$ = exports2.ListConnectionTypes$ = exports2.ListColumnStatisticsTaskRuns$ = exports2.ListBlueprints$ = exports2.ImportCatalogToGlue$ = exports2.GetWorkflowRuns$ = exports2.GetWorkflowRunProperties$ = exports2.GetWorkflowRun$ = exports2.GetWorkflow$ = exports2.GetUserDefinedFunctions$ = exports2.GetUserDefinedFunction$ = exports2.GetUsageProfile$ = exports2.GetUnfilteredTableMetadata$ = exports2.GetUnfilteredPartitionsMetadata$ = exports2.GetUnfilteredPartitionMetadata$ = exports2.GetTriggers$ = exports2.GetTrigger$ = exports2.GetTags$ = exports2.GetTableVersions$ = exports2.GetTableVersion$ = exports2.GetTables$ = exports2.GetTableOptimizer$ = exports2.GetTable$ = exports2.GetStatement$ = exports2.GetSessionEndpoint$ = exports2.GetSession$ = exports2.GetSecurityConfigurations$ = exports2.GetSecurityConfiguration$ = exports2.GetSchemaVersionsDiff$ = exports2.GetSchemaVersion$ = exports2.GetSchemaByDefinition$ = exports2.GetSchema$ = exports2.GetResourcePolicy$ = exports2.GetResourcePolicies$ = exports2.GetRegistry$ = exports2.GetPlan$ = exports2.GetPartitions$ = exports2.GetPartitionIndexes$ = exports2.GetPartition$ = exports2.GetMLTransforms$ = exports2.GetMLTransform$ = void 0;
+    exports2.StopTrigger$ = exports2.StopSession$ = exports2.StopMaterializedViewRefreshTaskRun$ = exports2.StopCrawlerSchedule$ = exports2.StopCrawler$ = exports2.StopColumnStatisticsTaskRunSchedule$ = exports2.StopColumnStatisticsTaskRun$ = exports2.StartWorkflowRun$ = exports2.StartTrigger$ = exports2.StartMLLabelingSetGenerationTaskRun$ = exports2.StartMLEvaluationTaskRun$ = exports2.StartMaterializedViewRefreshTaskRun$ = exports2.StartJobRun$ = exports2.StartImportLabelsTaskRun$ = exports2.StartExportLabelsTaskRun$ = exports2.StartDataQualityRulesetEvaluationRun$ = exports2.StartDataQualityRuleRecommendationRun$ = exports2.StartCrawlerSchedule$ = exports2.StartCrawler$ = exports2.StartColumnStatisticsTaskRunSchedule$ = exports2.StartColumnStatisticsTaskRun$ = exports2.StartBlueprintRun$ = exports2.SearchTables$ = exports2.RunStatement$ = exports2.ResumeWorkflowRun$ = exports2.ResetJobBookmark$ = exports2.RemoveSchemaVersionMetadata$ = exports2.RegisterSchemaVersion$ = exports2.RegisterConnectionType$ = exports2.QuerySchemaVersionMetadata$ = exports2.PutWorkflowRunProperties$ = exports2.PutSchemaVersionMetadata$ = exports2.PutResourcePolicy$ = exports2.PutDataQualityProfileAnnotation$ = exports2.PutDataCatalogEncryptionSettings$ = exports2.ModifyIntegration$ = exports2.ListWorkflows$ = exports2.ListUsageProfiles$ = exports2.ListTriggers$ = exports2.ListTableOptimizerRuns$ = exports2.ListStatements$ = exports2.ListSessions$ = exports2.ListSchemaVersions$ = exports2.ListSchemas$ = exports2.ListRegistries$ = exports2.ListMLTransforms$ = exports2.ListMaterializedViewRefreshTaskRuns$ = exports2.ListJobs$ = exports2.ListIntegrationResourceProperties$ = exports2.ListEntities$ = void 0;
+    exports2.UpdateWorkflow$ = exports2.UpdateUserDefinedFunction$ = exports2.UpdateUsageProfile$ = exports2.UpdateTrigger$ = exports2.UpdateTableOptimizer$ = exports2.UpdateTable$ = exports2.UpdateSourceControlFromJob$ = exports2.UpdateSchema$ = exports2.UpdateRegistry$ = exports2.UpdatePartition$ = exports2.UpdateMLTransform$ = exports2.UpdateJobFromSourceControl$ = exports2.UpdateJob$ = exports2.UpdateIntegrationTableProperties$ = exports2.UpdateIntegrationResourceProperty$ = exports2.UpdateGlueIdentityCenterConfiguration$ = exports2.UpdateDevEndpoint$ = exports2.UpdateDataQualityRuleset$ = exports2.UpdateDatabase$ = exports2.UpdateCrawlerSchedule$ = exports2.UpdateCrawler$ = exports2.UpdateConnection$ = exports2.UpdateColumnStatisticsTaskSettings$ = exports2.UpdateColumnStatisticsForTable$ = exports2.UpdateColumnStatisticsForPartition$ = exports2.UpdateClassifier$ = exports2.UpdateCatalog$ = exports2.UpdateBlueprint$ = exports2.UntagResource$ = exports2.TestConnection$ = exports2.TagResource$ = exports2.StopWorkflowRun$ = void 0;
     var _A2 = "Action";
     var _AA = "ApplicationArn";
     var _AAC = "AdditionalAuditContext";
@@ -79117,6 +79329,7 @@ var require_schemas_07 = __commonJS({
     var _AS = "AuthStrategy";
     var _ASC = "AllowSingleColumn";
     var _AT3 = "AccessToken";
+    var _ATET = "AuthTokenExpirationTime";
     var _ATG = "AttributesToGet";
     var _ATc = "AccessType";
     var _ATn = "AnalyzedTime";
@@ -80004,6 +80217,9 @@ var require_schemas_07 = __commonJS({
     var _GDRe = "GetDatabaseResponse";
     var _GDRet = "GetDatabasesRequest";
     var _GDReta = "GetDatabasesResponse";
+    var _GDU = "GetDashboardUrl";
+    var _GDUR = "GetDashboardUrlRequest";
+    var _GDURe = "GetDashboardUrlResponse";
     var _GDe = "GetDatabases";
     var _GEE = "GlueEncryptionException";
     var _GER = "GetEntityRecords";
@@ -80090,6 +80306,9 @@ var require_schemas_07 = __commonJS({
     var _GSCRete = "GetSecurityConfigurationsResponse";
     var _GSCe = "GetSecurityConfiguration";
     var _GSCet = "GetSecurityConfigurations";
+    var _GSE = "GetSessionEndpoint";
+    var _GSER = "GetSessionEndpointRequest";
+    var _GSERe = "GetSessionEndpointResponse";
     var _GSI = "GetSchemaInput";
     var _GSPL = "GlueStudioPathList";
     var _GSR = "GetSchemaResponse";
@@ -80781,6 +81000,7 @@ var require_schemas_07 = __commonJS({
     var _RIe = "RegistryId";
     var _RIef = "RefreshInterval";
     var _RIes = "ResultId";
+    var _RIeso = "ResourceId";
     var _RIu = "RunId";
     var _RIun = "RunIdentifier";
     var _RJB = "ResetJobBookmark";
@@ -80889,6 +81109,7 @@ var require_schemas_07 = __commonJS({
     var _SAtr = "StreamArn";
     var _SAu = "SucceededActions";
     var _SB = "StartedBefore";
+    var _SBE = "SessionBusyException";
     var _SBR = "StartBlueprintRun";
     var _SBRR = "StartBlueprintRunRequest";
     var _SBRRt = "StartBlueprintRunResponse";
@@ -80932,6 +81153,7 @@ var require_schemas_07 = __commonJS({
     var _SCTa = "S3CatalogTarget";
     var _SCV = "SkewedColumnValues";
     var _SCVLM = "SkewedColumnValueLocationMaps";
+    var _SC_ = "SPARK_CONNECT";
     var _SCc = "SchemaCheckpoint";
     var _SCca = "ScalaCode";
     var _SCch = "SchemaColumn";
@@ -80943,6 +81165,7 @@ var require_schemas_07 = __commonJS({
     var _SCor = "SortCriteria";
     var _SCort = "SortCriterion";
     var _SCorto = "SortColumns";
+    var _SCp = "SparkConnect";
     var _SCt = "StartCrawler";
     var _SCto = "StopCrawler";
     var _SD = "SchemaDefinition";
@@ -80976,6 +81199,7 @@ var require_schemas_07 = __commonJS({
     var _SEM = "S3EncryptionMode";
     var _SES = "S3ExcelSource";
     var _SEc = "ScheduleExpression";
+    var _SEe = "SessionEndpoint";
     var _SEn = "S3Encryption";
     var _SF = "SelectFields";
     var _SFC = "SelectFromCollection";
@@ -81066,7 +81290,7 @@ var require_schemas_07 = __commonJS({
     var _SRE = "SchedulerRunningException";
     var _SRO = "StatisticRecordedOn";
     var _SRc = "SchemaReference";
-    var _SS = "SuccessfulSubmissions";
+    var _SS = "SensitiveString";
     var _SSAO = "S3SourceAdditionalOptions";
     var _SSL = "StatisticSummaryList";
     var _SSQL = "SparkSQL";
@@ -81079,6 +81303,7 @@ var require_schemas_07 = __commonJS({
     var _SSn = "SnowflakeSource";
     var _SSt = "StatisticSummary";
     var _SSto = "StopSession";
+    var _SSu = "SuccessfulSubmissions";
     var _ST2 = "SourceType";
     var _STC = "SourceTableConfig";
     var _STE = "SchedulerTransitioningException";
@@ -81092,8 +81317,9 @@ var require_schemas_07 = __commonJS({
     var _STa = "S3Targets";
     var _STar = "S3Target";
     var _STc = "ScheduleType";
-    var _STe = "SearchText";
-    var _STea = "SearchTables";
+    var _STe = "SessionType";
+    var _STea = "SearchText";
+    var _STear = "SearchTables";
     var _STn = "SnowflakeTarget";
     var _STo = "SourceTable";
     var _STt = "StagingTable";
@@ -81101,6 +81327,7 @@ var require_schemas_07 = __commonJS({
     var _STtar = "StartingTimestamp";
     var _STtart = "StartTrigger";
     var _STto = "StopTrigger";
+    var _SU = "SensitiveUrl";
     var _SV = "SupportedValues";
     var _SVE = "SchemaVersionErrors";
     var _SVEI = "SchemaVersionErrorItem";
@@ -81451,6 +81678,7 @@ var require_schemas_07 = __commonJS({
     var _gCN = "glueConnectionName";
     var _hE5 = "httpError";
     var _iC = "icebergConfiguration";
+    var _jN2 = "jsonName";
     var _k = "key";
     var _l = "location";
     var _lR = "lastRun";
@@ -81880,6 +82108,15 @@ var require_schemas_07 = __commonJS({
       [0]
     ];
     n0_registry5.registerError(exports2.SchedulerTransitioningException$, errors_1.SchedulerTransitioningException);
+    exports2.SessionBusyException$ = [
+      -3,
+      n05,
+      _SBE,
+      { [_e5]: _c5 },
+      [_M],
+      [0]
+    ];
+    n0_registry5.registerError(exports2.SessionBusyException$, errors_1.SessionBusyException);
     exports2.TargetResourceNotFound$ = [
       -3,
       n05,
@@ -81928,6 +82165,8 @@ var require_schemas_07 = __commonJS({
     var Password = [0, n05, _P2, 8, 0];
     var _Record = [0, n05, _R, 8, 15];
     var RefreshToken3 = [0, n05, _RT3, 8, 0];
+    var SensitiveString = [0, n05, _SS, 8, 0];
+    var SensitiveUrl = [0, n05, _SU, 8, 0];
     var UserManagedClientApplicationClientSecret = [0, n05, _UMCACS, 8, 0];
     exports2.Action$ = [
       3,
@@ -82415,7 +82654,7 @@ var require_schemas_07 = __commonJS({
       n05,
       _BSJRRa,
       0,
-      [_SS, _E2],
+      [_SSu, _E2],
       [() => BatchStopJobRunSuccessfulSubmissionList, () => BatchStopJobRunErrorList]
     ];
     exports2.BatchStopJobRunSuccessfulSubmission$ = [
@@ -83499,8 +83738,8 @@ var require_schemas_07 = __commonJS({
       n05,
       _CSRreat,
       0,
-      [_Id, _Rol, _Comm, _D, _T2, _ITd, _DA, _Conn, _MCax, _NOW, _WT, _SC, _GV, _Tag, _RO],
-      [0, 0, () => exports2.SessionCommand$, 0, 1, 1, 128 | 0, () => exports2.ConnectionsList$, 1, 1, 0, 0, 0, 128 | 0, 0],
+      [_Id, _Rol, _Comm, _D, _T2, _ITd, _DA, _Conn, _MCax, _NOW, _WT, _SC, _GV, _Tag, _RO, _STe],
+      [0, 0, () => exports2.SessionCommand$, 0, 1, 1, 128 | 0, () => exports2.ConnectionsList$, 1, 1, 0, 0, 0, 128 | 0, 0, 0],
       3
     ];
     exports2.CreateSessionResponse$ = [
@@ -85283,6 +85522,24 @@ var require_schemas_07 = __commonJS({
       [_N, _RSe, _CW],
       [0, 0, 64 | 0]
     ];
+    exports2.GetDashboardUrlRequest$ = [
+      3,
+      n05,
+      _GDUR,
+      0,
+      [_RIeso, _RTes, _RO],
+      [0, 0, 0],
+      2
+    ];
+    exports2.GetDashboardUrlResponse$ = [
+      3,
+      n05,
+      _GDURe,
+      0,
+      [_Ur],
+      [[() => SensitiveUrl, 0]],
+      1
+    ];
     exports2.GetDatabaseRequest$ = [
       3,
       n05,
@@ -85954,6 +86211,24 @@ var require_schemas_07 = __commonJS({
       0,
       [_SCec, _NTe],
       [() => SecurityConfigurationList, 0]
+    ];
+    exports2.GetSessionEndpointRequest$ = [
+      3,
+      n05,
+      _GSER,
+      0,
+      [_SIe],
+      [0],
+      1
+    ];
+    exports2.GetSessionEndpointResponse$ = [
+      3,
+      n05,
+      _GSERe,
+      0,
+      [_SCp],
+      [[() => exports2.SessionEndpoint$, { [_jN2]: _SC_ }]],
+      1
     ];
     exports2.GetSessionRequest$ = [
       3,
@@ -88352,7 +88627,7 @@ var require_schemas_07 = __commonJS({
       n05,
       _STR,
       0,
-      [_CI, _NTe, _Fil, _STe, _SCor, _MRax, _RST, _ISD],
+      [_CI, _NTe, _Fil, _STea, _SCor, _MRax, _RST, _ISD],
       [0, 0, () => SearchPropertyPredicates, 0, () => SortCriteria, 1, 0, 2]
     ];
     exports2.SearchTablesResponse$ = [
@@ -88411,8 +88686,8 @@ var require_schemas_07 = __commonJS({
       n05,
       _Ses,
       0,
-      [_Id, _CO, _St, _EM, _D, _Rol, _Comm, _DA, _Conn, _Prog, _MCax, _SC, _GV, _NOW, _WT, _COo, _ETxe, _DPUS, _ITd, _PN],
-      [0, 4, 0, 0, 0, 0, () => exports2.SessionCommand$, 128 | 0, () => exports2.ConnectionsList$, 1, 1, 0, 0, 1, 0, 4, 1, 1, 1, 0]
+      [_Id, _CO, _St, _EM, _D, _Rol, _Comm, _DA, _Conn, _Prog, _MCax, _SC, _GV, _NOW, _WT, _COo, _ETxe, _DPUS, _ITd, _PN, _STe],
+      [0, 4, 0, 0, 0, 0, () => exports2.SessionCommand$, 128 | 0, () => exports2.ConnectionsList$, 1, 1, 0, 0, 1, 0, 4, 1, 1, 1, 0, 0]
     ];
     exports2.SessionCommand$ = [
       3,
@@ -88421,6 +88696,15 @@ var require_schemas_07 = __commonJS({
       0,
       [_N, _PVy],
       [0, 0]
+    ];
+    exports2.SessionEndpoint$ = [
+      3,
+      n05,
+      _SEe,
+      0,
+      [_Ur, _ATuth, _ATET],
+      [0, [() => SensitiveString, 0], 4],
+      3
     ];
     exports2.SkewedInfo$ = [
       3,
@@ -92089,6 +92373,14 @@ var require_schemas_07 = __commonJS({
       () => exports2.GetCustomEntityTypeRequest$,
       () => exports2.GetCustomEntityTypeResponse$
     ];
+    exports2.GetDashboardUrl$ = [
+      9,
+      n05,
+      _GDU,
+      0,
+      () => exports2.GetDashboardUrlRequest$,
+      () => exports2.GetDashboardUrlResponse$
+    ];
     exports2.GetDatabase$ = [
       9,
       n05,
@@ -92416,6 +92708,14 @@ var require_schemas_07 = __commonJS({
       0,
       () => exports2.GetSessionRequest$,
       () => exports2.GetSessionResponse$
+    ];
+    exports2.GetSessionEndpoint$ = [
+      9,
+      n05,
+      _GSE,
+      0,
+      () => exports2.GetSessionEndpointRequest$,
+      () => exports2.GetSessionEndpointResponse$
     ];
     exports2.GetStatement$ = [
       9,
@@ -92900,7 +93200,7 @@ var require_schemas_07 = __commonJS({
     exports2.SearchTables$ = [
       9,
       n05,
-      _STea,
+      _STear,
       0,
       () => exports2.SearchTablesRequest$,
       () => exports2.SearchTablesResponse$
@@ -93984,6 +94284,10 @@ var require_dist_cjs26 = __commonJS({
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("AWSGlue", "GetCustomEntityType", {}).n("GlueClient", "GetCustomEntityTypeCommand").sc(schemas_0.GetCustomEntityType$).build() {
     };
+    var GetDashboardUrlCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+      return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
+    }).s("AWSGlue", "GetDashboardUrl", {}).n("GlueClient", "GetDashboardUrlCommand").sc(schemas_0.GetDashboardUrl$).build() {
+    };
     var GetDatabaseCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("AWSGlue", "GetDatabase", {}).n("GlueClient", "GetDatabaseCommand").sc(schemas_0.GetDatabase$).build() {
@@ -94147,6 +94451,10 @@ var require_dist_cjs26 = __commonJS({
     var GetSessionCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
     }).s("AWSGlue", "GetSession", {}).n("GlueClient", "GetSessionCommand").sc(schemas_0.GetSession$).build() {
+    };
+    var GetSessionEndpointCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
+      return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
+    }).s("AWSGlue", "GetSessionEndpoint", {}).n("GlueClient", "GetSessionEndpointCommand").sc(schemas_0.GetSessionEndpoint$).build() {
     };
     var GetStatementCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions())];
@@ -94764,6 +95072,7 @@ var require_dist_cjs26 = __commonJS({
       GetCrawlerMetricsCommand,
       GetCrawlersCommand,
       GetCustomEntityTypeCommand,
+      GetDashboardUrlCommand,
       GetDatabaseCommand,
       GetDatabasesCommand,
       GetDataCatalogEncryptionSettingsCommand,
@@ -94805,6 +95114,7 @@ var require_dist_cjs26 = __commonJS({
       GetSecurityConfigurationCommand,
       GetSecurityConfigurationsCommand,
       GetSessionCommand,
+      GetSessionEndpointCommand,
       GetStatementCommand,
       GetTableCommand,
       GetTableOptimizerCommand,
@@ -95636,6 +95946,10 @@ var require_dist_cjs26 = __commonJS({
       SSEKMS: "SSE-KMS",
       SSES3: "SSE-S3"
     };
+    var SessionType = {
+      LIVY: "LIVY",
+      SPARK_CONNECT: "SPARK_CONNECT"
+    };
     var SessionStatus = {
       FAILED: "FAILED",
       PROVISIONING: "PROVISIONING",
@@ -95758,6 +96072,10 @@ var require_dist_cjs26 = __commonJS({
     var SettingSource = {
       CATALOG: "CATALOG",
       TABLE: "TABLE"
+    };
+    var GlueResourceType = {
+      JOB: "JOB",
+      SESSION: "SESSION"
     };
     var DatabaseAttributes = {
       NAME: "NAME",
@@ -96109,6 +96427,7 @@ var require_dist_cjs26 = __commonJS({
     exports2.GetCrawlerMetricsCommand = GetCrawlerMetricsCommand;
     exports2.GetCrawlersCommand = GetCrawlersCommand;
     exports2.GetCustomEntityTypeCommand = GetCustomEntityTypeCommand;
+    exports2.GetDashboardUrlCommand = GetDashboardUrlCommand;
     exports2.GetDataCatalogEncryptionSettingsCommand = GetDataCatalogEncryptionSettingsCommand;
     exports2.GetDataQualityModelCommand = GetDataQualityModelCommand;
     exports2.GetDataQualityModelResultCommand = GetDataQualityModelResultCommand;
@@ -96150,6 +96469,7 @@ var require_dist_cjs26 = __commonJS({
     exports2.GetSecurityConfigurationCommand = GetSecurityConfigurationCommand;
     exports2.GetSecurityConfigurationsCommand = GetSecurityConfigurationsCommand;
     exports2.GetSessionCommand = GetSessionCommand;
+    exports2.GetSessionEndpointCommand = GetSessionEndpointCommand;
     exports2.GetStatementCommand = GetStatementCommand;
     exports2.GetTableCommand = GetTableCommand;
     exports2.GetTableOptimizerCommand = GetTableOptimizerCommand;
@@ -96172,6 +96492,7 @@ var require_dist_cjs26 = __commonJS({
     exports2.Glue = Glue;
     exports2.GlueClient = GlueClient2;
     exports2.GlueRecordType = GlueRecordType;
+    exports2.GlueResourceType = GlueResourceType;
     exports2.HTTPMethod = HTTPMethod;
     exports2.HudiTargetCompressionType = HudiTargetCompressionType;
     exports2.HyperTargetCompressionType = HyperTargetCompressionType;
@@ -96268,6 +96589,7 @@ var require_dist_cjs26 = __commonJS({
     exports2.SearchTablesCommand = SearchTablesCommand;
     exports2.Separator = Separator;
     exports2.SessionStatus = SessionStatus;
+    exports2.SessionType = SessionType;
     exports2.SettingSource = SettingSource;
     exports2.Sort = Sort;
     exports2.SortDirectionType = SortDirectionType;
@@ -96471,10 +96793,10 @@ var require_package8 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-lambda",
       description: "AWS SDK for JavaScript Lambda Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-lambda",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -96497,17 +96819,17 @@ var require_package8 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@smithy/snapshot-testing": "^2.1.6",
+        "@smithy/snapshot-testing": "^2.1.7",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -96531,7 +96853,7 @@ var require_package8 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -97480,10 +97802,10 @@ var require_schemas_08 = __commonJS({
     exports2.DeleteAliasRequest$ = exports2.DeadLetterConfig$ = exports2.CreateFunctionUrlConfigResponse$ = exports2.CreateFunctionUrlConfigRequest$ = exports2.CreateFunctionRequest$ = exports2.CreateEventSourceMappingRequest$ = exports2.CreateCodeSigningConfigResponse$ = exports2.CreateCodeSigningConfigRequest$ = exports2.CreateCapacityProviderResponse$ = exports2.CreateCapacityProviderRequest$ = exports2.CreateAliasRequest$ = exports2.Cors$ = exports2.ContextSucceededDetails$ = exports2.ContextStartedDetails$ = exports2.ContextOptions$ = exports2.ContextFailedDetails$ = exports2.ContextDetails$ = exports2.Concurrency$ = exports2.CodeSigningPolicies$ = exports2.CodeSigningConfig$ = exports2.CheckpointUpdatedExecutionState$ = exports2.CheckpointDurableExecutionResponse$ = exports2.CheckpointDurableExecutionRequest$ = exports2.ChainedInvokeTimedOutDetails$ = exports2.ChainedInvokeSucceededDetails$ = exports2.ChainedInvokeStoppedDetails$ = exports2.ChainedInvokeStartedDetails$ = exports2.ChainedInvokeOptions$ = exports2.ChainedInvokeFailedDetails$ = exports2.ChainedInvokeDetails$ = exports2.CapacityProviderVpcConfig$ = exports2.CapacityProviderScalingConfig$ = exports2.CapacityProviderPermissionsConfig$ = exports2.CapacityProviderConfig$ = exports2.CapacityProvider$ = exports2.CallbackTimedOutDetails$ = exports2.CallbackSucceededDetails$ = exports2.CallbackStartedDetails$ = exports2.CallbackOptions$ = exports2.CallbackFailedDetails$ = exports2.CallbackDetails$ = exports2.AmazonManagedKafkaEventSourceConfig$ = exports2.AllowedPublishers$ = exports2.AliasRoutingConfiguration$ = exports2.AliasConfiguration$ = exports2.AddPermissionResponse$ = exports2.AddPermissionRequest$ = exports2.AddLayerVersionPermissionResponse$ = exports2.AddLayerVersionPermissionRequest$ = exports2.AccountUsage$ = void 0;
     exports2.GetCapacityProviderRequest$ = exports2.GetAliasRequest$ = exports2.GetAccountSettingsResponse$ = exports2.GetAccountSettingsRequest$ = exports2.FunctionVersionsByCapacityProviderListItem$ = exports2.FunctionUrlConfig$ = exports2.FunctionScalingConfig$ = exports2.FunctionEventInvokeConfig$ = exports2.FunctionConfiguration$ = exports2.FunctionCodeLocation$ = exports2.FunctionCode$ = exports2.FilterCriteriaError$ = exports2.FilterCriteria$ = exports2.Filter$ = exports2.FileSystemConfig$ = exports2.ExecutionTimedOutDetails$ = exports2.ExecutionSucceededDetails$ = exports2.ExecutionStoppedDetails$ = exports2.ExecutionStartedDetails$ = exports2.ExecutionFailedDetails$ = exports2.ExecutionDetails$ = exports2.Execution$ = exports2.EventSourceMappingMetricsConfig$ = exports2.EventSourceMappingLoggingConfig$ = exports2.EventSourceMappingConfiguration$ = exports2.EventResult$ = exports2.EventInput$ = exports2.EventError$ = exports2.Event$ = exports2.ErrorObject$ = exports2.EphemeralStorage$ = exports2.EnvironmentResponse$ = exports2.EnvironmentError$ = exports2.Environment$ = exports2.DurableConfig$ = exports2.DocumentDBEventSourceConfig$ = exports2.DestinationConfig$ = exports2.DeleteProvisionedConcurrencyConfigRequest$ = exports2.DeleteLayerVersionRequest$ = exports2.DeleteFunctionUrlConfigRequest$ = exports2.DeleteFunctionResponse$ = exports2.DeleteFunctionRequest$ = exports2.DeleteFunctionEventInvokeConfigRequest$ = exports2.DeleteFunctionConcurrencyRequest$ = exports2.DeleteFunctionCodeSigningConfigRequest$ = exports2.DeleteEventSourceMappingRequest$ = exports2.DeleteCodeSigningConfigResponse$ = exports2.DeleteCodeSigningConfigRequest$ = exports2.DeleteCapacityProviderResponse$ = exports2.DeleteCapacityProviderRequest$ = void 0;
     exports2.KafkaSchemaRegistryConfig$ = exports2.KafkaSchemaRegistryAccessConfig$ = exports2.InvokeWithResponseStreamResponse$ = exports2.InvokeWithResponseStreamRequest$ = exports2.InvokeWithResponseStreamCompleteEvent$ = exports2.InvokeResponseStreamUpdate$ = exports2.InvokeAsyncResponse$ = exports2.InvokeAsyncRequest$ = exports2.InvocationResponse$ = exports2.InvocationRequest$ = exports2.InvocationCompletedDetails$ = exports2.InstanceRequirements$ = exports2.ImageConfigResponse$ = exports2.ImageConfigError$ = exports2.ImageConfig$ = exports2.GetRuntimeManagementConfigResponse$ = exports2.GetRuntimeManagementConfigRequest$ = exports2.GetProvisionedConcurrencyConfigResponse$ = exports2.GetProvisionedConcurrencyConfigRequest$ = exports2.GetPolicyResponse$ = exports2.GetPolicyRequest$ = exports2.GetLayerVersionResponse$ = exports2.GetLayerVersionRequest$ = exports2.GetLayerVersionPolicyResponse$ = exports2.GetLayerVersionPolicyRequest$ = exports2.GetLayerVersionByArnRequest$ = exports2.GetFunctionUrlConfigResponse$ = exports2.GetFunctionUrlConfigRequest$ = exports2.GetFunctionScalingConfigResponse$ = exports2.GetFunctionScalingConfigRequest$ = exports2.GetFunctionResponse$ = exports2.GetFunctionRequest$ = exports2.GetFunctionRecursionConfigResponse$ = exports2.GetFunctionRecursionConfigRequest$ = exports2.GetFunctionEventInvokeConfigRequest$ = exports2.GetFunctionConfigurationRequest$ = exports2.GetFunctionConcurrencyResponse$ = exports2.GetFunctionConcurrencyRequest$ = exports2.GetFunctionCodeSigningConfigResponse$ = exports2.GetFunctionCodeSigningConfigRequest$ = exports2.GetEventSourceMappingRequest$ = exports2.GetDurableExecutionStateResponse$ = exports2.GetDurableExecutionStateRequest$ = exports2.GetDurableExecutionResponse$ = exports2.GetDurableExecutionRequest$ = exports2.GetDurableExecutionHistoryResponse$ = exports2.GetDurableExecutionHistoryRequest$ = exports2.GetCodeSigningConfigResponse$ = exports2.GetCodeSigningConfigRequest$ = exports2.GetCapacityProviderResponse$ = void 0;
-    exports2.PutFunctionConcurrencyRequest$ = exports2.PutFunctionCodeSigningConfigResponse$ = exports2.PutFunctionCodeSigningConfigRequest$ = exports2.PublishVersionRequest$ = exports2.PublishLayerVersionResponse$ = exports2.PublishLayerVersionRequest$ = exports2.ProvisionedPollerConfig$ = exports2.ProvisionedConcurrencyConfigListItem$ = exports2.OperationUpdate$ = exports2.Operation$ = exports2.OnSuccess$ = exports2.OnFailure$ = exports2.LoggingConfig$ = exports2.ListVersionsByFunctionResponse$ = exports2.ListVersionsByFunctionRequest$ = exports2.ListTagsResponse$ = exports2.ListTagsRequest$ = exports2.ListProvisionedConcurrencyConfigsResponse$ = exports2.ListProvisionedConcurrencyConfigsRequest$ = exports2.ListLayerVersionsResponse$ = exports2.ListLayerVersionsRequest$ = exports2.ListLayersResponse$ = exports2.ListLayersRequest$ = exports2.ListFunctionVersionsByCapacityProviderResponse$ = exports2.ListFunctionVersionsByCapacityProviderRequest$ = exports2.ListFunctionUrlConfigsResponse$ = exports2.ListFunctionUrlConfigsRequest$ = exports2.ListFunctionsResponse$ = exports2.ListFunctionsRequest$ = exports2.ListFunctionsByCodeSigningConfigResponse$ = exports2.ListFunctionsByCodeSigningConfigRequest$ = exports2.ListFunctionEventInvokeConfigsResponse$ = exports2.ListFunctionEventInvokeConfigsRequest$ = exports2.ListEventSourceMappingsResponse$ = exports2.ListEventSourceMappingsRequest$ = exports2.ListDurableExecutionsByFunctionResponse$ = exports2.ListDurableExecutionsByFunctionRequest$ = exports2.ListCodeSigningConfigsResponse$ = exports2.ListCodeSigningConfigsRequest$ = exports2.ListCapacityProvidersResponse$ = exports2.ListCapacityProvidersRequest$ = exports2.ListAliasesResponse$ = exports2.ListAliasesRequest$ = exports2.LayerVersionsListItem$ = exports2.LayerVersionContentOutput$ = exports2.LayerVersionContentInput$ = exports2.LayersListItem$ = exports2.Layer$ = exports2.LambdaManagedInstancesCapacityProviderConfig$ = exports2.KafkaSchemaValidationConfig$ = void 0;
-    exports2.UpdateFunctionEventInvokeConfigRequest$ = exports2.UpdateFunctionConfigurationRequest$ = exports2.UpdateFunctionCodeRequest$ = exports2.UpdateEventSourceMappingRequest$ = exports2.UpdateCodeSigningConfigResponse$ = exports2.UpdateCodeSigningConfigRequest$ = exports2.UpdateCapacityProviderResponse$ = exports2.UpdateCapacityProviderRequest$ = exports2.UpdateAliasRequest$ = exports2.UntagResourceRequest$ = exports2.TracingConfigResponse$ = exports2.TracingConfig$ = exports2.TraceHeader$ = exports2.TenancyConfig$ = exports2.TargetTrackingScalingPolicy$ = exports2.TagsError$ = exports2.TagResourceRequest$ = exports2.StopDurableExecutionResponse$ = exports2.StopDurableExecutionRequest$ = exports2.StepSucceededDetails$ = exports2.StepStartedDetails$ = exports2.StepOptions$ = exports2.StepFailedDetails$ = exports2.StepDetails$ = exports2.SourceAccessConfiguration$ = exports2.SnapStartResponse$ = exports2.SnapStart$ = exports2.SendDurableExecutionCallbackSuccessResponse$ = exports2.SendDurableExecutionCallbackSuccessRequest$ = exports2.SendDurableExecutionCallbackHeartbeatResponse$ = exports2.SendDurableExecutionCallbackHeartbeatRequest$ = exports2.SendDurableExecutionCallbackFailureResponse$ = exports2.SendDurableExecutionCallbackFailureRequest$ = exports2.SelfManagedKafkaEventSourceConfig$ = exports2.SelfManagedEventSource$ = exports2.ScalingConfig$ = exports2.RuntimeVersionError$ = exports2.RuntimeVersionConfig$ = exports2.RetryDetails$ = exports2.RemovePermissionRequest$ = exports2.RemoveLayerVersionPermissionRequest$ = exports2.PutRuntimeManagementConfigResponse$ = exports2.PutRuntimeManagementConfigRequest$ = exports2.PutProvisionedConcurrencyConfigResponse$ = exports2.PutProvisionedConcurrencyConfigRequest$ = exports2.PutFunctionScalingConfigResponse$ = exports2.PutFunctionScalingConfigRequest$ = exports2.PutFunctionRecursionConfigResponse$ = exports2.PutFunctionRecursionConfigRequest$ = exports2.PutFunctionEventInvokeConfigRequest$ = void 0;
-    exports2.GetPolicy$ = exports2.GetLayerVersionPolicy$ = exports2.GetLayerVersionByArn$ = exports2.GetLayerVersion$ = exports2.GetFunctionUrlConfig$ = exports2.GetFunctionScalingConfig$ = exports2.GetFunctionRecursionConfig$ = exports2.GetFunctionEventInvokeConfig$ = exports2.GetFunctionConfiguration$ = exports2.GetFunctionConcurrency$ = exports2.GetFunctionCodeSigningConfig$ = exports2.GetFunction$ = exports2.GetEventSourceMapping$ = exports2.GetDurableExecutionState$ = exports2.GetDurableExecutionHistory$ = exports2.GetDurableExecution$ = exports2.GetCodeSigningConfig$ = exports2.GetCapacityProvider$ = exports2.GetAlias$ = exports2.GetAccountSettings$ = exports2.DeleteProvisionedConcurrencyConfig$ = exports2.DeleteLayerVersion$ = exports2.DeleteFunctionUrlConfig$ = exports2.DeleteFunctionEventInvokeConfig$ = exports2.DeleteFunctionConcurrency$ = exports2.DeleteFunctionCodeSigningConfig$ = exports2.DeleteFunction$ = exports2.DeleteEventSourceMapping$ = exports2.DeleteCodeSigningConfig$ = exports2.DeleteCapacityProvider$ = exports2.DeleteAlias$ = exports2.CreateFunctionUrlConfig$ = exports2.CreateFunction$ = exports2.CreateEventSourceMapping$ = exports2.CreateCodeSigningConfig$ = exports2.CreateCapacityProvider$ = exports2.CreateAlias$ = exports2.CheckpointDurableExecution$ = exports2.AddPermission$ = exports2.AddLayerVersionPermission$ = exports2.InvokeWithResponseStreamResponseEvent$ = exports2.WaitSucceededDetails$ = exports2.WaitStartedDetails$ = exports2.WaitOptions$ = exports2.WaitDetails$ = exports2.WaitCancelledDetails$ = exports2.VpcConfigResponse$ = exports2.VpcConfig$ = exports2.UpdateFunctionUrlConfigResponse$ = exports2.UpdateFunctionUrlConfigRequest$ = void 0;
-    exports2.UpdateFunctionUrlConfig$ = exports2.UpdateFunctionEventInvokeConfig$ = exports2.UpdateFunctionConfiguration$ = exports2.UpdateFunctionCode$ = exports2.UpdateEventSourceMapping$ = exports2.UpdateCodeSigningConfig$ = exports2.UpdateCapacityProvider$ = exports2.UpdateAlias$ = exports2.UntagResource$ = exports2.TagResource$ = exports2.StopDurableExecution$ = exports2.SendDurableExecutionCallbackSuccess$ = exports2.SendDurableExecutionCallbackHeartbeat$ = exports2.SendDurableExecutionCallbackFailure$ = exports2.RemovePermission$ = exports2.RemoveLayerVersionPermission$ = exports2.PutRuntimeManagementConfig$ = exports2.PutProvisionedConcurrencyConfig$ = exports2.PutFunctionScalingConfig$ = exports2.PutFunctionRecursionConfig$ = exports2.PutFunctionEventInvokeConfig$ = exports2.PutFunctionConcurrency$ = exports2.PutFunctionCodeSigningConfig$ = exports2.PublishVersion$ = exports2.PublishLayerVersion$ = exports2.ListVersionsByFunction$ = exports2.ListTags$ = exports2.ListProvisionedConcurrencyConfigs$ = exports2.ListLayerVersions$ = exports2.ListLayers$ = exports2.ListFunctionVersionsByCapacityProvider$ = exports2.ListFunctionUrlConfigs$ = exports2.ListFunctionsByCodeSigningConfig$ = exports2.ListFunctions$ = exports2.ListFunctionEventInvokeConfigs$ = exports2.ListEventSourceMappings$ = exports2.ListDurableExecutionsByFunction$ = exports2.ListCodeSigningConfigs$ = exports2.ListCapacityProviders$ = exports2.ListAliases$ = exports2.InvokeWithResponseStream$ = exports2.InvokeAsync$ = exports2.Invoke$ = exports2.GetRuntimeManagementConfig$ = exports2.GetProvisionedConcurrencyConfig$ = void 0;
+    exports2.PutFunctionCodeSigningConfigResponse$ = exports2.PutFunctionCodeSigningConfigRequest$ = exports2.PublishVersionRequest$ = exports2.PublishLayerVersionResponse$ = exports2.PublishLayerVersionRequest$ = exports2.ProvisionedPollerConfig$ = exports2.ProvisionedConcurrencyConfigListItem$ = exports2.PropagateTags$ = exports2.OperationUpdate$ = exports2.Operation$ = exports2.OnSuccess$ = exports2.OnFailure$ = exports2.LoggingConfig$ = exports2.ListVersionsByFunctionResponse$ = exports2.ListVersionsByFunctionRequest$ = exports2.ListTagsResponse$ = exports2.ListTagsRequest$ = exports2.ListProvisionedConcurrencyConfigsResponse$ = exports2.ListProvisionedConcurrencyConfigsRequest$ = exports2.ListLayerVersionsResponse$ = exports2.ListLayerVersionsRequest$ = exports2.ListLayersResponse$ = exports2.ListLayersRequest$ = exports2.ListFunctionVersionsByCapacityProviderResponse$ = exports2.ListFunctionVersionsByCapacityProviderRequest$ = exports2.ListFunctionUrlConfigsResponse$ = exports2.ListFunctionUrlConfigsRequest$ = exports2.ListFunctionsResponse$ = exports2.ListFunctionsRequest$ = exports2.ListFunctionsByCodeSigningConfigResponse$ = exports2.ListFunctionsByCodeSigningConfigRequest$ = exports2.ListFunctionEventInvokeConfigsResponse$ = exports2.ListFunctionEventInvokeConfigsRequest$ = exports2.ListEventSourceMappingsResponse$ = exports2.ListEventSourceMappingsRequest$ = exports2.ListDurableExecutionsByFunctionResponse$ = exports2.ListDurableExecutionsByFunctionRequest$ = exports2.ListCodeSigningConfigsResponse$ = exports2.ListCodeSigningConfigsRequest$ = exports2.ListCapacityProvidersResponse$ = exports2.ListCapacityProvidersRequest$ = exports2.ListAliasesResponse$ = exports2.ListAliasesRequest$ = exports2.LayerVersionsListItem$ = exports2.LayerVersionContentOutput$ = exports2.LayerVersionContentInput$ = exports2.LayersListItem$ = exports2.Layer$ = exports2.LambdaManagedInstancesCapacityProviderConfig$ = exports2.KafkaSchemaValidationConfig$ = void 0;
+    exports2.UpdateFunctionConfigurationRequest$ = exports2.UpdateFunctionCodeRequest$ = exports2.UpdateEventSourceMappingRequest$ = exports2.UpdateCodeSigningConfigResponse$ = exports2.UpdateCodeSigningConfigRequest$ = exports2.UpdateCapacityProviderResponse$ = exports2.UpdateCapacityProviderRequest$ = exports2.UpdateAliasRequest$ = exports2.UntagResourceRequest$ = exports2.TracingConfigResponse$ = exports2.TracingConfig$ = exports2.TraceHeader$ = exports2.TenancyConfig$ = exports2.TargetTrackingScalingPolicy$ = exports2.TagsError$ = exports2.TagResourceRequest$ = exports2.StopDurableExecutionResponse$ = exports2.StopDurableExecutionRequest$ = exports2.StepSucceededDetails$ = exports2.StepStartedDetails$ = exports2.StepOptions$ = exports2.StepFailedDetails$ = exports2.StepDetails$ = exports2.SourceAccessConfiguration$ = exports2.SnapStartResponse$ = exports2.SnapStart$ = exports2.SendDurableExecutionCallbackSuccessResponse$ = exports2.SendDurableExecutionCallbackSuccessRequest$ = exports2.SendDurableExecutionCallbackHeartbeatResponse$ = exports2.SendDurableExecutionCallbackHeartbeatRequest$ = exports2.SendDurableExecutionCallbackFailureResponse$ = exports2.SendDurableExecutionCallbackFailureRequest$ = exports2.SelfManagedKafkaEventSourceConfig$ = exports2.SelfManagedEventSource$ = exports2.ScalingConfig$ = exports2.RuntimeVersionError$ = exports2.RuntimeVersionConfig$ = exports2.RetryDetails$ = exports2.RemovePermissionRequest$ = exports2.RemoveLayerVersionPermissionRequest$ = exports2.PutRuntimeManagementConfigResponse$ = exports2.PutRuntimeManagementConfigRequest$ = exports2.PutProvisionedConcurrencyConfigResponse$ = exports2.PutProvisionedConcurrencyConfigRequest$ = exports2.PutFunctionScalingConfigResponse$ = exports2.PutFunctionScalingConfigRequest$ = exports2.PutFunctionRecursionConfigResponse$ = exports2.PutFunctionRecursionConfigRequest$ = exports2.PutFunctionEventInvokeConfigRequest$ = exports2.PutFunctionConcurrencyRequest$ = void 0;
+    exports2.GetLayerVersionPolicy$ = exports2.GetLayerVersionByArn$ = exports2.GetLayerVersion$ = exports2.GetFunctionUrlConfig$ = exports2.GetFunctionScalingConfig$ = exports2.GetFunctionRecursionConfig$ = exports2.GetFunctionEventInvokeConfig$ = exports2.GetFunctionConfiguration$ = exports2.GetFunctionConcurrency$ = exports2.GetFunctionCodeSigningConfig$ = exports2.GetFunction$ = exports2.GetEventSourceMapping$ = exports2.GetDurableExecutionState$ = exports2.GetDurableExecutionHistory$ = exports2.GetDurableExecution$ = exports2.GetCodeSigningConfig$ = exports2.GetCapacityProvider$ = exports2.GetAlias$ = exports2.GetAccountSettings$ = exports2.DeleteProvisionedConcurrencyConfig$ = exports2.DeleteLayerVersion$ = exports2.DeleteFunctionUrlConfig$ = exports2.DeleteFunctionEventInvokeConfig$ = exports2.DeleteFunctionConcurrency$ = exports2.DeleteFunctionCodeSigningConfig$ = exports2.DeleteFunction$ = exports2.DeleteEventSourceMapping$ = exports2.DeleteCodeSigningConfig$ = exports2.DeleteCapacityProvider$ = exports2.DeleteAlias$ = exports2.CreateFunctionUrlConfig$ = exports2.CreateFunction$ = exports2.CreateEventSourceMapping$ = exports2.CreateCodeSigningConfig$ = exports2.CreateCapacityProvider$ = exports2.CreateAlias$ = exports2.CheckpointDurableExecution$ = exports2.AddPermission$ = exports2.AddLayerVersionPermission$ = exports2.InvokeWithResponseStreamResponseEvent$ = exports2.WaitSucceededDetails$ = exports2.WaitStartedDetails$ = exports2.WaitOptions$ = exports2.WaitDetails$ = exports2.WaitCancelledDetails$ = exports2.VpcConfigResponse$ = exports2.VpcConfig$ = exports2.UpdateFunctionUrlConfigResponse$ = exports2.UpdateFunctionUrlConfigRequest$ = exports2.UpdateFunctionEventInvokeConfigRequest$ = void 0;
+    exports2.UpdateFunctionUrlConfig$ = exports2.UpdateFunctionEventInvokeConfig$ = exports2.UpdateFunctionConfiguration$ = exports2.UpdateFunctionCode$ = exports2.UpdateEventSourceMapping$ = exports2.UpdateCodeSigningConfig$ = exports2.UpdateCapacityProvider$ = exports2.UpdateAlias$ = exports2.UntagResource$ = exports2.TagResource$ = exports2.StopDurableExecution$ = exports2.SendDurableExecutionCallbackSuccess$ = exports2.SendDurableExecutionCallbackHeartbeat$ = exports2.SendDurableExecutionCallbackFailure$ = exports2.RemovePermission$ = exports2.RemoveLayerVersionPermission$ = exports2.PutRuntimeManagementConfig$ = exports2.PutProvisionedConcurrencyConfig$ = exports2.PutFunctionScalingConfig$ = exports2.PutFunctionRecursionConfig$ = exports2.PutFunctionEventInvokeConfig$ = exports2.PutFunctionConcurrency$ = exports2.PutFunctionCodeSigningConfig$ = exports2.PublishVersion$ = exports2.PublishLayerVersion$ = exports2.ListVersionsByFunction$ = exports2.ListTags$ = exports2.ListProvisionedConcurrencyConfigs$ = exports2.ListLayerVersions$ = exports2.ListLayers$ = exports2.ListFunctionVersionsByCapacityProvider$ = exports2.ListFunctionUrlConfigs$ = exports2.ListFunctionsByCodeSigningConfig$ = exports2.ListFunctions$ = exports2.ListFunctionEventInvokeConfigs$ = exports2.ListEventSourceMappings$ = exports2.ListDurableExecutionsByFunction$ = exports2.ListCodeSigningConfigs$ = exports2.ListCapacityProviders$ = exports2.ListAliases$ = exports2.InvokeWithResponseStream$ = exports2.InvokeAsync$ = exports2.Invoke$ = exports2.GetRuntimeManagementConfig$ = exports2.GetProvisionedConcurrencyConfig$ = exports2.GetPolicy$ = void 0;
     var _A2 = "Action";
     var _AA = "AliasArn";
     var _AC = "AliasConfiguration";
@@ -97692,6 +98014,7 @@ var require_schemas_08 = __commonJS({
     var _ETv = "EventType";
     var _ETve = "EventTimestamp";
     var _ETx = "ExecutionTimeout";
+    var _ETxp = "ExplicitTags";
     var _EV = "ExecutedVersion";
     var _EVN = "EnvironmentVariableName";
     var _EVV = "EnvironmentVariableValue";
@@ -97996,7 +98319,8 @@ var require_schemas_08 = __commonJS({
     var _PRMC = "PutRuntimeManagementConfig";
     var _PRMCR = "PutRuntimeManagementConfigRequest";
     var _PRMCRu = "PutRuntimeManagementConfigResponse";
-    var _PT = "PackageType";
+    var _PT = "PropagateTags";
+    var _PTa = "PackageType";
     var _PTu = "PublishTo";
     var _PV = "PublishVersion";
     var _PVR = "PublishVersionRequest";
@@ -98788,8 +99112,8 @@ var require_schemas_08 = __commonJS({
       n05,
       _CP,
       0,
-      [_CPA, _St, _VC, _PC2, _IR, _CPSC, _KKA, _LM],
-      [0, 0, () => exports2.CapacityProviderVpcConfig$, () => exports2.CapacityProviderPermissionsConfig$, () => exports2.InstanceRequirements$, () => exports2.CapacityProviderScalingConfig$, 0, 0],
+      [_CPA, _St, _VC, _PC2, _IR, _CPSC, _KKA, _LM, _PT],
+      [0, 0, () => exports2.CapacityProviderVpcConfig$, () => exports2.CapacityProviderPermissionsConfig$, () => exports2.InstanceRequirements$, () => exports2.CapacityProviderScalingConfig$, 0, 0, () => exports2.PropagateTags$],
       4
     ];
     exports2.CapacityProviderConfig$ = [
@@ -99004,8 +99328,8 @@ var require_schemas_08 = __commonJS({
       n05,
       _CCPR,
       0,
-      [_CPN, _VC, _PC2, _IR, _CPSC, _KKA, _Ta2],
-      [0, () => exports2.CapacityProviderVpcConfig$, () => exports2.CapacityProviderPermissionsConfig$, () => exports2.InstanceRequirements$, () => exports2.CapacityProviderScalingConfig$, 0, 128 | 0],
+      [_CPN, _VC, _PC2, _IR, _CPSC, _KKA, _Ta2, _PT],
+      [0, () => exports2.CapacityProviderVpcConfig$, () => exports2.CapacityProviderPermissionsConfig$, () => exports2.InstanceRequirements$, () => exports2.CapacityProviderScalingConfig$, 0, 128 | 0, () => exports2.PropagateTags$],
       3
     ];
     exports2.CreateCapacityProviderResponse$ = [
@@ -99049,7 +99373,7 @@ var require_schemas_08 = __commonJS({
       n05,
       _CFR,
       0,
-      [_FN, _Ro, _Cod, _Ru, _H, _D, _Ti, _MS, _Pu, _VC, _PT, _DLC, _Env, _KMSKA, _TC2, _Ta2, _L, _FSC, _IC, _CSCA, _Ar, _ES, _SSn, _LC, _CPC, _PTu, _DCu, _TCe],
+      [_FN, _Ro, _Cod, _Ru, _H, _D, _Ti, _MS, _Pu, _VC, _PTa, _DLC, _Env, _KMSKA, _TC2, _Ta2, _L, _FSC, _IC, _CSCA, _Ar, _ES, _SSn, _LC, _CPC, _PTu, _DCu, _TCe],
       [0, 0, [() => exports2.FunctionCode$, 0], 0, 0, 0, 1, 1, 2, () => exports2.VpcConfig$, 0, () => exports2.DeadLetterConfig$, [() => exports2.Environment$, 0], 0, () => exports2.TracingConfig$, 128 | 0, 64 | 0, () => FileSystemConfigList, () => exports2.ImageConfig$, 0, 64 | 0, () => exports2.EphemeralStorage$, () => exports2.SnapStart$, () => exports2.LoggingConfig$, () => exports2.CapacityProviderConfig$, 0, () => exports2.DurableConfig$, () => exports2.TenancyConfig$],
       3
     ];
@@ -99439,7 +99763,7 @@ var require_schemas_08 = __commonJS({
       n05,
       _FCun,
       0,
-      [_FN, _FA, _Ru, _Ro, _H, _CS2, _D, _Ti, _MS, _LM, _CSo, _Ve, _VC, _DLC, _Env, _KMSKA, _TC2, _MAa, _RI, _L, _St, _SR, _SRCt, _LUS, _LUSR, _LUSRC, _FSC, _PT, _ICR, _SPVAi, _SJA, _Ar, _ES, _SSn, _RVC, _LC, _CPC, _CSon, _DCu, _TCe],
+      [_FN, _FA, _Ru, _Ro, _H, _CS2, _D, _Ti, _MS, _LM, _CSo, _Ve, _VC, _DLC, _Env, _KMSKA, _TC2, _MAa, _RI, _L, _St, _SR, _SRCt, _LUS, _LUSR, _LUSRC, _FSC, _PTa, _ICR, _SPVAi, _SJA, _Ar, _ES, _SSn, _RVC, _LC, _CPC, _CSon, _DCu, _TCe],
       [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, () => exports2.VpcConfigResponse$, () => exports2.DeadLetterConfig$, [() => exports2.EnvironmentResponse$, 0], 0, () => exports2.TracingConfigResponse$, 0, 0, () => LayersReferenceList, 0, 0, 0, 0, 0, 0, () => FileSystemConfigList, 0, [() => exports2.ImageConfigResponse$, 0], 0, 0, 64 | 0, () => exports2.EphemeralStorage$, () => exports2.SnapStartResponse$, [() => exports2.RuntimeVersionConfig$, 0], () => exports2.LoggingConfig$, () => exports2.CapacityProviderConfig$, 0, () => exports2.DurableConfig$, () => exports2.TenancyConfig$]
     ];
     exports2.FunctionEventInvokeConfig$ = [
@@ -100292,6 +100616,14 @@ var require_schemas_08 = __commonJS({
       [0, 0, 0, 0, 0, 0, [() => OperationPayload, 0], [() => exports2.ErrorObject$, 0], () => exports2.ContextOptions$, () => exports2.StepOptions$, () => exports2.WaitOptions$, () => exports2.CallbackOptions$, () => exports2.ChainedInvokeOptions$],
       3
     ];
+    exports2.PropagateTags$ = [
+      3,
+      n05,
+      _PT,
+      0,
+      [_Mo, _ETxp],
+      [0, 128 | 0]
+    ];
     exports2.ProvisionedConcurrencyConfigListItem$ = [
       3,
       n05,
@@ -100723,8 +101055,8 @@ var require_schemas_08 = __commonJS({
       n05,
       _UCPR,
       0,
-      [_CPN, _CPSC],
-      [[0, 1], () => exports2.CapacityProviderScalingConfig$],
+      [_CPN, _CPSC, _PT],
+      [[0, 1], () => exports2.CapacityProviderScalingConfig$, () => exports2.PropagateTags$],
       1
     ];
     exports2.UpdateCapacityProviderResponse$ = [
@@ -102764,6 +103096,10 @@ var require_dist_cjs27 = __commonJS({
     var CapacityProviderPredefinedMetricType = {
       LambdaCapacityProviderAverageCPUUtilization: "LambdaCapacityProviderAverageCPUUtilization"
     };
+    var PropagateTagsMode = {
+      Explicit: "Explicit",
+      None: "None"
+    };
     var CapacityProviderState = {
       Active: "Active",
       Deleting: "Deleting",
@@ -103165,6 +103501,7 @@ var require_dist_cjs27 = __commonJS({
     exports2.OperationStatus = OperationStatus;
     exports2.OperationType = OperationType;
     exports2.PackageType = PackageType;
+    exports2.PropagateTagsMode = PropagateTagsMode;
     exports2.ProvisionedConcurrencyStatusEnum = ProvisionedConcurrencyStatusEnum;
     exports2.PublishLayerVersionCommand = PublishLayerVersionCommand;
     exports2.PublishVersionCommand = PublishVersionCommand;
@@ -103569,10 +103906,10 @@ var require_package9 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-eventbridge",
       description: "AWS SDK for JavaScript Eventbridge Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-eventbridge",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -103591,18 +103928,18 @@ var require_package9 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.30",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.34",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@aws-sdk/signature-v4-crt": "3.1057.0",
+        "@aws-sdk/signature-v4-crt": "3.1067.0",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -103625,7 +103962,7 @@ var require_package9 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -107366,10 +107703,10 @@ var require_package10 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-pipes",
       description: "AWS SDK for JavaScript Pipes Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-pipes",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -107386,13 +107723,13 @@ var require_package10 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -107418,7 +107755,7 @@ var require_package10 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -109762,10 +110099,10 @@ var require_package11 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-bedrock-agent",
       description: "AWS SDK for JavaScript Bedrock Agent Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-bedrock-agent",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -109782,13 +110119,13 @@ var require_package11 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -109814,7 +110151,7 @@ var require_package11 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -116768,10 +117105,10 @@ var require_package12 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-elastic-load-balancing-v2",
       description: "AWS SDK for JavaScript Elastic Load Balancing V2 Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-elastic-load-balancing-v2",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -116790,13 +117127,13 @@ var require_package12 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -116822,7 +117159,7 @@ var require_package12 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -121819,10 +122156,10 @@ var require_package13 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-verifiedpermissions",
       description: "AWS SDK for JavaScript Verifiedpermissions Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-verifiedpermissions",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -121839,13 +122176,13 @@ var require_package13 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -121871,7 +122208,7 @@ var require_package13 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -125081,10 +125418,10 @@ var require_package14 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sfn",
       description: "AWS SDK for JavaScript Sfn Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-sfn",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -125101,13 +125438,13 @@ var require_package14 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -125133,7 +125470,7 @@ var require_package14 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -128816,10 +129153,10 @@ var require_package15 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-ssm",
       description: "AWS SDK for JavaScript Ssm Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-ssm",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -128838,13 +129175,13 @@ var require_package15 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -128870,7 +129207,7 @@ var require_package15 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -142296,10 +142633,10 @@ var require_package16 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-sns",
       description: "AWS SDK for JavaScript Sns Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-sns",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -142318,13 +142655,13 @@ var require_package16 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -142350,7 +142687,7 @@ var require_package16 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -145258,52 +145595,6 @@ var require_dist_cjs35 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/middleware-expect-continue/dist-cjs/index.js
-var require_dist_cjs36 = __commonJS({
-  "node_modules/@aws-sdk/middleware-expect-continue/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    function addExpectContinueMiddleware(options) {
-      return (next) => async (args) => {
-        const { request } = args;
-        if (options.expectContinueHeader !== false && protocols.HttpRequest.isInstance(request) && request.body && options.runtime === "node" && options.requestHandler?.constructor?.name !== "FetchHttpHandler") {
-          let sendHeader = true;
-          if (typeof options.expectContinueHeader === "number") {
-            try {
-              const bodyLength = Number(request.headers?.["content-length"]) ?? options.bodyLengthChecker?.(request.body) ?? Infinity;
-              sendHeader = bodyLength >= options.expectContinueHeader;
-            } catch (e5) {
-            }
-          } else {
-            sendHeader = !!options.expectContinueHeader;
-          }
-          if (sendHeader) {
-            request.headers.Expect = "100-continue";
-          }
-        }
-        return next({
-          ...args,
-          request
-        });
-      };
-    }
-    var addExpectContinueMiddlewareOptions = {
-      step: "build",
-      tags: ["SET_EXPECT_HEADER", "EXPECT_HEADER"],
-      name: "addExpectContinueMiddleware",
-      override: true
-    };
-    var getAddExpectContinuePlugin = (options) => ({
-      applyToStack: (clientStack) => {
-        clientStack.add(addExpectContinueMiddleware(options), addExpectContinueMiddlewareOptions);
-      }
-    });
-    exports2.addExpectContinueMiddleware = addExpectContinueMiddleware;
-    exports2.addExpectContinueMiddlewareOptions = addExpectContinueMiddlewareOptions;
-    exports2.getAddExpectContinuePlugin = getAddExpectContinuePlugin;
-  }
-});
-
 // node_modules/@aws-crypto/crc32c/build/main/aws_crc32c.js
 var require_aws_crc32c = __commonJS({
   "node_modules/@aws-crypto/crc32c/build/main/aws_crc32c.js"(exports2) {
@@ -145650,10 +145941,48 @@ var require_main3 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/crc64-nvme/dist-cjs/index.js
-var require_dist_cjs37 = __commonJS({
-  "node_modules/@aws-sdk/crc64-nvme/dist-cjs/index.js"(exports2) {
+// node_modules/@aws-sdk/checksums/dist-cjs/flexible-checksums/getCrc32ChecksumAlgorithmFunction.js
+var require_getCrc32ChecksumAlgorithmFunction = __commonJS({
+  "node_modules/@aws-sdk/checksums/dist-cjs/flexible-checksums/getCrc32ChecksumAlgorithmFunction.js"(exports2) {
     "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getCrc32ChecksumAlgorithmFunction = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var crc32_1 = require_main2();
+    var util_1 = require_main();
+    var zlib = tslib_1.__importStar(require("node:zlib"));
+    var NodeCrc32 = class {
+      checksum = 0;
+      update(data2) {
+        this.checksum = zlib.crc32(data2, this.checksum);
+      }
+      async digest() {
+        return (0, util_1.numToUint8)(this.checksum);
+      }
+      reset() {
+        this.checksum = 0;
+      }
+    };
+    var getCrc32ChecksumAlgorithmFunction = () => {
+      if (typeof zlib.crc32 === "undefined") {
+        return crc32_1.AwsCrc32;
+      }
+      return NodeCrc32;
+    };
+    exports2.getCrc32ChecksumAlgorithmFunction = getCrc32ChecksumAlgorithmFunction;
+  }
+});
+
+// node_modules/@aws-sdk/checksums/dist-cjs/index.js
+var require_dist_cjs36 = __commonJS({
+  "node_modules/@aws-sdk/checksums/dist-cjs/index.js"(exports2) {
+    "use strict";
+    var client = (init_client3(), __toCommonJS(client_exports2));
+    var protocols = (init_protocols(), __toCommonJS(protocols_exports));
+    var serde = (init_serde(), __toCommonJS(serde_exports));
+    var crc32c = require_main3();
+    var getCrc32ChecksumAlgorithmFunction = require_getCrc32ChecksumAlgorithmFunction();
+    var client$1 = (init_client2(), __toCommonJS(client_exports));
     var generateCRC64NVMETable = () => {
       const sliceLength = 8;
       const tables = new Array(sliceLength);
@@ -145746,54 +146075,6 @@ var require_dist_cjs37 = __commonJS({
     var crc64NvmeCrtContainer = {
       CrtCrc64Nvme: null
     };
-    exports2.Crc64Nvme = Crc64Nvme;
-    exports2.crc64NvmeCrtContainer = crc64NvmeCrtContainer;
-  }
-});
-
-// node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/getCrc32ChecksumAlgorithmFunction.js
-var require_getCrc32ChecksumAlgorithmFunction = __commonJS({
-  "node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/getCrc32ChecksumAlgorithmFunction.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.getCrc32ChecksumAlgorithmFunction = void 0;
-    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
-    var crc32_1 = require_main2();
-    var util_1 = require_main();
-    var zlib = tslib_1.__importStar(require("node:zlib"));
-    var NodeCrc32 = class {
-      checksum = 0;
-      update(data2) {
-        this.checksum = zlib.crc32(data2, this.checksum);
-      }
-      async digest() {
-        return (0, util_1.numToUint8)(this.checksum);
-      }
-      reset() {
-        this.checksum = 0;
-      }
-    };
-    var getCrc32ChecksumAlgorithmFunction = () => {
-      if (typeof zlib.crc32 === "undefined") {
-        return crc32_1.AwsCrc32;
-      }
-      return NodeCrc32;
-    };
-    exports2.getCrc32ChecksumAlgorithmFunction = getCrc32ChecksumAlgorithmFunction;
-  }
-});
-
-// node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/index.js
-var require_dist_cjs38 = __commonJS({
-  "node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var client = (init_client3(), __toCommonJS(client_exports2));
-    var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var serde = (init_serde(), __toCommonJS(serde_exports));
-    var crc32c = require_main3();
-    var crc64Nvme = require_dist_cjs37();
-    var getCrc32ChecksumAlgorithmFunction = require_getCrc32ChecksumAlgorithmFunction();
-    var client$1 = (init_client2(), __toCommonJS(client_exports));
     var RequestChecksumCalculation = {
       WHEN_SUPPORTED: "WHEN_SUPPORTED",
       WHEN_REQUIRED: "WHEN_REQUIRED"
@@ -145901,10 +146182,10 @@ var require_dist_cjs38 = __commonJS({
         case exports2.ChecksumAlgorithm.CRC32C:
           return checksumAlgorithms?.CRC32C ?? crc32c.AwsCrc32c;
         case exports2.ChecksumAlgorithm.CRC64NVME:
-          if (typeof crc64Nvme.crc64NvmeCrtContainer.CrtCrc64Nvme !== "function") {
-            return checksumAlgorithms?.CRC64NVME ?? crc64Nvme.Crc64Nvme;
+          if (typeof crc64NvmeCrtContainer.CrtCrc64Nvme !== "function") {
+            return checksumAlgorithms?.CRC64NVME ?? Crc64Nvme;
           }
-          return checksumAlgorithms?.CRC64NVME ?? crc64Nvme.crc64NvmeCrtContainer.CrtCrc64Nvme;
+          return checksumAlgorithms?.CRC64NVME ?? crc64NvmeCrtContainer.CrtCrc64Nvme;
         case exports2.ChecksumAlgorithm.SHA1:
           return checksumAlgorithms?.SHA1 ?? config.sha1;
         case exports2.ChecksumAlgorithm.SHA256:
@@ -146182,6 +146463,7 @@ var require_dist_cjs38 = __commonJS({
     };
     exports2.CONFIG_REQUEST_CHECKSUM_CALCULATION = CONFIG_REQUEST_CHECKSUM_CALCULATION;
     exports2.CONFIG_RESPONSE_CHECKSUM_VALIDATION = CONFIG_RESPONSE_CHECKSUM_VALIDATION;
+    exports2.Crc64Nvme = Crc64Nvme;
     exports2.DEFAULT_CHECKSUM_ALGORITHM = DEFAULT_CHECKSUM_ALGORITHM;
     exports2.DEFAULT_REQUEST_CHECKSUM_CALCULATION = DEFAULT_REQUEST_CHECKSUM_CALCULATION;
     exports2.DEFAULT_RESPONSE_CHECKSUM_VALIDATION = DEFAULT_RESPONSE_CHECKSUM_VALIDATION;
@@ -146191,6 +146473,7 @@ var require_dist_cjs38 = __commonJS({
     exports2.NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS = NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS;
     exports2.RequestChecksumCalculation = RequestChecksumCalculation;
     exports2.ResponseChecksumValidation = ResponseChecksumValidation;
+    exports2.crc64NvmeCrtContainer = crc64NvmeCrtContainer;
     exports2.flexibleChecksumsMiddleware = flexibleChecksumsMiddleware;
     exports2.flexibleChecksumsMiddlewareOptions = flexibleChecksumsMiddlewareOptions;
     exports2.getFlexibleChecksumsPlugin = getFlexibleChecksumsPlugin;
@@ -146198,155 +146481,87 @@ var require_dist_cjs38 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/toStream.js
-var require_toStream = __commonJS({
-  "node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/toStream.js"(exports2) {
+// node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/index.js
+var require_dist_cjs37 = __commonJS({
+  "node_modules/@aws-sdk/middleware-flexible-checksums/dist-cjs/index.js"(exports2) {
     "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.toStream = toStream;
-    var node_stream_1 = require("node:stream");
-    function toStream(bytes) {
-      return node_stream_1.Readable.from(Buffer.from(bytes));
-    }
+    var checksums = require_dist_cjs36();
+    exports2.CONFIG_REQUEST_CHECKSUM_CALCULATION = checksums.CONFIG_REQUEST_CHECKSUM_CALCULATION;
+    exports2.CONFIG_RESPONSE_CHECKSUM_VALIDATION = checksums.CONFIG_RESPONSE_CHECKSUM_VALIDATION;
+    exports2.ChecksumAlgorithm = checksums.ChecksumAlgorithm;
+    exports2.ChecksumLocation = checksums.ChecksumLocation;
+    exports2.DEFAULT_CHECKSUM_ALGORITHM = checksums.DEFAULT_CHECKSUM_ALGORITHM;
+    exports2.DEFAULT_REQUEST_CHECKSUM_CALCULATION = checksums.DEFAULT_REQUEST_CHECKSUM_CALCULATION;
+    exports2.DEFAULT_RESPONSE_CHECKSUM_VALIDATION = checksums.DEFAULT_RESPONSE_CHECKSUM_VALIDATION;
+    exports2.ENV_REQUEST_CHECKSUM_CALCULATION = checksums.ENV_REQUEST_CHECKSUM_CALCULATION;
+    exports2.ENV_RESPONSE_CHECKSUM_VALIDATION = checksums.ENV_RESPONSE_CHECKSUM_VALIDATION;
+    exports2.NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS = checksums.NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS;
+    exports2.NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS = checksums.NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS;
+    exports2.RequestChecksumCalculation = checksums.RequestChecksumCalculation;
+    exports2.ResponseChecksumValidation = checksums.ResponseChecksumValidation;
+    exports2.flexibleChecksumsMiddleware = checksums.flexibleChecksumsMiddleware;
+    exports2.flexibleChecksumsMiddlewareOptions = checksums.flexibleChecksumsMiddlewareOptions;
+    exports2.getFlexibleChecksumsPlugin = checksums.getFlexibleChecksumsPlugin;
+    exports2.resolveFlexibleChecksumsConfig = checksums.resolveFlexibleChecksumsConfig;
   }
 });
 
-// node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse6, build;
-var init_arn = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
-    validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse6 = (arn) => {
-      const segments = arn.split(":");
-      if (segments.length < 6 || segments[0] !== "arn")
-        throw new Error("Malformed ARN");
-      const [, partition2, service, region, accountId, ...resource] = segments;
-      return {
-        partition: partition2,
-        service,
-        region,
-        accountId,
-        resource: resource.join(":")
-      };
-    };
-    build = (arnObject) => {
-      const { partition: partition2 = "aws", service, region, accountId, resource } = arnObject;
-      if ([service, region, accountId, resource].some((segment) => typeof segment !== "string")) {
-        throw new Error("Input ARN object is invalid");
-      }
-      return `arn:${partition2}:${service}:${region}:${accountId}:${resource}`;
-    };
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/util/util-format-url/format-url.js
-function formatUrl(request) {
-  const { port, query } = request;
-  let { protocol, path: path15, hostname } = request;
-  if (protocol && protocol.slice(-1) !== ":") {
-    protocol += ":";
-  }
-  if (port) {
-    hostname += `:${port}`;
-  }
-  if (path15 && path15.charAt(0) !== "/") {
-    path15 = `/${path15}`;
-  }
-  let queryString = query ? buildQueryString(query) : "";
-  if (queryString && queryString[0] !== "?") {
-    queryString = `?${queryString}`;
-  }
-  let auth = "";
-  if (request.username != null || request.password != null) {
-    const username = request.username ?? "";
-    const password = request.password ?? "";
-    auth = `${username}:${password}@`;
-  }
-  let fragment = "";
-  if (request.fragment) {
-    fragment = `#${request.fragment}`;
-  }
-  return `${protocol}//${auth}${hostname}${path15}${queryString}${fragment}`;
-}
-var init_format_url = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/util/util-format-url/format-url.js"() {
-    init_protocols();
-  }
-});
-
-// node_modules/@aws-sdk/core/dist-es/submodules/util/index.js
-var util_exports = {};
-__export(util_exports, {
-  build: () => build,
-  formatUrl: () => formatUrl,
-  parse: () => parse6,
-  validate: () => validate
-});
-var init_util2 = __esm({
-  "node_modules/@aws-sdk/core/dist-es/submodules/util/index.js"() {
-    init_arn();
-    init_format_url();
-  }
-});
-
-// node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/index.js
-var require_dist_cjs39 = __commonJS({
-  "node_modules/@aws-sdk/middleware-sdk-s3/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var client = (init_client2(), __toCommonJS(client_exports));
-    var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var serde = (init_serde(), __toCommonJS(serde_exports));
-    var toStream = require_toStream();
-    var util = (init_util2(), __toCommonJS(util_exports));
-    var protocols$1 = (init_protocols2(), __toCommonJS(protocols_exports2));
-    var schema = (init_schema(), __toCommonJS(schema_exports));
-    var signatureV4MultiRegion = require_dist_cjs15();
-    var config = (init_config2(), __toCommonJS(config_exports));
-    var client$1 = (init_client3(), __toCommonJS(client_exports2));
-    var core = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var CONTENT_LENGTH_HEADER2 = "content-length";
-    var DECODED_CONTENT_LENGTH_HEADER = "x-amz-decoded-content-length";
-    function checkContentLengthHeader() {
-      return (next, context) => async (args) => {
-        const { request } = args;
-        if (protocols.HttpRequest.isInstance(request)) {
-          if (!(CONTENT_LENGTH_HEADER2 in request.headers) && !(DECODED_CONTENT_LENGTH_HEADER in request.headers)) {
-            const message = `Are you using a Stream of unknown length as the Body of a PutObject request? Consider using Upload instead from @aws-sdk/lib-storage.`;
-            if (typeof context?.logger?.warn === "function" && !(context.logger instanceof client.NoOpLogger)) {
-              context.logger.warn(message);
-            } else {
-              console.warn(message);
-            }
-          }
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-check-content-length-header/check-content-length-header.js
+function checkContentLengthHeader() {
+  return (next, context) => async (args) => {
+    const { request } = args;
+    if (HttpRequest.isInstance(request)) {
+      if (!(CONTENT_LENGTH_HEADER2 in request.headers) && !(DECODED_CONTENT_LENGTH_HEADER in request.headers)) {
+        const message = `Are you using a Stream of unknown length as the Body of a PutObject request? Consider using Upload instead from @aws-sdk/lib-storage.`;
+        if (typeof context?.logger?.warn === "function" && !(context.logger instanceof NoOpLogger)) {
+          context.logger.warn(message);
+        } else {
+          console.warn(message);
         }
-        return next({ ...args });
-      };
+      }
     }
-    var checkContentLengthHeaderMiddlewareOptions = {
+    return next({ ...args });
+  };
+}
+var CONTENT_LENGTH_HEADER2, DECODED_CONTENT_LENGTH_HEADER, checkContentLengthHeaderMiddlewareOptions, getCheckContentLengthHeaderPlugin;
+var init_check_content_length_header = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-check-content-length-header/check-content-length-header.js"() {
+    init_client2();
+    init_protocols();
+    CONTENT_LENGTH_HEADER2 = "content-length";
+    DECODED_CONTENT_LENGTH_HEADER = "x-amz-decoded-content-length";
+    checkContentLengthHeaderMiddlewareOptions = {
       step: "finalizeRequest",
       tags: ["CHECK_CONTENT_LENGTH_HEADER"],
       name: "getCheckContentLengthHeaderPlugin",
       override: true
     };
-    var getCheckContentLengthHeaderPlugin = (unused) => ({
+    getCheckContentLengthHeaderPlugin = (unused) => ({
       applyToStack: (clientStack) => {
         clientStack.add(checkContentLengthHeader(), checkContentLengthHeaderMiddlewareOptions);
       }
     });
-    var regionRedirectEndpointMiddleware = (config2) => {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/region-redirect-endpoint-middleware.js
+var regionRedirectEndpointMiddleware, regionRedirectEndpointMiddlewareOptions;
+var init_region_redirect_endpoint_middleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/region-redirect-endpoint-middleware.js"() {
+    regionRedirectEndpointMiddleware = (config) => {
       return (next, context) => async (args) => {
-        const originalRegion = await config2.region();
-        const regionProviderRef = config2.region;
+        const originalRegion = await config.region();
+        const regionProviderRef = config.region;
         let unlock = () => {
         };
         if (context.__s3RegionRedirect) {
-          Object.defineProperty(config2, "region", {
+          Object.defineProperty(config, "region", {
             writable: false,
             value: async () => {
               return context.__s3RegionRedirect;
             }
           });
-          unlock = () => Object.defineProperty(config2, "region", {
+          unlock = () => Object.defineProperty(config, "region", {
             writable: true,
             value: regionProviderRef
           });
@@ -146355,7 +146570,7 @@ var require_dist_cjs39 = __commonJS({
           const result = await next(args);
           if (context.__s3RegionRedirect) {
             unlock();
-            const region = await config2.region();
+            const region = await config.region();
             if (originalRegion !== region) {
               throw new Error("Region was not restored following S3 region redirect.");
             }
@@ -146367,82 +146582,67 @@ var require_dist_cjs39 = __commonJS({
         }
       };
     };
-    var regionRedirectEndpointMiddlewareOptions = {
+    regionRedirectEndpointMiddlewareOptions = {
       tags: ["REGION_REDIRECT", "S3"],
       name: "regionRedirectEndpointMiddleware",
       override: true,
       relation: "before",
       toMiddleware: "endpointV2Middleware"
     };
-    function regionRedirectMiddleware(clientConfig) {
-      return (next, context) => async (args) => {
-        try {
-          return await next(args);
-        } catch (err) {
-          if (clientConfig.followRegionRedirects) {
-            const statusCode = err?.$metadata?.httpStatusCode;
-            const isHeadBucket = context.commandName === "HeadBucketCommand";
-            const bucketRegionHeader = err?.$response?.headers?.["x-amz-bucket-region"];
-            if (bucketRegionHeader) {
-              if (statusCode === 301 || statusCode === 400 && (err?.name === "IllegalLocationConstraintException" || isHeadBucket)) {
-                try {
-                  const actualRegion = bucketRegionHeader;
-                  context.logger?.debug(`Redirecting from ${await clientConfig.region()} to ${actualRegion}`);
-                  context.__s3RegionRedirect = actualRegion;
-                } catch (e5) {
-                  throw new Error("Region redirect failed: " + e5);
-                }
-                return next(args);
-              }
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/region-redirect-middleware.js
+function regionRedirectMiddleware(clientConfig) {
+  return (next, context) => async (args) => {
+    try {
+      return await next(args);
+    } catch (err) {
+      if (clientConfig.followRegionRedirects) {
+        const statusCode = err?.$metadata?.httpStatusCode;
+        const isHeadBucket = context.commandName === "HeadBucketCommand";
+        const bucketRegionHeader = err?.$response?.headers?.["x-amz-bucket-region"];
+        if (bucketRegionHeader) {
+          if (statusCode === 301 || statusCode === 400 && (err?.name === "IllegalLocationConstraintException" || isHeadBucket)) {
+            try {
+              const actualRegion = bucketRegionHeader;
+              context.logger?.debug(`Redirecting from ${await clientConfig.region()} to ${actualRegion}`);
+              context.__s3RegionRedirect = actualRegion;
+            } catch (e5) {
+              throw new Error("Region redirect failed: " + e5);
             }
+            return next(args);
           }
-          throw err;
         }
-      };
+      }
+      throw err;
     }
-    var regionRedirectMiddlewareOptions = {
+  };
+}
+var regionRedirectMiddlewareOptions, getRegionRedirectMiddlewarePlugin;
+var init_region_redirect_middleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/region-redirect-middleware.js"() {
+    init_region_redirect_endpoint_middleware();
+    regionRedirectMiddlewareOptions = {
       step: "initialize",
       tags: ["REGION_REDIRECT", "S3"],
       name: "regionRedirectMiddleware",
       override: true
     };
-    var getRegionRedirectMiddlewarePlugin = (clientConfig) => ({
+    getRegionRedirectMiddlewarePlugin = (clientConfig) => ({
       applyToStack: (clientStack) => {
         clientStack.add(regionRedirectMiddleware(clientConfig), regionRedirectMiddlewareOptions);
         clientStack.addRelativeTo(regionRedirectEndpointMiddleware(clientConfig), regionRedirectEndpointMiddlewareOptions);
       }
     });
-    var s3ExpiresMiddleware = (config2) => {
-      return (next, context) => async (args) => {
-        const result = await next(args);
-        const { response } = result;
-        if (protocols.HttpResponse.isInstance(response)) {
-          if (response.headers.expires) {
-            response.headers.expiresstring = response.headers.expires;
-            try {
-              serde.parseRfc7231DateTime(response.headers.expires);
-            } catch (e5) {
-              context.logger?.warn(`AWS SDK Warning for ${context.clientName}::${context.commandName} response parsing (${response.headers.expires}): ${e5}`);
-              delete response.headers.expires;
-            }
-          }
-        }
-        return result;
-      };
-    };
-    var s3ExpiresMiddlewareOptions = {
-      tags: ["S3"],
-      name: "s3ExpiresMiddleware",
-      override: true,
-      relation: "after",
-      toMiddleware: "deserializerMiddleware"
-    };
-    var getS3ExpiresMiddlewarePlugin = (clientConfig) => ({
-      applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(s3ExpiresMiddleware(), s3ExpiresMiddlewareOptions);
-      }
-    });
-    var S3ExpressIdentityCache = class _S3ExpressIdentityCache {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityCache.js
+var S3ExpressIdentityCache;
+var init_S3ExpressIdentityCache = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityCache.js"() {
+    S3ExpressIdentityCache = class _S3ExpressIdentityCache {
       data;
       lastPurgeTime = Date.now();
       static EXPIRED_CREDENTIAL_PURGE_INTERVAL_MS = 3e4;
@@ -146481,7 +146681,14 @@ var require_dist_cjs39 = __commonJS({
         }
       }
     };
-    var S3ExpressIdentityCacheEntry = class {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityCacheEntry.js
+var S3ExpressIdentityCacheEntry;
+var init_S3ExpressIdentityCacheEntry = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityCacheEntry.js"() {
+    S3ExpressIdentityCacheEntry = class {
       _identity;
       isRefreshing;
       accessed;
@@ -146495,7 +146702,16 @@ var require_dist_cjs39 = __commonJS({
         return this._identity;
       }
     };
-    var S3ExpressIdentityProviderImpl = class _S3ExpressIdentityProviderImpl {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityProviderImpl.js
+var S3ExpressIdentityProviderImpl;
+var init_S3ExpressIdentityProviderImpl = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/S3ExpressIdentityProviderImpl.js"() {
+    init_S3ExpressIdentityCache();
+    init_S3ExpressIdentityCacheEntry();
+    S3ExpressIdentityProviderImpl = class _S3ExpressIdentityProviderImpl {
       createSessionFn;
       cache;
       static REFRESH_WINDOW_MS = 6e4;
@@ -146542,99 +146758,15 @@ var require_dist_cjs39 = __commonJS({
         return identity;
       }
     };
-    var SignatureV4S3Express = class extends signatureV4MultiRegion.SignatureV4SignWithCredentials {
-    };
-    var S3_EXPRESS_BUCKET_TYPE = "Directory";
-    var S3_EXPRESS_BACKEND = "S3Express";
-    var S3_EXPRESS_AUTH_SCHEME = "sigv4-s3express";
-    var SESSION_TOKEN_QUERY_PARAM = "X-Amz-S3session-Token";
-    var SESSION_TOKEN_HEADER = SESSION_TOKEN_QUERY_PARAM.toLowerCase();
-    var NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_ENV_NAME = "AWS_S3_DISABLE_EXPRESS_SESSION_AUTH";
-    var NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_INI_NAME = "s3_disable_express_session_auth";
-    var NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS = {
-      environmentVariableSelector: (env2) => config.booleanSelector(env2, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_ENV_NAME, config.SelectorType.ENV),
-      configFileSelector: (profile) => config.booleanSelector(profile, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_INI_NAME, config.SelectorType.CONFIG),
-      default: false
-    };
-    var s3ExpressMiddleware = (options) => {
-      return (next, context) => async (args) => {
-        if (context.endpointV2) {
-          const endpoint = context.endpointV2;
-          const isS3ExpressAuth = endpoint.properties?.authSchemes?.[0]?.name === S3_EXPRESS_AUTH_SCHEME;
-          const isS3ExpressBucket = endpoint.properties?.backend === S3_EXPRESS_BACKEND || endpoint.properties?.bucketType === S3_EXPRESS_BUCKET_TYPE;
-          if (isS3ExpressBucket) {
-            client$1.setFeature(context, "S3_EXPRESS_BUCKET", "J");
-            context.isS3ExpressBucket = true;
-          }
-          if (isS3ExpressAuth) {
-            const requestBucket = args.input.Bucket;
-            if (requestBucket) {
-              const s3ExpressIdentity = await options.s3ExpressIdentityProvider.getS3ExpressIdentity(await options.credentials(), {
-                Bucket: requestBucket
-              });
-              context.s3ExpressIdentity = s3ExpressIdentity;
-              if (protocols.HttpRequest.isInstance(args.request) && s3ExpressIdentity.sessionToken) {
-                args.request.headers[SESSION_TOKEN_HEADER] = s3ExpressIdentity.sessionToken;
-              }
-            }
-          }
-        }
-        return next(args);
-      };
-    };
-    var s3ExpressMiddlewareOptions = {
-      name: "s3ExpressMiddleware",
-      step: "build",
-      tags: ["S3", "S3_EXPRESS"],
-      override: true
-    };
-    var getS3ExpressPlugin = (options) => ({
-      applyToStack: (clientStack) => {
-        clientStack.add(s3ExpressMiddleware(options), s3ExpressMiddlewareOptions);
-      }
-    });
-    var signS3Express = async (s3ExpressIdentity, signingOptions, request, sigV4MultiRegionSigner) => {
-      const signedRequest = await sigV4MultiRegionSigner.signWithCredentials(request, s3ExpressIdentity, {});
-      if (signedRequest.headers["X-Amz-Security-Token"] || signedRequest.headers["x-amz-security-token"]) {
-        throw new Error("X-Amz-Security-Token must not be set for s3-express requests.");
-      }
-      return signedRequest;
-    };
-    var defaultErrorHandler2 = (signingProperties) => (error3) => {
-      throw error3;
-    };
-    var defaultSuccessHandler2 = (httpResponse, signingProperties) => {
-    };
-    var s3ExpressHttpSigningMiddlewareOptions = core.httpSigningMiddlewareOptions;
-    var s3ExpressHttpSigningMiddleware = (config2) => (next, context) => async (args) => {
-      if (!protocols.HttpRequest.isInstance(args.request)) {
-        return next(args);
-      }
-      const smithyContext = client.getSmithyContext(context);
-      const scheme = smithyContext.selectedHttpAuthScheme;
-      if (!scheme) {
-        throw new Error(`No HttpAuthScheme was selected: unable to sign request`);
-      }
-      const { httpAuthOption: { signingProperties = {} }, identity, signer } = scheme;
-      let request;
-      if (context.s3ExpressIdentity) {
-        request = await signS3Express(context.s3ExpressIdentity, signingProperties, args.request, await config2.signer());
-      } else {
-        request = await signer.sign(args.request, identity, signingProperties);
-      }
-      const output = await next({
-        ...args,
-        request
-      }).catch((signer.errorHandler || defaultErrorHandler2)(signingProperties));
-      (signer.successHandler || defaultSuccessHandler2)(output.response, signingProperties);
-      return output;
-    };
-    var getS3ExpressHttpSigningPlugin = (config2) => ({
-      applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(s3ExpressHttpSigningMiddleware(config2), core.httpSigningMiddlewareOptions);
-      }
-    });
-    var resolveS3Config = (input, { session }) => {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-configuration/s3Configuration.js
+var resolveS3Config;
+var init_s3Configuration = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-configuration/s3Configuration.js"() {
+    init_S3ExpressIdentityProviderImpl();
+    resolveS3Config = (input, { session }) => {
       const [s3ClientProvider, CreateSessionCommandCtor] = session;
       const { forcePathStyle, useAccelerateEndpoint, disableMultiregionAccessPoints, followRegionRedirects, s3ExpressIdentityProvider, bucketEndpoint, expectContinueHeader } = input;
       return Object.assign(input, {
@@ -146649,23 +146781,218 @@ var require_dist_cjs39 = __commonJS({
         expectContinueHeader: expectContinueHeader ?? 2097152
       });
     };
-    var THROW_IF_EMPTY_BODY = {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-expires/s3-expires-middleware.js
+var s3ExpiresMiddleware, s3ExpiresMiddlewareOptions, getS3ExpiresMiddlewarePlugin;
+var init_s3_expires_middleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-expires/s3-expires-middleware.js"() {
+    init_protocols();
+    init_serde();
+    s3ExpiresMiddleware = (config) => {
+      return (next, context) => async (args) => {
+        const result = await next(args);
+        const { response } = result;
+        if (HttpResponse.isInstance(response)) {
+          if (response.headers.expires) {
+            response.headers.expiresstring = response.headers.expires;
+            try {
+              parseRfc7231DateTime(response.headers.expires);
+            } catch (e5) {
+              context.logger?.warn(`AWS SDK Warning for ${context.clientName}::${context.commandName} response parsing (${response.headers.expires}): ${e5}`);
+              delete response.headers.expires;
+            }
+          }
+        }
+        return result;
+      };
+    };
+    s3ExpiresMiddlewareOptions = {
+      tags: ["S3"],
+      name: "s3ExpiresMiddleware",
+      override: true,
+      relation: "after",
+      toMiddleware: "deserializerMiddleware"
+    };
+    getS3ExpiresMiddlewarePlugin = (clientConfig) => ({
+      applyToStack: (clientStack) => {
+        clientStack.addRelativeTo(s3ExpiresMiddleware(clientConfig), s3ExpiresMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/SignatureV4S3Express.js
+var import_signature_v4_multi_region3, SignatureV4S3Express;
+var init_SignatureV4S3Express = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/classes/SignatureV4S3Express.js"() {
+    import_signature_v4_multi_region3 = __toESM(require_dist_cjs15());
+    SignatureV4S3Express = class extends import_signature_v4_multi_region3.SignatureV4SignWithCredentials {
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/constants.js
+var S3_EXPRESS_BUCKET_TYPE, S3_EXPRESS_BACKEND, S3_EXPRESS_AUTH_SCHEME, SESSION_TOKEN_QUERY_PARAM, SESSION_TOKEN_HEADER, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_ENV_NAME, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_INI_NAME, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS;
+var init_constants7 = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/constants.js"() {
+    init_config2();
+    S3_EXPRESS_BUCKET_TYPE = "Directory";
+    S3_EXPRESS_BACKEND = "S3Express";
+    S3_EXPRESS_AUTH_SCHEME = "sigv4-s3express";
+    SESSION_TOKEN_QUERY_PARAM = "X-Amz-S3session-Token";
+    SESSION_TOKEN_HEADER = SESSION_TOKEN_QUERY_PARAM.toLowerCase();
+    NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_ENV_NAME = "AWS_S3_DISABLE_EXPRESS_SESSION_AUTH";
+    NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_INI_NAME = "s3_disable_express_session_auth";
+    NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_ENV_NAME, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_INI_NAME, SelectorType.CONFIG),
+      default: false
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/s3ExpressMiddleware.js
+var s3ExpressMiddleware, s3ExpressMiddlewareOptions, getS3ExpressPlugin;
+var init_s3ExpressMiddleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/s3ExpressMiddleware.js"() {
+    init_client3();
+    init_protocols();
+    init_constants7();
+    s3ExpressMiddleware = (options) => {
+      return (next, context) => async (args) => {
+        if (context.endpointV2) {
+          const endpoint = context.endpointV2;
+          const isS3ExpressAuth = endpoint.properties?.authSchemes?.[0]?.name === S3_EXPRESS_AUTH_SCHEME;
+          const isS3ExpressBucket = endpoint.properties?.backend === S3_EXPRESS_BACKEND || endpoint.properties?.bucketType === S3_EXPRESS_BUCKET_TYPE;
+          if (isS3ExpressBucket) {
+            setFeature2(context, "S3_EXPRESS_BUCKET", "J");
+            context.isS3ExpressBucket = true;
+          }
+          if (isS3ExpressAuth) {
+            const requestBucket = args.input.Bucket;
+            if (requestBucket) {
+              const s3ExpressIdentity = await options.s3ExpressIdentityProvider.getS3ExpressIdentity(await options.credentials(), {
+                Bucket: requestBucket
+              });
+              context.s3ExpressIdentity = s3ExpressIdentity;
+              if (HttpRequest.isInstance(args.request) && s3ExpressIdentity.sessionToken) {
+                args.request.headers[SESSION_TOKEN_HEADER] = s3ExpressIdentity.sessionToken;
+              }
+            }
+          }
+        }
+        return next(args);
+      };
+    };
+    s3ExpressMiddlewareOptions = {
+      name: "s3ExpressMiddleware",
+      step: "build",
+      tags: ["S3", "S3_EXPRESS"],
+      override: true
+    };
+    getS3ExpressPlugin = (options) => ({
+      applyToStack: (clientStack) => {
+        clientStack.add(s3ExpressMiddleware(options), s3ExpressMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/signS3Express.js
+var signS3Express;
+var init_signS3Express = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/signS3Express.js"() {
+    signS3Express = async (s3ExpressIdentity, signingOptions, request, sigV4MultiRegionSigner) => {
+      const signedRequest = await sigV4MultiRegionSigner.signWithCredentials(request, s3ExpressIdentity, {});
+      if (signedRequest.headers["X-Amz-Security-Token"] || signedRequest.headers["x-amz-security-token"]) {
+        throw new Error("X-Amz-Security-Token must not be set for s3-express requests.");
+      }
+      return signedRequest;
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/s3ExpressHttpSigningMiddleware.js
+var defaultErrorHandler2, defaultSuccessHandler2, s3ExpressHttpSigningMiddlewareOptions, s3ExpressHttpSigningMiddleware, getS3ExpressHttpSigningPlugin;
+var init_s3ExpressHttpSigningMiddleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-s3-express/functions/s3ExpressHttpSigningMiddleware.js"() {
+    init_dist_es();
+    init_client2();
+    init_protocols();
+    init_signS3Express();
+    defaultErrorHandler2 = (signingProperties) => (error3) => {
+      throw error3;
+    };
+    defaultSuccessHandler2 = (httpResponse, signingProperties) => {
+    };
+    s3ExpressHttpSigningMiddlewareOptions = httpSigningMiddlewareOptions;
+    s3ExpressHttpSigningMiddleware = (config) => (next, context) => async (args) => {
+      if (!HttpRequest.isInstance(args.request)) {
+        return next(args);
+      }
+      const smithyContext = getSmithyContext(context);
+      const scheme = smithyContext.selectedHttpAuthScheme;
+      if (!scheme) {
+        throw new Error(`No HttpAuthScheme was selected: unable to sign request`);
+      }
+      const { httpAuthOption: { signingProperties = {} }, identity, signer } = scheme;
+      let request;
+      if (context.s3ExpressIdentity) {
+        request = await signS3Express(context.s3ExpressIdentity, signingProperties, args.request, await config.signer());
+      } else {
+        request = await signer.sign(args.request, identity, signingProperties);
+      }
+      const output = await next({
+        ...args,
+        request
+      }).catch((signer.errorHandler || defaultErrorHandler2)(signingProperties));
+      (signer.successHandler || defaultSuccessHandler2)(output.response, signingProperties);
+      return output;
+    };
+    getS3ExpressHttpSigningPlugin = (config) => ({
+      applyToStack: (clientStack) => {
+        clientStack.addRelativeTo(s3ExpressHttpSigningMiddleware(config), httpSigningMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/to-stream/toStream.js
+function toStream(bytes) {
+  return import_node_stream10.Readable.from(Buffer.from(bytes));
+}
+var import_node_stream10;
+var init_toStream = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/to-stream/toStream.js"() {
+    import_node_stream10 = require("node:stream");
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-throw-200-exceptions/throw-200-exceptions.js
+var THROW_IF_EMPTY_BODY, throw200ExceptionsMiddleware, collectBody2, throw200ExceptionsMiddlewareOptions, getThrow200ExceptionsPlugin;
+var init_throw_200_exceptions = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-throw-200-exceptions/throw-200-exceptions.js"() {
+    init_protocols();
+    init_toStream();
+    THROW_IF_EMPTY_BODY = {
       CopyObjectCommand: true,
       UploadPartCopyCommand: true,
       CompleteMultipartUploadCommand: true
     };
-    var throw200ExceptionsMiddleware = (config2) => (next, context) => async (args) => {
+    throw200ExceptionsMiddleware = (config) => (next, context) => async (args) => {
       const result = await next(args);
       const { response } = result;
-      if (!protocols.HttpResponse.isInstance(response)) {
+      if (!HttpResponse.isInstance(response)) {
         return result;
       }
       const { statusCode, body } = response;
       if (statusCode < 200 || statusCode >= 300) {
         return result;
       }
-      const bodyBytes = await collectBody2(body, config2);
-      response.body = toStream.toStream(bodyBytes);
+      const bodyBytes = await collectBody2(body, config);
+      response.body = toStream(bodyBytes);
       if (bodyBytes.length === 0 && THROW_IF_EMPTY_BODY[context.commandName]) {
         const err = new Error("S3 aborted request");
         err.$metadata = {
@@ -146674,91 +147001,144 @@ var require_dist_cjs39 = __commonJS({
         err.name = "InternalError";
         throw err;
       }
-      const bodyStringTail = config2.utf8Encoder(bodyBytes.subarray(bodyBytes.length - 16));
+      const bodyStringTail = config.utf8Encoder(bodyBytes.subarray(bodyBytes.length - 16));
       if (bodyStringTail && bodyStringTail.endsWith("</Error>")) {
         response.statusCode = 503;
       }
       return result;
     };
-    var collectBody2 = (streamBody = new Uint8Array(), context) => {
+    collectBody2 = (streamBody = new Uint8Array(), context) => {
       if (streamBody instanceof Uint8Array) {
         return Promise.resolve(streamBody);
       }
       return context.streamCollector(streamBody) || Promise.resolve(new Uint8Array());
     };
-    var throw200ExceptionsMiddlewareOptions = {
+    throw200ExceptionsMiddlewareOptions = {
       relation: "after",
       toMiddleware: "deserializerMiddleware",
       tags: ["THROW_200_EXCEPTIONS", "S3"],
       name: "throw200ExceptionsMiddleware",
       override: true
     };
-    var getThrow200ExceptionsPlugin = (config2) => ({
+    getThrow200ExceptionsPlugin = (config) => ({
       applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(throw200ExceptionsMiddleware(config2), throw200ExceptionsMiddlewareOptions);
+        clientStack.addRelativeTo(throw200ExceptionsMiddleware(config), throw200ExceptionsMiddlewareOptions);
       }
     });
-    function bucketEndpointMiddleware(options) {
-      return (next, context) => async (args) => {
-        if (options.bucketEndpoint) {
-          const endpoint = context.endpointV2;
-          if (endpoint) {
-            const bucket = args.input.Bucket;
-            if (typeof bucket === "string") {
-              try {
-                const bucketEndpointUrl = new URL(bucket);
-                context.endpointV2 = {
-                  ...endpoint,
-                  url: bucketEndpointUrl
-                };
-              } catch (e5) {
-                const warning3 = `@aws-sdk/middleware-sdk-s3: bucketEndpoint=true was set but Bucket=${bucket} could not be parsed as URL.`;
-                if (context.logger?.constructor?.name === "NoOpLogger") {
-                  console.warn(warning3);
-                } else {
-                  context.logger?.warn?.(warning3);
-                }
-                throw e5;
-              }
+  }
+});
+
+// node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
+var validate, parse6;
+var init_arn = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
+    validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
+    parse6 = (arn) => {
+      const segments = arn.split(":");
+      if (segments.length < 6 || segments[0] !== "arn")
+        throw new Error("Malformed ARN");
+      const [, partition2, service, region, accountId, ...resource] = segments;
+      return {
+        partition: partition2,
+        service,
+        region,
+        accountId,
+        resource: resource.join(":")
+      };
+    };
+  }
+});
+
+// node_modules/@aws-sdk/core/dist-es/submodules/util/index.js
+var init_util2 = __esm({
+  "node_modules/@aws-sdk/core/dist-es/submodules/util/index.js"() {
+    init_arn();
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/bucket-endpoint-middleware.js
+function bucketEndpointMiddleware(options) {
+  return (next, context) => async (args) => {
+    if (options.bucketEndpoint) {
+      const endpoint = context.endpointV2;
+      if (endpoint) {
+        const bucket = args.input.Bucket;
+        if (typeof bucket === "string") {
+          try {
+            const bucketEndpointUrl = new URL(bucket);
+            context.endpointV2 = {
+              ...endpoint,
+              url: bucketEndpointUrl
+            };
+          } catch (e5) {
+            const warning3 = `@aws-sdk/middleware-sdk-s3: bucketEndpoint=true was set but Bucket=${bucket} could not be parsed as URL.`;
+            if (context.logger?.constructor?.name === "NoOpLogger") {
+              console.warn(warning3);
+            } else {
+              context.logger?.warn?.(warning3);
             }
+            throw e5;
           }
         }
-        return next(args);
-      };
+      }
     }
-    var bucketEndpointMiddlewareOptions = {
+    return next(args);
+  };
+}
+var bucketEndpointMiddlewareOptions;
+var init_bucket_endpoint_middleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-region-redirect/bucket-endpoint-middleware.js"() {
+    bucketEndpointMiddlewareOptions = {
       name: "bucketEndpointMiddleware",
       override: true,
       relation: "after",
       toMiddleware: "endpointV2Middleware"
     };
-    function validateBucketNameMiddleware({ bucketEndpoint }) {
-      return (next) => async (args) => {
-        const { input: { Bucket } } = args;
-        if (!bucketEndpoint && typeof Bucket === "string" && !util.validate(Bucket) && Bucket.indexOf("/") >= 0) {
-          const err = new Error(`Bucket name shouldn't contain '/', received '${Bucket}'`);
-          err.name = "InvalidBucketName";
-          throw err;
-        }
-        return next({ ...args });
-      };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-validate-bucket-name/validate-bucket-name.js
+function validateBucketNameMiddleware({ bucketEndpoint }) {
+  return (next) => async (args) => {
+    const { input: { Bucket } } = args;
+    if (!bucketEndpoint && typeof Bucket === "string" && !validate(Bucket) && Bucket.indexOf("/") >= 0) {
+      const err = new Error(`Bucket name shouldn't contain '/', received '${Bucket}'`);
+      err.name = "InvalidBucketName";
+      throw err;
     }
-    var validateBucketNameMiddlewareOptions = {
+    return next({ ...args });
+  };
+}
+var validateBucketNameMiddlewareOptions, getValidateBucketNamePlugin;
+var init_validate_bucket_name = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-validate-bucket-name/validate-bucket-name.js"() {
+    init_util2();
+    init_bucket_endpoint_middleware();
+    validateBucketNameMiddlewareOptions = {
       step: "initialize",
       tags: ["VALIDATE_BUCKET_NAME"],
       name: "validateBucketNameMiddleware",
       override: true
     };
-    var getValidateBucketNamePlugin = (options) => ({
+    getValidateBucketNamePlugin = (options) => ({
       applyToStack: (clientStack) => {
         clientStack.add(validateBucketNameMiddleware(options), validateBucketNameMiddlewareOptions);
         clientStack.addRelativeTo(bucketEndpointMiddleware(options), bucketEndpointMiddlewareOptions);
       }
     });
-    var S3RestXmlProtocol = class extends protocols$1.AwsRestXmlProtocol {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/protocol/S3RestXmlProtocol.js
+var S3RestXmlProtocol;
+var init_S3RestXmlProtocol = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/protocol/S3RestXmlProtocol.js"() {
+    init_protocols2();
+    init_schema();
+    S3RestXmlProtocol = class extends AwsRestXmlProtocol {
       async serializeRequest(operationSchema, input, context) {
         const request = await super.serializeRequest(operationSchema, input, context);
-        const ns = schema.NormalizedSchema.of(operationSchema.input);
+        const ns = NormalizedSchema.of(operationSchema.input);
         const staticStructureSchema = ns.getSchema();
         let bucketMemberIndex = 0;
         const requiredMemberCount = staticStructureSchema[6] ?? 0;
@@ -146778,36 +147158,601 @@ var require_dist_cjs39 = __commonJS({
         return request;
       }
     };
-    exports2.NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS = NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS;
-    exports2.S3ExpressIdentityCache = S3ExpressIdentityCache;
-    exports2.S3ExpressIdentityCacheEntry = S3ExpressIdentityCacheEntry;
-    exports2.S3ExpressIdentityProviderImpl = S3ExpressIdentityProviderImpl;
-    exports2.S3RestXmlProtocol = S3RestXmlProtocol;
-    exports2.SignatureV4S3Express = SignatureV4S3Express;
-    exports2.checkContentLengthHeader = checkContentLengthHeader;
-    exports2.checkContentLengthHeaderMiddlewareOptions = checkContentLengthHeaderMiddlewareOptions;
-    exports2.getCheckContentLengthHeaderPlugin = getCheckContentLengthHeaderPlugin;
-    exports2.getRegionRedirectMiddlewarePlugin = getRegionRedirectMiddlewarePlugin;
-    exports2.getS3ExpiresMiddlewarePlugin = getS3ExpiresMiddlewarePlugin;
-    exports2.getS3ExpressHttpSigningPlugin = getS3ExpressHttpSigningPlugin;
-    exports2.getS3ExpressPlugin = getS3ExpressPlugin;
-    exports2.getThrow200ExceptionsPlugin = getThrow200ExceptionsPlugin;
-    exports2.getValidateBucketNamePlugin = getValidateBucketNamePlugin;
-    exports2.regionRedirectEndpointMiddleware = regionRedirectEndpointMiddleware;
-    exports2.regionRedirectEndpointMiddlewareOptions = regionRedirectEndpointMiddlewareOptions;
-    exports2.regionRedirectMiddleware = regionRedirectMiddleware;
-    exports2.regionRedirectMiddlewareOptions = regionRedirectMiddlewareOptions;
-    exports2.resolveS3Config = resolveS3Config;
-    exports2.s3ExpiresMiddleware = s3ExpiresMiddleware;
-    exports2.s3ExpiresMiddlewareOptions = s3ExpiresMiddlewareOptions;
-    exports2.s3ExpressHttpSigningMiddleware = s3ExpressHttpSigningMiddleware;
-    exports2.s3ExpressHttpSigningMiddlewareOptions = s3ExpressHttpSigningMiddlewareOptions;
-    exports2.s3ExpressMiddleware = s3ExpressMiddleware;
-    exports2.s3ExpressMiddlewareOptions = s3ExpressMiddlewareOptions;
-    exports2.throw200ExceptionsMiddleware = throw200ExceptionsMiddleware;
-    exports2.throw200ExceptionsMiddlewareOptions = throw200ExceptionsMiddlewareOptions;
-    exports2.validateBucketNameMiddleware = validateBucketNameMiddleware;
-    exports2.validateBucketNameMiddlewareOptions = validateBucketNameMiddlewareOptions;
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/NodeDisableMultiregionAccessPointConfigOptions.js
+var NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME, NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME, NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS;
+var init_NodeDisableMultiregionAccessPointConfigOptions = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/NodeDisableMultiregionAccessPointConfigOptions.js"() {
+    init_config2();
+    NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME = "AWS_S3_DISABLE_MULTIREGION_ACCESS_POINTS";
+    NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME = "s3_disable_multiregion_access_points";
+    NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME, SelectorType.CONFIG),
+      default: false
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/NodeUseArnRegionConfigOptions.js
+var NODE_USE_ARN_REGION_ENV_NAME, NODE_USE_ARN_REGION_INI_NAME, NODE_USE_ARN_REGION_CONFIG_OPTIONS;
+var init_NodeUseArnRegionConfigOptions = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/NodeUseArnRegionConfigOptions.js"() {
+    init_config2();
+    NODE_USE_ARN_REGION_ENV_NAME = "AWS_S3_USE_ARN_REGION";
+    NODE_USE_ARN_REGION_INI_NAME = "s3_use_arn_region";
+    NODE_USE_ARN_REGION_CONFIG_OPTIONS = {
+      environmentVariableSelector: (env2) => booleanSelector(env2, NODE_USE_ARN_REGION_ENV_NAME, SelectorType.ENV),
+      configFileSelector: (profile) => booleanSelector(profile, NODE_USE_ARN_REGION_INI_NAME, SelectorType.CONFIG),
+      default: void 0
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketHostnameUtils.js
+var DOMAIN_PATTERN2, IP_ADDRESS_PATTERN2, DOTS_PATTERN2, DOT_PATTERN, S3_HOSTNAME_PATTERN, S3_US_EAST_1_ALTNAME_PATTERN, AWS_PARTITION_SUFFIX, isBucketNameOptions, isDnsCompatibleBucketName2, getRegionalSuffix, getSuffix, getSuffixForArnEndpoint, validateArnEndpointOptions, validateService, validateS3Service, validateOutpostService, validatePartition, validateRegion, validateRegionalClient, validateAccountId, validateDNSHostLabel, validateCustomEndpoint, getArnResources, validateNoDualstack, validateNoFIPS, validateMrapAlias;
+var init_bucketHostnameUtils = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketHostnameUtils.js"() {
+    DOMAIN_PATTERN2 = /^[a-z0-9][a-z0-9\.\-]{1,61}[a-z0-9]$/;
+    IP_ADDRESS_PATTERN2 = /(\d+\.){3}\d+/;
+    DOTS_PATTERN2 = /\.\./;
+    DOT_PATTERN = /\./;
+    S3_HOSTNAME_PATTERN = /^(.+\.)?s3(-fips)?(\.dualstack)?[.-]([a-z0-9-]+)\./;
+    S3_US_EAST_1_ALTNAME_PATTERN = /^s3(-external-1)?\.amazonaws\.com$/;
+    AWS_PARTITION_SUFFIX = "amazonaws.com";
+    isBucketNameOptions = (options) => typeof options.bucketName === "string";
+    isDnsCompatibleBucketName2 = (bucketName) => DOMAIN_PATTERN2.test(bucketName) && !IP_ADDRESS_PATTERN2.test(bucketName) && !DOTS_PATTERN2.test(bucketName);
+    getRegionalSuffix = (hostname) => {
+      const parts = hostname.match(S3_HOSTNAME_PATTERN);
+      return [parts[4], hostname.replace(new RegExp(`^${parts[0]}`), "")];
+    };
+    getSuffix = (hostname) => S3_US_EAST_1_ALTNAME_PATTERN.test(hostname) ? ["us-east-1", AWS_PARTITION_SUFFIX] : getRegionalSuffix(hostname);
+    getSuffixForArnEndpoint = (hostname) => S3_US_EAST_1_ALTNAME_PATTERN.test(hostname) ? [hostname.replace(`.${AWS_PARTITION_SUFFIX}`, ""), AWS_PARTITION_SUFFIX] : getRegionalSuffix(hostname);
+    validateArnEndpointOptions = (options) => {
+      if (options.pathStyleEndpoint) {
+        throw new Error("Path-style S3 endpoint is not supported when bucket is an ARN");
+      }
+      if (options.accelerateEndpoint) {
+        throw new Error("Accelerate endpoint is not supported when bucket is an ARN");
+      }
+      if (!options.tlsCompatible) {
+        throw new Error("HTTPS is required when bucket is an ARN");
+      }
+    };
+    validateService = (service) => {
+      if (service !== "s3" && service !== "s3-outposts" && service !== "s3-object-lambda") {
+        throw new Error("Expect 's3' or 's3-outposts' or 's3-object-lambda' in ARN service component");
+      }
+    };
+    validateS3Service = (service) => {
+      if (service !== "s3") {
+        throw new Error("Expect 's3' in Accesspoint ARN service component");
+      }
+    };
+    validateOutpostService = (service) => {
+      if (service !== "s3-outposts") {
+        throw new Error("Expect 's3-posts' in Outpost ARN service component");
+      }
+    };
+    validatePartition = (partition2, options) => {
+      if (partition2 !== options.clientPartition) {
+        throw new Error(`Partition in ARN is incompatible, got "${partition2}" but expected "${options.clientPartition}"`);
+      }
+    };
+    validateRegion = (region, options) => {
+    };
+    validateRegionalClient = (region) => {
+      if (["s3-external-1", "aws-global"].includes(region)) {
+        throw new Error(`Client region ${region} is not regional`);
+      }
+    };
+    validateAccountId = (accountId) => {
+      if (!/[0-9]{12}/.exec(accountId)) {
+        throw new Error("Access point ARN accountID does not match regex '[0-9]{12}'");
+      }
+    };
+    validateDNSHostLabel = (label, options = { tlsCompatible: true }) => {
+      if (label.length >= 64 || !/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(label) || /(\d+\.){3}\d+/.test(label) || /[.-]{2}/.test(label) || options?.tlsCompatible && DOT_PATTERN.test(label)) {
+        throw new Error(`Invalid DNS label ${label}`);
+      }
+    };
+    validateCustomEndpoint = (options) => {
+      if (options.isCustomEndpoint) {
+        if (options.dualstackEndpoint)
+          throw new Error("Dualstack endpoint is not supported with custom endpoint");
+        if (options.accelerateEndpoint)
+          throw new Error("Accelerate endpoint is not supported with custom endpoint");
+      }
+    };
+    getArnResources = (resource) => {
+      const delimiter3 = resource.includes(":") ? ":" : "/";
+      const [resourceType, ...rest] = resource.split(delimiter3);
+      if (resourceType === "accesspoint") {
+        if (rest.length !== 1 || rest[0] === "") {
+          throw new Error(`Access Point ARN should have one resource accesspoint${delimiter3}{accesspointname}`);
+        }
+        return { accesspointName: rest[0] };
+      } else if (resourceType === "outpost") {
+        if (!rest[0] || rest[1] !== "accesspoint" || !rest[2] || rest.length !== 3) {
+          throw new Error(`Outpost ARN should have resource outpost${delimiter3}{outpostId}${delimiter3}accesspoint${delimiter3}{accesspointName}`);
+        }
+        const [outpostId, _, accesspointName] = rest;
+        return { outpostId, accesspointName };
+      } else {
+        throw new Error(`ARN resource should begin with 'accesspoint${delimiter3}' or 'outpost${delimiter3}'`);
+      }
+    };
+    validateNoDualstack = (dualstackEndpoint) => {
+    };
+    validateNoFIPS = (useFipsEndpoint) => {
+      if (useFipsEndpoint)
+        throw new Error(`FIPS region is not supported with Outpost.`);
+    };
+    validateMrapAlias = (name) => {
+      try {
+        name.split(".").forEach((label) => {
+          validateDNSHostLabel(label);
+        });
+      } catch (e5) {
+        throw new Error(`"${name}" is not a DNS compatible name.`);
+      }
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketHostname.js
+var bucketHostname, getEndpointFromBucketName, getEndpointFromArn, getEndpointFromObjectLambdaArn, getEndpointFromMRAPArn, getEndpointFromOutpostArn, getEndpointFromAccessPointArn;
+var init_bucketHostname = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketHostname.js"() {
+    init_bucketHostnameUtils();
+    bucketHostname = (options) => {
+      validateCustomEndpoint(options);
+      return isBucketNameOptions(options) ? getEndpointFromBucketName(options) : getEndpointFromArn(options);
+    };
+    getEndpointFromBucketName = ({ accelerateEndpoint = false, clientRegion: region, baseHostname, bucketName, dualstackEndpoint = false, fipsEndpoint = false, pathStyleEndpoint = false, tlsCompatible = true, isCustomEndpoint = false }) => {
+      const [clientRegion, hostnameSuffix] = isCustomEndpoint ? [region, baseHostname] : getSuffix(baseHostname);
+      if (pathStyleEndpoint || !isDnsCompatibleBucketName2(bucketName) || tlsCompatible && DOT_PATTERN.test(bucketName)) {
+        return {
+          bucketEndpoint: false,
+          hostname: dualstackEndpoint ? `s3.dualstack.${clientRegion}.${hostnameSuffix}` : baseHostname
+        };
+      }
+      if (accelerateEndpoint) {
+        baseHostname = `s3-accelerate${dualstackEndpoint ? ".dualstack" : ""}.${hostnameSuffix}`;
+      } else if (dualstackEndpoint) {
+        baseHostname = `s3.dualstack.${clientRegion}.${hostnameSuffix}`;
+      }
+      return {
+        bucketEndpoint: true,
+        hostname: `${bucketName}.${baseHostname}`
+      };
+    };
+    getEndpointFromArn = (options) => {
+      const { isCustomEndpoint, baseHostname, clientRegion } = options;
+      const hostnameSuffix = isCustomEndpoint ? baseHostname : getSuffixForArnEndpoint(baseHostname)[1];
+      const { pathStyleEndpoint, accelerateEndpoint = false, fipsEndpoint = false, tlsCompatible = true, bucketName, clientPartition = "aws" } = options;
+      validateArnEndpointOptions({ pathStyleEndpoint, accelerateEndpoint, tlsCompatible });
+      const { service, partition: partition2, accountId, region, resource } = bucketName;
+      validateService(service);
+      validatePartition(partition2, { clientPartition });
+      validateAccountId(accountId);
+      const { accesspointName, outpostId } = getArnResources(resource);
+      if (service === "s3-object-lambda") {
+        return getEndpointFromObjectLambdaArn({ ...options, tlsCompatible, bucketName, accesspointName, hostnameSuffix });
+      }
+      if (region === "") {
+        return getEndpointFromMRAPArn({ ...options, clientRegion, mrapAlias: accesspointName, hostnameSuffix });
+      }
+      if (outpostId) {
+        return getEndpointFromOutpostArn({ ...options, clientRegion, outpostId, accesspointName, hostnameSuffix });
+      }
+      return getEndpointFromAccessPointArn({ ...options, clientRegion, accesspointName, hostnameSuffix });
+    };
+    getEndpointFromObjectLambdaArn = ({ dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, useArnRegion, clientRegion, clientSigningRegion = clientRegion, accesspointName, bucketName, hostnameSuffix }) => {
+      const { accountId, region, service } = bucketName;
+      validateRegionalClient(clientRegion);
+      const DNSHostLabel = `${accesspointName}-${accountId}`;
+      validateDNSHostLabel(DNSHostLabel, { tlsCompatible });
+      const endpointRegion = useArnRegion ? region : clientRegion;
+      const signingRegion = useArnRegion ? region : clientSigningRegion;
+      return {
+        bucketEndpoint: true,
+        hostname: `${DNSHostLabel}.${service}${fipsEndpoint ? "-fips" : ""}.${endpointRegion}.${hostnameSuffix}`,
+        signingRegion,
+        signingService: service
+      };
+    };
+    getEndpointFromMRAPArn = ({ disableMultiregionAccessPoints, dualstackEndpoint = false, isCustomEndpoint, mrapAlias, hostnameSuffix }) => {
+      if (disableMultiregionAccessPoints === true) {
+        throw new Error("SDK is attempting to use a MRAP ARN. Please enable to feature.");
+      }
+      validateMrapAlias(mrapAlias);
+      return {
+        bucketEndpoint: true,
+        hostname: `${mrapAlias}${isCustomEndpoint ? "" : `.accesspoint.s3-global`}.${hostnameSuffix}`,
+        signingRegion: "*"
+      };
+    };
+    getEndpointFromOutpostArn = ({ useArnRegion, clientRegion, clientSigningRegion = clientRegion, bucketName, outpostId, dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, accesspointName, isCustomEndpoint, hostnameSuffix }) => {
+      validateRegionalClient(clientRegion);
+      const DNSHostLabel = `${accesspointName}-${bucketName.accountId}`;
+      validateDNSHostLabel(DNSHostLabel, { tlsCompatible });
+      const endpointRegion = useArnRegion ? bucketName.region : clientRegion;
+      const signingRegion = useArnRegion ? bucketName.region : clientSigningRegion;
+      validateOutpostService(bucketName.service);
+      validateDNSHostLabel(outpostId, { tlsCompatible });
+      validateNoFIPS(fipsEndpoint);
+      const hostnamePrefix = `${DNSHostLabel}.${outpostId}`;
+      return {
+        bucketEndpoint: true,
+        hostname: `${hostnamePrefix}${isCustomEndpoint ? "" : `.s3-outposts.${endpointRegion}`}.${hostnameSuffix}`,
+        signingRegion,
+        signingService: "s3-outposts"
+      };
+    };
+    getEndpointFromAccessPointArn = ({ useArnRegion, clientRegion, clientSigningRegion = clientRegion, bucketName, dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, accesspointName, isCustomEndpoint, hostnameSuffix }) => {
+      validateRegionalClient(clientRegion);
+      const hostnamePrefix = `${accesspointName}-${bucketName.accountId}`;
+      validateDNSHostLabel(hostnamePrefix, { tlsCompatible });
+      const endpointRegion = useArnRegion ? bucketName.region : clientRegion;
+      const signingRegion = useArnRegion ? bucketName.region : clientSigningRegion;
+      validateS3Service(bucketName.service);
+      return {
+        bucketEndpoint: true,
+        hostname: `${hostnamePrefix}${isCustomEndpoint ? "" : `.s3-accesspoint${fipsEndpoint ? "-fips" : ""}${dualstackEndpoint ? ".dualstack" : ""}.${endpointRegion}`}.${hostnameSuffix}`,
+        signingRegion
+      };
+    };
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketEndpointMiddleware.js
+var bucketEndpointMiddleware2, bucketEndpointMiddlewareOptions2, getBucketEndpointPlugin;
+var init_bucketEndpointMiddleware = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/bucketEndpointMiddleware.js"() {
+    init_util2();
+    init_protocols();
+    init_bucketHostname();
+    bucketEndpointMiddleware2 = (options) => (next, context) => async (args) => {
+      const { Bucket: bucketName } = args.input;
+      let replaceBucketInPath = options.bucketEndpoint;
+      const request = args.request;
+      if (HttpRequest.isInstance(request)) {
+        if (options.bucketEndpoint) {
+          request.hostname = bucketName;
+        } else if (validate(bucketName)) {
+          const bucketArn = parse6(bucketName);
+          const clientRegion = await options.region();
+          const useDualstackEndpoint = await options.useDualstackEndpoint();
+          const useFipsEndpoint = await options.useFipsEndpoint();
+          const { partition: partition2, signingRegion = clientRegion } = await options.regionInfoProvider(clientRegion, { useDualstackEndpoint, useFipsEndpoint }) || {};
+          const useArnRegion = await options.useArnRegion();
+          const { hostname, bucketEndpoint, signingRegion: modifiedSigningRegion, signingService } = bucketHostname({
+            bucketName: bucketArn,
+            baseHostname: request.hostname,
+            accelerateEndpoint: options.useAccelerateEndpoint,
+            dualstackEndpoint: useDualstackEndpoint,
+            fipsEndpoint: useFipsEndpoint,
+            pathStyleEndpoint: options.forcePathStyle,
+            tlsCompatible: request.protocol === "https:",
+            useArnRegion,
+            clientPartition: partition2,
+            clientSigningRegion: signingRegion,
+            clientRegion,
+            isCustomEndpoint: options.isCustomEndpoint,
+            disableMultiregionAccessPoints: await options.disableMultiregionAccessPoints()
+          });
+          if (modifiedSigningRegion && modifiedSigningRegion !== signingRegion) {
+            context["signing_region"] = modifiedSigningRegion;
+          }
+          if (signingService && signingService !== "s3") {
+            context["signing_service"] = signingService;
+          }
+          request.hostname = hostname;
+          replaceBucketInPath = bucketEndpoint;
+        } else {
+          const clientRegion = await options.region();
+          const dualstackEndpoint = await options.useDualstackEndpoint();
+          const fipsEndpoint = await options.useFipsEndpoint();
+          const { hostname, bucketEndpoint } = bucketHostname({
+            bucketName,
+            clientRegion,
+            baseHostname: request.hostname,
+            accelerateEndpoint: options.useAccelerateEndpoint,
+            dualstackEndpoint,
+            fipsEndpoint,
+            pathStyleEndpoint: options.forcePathStyle,
+            tlsCompatible: request.protocol === "https:",
+            isCustomEndpoint: options.isCustomEndpoint
+          });
+          request.hostname = hostname;
+          replaceBucketInPath = bucketEndpoint;
+        }
+        if (replaceBucketInPath) {
+          request.path = request.path.replace(/^(\/)?[^\/]+/, "");
+          if (request.path === "") {
+            request.path = "/";
+          }
+        }
+      }
+      return next({ ...args, request });
+    };
+    bucketEndpointMiddlewareOptions2 = {
+      tags: ["BUCKET_ENDPOINT"],
+      name: "bucketEndpointMiddleware",
+      relation: "before",
+      toMiddleware: "hostHeaderMiddleware",
+      override: true
+    };
+    getBucketEndpointPlugin = (options) => ({
+      applyToStack: (clientStack) => {
+        clientStack.addRelativeTo(bucketEndpointMiddleware2(options), bucketEndpointMiddlewareOptions2);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/configurations.js
+function resolveBucketEndpointConfig(input) {
+  const { bucketEndpoint = false, forcePathStyle = false, useAccelerateEndpoint = false, useArnRegion, disableMultiregionAccessPoints = false } = input;
+  return Object.assign(input, {
+    bucketEndpoint,
+    forcePathStyle,
+    useAccelerateEndpoint,
+    useArnRegion: typeof useArnRegion === "function" ? useArnRegion : () => Promise.resolve(useArnRegion),
+    disableMultiregionAccessPoints: typeof disableMultiregionAccessPoints === "function" ? disableMultiregionAccessPoints : () => Promise.resolve(disableMultiregionAccessPoints)
+  });
+}
+var init_configurations3 = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-bucket-endpoint/configurations.js"() {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-expect-continue/middleware-expect-continue.js
+function addExpectContinueMiddleware(options) {
+  return (next) => async (args) => {
+    const { request } = args;
+    if (options.expectContinueHeader !== false && HttpRequest.isInstance(request) && request.body && options.runtime === "node" && options.requestHandler?.constructor?.name !== "FetchHttpHandler") {
+      let sendHeader = true;
+      if (typeof options.expectContinueHeader === "number") {
+        try {
+          const bodyLength = Number(request.headers?.["content-length"]) ?? options.bodyLengthChecker?.(request.body) ?? Infinity;
+          sendHeader = bodyLength >= options.expectContinueHeader;
+        } catch (e5) {
+        }
+      } else {
+        sendHeader = !!options.expectContinueHeader;
+      }
+      if (sendHeader) {
+        request.headers.Expect = "100-continue";
+      }
+    }
+    return next({
+      ...args,
+      request
+    });
+  };
+}
+var addExpectContinueMiddlewareOptions, getAddExpectContinuePlugin;
+var init_middleware_expect_continue = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-expect-continue/middleware-expect-continue.js"() {
+    init_protocols();
+    addExpectContinueMiddlewareOptions = {
+      step: "build",
+      tags: ["SET_EXPECT_HEADER", "EXPECT_HEADER"],
+      name: "addExpectContinueMiddleware",
+      override: true
+    };
+    getAddExpectContinuePlugin = (options) => ({
+      applyToStack: (clientStack) => {
+        clientStack.add(addExpectContinueMiddleware(options), addExpectContinueMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-location-constraint/middleware-location-constraint.js
+function locationConstraintMiddleware(options) {
+  return (next) => async (args) => {
+    const { CreateBucketConfiguration } = args.input;
+    const region = await options.region();
+    if (!CreateBucketConfiguration?.LocationConstraint && !CreateBucketConfiguration?.Location) {
+      if (region !== "us-east-1") {
+        args.input.CreateBucketConfiguration = args.input.CreateBucketConfiguration ?? {};
+        args.input.CreateBucketConfiguration.LocationConstraint = region;
+      }
+    }
+    return next(args);
+  };
+}
+var locationConstraintMiddlewareOptions, getLocationConstraintPlugin;
+var init_middleware_location_constraint = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-location-constraint/middleware-location-constraint.js"() {
+    locationConstraintMiddlewareOptions = {
+      step: "initialize",
+      tags: ["LOCATION_CONSTRAINT", "CREATE_BUCKET_CONFIGURATION"],
+      name: "locationConstraintMiddleware",
+      override: true
+    };
+    getLocationConstraintPlugin = (config) => ({
+      applyToStack: (clientStack) => {
+        clientStack.add(locationConstraintMiddleware(config), locationConstraintMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-location-constraint/configuration.js
+function resolveLocationConstraintConfig(input) {
+  return input;
+}
+var init_configuration2 = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-location-constraint/configuration.js"() {
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-ssec/middleware-ssec.js
+function ssecMiddleware(options) {
+  return (next) => async (args) => {
+    const input = { ...args.input };
+    const properties = [
+      {
+        target: "SSECustomerKey",
+        hash: "SSECustomerKeyMD5"
+      },
+      {
+        target: "CopySourceSSECustomerKey",
+        hash: "CopySourceSSECustomerKeyMD5"
+      }
+    ];
+    for (const prop of properties) {
+      const value = input[prop.target];
+      if (value) {
+        let valueForHash;
+        if (typeof value === "string") {
+          if (isValidBase64EncodedSSECustomerKey(value, options)) {
+            valueForHash = options.base64Decoder(value);
+          } else {
+            valueForHash = options.utf8Decoder(value);
+            input[prop.target] = options.base64Encoder(valueForHash);
+          }
+        } else {
+          valueForHash = ArrayBuffer.isView(value) ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength) : new Uint8Array(value);
+          input[prop.target] = options.base64Encoder(valueForHash);
+        }
+        const hash = new options.md5();
+        hash.update(valueForHash);
+        input[prop.hash] = options.base64Encoder(await hash.digest());
+      }
+    }
+    return next({
+      ...args,
+      input
+    });
+  };
+}
+function isValidBase64EncodedSSECustomerKey(str, options) {
+  const base64Regex = /^(?:[A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+  if (!base64Regex.test(str))
+    return false;
+  try {
+    const decodedBytes = options.base64Decoder(str);
+    return decodedBytes.length === 32;
+  } catch {
+    return false;
+  }
+}
+var ssecMiddlewareOptions, getSsecPlugin;
+var init_middleware_ssec = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/middleware-ssec/middleware-ssec.js"() {
+    ssecMiddlewareOptions = {
+      name: "ssecMiddleware",
+      step: "initialize",
+      tags: ["SSE"],
+      override: true
+    };
+    getSsecPlugin = (config) => ({
+      applyToStack: (clientStack) => {
+        clientStack.add(ssecMiddleware(config), ssecMiddlewareOptions);
+      }
+    });
+  }
+});
+
+// node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/index.js
+var s3_exports = {};
+__export(s3_exports, {
+  NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS: () => NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS,
+  NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME: () => NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME,
+  NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME: () => NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME,
+  NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS: () => NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS,
+  NODE_USE_ARN_REGION_CONFIG_OPTIONS: () => NODE_USE_ARN_REGION_CONFIG_OPTIONS,
+  NODE_USE_ARN_REGION_ENV_NAME: () => NODE_USE_ARN_REGION_ENV_NAME,
+  NODE_USE_ARN_REGION_INI_NAME: () => NODE_USE_ARN_REGION_INI_NAME,
+  S3ExpressIdentityCache: () => S3ExpressIdentityCache,
+  S3ExpressIdentityCacheEntry: () => S3ExpressIdentityCacheEntry,
+  S3ExpressIdentityProviderImpl: () => S3ExpressIdentityProviderImpl,
+  S3RestXmlProtocol: () => S3RestXmlProtocol,
+  SignatureV4S3Express: () => SignatureV4S3Express,
+  addExpectContinueMiddleware: () => addExpectContinueMiddleware,
+  addExpectContinueMiddlewareOptions: () => addExpectContinueMiddlewareOptions,
+  bucketEndpointMiddleware: () => bucketEndpointMiddleware2,
+  bucketEndpointMiddlewareOptions: () => bucketEndpointMiddlewareOptions2,
+  bucketHostname: () => bucketHostname,
+  checkContentLengthHeader: () => checkContentLengthHeader,
+  checkContentLengthHeaderMiddlewareOptions: () => checkContentLengthHeaderMiddlewareOptions,
+  getAddExpectContinuePlugin: () => getAddExpectContinuePlugin,
+  getArnResources: () => getArnResources,
+  getBucketEndpointPlugin: () => getBucketEndpointPlugin,
+  getCheckContentLengthHeaderPlugin: () => getCheckContentLengthHeaderPlugin,
+  getLocationConstraintPlugin: () => getLocationConstraintPlugin,
+  getRegionRedirectMiddlewarePlugin: () => getRegionRedirectMiddlewarePlugin,
+  getS3ExpiresMiddlewarePlugin: () => getS3ExpiresMiddlewarePlugin,
+  getS3ExpressHttpSigningPlugin: () => getS3ExpressHttpSigningPlugin,
+  getS3ExpressPlugin: () => getS3ExpressPlugin,
+  getSsecPlugin: () => getSsecPlugin,
+  getSuffixForArnEndpoint: () => getSuffixForArnEndpoint,
+  getThrow200ExceptionsPlugin: () => getThrow200ExceptionsPlugin,
+  getValidateBucketNamePlugin: () => getValidateBucketNamePlugin,
+  isValidBase64EncodedSSECustomerKey: () => isValidBase64EncodedSSECustomerKey,
+  locationConstraintMiddleware: () => locationConstraintMiddleware,
+  locationConstraintMiddlewareOptions: () => locationConstraintMiddlewareOptions,
+  regionRedirectEndpointMiddleware: () => regionRedirectEndpointMiddleware,
+  regionRedirectEndpointMiddlewareOptions: () => regionRedirectEndpointMiddlewareOptions,
+  regionRedirectMiddleware: () => regionRedirectMiddleware,
+  regionRedirectMiddlewareOptions: () => regionRedirectMiddlewareOptions,
+  resolveBucketEndpointConfig: () => resolveBucketEndpointConfig,
+  resolveLocationConstraintConfig: () => resolveLocationConstraintConfig,
+  resolveS3Config: () => resolveS3Config,
+  s3ExpiresMiddleware: () => s3ExpiresMiddleware,
+  s3ExpiresMiddlewareOptions: () => s3ExpiresMiddlewareOptions,
+  s3ExpressHttpSigningMiddleware: () => s3ExpressHttpSigningMiddleware,
+  s3ExpressHttpSigningMiddlewareOptions: () => s3ExpressHttpSigningMiddlewareOptions,
+  s3ExpressMiddleware: () => s3ExpressMiddleware,
+  s3ExpressMiddlewareOptions: () => s3ExpressMiddlewareOptions,
+  ssecMiddleware: () => ssecMiddleware,
+  ssecMiddlewareOptions: () => ssecMiddlewareOptions,
+  throw200ExceptionsMiddleware: () => throw200ExceptionsMiddleware,
+  throw200ExceptionsMiddlewareOptions: () => throw200ExceptionsMiddlewareOptions,
+  validateAccountId: () => validateAccountId,
+  validateBucketNameMiddleware: () => validateBucketNameMiddleware,
+  validateBucketNameMiddlewareOptions: () => validateBucketNameMiddlewareOptions,
+  validateDNSHostLabel: () => validateDNSHostLabel,
+  validateNoDualstack: () => validateNoDualstack,
+  validateNoFIPS: () => validateNoFIPS,
+  validateOutpostService: () => validateOutpostService,
+  validatePartition: () => validatePartition,
+  validateRegion: () => validateRegion
+});
+var init_s32 = __esm({
+  "node_modules/@aws-sdk/middleware-sdk-s3/dist-es/submodules/s3/index.js"() {
+    init_check_content_length_header();
+    init_region_redirect_endpoint_middleware();
+    init_region_redirect_middleware();
+    init_s3Configuration();
+    init_s3_expires_middleware();
+    init_S3ExpressIdentityCache();
+    init_S3ExpressIdentityCacheEntry();
+    init_S3ExpressIdentityProviderImpl();
+    init_SignatureV4S3Express();
+    init_constants7();
+    init_s3ExpressMiddleware();
+    init_s3ExpressHttpSigningMiddleware();
+    init_throw_200_exceptions();
+    init_validate_bucket_name();
+    init_S3RestXmlProtocol();
+    init_NodeDisableMultiregionAccessPointConfigOptions();
+    init_NodeUseArnRegionConfigOptions();
+    init_bucketEndpointMiddleware();
+    init_bucketHostname();
+    init_configurations3();
+    init_bucketHostnameUtils();
+    init_middleware_expect_continue();
+    init_middleware_location_constraint();
+    init_configuration2();
+    init_middleware_ssec();
   }
 });
 
@@ -154379,10 +155324,10 @@ var require_package17 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-s3",
       description: "AWS SDK for JavaScript S3 Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-s3",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -154408,25 +155353,21 @@ var require_package17 = __commonJS({
         "@aws-crypto/sha1-browser": "5.2.0",
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/middleware-bucket-endpoint": "^3.972.17",
-        "@aws-sdk/middleware-expect-continue": "^3.972.14",
-        "@aws-sdk/middleware-flexible-checksums": "^3.974.23",
-        "@aws-sdk/middleware-location-constraint": "^3.972.11",
-        "@aws-sdk/middleware-sdk-s3": "^3.972.44",
-        "@aws-sdk/middleware-ssec": "^3.972.11",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.30",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/middleware-flexible-checksums": "^3.974.30",
+        "@aws-sdk/middleware-sdk-s3": "^3.972.51",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.34",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
-        "@aws-sdk/signature-v4-crt": "3.1057.0",
-        "@smithy/snapshot-testing": "^2.1.6",
+        "@aws-sdk/signature-v4-crt": "3.1067.0",
+        "@smithy/snapshot-testing": "^2.1.7",
         "@tsconfig/node20": "20.1.8",
         "@types/node": "^20.14.8",
         concurrently: "7.0.0",
@@ -154450,7 +155391,7 @@ var require_package17 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -154466,338 +155407,6 @@ var require_package17 = __commonJS({
         directory: "clients/client-s3"
       }
     };
-  }
-});
-
-// node_modules/@aws-sdk/middleware-bucket-endpoint/dist-cjs/index.js
-var require_dist_cjs40 = __commonJS({
-  "node_modules/@aws-sdk/middleware-bucket-endpoint/dist-cjs/index.js"(exports2) {
-    "use strict";
-    var config = (init_config2(), __toCommonJS(config_exports));
-    var util = (init_util2(), __toCommonJS(util_exports));
-    var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME = "AWS_S3_DISABLE_MULTIREGION_ACCESS_POINTS";
-    var NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME = "s3_disable_multiregion_access_points";
-    var NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => config.booleanSelector(env2, NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME, config.SelectorType.ENV),
-      configFileSelector: (profile) => config.booleanSelector(profile, NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME, config.SelectorType.CONFIG),
-      default: false
-    };
-    var NODE_USE_ARN_REGION_ENV_NAME = "AWS_S3_USE_ARN_REGION";
-    var NODE_USE_ARN_REGION_INI_NAME = "s3_use_arn_region";
-    var NODE_USE_ARN_REGION_CONFIG_OPTIONS = {
-      environmentVariableSelector: (env2) => config.booleanSelector(env2, NODE_USE_ARN_REGION_ENV_NAME, config.SelectorType.ENV),
-      configFileSelector: (profile) => config.booleanSelector(profile, NODE_USE_ARN_REGION_INI_NAME, config.SelectorType.CONFIG),
-      default: void 0
-    };
-    var DOMAIN_PATTERN2 = /^[a-z0-9][a-z0-9\.\-]{1,61}[a-z0-9]$/;
-    var IP_ADDRESS_PATTERN2 = /(\d+\.){3}\d+/;
-    var DOTS_PATTERN2 = /\.\./;
-    var DOT_PATTERN = /\./;
-    var S3_HOSTNAME_PATTERN = /^(.+\.)?s3(-fips)?(\.dualstack)?[.-]([a-z0-9-]+)\./;
-    var S3_US_EAST_1_ALTNAME_PATTERN = /^s3(-external-1)?\.amazonaws\.com$/;
-    var AWS_PARTITION_SUFFIX = "amazonaws.com";
-    var isBucketNameOptions = (options) => typeof options.bucketName === "string";
-    var isDnsCompatibleBucketName2 = (bucketName) => DOMAIN_PATTERN2.test(bucketName) && !IP_ADDRESS_PATTERN2.test(bucketName) && !DOTS_PATTERN2.test(bucketName);
-    var getRegionalSuffix = (hostname) => {
-      const parts = hostname.match(S3_HOSTNAME_PATTERN);
-      return [parts[4], hostname.replace(new RegExp(`^${parts[0]}`), "")];
-    };
-    var getSuffix = (hostname) => S3_US_EAST_1_ALTNAME_PATTERN.test(hostname) ? ["us-east-1", AWS_PARTITION_SUFFIX] : getRegionalSuffix(hostname);
-    var getSuffixForArnEndpoint = (hostname) => S3_US_EAST_1_ALTNAME_PATTERN.test(hostname) ? [hostname.replace(`.${AWS_PARTITION_SUFFIX}`, ""), AWS_PARTITION_SUFFIX] : getRegionalSuffix(hostname);
-    var validateArnEndpointOptions = (options) => {
-      if (options.pathStyleEndpoint) {
-        throw new Error("Path-style S3 endpoint is not supported when bucket is an ARN");
-      }
-      if (options.accelerateEndpoint) {
-        throw new Error("Accelerate endpoint is not supported when bucket is an ARN");
-      }
-      if (!options.tlsCompatible) {
-        throw new Error("HTTPS is required when bucket is an ARN");
-      }
-    };
-    var validateService = (service) => {
-      if (service !== "s3" && service !== "s3-outposts" && service !== "s3-object-lambda") {
-        throw new Error("Expect 's3' or 's3-outposts' or 's3-object-lambda' in ARN service component");
-      }
-    };
-    var validateS3Service = (service) => {
-      if (service !== "s3") {
-        throw new Error("Expect 's3' in Accesspoint ARN service component");
-      }
-    };
-    var validateOutpostService = (service) => {
-      if (service !== "s3-outposts") {
-        throw new Error("Expect 's3-posts' in Outpost ARN service component");
-      }
-    };
-    var validatePartition = (partition2, options) => {
-      if (partition2 !== options.clientPartition) {
-        throw new Error(`Partition in ARN is incompatible, got "${partition2}" but expected "${options.clientPartition}"`);
-      }
-    };
-    var validateRegion = (region, options) => {
-    };
-    var validateRegionalClient = (region) => {
-      if (["s3-external-1", "aws-global"].includes(region)) {
-        throw new Error(`Client region ${region} is not regional`);
-      }
-    };
-    var validateAccountId = (accountId) => {
-      if (!/[0-9]{12}/.exec(accountId)) {
-        throw new Error("Access point ARN accountID does not match regex '[0-9]{12}'");
-      }
-    };
-    var validateDNSHostLabel = (label, options = { tlsCompatible: true }) => {
-      if (label.length >= 64 || !/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(label) || /(\d+\.){3}\d+/.test(label) || /[.-]{2}/.test(label) || options?.tlsCompatible && DOT_PATTERN.test(label)) {
-        throw new Error(`Invalid DNS label ${label}`);
-      }
-    };
-    var validateCustomEndpoint = (options) => {
-      if (options.isCustomEndpoint) {
-        if (options.dualstackEndpoint)
-          throw new Error("Dualstack endpoint is not supported with custom endpoint");
-        if (options.accelerateEndpoint)
-          throw new Error("Accelerate endpoint is not supported with custom endpoint");
-      }
-    };
-    var getArnResources = (resource) => {
-      const delimiter3 = resource.includes(":") ? ":" : "/";
-      const [resourceType, ...rest] = resource.split(delimiter3);
-      if (resourceType === "accesspoint") {
-        if (rest.length !== 1 || rest[0] === "") {
-          throw new Error(`Access Point ARN should have one resource accesspoint${delimiter3}{accesspointname}`);
-        }
-        return { accesspointName: rest[0] };
-      } else if (resourceType === "outpost") {
-        if (!rest[0] || rest[1] !== "accesspoint" || !rest[2] || rest.length !== 3) {
-          throw new Error(`Outpost ARN should have resource outpost${delimiter3}{outpostId}${delimiter3}accesspoint${delimiter3}{accesspointName}`);
-        }
-        const [outpostId, _, accesspointName] = rest;
-        return { outpostId, accesspointName };
-      } else {
-        throw new Error(`ARN resource should begin with 'accesspoint${delimiter3}' or 'outpost${delimiter3}'`);
-      }
-    };
-    var validateNoDualstack = (dualstackEndpoint) => {
-    };
-    var validateNoFIPS = (useFipsEndpoint) => {
-      if (useFipsEndpoint)
-        throw new Error(`FIPS region is not supported with Outpost.`);
-    };
-    var validateMrapAlias = (name) => {
-      try {
-        name.split(".").forEach((label) => {
-          validateDNSHostLabel(label);
-        });
-      } catch (e5) {
-        throw new Error(`"${name}" is not a DNS compatible name.`);
-      }
-    };
-    var bucketHostname = (options) => {
-      validateCustomEndpoint(options);
-      return isBucketNameOptions(options) ? getEndpointFromBucketName(options) : getEndpointFromArn(options);
-    };
-    var getEndpointFromBucketName = ({ accelerateEndpoint = false, clientRegion: region, baseHostname, bucketName, dualstackEndpoint = false, fipsEndpoint = false, pathStyleEndpoint = false, tlsCompatible = true, isCustomEndpoint = false }) => {
-      const [clientRegion, hostnameSuffix] = isCustomEndpoint ? [region, baseHostname] : getSuffix(baseHostname);
-      if (pathStyleEndpoint || !isDnsCompatibleBucketName2(bucketName) || tlsCompatible && DOT_PATTERN.test(bucketName)) {
-        return {
-          bucketEndpoint: false,
-          hostname: dualstackEndpoint ? `s3.dualstack.${clientRegion}.${hostnameSuffix}` : baseHostname
-        };
-      }
-      if (accelerateEndpoint) {
-        baseHostname = `s3-accelerate${dualstackEndpoint ? ".dualstack" : ""}.${hostnameSuffix}`;
-      } else if (dualstackEndpoint) {
-        baseHostname = `s3.dualstack.${clientRegion}.${hostnameSuffix}`;
-      }
-      return {
-        bucketEndpoint: true,
-        hostname: `${bucketName}.${baseHostname}`
-      };
-    };
-    var getEndpointFromArn = (options) => {
-      const { isCustomEndpoint, baseHostname, clientRegion } = options;
-      const hostnameSuffix = isCustomEndpoint ? baseHostname : getSuffixForArnEndpoint(baseHostname)[1];
-      const { pathStyleEndpoint, accelerateEndpoint = false, fipsEndpoint = false, tlsCompatible = true, bucketName, clientPartition = "aws" } = options;
-      validateArnEndpointOptions({ pathStyleEndpoint, accelerateEndpoint, tlsCompatible });
-      const { service, partition: partition2, accountId, region, resource } = bucketName;
-      validateService(service);
-      validatePartition(partition2, { clientPartition });
-      validateAccountId(accountId);
-      const { accesspointName, outpostId } = getArnResources(resource);
-      if (service === "s3-object-lambda") {
-        return getEndpointFromObjectLambdaArn({ ...options, tlsCompatible, bucketName, accesspointName, hostnameSuffix });
-      }
-      if (region === "") {
-        return getEndpointFromMRAPArn({ ...options, mrapAlias: accesspointName, hostnameSuffix });
-      }
-      if (outpostId) {
-        return getEndpointFromOutpostArn({ ...options, clientRegion, outpostId, accesspointName, hostnameSuffix });
-      }
-      return getEndpointFromAccessPointArn({ ...options, clientRegion, accesspointName, hostnameSuffix });
-    };
-    var getEndpointFromObjectLambdaArn = ({ dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, useArnRegion, clientRegion, clientSigningRegion = clientRegion, accesspointName, bucketName, hostnameSuffix }) => {
-      const { accountId, region, service } = bucketName;
-      validateRegionalClient(clientRegion);
-      const DNSHostLabel = `${accesspointName}-${accountId}`;
-      validateDNSHostLabel(DNSHostLabel, { tlsCompatible });
-      const endpointRegion = useArnRegion ? region : clientRegion;
-      const signingRegion = useArnRegion ? region : clientSigningRegion;
-      return {
-        bucketEndpoint: true,
-        hostname: `${DNSHostLabel}.${service}${fipsEndpoint ? "-fips" : ""}.${endpointRegion}.${hostnameSuffix}`,
-        signingRegion,
-        signingService: service
-      };
-    };
-    var getEndpointFromMRAPArn = ({ disableMultiregionAccessPoints, dualstackEndpoint = false, isCustomEndpoint, mrapAlias, hostnameSuffix }) => {
-      if (disableMultiregionAccessPoints === true) {
-        throw new Error("SDK is attempting to use a MRAP ARN. Please enable to feature.");
-      }
-      validateMrapAlias(mrapAlias);
-      return {
-        bucketEndpoint: true,
-        hostname: `${mrapAlias}${isCustomEndpoint ? "" : `.accesspoint.s3-global`}.${hostnameSuffix}`,
-        signingRegion: "*"
-      };
-    };
-    var getEndpointFromOutpostArn = ({ useArnRegion, clientRegion, clientSigningRegion = clientRegion, bucketName, outpostId, dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, accesspointName, isCustomEndpoint, hostnameSuffix }) => {
-      validateRegionalClient(clientRegion);
-      const DNSHostLabel = `${accesspointName}-${bucketName.accountId}`;
-      validateDNSHostLabel(DNSHostLabel, { tlsCompatible });
-      const endpointRegion = useArnRegion ? bucketName.region : clientRegion;
-      const signingRegion = useArnRegion ? bucketName.region : clientSigningRegion;
-      validateOutpostService(bucketName.service);
-      validateDNSHostLabel(outpostId, { tlsCompatible });
-      validateNoFIPS(fipsEndpoint);
-      const hostnamePrefix = `${DNSHostLabel}.${outpostId}`;
-      return {
-        bucketEndpoint: true,
-        hostname: `${hostnamePrefix}${isCustomEndpoint ? "" : `.s3-outposts.${endpointRegion}`}.${hostnameSuffix}`,
-        signingRegion,
-        signingService: "s3-outposts"
-      };
-    };
-    var getEndpointFromAccessPointArn = ({ useArnRegion, clientRegion, clientSigningRegion = clientRegion, bucketName, dualstackEndpoint = false, fipsEndpoint = false, tlsCompatible = true, accesspointName, isCustomEndpoint, hostnameSuffix }) => {
-      validateRegionalClient(clientRegion);
-      const hostnamePrefix = `${accesspointName}-${bucketName.accountId}`;
-      validateDNSHostLabel(hostnamePrefix, { tlsCompatible });
-      const endpointRegion = useArnRegion ? bucketName.region : clientRegion;
-      const signingRegion = useArnRegion ? bucketName.region : clientSigningRegion;
-      validateS3Service(bucketName.service);
-      return {
-        bucketEndpoint: true,
-        hostname: `${hostnamePrefix}${isCustomEndpoint ? "" : `.s3-accesspoint${fipsEndpoint ? "-fips" : ""}${dualstackEndpoint ? ".dualstack" : ""}.${endpointRegion}`}.${hostnameSuffix}`,
-        signingRegion
-      };
-    };
-    var bucketEndpointMiddleware = (options) => (next, context) => async (args) => {
-      const { Bucket: bucketName } = args.input;
-      let replaceBucketInPath = options.bucketEndpoint;
-      const request = args.request;
-      if (protocols.HttpRequest.isInstance(request)) {
-        if (options.bucketEndpoint) {
-          request.hostname = bucketName;
-        } else if (util.validate(bucketName)) {
-          const bucketArn = util.parse(bucketName);
-          const clientRegion = await options.region();
-          const useDualstackEndpoint = await options.useDualstackEndpoint();
-          const useFipsEndpoint = await options.useFipsEndpoint();
-          const { partition: partition2, signingRegion = clientRegion } = await options.regionInfoProvider(clientRegion, { useDualstackEndpoint, useFipsEndpoint }) || {};
-          const useArnRegion = await options.useArnRegion();
-          const { hostname, bucketEndpoint, signingRegion: modifiedSigningRegion, signingService } = bucketHostname({
-            bucketName: bucketArn,
-            baseHostname: request.hostname,
-            accelerateEndpoint: options.useAccelerateEndpoint,
-            dualstackEndpoint: useDualstackEndpoint,
-            fipsEndpoint: useFipsEndpoint,
-            pathStyleEndpoint: options.forcePathStyle,
-            tlsCompatible: request.protocol === "https:",
-            useArnRegion,
-            clientPartition: partition2,
-            clientSigningRegion: signingRegion,
-            clientRegion,
-            isCustomEndpoint: options.isCustomEndpoint,
-            disableMultiregionAccessPoints: await options.disableMultiregionAccessPoints()
-          });
-          if (modifiedSigningRegion && modifiedSigningRegion !== signingRegion) {
-            context["signing_region"] = modifiedSigningRegion;
-          }
-          if (signingService && signingService !== "s3") {
-            context["signing_service"] = signingService;
-          }
-          request.hostname = hostname;
-          replaceBucketInPath = bucketEndpoint;
-        } else {
-          const clientRegion = await options.region();
-          const dualstackEndpoint = await options.useDualstackEndpoint();
-          const fipsEndpoint = await options.useFipsEndpoint();
-          const { hostname, bucketEndpoint } = bucketHostname({
-            bucketName,
-            clientRegion,
-            baseHostname: request.hostname,
-            accelerateEndpoint: options.useAccelerateEndpoint,
-            dualstackEndpoint,
-            fipsEndpoint,
-            pathStyleEndpoint: options.forcePathStyle,
-            tlsCompatible: request.protocol === "https:",
-            isCustomEndpoint: options.isCustomEndpoint
-          });
-          request.hostname = hostname;
-          replaceBucketInPath = bucketEndpoint;
-        }
-        if (replaceBucketInPath) {
-          request.path = request.path.replace(/^(\/)?[^\/]+/, "");
-          if (request.path === "") {
-            request.path = "/";
-          }
-        }
-      }
-      return next({ ...args, request });
-    };
-    var bucketEndpointMiddlewareOptions = {
-      tags: ["BUCKET_ENDPOINT"],
-      name: "bucketEndpointMiddleware",
-      relation: "before",
-      toMiddleware: "hostHeaderMiddleware",
-      override: true
-    };
-    var getBucketEndpointPlugin = (options) => ({
-      applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(bucketEndpointMiddleware(options), bucketEndpointMiddlewareOptions);
-      }
-    });
-    function resolveBucketEndpointConfig(input) {
-      const { bucketEndpoint = false, forcePathStyle = false, useAccelerateEndpoint = false, useArnRegion, disableMultiregionAccessPoints = false } = input;
-      return Object.assign(input, {
-        bucketEndpoint,
-        forcePathStyle,
-        useAccelerateEndpoint,
-        useArnRegion: typeof useArnRegion === "function" ? useArnRegion : () => Promise.resolve(useArnRegion),
-        disableMultiregionAccessPoints: typeof disableMultiregionAccessPoints === "function" ? disableMultiregionAccessPoints : () => Promise.resolve(disableMultiregionAccessPoints)
-      });
-    }
-    exports2.NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS = NODE_DISABLE_MULTIREGION_ACCESS_POINT_CONFIG_OPTIONS;
-    exports2.NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME = NODE_DISABLE_MULTIREGION_ACCESS_POINT_ENV_NAME;
-    exports2.NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME = NODE_DISABLE_MULTIREGION_ACCESS_POINT_INI_NAME;
-    exports2.NODE_USE_ARN_REGION_CONFIG_OPTIONS = NODE_USE_ARN_REGION_CONFIG_OPTIONS;
-    exports2.NODE_USE_ARN_REGION_ENV_NAME = NODE_USE_ARN_REGION_ENV_NAME;
-    exports2.NODE_USE_ARN_REGION_INI_NAME = NODE_USE_ARN_REGION_INI_NAME;
-    exports2.bucketEndpointMiddleware = bucketEndpointMiddleware;
-    exports2.bucketEndpointMiddlewareOptions = bucketEndpointMiddlewareOptions;
-    exports2.bucketHostname = bucketHostname;
-    exports2.getArnResources = getArnResources;
-    exports2.getBucketEndpointPlugin = getBucketEndpointPlugin;
-    exports2.getSuffixForArnEndpoint = getSuffixForArnEndpoint;
-    exports2.resolveBucketEndpointConfig = resolveBucketEndpointConfig;
-    exports2.validateAccountId = validateAccountId;
-    exports2.validateDNSHostLabel = validateDNSHostLabel;
-    exports2.validateNoDualstack = validateNoDualstack;
-    exports2.validateNoFIPS = validateNoFIPS;
-    exports2.validateOutpostService = validateOutpostService;
-    exports2.validatePartition = validatePartition;
-    exports2.validateRegion = validateRegion;
   }
 });
 
@@ -154832,12 +155441,12 @@ var init_blobHasher = __esm({
 });
 
 // node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js
-var import_node_stream10, HashCalculator;
+var import_node_stream11, HashCalculator;
 var init_HashCalculator = __esm({
   "node_modules/@smithy/core/dist-es/submodules/checksum/hash-stream-node/HashCalculator.js"() {
-    import_node_stream10 = require("node:stream");
+    import_node_stream11 = require("node:stream");
     init_serde();
-    HashCalculator = class extends import_node_stream10.Writable {
+    HashCalculator = class extends import_node_stream11.Writable {
       hash;
       constructor(hash, options) {
         super(options);
@@ -154914,7 +155523,7 @@ var init_readableStreamHasher = __esm({
 
 // node_modules/@smithy/core/dist-es/submodules/checksum/md5-js/constants.js
 var BLOCK_SIZE, DIGEST_LENGTH, INIT;
-var init_constants7 = __esm({
+var init_constants8 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/checksum/md5-js/constants.js"() {
     BLOCK_SIZE = 64;
     DIGEST_LENGTH = 16;
@@ -154958,7 +155567,7 @@ var Md5;
 var init_md5 = __esm({
   "node_modules/@smithy/core/dist-es/submodules/checksum/md5-js/md5.js"() {
     init_serde();
-    init_constants7();
+    init_constants8();
     Md5 = class {
       state;
       buffer;
@@ -155122,7 +155731,7 @@ var require_runtimeConfig_shared17 = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getRuntimeConfig = void 0;
     var httpAuthSchemes_1 = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
-    var middleware_sdk_s3_1 = require_dist_cjs39();
+    var s3_1 = (init_s32(), __toCommonJS(s3_exports));
     var signature_v4_multi_region_1 = require_dist_cjs15();
     var client_1 = (init_client2(), __toCommonJS(client_exports));
     var protocols_1 = (init_protocols(), __toCommonJS(protocols_exports));
@@ -155153,7 +155762,7 @@ var require_runtimeConfig_shared17 = __commonJS({
           }
         ],
         logger: config?.logger ?? new client_1.NoOpLogger(),
-        protocol: config?.protocol ?? middleware_sdk_s3_1.S3RestXmlProtocol,
+        protocol: config?.protocol ?? s3_1.S3RestXmlProtocol,
         protocolSettings: config?.protocolSettings ?? {
           defaultNamespace: "com.amazonaws.s3",
           errorTypeRegistries: schemas_0_1.errorTypeRegistries,
@@ -155186,9 +155795,8 @@ var require_runtimeConfig17 = __commonJS({
     var client_1 = (init_client3(), __toCommonJS(client_exports2));
     var httpAuthSchemes_1 = (init_httpAuthSchemes2(), __toCommonJS(httpAuthSchemes_exports));
     var credential_provider_node_1 = require_dist_cjs19();
-    var middleware_bucket_endpoint_1 = require_dist_cjs40();
-    var middleware_flexible_checksums_1 = require_dist_cjs38();
-    var middleware_sdk_s3_1 = require_dist_cjs39();
+    var middleware_flexible_checksums_1 = require_dist_cjs37();
+    var s3_1 = (init_s32(), __toCommonJS(s3_exports));
     var checksum_1 = (init_checksum2(), __toCommonJS(checksum_exports));
     var client_2 = (init_client2(), __toCommonJS(client_exports));
     var config_1 = (init_config2(), __toCommonJS(config_exports));
@@ -155216,7 +155824,7 @@ var require_runtimeConfig17 = __commonJS({
         bodyLengthChecker: config?.bodyLengthChecker ?? serde_1.calculateBodyLength,
         credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
         defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, client_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
-        disableS3ExpressSessionAuth: config?.disableS3ExpressSessionAuth ?? (0, config_1.loadConfig)(middleware_sdk_s3_1.NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS, loaderConfig),
+        disableS3ExpressSessionAuth: config?.disableS3ExpressSessionAuth ?? (0, config_1.loadConfig)(s3_1.NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS, loaderConfig),
         eventStreamSerdeProvider: config?.eventStreamSerdeProvider ?? event_streams_1.eventStreamSerdeProvider,
         maxAttempts: config?.maxAttempts ?? (0, config_1.loadConfig)(retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
         md5: config?.md5 ?? serde_1.Hash.bind(null, "md5"),
@@ -155233,7 +155841,7 @@ var require_runtimeConfig17 = __commonJS({
         sigv4aSigningRegionSet: config?.sigv4aSigningRegionSet ?? (0, config_1.loadConfig)(httpAuthSchemes_1.NODE_SIGV4A_CONFIG_OPTIONS, loaderConfig),
         streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
         streamHasher: config?.streamHasher ?? checksum_1.readableStreamHasher,
-        useArnRegion: config?.useArnRegion ?? (0, config_1.loadConfig)(middleware_bucket_endpoint_1.NODE_USE_ARN_REGION_CONFIG_OPTIONS, loaderConfig),
+        useArnRegion: config?.useArnRegion ?? (0, config_1.loadConfig)(s3_1.NODE_USE_ARN_REGION_CONFIG_OPTIONS, loaderConfig),
         useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, config_1.loadConfig)(config_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         useFipsEndpoint: config?.useFipsEndpoint ?? (0, config_1.loadConfig)(config_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
         userAgentAppId: config?.userAgentAppId ?? (0, config_1.loadConfig)(client_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
@@ -155243,120 +155851,13 @@ var require_runtimeConfig17 = __commonJS({
   }
 });
 
-// node_modules/@aws-sdk/middleware-ssec/dist-cjs/index.js
-var require_dist_cjs41 = __commonJS({
-  "node_modules/@aws-sdk/middleware-ssec/dist-cjs/index.js"(exports2) {
-    "use strict";
-    function ssecMiddleware(options) {
-      return (next) => async (args) => {
-        const input = { ...args.input };
-        const properties = [
-          {
-            target: "SSECustomerKey",
-            hash: "SSECustomerKeyMD5"
-          },
-          {
-            target: "CopySourceSSECustomerKey",
-            hash: "CopySourceSSECustomerKeyMD5"
-          }
-        ];
-        for (const prop of properties) {
-          const value = input[prop.target];
-          if (value) {
-            let valueForHash;
-            if (typeof value === "string") {
-              if (isValidBase64EncodedSSECustomerKey(value, options)) {
-                valueForHash = options.base64Decoder(value);
-              } else {
-                valueForHash = options.utf8Decoder(value);
-                input[prop.target] = options.base64Encoder(valueForHash);
-              }
-            } else {
-              valueForHash = ArrayBuffer.isView(value) ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength) : new Uint8Array(value);
-              input[prop.target] = options.base64Encoder(valueForHash);
-            }
-            const hash = new options.md5();
-            hash.update(valueForHash);
-            input[prop.hash] = options.base64Encoder(await hash.digest());
-          }
-        }
-        return next({
-          ...args,
-          input
-        });
-      };
-    }
-    var ssecMiddlewareOptions = {
-      name: "ssecMiddleware",
-      step: "initialize",
-      tags: ["SSE"],
-      override: true
-    };
-    var getSsecPlugin = (config) => ({
-      applyToStack: (clientStack) => {
-        clientStack.add(ssecMiddleware(config), ssecMiddlewareOptions);
-      }
-    });
-    function isValidBase64EncodedSSECustomerKey(str, options) {
-      const base64Regex = /^(?:[A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-      if (!base64Regex.test(str))
-        return false;
-      try {
-        const decodedBytes = options.base64Decoder(str);
-        return decodedBytes.length === 32;
-      } catch {
-        return false;
-      }
-    }
-    exports2.getSsecPlugin = getSsecPlugin;
-    exports2.isValidBase64EncodedSSECustomerKey = isValidBase64EncodedSSECustomerKey;
-    exports2.ssecMiddleware = ssecMiddleware;
-    exports2.ssecMiddlewareOptions = ssecMiddlewareOptions;
-  }
-});
-
-// node_modules/@aws-sdk/middleware-location-constraint/dist-cjs/index.js
-var require_dist_cjs42 = __commonJS({
-  "node_modules/@aws-sdk/middleware-location-constraint/dist-cjs/index.js"(exports2) {
-    "use strict";
-    function locationConstraintMiddleware(options) {
-      return (next) => async (args) => {
-        const { CreateBucketConfiguration } = args.input;
-        const region = await options.region();
-        if (!CreateBucketConfiguration?.LocationConstraint && !CreateBucketConfiguration?.Location) {
-          if (region !== "us-east-1") {
-            args.input.CreateBucketConfiguration = args.input.CreateBucketConfiguration ?? {};
-            args.input.CreateBucketConfiguration.LocationConstraint = region;
-          }
-        }
-        return next(args);
-      };
-    }
-    var locationConstraintMiddlewareOptions = {
-      step: "initialize",
-      tags: ["LOCATION_CONSTRAINT", "CREATE_BUCKET_CONFIGURATION"],
-      name: "locationConstraintMiddleware",
-      override: true
-    };
-    var getLocationConstraintPlugin = (config) => ({
-      applyToStack: (clientStack) => {
-        clientStack.add(locationConstraintMiddleware(config), locationConstraintMiddlewareOptions);
-      }
-    });
-    exports2.getLocationConstraintPlugin = getLocationConstraintPlugin;
-    exports2.locationConstraintMiddleware = locationConstraintMiddleware;
-    exports2.locationConstraintMiddlewareOptions = locationConstraintMiddlewareOptions;
-  }
-});
-
 // node_modules/@aws-sdk/client-s3/dist-cjs/index.js
-var require_dist_cjs43 = __commonJS({
+var require_dist_cjs38 = __commonJS({
   "node_modules/@aws-sdk/client-s3/dist-cjs/index.js"(exports2) {
     "use strict";
     var client$1 = (init_client3(), __toCommonJS(client_exports2));
-    var middlewareExpectContinue = require_dist_cjs36();
-    var middlewareFlexibleChecksums = require_dist_cjs38();
-    var middlewareSdkS3 = require_dist_cjs39();
+    var middlewareFlexibleChecksums = require_dist_cjs37();
+    var s3 = (init_s32(), __toCommonJS(s3_exports));
     var core = (init_dist_es(), __toCommonJS(dist_es_exports));
     var client = (init_client2(), __toCommonJS(client_exports));
     var config = (init_config2(), __toCommonJS(config_exports));
@@ -155368,8 +155869,6 @@ var require_dist_cjs43 = __commonJS({
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider17();
     var schemas_0 = require_schemas_017();
     var runtimeConfig = require_runtimeConfig17();
-    var middlewareSsec = require_dist_cjs41();
-    var middlewareLocationConstraint = require_dist_cjs42();
     var errors = require_errors19();
     var S3ServiceException = require_S3ServiceException();
     var resolveClientEndpointParameters5 = (options) => {
@@ -155403,7 +155902,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "CreateSession", {}).n("S3Client", "CreateSessionCommand").sc(schemas_0.CreateSession$).build() {
     };
@@ -155464,7 +155963,7 @@ var require_dist_cjs43 = __commonJS({
         const _config_7 = endpoints.resolveEndpointConfig(_config_6);
         const _config_8 = eventStreams.resolveEventStreamSerdeConfig(_config_7);
         const _config_9 = httpAuthSchemeProvider.resolveHttpAuthSchemeConfig(_config_8);
-        const _config_10 = middlewareSdkS3.resolveS3Config(_config_9, { session: [() => this, CreateSessionCommand] });
+        const _config_10 = s3.resolveS3Config(_config_9, { session: [() => this, CreateSessionCommand] });
         const _config_11 = resolveRuntimeExtensions5(_config_10, configuration?.extensions || []);
         this.config = _config_11;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
@@ -155482,11 +155981,11 @@ var require_dist_cjs43 = __commonJS({
           })
         }));
         this.middlewareStack.use(core.getHttpSigningPlugin(this.config));
-        this.middlewareStack.use(middlewareSdkS3.getValidateBucketNamePlugin(this.config));
-        this.middlewareStack.use(middlewareExpectContinue.getAddExpectContinuePlugin(this.config));
-        this.middlewareStack.use(middlewareSdkS3.getRegionRedirectMiddlewarePlugin(this.config));
-        this.middlewareStack.use(middlewareSdkS3.getS3ExpressPlugin(this.config));
-        this.middlewareStack.use(middlewareSdkS3.getS3ExpressHttpSigningPlugin(this.config));
+        this.middlewareStack.use(s3.getValidateBucketNamePlugin(this.config));
+        this.middlewareStack.use(s3.getAddExpectContinuePlugin(this.config));
+        this.middlewareStack.use(s3.getRegionRedirectMiddlewarePlugin(this.config));
+        this.middlewareStack.use(s3.getS3ExpressPlugin(this.config));
+        this.middlewareStack.use(s3.getS3ExpressHttpSigningPlugin(this.config));
       }
       destroy() {
         super.destroy();
@@ -155499,7 +155998,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "AbortMultipartUpload", {}).n("S3Client", "AbortMultipartUploadCommand").sc(schemas_0.AbortMultipartUpload$).build() {
     };
@@ -155510,8 +156009,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "CompleteMultipartUpload", {}).n("S3Client", "CompleteMultipartUploadCommand").sc(schemas_0.CompleteMultipartUpload$).build() {
     };
@@ -155524,8 +156023,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "CopyObject", {}).n("S3Client", "CopyObjectCommand").sc(schemas_0.CopyObject$).build() {
     };
@@ -155537,8 +156036,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareLocationConstraint.getLocationConstraintPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getLocationConstraintPlugin(config2)
       ];
     }).s("AmazonS3", "CreateBucket", {}).n("S3Client", "CreateBucketCommand").sc(schemas_0.CreateBucket$).build() {
     };
@@ -155577,8 +156076,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "CreateMultipartUpload", {}).n("S3Client", "CreateMultipartUploadCommand").sc(schemas_0.CreateMultipartUpload$).build() {
     };
@@ -155709,7 +156208,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "DeleteObject", {}).n("S3Client", "DeleteObjectCommand").sc(schemas_0.DeleteObject$).build() {
     };
@@ -155723,7 +156222,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "DeleteObjects", {}).n("S3Client", "DeleteObjectsCommand").sc(schemas_0.DeleteObjects$).build() {
     };
@@ -155733,7 +156232,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "DeleteObjectTagging", {}).n("S3Client", "DeleteObjectTaggingCommand").sc(schemas_0.DeleteObjectTagging$).build() {
     };
@@ -155751,7 +156250,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketAbac", {}).n("S3Client", "GetBucketAbacCommand").sc(schemas_0.GetBucketAbac$).build() {
     };
@@ -155762,7 +156261,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketAccelerateConfiguration", {}).n("S3Client", "GetBucketAccelerateConfigurationCommand").sc(schemas_0.GetBucketAccelerateConfiguration$).build() {
     };
@@ -155773,7 +156272,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketAcl", {}).n("S3Client", "GetBucketAclCommand").sc(schemas_0.GetBucketAcl$).build() {
     };
@@ -155784,7 +156283,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketAnalyticsConfiguration", {}).n("S3Client", "GetBucketAnalyticsConfigurationCommand").sc(schemas_0.GetBucketAnalyticsConfiguration$).build() {
     };
@@ -155795,7 +156294,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketCors", {}).n("S3Client", "GetBucketCorsCommand").sc(schemas_0.GetBucketCors$).build() {
     };
@@ -155806,7 +156305,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketEncryption", {}).n("S3Client", "GetBucketEncryptionCommand").sc(schemas_0.GetBucketEncryption$).build() {
     };
@@ -155817,7 +156316,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketIntelligentTieringConfiguration", {}).n("S3Client", "GetBucketIntelligentTieringConfigurationCommand").sc(schemas_0.GetBucketIntelligentTieringConfiguration$).build() {
     };
@@ -155828,7 +156327,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketInventoryConfiguration", {}).n("S3Client", "GetBucketInventoryConfigurationCommand").sc(schemas_0.GetBucketInventoryConfiguration$).build() {
     };
@@ -155839,7 +156338,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketLifecycleConfiguration", {}).n("S3Client", "GetBucketLifecycleConfigurationCommand").sc(schemas_0.GetBucketLifecycleConfiguration$).build() {
     };
@@ -155850,7 +156349,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketLocation", {}).n("S3Client", "GetBucketLocationCommand").sc(schemas_0.GetBucketLocation$).build() {
     };
@@ -155861,7 +156360,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketLogging", {}).n("S3Client", "GetBucketLoggingCommand").sc(schemas_0.GetBucketLogging$).build() {
     };
@@ -155872,7 +156371,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketMetadataConfiguration", {}).n("S3Client", "GetBucketMetadataConfigurationCommand").sc(schemas_0.GetBucketMetadataConfiguration$).build() {
     };
@@ -155883,7 +156382,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketMetadataTableConfiguration", {}).n("S3Client", "GetBucketMetadataTableConfigurationCommand").sc(schemas_0.GetBucketMetadataTableConfiguration$).build() {
     };
@@ -155894,7 +156393,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketMetricsConfiguration", {}).n("S3Client", "GetBucketMetricsConfigurationCommand").sc(schemas_0.GetBucketMetricsConfiguration$).build() {
     };
@@ -155905,7 +156404,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketNotificationConfiguration", {}).n("S3Client", "GetBucketNotificationConfigurationCommand").sc(schemas_0.GetBucketNotificationConfiguration$).build() {
     };
@@ -155916,7 +156415,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketOwnershipControls", {}).n("S3Client", "GetBucketOwnershipControlsCommand").sc(schemas_0.GetBucketOwnershipControls$).build() {
     };
@@ -155935,7 +156434,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketPolicyStatus", {}).n("S3Client", "GetBucketPolicyStatusCommand").sc(schemas_0.GetBucketPolicyStatus$).build() {
     };
@@ -155946,7 +156445,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketReplication", {}).n("S3Client", "GetBucketReplicationCommand").sc(schemas_0.GetBucketReplication$).build() {
     };
@@ -155957,7 +156456,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketRequestPayment", {}).n("S3Client", "GetBucketRequestPaymentCommand").sc(schemas_0.GetBucketRequestPayment$).build() {
     };
@@ -155968,7 +156467,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketTagging", {}).n("S3Client", "GetBucketTaggingCommand").sc(schemas_0.GetBucketTagging$).build() {
     };
@@ -155979,7 +156478,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketVersioning", {}).n("S3Client", "GetBucketVersioningCommand").sc(schemas_0.GetBucketVersioning$).build() {
     };
@@ -155990,7 +156489,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetBucketWebsite", {}).n("S3Client", "GetBucketWebsiteCommand").sc(schemas_0.GetBucketWebsite$).build() {
     };
@@ -156001,7 +156500,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectAcl", {}).n("S3Client", "GetObjectAclCommand").sc(schemas_0.GetObjectAcl$).build() {
     };
@@ -156011,8 +156510,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectAttributes", {}).n("S3Client", "GetObjectAttributesCommand").sc(schemas_0.GetObjectAttributes$).build() {
     };
@@ -156028,8 +156527,8 @@ var require_dist_cjs43 = __commonJS({
           requestValidationModeMember: "ChecksumMode",
           "responseAlgorithms": ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "SHA512", "MD5", "XXHASH64", "XXHASH3", "XXHASH128"]
         }),
-        middlewareSsec.getSsecPlugin(config2),
-        middlewareSdkS3.getS3ExpiresMiddlewarePlugin(config2)
+        s3.getSsecPlugin(config2),
+        s3.getS3ExpiresMiddlewarePlugin(config2)
       ];
     }).s("AmazonS3", "GetObject", {}).n("S3Client", "GetObjectCommand").sc(schemas_0.GetObject$).build() {
     };
@@ -156039,7 +156538,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectLegalHold", {}).n("S3Client", "GetObjectLegalHoldCommand").sc(schemas_0.GetObjectLegalHold$).build() {
     };
@@ -156049,7 +156548,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectLockConfiguration", {}).n("S3Client", "GetObjectLockConfigurationCommand").sc(schemas_0.GetObjectLockConfiguration$).build() {
     };
@@ -156059,7 +156558,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectRetention", {}).n("S3Client", "GetObjectRetentionCommand").sc(schemas_0.GetObjectRetention$).build() {
     };
@@ -156069,7 +156568,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetObjectTagging", {}).n("S3Client", "GetObjectTaggingCommand").sc(schemas_0.GetObjectTagging$).build() {
     };
@@ -156087,7 +156586,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "GetPublicAccessBlock", {}).n("S3Client", "GetPublicAccessBlockCommand").sc(schemas_0.GetPublicAccessBlock$).build() {
     };
@@ -156097,7 +156596,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "HeadBucket", {}).n("S3Client", "HeadBucketCommand").sc(schemas_0.HeadBucket$).build() {
     };
@@ -156108,9 +156607,9 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2),
-        middlewareSdkS3.getS3ExpiresMiddlewarePlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2),
+        s3.getS3ExpiresMiddlewarePlugin(config2)
       ];
     }).s("AmazonS3", "HeadObject", {}).n("S3Client", "HeadObjectCommand").sc(schemas_0.HeadObject$).build() {
     };
@@ -156121,7 +156620,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListBucketAnalyticsConfigurations", {}).n("S3Client", "ListBucketAnalyticsConfigurationsCommand").sc(schemas_0.ListBucketAnalyticsConfigurations$).build() {
     };
@@ -156132,7 +156631,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListBucketIntelligentTieringConfigurations", {}).n("S3Client", "ListBucketIntelligentTieringConfigurationsCommand").sc(schemas_0.ListBucketIntelligentTieringConfigurations$).build() {
     };
@@ -156143,7 +156642,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListBucketInventoryConfigurations", {}).n("S3Client", "ListBucketInventoryConfigurationsCommand").sc(schemas_0.ListBucketInventoryConfigurations$).build() {
     };
@@ -156154,14 +156653,14 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListBucketMetricsConfigurations", {}).n("S3Client", "ListBucketMetricsConfigurationsCommand").sc(schemas_0.ListBucketMetricsConfigurations$).build() {
     };
     var ListBucketsCommand = class extends client.Command.classBuilder().ep(commonParams5).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListBuckets", {}).n("S3Client", "ListBucketsCommand").sc(schemas_0.ListBuckets$).build() {
     };
@@ -156171,7 +156670,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListDirectoryBuckets", {}).n("S3Client", "ListDirectoryBucketsCommand").sc(schemas_0.ListDirectoryBuckets$).build() {
     };
@@ -156182,7 +156681,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListMultipartUploads", {}).n("S3Client", "ListMultipartUploadsCommand").sc(schemas_0.ListMultipartUploads$).build() {
     };
@@ -156193,7 +156692,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListObjects", {}).n("S3Client", "ListObjectsCommand").sc(schemas_0.ListObjects$).build() {
     };
@@ -156204,7 +156703,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListObjectsV2", {}).n("S3Client", "ListObjectsV2Command").sc(schemas_0.ListObjectsV2$).build() {
     };
@@ -156215,7 +156714,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "ListObjectVersions", {}).n("S3Client", "ListObjectVersionsCommand").sc(schemas_0.ListObjectVersions$).build() {
     };
@@ -156226,8 +156725,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "ListParts", {}).n("S3Client", "ListPartsCommand").sc(schemas_0.ListParts$).build() {
     };
@@ -156335,7 +156834,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutBucketLifecycleConfiguration", {}).n("S3Client", "PutBucketLifecycleConfigurationCommand").sc(schemas_0.PutBucketLifecycleConfiguration$).build() {
     };
@@ -156478,7 +156977,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutObjectAcl", {}).n("S3Client", "PutObjectAclCommand").sc(schemas_0.PutObjectAcl$).build() {
     };
@@ -156493,9 +156992,9 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: false
         }),
-        middlewareSdkS3.getCheckContentLengthHeaderPlugin(config2),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getCheckContentLengthHeaderPlugin(config2),
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "PutObject", {}).n("S3Client", "PutObjectCommand").sc(schemas_0.PutObject$).build() {
     };
@@ -156509,7 +157008,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutObjectLegalHold", {}).n("S3Client", "PutObjectLegalHoldCommand").sc(schemas_0.PutObjectLegalHold$).build() {
     };
@@ -156523,7 +157022,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutObjectLockConfiguration", {}).n("S3Client", "PutObjectLockConfigurationCommand").sc(schemas_0.PutObjectLockConfiguration$).build() {
     };
@@ -156537,7 +157036,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutObjectRetention", {}).n("S3Client", "PutObjectRetentionCommand").sc(schemas_0.PutObjectRetention$).build() {
     };
@@ -156551,7 +157050,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "PutObjectTagging", {}).n("S3Client", "PutObjectTaggingCommand").sc(schemas_0.PutObjectTagging$).build() {
     };
@@ -156576,7 +157075,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "RenameObject", {}).n("S3Client", "RenameObjectCommand").sc(schemas_0.RenameObject$).build() {
     };
@@ -156590,7 +157089,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: false
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "RestoreObject", {}).n("S3Client", "RestoreObjectCommand").sc(schemas_0.RestoreObject$).build() {
     };
@@ -156600,7 +157099,7 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "SelectObjectContent", {
       eventStream: {
@@ -156646,7 +157145,7 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: true
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2)
       ];
     }).s("AmazonS3", "UpdateObjectEncryption", {}).n("S3Client", "UpdateObjectEncryptionCommand").sc(schemas_0.UpdateObjectEncryption$).build() {
     };
@@ -156661,8 +157160,8 @@ var require_dist_cjs43 = __commonJS({
           requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
           requestChecksumRequired: false
         }),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "UploadPart", {}).n("S3Client", "UploadPartCommand").sc(schemas_0.UploadPart$).build() {
     };
@@ -156673,8 +157172,8 @@ var require_dist_cjs43 = __commonJS({
     }).m(function(Command3, cs, config2, o2) {
       return [
         endpoints.getEndpointPlugin(config2, Command3.getEndpointParameterInstructions()),
-        middlewareSdkS3.getThrow200ExceptionsPlugin(config2),
-        middlewareSsec.getSsecPlugin(config2)
+        s3.getThrow200ExceptionsPlugin(config2),
+        s3.getSsecPlugin(config2)
       ];
     }).s("AmazonS3", "UploadPartCopy", {}).n("S3Client", "UploadPartCopyCommand").sc(schemas_0.UploadPartCopy$).build() {
     };
@@ -157588,10 +158087,10 @@ var require_package18 = __commonJS({
     module2.exports = {
       name: "@aws-sdk/client-resource-groups-tagging-api",
       description: "AWS SDK for JavaScript Resource Groups Tagging Api Client for Node.js, Browser and React Native",
-      version: "3.1057.0",
+      version: "3.1067.0",
       scripts: {
         build: "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
-        "build:cjs": "node ../../scripts/compilation/inline client-resource-groups-tagging-api",
+        "build:cjs": "node ../../scripts/compilation/inline",
         "build:es": "tsc -p tsconfig.es.json",
         "build:include:deps": 'yarn g:turbo run build -F="$npm_package_name"',
         "build:types": "tsc -p tsconfig.types.json",
@@ -157608,13 +158107,13 @@ var require_package18 = __commonJS({
       dependencies: {
         "@aws-crypto/sha256-browser": "5.2.0",
         "@aws-crypto/sha256-js": "5.2.0",
-        "@aws-sdk/core": "^3.974.15",
-        "@aws-sdk/credential-provider-node": "^3.972.47",
-        "@aws-sdk/types": "^3.973.9",
-        "@smithy/core": "^3.24.5",
-        "@smithy/fetch-http-handler": "^5.4.5",
-        "@smithy/node-http-handler": "^4.7.5",
-        "@smithy/types": "^4.14.2",
+        "@aws-sdk/core": "^3.974.20",
+        "@aws-sdk/credential-provider-node": "^3.972.55",
+        "@aws-sdk/types": "^3.973.12",
+        "@smithy/core": "^3.24.6",
+        "@smithy/fetch-http-handler": "^5.4.6",
+        "@smithy/node-http-handler": "^4.7.6",
+        "@smithy/types": "^4.14.3",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -157640,7 +158139,7 @@ var require_package18 = __commonJS({
       ],
       author: {
         name: "AWS SDK for JavaScript Team",
-        url: "https://aws.amazon.com/javascript/"
+        url: "https://aws.amazon.com/sdk-for-javascript/"
       },
       license: "Apache-2.0",
       browser: {
@@ -158498,7 +158997,7 @@ var require_runtimeConfig18 = __commonJS({
 });
 
 // node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/index.js
-var require_dist_cjs44 = __commonJS({
+var require_dist_cjs39 = __commonJS({
   "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/index.js"(exports2) {
     "use strict";
     var client$1 = (init_client3(), __toCommonJS(client_exports2));
@@ -161029,7 +161528,7 @@ var actionContract = {
   description: "Resolve the best API spec source for the current service repository.",
   inputs: {
     "aws-region": {
-      description: "AWS region used to resolve API Gateway resources",
+      description: "AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers.",
       required: true
     },
     "gateway-id": {
@@ -168517,7 +169016,7 @@ var SnsSdkClient = class {
 };
 
 // src/lib/aws/s3-client.ts
-var import_client_s3 = __toESM(require_dist_cjs43(), 1);
+var import_client_s3 = __toESM(require_dist_cjs38(), 1);
 var import_node_http_handler20 = __toESM(require_dist_cjs9(), 1);
 async function readObjectBody(body) {
   if (!body) return "";
@@ -168560,7 +169059,7 @@ var S3SdkClient = class {
 };
 
 // src/lib/aws/tagging-client.ts
-var import_client_resource_groups_tagging_api = __toESM(require_dist_cjs44(), 1);
+var import_client_resource_groups_tagging_api = __toESM(require_dist_cjs39(), 1);
 var import_node_http_handler21 = __toESM(require_dist_cjs9(), 1);
 var TaggingSdkClient = class {
   client;
@@ -170166,8 +170665,396 @@ async function execute(inputs, dependencies) {
   };
 }
 
+// node_modules/@postman-cse/automation-telemetry-core/dist/ci-context.js
+function norm(value) {
+  const trimmed = (value ?? "").trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+}
+function detectEventTrigger(env2 = process.env) {
+  const ghEvent = norm(env2.GITHUB_EVENT_NAME)?.toLowerCase();
+  if (ghEvent) {
+    if (ghEvent === "push")
+      return "push";
+    if (ghEvent === "pull_request" || ghEvent === "pull_request_target")
+      return "pull_request";
+    if (ghEvent === "schedule")
+      return "schedule";
+    if (ghEvent === "workflow_dispatch" || ghEvent === "repository_dispatch")
+      return "manual";
+    return "other";
+  }
+  const glSource = norm(env2.CI_PIPELINE_SOURCE)?.toLowerCase();
+  if (glSource) {
+    if (glSource === "push")
+      return "push";
+    if (glSource === "merge_request_event")
+      return "pull_request";
+    if (glSource === "schedule")
+      return "schedule";
+    if (glSource === "web" || glSource === "api" || glSource === "trigger" || glSource === "pipeline") {
+      return "manual";
+    }
+    return "other";
+  }
+  if (norm(env2.BITBUCKET_PR_ID))
+    return "pull_request";
+  if (norm(env2.CI) || norm(env2.BUILD_BUILDID) || norm(env2.JENKINS_URL) || norm(env2.TEAMCITY_VERSION)) {
+    return "other";
+  }
+  return "unknown";
+}
+function detectRunnerOs(env2 = process.env) {
+  const runnerOs = norm(env2.RUNNER_OS)?.toLowerCase();
+  if (runnerOs === "linux")
+    return "linux";
+  if (runnerOs === "macos")
+    return "macos";
+  if (runnerOs === "windows")
+    return "windows";
+  const platform3 = typeof process !== "undefined" ? process.platform : void 0;
+  if (platform3 === "linux")
+    return "linux";
+  if (platform3 === "darwin")
+    return "macos";
+  if (platform3 === "win32")
+    return "windows";
+  return "unknown";
+}
+function detectCiContext(env2 = process.env) {
+  const provider = detectCiProviderContext(env2);
+  return {
+    ...provider,
+    eventTrigger: detectEventTrigger(env2),
+    runnerOs: detectRunnerOs(env2)
+  };
+}
+function detectCiProviderContext(env2 = process.env) {
+  if (norm(env2.GITHUB_ACTIONS)) {
+    const runnerEnv = norm(env2.RUNNER_ENVIRONMENT);
+    const runnerKind = runnerEnv === "github-hosted" ? "hosted" : runnerEnv === "self-hosted" ? "self-hosted" : "unknown";
+    return {
+      ciProvider: "github",
+      runId: norm(env2.GITHUB_RUN_ID),
+      runnerKind
+    };
+  }
+  if (norm(env2.GITLAB_CI)) {
+    return {
+      ciProvider: "gitlab",
+      runId: norm(env2.CI_PIPELINE_ID) ?? norm(env2.CI_PIPELINE_IID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.CIRCLECI)) {
+    return {
+      ciProvider: "circleci",
+      runId: norm(env2.CIRCLE_WORKFLOW_ID) ?? norm(env2.CIRCLE_BUILD_NUM),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.BUILDKITE)) {
+    const computeType = norm(env2.BUILDKITE_COMPUTE_TYPE);
+    const runnerKind = computeType === "hosted" ? "hosted" : computeType === "self-hosted" ? "self-hosted" : "unknown";
+    return {
+      ciProvider: "buildkite",
+      runId: norm(env2.BUILDKITE_BUILD_ID) ?? norm(env2.BUILDKITE_BUILD_NUMBER),
+      runnerKind
+    };
+  }
+  if (norm(env2.TF_BUILD)) {
+    return {
+      ciProvider: "azure",
+      runId: norm(env2.BUILD_BUILDID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.CODEBUILD_BUILD_ID)) {
+    return {
+      ciProvider: "codebuild",
+      runId: norm(env2.CODEBUILD_BUILD_ID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.BITBUCKET_BUILD_NUMBER)) {
+    return {
+      ciProvider: "bitbucket",
+      runId: norm(env2.BITBUCKET_BUILD_NUMBER),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.TEAMCITY_VERSION)) {
+    return {
+      ciProvider: "teamcity",
+      runId: norm(env2.BUILD_NUMBER),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.HARNESS_BUILD_ID)) {
+    return {
+      ciProvider: "harness",
+      runId: norm(env2.HARNESS_EXECUTION_ID) ?? norm(env2.HARNESS_BUILD_ID),
+      runnerKind: "unknown"
+    };
+  }
+  if (norm(env2.JENKINS_URL)) {
+    return {
+      ciProvider: "jenkins",
+      runId: norm(env2.BUILD_ID) ?? norm(env2.BUILD_NUMBER) ?? norm(env2.BUILD_TAG),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.ATC_EXTERNAL_URL) || norm(env2.BUILD_ID) && norm(env2.BUILD_PIPELINE_NAME)) {
+    return {
+      ciProvider: "concourse",
+      runId: norm(env2.BUILD_ID) ?? norm(env2.BUILD_NAME),
+      runnerKind: "self-hosted"
+    };
+  }
+  if (norm(env2.CI)) {
+    return { ciProvider: "other", runnerKind: "unknown" };
+  }
+  return { ciProvider: "unknown", runnerKind: "unknown" };
+}
+
+// node_modules/@postman-cse/automation-telemetry-core/dist/repo-context.js
+function normalize3(value) {
+  const trimmed = (value ?? "").trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+}
+function normalizeRepoUrl2(url) {
+  const raw = normalize3(url);
+  if (!raw) {
+    return void 0;
+  }
+  const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
+  if (sshMatch) {
+    const host = sshMatch[1];
+    const path15 = sshMatch[2];
+    return `https://${host}/${path15}`;
+  }
+  return raw.replace(/\.git$/, "");
+}
+function parseProvider2(explicitProvider, repoUrl, env2) {
+  const explicit = normalize3(explicitProvider)?.toLowerCase();
+  if (explicit === "github" || explicit === "gitlab" || explicit === "bitbucket" || explicit === "azure-devops") {
+    return explicit;
+  }
+  const url = (repoUrl ?? "").toLowerCase();
+  if (url.includes("github")) {
+    return "github";
+  }
+  if (url.includes("gitlab")) {
+    return "gitlab";
+  }
+  if (url.includes("bitbucket")) {
+    return "bitbucket";
+  }
+  if (url.includes("dev.azure.com") || url.includes("visualstudio.com")) {
+    return "azure-devops";
+  }
+  if (normalize3(env2.GITHUB_REPOSITORY)) {
+    return "github";
+  }
+  if (normalize3(env2.CI_PROJECT_PATH) || normalize3(env2.GITLAB_CI)) {
+    return "gitlab";
+  }
+  if (normalize3(env2.BITBUCKET_REPO_SLUG)) {
+    return "bitbucket";
+  }
+  if (normalize3(env2.BUILD_REPOSITORY_URI)) {
+    return "azure-devops";
+  }
+  return "unknown";
+}
+function classifyRefKind(env2 = process.env) {
+  const githubRefType = normalize3(env2.GITHUB_REF_TYPE)?.toLowerCase();
+  const githubRef = normalize3(env2.GITHUB_REF);
+  const azureRef = normalize3(env2.BUILD_SOURCEBRANCH);
+  if (githubRefType === "tag" || githubRef?.startsWith("refs/tags/") || normalize3(env2.CI_COMMIT_TAG) || normalize3(env2.BITBUCKET_TAG) || azureRef?.startsWith("refs/tags/")) {
+    return "tag";
+  }
+  const githubRefName = normalize3(env2.GITHUB_REF_NAME);
+  const githubDefault = normalize3(env2.GITHUB_DEFAULT_BRANCH);
+  if (githubRefName && githubDefault) {
+    return githubRefName === githubDefault ? "default-branch" : "branch";
+  }
+  const gitlabRef = normalize3(env2.CI_COMMIT_REF_NAME);
+  const gitlabDefault = normalize3(env2.CI_DEFAULT_BRANCH);
+  if (gitlabRef && gitlabDefault) {
+    return gitlabRef === gitlabDefault ? "default-branch" : "branch";
+  }
+  if (githubRefName || githubRef?.startsWith("refs/heads/") || gitlabRef || normalize3(env2.BITBUCKET_BRANCH) || normalize3(env2.BUILD_SOURCEBRANCHNAME) || azureRef?.startsWith("refs/heads/")) {
+    return "branch";
+  }
+  return "unknown";
+}
+function detectRepoContext2(input, env2 = process.env) {
+  const repoUrl = normalizeRepoUrl2(input.repoUrl) ?? normalizeRepoUrl2(env2.GITHUB_SERVER_URL && env2.GITHUB_REPOSITORY ? `${env2.GITHUB_SERVER_URL}/${env2.GITHUB_REPOSITORY}` : void 0) ?? normalizeRepoUrl2(env2.CI_PROJECT_URL) ?? normalizeRepoUrl2(env2.BITBUCKET_GIT_HTTP_ORIGIN) ?? normalizeRepoUrl2(env2.BUILD_REPOSITORY_URI);
+  const repoSlug = normalize3(input.repoSlug) ?? normalize3(env2.GITHUB_REPOSITORY) ?? normalize3(env2.CI_PROJECT_PATH) ?? (env2.BITBUCKET_WORKSPACE && env2.BITBUCKET_REPO_SLUG ? normalize3(`${env2.BITBUCKET_WORKSPACE}/${env2.BITBUCKET_REPO_SLUG}`) : void 0) ?? normalize3(env2.BUILD_REPOSITORY_NAME);
+  const ref = normalize3(input.ref) ?? normalize3(env2.GITHUB_REF_NAME) ?? normalize3(env2.CI_COMMIT_REF_NAME) ?? normalize3(env2.BITBUCKET_BRANCH) ?? normalize3(env2.BUILD_SOURCEBRANCHNAME);
+  const sha = normalize3(input.sha) ?? normalize3(env2.GITHUB_SHA) ?? normalize3(env2.CI_COMMIT_SHA) ?? normalize3(env2.BITBUCKET_COMMIT) ?? normalize3(env2.BUILD_SOURCEVERSION);
+  const provider = parseProvider2(input.gitProvider, repoUrl, env2);
+  const refKind = classifyRefKind(env2);
+  return {
+    provider,
+    repoUrl,
+    repoSlug,
+    ref,
+    sha,
+    refKind
+  };
+}
+
+// node_modules/@postman-cse/automation-telemetry-core/dist/telemetry.js
+var import_node_crypto4 = require("node:crypto");
+var import_undici2 = __toESM(require_undici(), 1);
+var SCHEMA_VERSION = 3;
+var DEFAULT_TIMEOUT_MS2 = 1500;
+var DEFAULT_ENDPOINT = "https://events.pm-cse.dev/v1/events";
+var proxyDispatcher;
+function getProxyDispatcher() {
+  return proxyDispatcher ??= new import_undici2.EnvHttpProxyAgent();
+}
+function resolveActionVersion(explicit) {
+  if (explicit) {
+    return explicit;
+  }
+  return "1.0.4" ? "1.0.4" : "unknown";
+}
+function telemetryDisabled(env2) {
+  const flag = String(env2.POSTMAN_ACTIONS_TELEMETRY ?? "").trim().toLowerCase();
+  if (flag === "off" || flag === "0" || flag === "false" || flag === "no") {
+    return true;
+  }
+  const dnt = String(env2.DO_NOT_TRACK ?? "").trim().toLowerCase();
+  if (dnt && dnt !== "0" && dnt !== "false") {
+    return true;
+  }
+  return false;
+}
+function sha256(value) {
+  return (0, import_node_crypto4.createHash)("sha256").update(value).digest("hex");
+}
+function accountTypeFromConsumer(consumerType) {
+  const t = (consumerType ?? "").trim().toLowerCase();
+  if (!t) {
+    return "unknown";
+  }
+  return t === "service_account" ? "service" : "user";
+}
+var noticeShown = false;
+function maybeNotice(logger2) {
+  if (noticeShown || !logger2) {
+    return;
+  }
+  noticeShown = true;
+  logger2.info("note: postman-actions sends anonymous usage data (team id, action, CI provider, account type, run trigger, runner OS). Disable with POSTMAN_ACTIONS_TELEMETRY=off or DO_NOT_TRACK=1.");
+}
+function buildTelemetryEvent(params) {
+  const { action, actionVersion, teamId, accountType, outcome, env: env2, now } = params;
+  const ci = detectCiContext(env2);
+  const repo = detectRepoContext2({}, env2);
+  const repoSlug = repo.repoSlug;
+  const repoSource = repoSlug ?? repo.repoUrl;
+  const owner = repoSlug && repoSlug.includes("/") ? repoSlug.split("/")[0] : void 0;
+  return {
+    schema_version: SCHEMA_VERSION,
+    event: "completion",
+    action,
+    action_version: actionVersion || "unknown",
+    team_id: teamId,
+    ci_provider: ci.ciProvider,
+    git_provider: repo.provider,
+    run_id: ci.runId,
+    runner_kind: ci.runnerKind,
+    repo_id: repoSource ? sha256(repoSource) : void 0,
+    org_id: owner ? sha256(owner) : void 0,
+    account_type: accountType,
+    event_trigger: ci.eventTrigger,
+    runner_os: ci.runnerOs,
+    ref_kind: repo.refKind,
+    outcome,
+    ts: now()
+  };
+}
+async function send(event, options) {
+  const env2 = options.env ?? process.env;
+  const endpoint = options.endpoint ?? env2.POSTMAN_ACTIONS_TELEMETRY_ENDPOINT ?? DEFAULT_ENDPOINT;
+  const transport = options.transport ?? import_undici2.fetch;
+  const dispatcher = options.dispatcher ?? getProxyDispatcher();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS2);
+  timer.unref?.();
+  const init = {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(event),
+    signal: controller.signal
+  };
+  init.dispatcher = dispatcher;
+  try {
+    await transport(endpoint, init);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function createTelemetryContext(options) {
+  const env2 = options.env ?? process.env;
+  const now = options.now ?? Date.now;
+  const actionVersion = resolveActionVersion(options.actionVersion);
+  let teamId = "";
+  let accountType = "unknown";
+  let emitted = false;
+  return {
+    setTeamId(value) {
+      if (value) {
+        teamId = String(value);
+      }
+    },
+    setAccountType(consumerType) {
+      accountType = accountTypeFromConsumer(consumerType);
+    },
+    emitCompletion(outcome) {
+      if (emitted) {
+        return;
+      }
+      emitted = true;
+      try {
+        if (telemetryDisabled(env2) || !teamId) {
+          return;
+        }
+        const event = buildTelemetryEvent({
+          action: options.action,
+          actionVersion,
+          teamId,
+          accountType,
+          outcome,
+          env: env2,
+          now
+        });
+        maybeNotice(options.logger);
+        void send(event, options).catch(() => {
+        });
+      } catch {
+      }
+    }
+  };
+}
+
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
+  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: actionCore });
+  telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
+  try {
+    const result = await runActionInner(actionCore, dependencies);
+    telemetry.emitCompletion("success");
+    return result;
+  } catch (error3) {
+    telemetry.emitCompletion("failure");
+    throw error3;
+  }
+}
+async function runActionInner(actionCore = core_exports, dependencies = {}) {
   const inputs = readActionInputs(actionCore);
   const awsClient = dependencies.createAwsClient?.(inputs.awsRegion) ?? new AwsApiGatewaySdkClient(inputs.awsRegion, {
     requestTimeoutMs: inputs.requestTimeoutMs,

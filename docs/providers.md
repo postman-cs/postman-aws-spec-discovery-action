@@ -67,6 +67,36 @@ Native artifacts are preserved as the primary output. The action also emits `ope
 
 This action is read-only against AWS APIs and does not mutate AWS resources.
 
+Recommended GitHub Actions permissions when using AWS OIDC:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+```
+
+`id-token: write` lets `aws-actions/configure-aws-credentials` request a GitHub OIDC token and assume your AWS role. `contents: read` lets the workflow check out the repository so this action can scan repo-local specs and IaC signals. The action itself does not need a GitHub token.
+
+Example trust policy condition for the AWS role:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+  },
+  "Action": "sts:AssumeRoleWithWebIdentity",
+  "Condition": {
+    "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+    },
+    "StringLike": {
+      "token.actions.githubusercontent.com:sub": "repo:ORG/REPO:*"
+    }
+  }
+}
+```
+
 Minimum IAM policy (API Gateway only):
 
 ```json
@@ -265,12 +295,12 @@ spec:
 
 # Simple string -- remote URL
 spec:
-  definition: https://payments.example.com/openapi.yaml
+  definition: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 
 # $text reference -- local path or remote URL
 spec:
   definition:
-    $text: https://payments.example.com/openapi.yaml
+    $text: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 ```
 
 Example `catalog-info.yaml` using a remote OpenAPI document:
@@ -279,12 +309,12 @@ Example `catalog-info.yaml` using a remote OpenAPI document:
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: payments-api
+  name: telecom-api
 spec:
   type: openapi
-  owner: payments-platform
+  owner: api-platform
   lifecycle: production
-  definition: https://payments.example.com/openapi.yaml
+  definition: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 ```
 
 With that file committed at the repo root or inside a bounded service directory, the action resolves the spec URL automatically. No extra action inputs are required.
@@ -296,9 +326,9 @@ If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postm
 Store your spec reference in SSM Parameter Store:
 
 ```
-/postman/specs/{service-name}/url       -> https://api.example.com/openapi.json
+/postman/specs/{service-name}/url       -> https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 /postman/specs/{service-name}/content   -> {"openapi":"3.0.0",...}
-/postman/specs/{service-name}/format    -> openapi-json
+/postman/specs/{service-name}/format    -> openapi-yaml
 ```
 
 The action discovers these automatically. No action configuration needed.
@@ -307,16 +337,16 @@ Example SSM registration with a remote OpenAPI document:
 
 ```bash
 aws ssm put-parameter \
-  --name /postman/specs/payments-api/url \
+  --name /postman/specs/telecom-api/url \
   --type String \
   --overwrite \
-  --value https://payments.example.com/openapi.json
+  --value https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 
 aws ssm put-parameter \
-  --name /postman/specs/payments-api/format \
+  --name /postman/specs/telecom-api/format \
   --type String \
   --overwrite \
-  --value openapi-json
+  --value openapi-yaml
 ```
 
 Once those parameters exist, the action fetches the spec automatically during discovery. No repo changes or action inputs are needed.
@@ -327,10 +357,10 @@ If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversize
 
 ```json
 {
-  "specUrl": "https://api.example.com/openapi.json",
-  "serviceName": "payments-api",
+  "specUrl": "https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml",
+  "serviceName": "telecom-api",
   "registeredVia": "ssm-parameter-store",
-  "fetchError": "HTTP 503 fetching https://api.example.com/openapi.json"
+  "fetchError": "HTTP 503 fetching https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml"
 }
 ```
 
@@ -380,6 +410,8 @@ Preflight and reliability inputs:
 | `preflight-permission-probe` | `true` | Enable the IAM permission probe specifically (requires `preflight-checks`) |
 | `request-timeout-ms` | `30000` | Per-request timeout in milliseconds for AWS SDK calls |
 | `max-attempts` | `3` | AWS SDK retry count for transient failures |
+
+These preflight settings only cover AWS identity and permission checks. Postman credential preflight is configured on the downstream bootstrap or composite action and supports `warn` and `enforce` only.
 
 Repo context overrides (auto-detected from CI environment variables; override only when auto-detection is unavailable or incorrect):
 

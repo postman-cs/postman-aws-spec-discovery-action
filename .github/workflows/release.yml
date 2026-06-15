@@ -54,7 +54,7 @@ jobs:
           done
           if [ "$TAG_VERSION" = "$MAJOR" ]; then
             echo "npm_publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Tag v$TAG_VERSION is the rolling customer preview alias for package version $PKG_VERSION; skipping npm publish."
+            echo "::notice::Tag v$TAG_VERSION is the rolling v1 alias for package version $PKG_VERSION; skipping npm publish."
             exit 0
           fi
           if [ "${#PUBLISH_TAGS[@]}" -eq 2 ]; then
