@@ -9,10 +9,12 @@ import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
 import {
   defaultWriteSpecFile,
   execute,
+  getInput,
   readActionInputs,
   type InputReaderLike,
   type ReporterLike
 } from './runtime.js';
+import { resolveTelemetryAccountType } from './lib/postman/credential-identity.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
@@ -32,11 +34,16 @@ export async function runAction(
 ): Promise<DiscoveredService[]> {
   const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: actionCore });
   telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
+  // Optional access-token telemetry enrichment (D1): resolve account_type once,
+  // best-effort, and set it before either completion emit.
+  const accountType = await resolveTelemetryAccountType(getInput('postman-access-token'));
   try {
     const result = await runActionInner(actionCore, dependencies);
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion('success');
     return result;
   } catch (error) {
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion('failure');
     throw error;
   }

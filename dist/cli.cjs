@@ -159854,6 +159854,11 @@ var actionContract = {
       description: "Directory under the repository root where generated specs are written.",
       required: false,
       default: "discovered-specs"
+    },
+    "postman-access-token": {
+      description: "Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. Not used for any AWS or Postman asset operation.",
+      required: false,
+      default: ""
     }
   },
   outputs: {
@@ -168125,6 +168130,93 @@ async function execute(inputs, dependencies) {
   };
 }
 
+// src/lib/postman/credential-identity.ts
+var sessionPath = "/api/sessions/current";
+var DEFAULT_IAPUB_BASE_URL = "https://iapub.postman.co";
+var sessionMemo = /* @__PURE__ */ new Map();
+var memoizedSessionIdentity;
+function asRecord(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return void 0;
+  }
+  return value;
+}
+function coerceId(raw) {
+  return raw ? String(raw) : void 0;
+}
+function coerceText(raw) {
+  if (typeof raw !== "string") {
+    return void 0;
+  }
+  const trimmed = raw.trim();
+  return trimmed ? trimmed : void 0;
+}
+function normalizeBaseUrl(raw) {
+  return String(raw || "").replace(/\/+$/, "");
+}
+async function resolveSessionIdentity(opts) {
+  const accessToken = String(opts.accessToken || "").trim();
+  if (!accessToken) {
+    return void 0;
+  }
+  const baseUrl = normalizeBaseUrl(opts.iapubBaseUrl);
+  const memoKey = `${baseUrl}::${accessToken}`;
+  let pending = sessionMemo.get(memoKey);
+  if (!pending) {
+    pending = probeSessionIdentity(baseUrl, accessToken, opts.fetchImpl ?? fetch);
+    sessionMemo.set(memoKey, pending);
+  }
+  return pending;
+}
+async function resolveTelemetryAccountType(accessToken, fetchImpl) {
+  const token = String(accessToken || "").trim();
+  if (!token) {
+    return void 0;
+  }
+  const identity = await resolveSessionIdentity({
+    iapubBaseUrl: DEFAULT_IAPUB_BASE_URL,
+    accessToken: token,
+    ...fetchImpl ? { fetchImpl } : {}
+  }).catch(() => void 0);
+  return identity?.consumerType;
+}
+async function probeSessionIdentity(baseUrl, accessToken, fetchImpl) {
+  try {
+    const response = await fetchImpl(`${baseUrl}${sessionPath}`, {
+      method: "GET",
+      headers: { "x-access-token": accessToken }
+    });
+    if (!response.ok) {
+      return void 0;
+    }
+    const payload2 = asRecord(await response.json());
+    if (!payload2) {
+      return void 0;
+    }
+    const root5 = asRecord(payload2.session) ?? payload2;
+    const identity = asRecord(root5.identity);
+    const data2 = asRecord(root5.data);
+    const user = asRecord(data2?.user);
+    const roleEntries = Array.isArray(user?.roles) ? user.roles.map((entry) => coerceText(entry) ?? coerceId(entry)).filter((entry) => Boolean(entry)) : [];
+    const singleRole = coerceText(user?.role);
+    const roles = roleEntries.length > 0 ? roleEntries : singleRole ? [singleRole] : void 0;
+    const resolved = {
+      source: "iapub/sessions",
+      userId: coerceId(identity?.user) ?? coerceId(user?.id),
+      fullName: coerceText(user?.fullName) ?? coerceText(user?.name) ?? coerceText(user?.username),
+      teamId: coerceId(identity?.team),
+      teamName: coerceText(user?.teamName),
+      teamDomain: coerceText(identity?.domain),
+      ...roles ? { roles } : {},
+      consumerType: coerceText(root5.consumerType) ?? coerceText(data2?.consumerType) ?? coerceText(user?.consumerType)
+    };
+    memoizedSessionIdentity = resolved;
+    return resolved;
+  } catch {
+    return void 0;
+  }
+}
+
 // node_modules/@postman-cse/automation-telemetry-core/dist/ci-context.js
 function norm(value) {
   const trimmed = (value ?? "").trim();
@@ -168613,6 +168705,9 @@ async function runCli(argv = process.argv.slice(2)) {
   const reporter = new ConsoleReporter();
   const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: reporter });
   telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
+  const accountType = await resolveTelemetryAccountType(
+    config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? process.env.POSTMAN_ACCESS_TOKEN
+  );
   try {
     const result = await execute(inputs, {
       core: reporter,
@@ -168626,8 +168721,10 @@ async function runCli(argv = process.argv.slice(2)) {
     await writeOptionalFile(config.dotenvPath, toDotenv(result.outputs));
     process.stdout.write(`${JSON.stringify(result, null, 2)}
 `);
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion("success");
   } catch (error2) {
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion("failure");
     throw error2;
   }
