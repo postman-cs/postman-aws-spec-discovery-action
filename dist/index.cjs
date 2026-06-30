@@ -9195,14 +9195,14 @@ var require_retry_agent = __commonJS({
         this.#options = options;
       }
       dispatch(opts, handler) {
-        const retry = new RetryHandler({
+        const retry2 = new RetryHandler({
           ...opts,
           retryOptions: this.#options
         }, {
           dispatch: this.#agent.dispatch.bind(this.#agent),
           handler
         });
-        return this.#agent.dispatch(opts, retry);
+        return this.#agent.dispatch(opts, retry2);
       }
       close() {
         return this.#agent.close();
@@ -33482,7 +33482,7 @@ var require_dist_cjs8 = __commonJS({
         req.end();
       });
     }
-    var retry = (toRetry, maxRetries) => {
+    var retry2 = (toRetry, maxRetries) => {
       let promise = toRetry();
       for (let i5 = 0; i5 < maxRetries; i5++) {
         promise = promise.catch(toRetry);
@@ -33494,7 +33494,7 @@ var require_dist_cjs8 = __commonJS({
     var ENV_CMDS_AUTH_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN";
     var fromContainerMetadata = (init = {}) => {
       const { timeout, maxRetries } = providerConfigFromInit(init);
-      return () => retry(async () => {
+      return () => retry2(async () => {
         const requestOptions = await getCmdsUri({ logger: init.logger });
         const credsResponse = JSON.parse(await requestFromEcsImds(timeout, requestOptions));
         if (!isImdsCredentials(credsResponse)) {
@@ -33686,7 +33686,7 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
             throw new InstanceMetadataV1FallbackError(`AWS EC2 Metadata v1 fallback has been blocked by AWS SDK configuration in the following: [${causes.join(", ")}].`);
           }
         }
-        const imdsProfile = (await retry(async () => {
+        const imdsProfile = (await retry2(async () => {
           let profile2;
           try {
             profile2 = await getProfile(options);
@@ -33698,7 +33698,7 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL);
           }
           return profile2;
         }, maxRetries2)).trim();
-        return retry(async () => {
+        return retry2(async () => {
           let creds;
           try {
             creds = await getCredentialsFromProfile(imdsProfile, options, init);
@@ -48831,7 +48831,7 @@ var require_dist_cjs20 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider();
     var runtimeConfig = require_runtimeConfig();
@@ -48901,7 +48901,7 @@ var require_dist_cjs20 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -48910,7 +48910,7 @@ var require_dist_cjs20 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -54351,7 +54351,7 @@ var require_dist_cjs21 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider2();
     var runtimeConfig = require_runtimeConfig2();
@@ -54421,7 +54421,7 @@ var require_dist_cjs21 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -54430,7 +54430,7 @@ var require_dist_cjs21 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -56568,7 +56568,7 @@ var require_dist_cjs22 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider3();
     var runtimeConfig = require_runtimeConfig3();
@@ -56640,7 +56640,7 @@ var require_dist_cjs22 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -56649,7 +56649,7 @@ var require_dist_cjs22 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -67884,7 +67884,7 @@ var require_dist_cjs23 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider4();
     var runtimeConfig = require_runtimeConfig4();
@@ -67954,7 +67954,7 @@ var require_dist_cjs23 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -67963,7 +67963,7 @@ var require_dist_cjs23 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -70373,7 +70373,7 @@ var require_dist_cjs24 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider5();
     var runtimeConfig = require_runtimeConfig5();
@@ -70443,7 +70443,7 @@ var require_dist_cjs24 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -70452,7 +70452,7 @@ var require_dist_cjs24 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -75980,7 +75980,7 @@ var require_dist_cjs25 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider6();
     var runtimeConfig = require_runtimeConfig6();
@@ -76050,7 +76050,7 @@ var require_dist_cjs25 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -76059,7 +76059,7 @@ var require_dist_cjs25 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -93752,7 +93752,7 @@ var require_dist_cjs26 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider7();
     var runtimeConfig = require_runtimeConfig7();
@@ -93822,7 +93822,7 @@ var require_dist_cjs26 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -93831,7 +93831,7 @@ var require_dist_cjs26 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -102226,7 +102226,7 @@ var require_dist_cjs27 = __commonJS({
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var eventStreams = (init_event_streams(), __toCommonJS(event_streams_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider8();
     var runtimeConfig = require_runtimeConfig8();
@@ -102296,7 +102296,7 @@ var require_dist_cjs27 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -102306,7 +102306,7 @@ var require_dist_cjs27 = __commonJS({
         this.config = _config_9;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -107054,7 +107054,7 @@ var require_dist_cjs28 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider9();
     var runtimeConfig = require_runtimeConfig9();
@@ -107124,7 +107124,7 @@ var require_dist_cjs28 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -107133,7 +107133,7 @@ var require_dist_cjs28 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -109707,7 +109707,7 @@ var require_dist_cjs29 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider10();
     var runtimeConfig = require_runtimeConfig10();
@@ -109777,7 +109777,7 @@ var require_dist_cjs29 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -109786,7 +109786,7 @@ var require_dist_cjs29 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -116006,7 +116006,7 @@ var require_dist_cjs30 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider11();
     var runtimeConfig = require_runtimeConfig11();
@@ -116076,7 +116076,7 @@ var require_dist_cjs30 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -116085,7 +116085,7 @@ var require_dist_cjs30 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -121250,7 +121250,7 @@ var require_dist_cjs31 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider12();
     var runtimeConfig = require_runtimeConfig12();
@@ -121320,7 +121320,7 @@ var require_dist_cjs31 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -121329,7 +121329,7 @@ var require_dist_cjs31 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -124957,7 +124957,7 @@ var require_dist_cjs32 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider13();
     var runtimeConfig = require_runtimeConfig13();
@@ -125027,7 +125027,7 @@ var require_dist_cjs32 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -125036,7 +125036,7 @@ var require_dist_cjs32 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -128561,7 +128561,7 @@ var require_dist_cjs33 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider14();
     var runtimeConfig = require_runtimeConfig14();
@@ -128631,7 +128631,7 @@ var require_dist_cjs33 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -128640,7 +128640,7 @@ var require_dist_cjs33 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -140553,7 +140553,7 @@ var require_dist_cjs34 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider15();
     var runtimeConfig = require_runtimeConfig15();
@@ -140623,7 +140623,7 @@ var require_dist_cjs34 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -140632,7 +140632,7 @@ var require_dist_cjs34 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -145161,7 +145161,7 @@ var require_dist_cjs35 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider16();
     var runtimeConfig = require_runtimeConfig16();
@@ -145231,7 +145231,7 @@ var require_dist_cjs35 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -145240,7 +145240,7 @@ var require_dist_cjs35 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -155864,7 +155864,7 @@ var require_dist_cjs38 = __commonJS({
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var eventStreams = (init_event_streams(), __toCommonJS(event_streams_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider17();
     var schemas_0 = require_schemas_017();
@@ -155957,7 +155957,7 @@ var require_dist_cjs38 = __commonJS({
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
         const _config_3 = middlewareFlexibleChecksums.resolveFlexibleChecksumsConfig(_config_2);
-        const _config_4 = retry.resolveRetryConfig(_config_3);
+        const _config_4 = retry2.resolveRetryConfig(_config_3);
         const _config_5 = config.resolveRegionConfig(_config_4);
         const _config_6 = client$1.resolveHostHeaderConfig(_config_5);
         const _config_7 = endpoints.resolveEndpointConfig(_config_6);
@@ -155968,7 +155968,7 @@ var require_dist_cjs38 = __commonJS({
         this.config = _config_11;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -159006,7 +159006,7 @@ var require_dist_cjs39 = __commonJS({
     var config = (init_config2(), __toCommonJS(config_exports));
     var endpoints = (init_endpoints(), __toCommonJS(endpoints_exports));
     var protocols = (init_protocols(), __toCommonJS(protocols_exports));
-    var retry = (init_retry2(), __toCommonJS(retry_exports));
+    var retry2 = (init_retry2(), __toCommonJS(retry_exports));
     var schema = (init_schema(), __toCommonJS(schema_exports));
     var httpAuthSchemeProvider = require_httpAuthSchemeProvider18();
     var runtimeConfig = require_runtimeConfig18();
@@ -159076,7 +159076,7 @@ var require_dist_cjs39 = __commonJS({
         this.initConfig = _config_0;
         const _config_1 = resolveClientEndpointParameters5(_config_0);
         const _config_2 = client$1.resolveUserAgentConfig(_config_1);
-        const _config_3 = retry.resolveRetryConfig(_config_2);
+        const _config_3 = retry2.resolveRetryConfig(_config_2);
         const _config_4 = config.resolveRegionConfig(_config_3);
         const _config_5 = client$1.resolveHostHeaderConfig(_config_4);
         const _config_6 = endpoints.resolveEndpointConfig(_config_5);
@@ -159085,7 +159085,7 @@ var require_dist_cjs39 = __commonJS({
         this.config = _config_8;
         this.middlewareStack.use(schema.getSchemaSerdePlugin(this.config));
         this.middlewareStack.use(client$1.getUserAgentPlugin(this.config));
-        this.middlewareStack.use(retry.getRetryPlugin(this.config));
+        this.middlewareStack.use(retry2.getRetryPlugin(this.config));
         this.middlewareStack.use(protocols.getContentLengthPlugin(this.config));
         this.middlewareStack.use(client$1.getHostHeaderPlugin(this.config));
         this.middlewareStack.use(client$1.getLoggerPlugin(this.config));
@@ -161546,8 +161546,13 @@ var actionContract = {
       required: false,
       default: "discovered-specs"
     },
+    "postman-api-key": {
+      description: "Optional service-account PMAK used to mint or re-mint a postman-access-token for telemetry enrichment (account_type). Not used for any AWS or Postman asset operation.",
+      required: false,
+      default: ""
+    },
     "postman-access-token": {
-      description: "Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. Not used for any AWS or Postman asset operation.",
+      description: "Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. When omitted, postman-api-key alone can mint one for the same purpose. Not used for any AWS or Postman asset operation.",
       required: false,
       default: ""
     }
@@ -170757,6 +170762,199 @@ async function probeSessionIdentity(baseUrl, accessToken, fetchImpl) {
   }
 }
 
+// src/lib/retry.ts
+function sleep2(delayMs) {
+  return new Promise((resolve2) => {
+    setTimeout(resolve2, delayMs);
+  });
+}
+function normalizeRetryOptions(options) {
+  return {
+    maxAttempts: Math.max(1, options.maxAttempts ?? 3),
+    delayMs: Math.max(0, options.delayMs ?? 2e3),
+    backoffMultiplier: Math.max(1, options.backoffMultiplier ?? 1),
+    maxDelayMs: options.maxDelayMs === void 0 ? Number.POSITIVE_INFINITY : Math.max(0, options.maxDelayMs),
+    onRetry: options.onRetry ?? (async () => void 0),
+    shouldRetry: options.shouldRetry ?? (() => true),
+    sleep: options.sleep ?? sleep2
+  };
+}
+async function retry(operation2, options = {}) {
+  const normalized = normalizeRetryOptions(options);
+  let nextDelayMs = normalized.delayMs;
+  for (let attempt = 1; attempt <= normalized.maxAttempts; attempt += 1) {
+    try {
+      return await operation2();
+    } catch (error3) {
+      const shouldRetry = attempt < normalized.maxAttempts && normalized.shouldRetry(error3, {
+        attempt,
+        maxAttempts: normalized.maxAttempts
+      });
+      if (!shouldRetry) {
+        throw error3;
+      }
+      await normalized.onRetry({
+        attempt,
+        maxAttempts: normalized.maxAttempts,
+        delayMs: nextDelayMs,
+        error: error3
+      });
+      await normalized.sleep(nextDelayMs);
+      nextDelayMs = Math.min(
+        normalized.maxDelayMs,
+        Math.round(nextDelayMs * normalized.backoffMultiplier)
+      );
+    }
+  }
+  throw new Error("Retry exhausted without returning or throwing");
+}
+
+// src/lib/postman/base-urls.ts
+var POSTMAN_ENDPOINT_PROFILES = {
+  prod: {
+    apiBaseUrl: "https://api.getpostman.com",
+    iapubBaseUrl: "https://iapub.postman.co"
+  }
+};
+
+// src/lib/postman/token-provider.ts
+var MintError = class extends Error {
+  permanent;
+  constructor(message, permanent) {
+    super(message);
+    this.name = "MintError";
+    this.permanent = permanent;
+  }
+};
+function extractAccessToken(payload2) {
+  if (!payload2 || typeof payload2 !== "object") return void 0;
+  const record = payload2;
+  const direct = record.access_token;
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  const session = record.session;
+  if (session && typeof session === "object") {
+    const token = session.token;
+    if (typeof token === "string" && token.trim()) return token.trim();
+  }
+  return void 0;
+}
+var AccessTokenProvider = class {
+  token;
+  apiKey;
+  apiBaseUrl;
+  fetchImpl;
+  maxAttempts;
+  onToken;
+  sleep;
+  inflight;
+  constructor(options) {
+    this.token = String(options.accessToken || "").trim();
+    this.apiKey = String(options.apiKey || "").trim();
+    this.apiBaseUrl = String(
+      options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl
+    ).replace(/\/+$/, "");
+    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.maxAttempts = Math.max(1, options.maxAttempts ?? 2);
+    this.onToken = options.onToken;
+    this.sleep = options.sleep;
+  }
+  current() {
+    return this.token;
+  }
+  /** True when a PMAK is present, so an expired token can be re-minted. */
+  canRefresh() {
+    return Boolean(this.apiKey);
+  }
+  refresh() {
+    this.inflight ??= this.mintWithRetry().finally(() => {
+      this.inflight = void 0;
+    });
+    return this.inflight;
+  }
+  async mintWithRetry() {
+    if (!this.apiKey) {
+      throw new Error(
+        "postman: the access token expired and cannot be refreshed because no postman-api-key is present. Service-account access tokens expire after about 1 to 1.5 hours. Re-mint a fresh token (postman-resolve-service-token-action) and re-run."
+      );
+    }
+    const token = await retry(() => this.mintOnce(), {
+      maxAttempts: this.maxAttempts,
+      delayMs: 1e3,
+      backoffMultiplier: 2,
+      ...this.sleep ? { sleep: this.sleep } : {},
+      shouldRetry: (error3) => !(error3 instanceof MintError && error3.permanent)
+    });
+    this.token = token;
+    this.onToken?.(token);
+    return token;
+  }
+  async mintOnce() {
+    const response = await this.fetchImpl(`${this.apiBaseUrl}/service-account-tokens`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": this.apiKey
+      },
+      body: JSON.stringify({ apiKey: this.apiKey })
+    });
+    const body = await response.text().catch(() => "");
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 401 || status === 403) {
+        throw new MintError(
+          `postman: re-mint failed because the postman-api-key was rejected (PMAK rejected, HTTP ${status}); confirm it is a valid, enabled service-account PMAK for the intended team.`,
+          true
+        );
+      }
+      if (status === 400 && body.toLowerCase().includes("service accounts not enabled")) {
+        throw new MintError(
+          "postman: re-mint failed because service accounts are not enabled for this team; enable them in Team Settings or use a team where they are.",
+          true
+        );
+      }
+      throw new MintError(`postman: re-mint failed (service-account-tokens HTTP ${status}).`, false);
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      parsed = void 0;
+    }
+    const token = extractAccessToken(parsed);
+    if (!token) {
+      throw new MintError("postman: re-mint succeeded but no access token was returned.", false);
+    }
+    return token;
+  }
+};
+
+// src/lib/postman/telemetry-credentials.ts
+async function prepareTelemetryCredentials(options) {
+  const apiKey = String(options.postmanApiKey || "").trim();
+  const accessToken = String(options.postmanAccessToken || "").trim();
+  if (!apiKey && !accessToken) {
+    return {};
+  }
+  const provider = new AccessTokenProvider({
+    accessToken,
+    apiKey,
+    apiBaseUrl: options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl,
+    onToken: options.onToken,
+    ...options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}
+  });
+  if (!accessToken && apiKey && provider.canRefresh()) {
+    try {
+      await provider.refresh();
+    } catch {
+    }
+  }
+  const accountType = await resolveTelemetryAccountType(provider.current(), options.fetchImpl);
+  return {
+    provider,
+    ...accountType ? { accountType } : {}
+  };
+}
+
 // node_modules/@postman-cse/automation-telemetry-core/dist/ci-context.js
 function norm(value) {
   const trimmed = (value ?? "").trim();
@@ -171137,7 +171335,19 @@ function createTelemetryContext(options) {
 async function runAction(actionCore = core_exports, dependencies = {}) {
   const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: actionCore });
   telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
-  const accountType = await resolveTelemetryAccountType(getInput2("postman-access-token"));
+  const postmanApiKey = getInput2("postman-api-key");
+  const postmanAccessToken = getInput2("postman-access-token");
+  if (postmanApiKey) {
+    actionCore.setSecret?.(postmanApiKey);
+  }
+  if (postmanAccessToken) {
+    actionCore.setSecret?.(postmanAccessToken);
+  }
+  const { accountType } = await prepareTelemetryCredentials({
+    postmanApiKey,
+    postmanAccessToken,
+    onToken: (token) => actionCore.setSecret?.(token)
+  });
   try {
     const result = await runActionInner(actionCore, dependencies);
     telemetry.setAccountType(accountType);

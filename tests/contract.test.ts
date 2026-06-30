@@ -42,6 +42,7 @@ describe('action contract', () => {
     'gateway-id': false,
     stage: false,
     'output-dir': false,
+    'postman-api-key': false,
     'postman-access-token': false
   } as const;
   const expectedExistingOutputDescriptions = {

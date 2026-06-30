@@ -4,7 +4,7 @@ import path from 'node:path';
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
-import { resolveTelemetryAccountType } from './lib/postman/credential-identity.js';
+import { prepareTelemetryCredentials } from './lib/postman/telemetry-credentials.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 interface CliConfig {
@@ -69,7 +69,9 @@ export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.en
     'preflight-permission-probe',
     'request-timeout-ms',
     'max-attempts',
-    'include-v2'
+    'include-v2',
+    'postman-api-key',
+    'postman-access-token'
   ];
 
   const inputEnv: NodeJS.ProcessEnv = { ...env };
@@ -137,11 +139,12 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
   const reporter = new ConsoleReporter();
   const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: reporter });
   telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
-  // Optional access-token telemetry enrichment (D1): resolve account_type once,
-  // best-effort, and set it before either completion emit.
-  const accountType = await resolveTelemetryAccountType(
-    config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? process.env.POSTMAN_ACCESS_TOKEN
-  );
+  // Optional telemetry enrichment (D1): mint/re-mint access token when PMAK is
+  // present, resolve account_type once, best-effort, before either completion emit.
+  const { accountType } = await prepareTelemetryCredentials({
+    postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? process.env.POSTMAN_API_KEY,
+    postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? process.env.POSTMAN_ACCESS_TOKEN
+  });
   try {
     const result = await execute(inputs, {
       core: reporter,

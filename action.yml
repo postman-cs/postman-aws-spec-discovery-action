@@ -20,8 +20,12 @@ inputs:
     description: Directory under the repository root where generated specs are written.
     required: false
     default: discovered-specs
+  postman-api-key:
+    description: Optional service-account PMAK used to mint or re-mint a postman-access-token for telemetry enrichment (account_type). Not used for any AWS or Postman asset operation.
+    required: false
+    default: ''
   postman-access-token:
-    description: Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. Not used for any AWS or Postman asset operation.
+    description: Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. When omitted, postman-api-key alone can mint one for the same purpose. Not used for any AWS or Postman asset operation.
     required: false
     default: ''
 outputs:

@@ -216,7 +216,8 @@ CLI environment-variable outputs are documented in [docs/providers.md](docs/prov
 | `gateway-id` | Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery. | no | n/a |
 | `stage` | Optional API Gateway stage override (for example prod or staging). | no | n/a |
 | `output-dir` | Directory under the repository root where generated specs are written. | no | `discovered-specs` |
-| `postman-access-token` | Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. Not used for any AWS or Postman asset operation. | no | n/a |
+| `postman-api-key` | Optional service-account PMAK used to mint or re-mint a postman-access-token for telemetry enrichment (account_type). Not used for any AWS or Postman asset operation. | no | n/a |
+| `postman-access-token` | Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. When omitted, postman-api-key alone can mint one for the same purpose. Not used for any AWS or Postman asset operation. | no | n/a |
 <!-- inputs-table:end -->
 
 Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`, `max-candidates`, repo context overrides, and more) are set via `INPUT_`-prefixed environment variables and documented in [docs/providers.md](docs/providers.md#resolution-tuning-inputs).
