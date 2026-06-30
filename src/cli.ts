@@ -4,6 +4,7 @@ import path from 'node:path';
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
+import { resolveTelemetryAccountType } from './lib/postman/credential-identity.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 interface CliConfig {
@@ -136,6 +137,11 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
   const reporter = new ConsoleReporter();
   const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: reporter });
   telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
+  // Optional access-token telemetry enrichment (D1): resolve account_type once,
+  // best-effort, and set it before either completion emit.
+  const accountType = await resolveTelemetryAccountType(
+    config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? process.env.POSTMAN_ACCESS_TOKEN
+  );
   try {
     const result = await execute(inputs, {
       core: reporter,
@@ -150,8 +156,10 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
     await writeOptionalFile(config.dotenvPath, toDotenv(result.outputs));
 
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion('success');
   } catch (error) {
+    telemetry.setAccountType(accountType);
     telemetry.emitCompletion('failure');
     throw error;
   }

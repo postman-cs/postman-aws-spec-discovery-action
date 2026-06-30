@@ -150,6 +150,12 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       description: 'Directory under the repository root where generated specs are written.',
       required: false,
       default: 'discovered-specs'
+    },
+    'postman-access-token': {
+      description:
+        'Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. Not used for any AWS or Postman asset operation.',
+      required: false,
+      default: ''
     }
   },
   outputs: {

@@ -41,7 +41,8 @@ describe('action contract', () => {
     'aws-region': true,
     'gateway-id': false,
     stage: false,
-    'output-dir': false
+    'output-dir': false,
+    'postman-access-token': false
   } as const;
   const expectedExistingOutputDescriptions = {
     'resolution-json': 'JSON resolution result describing status, source type, confidence, and evidence.',
