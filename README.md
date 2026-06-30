@@ -344,9 +344,11 @@ DO_NOT_TRACK=1
 
 Telemetry is also skipped automatically when no Postman team ID can be resolved.
 
-This action holds no Postman credentials, so telemetry is present but inert
-unless a `POSTMAN_TEAM_ID` environment variable is supplied to attribute the
-run to a team.
+This action performs no Postman asset operation, so telemetry stays inert unless
+a `POSTMAN_TEAM_ID` environment variable is supplied to attribute the run to a
+team. The optional `postman-api-key` / `postman-access-token` inputs are used
+only to resolve the session `account_type` for that telemetry event; they never
+touch discovery, which runs entirely on AWS credentials.
 
 Events are sent over HTTPS to `https://events.pm-cse.dev/v1/events`. To
 allowlist this destination on a restricted network, or to route events to a
