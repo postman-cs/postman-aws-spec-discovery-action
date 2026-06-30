@@ -14,12 +14,13 @@ import {
   type InputReaderLike,
   type ReporterLike
 } from './runtime.js';
-import { resolveTelemetryAccountType } from './lib/postman/credential-identity.js';
+import { prepareTelemetryCredentials } from './lib/postman/telemetry-credentials.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
   setOutput(name: string, value: string): void;
   setFailed(message: string): void;
+  setSecret?(value: string): void;
 }
 
 export interface GitHubActionDependencies {
@@ -34,9 +35,21 @@ export async function runAction(
 ): Promise<DiscoveredService[]> {
   const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: actionCore });
   telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
-  // Optional access-token telemetry enrichment (D1): resolve account_type once,
-  // best-effort, and set it before either completion emit.
-  const accountType = await resolveTelemetryAccountType(getInput('postman-access-token'));
+  const postmanApiKey = getInput('postman-api-key');
+  const postmanAccessToken = getInput('postman-access-token');
+  if (postmanApiKey) {
+    actionCore.setSecret?.(postmanApiKey);
+  }
+  if (postmanAccessToken) {
+    actionCore.setSecret?.(postmanAccessToken);
+  }
+  // Optional telemetry enrichment (D1): mint/re-mint access token when PMAK is
+  // present, resolve account_type once, best-effort, before either completion emit.
+  const { accountType } = await prepareTelemetryCredentials({
+    postmanApiKey,
+    postmanAccessToken,
+    onToken: (token) => actionCore.setSecret?.(token)
+  });
   try {
     const result = await runActionInner(actionCore, dependencies);
     telemetry.setAccountType(accountType);

@@ -1,8 +1,9 @@
 // Session-identity subset copied from the shared credential-identity foundation
 // (postman-repo-sync-action/src/lib/postman/credential-identity.ts). This action
 // makes no Postman asset calls; it resolves the access-token -> iapub session
-// only so telemetry can emit `account_type` from the resolved `consumerType`
-// (D1: an optional postman-access-token input used for telemetry enrichment).
+// only so telemetry can emit `account_type` from the resolved `consumerType`.
+// Access tokens may be supplied directly or minted via AccessTokenProvider
+// (postman-api-key -> POST /service-account-tokens) in telemetry-credentials.ts.
 
 export interface CredentialIdentity {
   source: 'pmak/me' | 'iapub/sessions';
