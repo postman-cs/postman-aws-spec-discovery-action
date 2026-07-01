@@ -168138,8 +168138,55 @@ async function execute(inputs, dependencies) {
 // src/lib/postman/credential-identity.ts
 var sessionPath = "/api/sessions/current";
 var DEFAULT_IAPUB_BASE_URL = "https://iapub.postman.co";
+var SESSION_MAX_ATTEMPTS = 3;
+var SESSION_RETRY_BASE_DELAY_MS = 500;
+var SESSION_RETRY_MAX_DELAY_MS = 8e3;
 var sessionMemo = /* @__PURE__ */ new Map();
 var memoizedSessionIdentity;
+var memoizedSessionFailure;
+function defaultSessionSleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+function defaultRandom() {
+  return Math.random();
+}
+function parseRetryAfterMs(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return void 0;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed) * 1e3;
+  }
+  const dateMs = Date.parse(trimmed);
+  if (!Number.isNaN(dateMs)) {
+    return Math.max(0, dateMs - Date.now());
+  }
+  return void 0;
+}
+function parseRateLimitResetMs(value) {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^\d+$/.test(trimmed)) {
+    return void 0;
+  }
+  const seconds = Number(trimmed);
+  const nowSeconds = Date.now() / 1e3;
+  if (seconds > nowSeconds) {
+    return Math.max(0, (seconds - nowSeconds) * 1e3);
+  }
+  return seconds * 1e3;
+}
+function computeSessionRetryDelayMs(response, attempt, random) {
+  const headers = response?.headers;
+  const signal = parseRetryAfterMs(headers?.get("retry-after") ?? null) ?? parseRateLimitResetMs(
+    headers?.get("ratelimit-reset") ?? headers?.get("x-ratelimit-reset") ?? null
+  );
+  if (signal !== void 0) {
+    return Math.min(Math.max(0, signal), SESSION_RETRY_MAX_DELAY_MS);
+  }
+  const ceiling = Math.min(SESSION_RETRY_MAX_DELAY_MS, SESSION_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+  return Math.round(random() * ceiling);
+}
 function asRecord(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return void 0;
@@ -168168,7 +168215,14 @@ async function resolveSessionIdentity(opts) {
   const memoKey = `${baseUrl}::${accessToken}`;
   let pending = sessionMemo.get(memoKey);
   if (!pending) {
-    pending = probeSessionIdentity(baseUrl, accessToken, opts.fetchImpl ?? fetch);
+    pending = probeSessionIdentity(
+      baseUrl,
+      accessToken,
+      opts.fetchImpl ?? fetch,
+      Math.max(1, opts.maxAttempts ?? SESSION_MAX_ATTEMPTS),
+      opts.sleepImpl ?? defaultSessionSleep,
+      opts.randomImpl ?? defaultRandom
+    );
     sessionMemo.set(memoKey, pending);
   }
   return pending;
@@ -168185,41 +168239,78 @@ async function resolveTelemetryAccountType(accessToken, fetchImpl) {
   }).catch(() => void 0);
   return identity?.consumerType;
 }
-async function probeSessionIdentity(baseUrl, accessToken, fetchImpl) {
+async function parseSessionResponse(response) {
+  let payload2;
   try {
-    const response = await fetchImpl(`${baseUrl}${sessionPath}`, {
-      method: "GET",
-      headers: { "x-access-token": accessToken }
-    });
-    if (!response.ok) {
-      return void 0;
-    }
-    const payload2 = asRecord(await response.json());
-    if (!payload2) {
-      return void 0;
-    }
-    const root5 = asRecord(payload2.session) ?? payload2;
-    const identity = asRecord(root5.identity);
-    const data2 = asRecord(root5.data);
-    const user = asRecord(data2?.user);
-    const roleEntries = Array.isArray(user?.roles) ? user.roles.map((entry) => coerceText(entry) ?? coerceId(entry)).filter((entry) => Boolean(entry)) : [];
-    const singleRole = coerceText(user?.role);
-    const roles = roleEntries.length > 0 ? roleEntries : singleRole ? [singleRole] : void 0;
-    const resolved = {
-      source: "iapub/sessions",
-      userId: coerceId(identity?.user) ?? coerceId(user?.id),
-      fullName: coerceText(user?.fullName) ?? coerceText(user?.name) ?? coerceText(user?.username),
-      teamId: coerceId(identity?.team),
-      teamName: coerceText(user?.teamName),
-      teamDomain: coerceText(identity?.domain),
-      ...roles ? { roles } : {},
-      consumerType: coerceText(root5.consumerType) ?? coerceText(data2?.consumerType) ?? coerceText(user?.consumerType)
-    };
-    memoizedSessionIdentity = resolved;
-    return resolved;
+    payload2 = asRecord(await response.json());
   } catch {
     return void 0;
   }
+  if (!payload2) {
+    return void 0;
+  }
+  const root5 = asRecord(payload2.session) ?? payload2;
+  const identity = asRecord(root5.identity);
+  const data2 = asRecord(root5.data);
+  const user = asRecord(data2?.user);
+  const roleEntries = Array.isArray(user?.roles) ? user.roles.map((entry) => coerceText(entry) ?? coerceId(entry)).filter((entry) => Boolean(entry)) : [];
+  const singleRole = coerceText(user?.role);
+  const roles = roleEntries.length > 0 ? roleEntries : singleRole ? [singleRole] : void 0;
+  return {
+    source: "iapub/sessions",
+    userId: coerceId(identity?.user) ?? coerceId(user?.id),
+    fullName: coerceText(user?.fullName) ?? coerceText(user?.name) ?? coerceText(user?.username),
+    teamId: coerceId(identity?.team),
+    teamName: coerceText(user?.teamName),
+    teamDomain: coerceText(identity?.domain),
+    ...roles ? { roles } : {},
+    consumerType: coerceText(root5.consumerType) ?? coerceText(data2?.consumerType) ?? coerceText(user?.consumerType)
+  };
+}
+async function probeSessionIdentity(baseUrl, accessToken, fetchImpl, maxAttempts, sleepImpl, random) {
+  let failure = "unavailable";
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response;
+    try {
+      response = await fetchImpl(`${baseUrl}${sessionPath}`, {
+        method: "GET",
+        headers: { "x-access-token": accessToken }
+      });
+    } catch {
+      failure = "unavailable";
+      if (attempt < maxAttempts) {
+        await sleepImpl(computeSessionRetryDelayMs(void 0, attempt, random));
+        continue;
+      }
+      break;
+    }
+    if (response.ok) {
+      const resolved = await parseSessionResponse(response);
+      if (resolved) {
+        memoizedSessionIdentity = resolved;
+        memoizedSessionFailure = void 0;
+        return resolved;
+      }
+      failure = "unavailable";
+      break;
+    }
+    if (response.status === 401 || response.status === 403) {
+      failure = "auth";
+      break;
+    }
+    if (response.status === 429 || response.status >= 500) {
+      failure = "unavailable";
+      if (attempt < maxAttempts) {
+        await sleepImpl(computeSessionRetryDelayMs(response, attempt, random));
+        continue;
+      }
+      break;
+    }
+    failure = "unavailable";
+    break;
+  }
+  memoizedSessionFailure = failure;
+  return void 0;
 }
 
 // src/lib/retry.ts
