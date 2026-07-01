@@ -171300,7 +171300,7 @@ function resolveActionVersion(explicit) {
   if (explicit) {
     return explicit;
   }
-  return "2.0.0" ? "2.0.0" : "unknown";
+  return typeof __ACTION_VERSION__ !== "undefined" && __ACTION_VERSION__ ? __ACTION_VERSION__ : "unknown";
 }
 function telemetryDisabled(env2) {
   const flag = String(env2.POSTMAN_ACTIONS_TELEMETRY ?? "").trim().toLowerCase();
@@ -171422,9 +171422,21 @@ function createTelemetryContext(options) {
   };
 }
 
+// src/action-version.ts
+var import_node_fs3 = require("node:fs");
+var import_node_path17 = require("node:path");
+function resolveActionVersion2() {
+  try {
+    const raw = (0, import_node_fs3.readFileSync)((0, import_node_path17.join)(__dirname, "..", "package.json"), "utf8");
+    return JSON.parse(raw).version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
-  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: actionCore });
+  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion: resolveActionVersion2(), logger: actionCore });
   telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
   const postmanApiKey = getInput2("postman-api-key");
   const postmanAccessToken = getInput2("postman-access-token");

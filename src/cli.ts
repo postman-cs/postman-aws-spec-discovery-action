@@ -6,6 +6,7 @@ import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
 import { prepareTelemetryCredentials } from './lib/postman/telemetry-credentials.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
+import { resolveActionVersion } from './action-version.js';
 
 interface CliConfig {
   inputEnv: NodeJS.ProcessEnv;
@@ -137,7 +138,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
   const config = parseCliArgs(argv, process.env);
   const inputs = resolveInputs(config.inputEnv);
   const reporter = new ConsoleReporter();
-  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: reporter });
+  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', actionVersion: resolveActionVersion(), logger: reporter });
   telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
   // Optional telemetry enrichment (D1): mint/re-mint access token when PMAK is
   // present, resolve account_type once, best-effort, before either completion emit.

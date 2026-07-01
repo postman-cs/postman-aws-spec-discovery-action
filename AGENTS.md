@@ -50,7 +50,7 @@ discovered-specs/        # Sample output from discovery runs
 
 ```bash
 npm ci && npm test && npm run typecheck && npm run build
-npm run check:dist   # build + git diff --exit-code
+npm run verify:dist  # CI/hook gate: rebuild + git diff (dev runs build)
 ```
 
 ## Discovery Flow

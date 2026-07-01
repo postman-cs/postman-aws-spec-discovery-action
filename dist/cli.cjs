@@ -158990,7 +158990,7 @@ __export(cli_exports, {
 });
 module.exports = __toCommonJS(cli_exports);
 var import_promises12 = require("node:fs/promises");
-var import_node_path17 = __toESM(require("node:path"), 1);
+var import_node_path18 = __toESM(require("node:path"), 1);
 
 // src/lib/aws/client.ts
 var import_client_api_gateway = __toESM(require_dist_cjs20(), 1);
@@ -168760,7 +168760,7 @@ function resolveActionVersion(explicit) {
   if (explicit) {
     return explicit;
   }
-  return "2.0.0" ? "2.0.0" : "unknown";
+  return typeof __ACTION_VERSION__ !== "undefined" && __ACTION_VERSION__ ? __ACTION_VERSION__ : "unknown";
 }
 function telemetryDisabled(env2) {
   const flag = String(env2.POSTMAN_ACTIONS_TELEMETRY ?? "").trim().toLowerCase();
@@ -168882,6 +168882,18 @@ function createTelemetryContext(options) {
   };
 }
 
+// src/action-version.ts
+var import_node_fs3 = require("node:fs");
+var import_node_path17 = require("node:path");
+function resolveActionVersion2() {
+  try {
+    const raw = (0, import_node_fs3.readFileSync)((0, import_node_path17.join)(__dirname, "..", "package.json"), "utf8");
+    return JSON.parse(raw).version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 // src/cli.ts
 var ConsoleReporter = class {
   async group(name, fn) {
@@ -168981,20 +168993,20 @@ async function writeOptionalFile(filePath, content) {
   if (!filePath) {
     return;
   }
-  const workspaceRoot = import_node_path17.default.resolve(process.cwd());
-  const resolved = import_node_path17.default.resolve(workspaceRoot, filePath);
-  const relative = import_node_path17.default.relative(workspaceRoot, resolved);
-  if (relative.startsWith("..") || import_node_path17.default.isAbsolute(relative)) {
+  const workspaceRoot = import_node_path18.default.resolve(process.cwd());
+  const resolved = import_node_path18.default.resolve(workspaceRoot, filePath);
+  const relative = import_node_path18.default.relative(workspaceRoot, resolved);
+  if (relative.startsWith("..") || import_node_path18.default.isAbsolute(relative)) {
     throw new Error(`Output path must stay within workspace: ${filePath}`);
   }
-  await (0, import_promises12.mkdir)(import_node_path17.default.dirname(resolved), { recursive: true });
+  await (0, import_promises12.mkdir)(import_node_path18.default.dirname(resolved), { recursive: true });
   await (0, import_promises12.writeFile)(resolved, content, "utf8");
 }
 async function runCli(argv = process.argv.slice(2)) {
   const config = parseCliArgs(argv, process.env);
   const inputs = resolveInputs(config.inputEnv);
   const reporter = new ConsoleReporter();
-  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", logger: reporter });
+  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion: resolveActionVersion2(), logger: reporter });
   telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
   const { accountType } = await prepareTelemetryCredentials({
     postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? process.env.POSTMAN_API_KEY,
