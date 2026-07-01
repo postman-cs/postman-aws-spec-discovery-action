@@ -16,6 +16,7 @@ import {
 } from './runtime.js';
 import { prepareTelemetryCredentials } from './lib/postman/telemetry-credentials.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
+import { resolveActionVersion } from './action-version.js';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
   setOutput(name: string, value: string): void;
@@ -33,7 +34,7 @@ export async function runAction(
   actionCore: CoreLike = core,
   dependencies: GitHubActionDependencies = {}
 ): Promise<DiscoveredService[]> {
-  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', logger: actionCore });
+  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', actionVersion: resolveActionVersion(), logger: actionCore });
   telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
   const postmanApiKey = getInput('postman-api-key');
   const postmanAccessToken = getInput('postman-access-token');
