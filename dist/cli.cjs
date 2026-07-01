@@ -168669,7 +168669,7 @@ function resolveActionVersion(explicit) {
   if (explicit) {
     return explicit;
   }
-  return "1.0.4" ? "1.0.4" : "unknown";
+  return "2.0.0" ? "2.0.0" : "unknown";
 }
 function telemetryDisabled(env2) {
   const flag = String(env2.POSTMAN_ACTIONS_TELEMETRY ?? "").trim().toLowerCase();

@@ -45,17 +45,17 @@ jobs:
           aws-region: us-east-1
 
       - id: postman_token
-        uses: postman-cs/postman-resolve-service-token-action@v1
+        uses: postman-cs/postman-resolve-service-token-action@v2
         with:
           postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
           postman-region: us
 
       - id: resolve
-        uses: postman-cs/postman-aws-spec-discovery-action@v1
+        uses: postman-cs/postman-aws-spec-discovery-action@v2
         with:
           aws-region: us-east-1
 
-      - uses: postman-cs/postman-api-onboarding-action@v1
+      - uses: postman-cs/postman-api-onboarding-action@v2
         if: steps.resolve.outputs.resolution-status == 'resolved'
         with:
           postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
@@ -81,7 +81,7 @@ Providers are probed against your IAM permissions; anything your role cannot rea
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   with:
     aws-region: us-east-1
 ```
@@ -92,7 +92,7 @@ Bypass broad account discovery when you already know the gateway.
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   with:
     aws-region: us-east-1
     gateway-id: abc123def4
@@ -104,7 +104,7 @@ Export specs from all discovered APIs across all available providers. `mode` is 
 
 ```yaml
 - id: discover
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   env:
     INPUT_MODE: discover-many
   with:
@@ -117,7 +117,7 @@ Write generated specs somewhere other than `discovered-specs/`. The path must re
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   with:
     aws-region: us-east-1
     output-dir: postman/specs
@@ -129,17 +129,17 @@ Feed the discovered spec straight into the [onboarding composite](https://github
 
 ```yaml
 - id: postman_token
-  uses: postman-cs/postman-resolve-service-token-action@v1
+  uses: postman-cs/postman-resolve-service-token-action@v2
   with:
     postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
     postman-region: us
 
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   with:
     aws-region: us-east-1
 
-- uses: postman-cs/postman-api-onboarding-action@v1
+- uses: postman-cs/postman-api-onboarding-action@v2
   if: steps.resolve.outputs.resolution-status == 'resolved'
   with:
     postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
@@ -157,17 +157,17 @@ Use the bootstrap action directly when you only need workspace/spec/collection c
 
 ```yaml
 - id: postman_token
-  uses: postman-cs/postman-resolve-service-token-action@v1
+  uses: postman-cs/postman-resolve-service-token-action@v2
   with:
     postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
     postman-region: us
 
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   with:
     aws-region: us-east-1
 
-- uses: postman-cs/postman-bootstrap-action@v1
+- uses: postman-cs/postman-bootstrap-action@v2
   if: steps.resolve.outputs.resolution-status == 'resolved'
   with:
     postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
@@ -185,7 +185,7 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
 
 ```yaml
 - id: resolve-events
-  uses: postman-cs/postman-aws-spec-discovery-action@v1
+  uses: postman-cs/postman-aws-spec-discovery-action@v2
   env:
     INPUT_MODE: resolve-one
     INPUT_EXPECTED_SERVICE_NAME: orders-events
