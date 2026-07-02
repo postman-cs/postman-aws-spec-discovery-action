@@ -982,7 +982,7 @@ var init_client = __esm({
           }
         }
       }
-      send(command, optionsOrCb, cb) {
+      send(command5, optionsOrCb, cb) {
         const options = typeof optionsOrCb !== "function" ? optionsOrCb : void 0;
         const callback = typeof optionsOrCb === "function" ? optionsOrCb : cb;
         const useHandlerCache = options === void 0 && this.config.cacheMiddleware === true;
@@ -992,21 +992,21 @@ var init_client = __esm({
             this.handlers = /* @__PURE__ */ new WeakMap();
           }
           const handlers = this.handlers;
-          if (handlers.has(command.constructor)) {
-            handler = handlers.get(command.constructor);
+          if (handlers.has(command5.constructor)) {
+            handler = handlers.get(command5.constructor);
           } else {
-            handler = command.resolveMiddleware(this.middlewareStack, this.config, options);
-            handlers.set(command.constructor, handler);
+            handler = command5.resolveMiddleware(this.middlewareStack, this.config, options);
+            handlers.set(command5.constructor, handler);
           }
         } else {
           delete this.handlers;
-          handler = command.resolveMiddleware(this.middlewareStack, this.config, options);
+          handler = command5.resolveMiddleware(this.middlewareStack, this.config, options);
         }
         if (callback) {
-          handler(command).then((result) => callback(null, result.output), (err) => callback(err)).catch(() => {
+          handler(command5).then((result) => callback(null, result.output), (err) => callback(err)).catch(() => {
           });
         } else {
-          return handler(command).then((result) => result.output);
+          return handler(command5).then((result) => result.output);
         }
       }
       destroy() {
@@ -2024,20 +2024,20 @@ var createAggregatedClient;
 var init_create_aggregated_client = __esm({
   "node_modules/@smithy/core/dist-es/submodules/client/smithy-client/create-aggregated-client.js"() {
     createAggregatedClient = (commands5, Client2, options) => {
-      for (const [command, CommandCtor] of Object.entries(commands5)) {
+      for (const [command5, CommandCtor] of Object.entries(commands5)) {
         const methodImpl = async function(args, optionsOrCb, cb) {
-          const command2 = new CommandCtor(args);
+          const command6 = new CommandCtor(args);
           if (typeof optionsOrCb === "function") {
-            this.send(command2, optionsOrCb);
+            this.send(command6, optionsOrCb);
           } else if (typeof cb === "function") {
             if (typeof optionsOrCb !== "object")
               throw new Error(`Expected http options but got ${typeof optionsOrCb}`);
-            this.send(command2, optionsOrCb || {}, cb);
+            this.send(command6, optionsOrCb || {}, cb);
           } else {
-            return this.send(command2, optionsOrCb);
+            return this.send(command6, optionsOrCb);
           }
         };
-        const methodName = (command[0].toLowerCase() + command.slice(1)).replace(/Command$/, "");
+        const methodName = (command5[0].toLowerCase() + command5.slice(1)).replace(/Command$/, "");
         Client2.prototype[methodName] = methodImpl;
       }
       const { paginators = {}, waiters = {} } = options ?? {};
@@ -11423,9 +11423,9 @@ var makePagedClientRequest, get;
 var init_createPaginator = __esm({
   "node_modules/@smithy/core/dist-es/legacy-root-exports/pagination/createPaginator.js"() {
     makePagedClientRequest = async (CommandCtor, client, input, withCommand = (_) => _, ...args) => {
-      let command = new CommandCtor(input);
-      command = withCommand(command) ?? command;
-      return await client.send(command, ...args);
+      let command5 = new CommandCtor(input);
+      command5 = withCommand(command5) ?? command5;
+      return await client.send(command5, ...args);
     };
     get = (fromObject, path11) => {
       let cursor2 = fromObject;
@@ -15973,7 +15973,7 @@ var init_package = __esm({
   "node_modules/@aws-sdk/nested-clients/package.json"() {
     package_default = {
       name: "@aws-sdk/nested-clients",
-      version: "3.997.25",
+      version: "3.997.26",
       description: "Nested clients for AWS SDK packages.",
       main: "./dist-cjs/index.js",
       module: "./dist-es/index.js",
@@ -16001,13 +16001,13 @@ var init_package = __esm({
       },
       license: "Apache-2.0",
       dependencies: {
-        "@aws-sdk/core": "^3.974.25",
-        "@aws-sdk/signature-v4-multi-region": "^3.996.37",
-        "@aws-sdk/types": "^3.973.14",
-        "@smithy/core": "^3.28.0",
-        "@smithy/fetch-http-handler": "^5.6.1",
-        "@smithy/node-http-handler": "^4.9.1",
-        "@smithy/types": "^4.15.0",
+        "@aws-sdk/core": "^3.974.26",
+        "@aws-sdk/signature-v4-multi-region": "^3.996.38",
+        "@aws-sdk/types": "^3.973.15",
+        "@smithy/core": "^3.29.0",
+        "@smithy/fetch-http-handler": "^5.6.2",
+        "@smithy/node-http-handler": "^4.9.2",
+        "@smithy/types": "^4.15.1",
         tslib: "^2.6.2"
       },
       devDependencies: {
@@ -20446,17 +20446,26 @@ var init_SSOOIDCClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js
+var command, _ep0, _mw0;
+var init_commandBuilder = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters();
+    command = makeBuilder(commonParams, "AWSSSOOIDCService", "SSOOIDCClient", getEndpointPlugin);
+    _ep0 = {};
+    _mw0 = (Command2, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js
 var CreateTokenCommand;
 var init_CreateTokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/commands/CreateTokenCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters();
+    init_commandBuilder();
     init_schemas_0();
-    CreateTokenCommand = class extends Command.classBuilder().ep(commonParams).m(function(Command2, cs, config, o3) {
-      return [getEndpointPlugin(config, Command2.getEndpointParameterInstructions())];
-    }).s("AWSSSOOIDCService", "CreateToken", {}).n("SSOOIDCClient", "CreateTokenCommand").sc(CreateToken$).build() {
+    CreateTokenCommand = class extends command(_ep0, _mw0, "CreateToken", CreateToken$) {
     };
   }
 });
@@ -20550,6 +20559,7 @@ var init_sso_oidc = __esm({
     init_SSOOIDCClient();
     init_SSOOIDC();
     init_commands();
+    init_client2();
     init_schemas_0();
     init_enums();
     init_errors();
@@ -21297,17 +21307,26 @@ var init_SSOClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js
+var command2, _ep02, _mw02;
+var init_commandBuilder2 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters2();
+    command2 = makeBuilder(commonParams2, "SWBPortalService", "SSOClient", getEndpointPlugin);
+    _ep02 = {};
+    _mw02 = (Command2, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js
 var GetRoleCredentialsCommand;
 var init_GetRoleCredentialsCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso/commands/GetRoleCredentialsCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters2();
+    init_commandBuilder2();
     init_schemas_02();
-    GetRoleCredentialsCommand = class extends Command.classBuilder().ep(commonParams2).m(function(Command2, cs, config, o3) {
-      return [getEndpointPlugin(config, Command2.getEndpointParameterInstructions())];
-    }).s("SWBPortalService", "GetRoleCredentials", {}).n("SSOClient", "GetRoleCredentialsCommand").sc(GetRoleCredentials$).build() {
+    GetRoleCredentialsCommand = class extends command2(_ep02, _mw02, "GetRoleCredentials", GetRoleCredentials$) {
     };
   }
 });
@@ -21370,6 +21389,7 @@ var init_sso = __esm({
     init_SSOClient();
     init_SSO();
     init_commands2();
+    init_client2();
     init_schemas_02();
     init_errors2();
     init_models_02();
@@ -22277,20 +22297,28 @@ var init_SigninClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js
+var command3, _ep03, _mw03;
+var init_commandBuilder3 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters3();
+    command3 = makeBuilder(commonParams3, "Signin", "SigninClient", getEndpointPlugin);
+    _ep03 = {
+      IsControlPlane: { type: "staticContextParams", value: false }
+    };
+    _mw03 = (Command2, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js
 var CreateOAuth2TokenCommand;
 var init_CreateOAuth2TokenCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/signin/commands/CreateOAuth2TokenCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters3();
+    init_commandBuilder3();
     init_schemas_03();
-    CreateOAuth2TokenCommand = class extends Command.classBuilder().ep({
-      ...commonParams3,
-      IsControlPlane: { type: "staticContextParams", value: false }
-    }).m(function(Command2, cs, config, o3) {
-      return [getEndpointPlugin(config, Command2.getEndpointParameterInstructions())];
-    }).s("Signin", "CreateOAuth2Token", {}).n("SigninClient", "CreateOAuth2TokenCommand").sc(CreateOAuth2Token$).build() {
+    CreateOAuth2TokenCommand = class extends command3(_ep03, _mw03, "CreateOAuth2Token", CreateOAuth2Token$) {
     };
   }
 });
@@ -22374,6 +22402,7 @@ var init_signin = __esm({
     init_SigninClient();
     init_Signin();
     init_commands3();
+    init_client2();
     init_schemas_03();
     init_enums2();
     init_errors3();
@@ -23745,17 +23774,26 @@ var init_STSClient = __esm({
   }
 });
 
+// node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js
+var command4, _ep04, _mw04;
+var init_commandBuilder4 = __esm({
+  "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commandBuilder.js"() {
+    init_client2();
+    init_endpoints();
+    init_EndpointParameters4();
+    command4 = makeBuilder(commonParams4, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin);
+    _ep04 = {};
+    _mw04 = (Command2, cs, config, o3) => [];
+  }
+});
+
 // node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js
 var AssumeRoleCommand;
 var init_AssumeRoleCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters4();
+    init_commandBuilder4();
     init_schemas_04();
-    AssumeRoleCommand = class extends Command.classBuilder().ep(commonParams4).m(function(Command2, cs, config, o3) {
-      return [getEndpointPlugin(config, Command2.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(AssumeRole$).build() {
+    AssumeRoleCommand = class extends command4(_ep04, _mw04, "AssumeRole", AssumeRole$) {
     };
   }
 });
@@ -23764,13 +23802,9 @@ var init_AssumeRoleCommand = __esm({
 var AssumeRoleWithWebIdentityCommand;
 var init_AssumeRoleWithWebIdentityCommand = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.js"() {
-    init_client2();
-    init_endpoints();
-    init_EndpointParameters4();
+    init_commandBuilder4();
     init_schemas_04();
-    AssumeRoleWithWebIdentityCommand = class extends Command.classBuilder().ep(commonParams4).m(function(Command2, cs, config, o3) {
-      return [getEndpointPlugin(config, Command2.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(AssumeRoleWithWebIdentity$).build() {
+    AssumeRoleWithWebIdentityCommand = class extends command4(_ep04, _mw04, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$) {
     };
   }
 });
@@ -23990,6 +24024,7 @@ var init_sts = __esm({
     init_STSClient();
     init_STS();
     init_commands4();
+    init_client2();
     init_schemas_04();
     init_errors4();
     init_models_04();
@@ -24490,8 +24525,9 @@ var require_dist_cjs17 = __commonJS({
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getAcceptHeaderPlugin } = require_dist_cjs2();
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -24555,7 +24591,7 @@ var require_dist_cjs17 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -28401,501 +28437,256 @@ var require_dist_cjs17 = __commonJS({
         super.destroy();
       }
     };
-    var CreateApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateApiKey", {}).n("APIGatewayClient", "CreateApiKeyCommand").sc(CreateApiKey$).build() {
-    };
-    var CreateAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateAuthorizer", {}).n("APIGatewayClient", "CreateAuthorizerCommand").sc(CreateAuthorizer$).build() {
-    };
-    var CreateBasePathMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateBasePathMapping", {}).n("APIGatewayClient", "CreateBasePathMappingCommand").sc(CreateBasePathMapping$).build() {
-    };
-    var CreateDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateDeployment", {}).n("APIGatewayClient", "CreateDeploymentCommand").sc(CreateDeployment$).build() {
-    };
-    var CreateDocumentationPartCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateDocumentationPart", {}).n("APIGatewayClient", "CreateDocumentationPartCommand").sc(CreateDocumentationPart$).build() {
-    };
-    var CreateDocumentationVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateDocumentationVersion", {}).n("APIGatewayClient", "CreateDocumentationVersionCommand").sc(CreateDocumentationVersion$).build() {
-    };
-    var CreateDomainNameAccessAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateDomainNameAccessAssociation", {}).n("APIGatewayClient", "CreateDomainNameAccessAssociationCommand").sc(CreateDomainNameAccessAssociation$).build() {
-    };
-    var CreateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateDomainName", {}).n("APIGatewayClient", "CreateDomainNameCommand").sc(CreateDomainName$).build() {
-    };
-    var CreateModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateModel", {}).n("APIGatewayClient", "CreateModelCommand").sc(CreateModel$).build() {
-    };
-    var CreateRequestValidatorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateRequestValidator", {}).n("APIGatewayClient", "CreateRequestValidatorCommand").sc(CreateRequestValidator$).build() {
-    };
-    var CreateResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateResource", {}).n("APIGatewayClient", "CreateResourceCommand").sc(CreateResource$).build() {
-    };
-    var CreateRestApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateRestApi", {}).n("APIGatewayClient", "CreateRestApiCommand").sc(CreateRestApi$).build() {
-    };
-    var CreateStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateStage", {}).n("APIGatewayClient", "CreateStageCommand").sc(CreateStage$).build() {
-    };
-    var CreateUsagePlanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateUsagePlan", {}).n("APIGatewayClient", "CreateUsagePlanCommand").sc(CreateUsagePlan$).build() {
-    };
-    var CreateUsagePlanKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateUsagePlanKey", {}).n("APIGatewayClient", "CreateUsagePlanKeyCommand").sc(CreateUsagePlanKey$).build() {
-    };
-    var CreateVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "CreateVpcLink", {}).n("APIGatewayClient", "CreateVpcLinkCommand").sc(CreateVpcLink$).build() {
-    };
-    var DeleteApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteApiKey", {}).n("APIGatewayClient", "DeleteApiKeyCommand").sc(DeleteApiKey$).build() {
-    };
-    var DeleteAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteAuthorizer", {}).n("APIGatewayClient", "DeleteAuthorizerCommand").sc(DeleteAuthorizer$).build() {
-    };
-    var DeleteBasePathMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteBasePathMapping", {}).n("APIGatewayClient", "DeleteBasePathMappingCommand").sc(DeleteBasePathMapping$).build() {
-    };
-    var DeleteClientCertificateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteClientCertificate", {}).n("APIGatewayClient", "DeleteClientCertificateCommand").sc(DeleteClientCertificate$).build() {
-    };
-    var DeleteDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteDeployment", {}).n("APIGatewayClient", "DeleteDeploymentCommand").sc(DeleteDeployment$).build() {
-    };
-    var DeleteDocumentationPartCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteDocumentationPart", {}).n("APIGatewayClient", "DeleteDocumentationPartCommand").sc(DeleteDocumentationPart$).build() {
-    };
-    var DeleteDocumentationVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteDocumentationVersion", {}).n("APIGatewayClient", "DeleteDocumentationVersionCommand").sc(DeleteDocumentationVersion$).build() {
-    };
-    var DeleteDomainNameAccessAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteDomainNameAccessAssociation", {}).n("APIGatewayClient", "DeleteDomainNameAccessAssociationCommand").sc(DeleteDomainNameAccessAssociation$).build() {
-    };
-    var DeleteDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteDomainName", {}).n("APIGatewayClient", "DeleteDomainNameCommand").sc(DeleteDomainName$).build() {
-    };
-    var DeleteGatewayResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteGatewayResponse", {}).n("APIGatewayClient", "DeleteGatewayResponseCommand").sc(DeleteGatewayResponse$).build() {
-    };
-    var DeleteIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteIntegration", {}).n("APIGatewayClient", "DeleteIntegrationCommand").sc(DeleteIntegration$).build() {
-    };
-    var DeleteIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteIntegrationResponse", {}).n("APIGatewayClient", "DeleteIntegrationResponseCommand").sc(DeleteIntegrationResponse$).build() {
-    };
-    var DeleteMethodCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteMethod", {}).n("APIGatewayClient", "DeleteMethodCommand").sc(DeleteMethod$).build() {
-    };
-    var DeleteMethodResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteMethodResponse", {}).n("APIGatewayClient", "DeleteMethodResponseCommand").sc(DeleteMethodResponse$).build() {
-    };
-    var DeleteModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteModel", {}).n("APIGatewayClient", "DeleteModelCommand").sc(DeleteModel$).build() {
-    };
-    var DeleteRequestValidatorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteRequestValidator", {}).n("APIGatewayClient", "DeleteRequestValidatorCommand").sc(DeleteRequestValidator$).build() {
-    };
-    var DeleteResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteResource", {}).n("APIGatewayClient", "DeleteResourceCommand").sc(DeleteResource$).build() {
-    };
-    var DeleteRestApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteRestApi", {}).n("APIGatewayClient", "DeleteRestApiCommand").sc(DeleteRestApi$).build() {
-    };
-    var DeleteStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteStage", {}).n("APIGatewayClient", "DeleteStageCommand").sc(DeleteStage$).build() {
-    };
-    var DeleteUsagePlanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteUsagePlan", {}).n("APIGatewayClient", "DeleteUsagePlanCommand").sc(DeleteUsagePlan$).build() {
-    };
-    var DeleteUsagePlanKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteUsagePlanKey", {}).n("APIGatewayClient", "DeleteUsagePlanKeyCommand").sc(DeleteUsagePlanKey$).build() {
-    };
-    var DeleteVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "DeleteVpcLink", {}).n("APIGatewayClient", "DeleteVpcLinkCommand").sc(DeleteVpcLink$).build() {
-    };
-    var FlushStageAuthorizersCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "FlushStageAuthorizersCache", {}).n("APIGatewayClient", "FlushStageAuthorizersCacheCommand").sc(FlushStageAuthorizersCache$).build() {
-    };
-    var FlushStageCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "FlushStageCache", {}).n("APIGatewayClient", "FlushStageCacheCommand").sc(FlushStageCache$).build() {
-    };
-    var GenerateClientCertificateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GenerateClientCertificate", {}).n("APIGatewayClient", "GenerateClientCertificateCommand").sc(GenerateClientCertificate$).build() {
-    };
-    var GetAccountCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetAccount", {}).n("APIGatewayClient", "GetAccountCommand").sc(GetAccount$).build() {
-    };
-    var GetApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetApiKey", {}).n("APIGatewayClient", "GetApiKeyCommand").sc(GetApiKey$).build() {
-    };
-    var GetApiKeysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetApiKeys", {}).n("APIGatewayClient", "GetApiKeysCommand").sc(GetApiKeys$).build() {
-    };
-    var GetAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetAuthorizer", {}).n("APIGatewayClient", "GetAuthorizerCommand").sc(GetAuthorizer$).build() {
-    };
-    var GetAuthorizersCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetAuthorizers", {}).n("APIGatewayClient", "GetAuthorizersCommand").sc(GetAuthorizers$).build() {
-    };
-    var GetBasePathMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetBasePathMapping", {}).n("APIGatewayClient", "GetBasePathMappingCommand").sc(GetBasePathMapping$).build() {
-    };
-    var GetBasePathMappingsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetBasePathMappings", {}).n("APIGatewayClient", "GetBasePathMappingsCommand").sc(GetBasePathMappings$).build() {
-    };
-    var GetClientCertificateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetClientCertificate", {}).n("APIGatewayClient", "GetClientCertificateCommand").sc(GetClientCertificate$).build() {
-    };
-    var GetClientCertificatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetClientCertificates", {}).n("APIGatewayClient", "GetClientCertificatesCommand").sc(GetClientCertificates$).build() {
-    };
-    var GetDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDeployment", {}).n("APIGatewayClient", "GetDeploymentCommand").sc(GetDeployment$).build() {
-    };
-    var GetDeploymentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDeployments", {}).n("APIGatewayClient", "GetDeploymentsCommand").sc(GetDeployments$).build() {
-    };
-    var GetDocumentationPartCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDocumentationPart", {}).n("APIGatewayClient", "GetDocumentationPartCommand").sc(GetDocumentationPart$).build() {
-    };
-    var GetDocumentationPartsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDocumentationParts", {}).n("APIGatewayClient", "GetDocumentationPartsCommand").sc(GetDocumentationParts$).build() {
-    };
-    var GetDocumentationVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDocumentationVersion", {}).n("APIGatewayClient", "GetDocumentationVersionCommand").sc(GetDocumentationVersion$).build() {
-    };
-    var GetDocumentationVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDocumentationVersions", {}).n("APIGatewayClient", "GetDocumentationVersionsCommand").sc(GetDocumentationVersions$).build() {
-    };
-    var GetDomainNameAccessAssociationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDomainNameAccessAssociations", {}).n("APIGatewayClient", "GetDomainNameAccessAssociationsCommand").sc(GetDomainNameAccessAssociations$).build() {
-    };
-    var GetDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDomainName", {}).n("APIGatewayClient", "GetDomainNameCommand").sc(GetDomainName$).build() {
-    };
-    var GetDomainNamesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetDomainNames", {}).n("APIGatewayClient", "GetDomainNamesCommand").sc(GetDomainNames$).build() {
-    };
-    var GetExportCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetExport", {}).n("APIGatewayClient", "GetExportCommand").sc(GetExport$).build() {
-    };
-    var GetGatewayResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetGatewayResponse", {}).n("APIGatewayClient", "GetGatewayResponseCommand").sc(GetGatewayResponse$).build() {
-    };
-    var GetGatewayResponsesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetGatewayResponses", {}).n("APIGatewayClient", "GetGatewayResponsesCommand").sc(GetGatewayResponses$).build() {
-    };
-    var GetIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetIntegration", {}).n("APIGatewayClient", "GetIntegrationCommand").sc(GetIntegration$).build() {
-    };
-    var GetIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetIntegrationResponse", {}).n("APIGatewayClient", "GetIntegrationResponseCommand").sc(GetIntegrationResponse$).build() {
-    };
-    var GetMethodCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetMethod", {}).n("APIGatewayClient", "GetMethodCommand").sc(GetMethod$).build() {
-    };
-    var GetMethodResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetMethodResponse", {}).n("APIGatewayClient", "GetMethodResponseCommand").sc(GetMethodResponse$).build() {
-    };
-    var GetModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetModel", {}).n("APIGatewayClient", "GetModelCommand").sc(GetModel$).build() {
-    };
-    var GetModelsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetModels", {}).n("APIGatewayClient", "GetModelsCommand").sc(GetModels$).build() {
-    };
-    var GetModelTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetModelTemplate", {}).n("APIGatewayClient", "GetModelTemplateCommand").sc(GetModelTemplate$).build() {
-    };
-    var GetRequestValidatorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetRequestValidator", {}).n("APIGatewayClient", "GetRequestValidatorCommand").sc(GetRequestValidator$).build() {
-    };
-    var GetRequestValidatorsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetRequestValidators", {}).n("APIGatewayClient", "GetRequestValidatorsCommand").sc(GetRequestValidators$).build() {
-    };
-    var GetResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetResource", {}).n("APIGatewayClient", "GetResourceCommand").sc(GetResource$).build() {
-    };
-    var GetResourcesCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetResources", {}).n("APIGatewayClient", "GetResourcesCommand").sc(GetResources$).build() {
-    };
-    var GetRestApiCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetRestApi", {}).n("APIGatewayClient", "GetRestApiCommand").sc(GetRestApi$).build() {
-    };
-    var GetRestApisCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetRestApis", {}).n("APIGatewayClient", "GetRestApisCommand").sc(GetRestApis$).build() {
-    };
-    var GetSdkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetSdk", {}).n("APIGatewayClient", "GetSdkCommand").sc(GetSdk$).build() {
-    };
-    var GetSdkTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetSdkType", {}).n("APIGatewayClient", "GetSdkTypeCommand").sc(GetSdkType$).build() {
-    };
-    var GetSdkTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetSdkTypes", {}).n("APIGatewayClient", "GetSdkTypesCommand").sc(GetSdkTypes$).build() {
-    };
-    var GetStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetStage", {}).n("APIGatewayClient", "GetStageCommand").sc(GetStage$).build() {
-    };
-    var GetStagesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetStages", {}).n("APIGatewayClient", "GetStagesCommand").sc(GetStages$).build() {
-    };
-    var GetTagsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetTags", {}).n("APIGatewayClient", "GetTagsCommand").sc(GetTags$).build() {
-    };
-    var GetUsageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetUsage", {}).n("APIGatewayClient", "GetUsageCommand").sc(GetUsage$).build() {
-    };
-    var GetUsagePlanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetUsagePlan", {}).n("APIGatewayClient", "GetUsagePlanCommand").sc(GetUsagePlan$).build() {
-    };
-    var GetUsagePlanKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetUsagePlanKey", {}).n("APIGatewayClient", "GetUsagePlanKeyCommand").sc(GetUsagePlanKey$).build() {
-    };
-    var GetUsagePlanKeysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetUsagePlanKeys", {}).n("APIGatewayClient", "GetUsagePlanKeysCommand").sc(GetUsagePlanKeys$).build() {
-    };
-    var GetUsagePlansCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetUsagePlans", {}).n("APIGatewayClient", "GetUsagePlansCommand").sc(GetUsagePlans$).build() {
-    };
-    var GetVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetVpcLink", {}).n("APIGatewayClient", "GetVpcLinkCommand").sc(GetVpcLink$).build() {
-    };
-    var GetVpcLinksCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "GetVpcLinks", {}).n("APIGatewayClient", "GetVpcLinksCommand").sc(GetVpcLinks$).build() {
-    };
-    var ImportApiKeysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "ImportApiKeys", {}).n("APIGatewayClient", "ImportApiKeysCommand").sc(ImportApiKeys$).build() {
-    };
-    var ImportDocumentationPartsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "ImportDocumentationParts", {}).n("APIGatewayClient", "ImportDocumentationPartsCommand").sc(ImportDocumentationParts$).build() {
-    };
-    var ImportRestApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "ImportRestApi", {}).n("APIGatewayClient", "ImportRestApiCommand").sc(ImportRestApi$).build() {
-    };
-    var PutGatewayResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutGatewayResponse", {}).n("APIGatewayClient", "PutGatewayResponseCommand").sc(PutGatewayResponse$).build() {
-    };
-    var PutIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutIntegration", {}).n("APIGatewayClient", "PutIntegrationCommand").sc(PutIntegration$).build() {
-    };
-    var PutIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutIntegrationResponse", {}).n("APIGatewayClient", "PutIntegrationResponseCommand").sc(PutIntegrationResponse$).build() {
-    };
-    var PutMethodCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutMethod", {}).n("APIGatewayClient", "PutMethodCommand").sc(PutMethod$).build() {
-    };
-    var PutMethodResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutMethodResponse", {}).n("APIGatewayClient", "PutMethodResponseCommand").sc(PutMethodResponse$).build() {
-    };
-    var PutRestApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "PutRestApi", {}).n("APIGatewayClient", "PutRestApiCommand").sc(PutRestApi$).build() {
-    };
-    var RejectDomainNameAccessAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "RejectDomainNameAccessAssociation", {}).n("APIGatewayClient", "RejectDomainNameAccessAssociationCommand").sc(RejectDomainNameAccessAssociation$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "TagResource", {}).n("APIGatewayClient", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var TestInvokeAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "TestInvokeAuthorizer", {}).n("APIGatewayClient", "TestInvokeAuthorizerCommand").sc(TestInvokeAuthorizer$).build() {
-    };
-    var TestInvokeMethodCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "TestInvokeMethod", {}).n("APIGatewayClient", "TestInvokeMethodCommand").sc(TestInvokeMethod$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UntagResource", {}).n("APIGatewayClient", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateAccountCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateAccount", {}).n("APIGatewayClient", "UpdateAccountCommand").sc(UpdateAccount$).build() {
-    };
-    var UpdateApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateApiKey", {}).n("APIGatewayClient", "UpdateApiKeyCommand").sc(UpdateApiKey$).build() {
-    };
-    var UpdateAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateAuthorizer", {}).n("APIGatewayClient", "UpdateAuthorizerCommand").sc(UpdateAuthorizer$).build() {
-    };
-    var UpdateBasePathMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateBasePathMapping", {}).n("APIGatewayClient", "UpdateBasePathMappingCommand").sc(UpdateBasePathMapping$).build() {
-    };
-    var UpdateClientCertificateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateClientCertificate", {}).n("APIGatewayClient", "UpdateClientCertificateCommand").sc(UpdateClientCertificate$).build() {
-    };
-    var UpdateDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateDeployment", {}).n("APIGatewayClient", "UpdateDeploymentCommand").sc(UpdateDeployment$).build() {
-    };
-    var UpdateDocumentationPartCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateDocumentationPart", {}).n("APIGatewayClient", "UpdateDocumentationPartCommand").sc(UpdateDocumentationPart$).build() {
-    };
-    var UpdateDocumentationVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateDocumentationVersion", {}).n("APIGatewayClient", "UpdateDocumentationVersionCommand").sc(UpdateDocumentationVersion$).build() {
-    };
-    var UpdateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateDomainName", {}).n("APIGatewayClient", "UpdateDomainNameCommand").sc(UpdateDomainName$).build() {
-    };
-    var UpdateGatewayResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateGatewayResponse", {}).n("APIGatewayClient", "UpdateGatewayResponseCommand").sc(UpdateGatewayResponse$).build() {
-    };
-    var UpdateIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateIntegration", {}).n("APIGatewayClient", "UpdateIntegrationCommand").sc(UpdateIntegration$).build() {
-    };
-    var UpdateIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateIntegrationResponse", {}).n("APIGatewayClient", "UpdateIntegrationResponseCommand").sc(UpdateIntegrationResponse$).build() {
-    };
-    var UpdateMethodCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateMethod", {}).n("APIGatewayClient", "UpdateMethodCommand").sc(UpdateMethod$).build() {
-    };
-    var UpdateMethodResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateMethodResponse", {}).n("APIGatewayClient", "UpdateMethodResponseCommand").sc(UpdateMethodResponse$).build() {
-    };
-    var UpdateModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateModel", {}).n("APIGatewayClient", "UpdateModelCommand").sc(UpdateModel$).build() {
-    };
-    var UpdateRequestValidatorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateRequestValidator", {}).n("APIGatewayClient", "UpdateRequestValidatorCommand").sc(UpdateRequestValidator$).build() {
-    };
-    var UpdateResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateResource", {}).n("APIGatewayClient", "UpdateResourceCommand").sc(UpdateResource$).build() {
-    };
-    var UpdateRestApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateRestApi", {}).n("APIGatewayClient", "UpdateRestApiCommand").sc(UpdateRestApi$).build() {
-    };
-    var UpdateStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateStage", {}).n("APIGatewayClient", "UpdateStageCommand").sc(UpdateStage$).build() {
-    };
-    var UpdateUsageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateUsage", {}).n("APIGatewayClient", "UpdateUsageCommand").sc(UpdateUsage$).build() {
-    };
-    var UpdateUsagePlanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateUsagePlan", {}).n("APIGatewayClient", "UpdateUsagePlanCommand").sc(UpdateUsagePlan$).build() {
-    };
-    var UpdateVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("BackplaneControlService", "UpdateVpcLink", {}).n("APIGatewayClient", "UpdateVpcLinkCommand").sc(UpdateVpcLink$).build() {
+    var command5 = makeBuilder2(commonParams5, "BackplaneControlService", "APIGatewayClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var CreateApiKeyCommand = class extends command5(_ep05, _mw05, "CreateApiKey", CreateApiKey$) {
+    };
+    var CreateAuthorizerCommand = class extends command5(_ep05, _mw05, "CreateAuthorizer", CreateAuthorizer$) {
+    };
+    var CreateBasePathMappingCommand = class extends command5(_ep05, _mw05, "CreateBasePathMapping", CreateBasePathMapping$) {
+    };
+    var CreateDeploymentCommand = class extends command5(_ep05, _mw05, "CreateDeployment", CreateDeployment$) {
+    };
+    var CreateDocumentationPartCommand = class extends command5(_ep05, _mw05, "CreateDocumentationPart", CreateDocumentationPart$) {
+    };
+    var CreateDocumentationVersionCommand = class extends command5(_ep05, _mw05, "CreateDocumentationVersion", CreateDocumentationVersion$) {
+    };
+    var CreateDomainNameAccessAssociationCommand = class extends command5(_ep05, _mw05, "CreateDomainNameAccessAssociation", CreateDomainNameAccessAssociation$) {
+    };
+    var CreateDomainNameCommand = class extends command5(_ep05, _mw05, "CreateDomainName", CreateDomainName$) {
+    };
+    var CreateModelCommand = class extends command5(_ep05, _mw05, "CreateModel", CreateModel$) {
+    };
+    var CreateRequestValidatorCommand = class extends command5(_ep05, _mw05, "CreateRequestValidator", CreateRequestValidator$) {
+    };
+    var CreateResourceCommand = class extends command5(_ep05, _mw05, "CreateResource", CreateResource$) {
+    };
+    var CreateRestApiCommand = class extends command5(_ep05, _mw05, "CreateRestApi", CreateRestApi$) {
+    };
+    var CreateStageCommand = class extends command5(_ep05, _mw05, "CreateStage", CreateStage$) {
+    };
+    var CreateUsagePlanCommand = class extends command5(_ep05, _mw05, "CreateUsagePlan", CreateUsagePlan$) {
+    };
+    var CreateUsagePlanKeyCommand = class extends command5(_ep05, _mw05, "CreateUsagePlanKey", CreateUsagePlanKey$) {
+    };
+    var CreateVpcLinkCommand = class extends command5(_ep05, _mw05, "CreateVpcLink", CreateVpcLink$) {
+    };
+    var DeleteApiKeyCommand = class extends command5(_ep05, _mw05, "DeleteApiKey", DeleteApiKey$) {
+    };
+    var DeleteAuthorizerCommand = class extends command5(_ep05, _mw05, "DeleteAuthorizer", DeleteAuthorizer$) {
+    };
+    var DeleteBasePathMappingCommand = class extends command5(_ep05, _mw05, "DeleteBasePathMapping", DeleteBasePathMapping$) {
+    };
+    var DeleteClientCertificateCommand = class extends command5(_ep05, _mw05, "DeleteClientCertificate", DeleteClientCertificate$) {
+    };
+    var DeleteDeploymentCommand = class extends command5(_ep05, _mw05, "DeleteDeployment", DeleteDeployment$) {
+    };
+    var DeleteDocumentationPartCommand = class extends command5(_ep05, _mw05, "DeleteDocumentationPart", DeleteDocumentationPart$) {
+    };
+    var DeleteDocumentationVersionCommand = class extends command5(_ep05, _mw05, "DeleteDocumentationVersion", DeleteDocumentationVersion$) {
+    };
+    var DeleteDomainNameAccessAssociationCommand = class extends command5(_ep05, _mw05, "DeleteDomainNameAccessAssociation", DeleteDomainNameAccessAssociation$) {
+    };
+    var DeleteDomainNameCommand = class extends command5(_ep05, _mw05, "DeleteDomainName", DeleteDomainName$) {
+    };
+    var DeleteGatewayResponseCommand = class extends command5(_ep05, _mw05, "DeleteGatewayResponse", DeleteGatewayResponse$) {
+    };
+    var DeleteIntegrationCommand = class extends command5(_ep05, _mw05, "DeleteIntegration", DeleteIntegration$) {
+    };
+    var DeleteIntegrationResponseCommand = class extends command5(_ep05, _mw05, "DeleteIntegrationResponse", DeleteIntegrationResponse$) {
+    };
+    var DeleteMethodCommand = class extends command5(_ep05, _mw05, "DeleteMethod", DeleteMethod$) {
+    };
+    var DeleteMethodResponseCommand = class extends command5(_ep05, _mw05, "DeleteMethodResponse", DeleteMethodResponse$) {
+    };
+    var DeleteModelCommand = class extends command5(_ep05, _mw05, "DeleteModel", DeleteModel$) {
+    };
+    var DeleteRequestValidatorCommand = class extends command5(_ep05, _mw05, "DeleteRequestValidator", DeleteRequestValidator$) {
+    };
+    var DeleteResourceCommand = class extends command5(_ep05, _mw05, "DeleteResource", DeleteResource$) {
+    };
+    var DeleteRestApiCommand = class extends command5(_ep05, _mw05, "DeleteRestApi", DeleteRestApi$) {
+    };
+    var DeleteStageCommand = class extends command5(_ep05, _mw05, "DeleteStage", DeleteStage$) {
+    };
+    var DeleteUsagePlanCommand = class extends command5(_ep05, _mw05, "DeleteUsagePlan", DeleteUsagePlan$) {
+    };
+    var DeleteUsagePlanKeyCommand = class extends command5(_ep05, _mw05, "DeleteUsagePlanKey", DeleteUsagePlanKey$) {
+    };
+    var DeleteVpcLinkCommand = class extends command5(_ep05, _mw05, "DeleteVpcLink", DeleteVpcLink$) {
+    };
+    var FlushStageAuthorizersCacheCommand = class extends command5(_ep05, _mw05, "FlushStageAuthorizersCache", FlushStageAuthorizersCache$) {
+    };
+    var FlushStageCacheCommand = class extends command5(_ep05, _mw05, "FlushStageCache", FlushStageCache$) {
+    };
+    var GenerateClientCertificateCommand = class extends command5(_ep05, _mw05, "GenerateClientCertificate", GenerateClientCertificate$) {
+    };
+    var GetAccountCommand = class extends command5(_ep05, _mw05, "GetAccount", GetAccount$) {
+    };
+    var GetApiKeyCommand = class extends command5(_ep05, _mw05, "GetApiKey", GetApiKey$) {
+    };
+    var GetApiKeysCommand = class extends command5(_ep05, _mw05, "GetApiKeys", GetApiKeys$) {
+    };
+    var GetAuthorizerCommand = class extends command5(_ep05, _mw05, "GetAuthorizer", GetAuthorizer$) {
+    };
+    var GetAuthorizersCommand2 = class extends command5(_ep05, _mw05, "GetAuthorizers", GetAuthorizers$) {
+    };
+    var GetBasePathMappingCommand = class extends command5(_ep05, _mw05, "GetBasePathMapping", GetBasePathMapping$) {
+    };
+    var GetBasePathMappingsCommand2 = class extends command5(_ep05, _mw05, "GetBasePathMappings", GetBasePathMappings$) {
+    };
+    var GetClientCertificateCommand = class extends command5(_ep05, _mw05, "GetClientCertificate", GetClientCertificate$) {
+    };
+    var GetClientCertificatesCommand = class extends command5(_ep05, _mw05, "GetClientCertificates", GetClientCertificates$) {
+    };
+    var GetDeploymentCommand = class extends command5(_ep05, _mw05, "GetDeployment", GetDeployment$) {
+    };
+    var GetDeploymentsCommand = class extends command5(_ep05, _mw05, "GetDeployments", GetDeployments$) {
+    };
+    var GetDocumentationPartCommand = class extends command5(_ep05, _mw05, "GetDocumentationPart", GetDocumentationPart$) {
+    };
+    var GetDocumentationPartsCommand = class extends command5(_ep05, _mw05, "GetDocumentationParts", GetDocumentationParts$) {
+    };
+    var GetDocumentationVersionCommand = class extends command5(_ep05, _mw05, "GetDocumentationVersion", GetDocumentationVersion$) {
+    };
+    var GetDocumentationVersionsCommand = class extends command5(_ep05, _mw05, "GetDocumentationVersions", GetDocumentationVersions$) {
+    };
+    var GetDomainNameAccessAssociationsCommand = class extends command5(_ep05, _mw05, "GetDomainNameAccessAssociations", GetDomainNameAccessAssociations$) {
+    };
+    var GetDomainNameCommand = class extends command5(_ep05, _mw05, "GetDomainName", GetDomainName$) {
+    };
+    var GetDomainNamesCommand = class extends command5(_ep05, _mw05, "GetDomainNames", GetDomainNames$) {
+    };
+    var GetExportCommand2 = class extends command5(_ep05, _mw05, "GetExport", GetExport$) {
+    };
+    var GetGatewayResponseCommand = class extends command5(_ep05, _mw05, "GetGatewayResponse", GetGatewayResponse$) {
+    };
+    var GetGatewayResponsesCommand = class extends command5(_ep05, _mw05, "GetGatewayResponses", GetGatewayResponses$) {
+    };
+    var GetIntegrationCommand = class extends command5(_ep05, _mw05, "GetIntegration", GetIntegration$) {
+    };
+    var GetIntegrationResponseCommand = class extends command5(_ep05, _mw05, "GetIntegrationResponse", GetIntegrationResponse$) {
+    };
+    var GetMethodCommand = class extends command5(_ep05, _mw05, "GetMethod", GetMethod$) {
+    };
+    var GetMethodResponseCommand = class extends command5(_ep05, _mw05, "GetMethodResponse", GetMethodResponse$) {
+    };
+    var GetModelCommand = class extends command5(_ep05, _mw05, "GetModel", GetModel$) {
+    };
+    var GetModelsCommand2 = class extends command5(_ep05, _mw05, "GetModels", GetModels$) {
+    };
+    var GetModelTemplateCommand = class extends command5(_ep05, _mw05, "GetModelTemplate", GetModelTemplate$) {
+    };
+    var GetRequestValidatorCommand = class extends command5(_ep05, _mw05, "GetRequestValidator", GetRequestValidator$) {
+    };
+    var GetRequestValidatorsCommand = class extends command5(_ep05, _mw05, "GetRequestValidators", GetRequestValidators$) {
+    };
+    var GetResourceCommand = class extends command5(_ep05, _mw05, "GetResource", GetResource$) {
+    };
+    var GetResourcesCommand3 = class extends command5(_ep05, _mw05, "GetResources", GetResources$) {
+    };
+    var GetRestApiCommand2 = class extends command5(_ep05, _mw05, "GetRestApi", GetRestApi$) {
+    };
+    var GetRestApisCommand2 = class extends command5(_ep05, _mw05, "GetRestApis", GetRestApis$) {
+    };
+    var GetSdkCommand = class extends command5(_ep05, _mw05, "GetSdk", GetSdk$) {
+    };
+    var GetSdkTypeCommand = class extends command5(_ep05, _mw05, "GetSdkType", GetSdkType$) {
+    };
+    var GetSdkTypesCommand = class extends command5(_ep05, _mw05, "GetSdkTypes", GetSdkTypes$) {
+    };
+    var GetStageCommand = class extends command5(_ep05, _mw05, "GetStage", GetStage$) {
+    };
+    var GetStagesCommand = class extends command5(_ep05, _mw05, "GetStages", GetStages$) {
+    };
+    var GetTagsCommand2 = class extends command5(_ep05, _mw05, "GetTags", GetTags$) {
+    };
+    var GetUsageCommand = class extends command5(_ep05, _mw05, "GetUsage", GetUsage$) {
+    };
+    var GetUsagePlanCommand = class extends command5(_ep05, _mw05, "GetUsagePlan", GetUsagePlan$) {
+    };
+    var GetUsagePlanKeyCommand = class extends command5(_ep05, _mw05, "GetUsagePlanKey", GetUsagePlanKey$) {
+    };
+    var GetUsagePlanKeysCommand = class extends command5(_ep05, _mw05, "GetUsagePlanKeys", GetUsagePlanKeys$) {
+    };
+    var GetUsagePlansCommand = class extends command5(_ep05, _mw05, "GetUsagePlans", GetUsagePlans$) {
+    };
+    var GetVpcLinkCommand = class extends command5(_ep05, _mw05, "GetVpcLink", GetVpcLink$) {
+    };
+    var GetVpcLinksCommand = class extends command5(_ep05, _mw05, "GetVpcLinks", GetVpcLinks$) {
+    };
+    var ImportApiKeysCommand = class extends command5(_ep05, _mw05, "ImportApiKeys", ImportApiKeys$) {
+    };
+    var ImportDocumentationPartsCommand = class extends command5(_ep05, _mw05, "ImportDocumentationParts", ImportDocumentationParts$) {
+    };
+    var ImportRestApiCommand = class extends command5(_ep05, _mw05, "ImportRestApi", ImportRestApi$) {
+    };
+    var PutGatewayResponseCommand = class extends command5(_ep05, _mw05, "PutGatewayResponse", PutGatewayResponse$) {
+    };
+    var PutIntegrationCommand = class extends command5(_ep05, _mw05, "PutIntegration", PutIntegration$) {
+    };
+    var PutIntegrationResponseCommand = class extends command5(_ep05, _mw05, "PutIntegrationResponse", PutIntegrationResponse$) {
+    };
+    var PutMethodCommand = class extends command5(_ep05, _mw05, "PutMethod", PutMethod$) {
+    };
+    var PutMethodResponseCommand = class extends command5(_ep05, _mw05, "PutMethodResponse", PutMethodResponse$) {
+    };
+    var PutRestApiCommand = class extends command5(_ep05, _mw05, "PutRestApi", PutRestApi$) {
+    };
+    var RejectDomainNameAccessAssociationCommand = class extends command5(_ep05, _mw05, "RejectDomainNameAccessAssociation", RejectDomainNameAccessAssociation$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var TestInvokeAuthorizerCommand = class extends command5(_ep05, _mw05, "TestInvokeAuthorizer", TestInvokeAuthorizer$) {
+    };
+    var TestInvokeMethodCommand = class extends command5(_ep05, _mw05, "TestInvokeMethod", TestInvokeMethod$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateAccountCommand = class extends command5(_ep05, _mw05, "UpdateAccount", UpdateAccount$) {
+    };
+    var UpdateApiKeyCommand = class extends command5(_ep05, _mw05, "UpdateApiKey", UpdateApiKey$) {
+    };
+    var UpdateAuthorizerCommand = class extends command5(_ep05, _mw05, "UpdateAuthorizer", UpdateAuthorizer$) {
+    };
+    var UpdateBasePathMappingCommand = class extends command5(_ep05, _mw05, "UpdateBasePathMapping", UpdateBasePathMapping$) {
+    };
+    var UpdateClientCertificateCommand = class extends command5(_ep05, _mw05, "UpdateClientCertificate", UpdateClientCertificate$) {
+    };
+    var UpdateDeploymentCommand = class extends command5(_ep05, _mw05, "UpdateDeployment", UpdateDeployment$) {
+    };
+    var UpdateDocumentationPartCommand = class extends command5(_ep05, _mw05, "UpdateDocumentationPart", UpdateDocumentationPart$) {
+    };
+    var UpdateDocumentationVersionCommand = class extends command5(_ep05, _mw05, "UpdateDocumentationVersion", UpdateDocumentationVersion$) {
+    };
+    var UpdateDomainNameCommand = class extends command5(_ep05, _mw05, "UpdateDomainName", UpdateDomainName$) {
+    };
+    var UpdateGatewayResponseCommand = class extends command5(_ep05, _mw05, "UpdateGatewayResponse", UpdateGatewayResponse$) {
+    };
+    var UpdateIntegrationCommand = class extends command5(_ep05, _mw05, "UpdateIntegration", UpdateIntegration$) {
+    };
+    var UpdateIntegrationResponseCommand = class extends command5(_ep05, _mw05, "UpdateIntegrationResponse", UpdateIntegrationResponse$) {
+    };
+    var UpdateMethodCommand = class extends command5(_ep05, _mw05, "UpdateMethod", UpdateMethod$) {
+    };
+    var UpdateMethodResponseCommand = class extends command5(_ep05, _mw05, "UpdateMethodResponse", UpdateMethodResponse$) {
+    };
+    var UpdateModelCommand = class extends command5(_ep05, _mw05, "UpdateModel", UpdateModel$) {
+    };
+    var UpdateRequestValidatorCommand = class extends command5(_ep05, _mw05, "UpdateRequestValidator", UpdateRequestValidator$) {
+    };
+    var UpdateResourceCommand = class extends command5(_ep05, _mw05, "UpdateResource", UpdateResource$) {
+    };
+    var UpdateRestApiCommand = class extends command5(_ep05, _mw05, "UpdateRestApi", UpdateRestApi$) {
+    };
+    var UpdateStageCommand = class extends command5(_ep05, _mw05, "UpdateStage", UpdateStage$) {
+    };
+    var UpdateUsageCommand = class extends command5(_ep05, _mw05, "UpdateUsage", UpdateUsage$) {
+    };
+    var UpdateUsagePlanCommand = class extends command5(_ep05, _mw05, "UpdateUsagePlan", UpdateUsagePlan$) {
+    };
+    var UpdateVpcLinkCommand = class extends command5(_ep05, _mw05, "UpdateVpcLink", UpdateVpcLink$) {
     };
     var paginateGetApiKeys = createPaginator2(APIGatewayClient2, GetApiKeysCommand, "position", "position", "limit");
     var paginateGetBasePathMappings = createPaginator2(APIGatewayClient2, GetBasePathMappingsCommand2, "position", "position", "limit");
@@ -29727,8 +29518,9 @@ var require_dist_cjs18 = __commonJS({
   "node_modules/@aws-sdk/client-apigatewayv2/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -29792,7 +29584,7 @@ var require_dist_cjs18 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -34019,417 +33811,214 @@ var require_dist_cjs18 = __commonJS({
         super.destroy();
       }
     };
-    var CreateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateApi", {}).n("ApiGatewayV2Client", "CreateApiCommand").sc(CreateApi$).build() {
-    };
-    var CreateApiMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateApiMapping", {}).n("ApiGatewayV2Client", "CreateApiMappingCommand").sc(CreateApiMapping$).build() {
-    };
-    var CreateAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateAuthorizer", {}).n("ApiGatewayV2Client", "CreateAuthorizerCommand").sc(CreateAuthorizer$).build() {
-    };
-    var CreateDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateDeployment", {}).n("ApiGatewayV2Client", "CreateDeploymentCommand").sc(CreateDeployment$).build() {
-    };
-    var CreateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateDomainName", {}).n("ApiGatewayV2Client", "CreateDomainNameCommand").sc(CreateDomainName$).build() {
-    };
-    var CreateIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateIntegration", {}).n("ApiGatewayV2Client", "CreateIntegrationCommand").sc(CreateIntegration$).build() {
-    };
-    var CreateIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateIntegrationResponse", {}).n("ApiGatewayV2Client", "CreateIntegrationResponseCommand").sc(CreateIntegrationResponse$).build() {
-    };
-    var CreateModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateModel", {}).n("ApiGatewayV2Client", "CreateModelCommand").sc(CreateModel$).build() {
-    };
-    var CreatePortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreatePortal", {}).n("ApiGatewayV2Client", "CreatePortalCommand").sc(CreatePortal$).build() {
-    };
-    var CreatePortalProductCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreatePortalProduct", {}).n("ApiGatewayV2Client", "CreatePortalProductCommand").sc(CreatePortalProduct$).build() {
-    };
-    var CreateProductPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateProductPage", {}).n("ApiGatewayV2Client", "CreateProductPageCommand").sc(CreateProductPage$).build() {
-    };
-    var CreateProductRestEndpointPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateProductRestEndpointPage", {}).n("ApiGatewayV2Client", "CreateProductRestEndpointPageCommand").sc(CreateProductRestEndpointPage$).build() {
-    };
-    var CreateRouteCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateRoute", {}).n("ApiGatewayV2Client", "CreateRouteCommand").sc(CreateRoute$).build() {
-    };
-    var CreateRouteResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateRouteResponse", {}).n("ApiGatewayV2Client", "CreateRouteResponseCommand").sc(CreateRouteResponse$).build() {
-    };
-    var CreateRoutingRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateRoutingRule", {}).n("ApiGatewayV2Client", "CreateRoutingRuleCommand").sc(CreateRoutingRule$).build() {
-    };
-    var CreateStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateStage", {}).n("ApiGatewayV2Client", "CreateStageCommand").sc(CreateStage$).build() {
-    };
-    var CreateVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "CreateVpcLink", {}).n("ApiGatewayV2Client", "CreateVpcLinkCommand").sc(CreateVpcLink$).build() {
-    };
-    var DeleteAccessLogSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteAccessLogSettings", {}).n("ApiGatewayV2Client", "DeleteAccessLogSettingsCommand").sc(DeleteAccessLogSettings$).build() {
-    };
-    var DeleteApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteApi", {}).n("ApiGatewayV2Client", "DeleteApiCommand").sc(DeleteApi$).build() {
-    };
-    var DeleteApiMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteApiMapping", {}).n("ApiGatewayV2Client", "DeleteApiMappingCommand").sc(DeleteApiMapping$).build() {
-    };
-    var DeleteAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteAuthorizer", {}).n("ApiGatewayV2Client", "DeleteAuthorizerCommand").sc(DeleteAuthorizer$).build() {
-    };
-    var DeleteCorsConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteCorsConfiguration", {}).n("ApiGatewayV2Client", "DeleteCorsConfigurationCommand").sc(DeleteCorsConfiguration$).build() {
-    };
-    var DeleteDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteDeployment", {}).n("ApiGatewayV2Client", "DeleteDeploymentCommand").sc(DeleteDeployment$).build() {
-    };
-    var DeleteDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteDomainName", {}).n("ApiGatewayV2Client", "DeleteDomainNameCommand").sc(DeleteDomainName$).build() {
-    };
-    var DeleteIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteIntegration", {}).n("ApiGatewayV2Client", "DeleteIntegrationCommand").sc(DeleteIntegration$).build() {
-    };
-    var DeleteIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteIntegrationResponse", {}).n("ApiGatewayV2Client", "DeleteIntegrationResponseCommand").sc(DeleteIntegrationResponse$).build() {
-    };
-    var DeleteModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteModel", {}).n("ApiGatewayV2Client", "DeleteModelCommand").sc(DeleteModel$).build() {
-    };
-    var DeletePortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeletePortal", {}).n("ApiGatewayV2Client", "DeletePortalCommand").sc(DeletePortal$).build() {
-    };
-    var DeletePortalProductCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeletePortalProduct", {}).n("ApiGatewayV2Client", "DeletePortalProductCommand").sc(DeletePortalProduct$).build() {
-    };
-    var DeletePortalProductSharingPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeletePortalProductSharingPolicy", {}).n("ApiGatewayV2Client", "DeletePortalProductSharingPolicyCommand").sc(DeletePortalProductSharingPolicy$).build() {
-    };
-    var DeleteProductPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteProductPage", {}).n("ApiGatewayV2Client", "DeleteProductPageCommand").sc(DeleteProductPage$).build() {
-    };
-    var DeleteProductRestEndpointPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteProductRestEndpointPage", {}).n("ApiGatewayV2Client", "DeleteProductRestEndpointPageCommand").sc(DeleteProductRestEndpointPage$).build() {
-    };
-    var DeleteRouteCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteRoute", {}).n("ApiGatewayV2Client", "DeleteRouteCommand").sc(DeleteRoute$).build() {
-    };
-    var DeleteRouteRequestParameterCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteRouteRequestParameter", {}).n("ApiGatewayV2Client", "DeleteRouteRequestParameterCommand").sc(DeleteRouteRequestParameter$).build() {
-    };
-    var DeleteRouteResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteRouteResponse", {}).n("ApiGatewayV2Client", "DeleteRouteResponseCommand").sc(DeleteRouteResponse$).build() {
-    };
-    var DeleteRouteSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteRouteSettings", {}).n("ApiGatewayV2Client", "DeleteRouteSettingsCommand").sc(DeleteRouteSettings$).build() {
-    };
-    var DeleteRoutingRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteRoutingRule", {}).n("ApiGatewayV2Client", "DeleteRoutingRuleCommand").sc(DeleteRoutingRule$).build() {
-    };
-    var DeleteStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteStage", {}).n("ApiGatewayV2Client", "DeleteStageCommand").sc(DeleteStage$).build() {
-    };
-    var DeleteVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DeleteVpcLink", {}).n("ApiGatewayV2Client", "DeleteVpcLinkCommand").sc(DeleteVpcLink$).build() {
-    };
-    var DisablePortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "DisablePortal", {}).n("ApiGatewayV2Client", "DisablePortalCommand").sc(DisablePortal$).build() {
-    };
-    var ExportApiCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ExportApi", {}).n("ApiGatewayV2Client", "ExportApiCommand").sc(ExportApi$).build() {
-    };
-    var GetApiCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetApi", {}).n("ApiGatewayV2Client", "GetApiCommand").sc(GetApi$).build() {
-    };
-    var GetApiMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetApiMapping", {}).n("ApiGatewayV2Client", "GetApiMappingCommand").sc(GetApiMapping$).build() {
-    };
-    var GetApiMappingsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetApiMappings", {}).n("ApiGatewayV2Client", "GetApiMappingsCommand").sc(GetApiMappings$).build() {
-    };
-    var GetApisCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetApis", {}).n("ApiGatewayV2Client", "GetApisCommand").sc(GetApis$).build() {
-    };
-    var GetAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetAuthorizer", {}).n("ApiGatewayV2Client", "GetAuthorizerCommand").sc(GetAuthorizer$).build() {
-    };
-    var GetAuthorizersCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetAuthorizers", {}).n("ApiGatewayV2Client", "GetAuthorizersCommand").sc(GetAuthorizers$).build() {
-    };
-    var GetDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetDeployment", {}).n("ApiGatewayV2Client", "GetDeploymentCommand").sc(GetDeployment$).build() {
-    };
-    var GetDeploymentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetDeployments", {}).n("ApiGatewayV2Client", "GetDeploymentsCommand").sc(GetDeployments$).build() {
-    };
-    var GetDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetDomainName", {}).n("ApiGatewayV2Client", "GetDomainNameCommand").sc(GetDomainName$).build() {
-    };
-    var GetDomainNamesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetDomainNames", {}).n("ApiGatewayV2Client", "GetDomainNamesCommand").sc(GetDomainNames$).build() {
-    };
-    var GetIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetIntegration", {}).n("ApiGatewayV2Client", "GetIntegrationCommand").sc(GetIntegration$).build() {
-    };
-    var GetIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetIntegrationResponse", {}).n("ApiGatewayV2Client", "GetIntegrationResponseCommand").sc(GetIntegrationResponse$).build() {
-    };
-    var GetIntegrationResponsesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetIntegrationResponses", {}).n("ApiGatewayV2Client", "GetIntegrationResponsesCommand").sc(GetIntegrationResponses$).build() {
-    };
-    var GetIntegrationsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetIntegrations", {}).n("ApiGatewayV2Client", "GetIntegrationsCommand").sc(GetIntegrations$).build() {
-    };
-    var GetModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetModel", {}).n("ApiGatewayV2Client", "GetModelCommand").sc(GetModel$).build() {
-    };
-    var GetModelsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetModels", {}).n("ApiGatewayV2Client", "GetModelsCommand").sc(GetModels$).build() {
-    };
-    var GetModelTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetModelTemplate", {}).n("ApiGatewayV2Client", "GetModelTemplateCommand").sc(GetModelTemplate$).build() {
-    };
-    var GetPortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetPortal", {}).n("ApiGatewayV2Client", "GetPortalCommand").sc(GetPortal$).build() {
-    };
-    var GetPortalProductCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetPortalProduct", {}).n("ApiGatewayV2Client", "GetPortalProductCommand").sc(GetPortalProduct$).build() {
-    };
-    var GetPortalProductSharingPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetPortalProductSharingPolicy", {}).n("ApiGatewayV2Client", "GetPortalProductSharingPolicyCommand").sc(GetPortalProductSharingPolicy$).build() {
-    };
-    var GetProductPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetProductPage", {}).n("ApiGatewayV2Client", "GetProductPageCommand").sc(GetProductPage$).build() {
-    };
-    var GetProductRestEndpointPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetProductRestEndpointPage", {}).n("ApiGatewayV2Client", "GetProductRestEndpointPageCommand").sc(GetProductRestEndpointPage$).build() {
-    };
-    var GetRouteCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetRoute", {}).n("ApiGatewayV2Client", "GetRouteCommand").sc(GetRoute$).build() {
-    };
-    var GetRouteResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetRouteResponse", {}).n("ApiGatewayV2Client", "GetRouteResponseCommand").sc(GetRouteResponse$).build() {
-    };
-    var GetRouteResponsesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetRouteResponses", {}).n("ApiGatewayV2Client", "GetRouteResponsesCommand").sc(GetRouteResponses$).build() {
-    };
-    var GetRoutesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetRoutes", {}).n("ApiGatewayV2Client", "GetRoutesCommand").sc(GetRoutes$).build() {
-    };
-    var GetRoutingRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetRoutingRule", {}).n("ApiGatewayV2Client", "GetRoutingRuleCommand").sc(GetRoutingRule$).build() {
-    };
-    var GetStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetStage", {}).n("ApiGatewayV2Client", "GetStageCommand").sc(GetStage$).build() {
-    };
-    var GetStagesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetStages", {}).n("ApiGatewayV2Client", "GetStagesCommand").sc(GetStages$).build() {
-    };
-    var GetTagsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetTags", {}).n("ApiGatewayV2Client", "GetTagsCommand").sc(GetTags$).build() {
-    };
-    var GetVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetVpcLink", {}).n("ApiGatewayV2Client", "GetVpcLinkCommand").sc(GetVpcLink$).build() {
-    };
-    var GetVpcLinksCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "GetVpcLinks", {}).n("ApiGatewayV2Client", "GetVpcLinksCommand").sc(GetVpcLinks$).build() {
-    };
-    var ImportApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ImportApi", {}).n("ApiGatewayV2Client", "ImportApiCommand").sc(ImportApi$).build() {
-    };
-    var ListPortalProductsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ListPortalProducts", {}).n("ApiGatewayV2Client", "ListPortalProductsCommand").sc(ListPortalProducts$).build() {
-    };
-    var ListPortalsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ListPortals", {}).n("ApiGatewayV2Client", "ListPortalsCommand").sc(ListPortals$).build() {
-    };
-    var ListProductPagesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ListProductPages", {}).n("ApiGatewayV2Client", "ListProductPagesCommand").sc(ListProductPages$).build() {
-    };
-    var ListProductRestEndpointPagesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ListProductRestEndpointPages", {}).n("ApiGatewayV2Client", "ListProductRestEndpointPagesCommand").sc(ListProductRestEndpointPages$).build() {
-    };
-    var ListRoutingRulesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ListRoutingRules", {}).n("ApiGatewayV2Client", "ListRoutingRulesCommand").sc(ListRoutingRules$).build() {
-    };
-    var PreviewPortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "PreviewPortal", {}).n("ApiGatewayV2Client", "PreviewPortalCommand").sc(PreviewPortal$).build() {
-    };
-    var PublishPortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "PublishPortal", {}).n("ApiGatewayV2Client", "PublishPortalCommand").sc(PublishPortal$).build() {
-    };
-    var PutPortalProductSharingPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "PutPortalProductSharingPolicy", {}).n("ApiGatewayV2Client", "PutPortalProductSharingPolicyCommand").sc(PutPortalProductSharingPolicy$).build() {
-    };
-    var PutRoutingRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "PutRoutingRule", {}).n("ApiGatewayV2Client", "PutRoutingRuleCommand").sc(PutRoutingRule$).build() {
-    };
-    var ReimportApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ReimportApi", {}).n("ApiGatewayV2Client", "ReimportApiCommand").sc(ReimportApi$).build() {
-    };
-    var ResetAuthorizersCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "ResetAuthorizersCache", {}).n("ApiGatewayV2Client", "ResetAuthorizersCacheCommand").sc(ResetAuthorizersCache$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "TagResource", {}).n("ApiGatewayV2Client", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UntagResource", {}).n("ApiGatewayV2Client", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateApi", {}).n("ApiGatewayV2Client", "UpdateApiCommand").sc(UpdateApi$).build() {
-    };
-    var UpdateApiMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateApiMapping", {}).n("ApiGatewayV2Client", "UpdateApiMappingCommand").sc(UpdateApiMapping$).build() {
-    };
-    var UpdateAuthorizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateAuthorizer", {}).n("ApiGatewayV2Client", "UpdateAuthorizerCommand").sc(UpdateAuthorizer$).build() {
-    };
-    var UpdateDeploymentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateDeployment", {}).n("ApiGatewayV2Client", "UpdateDeploymentCommand").sc(UpdateDeployment$).build() {
-    };
-    var UpdateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateDomainName", {}).n("ApiGatewayV2Client", "UpdateDomainNameCommand").sc(UpdateDomainName$).build() {
-    };
-    var UpdateIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateIntegration", {}).n("ApiGatewayV2Client", "UpdateIntegrationCommand").sc(UpdateIntegration$).build() {
-    };
-    var UpdateIntegrationResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateIntegrationResponse", {}).n("ApiGatewayV2Client", "UpdateIntegrationResponseCommand").sc(UpdateIntegrationResponse$).build() {
-    };
-    var UpdateModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateModel", {}).n("ApiGatewayV2Client", "UpdateModelCommand").sc(UpdateModel$).build() {
-    };
-    var UpdatePortalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdatePortal", {}).n("ApiGatewayV2Client", "UpdatePortalCommand").sc(UpdatePortal$).build() {
-    };
-    var UpdatePortalProductCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdatePortalProduct", {}).n("ApiGatewayV2Client", "UpdatePortalProductCommand").sc(UpdatePortalProduct$).build() {
-    };
-    var UpdateProductPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateProductPage", {}).n("ApiGatewayV2Client", "UpdateProductPageCommand").sc(UpdateProductPage$).build() {
-    };
-    var UpdateProductRestEndpointPageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateProductRestEndpointPage", {}).n("ApiGatewayV2Client", "UpdateProductRestEndpointPageCommand").sc(UpdateProductRestEndpointPage$).build() {
-    };
-    var UpdateRouteCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateRoute", {}).n("ApiGatewayV2Client", "UpdateRouteCommand").sc(UpdateRoute$).build() {
-    };
-    var UpdateRouteResponseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateRouteResponse", {}).n("ApiGatewayV2Client", "UpdateRouteResponseCommand").sc(UpdateRouteResponse$).build() {
-    };
-    var UpdateStageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateStage", {}).n("ApiGatewayV2Client", "UpdateStageCommand").sc(UpdateStage$).build() {
-    };
-    var UpdateVpcLinkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ApiGatewayV2", "UpdateVpcLink", {}).n("ApiGatewayV2Client", "UpdateVpcLinkCommand").sc(UpdateVpcLink$).build() {
+    var command5 = makeBuilder2(commonParams5, "ApiGatewayV2", "ApiGatewayV2Client", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var CreateApiCommand = class extends command5(_ep05, _mw05, "CreateApi", CreateApi$) {
+    };
+    var CreateApiMappingCommand = class extends command5(_ep05, _mw05, "CreateApiMapping", CreateApiMapping$) {
+    };
+    var CreateAuthorizerCommand = class extends command5(_ep05, _mw05, "CreateAuthorizer", CreateAuthorizer$) {
+    };
+    var CreateDeploymentCommand = class extends command5(_ep05, _mw05, "CreateDeployment", CreateDeployment$) {
+    };
+    var CreateDomainNameCommand = class extends command5(_ep05, _mw05, "CreateDomainName", CreateDomainName$) {
+    };
+    var CreateIntegrationCommand = class extends command5(_ep05, _mw05, "CreateIntegration", CreateIntegration$) {
+    };
+    var CreateIntegrationResponseCommand = class extends command5(_ep05, _mw05, "CreateIntegrationResponse", CreateIntegrationResponse$) {
+    };
+    var CreateModelCommand = class extends command5(_ep05, _mw05, "CreateModel", CreateModel$) {
+    };
+    var CreatePortalCommand = class extends command5(_ep05, _mw05, "CreatePortal", CreatePortal$) {
+    };
+    var CreatePortalProductCommand = class extends command5(_ep05, _mw05, "CreatePortalProduct", CreatePortalProduct$) {
+    };
+    var CreateProductPageCommand = class extends command5(_ep05, _mw05, "CreateProductPage", CreateProductPage$) {
+    };
+    var CreateProductRestEndpointPageCommand = class extends command5(_ep05, _mw05, "CreateProductRestEndpointPage", CreateProductRestEndpointPage$) {
+    };
+    var CreateRouteCommand = class extends command5(_ep05, _mw05, "CreateRoute", CreateRoute$) {
+    };
+    var CreateRouteResponseCommand = class extends command5(_ep05, _mw05, "CreateRouteResponse", CreateRouteResponse$) {
+    };
+    var CreateRoutingRuleCommand = class extends command5(_ep05, _mw05, "CreateRoutingRule", CreateRoutingRule$) {
+    };
+    var CreateStageCommand = class extends command5(_ep05, _mw05, "CreateStage", CreateStage$) {
+    };
+    var CreateVpcLinkCommand = class extends command5(_ep05, _mw05, "CreateVpcLink", CreateVpcLink$) {
+    };
+    var DeleteAccessLogSettingsCommand = class extends command5(_ep05, _mw05, "DeleteAccessLogSettings", DeleteAccessLogSettings$) {
+    };
+    var DeleteApiCommand = class extends command5(_ep05, _mw05, "DeleteApi", DeleteApi$) {
+    };
+    var DeleteApiMappingCommand = class extends command5(_ep05, _mw05, "DeleteApiMapping", DeleteApiMapping$) {
+    };
+    var DeleteAuthorizerCommand = class extends command5(_ep05, _mw05, "DeleteAuthorizer", DeleteAuthorizer$) {
+    };
+    var DeleteCorsConfigurationCommand = class extends command5(_ep05, _mw05, "DeleteCorsConfiguration", DeleteCorsConfiguration$) {
+    };
+    var DeleteDeploymentCommand = class extends command5(_ep05, _mw05, "DeleteDeployment", DeleteDeployment$) {
+    };
+    var DeleteDomainNameCommand = class extends command5(_ep05, _mw05, "DeleteDomainName", DeleteDomainName$) {
+    };
+    var DeleteIntegrationCommand = class extends command5(_ep05, _mw05, "DeleteIntegration", DeleteIntegration$) {
+    };
+    var DeleteIntegrationResponseCommand = class extends command5(_ep05, _mw05, "DeleteIntegrationResponse", DeleteIntegrationResponse$) {
+    };
+    var DeleteModelCommand = class extends command5(_ep05, _mw05, "DeleteModel", DeleteModel$) {
+    };
+    var DeletePortalCommand = class extends command5(_ep05, _mw05, "DeletePortal", DeletePortal$) {
+    };
+    var DeletePortalProductCommand = class extends command5(_ep05, _mw05, "DeletePortalProduct", DeletePortalProduct$) {
+    };
+    var DeletePortalProductSharingPolicyCommand = class extends command5(_ep05, _mw05, "DeletePortalProductSharingPolicy", DeletePortalProductSharingPolicy$) {
+    };
+    var DeleteProductPageCommand = class extends command5(_ep05, _mw05, "DeleteProductPage", DeleteProductPage$) {
+    };
+    var DeleteProductRestEndpointPageCommand = class extends command5(_ep05, _mw05, "DeleteProductRestEndpointPage", DeleteProductRestEndpointPage$) {
+    };
+    var DeleteRouteCommand = class extends command5(_ep05, _mw05, "DeleteRoute", DeleteRoute$) {
+    };
+    var DeleteRouteRequestParameterCommand = class extends command5(_ep05, _mw05, "DeleteRouteRequestParameter", DeleteRouteRequestParameter$) {
+    };
+    var DeleteRouteResponseCommand = class extends command5(_ep05, _mw05, "DeleteRouteResponse", DeleteRouteResponse$) {
+    };
+    var DeleteRouteSettingsCommand = class extends command5(_ep05, _mw05, "DeleteRouteSettings", DeleteRouteSettings$) {
+    };
+    var DeleteRoutingRuleCommand = class extends command5(_ep05, _mw05, "DeleteRoutingRule", DeleteRoutingRule$) {
+    };
+    var DeleteStageCommand = class extends command5(_ep05, _mw05, "DeleteStage", DeleteStage$) {
+    };
+    var DeleteVpcLinkCommand = class extends command5(_ep05, _mw05, "DeleteVpcLink", DeleteVpcLink$) {
+    };
+    var DisablePortalCommand = class extends command5(_ep05, _mw05, "DisablePortal", DisablePortal$) {
+    };
+    var ExportApiCommand2 = class extends command5(_ep05, _mw05, "ExportApi", ExportApi$) {
+    };
+    var GetApiCommand2 = class extends command5(_ep05, _mw05, "GetApi", GetApi$) {
+    };
+    var GetApiMappingCommand = class extends command5(_ep05, _mw05, "GetApiMapping", GetApiMapping$) {
+    };
+    var GetApiMappingsCommand2 = class extends command5(_ep05, _mw05, "GetApiMappings", GetApiMappings$) {
+    };
+    var GetApisCommand2 = class extends command5(_ep05, _mw05, "GetApis", GetApis$) {
+    };
+    var GetAuthorizerCommand = class extends command5(_ep05, _mw05, "GetAuthorizer", GetAuthorizer$) {
+    };
+    var GetAuthorizersCommand2 = class extends command5(_ep05, _mw05, "GetAuthorizers", GetAuthorizers$) {
+    };
+    var GetDeploymentCommand = class extends command5(_ep05, _mw05, "GetDeployment", GetDeployment$) {
+    };
+    var GetDeploymentsCommand = class extends command5(_ep05, _mw05, "GetDeployments", GetDeployments$) {
+    };
+    var GetDomainNameCommand = class extends command5(_ep05, _mw05, "GetDomainName", GetDomainName$) {
+    };
+    var GetDomainNamesCommand = class extends command5(_ep05, _mw05, "GetDomainNames", GetDomainNames$) {
+    };
+    var GetIntegrationCommand = class extends command5(_ep05, _mw05, "GetIntegration", GetIntegration$) {
+    };
+    var GetIntegrationResponseCommand = class extends command5(_ep05, _mw05, "GetIntegrationResponse", GetIntegrationResponse$) {
+    };
+    var GetIntegrationResponsesCommand = class extends command5(_ep05, _mw05, "GetIntegrationResponses", GetIntegrationResponses$) {
+    };
+    var GetIntegrationsCommand2 = class extends command5(_ep05, _mw05, "GetIntegrations", GetIntegrations$) {
+    };
+    var GetModelCommand = class extends command5(_ep05, _mw05, "GetModel", GetModel$) {
+    };
+    var GetModelsCommand2 = class extends command5(_ep05, _mw05, "GetModels", GetModels$) {
+    };
+    var GetModelTemplateCommand = class extends command5(_ep05, _mw05, "GetModelTemplate", GetModelTemplate$) {
+    };
+    var GetPortalCommand = class extends command5(_ep05, _mw05, "GetPortal", GetPortal$) {
+    };
+    var GetPortalProductCommand = class extends command5(_ep05, _mw05, "GetPortalProduct", GetPortalProduct$) {
+    };
+    var GetPortalProductSharingPolicyCommand = class extends command5(_ep05, _mw05, "GetPortalProductSharingPolicy", GetPortalProductSharingPolicy$) {
+    };
+    var GetProductPageCommand = class extends command5(_ep05, _mw05, "GetProductPage", GetProductPage$) {
+    };
+    var GetProductRestEndpointPageCommand = class extends command5(_ep05, _mw05, "GetProductRestEndpointPage", GetProductRestEndpointPage$) {
+    };
+    var GetRouteCommand = class extends command5(_ep05, _mw05, "GetRoute", GetRoute$) {
+    };
+    var GetRouteResponseCommand = class extends command5(_ep05, _mw05, "GetRouteResponse", GetRouteResponse$) {
+    };
+    var GetRouteResponsesCommand2 = class extends command5(_ep05, _mw05, "GetRouteResponses", GetRouteResponses$) {
+    };
+    var GetRoutesCommand2 = class extends command5(_ep05, _mw05, "GetRoutes", GetRoutes$) {
+    };
+    var GetRoutingRuleCommand = class extends command5(_ep05, _mw05, "GetRoutingRule", GetRoutingRule$) {
+    };
+    var GetStageCommand = class extends command5(_ep05, _mw05, "GetStage", GetStage$) {
+    };
+    var GetStagesCommand = class extends command5(_ep05, _mw05, "GetStages", GetStages$) {
+    };
+    var GetTagsCommand2 = class extends command5(_ep05, _mw05, "GetTags", GetTags$) {
+    };
+    var GetVpcLinkCommand = class extends command5(_ep05, _mw05, "GetVpcLink", GetVpcLink$) {
+    };
+    var GetVpcLinksCommand = class extends command5(_ep05, _mw05, "GetVpcLinks", GetVpcLinks$) {
+    };
+    var ImportApiCommand = class extends command5(_ep05, _mw05, "ImportApi", ImportApi$) {
+    };
+    var ListPortalProductsCommand = class extends command5(_ep05, _mw05, "ListPortalProducts", ListPortalProducts$) {
+    };
+    var ListPortalsCommand = class extends command5(_ep05, _mw05, "ListPortals", ListPortals$) {
+    };
+    var ListProductPagesCommand = class extends command5(_ep05, _mw05, "ListProductPages", ListProductPages$) {
+    };
+    var ListProductRestEndpointPagesCommand = class extends command5(_ep05, _mw05, "ListProductRestEndpointPages", ListProductRestEndpointPages$) {
+    };
+    var ListRoutingRulesCommand = class extends command5(_ep05, _mw05, "ListRoutingRules", ListRoutingRules$) {
+    };
+    var PreviewPortalCommand = class extends command5(_ep05, _mw05, "PreviewPortal", PreviewPortal$) {
+    };
+    var PublishPortalCommand = class extends command5(_ep05, _mw05, "PublishPortal", PublishPortal$) {
+    };
+    var PutPortalProductSharingPolicyCommand = class extends command5(_ep05, _mw05, "PutPortalProductSharingPolicy", PutPortalProductSharingPolicy$) {
+    };
+    var PutRoutingRuleCommand = class extends command5(_ep05, _mw05, "PutRoutingRule", PutRoutingRule$) {
+    };
+    var ReimportApiCommand = class extends command5(_ep05, _mw05, "ReimportApi", ReimportApi$) {
+    };
+    var ResetAuthorizersCacheCommand = class extends command5(_ep05, _mw05, "ResetAuthorizersCache", ResetAuthorizersCache$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateApiCommand = class extends command5(_ep05, _mw05, "UpdateApi", UpdateApi$) {
+    };
+    var UpdateApiMappingCommand = class extends command5(_ep05, _mw05, "UpdateApiMapping", UpdateApiMapping$) {
+    };
+    var UpdateAuthorizerCommand = class extends command5(_ep05, _mw05, "UpdateAuthorizer", UpdateAuthorizer$) {
+    };
+    var UpdateDeploymentCommand = class extends command5(_ep05, _mw05, "UpdateDeployment", UpdateDeployment$) {
+    };
+    var UpdateDomainNameCommand = class extends command5(_ep05, _mw05, "UpdateDomainName", UpdateDomainName$) {
+    };
+    var UpdateIntegrationCommand = class extends command5(_ep05, _mw05, "UpdateIntegration", UpdateIntegration$) {
+    };
+    var UpdateIntegrationResponseCommand = class extends command5(_ep05, _mw05, "UpdateIntegrationResponse", UpdateIntegrationResponse$) {
+    };
+    var UpdateModelCommand = class extends command5(_ep05, _mw05, "UpdateModel", UpdateModel$) {
+    };
+    var UpdatePortalCommand = class extends command5(_ep05, _mw05, "UpdatePortal", UpdatePortal$) {
+    };
+    var UpdatePortalProductCommand = class extends command5(_ep05, _mw05, "UpdatePortalProduct", UpdatePortalProduct$) {
+    };
+    var UpdateProductPageCommand = class extends command5(_ep05, _mw05, "UpdateProductPage", UpdateProductPage$) {
+    };
+    var UpdateProductRestEndpointPageCommand = class extends command5(_ep05, _mw05, "UpdateProductRestEndpointPage", UpdateProductRestEndpointPage$) {
+    };
+    var UpdateRouteCommand = class extends command5(_ep05, _mw05, "UpdateRoute", UpdateRoute$) {
+    };
+    var UpdateRouteResponseCommand = class extends command5(_ep05, _mw05, "UpdateRouteResponse", UpdateRouteResponse$) {
+    };
+    var UpdateStageCommand = class extends command5(_ep05, _mw05, "UpdateStage", UpdateStage$) {
+    };
+    var UpdateVpcLinkCommand = class extends command5(_ep05, _mw05, "UpdateVpcLink", UpdateVpcLink$) {
     };
     var paginateListRoutingRules = createPaginator2(ApiGatewayV2Client2, ListRoutingRulesCommand, "NextToken", "NextToken", "MaxResults");
     var commands5 = {
@@ -35126,8 +34715,9 @@ var require_dist_cjs19 = __commonJS({
   "node_modules/@aws-sdk/client-sts/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2, setCredentialFeature: setCredentialFeature2, stsRegionDefaultResolver: stsRegionDefaultResolver2 } = (init_client3(), __toCommonJS(client_exports2));
     var { NoAuthSigner: NoAuthSigner2, getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveParams: resolveParams2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -35458,7 +35048,7 @@ var require_dist_cjs19 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -36362,49 +35952,30 @@ var require_dist_cjs19 = __commonJS({
         super.destroy();
       }
     };
-    var AssumeRoleCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").sc(AssumeRole$2).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSSecurityTokenServiceV20110615", "STSClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o4) => [];
+    var AssumeRoleCommand2 = class extends command5(_ep05, _mw05, "AssumeRole", AssumeRole$2) {
     };
-    var AssumeRoleWithSAMLCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithSAML", {}).n("STSClient", "AssumeRoleWithSAMLCommand").sc(AssumeRoleWithSAML$).build() {
+    var AssumeRoleWithSAMLCommand = class extends command5(_ep05, _mw05, "AssumeRoleWithSAML", AssumeRoleWithSAML$) {
     };
-    var AssumeRoleWithWebIdentityCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").sc(AssumeRoleWithWebIdentity$2).build() {
+    var AssumeRoleWithWebIdentityCommand2 = class extends command5(_ep05, _mw05, "AssumeRoleWithWebIdentity", AssumeRoleWithWebIdentity$2) {
     };
-    var AssumeRootCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "AssumeRoot", {}).n("STSClient", "AssumeRootCommand").sc(AssumeRoot$).build() {
+    var AssumeRootCommand = class extends command5(_ep05, _mw05, "AssumeRoot", AssumeRoot$) {
     };
-    var DecodeAuthorizationMessageCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "DecodeAuthorizationMessage", {}).n("STSClient", "DecodeAuthorizationMessageCommand").sc(DecodeAuthorizationMessage$).build() {
+    var DecodeAuthorizationMessageCommand = class extends command5(_ep05, _mw05, "DecodeAuthorizationMessage", DecodeAuthorizationMessage$) {
     };
-    var GetAccessKeyInfoCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetAccessKeyInfo", {}).n("STSClient", "GetAccessKeyInfoCommand").sc(GetAccessKeyInfo$).build() {
+    var GetAccessKeyInfoCommand = class extends command5(_ep05, _mw05, "GetAccessKeyInfo", GetAccessKeyInfo$) {
     };
-    var GetCallerIdentityCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetCallerIdentity", {}).n("STSClient", "GetCallerIdentityCommand").sc(GetCallerIdentity$).build() {
+    var GetCallerIdentityCommand2 = class extends command5(_ep05, _mw05, "GetCallerIdentity", GetCallerIdentity$) {
     };
-    var GetDelegatedAccessTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetDelegatedAccessToken", {}).n("STSClient", "GetDelegatedAccessTokenCommand").sc(GetDelegatedAccessToken$).build() {
+    var GetDelegatedAccessTokenCommand = class extends command5(_ep05, _mw05, "GetDelegatedAccessToken", GetDelegatedAccessToken$) {
     };
-    var GetFederationTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetFederationToken", {}).n("STSClient", "GetFederationTokenCommand").sc(GetFederationToken$).build() {
+    var GetFederationTokenCommand = class extends command5(_ep05, _mw05, "GetFederationToken", GetFederationToken$) {
     };
-    var GetSessionTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetSessionToken", {}).n("STSClient", "GetSessionTokenCommand").sc(GetSessionToken$).build() {
+    var GetSessionTokenCommand = class extends command5(_ep05, _mw05, "GetSessionToken", GetSessionToken$) {
     };
-    var GetWebIdentityTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSSecurityTokenServiceV20110615", "GetWebIdentityToken", {}).n("STSClient", "GetWebIdentityTokenCommand").sc(GetWebIdentityToken$).build() {
+    var GetWebIdentityTokenCommand = class extends command5(_ep05, _mw05, "GetWebIdentityToken", GetWebIdentityToken$) {
     };
     var commands5 = {
       AssumeRoleCommand: AssumeRoleCommand2,
@@ -43957,8 +43528,9 @@ var require_dist_cjs20 = __commonJS({
   "node_modules/@aws-sdk/client-appsync/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -44022,7 +43594,7 @@ var require_dist_cjs20 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -47514,301 +47086,156 @@ var require_dist_cjs20 = __commonJS({
         super.destroy();
       }
     };
-    var AssociateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "AssociateApi", {}).n("AppSyncClient", "AssociateApiCommand").sc(AssociateApi$).build() {
-    };
-    var AssociateMergedGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "AssociateMergedGraphqlApi", {}).n("AppSyncClient", "AssociateMergedGraphqlApiCommand").sc(AssociateMergedGraphqlApi$).build() {
-    };
-    var AssociateSourceGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "AssociateSourceGraphqlApi", {}).n("AppSyncClient", "AssociateSourceGraphqlApiCommand").sc(AssociateSourceGraphqlApi$).build() {
-    };
-    var CreateApiCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateApiCache", {}).n("AppSyncClient", "CreateApiCacheCommand").sc(CreateApiCache$).build() {
-    };
-    var CreateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateApi", {}).n("AppSyncClient", "CreateApiCommand").sc(CreateApi$).build() {
-    };
-    var CreateApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateApiKey", {}).n("AppSyncClient", "CreateApiKeyCommand").sc(CreateApiKey$).build() {
-    };
-    var CreateChannelNamespaceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateChannelNamespace", {}).n("AppSyncClient", "CreateChannelNamespaceCommand").sc(CreateChannelNamespace$).build() {
-    };
-    var CreateDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateDataSource", {}).n("AppSyncClient", "CreateDataSourceCommand").sc(CreateDataSource$).build() {
-    };
-    var CreateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateDomainName", {}).n("AppSyncClient", "CreateDomainNameCommand").sc(CreateDomainName$).build() {
-    };
-    var CreateFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateFunction", {}).n("AppSyncClient", "CreateFunctionCommand").sc(CreateFunction$).build() {
-    };
-    var CreateGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateGraphqlApi", {}).n("AppSyncClient", "CreateGraphqlApiCommand").sc(CreateGraphqlApi$).build() {
-    };
-    var CreateResolverCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateResolver", {}).n("AppSyncClient", "CreateResolverCommand").sc(CreateResolver$).build() {
-    };
-    var CreateTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "CreateType", {}).n("AppSyncClient", "CreateTypeCommand").sc(CreateType$).build() {
-    };
-    var DeleteApiCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteApiCache", {}).n("AppSyncClient", "DeleteApiCacheCommand").sc(DeleteApiCache$).build() {
-    };
-    var DeleteApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteApi", {}).n("AppSyncClient", "DeleteApiCommand").sc(DeleteApi$).build() {
-    };
-    var DeleteApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteApiKey", {}).n("AppSyncClient", "DeleteApiKeyCommand").sc(DeleteApiKey$).build() {
-    };
-    var DeleteChannelNamespaceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteChannelNamespace", {}).n("AppSyncClient", "DeleteChannelNamespaceCommand").sc(DeleteChannelNamespace$).build() {
-    };
-    var DeleteDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteDataSource", {}).n("AppSyncClient", "DeleteDataSourceCommand").sc(DeleteDataSource$).build() {
-    };
-    var DeleteDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteDomainName", {}).n("AppSyncClient", "DeleteDomainNameCommand").sc(DeleteDomainName$).build() {
-    };
-    var DeleteFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteFunction", {}).n("AppSyncClient", "DeleteFunctionCommand").sc(DeleteFunction$).build() {
-    };
-    var DeleteGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteGraphqlApi", {}).n("AppSyncClient", "DeleteGraphqlApiCommand").sc(DeleteGraphqlApi$).build() {
-    };
-    var DeleteResolverCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteResolver", {}).n("AppSyncClient", "DeleteResolverCommand").sc(DeleteResolver$).build() {
-    };
-    var DeleteTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DeleteType", {}).n("AppSyncClient", "DeleteTypeCommand").sc(DeleteType$).build() {
-    };
-    var DisassociateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DisassociateApi", {}).n("AppSyncClient", "DisassociateApiCommand").sc(DisassociateApi$).build() {
-    };
-    var DisassociateMergedGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DisassociateMergedGraphqlApi", {}).n("AppSyncClient", "DisassociateMergedGraphqlApiCommand").sc(DisassociateMergedGraphqlApi$).build() {
-    };
-    var DisassociateSourceGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "DisassociateSourceGraphqlApi", {}).n("AppSyncClient", "DisassociateSourceGraphqlApiCommand").sc(DisassociateSourceGraphqlApi$).build() {
-    };
-    var EvaluateCodeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "EvaluateCode", {}).n("AppSyncClient", "EvaluateCodeCommand").sc(EvaluateCode$).build() {
-    };
-    var EvaluateMappingTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "EvaluateMappingTemplate", {}).n("AppSyncClient", "EvaluateMappingTemplateCommand").sc(EvaluateMappingTemplate$).build() {
-    };
-    var FlushApiCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "FlushApiCache", {}).n("AppSyncClient", "FlushApiCacheCommand").sc(FlushApiCache$).build() {
-    };
-    var GetApiAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetApiAssociation", {}).n("AppSyncClient", "GetApiAssociationCommand").sc(GetApiAssociation$).build() {
-    };
-    var GetApiCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetApiCache", {}).n("AppSyncClient", "GetApiCacheCommand").sc(GetApiCache$).build() {
-    };
-    var GetApiCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetApi", {}).n("AppSyncClient", "GetApiCommand").sc(GetApi$).build() {
-    };
-    var GetChannelNamespaceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetChannelNamespace", {}).n("AppSyncClient", "GetChannelNamespaceCommand").sc(GetChannelNamespace$).build() {
-    };
-    var GetDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetDataSource", {}).n("AppSyncClient", "GetDataSourceCommand").sc(GetDataSource$).build() {
-    };
-    var GetDataSourceIntrospectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetDataSourceIntrospection", {}).n("AppSyncClient", "GetDataSourceIntrospectionCommand").sc(GetDataSourceIntrospection$).build() {
-    };
-    var GetDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetDomainName", {}).n("AppSyncClient", "GetDomainNameCommand").sc(GetDomainName$).build() {
-    };
-    var GetFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetFunction", {}).n("AppSyncClient", "GetFunctionCommand").sc(GetFunction$).build() {
-    };
-    var GetGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetGraphqlApi", {}).n("AppSyncClient", "GetGraphqlApiCommand").sc(GetGraphqlApi$).build() {
-    };
-    var GetGraphqlApiEnvironmentVariablesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetGraphqlApiEnvironmentVariables", {}).n("AppSyncClient", "GetGraphqlApiEnvironmentVariablesCommand").sc(GetGraphqlApiEnvironmentVariables$).build() {
-    };
-    var GetIntrospectionSchemaCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetIntrospectionSchema", {}).n("AppSyncClient", "GetIntrospectionSchemaCommand").sc(GetIntrospectionSchema$).build() {
-    };
-    var GetResolverCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetResolver", {}).n("AppSyncClient", "GetResolverCommand").sc(GetResolver$).build() {
-    };
-    var GetSchemaCreationStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetSchemaCreationStatus", {}).n("AppSyncClient", "GetSchemaCreationStatusCommand").sc(GetSchemaCreationStatus$).build() {
-    };
-    var GetSourceApiAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetSourceApiAssociation", {}).n("AppSyncClient", "GetSourceApiAssociationCommand").sc(GetSourceApiAssociation$).build() {
-    };
-    var GetTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "GetType", {}).n("AppSyncClient", "GetTypeCommand").sc(GetType$).build() {
-    };
-    var ListApiKeysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListApiKeys", {}).n("AppSyncClient", "ListApiKeysCommand").sc(ListApiKeys$).build() {
-    };
-    var ListApisCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListApis", {}).n("AppSyncClient", "ListApisCommand").sc(ListApis$).build() {
-    };
-    var ListChannelNamespacesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListChannelNamespaces", {}).n("AppSyncClient", "ListChannelNamespacesCommand").sc(ListChannelNamespaces$).build() {
-    };
-    var ListDataSourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListDataSources", {}).n("AppSyncClient", "ListDataSourcesCommand").sc(ListDataSources$).build() {
-    };
-    var ListDomainNamesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListDomainNames", {}).n("AppSyncClient", "ListDomainNamesCommand").sc(ListDomainNames$).build() {
-    };
-    var ListFunctionsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListFunctions", {}).n("AppSyncClient", "ListFunctionsCommand").sc(ListFunctions$).build() {
-    };
-    var ListGraphqlApisCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListGraphqlApis", {}).n("AppSyncClient", "ListGraphqlApisCommand").sc(ListGraphqlApis$).build() {
-    };
-    var ListResolversByFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListResolversByFunction", {}).n("AppSyncClient", "ListResolversByFunctionCommand").sc(ListResolversByFunction$).build() {
-    };
-    var ListResolversCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListResolvers", {}).n("AppSyncClient", "ListResolversCommand").sc(ListResolvers$).build() {
-    };
-    var ListSourceApiAssociationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListSourceApiAssociations", {}).n("AppSyncClient", "ListSourceApiAssociationsCommand").sc(ListSourceApiAssociations$).build() {
-    };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListTagsForResource", {}).n("AppSyncClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
-    };
-    var ListTypesByAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListTypesByAssociation", {}).n("AppSyncClient", "ListTypesByAssociationCommand").sc(ListTypesByAssociation$).build() {
-    };
-    var ListTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "ListTypes", {}).n("AppSyncClient", "ListTypesCommand").sc(ListTypes$).build() {
-    };
-    var PutGraphqlApiEnvironmentVariablesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "PutGraphqlApiEnvironmentVariables", {}).n("AppSyncClient", "PutGraphqlApiEnvironmentVariablesCommand").sc(PutGraphqlApiEnvironmentVariables$).build() {
-    };
-    var StartDataSourceIntrospectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "StartDataSourceIntrospection", {}).n("AppSyncClient", "StartDataSourceIntrospectionCommand").sc(StartDataSourceIntrospection$).build() {
-    };
-    var StartSchemaCreationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "StartSchemaCreation", {}).n("AppSyncClient", "StartSchemaCreationCommand").sc(StartSchemaCreation$).build() {
-    };
-    var StartSchemaMergeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "StartSchemaMerge", {}).n("AppSyncClient", "StartSchemaMergeCommand").sc(StartSchemaMerge$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "TagResource", {}).n("AppSyncClient", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UntagResource", {}).n("AppSyncClient", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateApiCacheCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateApiCache", {}).n("AppSyncClient", "UpdateApiCacheCommand").sc(UpdateApiCache$).build() {
-    };
-    var UpdateApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateApi", {}).n("AppSyncClient", "UpdateApiCommand").sc(UpdateApi$).build() {
-    };
-    var UpdateApiKeyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateApiKey", {}).n("AppSyncClient", "UpdateApiKeyCommand").sc(UpdateApiKey$).build() {
-    };
-    var UpdateChannelNamespaceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateChannelNamespace", {}).n("AppSyncClient", "UpdateChannelNamespaceCommand").sc(UpdateChannelNamespace$).build() {
-    };
-    var UpdateDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateDataSource", {}).n("AppSyncClient", "UpdateDataSourceCommand").sc(UpdateDataSource$).build() {
-    };
-    var UpdateDomainNameCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateDomainName", {}).n("AppSyncClient", "UpdateDomainNameCommand").sc(UpdateDomainName$).build() {
-    };
-    var UpdateFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateFunction", {}).n("AppSyncClient", "UpdateFunctionCommand").sc(UpdateFunction$).build() {
-    };
-    var UpdateGraphqlApiCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateGraphqlApi", {}).n("AppSyncClient", "UpdateGraphqlApiCommand").sc(UpdateGraphqlApi$).build() {
-    };
-    var UpdateResolverCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateResolver", {}).n("AppSyncClient", "UpdateResolverCommand").sc(UpdateResolver$).build() {
-    };
-    var UpdateSourceApiAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateSourceApiAssociation", {}).n("AppSyncClient", "UpdateSourceApiAssociationCommand").sc(UpdateSourceApiAssociation$).build() {
-    };
-    var UpdateTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSDeepdishControlPlaneService", "UpdateType", {}).n("AppSyncClient", "UpdateTypeCommand").sc(UpdateType$).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSDeepdishControlPlaneService", "AppSyncClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AssociateApiCommand = class extends command5(_ep05, _mw05, "AssociateApi", AssociateApi$) {
+    };
+    var AssociateMergedGraphqlApiCommand = class extends command5(_ep05, _mw05, "AssociateMergedGraphqlApi", AssociateMergedGraphqlApi$) {
+    };
+    var AssociateSourceGraphqlApiCommand = class extends command5(_ep05, _mw05, "AssociateSourceGraphqlApi", AssociateSourceGraphqlApi$) {
+    };
+    var CreateApiCacheCommand = class extends command5(_ep05, _mw05, "CreateApiCache", CreateApiCache$) {
+    };
+    var CreateApiCommand = class extends command5(_ep05, _mw05, "CreateApi", CreateApi$) {
+    };
+    var CreateApiKeyCommand = class extends command5(_ep05, _mw05, "CreateApiKey", CreateApiKey$) {
+    };
+    var CreateChannelNamespaceCommand = class extends command5(_ep05, _mw05, "CreateChannelNamespace", CreateChannelNamespace$) {
+    };
+    var CreateDataSourceCommand = class extends command5(_ep05, _mw05, "CreateDataSource", CreateDataSource$) {
+    };
+    var CreateDomainNameCommand = class extends command5(_ep05, _mw05, "CreateDomainName", CreateDomainName$) {
+    };
+    var CreateFunctionCommand = class extends command5(_ep05, _mw05, "CreateFunction", CreateFunction$) {
+    };
+    var CreateGraphqlApiCommand = class extends command5(_ep05, _mw05, "CreateGraphqlApi", CreateGraphqlApi$) {
+    };
+    var CreateResolverCommand = class extends command5(_ep05, _mw05, "CreateResolver", CreateResolver$) {
+    };
+    var CreateTypeCommand = class extends command5(_ep05, _mw05, "CreateType", CreateType$) {
+    };
+    var DeleteApiCacheCommand = class extends command5(_ep05, _mw05, "DeleteApiCache", DeleteApiCache$) {
+    };
+    var DeleteApiCommand = class extends command5(_ep05, _mw05, "DeleteApi", DeleteApi$) {
+    };
+    var DeleteApiKeyCommand = class extends command5(_ep05, _mw05, "DeleteApiKey", DeleteApiKey$) {
+    };
+    var DeleteChannelNamespaceCommand = class extends command5(_ep05, _mw05, "DeleteChannelNamespace", DeleteChannelNamespace$) {
+    };
+    var DeleteDataSourceCommand = class extends command5(_ep05, _mw05, "DeleteDataSource", DeleteDataSource$) {
+    };
+    var DeleteDomainNameCommand = class extends command5(_ep05, _mw05, "DeleteDomainName", DeleteDomainName$) {
+    };
+    var DeleteFunctionCommand = class extends command5(_ep05, _mw05, "DeleteFunction", DeleteFunction$) {
+    };
+    var DeleteGraphqlApiCommand = class extends command5(_ep05, _mw05, "DeleteGraphqlApi", DeleteGraphqlApi$) {
+    };
+    var DeleteResolverCommand = class extends command5(_ep05, _mw05, "DeleteResolver", DeleteResolver$) {
+    };
+    var DeleteTypeCommand = class extends command5(_ep05, _mw05, "DeleteType", DeleteType$) {
+    };
+    var DisassociateApiCommand = class extends command5(_ep05, _mw05, "DisassociateApi", DisassociateApi$) {
+    };
+    var DisassociateMergedGraphqlApiCommand = class extends command5(_ep05, _mw05, "DisassociateMergedGraphqlApi", DisassociateMergedGraphqlApi$) {
+    };
+    var DisassociateSourceGraphqlApiCommand = class extends command5(_ep05, _mw05, "DisassociateSourceGraphqlApi", DisassociateSourceGraphqlApi$) {
+    };
+    var EvaluateCodeCommand = class extends command5(_ep05, _mw05, "EvaluateCode", EvaluateCode$) {
+    };
+    var EvaluateMappingTemplateCommand = class extends command5(_ep05, _mw05, "EvaluateMappingTemplate", EvaluateMappingTemplate$) {
+    };
+    var FlushApiCacheCommand = class extends command5(_ep05, _mw05, "FlushApiCache", FlushApiCache$) {
+    };
+    var GetApiAssociationCommand = class extends command5(_ep05, _mw05, "GetApiAssociation", GetApiAssociation$) {
+    };
+    var GetApiCacheCommand = class extends command5(_ep05, _mw05, "GetApiCache", GetApiCache$) {
+    };
+    var GetApiCommand2 = class extends command5(_ep05, _mw05, "GetApi", GetApi$) {
+    };
+    var GetChannelNamespaceCommand = class extends command5(_ep05, _mw05, "GetChannelNamespace", GetChannelNamespace$) {
+    };
+    var GetDataSourceCommand = class extends command5(_ep05, _mw05, "GetDataSource", GetDataSource$) {
+    };
+    var GetDataSourceIntrospectionCommand = class extends command5(_ep05, _mw05, "GetDataSourceIntrospection", GetDataSourceIntrospection$) {
+    };
+    var GetDomainNameCommand = class extends command5(_ep05, _mw05, "GetDomainName", GetDomainName$) {
+    };
+    var GetFunctionCommand = class extends command5(_ep05, _mw05, "GetFunction", GetFunction$) {
+    };
+    var GetGraphqlApiCommand = class extends command5(_ep05, _mw05, "GetGraphqlApi", GetGraphqlApi$) {
+    };
+    var GetGraphqlApiEnvironmentVariablesCommand = class extends command5(_ep05, _mw05, "GetGraphqlApiEnvironmentVariables", GetGraphqlApiEnvironmentVariables$) {
+    };
+    var GetIntrospectionSchemaCommand2 = class extends command5(_ep05, _mw05, "GetIntrospectionSchema", GetIntrospectionSchema$) {
+    };
+    var GetResolverCommand = class extends command5(_ep05, _mw05, "GetResolver", GetResolver$) {
+    };
+    var GetSchemaCreationStatusCommand = class extends command5(_ep05, _mw05, "GetSchemaCreationStatus", GetSchemaCreationStatus$) {
+    };
+    var GetSourceApiAssociationCommand = class extends command5(_ep05, _mw05, "GetSourceApiAssociation", GetSourceApiAssociation$) {
+    };
+    var GetTypeCommand = class extends command5(_ep05, _mw05, "GetType", GetType$) {
+    };
+    var ListApiKeysCommand = class extends command5(_ep05, _mw05, "ListApiKeys", ListApiKeys$) {
+    };
+    var ListApisCommand2 = class extends command5(_ep05, _mw05, "ListApis", ListApis$) {
+    };
+    var ListChannelNamespacesCommand2 = class extends command5(_ep05, _mw05, "ListChannelNamespaces", ListChannelNamespaces$) {
+    };
+    var ListDataSourcesCommand = class extends command5(_ep05, _mw05, "ListDataSources", ListDataSources$) {
+    };
+    var ListDomainNamesCommand = class extends command5(_ep05, _mw05, "ListDomainNames", ListDomainNames$) {
+    };
+    var ListFunctionsCommand2 = class extends command5(_ep05, _mw05, "ListFunctions", ListFunctions$) {
+    };
+    var ListGraphqlApisCommand2 = class extends command5(_ep05, _mw05, "ListGraphqlApis", ListGraphqlApis$) {
+    };
+    var ListResolversByFunctionCommand = class extends command5(_ep05, _mw05, "ListResolversByFunction", ListResolversByFunction$) {
+    };
+    var ListResolversCommand = class extends command5(_ep05, _mw05, "ListResolvers", ListResolvers$) {
+    };
+    var ListSourceApiAssociationsCommand = class extends command5(_ep05, _mw05, "ListSourceApiAssociations", ListSourceApiAssociations$) {
+    };
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
+    };
+    var ListTypesByAssociationCommand = class extends command5(_ep05, _mw05, "ListTypesByAssociation", ListTypesByAssociation$) {
+    };
+    var ListTypesCommand = class extends command5(_ep05, _mw05, "ListTypes", ListTypes$) {
+    };
+    var PutGraphqlApiEnvironmentVariablesCommand = class extends command5(_ep05, _mw05, "PutGraphqlApiEnvironmentVariables", PutGraphqlApiEnvironmentVariables$) {
+    };
+    var StartDataSourceIntrospectionCommand = class extends command5(_ep05, _mw05, "StartDataSourceIntrospection", StartDataSourceIntrospection$) {
+    };
+    var StartSchemaCreationCommand = class extends command5(_ep05, _mw05, "StartSchemaCreation", StartSchemaCreation$) {
+    };
+    var StartSchemaMergeCommand = class extends command5(_ep05, _mw05, "StartSchemaMerge", StartSchemaMerge$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateApiCacheCommand = class extends command5(_ep05, _mw05, "UpdateApiCache", UpdateApiCache$) {
+    };
+    var UpdateApiCommand = class extends command5(_ep05, _mw05, "UpdateApi", UpdateApi$) {
+    };
+    var UpdateApiKeyCommand = class extends command5(_ep05, _mw05, "UpdateApiKey", UpdateApiKey$) {
+    };
+    var UpdateChannelNamespaceCommand = class extends command5(_ep05, _mw05, "UpdateChannelNamespace", UpdateChannelNamespace$) {
+    };
+    var UpdateDataSourceCommand = class extends command5(_ep05, _mw05, "UpdateDataSource", UpdateDataSource$) {
+    };
+    var UpdateDomainNameCommand = class extends command5(_ep05, _mw05, "UpdateDomainName", UpdateDomainName$) {
+    };
+    var UpdateFunctionCommand = class extends command5(_ep05, _mw05, "UpdateFunction", UpdateFunction$) {
+    };
+    var UpdateGraphqlApiCommand = class extends command5(_ep05, _mw05, "UpdateGraphqlApi", UpdateGraphqlApi$) {
+    };
+    var UpdateResolverCommand = class extends command5(_ep05, _mw05, "UpdateResolver", UpdateResolver$) {
+    };
+    var UpdateSourceApiAssociationCommand = class extends command5(_ep05, _mw05, "UpdateSourceApiAssociation", UpdateSourceApiAssociation$) {
+    };
+    var UpdateTypeCommand = class extends command5(_ep05, _mw05, "UpdateType", UpdateType$) {
     };
     var paginateListApiKeys = createPaginator2(AppSyncClient2, ListApiKeysCommand, "nextToken", "nextToken", "maxResults");
     var paginateListApis = createPaginator2(AppSyncClient2, ListApisCommand2, "nextToken", "nextToken", "maxResults");
@@ -48532,8 +47959,9 @@ var require_dist_cjs21 = __commonJS({
   "node_modules/@aws-sdk/client-schemas/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -48597,7 +48025,7 @@ var require_dist_cjs21 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -50096,129 +49524,70 @@ var require_dist_cjs21 = __commonJS({
         super.destroy();
       }
     };
-    var CreateDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "CreateDiscoverer", {}).n("SchemasClient", "CreateDiscovererCommand").sc(CreateDiscoverer$).build() {
+    var command5 = makeBuilder2(commonParams5, "schemas", "SchemasClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var CreateDiscovererCommand = class extends command5(_ep05, _mw05, "CreateDiscoverer", CreateDiscoverer$) {
     };
-    var CreateRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "CreateRegistry", {}).n("SchemasClient", "CreateRegistryCommand").sc(CreateRegistry$).build() {
+    var CreateRegistryCommand = class extends command5(_ep05, _mw05, "CreateRegistry", CreateRegistry$) {
     };
-    var CreateSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "CreateSchema", {}).n("SchemasClient", "CreateSchemaCommand").sc(CreateSchema$).build() {
+    var CreateSchemaCommand = class extends command5(_ep05, _mw05, "CreateSchema", CreateSchema$) {
     };
-    var DeleteDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DeleteDiscoverer", {}).n("SchemasClient", "DeleteDiscovererCommand").sc(DeleteDiscoverer$).build() {
+    var DeleteDiscovererCommand = class extends command5(_ep05, _mw05, "DeleteDiscoverer", DeleteDiscoverer$) {
     };
-    var DeleteRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DeleteRegistry", {}).n("SchemasClient", "DeleteRegistryCommand").sc(DeleteRegistry$).build() {
+    var DeleteRegistryCommand = class extends command5(_ep05, _mw05, "DeleteRegistry", DeleteRegistry$) {
     };
-    var DeleteResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DeleteResourcePolicy", {}).n("SchemasClient", "DeleteResourcePolicyCommand").sc(DeleteResourcePolicy$).build() {
+    var DeleteResourcePolicyCommand = class extends command5(_ep05, _mw05, "DeleteResourcePolicy", DeleteResourcePolicy$) {
     };
-    var DeleteSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DeleteSchema", {}).n("SchemasClient", "DeleteSchemaCommand").sc(DeleteSchema$).build() {
+    var DeleteSchemaCommand = class extends command5(_ep05, _mw05, "DeleteSchema", DeleteSchema$) {
     };
-    var DeleteSchemaVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DeleteSchemaVersion", {}).n("SchemasClient", "DeleteSchemaVersionCommand").sc(DeleteSchemaVersion$).build() {
+    var DeleteSchemaVersionCommand = class extends command5(_ep05, _mw05, "DeleteSchemaVersion", DeleteSchemaVersion$) {
     };
-    var DescribeCodeBindingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DescribeCodeBinding", {}).n("SchemasClient", "DescribeCodeBindingCommand").sc(DescribeCodeBinding$).build() {
+    var DescribeCodeBindingCommand = class extends command5(_ep05, _mw05, "DescribeCodeBinding", DescribeCodeBinding$) {
     };
-    var DescribeDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DescribeDiscoverer", {}).n("SchemasClient", "DescribeDiscovererCommand").sc(DescribeDiscoverer$).build() {
+    var DescribeDiscovererCommand = class extends command5(_ep05, _mw05, "DescribeDiscoverer", DescribeDiscoverer$) {
     };
-    var DescribeRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DescribeRegistry", {}).n("SchemasClient", "DescribeRegistryCommand").sc(DescribeRegistry$).build() {
+    var DescribeRegistryCommand = class extends command5(_ep05, _mw05, "DescribeRegistry", DescribeRegistry$) {
     };
-    var DescribeSchemaCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "DescribeSchema", {}).n("SchemasClient", "DescribeSchemaCommand").sc(DescribeSchema$).build() {
+    var DescribeSchemaCommand2 = class extends command5(_ep05, _mw05, "DescribeSchema", DescribeSchema$) {
     };
-    var ExportSchemaCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ExportSchema", {}).n("SchemasClient", "ExportSchemaCommand").sc(ExportSchema$).build() {
+    var ExportSchemaCommand2 = class extends command5(_ep05, _mw05, "ExportSchema", ExportSchema$) {
     };
-    var GetCodeBindingSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "GetCodeBindingSource", {}).n("SchemasClient", "GetCodeBindingSourceCommand").sc(GetCodeBindingSource$).build() {
+    var GetCodeBindingSourceCommand = class extends command5(_ep05, _mw05, "GetCodeBindingSource", GetCodeBindingSource$) {
     };
-    var GetDiscoveredSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "GetDiscoveredSchema", {}).n("SchemasClient", "GetDiscoveredSchemaCommand").sc(GetDiscoveredSchema$).build() {
+    var GetDiscoveredSchemaCommand = class extends command5(_ep05, _mw05, "GetDiscoveredSchema", GetDiscoveredSchema$) {
     };
-    var GetResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "GetResourcePolicy", {}).n("SchemasClient", "GetResourcePolicyCommand").sc(GetResourcePolicy$).build() {
+    var GetResourcePolicyCommand = class extends command5(_ep05, _mw05, "GetResourcePolicy", GetResourcePolicy$) {
     };
-    var ListDiscoverersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ListDiscoverers", {}).n("SchemasClient", "ListDiscoverersCommand").sc(ListDiscoverers$).build() {
+    var ListDiscoverersCommand = class extends command5(_ep05, _mw05, "ListDiscoverers", ListDiscoverers$) {
     };
-    var ListRegistriesCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ListRegistries", {}).n("SchemasClient", "ListRegistriesCommand").sc(ListRegistries$).build() {
+    var ListRegistriesCommand3 = class extends command5(_ep05, _mw05, "ListRegistries", ListRegistries$) {
     };
-    var ListSchemasCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ListSchemas", {}).n("SchemasClient", "ListSchemasCommand").sc(ListSchemas$).build() {
+    var ListSchemasCommand3 = class extends command5(_ep05, _mw05, "ListSchemas", ListSchemas$) {
     };
-    var ListSchemaVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ListSchemaVersions", {}).n("SchemasClient", "ListSchemaVersionsCommand").sc(ListSchemaVersions$).build() {
+    var ListSchemaVersionsCommand = class extends command5(_ep05, _mw05, "ListSchemaVersions", ListSchemaVersions$) {
     };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "ListTagsForResource", {}).n("SchemasClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
-    var PutCodeBindingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "PutCodeBinding", {}).n("SchemasClient", "PutCodeBindingCommand").sc(PutCodeBinding$).build() {
+    var PutCodeBindingCommand = class extends command5(_ep05, _mw05, "PutCodeBinding", PutCodeBinding$) {
     };
-    var PutResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "PutResourcePolicy", {}).n("SchemasClient", "PutResourcePolicyCommand").sc(PutResourcePolicy$).build() {
+    var PutResourcePolicyCommand = class extends command5(_ep05, _mw05, "PutResourcePolicy", PutResourcePolicy$) {
     };
-    var SearchSchemasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "SearchSchemas", {}).n("SchemasClient", "SearchSchemasCommand").sc(SearchSchemas$).build() {
+    var SearchSchemasCommand = class extends command5(_ep05, _mw05, "SearchSchemas", SearchSchemas$) {
     };
-    var StartDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "StartDiscoverer", {}).n("SchemasClient", "StartDiscovererCommand").sc(StartDiscoverer$).build() {
+    var StartDiscovererCommand = class extends command5(_ep05, _mw05, "StartDiscoverer", StartDiscoverer$) {
     };
-    var StopDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "StopDiscoverer", {}).n("SchemasClient", "StopDiscovererCommand").sc(StopDiscoverer$).build() {
+    var StopDiscovererCommand = class extends command5(_ep05, _mw05, "StopDiscoverer", StopDiscoverer$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "TagResource", {}).n("SchemasClient", "TagResourceCommand").sc(TagResource$).build() {
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "UntagResource", {}).n("SchemasClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
     };
-    var UpdateDiscovererCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "UpdateDiscoverer", {}).n("SchemasClient", "UpdateDiscovererCommand").sc(UpdateDiscoverer$).build() {
+    var UpdateDiscovererCommand = class extends command5(_ep05, _mw05, "UpdateDiscoverer", UpdateDiscoverer$) {
     };
-    var UpdateRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "UpdateRegistry", {}).n("SchemasClient", "UpdateRegistryCommand").sc(UpdateRegistry$).build() {
+    var UpdateRegistryCommand = class extends command5(_ep05, _mw05, "UpdateRegistry", UpdateRegistry$) {
     };
-    var UpdateSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("schemas", "UpdateSchema", {}).n("SchemasClient", "UpdateSchemaCommand").sc(UpdateSchema$).build() {
+    var UpdateSchemaCommand = class extends command5(_ep05, _mw05, "UpdateSchema", UpdateSchema$) {
     };
     var paginateListDiscoverers = createPaginator2(SchemasClient2, ListDiscoverersCommand, "NextToken", "NextToken", "Limit");
     var paginateListRegistries = createPaginator2(SchemasClient2, ListRegistriesCommand3, "NextToken", "NextToken", "Limit");
@@ -50499,8 +49868,9 @@ var require_dist_cjs22 = __commonJS({
   "node_modules/@aws-sdk/client-cloudformation/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -50564,7 +49934,7 @@ var require_dist_cjs22 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -55563,365 +54933,188 @@ var require_dist_cjs22 = __commonJS({
         super.destroy();
       }
     };
-    var ActivateOrganizationsAccessCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ActivateOrganizationsAccess", {}).n("CloudFormationClient", "ActivateOrganizationsAccessCommand").sc(ActivateOrganizationsAccess$).build() {
-    };
-    var ActivateTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ActivateType", {}).n("CloudFormationClient", "ActivateTypeCommand").sc(ActivateType$).build() {
-    };
-    var BatchDescribeTypeConfigurationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "BatchDescribeTypeConfigurations", {}).n("CloudFormationClient", "BatchDescribeTypeConfigurationsCommand").sc(BatchDescribeTypeConfigurations$).build() {
-    };
-    var CancelUpdateStackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CancelUpdateStack", {}).n("CloudFormationClient", "CancelUpdateStackCommand").sc(CancelUpdateStack$).build() {
-    };
-    var ContinueUpdateRollbackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ContinueUpdateRollback", {}).n("CloudFormationClient", "ContinueUpdateRollbackCommand").sc(ContinueUpdateRollback$).build() {
-    };
-    var CreateChangeSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateChangeSet", {}).n("CloudFormationClient", "CreateChangeSetCommand").sc(CreateChangeSet$).build() {
-    };
-    var CreateGeneratedTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateGeneratedTemplate", {}).n("CloudFormationClient", "CreateGeneratedTemplateCommand").sc(CreateGeneratedTemplate$).build() {
-    };
-    var CreateStackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateStack", {}).n("CloudFormationClient", "CreateStackCommand").sc(CreateStack$).build() {
-    };
-    var CreateStackInstancesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateStackInstances", {}).n("CloudFormationClient", "CreateStackInstancesCommand").sc(CreateStackInstances$).build() {
-    };
-    var CreateStackRefactorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateStackRefactor", {}).n("CloudFormationClient", "CreateStackRefactorCommand").sc(CreateStackRefactor$).build() {
-    };
-    var CreateStackSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "CreateStackSet", {}).n("CloudFormationClient", "CreateStackSetCommand").sc(CreateStackSet$).build() {
-    };
-    var DeactivateOrganizationsAccessCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeactivateOrganizationsAccess", {}).n("CloudFormationClient", "DeactivateOrganizationsAccessCommand").sc(DeactivateOrganizationsAccess$).build() {
-    };
-    var DeactivateTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeactivateType", {}).n("CloudFormationClient", "DeactivateTypeCommand").sc(DeactivateType$).build() {
-    };
-    var DeleteChangeSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeleteChangeSet", {}).n("CloudFormationClient", "DeleteChangeSetCommand").sc(DeleteChangeSet$).build() {
-    };
-    var DeleteGeneratedTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeleteGeneratedTemplate", {}).n("CloudFormationClient", "DeleteGeneratedTemplateCommand").sc(DeleteGeneratedTemplate$).build() {
-    };
-    var DeleteStackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeleteStack", {}).n("CloudFormationClient", "DeleteStackCommand").sc(DeleteStack$).build() {
-    };
-    var DeleteStackInstancesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeleteStackInstances", {}).n("CloudFormationClient", "DeleteStackInstancesCommand").sc(DeleteStackInstances$).build() {
-    };
-    var DeleteStackSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeleteStackSet", {}).n("CloudFormationClient", "DeleteStackSetCommand").sc(DeleteStackSet$).build() {
-    };
-    var DeregisterTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DeregisterType", {}).n("CloudFormationClient", "DeregisterTypeCommand").sc(DeregisterType$).build() {
-    };
-    var DescribeAccountLimitsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeAccountLimits", {}).n("CloudFormationClient", "DescribeAccountLimitsCommand").sc(DescribeAccountLimits$).build() {
-    };
-    var DescribeChangeSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeChangeSet", {}).n("CloudFormationClient", "DescribeChangeSetCommand").sc(DescribeChangeSet$).build() {
-    };
-    var DescribeChangeSetHooksCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeChangeSetHooks", {}).n("CloudFormationClient", "DescribeChangeSetHooksCommand").sc(DescribeChangeSetHooks$).build() {
-    };
-    var DescribeEventsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeEvents", {}).n("CloudFormationClient", "DescribeEventsCommand").sc(DescribeEvents$).build() {
-    };
-    var DescribeGeneratedTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeGeneratedTemplate", {}).n("CloudFormationClient", "DescribeGeneratedTemplateCommand").sc(DescribeGeneratedTemplate$).build() {
-    };
-    var DescribeOrganizationsAccessCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeOrganizationsAccess", {}).n("CloudFormationClient", "DescribeOrganizationsAccessCommand").sc(DescribeOrganizationsAccess$).build() {
-    };
-    var DescribePublisherCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribePublisher", {}).n("CloudFormationClient", "DescribePublisherCommand").sc(DescribePublisher$).build() {
-    };
-    var DescribeResourceScanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeResourceScan", {}).n("CloudFormationClient", "DescribeResourceScanCommand").sc(DescribeResourceScan$).build() {
-    };
-    var DescribeStackDriftDetectionStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackDriftDetectionStatus", {}).n("CloudFormationClient", "DescribeStackDriftDetectionStatusCommand").sc(DescribeStackDriftDetectionStatus$).build() {
-    };
-    var DescribeStackEventsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackEvents", {}).n("CloudFormationClient", "DescribeStackEventsCommand").sc(DescribeStackEvents$).build() {
-    };
-    var DescribeStackInstanceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackInstance", {}).n("CloudFormationClient", "DescribeStackInstanceCommand").sc(DescribeStackInstance$).build() {
-    };
-    var DescribeStackRefactorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackRefactor", {}).n("CloudFormationClient", "DescribeStackRefactorCommand").sc(DescribeStackRefactor$).build() {
-    };
-    var DescribeStackResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackResource", {}).n("CloudFormationClient", "DescribeStackResourceCommand").sc(DescribeStackResource$).build() {
-    };
-    var DescribeStackResourceDriftsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackResourceDrifts", {}).n("CloudFormationClient", "DescribeStackResourceDriftsCommand").sc(DescribeStackResourceDrifts$).build() {
-    };
-    var DescribeStackResourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackResources", {}).n("CloudFormationClient", "DescribeStackResourcesCommand").sc(DescribeStackResources$).build() {
-    };
-    var DescribeStacksCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStacks", {}).n("CloudFormationClient", "DescribeStacksCommand").sc(DescribeStacks$).build() {
-    };
-    var DescribeStackSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackSet", {}).n("CloudFormationClient", "DescribeStackSetCommand").sc(DescribeStackSet$).build() {
-    };
-    var DescribeStackSetOperationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeStackSetOperation", {}).n("CloudFormationClient", "DescribeStackSetOperationCommand").sc(DescribeStackSetOperation$).build() {
-    };
-    var DescribeTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeType", {}).n("CloudFormationClient", "DescribeTypeCommand").sc(DescribeType$).build() {
-    };
-    var DescribeTypeRegistrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DescribeTypeRegistration", {}).n("CloudFormationClient", "DescribeTypeRegistrationCommand").sc(DescribeTypeRegistration$).build() {
-    };
-    var DetectStackDriftCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DetectStackDrift", {}).n("CloudFormationClient", "DetectStackDriftCommand").sc(DetectStackDrift$).build() {
-    };
-    var DetectStackResourceDriftCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DetectStackResourceDrift", {}).n("CloudFormationClient", "DetectStackResourceDriftCommand").sc(DetectStackResourceDrift$).build() {
-    };
-    var DetectStackSetDriftCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "DetectStackSetDrift", {}).n("CloudFormationClient", "DetectStackSetDriftCommand").sc(DetectStackSetDrift$).build() {
-    };
-    var EstimateTemplateCostCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "EstimateTemplateCost", {}).n("CloudFormationClient", "EstimateTemplateCostCommand").sc(EstimateTemplateCost$).build() {
-    };
-    var ExecuteChangeSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ExecuteChangeSet", {}).n("CloudFormationClient", "ExecuteChangeSetCommand").sc(ExecuteChangeSet$).build() {
-    };
-    var ExecuteStackRefactorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ExecuteStackRefactor", {}).n("CloudFormationClient", "ExecuteStackRefactorCommand").sc(ExecuteStackRefactor$).build() {
-    };
-    var GetGeneratedTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "GetGeneratedTemplate", {}).n("CloudFormationClient", "GetGeneratedTemplateCommand").sc(GetGeneratedTemplate$).build() {
-    };
-    var GetHookResultCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "GetHookResult", {}).n("CloudFormationClient", "GetHookResultCommand").sc(GetHookResult$).build() {
-    };
-    var GetStackPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "GetStackPolicy", {}).n("CloudFormationClient", "GetStackPolicyCommand").sc(GetStackPolicy$).build() {
-    };
-    var GetTemplateCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "GetTemplate", {}).n("CloudFormationClient", "GetTemplateCommand").sc(GetTemplate$).build() {
-    };
-    var GetTemplateSummaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "GetTemplateSummary", {}).n("CloudFormationClient", "GetTemplateSummaryCommand").sc(GetTemplateSummary$).build() {
-    };
-    var ImportStacksToStackSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ImportStacksToStackSet", {}).n("CloudFormationClient", "ImportStacksToStackSetCommand").sc(ImportStacksToStackSet$).build() {
-    };
-    var ListChangeSetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListChangeSets", {}).n("CloudFormationClient", "ListChangeSetsCommand").sc(ListChangeSets$).build() {
-    };
-    var ListExportsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListExports", {}).n("CloudFormationClient", "ListExportsCommand").sc(ListExports$).build() {
-    };
-    var ListGeneratedTemplatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListGeneratedTemplates", {}).n("CloudFormationClient", "ListGeneratedTemplatesCommand").sc(ListGeneratedTemplates$).build() {
-    };
-    var ListHookResultsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListHookResults", {}).n("CloudFormationClient", "ListHookResultsCommand").sc(ListHookResults$).build() {
-    };
-    var ListImportsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListImports", {}).n("CloudFormationClient", "ListImportsCommand").sc(ListImports$).build() {
-    };
-    var ListResourceScanRelatedResourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListResourceScanRelatedResources", {}).n("CloudFormationClient", "ListResourceScanRelatedResourcesCommand").sc(ListResourceScanRelatedResources$).build() {
-    };
-    var ListResourceScanResourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListResourceScanResources", {}).n("CloudFormationClient", "ListResourceScanResourcesCommand").sc(ListResourceScanResources$).build() {
-    };
-    var ListResourceScansCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListResourceScans", {}).n("CloudFormationClient", "ListResourceScansCommand").sc(ListResourceScans$).build() {
-    };
-    var ListStackInstanceResourceDriftsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackInstanceResourceDrifts", {}).n("CloudFormationClient", "ListStackInstanceResourceDriftsCommand").sc(ListStackInstanceResourceDrifts$).build() {
-    };
-    var ListStackInstancesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackInstances", {}).n("CloudFormationClient", "ListStackInstancesCommand").sc(ListStackInstances$).build() {
-    };
-    var ListStackRefactorActionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackRefactorActions", {}).n("CloudFormationClient", "ListStackRefactorActionsCommand").sc(ListStackRefactorActions$).build() {
-    };
-    var ListStackRefactorsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackRefactors", {}).n("CloudFormationClient", "ListStackRefactorsCommand").sc(ListStackRefactors$).build() {
-    };
-    var ListStackResourcesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackResources", {}).n("CloudFormationClient", "ListStackResourcesCommand").sc(ListStackResources$).build() {
-    };
-    var ListStacksCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStacks", {}).n("CloudFormationClient", "ListStacksCommand").sc(ListStacks$).build() {
-    };
-    var ListStackSetAutoDeploymentTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackSetAutoDeploymentTargets", {}).n("CloudFormationClient", "ListStackSetAutoDeploymentTargetsCommand").sc(ListStackSetAutoDeploymentTargets$).build() {
-    };
-    var ListStackSetOperationResultsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackSetOperationResults", {}).n("CloudFormationClient", "ListStackSetOperationResultsCommand").sc(ListStackSetOperationResults$).build() {
-    };
-    var ListStackSetOperationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackSetOperations", {}).n("CloudFormationClient", "ListStackSetOperationsCommand").sc(ListStackSetOperations$).build() {
-    };
-    var ListStackSetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListStackSets", {}).n("CloudFormationClient", "ListStackSetsCommand").sc(ListStackSets$).build() {
-    };
-    var ListTypeRegistrationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListTypeRegistrations", {}).n("CloudFormationClient", "ListTypeRegistrationsCommand").sc(ListTypeRegistrations$).build() {
-    };
-    var ListTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListTypes", {}).n("CloudFormationClient", "ListTypesCommand").sc(ListTypes$).build() {
-    };
-    var ListTypeVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ListTypeVersions", {}).n("CloudFormationClient", "ListTypeVersionsCommand").sc(ListTypeVersions$).build() {
-    };
-    var PublishTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "PublishType", {}).n("CloudFormationClient", "PublishTypeCommand").sc(PublishType$).build() {
-    };
-    var RecordHandlerProgressCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "RecordHandlerProgress", {}).n("CloudFormationClient", "RecordHandlerProgressCommand").sc(RecordHandlerProgress$).build() {
-    };
-    var RegisterPublisherCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "RegisterPublisher", {}).n("CloudFormationClient", "RegisterPublisherCommand").sc(RegisterPublisher$).build() {
-    };
-    var RegisterTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "RegisterType", {}).n("CloudFormationClient", "RegisterTypeCommand").sc(RegisterType$).build() {
-    };
-    var RollbackStackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "RollbackStack", {}).n("CloudFormationClient", "RollbackStackCommand").sc(RollbackStack$).build() {
-    };
-    var SetStackPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "SetStackPolicy", {}).n("CloudFormationClient", "SetStackPolicyCommand").sc(SetStackPolicy$).build() {
-    };
-    var SetTypeConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "SetTypeConfiguration", {}).n("CloudFormationClient", "SetTypeConfigurationCommand").sc(SetTypeConfiguration$).build() {
-    };
-    var SetTypeDefaultVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "SetTypeDefaultVersion", {}).n("CloudFormationClient", "SetTypeDefaultVersionCommand").sc(SetTypeDefaultVersion$).build() {
-    };
-    var SignalResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "SignalResource", {}).n("CloudFormationClient", "SignalResourceCommand").sc(SignalResource$).build() {
-    };
-    var StartResourceScanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "StartResourceScan", {}).n("CloudFormationClient", "StartResourceScanCommand").sc(StartResourceScan$).build() {
-    };
-    var StopStackSetOperationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "StopStackSetOperation", {}).n("CloudFormationClient", "StopStackSetOperationCommand").sc(StopStackSetOperation$).build() {
-    };
-    var TestTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "TestType", {}).n("CloudFormationClient", "TestTypeCommand").sc(TestType$).build() {
-    };
-    var UpdateGeneratedTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "UpdateGeneratedTemplate", {}).n("CloudFormationClient", "UpdateGeneratedTemplateCommand").sc(UpdateGeneratedTemplate$).build() {
-    };
-    var UpdateStackCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "UpdateStack", {}).n("CloudFormationClient", "UpdateStackCommand").sc(UpdateStack$).build() {
-    };
-    var UpdateStackInstancesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "UpdateStackInstances", {}).n("CloudFormationClient", "UpdateStackInstancesCommand").sc(UpdateStackInstances$).build() {
-    };
-    var UpdateStackSetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "UpdateStackSet", {}).n("CloudFormationClient", "UpdateStackSetCommand").sc(UpdateStackSet$).build() {
-    };
-    var UpdateTerminationProtectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "UpdateTerminationProtection", {}).n("CloudFormationClient", "UpdateTerminationProtectionCommand").sc(UpdateTerminationProtection$).build() {
-    };
-    var ValidateTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("CloudFormation", "ValidateTemplate", {}).n("CloudFormationClient", "ValidateTemplateCommand").sc(ValidateTemplate$).build() {
+    var command5 = makeBuilder2(commonParams5, "CloudFormation", "CloudFormationClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var ActivateOrganizationsAccessCommand = class extends command5(_ep05, _mw05, "ActivateOrganizationsAccess", ActivateOrganizationsAccess$) {
+    };
+    var ActivateTypeCommand = class extends command5(_ep05, _mw05, "ActivateType", ActivateType$) {
+    };
+    var BatchDescribeTypeConfigurationsCommand = class extends command5(_ep05, _mw05, "BatchDescribeTypeConfigurations", BatchDescribeTypeConfigurations$) {
+    };
+    var CancelUpdateStackCommand = class extends command5(_ep05, _mw05, "CancelUpdateStack", CancelUpdateStack$) {
+    };
+    var ContinueUpdateRollbackCommand = class extends command5(_ep05, _mw05, "ContinueUpdateRollback", ContinueUpdateRollback$) {
+    };
+    var CreateChangeSetCommand = class extends command5(_ep05, _mw05, "CreateChangeSet", CreateChangeSet$) {
+    };
+    var CreateGeneratedTemplateCommand = class extends command5(_ep05, _mw05, "CreateGeneratedTemplate", CreateGeneratedTemplate$) {
+    };
+    var CreateStackCommand = class extends command5(_ep05, _mw05, "CreateStack", CreateStack$) {
+    };
+    var CreateStackInstancesCommand = class extends command5(_ep05, _mw05, "CreateStackInstances", CreateStackInstances$) {
+    };
+    var CreateStackRefactorCommand = class extends command5(_ep05, _mw05, "CreateStackRefactor", CreateStackRefactor$) {
+    };
+    var CreateStackSetCommand = class extends command5(_ep05, _mw05, "CreateStackSet", CreateStackSet$) {
+    };
+    var DeactivateOrganizationsAccessCommand = class extends command5(_ep05, _mw05, "DeactivateOrganizationsAccess", DeactivateOrganizationsAccess$) {
+    };
+    var DeactivateTypeCommand = class extends command5(_ep05, _mw05, "DeactivateType", DeactivateType$) {
+    };
+    var DeleteChangeSetCommand = class extends command5(_ep05, _mw05, "DeleteChangeSet", DeleteChangeSet$) {
+    };
+    var DeleteGeneratedTemplateCommand = class extends command5(_ep05, _mw05, "DeleteGeneratedTemplate", DeleteGeneratedTemplate$) {
+    };
+    var DeleteStackCommand = class extends command5(_ep05, _mw05, "DeleteStack", DeleteStack$) {
+    };
+    var DeleteStackInstancesCommand = class extends command5(_ep05, _mw05, "DeleteStackInstances", DeleteStackInstances$) {
+    };
+    var DeleteStackSetCommand = class extends command5(_ep05, _mw05, "DeleteStackSet", DeleteStackSet$) {
+    };
+    var DeregisterTypeCommand = class extends command5(_ep05, _mw05, "DeregisterType", DeregisterType$) {
+    };
+    var DescribeAccountLimitsCommand = class extends command5(_ep05, _mw05, "DescribeAccountLimits", DescribeAccountLimits$) {
+    };
+    var DescribeChangeSetCommand = class extends command5(_ep05, _mw05, "DescribeChangeSet", DescribeChangeSet$) {
+    };
+    var DescribeChangeSetHooksCommand = class extends command5(_ep05, _mw05, "DescribeChangeSetHooks", DescribeChangeSetHooks$) {
+    };
+    var DescribeEventsCommand = class extends command5(_ep05, _mw05, "DescribeEvents", DescribeEvents$) {
+    };
+    var DescribeGeneratedTemplateCommand = class extends command5(_ep05, _mw05, "DescribeGeneratedTemplate", DescribeGeneratedTemplate$) {
+    };
+    var DescribeOrganizationsAccessCommand = class extends command5(_ep05, _mw05, "DescribeOrganizationsAccess", DescribeOrganizationsAccess$) {
+    };
+    var DescribePublisherCommand = class extends command5(_ep05, _mw05, "DescribePublisher", DescribePublisher$) {
+    };
+    var DescribeResourceScanCommand = class extends command5(_ep05, _mw05, "DescribeResourceScan", DescribeResourceScan$) {
+    };
+    var DescribeStackDriftDetectionStatusCommand = class extends command5(_ep05, _mw05, "DescribeStackDriftDetectionStatus", DescribeStackDriftDetectionStatus$) {
+    };
+    var DescribeStackEventsCommand = class extends command5(_ep05, _mw05, "DescribeStackEvents", DescribeStackEvents$) {
+    };
+    var DescribeStackInstanceCommand = class extends command5(_ep05, _mw05, "DescribeStackInstance", DescribeStackInstance$) {
+    };
+    var DescribeStackRefactorCommand = class extends command5(_ep05, _mw05, "DescribeStackRefactor", DescribeStackRefactor$) {
+    };
+    var DescribeStackResourceCommand = class extends command5(_ep05, _mw05, "DescribeStackResource", DescribeStackResource$) {
+    };
+    var DescribeStackResourceDriftsCommand = class extends command5(_ep05, _mw05, "DescribeStackResourceDrifts", DescribeStackResourceDrifts$) {
+    };
+    var DescribeStackResourcesCommand = class extends command5(_ep05, _mw05, "DescribeStackResources", DescribeStackResources$) {
+    };
+    var DescribeStacksCommand2 = class extends command5(_ep05, _mw05, "DescribeStacks", DescribeStacks$) {
+    };
+    var DescribeStackSetCommand = class extends command5(_ep05, _mw05, "DescribeStackSet", DescribeStackSet$) {
+    };
+    var DescribeStackSetOperationCommand = class extends command5(_ep05, _mw05, "DescribeStackSetOperation", DescribeStackSetOperation$) {
+    };
+    var DescribeTypeCommand = class extends command5(_ep05, _mw05, "DescribeType", DescribeType$) {
+    };
+    var DescribeTypeRegistrationCommand = class extends command5(_ep05, _mw05, "DescribeTypeRegistration", DescribeTypeRegistration$) {
+    };
+    var DetectStackDriftCommand = class extends command5(_ep05, _mw05, "DetectStackDrift", DetectStackDrift$) {
+    };
+    var DetectStackResourceDriftCommand = class extends command5(_ep05, _mw05, "DetectStackResourceDrift", DetectStackResourceDrift$) {
+    };
+    var DetectStackSetDriftCommand = class extends command5(_ep05, _mw05, "DetectStackSetDrift", DetectStackSetDrift$) {
+    };
+    var EstimateTemplateCostCommand = class extends command5(_ep05, _mw05, "EstimateTemplateCost", EstimateTemplateCost$) {
+    };
+    var ExecuteChangeSetCommand = class extends command5(_ep05, _mw05, "ExecuteChangeSet", ExecuteChangeSet$) {
+    };
+    var ExecuteStackRefactorCommand = class extends command5(_ep05, _mw05, "ExecuteStackRefactor", ExecuteStackRefactor$) {
+    };
+    var GetGeneratedTemplateCommand = class extends command5(_ep05, _mw05, "GetGeneratedTemplate", GetGeneratedTemplate$) {
+    };
+    var GetHookResultCommand = class extends command5(_ep05, _mw05, "GetHookResult", GetHookResult$) {
+    };
+    var GetStackPolicyCommand = class extends command5(_ep05, _mw05, "GetStackPolicy", GetStackPolicy$) {
+    };
+    var GetTemplateCommand2 = class extends command5(_ep05, _mw05, "GetTemplate", GetTemplate$) {
+    };
+    var GetTemplateSummaryCommand = class extends command5(_ep05, _mw05, "GetTemplateSummary", GetTemplateSummary$) {
+    };
+    var ImportStacksToStackSetCommand = class extends command5(_ep05, _mw05, "ImportStacksToStackSet", ImportStacksToStackSet$) {
+    };
+    var ListChangeSetsCommand = class extends command5(_ep05, _mw05, "ListChangeSets", ListChangeSets$) {
+    };
+    var ListExportsCommand = class extends command5(_ep05, _mw05, "ListExports", ListExports$) {
+    };
+    var ListGeneratedTemplatesCommand = class extends command5(_ep05, _mw05, "ListGeneratedTemplates", ListGeneratedTemplates$) {
+    };
+    var ListHookResultsCommand = class extends command5(_ep05, _mw05, "ListHookResults", ListHookResults$) {
+    };
+    var ListImportsCommand = class extends command5(_ep05, _mw05, "ListImports", ListImports$) {
+    };
+    var ListResourceScanRelatedResourcesCommand = class extends command5(_ep05, _mw05, "ListResourceScanRelatedResources", ListResourceScanRelatedResources$) {
+    };
+    var ListResourceScanResourcesCommand = class extends command5(_ep05, _mw05, "ListResourceScanResources", ListResourceScanResources$) {
+    };
+    var ListResourceScansCommand = class extends command5(_ep05, _mw05, "ListResourceScans", ListResourceScans$) {
+    };
+    var ListStackInstanceResourceDriftsCommand = class extends command5(_ep05, _mw05, "ListStackInstanceResourceDrifts", ListStackInstanceResourceDrifts$) {
+    };
+    var ListStackInstancesCommand = class extends command5(_ep05, _mw05, "ListStackInstances", ListStackInstances$) {
+    };
+    var ListStackRefactorActionsCommand = class extends command5(_ep05, _mw05, "ListStackRefactorActions", ListStackRefactorActions$) {
+    };
+    var ListStackRefactorsCommand = class extends command5(_ep05, _mw05, "ListStackRefactors", ListStackRefactors$) {
+    };
+    var ListStackResourcesCommand2 = class extends command5(_ep05, _mw05, "ListStackResources", ListStackResources$) {
+    };
+    var ListStacksCommand2 = class extends command5(_ep05, _mw05, "ListStacks", ListStacks$) {
+    };
+    var ListStackSetAutoDeploymentTargetsCommand = class extends command5(_ep05, _mw05, "ListStackSetAutoDeploymentTargets", ListStackSetAutoDeploymentTargets$) {
+    };
+    var ListStackSetOperationResultsCommand = class extends command5(_ep05, _mw05, "ListStackSetOperationResults", ListStackSetOperationResults$) {
+    };
+    var ListStackSetOperationsCommand = class extends command5(_ep05, _mw05, "ListStackSetOperations", ListStackSetOperations$) {
+    };
+    var ListStackSetsCommand = class extends command5(_ep05, _mw05, "ListStackSets", ListStackSets$) {
+    };
+    var ListTypeRegistrationsCommand = class extends command5(_ep05, _mw05, "ListTypeRegistrations", ListTypeRegistrations$) {
+    };
+    var ListTypesCommand = class extends command5(_ep05, _mw05, "ListTypes", ListTypes$) {
+    };
+    var ListTypeVersionsCommand = class extends command5(_ep05, _mw05, "ListTypeVersions", ListTypeVersions$) {
+    };
+    var PublishTypeCommand = class extends command5(_ep05, _mw05, "PublishType", PublishType$) {
+    };
+    var RecordHandlerProgressCommand = class extends command5(_ep05, _mw05, "RecordHandlerProgress", RecordHandlerProgress$) {
+    };
+    var RegisterPublisherCommand = class extends command5(_ep05, _mw05, "RegisterPublisher", RegisterPublisher$) {
+    };
+    var RegisterTypeCommand = class extends command5(_ep05, _mw05, "RegisterType", RegisterType$) {
+    };
+    var RollbackStackCommand = class extends command5(_ep05, _mw05, "RollbackStack", RollbackStack$) {
+    };
+    var SetStackPolicyCommand = class extends command5(_ep05, _mw05, "SetStackPolicy", SetStackPolicy$) {
+    };
+    var SetTypeConfigurationCommand = class extends command5(_ep05, _mw05, "SetTypeConfiguration", SetTypeConfiguration$) {
+    };
+    var SetTypeDefaultVersionCommand = class extends command5(_ep05, _mw05, "SetTypeDefaultVersion", SetTypeDefaultVersion$) {
+    };
+    var SignalResourceCommand = class extends command5(_ep05, _mw05, "SignalResource", SignalResource$) {
+    };
+    var StartResourceScanCommand = class extends command5(_ep05, _mw05, "StartResourceScan", StartResourceScan$) {
+    };
+    var StopStackSetOperationCommand = class extends command5(_ep05, _mw05, "StopStackSetOperation", StopStackSetOperation$) {
+    };
+    var TestTypeCommand = class extends command5(_ep05, _mw05, "TestType", TestType$) {
+    };
+    var UpdateGeneratedTemplateCommand = class extends command5(_ep05, _mw05, "UpdateGeneratedTemplate", UpdateGeneratedTemplate$) {
+    };
+    var UpdateStackCommand = class extends command5(_ep05, _mw05, "UpdateStack", UpdateStack$) {
+    };
+    var UpdateStackInstancesCommand = class extends command5(_ep05, _mw05, "UpdateStackInstances", UpdateStackInstances$) {
+    };
+    var UpdateStackSetCommand = class extends command5(_ep05, _mw05, "UpdateStackSet", UpdateStackSet$) {
+    };
+    var UpdateTerminationProtectionCommand = class extends command5(_ep05, _mw05, "UpdateTerminationProtection", UpdateTerminationProtection$) {
+    };
+    var ValidateTemplateCommand = class extends command5(_ep05, _mw05, "ValidateTemplate", ValidateTemplate$) {
     };
     var paginateDescribeAccountLimits = createPaginator2(CloudFormationClient2, DescribeAccountLimitsCommand, "NextToken", "NextToken", "");
     var paginateDescribeChangeSet = createPaginator2(CloudFormationClient2, DescribeChangeSetCommand, "NextToken", "NextToken", "");
@@ -58112,8 +57305,9 @@ var require_dist_cjs23 = __commonJS({
   "node_modules/@aws-sdk/client-glue/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -58177,7 +57371,7 @@ var require_dist_cjs23 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -74518,1189 +73712,600 @@ var require_dist_cjs23 = __commonJS({
         super.destroy();
       }
     };
-    var AssociateGlossaryTermsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "AssociateGlossaryTerms", {}).n("GlueClient", "AssociateGlossaryTermsCommand").sc(AssociateGlossaryTerms$).build() {
-    };
-    var BatchCreatePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchCreatePartition", {}).n("GlueClient", "BatchCreatePartitionCommand").sc(BatchCreatePartition$).build() {
-    };
-    var BatchDeleteConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchDeleteConnection", {}).n("GlueClient", "BatchDeleteConnectionCommand").sc(BatchDeleteConnection$).build() {
-    };
-    var BatchDeletePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchDeletePartition", {}).n("GlueClient", "BatchDeletePartitionCommand").sc(BatchDeletePartition$).build() {
-    };
-    var BatchDeleteTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchDeleteTable", {}).n("GlueClient", "BatchDeleteTableCommand").sc(BatchDeleteTable$).build() {
-    };
-    var BatchDeleteTableVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchDeleteTableVersion", {}).n("GlueClient", "BatchDeleteTableVersionCommand").sc(BatchDeleteTableVersion$).build() {
-    };
-    var BatchGetBlueprintsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetBlueprints", {}).n("GlueClient", "BatchGetBlueprintsCommand").sc(BatchGetBlueprints$).build() {
-    };
-    var BatchGetCrawlersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetCrawlers", {}).n("GlueClient", "BatchGetCrawlersCommand").sc(BatchGetCrawlers$).build() {
-    };
-    var BatchGetCustomEntityTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetCustomEntityTypes", {}).n("GlueClient", "BatchGetCustomEntityTypesCommand").sc(BatchGetCustomEntityTypes$).build() {
-    };
-    var BatchGetDataQualityResultCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetDataQualityResult", {}).n("GlueClient", "BatchGetDataQualityResultCommand").sc(BatchGetDataQualityResult$).build() {
-    };
-    var BatchGetDevEndpointsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetDevEndpoints", {}).n("GlueClient", "BatchGetDevEndpointsCommand").sc(BatchGetDevEndpoints$).build() {
-    };
-    var BatchGetIterableFormsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetIterableForms", {}).n("GlueClient", "BatchGetIterableFormsCommand").sc(BatchGetIterableForms$).build() {
-    };
-    var BatchGetJobsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetJobs", {}).n("GlueClient", "BatchGetJobsCommand").sc(BatchGetJobs$).build() {
-    };
-    var BatchGetPartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetPartition", {}).n("GlueClient", "BatchGetPartitionCommand").sc(BatchGetPartition$).build() {
-    };
-    var BatchGetTableOptimizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetTableOptimizer", {}).n("GlueClient", "BatchGetTableOptimizerCommand").sc(BatchGetTableOptimizer$).build() {
-    };
-    var BatchGetTriggersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetTriggers", {}).n("GlueClient", "BatchGetTriggersCommand").sc(BatchGetTriggers$).build() {
-    };
-    var BatchGetWorkflowsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchGetWorkflows", {}).n("GlueClient", "BatchGetWorkflowsCommand").sc(BatchGetWorkflows$).build() {
-    };
-    var BatchPutDataQualityStatisticAnnotationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchPutDataQualityStatisticAnnotation", {}).n("GlueClient", "BatchPutDataQualityStatisticAnnotationCommand").sc(BatchPutDataQualityStatisticAnnotation$).build() {
-    };
-    var BatchStopJobRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchStopJobRun", {}).n("GlueClient", "BatchStopJobRunCommand").sc(BatchStopJobRun$).build() {
-    };
-    var BatchUpdatePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "BatchUpdatePartition", {}).n("GlueClient", "BatchUpdatePartitionCommand").sc(BatchUpdatePartition$).build() {
-    };
-    var CancelDataQualityRuleRecommendationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CancelDataQualityRuleRecommendationRun", {}).n("GlueClient", "CancelDataQualityRuleRecommendationRunCommand").sc(CancelDataQualityRuleRecommendationRun$).build() {
-    };
-    var CancelDataQualityRulesetEvaluationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CancelDataQualityRulesetEvaluationRun", {}).n("GlueClient", "CancelDataQualityRulesetEvaluationRunCommand").sc(CancelDataQualityRulesetEvaluationRun$).build() {
-    };
-    var CancelMLTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CancelMLTaskRun", {}).n("GlueClient", "CancelMLTaskRunCommand").sc(CancelMLTaskRun$).build() {
-    };
-    var CancelStatementCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CancelStatement", {}).n("GlueClient", "CancelStatementCommand").sc(CancelStatement$).build() {
-    };
-    var CheckSchemaVersionValidityCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CheckSchemaVersionValidity", {}).n("GlueClient", "CheckSchemaVersionValidityCommand").sc(CheckSchemaVersionValidity$).build() {
-    };
-    var CreateBlueprintCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateBlueprint", {}).n("GlueClient", "CreateBlueprintCommand").sc(CreateBlueprint$).build() {
-    };
-    var CreateCatalogCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateCatalog", {}).n("GlueClient", "CreateCatalogCommand").sc(CreateCatalog$).build() {
-    };
-    var CreateClassifierCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateClassifier", {}).n("GlueClient", "CreateClassifierCommand").sc(CreateClassifier$).build() {
-    };
-    var CreateColumnStatisticsTaskSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateColumnStatisticsTaskSettings", {}).n("GlueClient", "CreateColumnStatisticsTaskSettingsCommand").sc(CreateColumnStatisticsTaskSettings$).build() {
-    };
-    var CreateConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateConnection", {}).n("GlueClient", "CreateConnectionCommand").sc(CreateConnection$).build() {
-    };
-    var CreateCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateCrawler", {}).n("GlueClient", "CreateCrawlerCommand").sc(CreateCrawler$).build() {
-    };
-    var CreateCustomEntityTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateCustomEntityType", {}).n("GlueClient", "CreateCustomEntityTypeCommand").sc(CreateCustomEntityType$).build() {
-    };
-    var CreateDatabaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateDatabase", {}).n("GlueClient", "CreateDatabaseCommand").sc(CreateDatabase$).build() {
-    };
-    var CreateDataQualityRulesetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateDataQualityRuleset", {}).n("GlueClient", "CreateDataQualityRulesetCommand").sc(CreateDataQualityRuleset$).build() {
-    };
-    var CreateDevEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateDevEndpoint", {}).n("GlueClient", "CreateDevEndpointCommand").sc(CreateDevEndpoint$).build() {
-    };
-    var CreateGlossaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateGlossary", {}).n("GlueClient", "CreateGlossaryCommand").sc(CreateGlossary$).build() {
-    };
-    var CreateGlossaryTermCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateGlossaryTerm", {}).n("GlueClient", "CreateGlossaryTermCommand").sc(CreateGlossaryTerm$).build() {
-    };
-    var CreateGlueIdentityCenterConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateGlueIdentityCenterConfiguration", {}).n("GlueClient", "CreateGlueIdentityCenterConfigurationCommand").sc(CreateGlueIdentityCenterConfiguration$).build() {
-    };
-    var CreateIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateIntegration", {}).n("GlueClient", "CreateIntegrationCommand").sc(CreateIntegration$).build() {
-    };
-    var CreateIntegrationResourcePropertyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateIntegrationResourceProperty", {}).n("GlueClient", "CreateIntegrationResourcePropertyCommand").sc(CreateIntegrationResourceProperty$).build() {
-    };
-    var CreateIntegrationTablePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateIntegrationTableProperties", {}).n("GlueClient", "CreateIntegrationTablePropertiesCommand").sc(CreateIntegrationTableProperties$).build() {
-    };
-    var CreateJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateJob", {}).n("GlueClient", "CreateJobCommand").sc(CreateJob$).build() {
-    };
-    var CreateMLTransformCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateMLTransform", {}).n("GlueClient", "CreateMLTransformCommand").sc(CreateMLTransform$).build() {
-    };
-    var CreatePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreatePartition", {}).n("GlueClient", "CreatePartitionCommand").sc(CreatePartition$).build() {
-    };
-    var CreatePartitionIndexCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreatePartitionIndex", {}).n("GlueClient", "CreatePartitionIndexCommand").sc(CreatePartitionIndex$).build() {
-    };
-    var CreateRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateRegistry", {}).n("GlueClient", "CreateRegistryCommand").sc(CreateRegistry$).build() {
-    };
-    var CreateSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateSchema", {}).n("GlueClient", "CreateSchemaCommand").sc(CreateSchema$).build() {
-    };
-    var CreateScriptCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateScript", {}).n("GlueClient", "CreateScriptCommand").sc(CreateScript$).build() {
-    };
-    var CreateSecurityConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateSecurityConfiguration", {}).n("GlueClient", "CreateSecurityConfigurationCommand").sc(CreateSecurityConfiguration$).build() {
-    };
-    var CreateSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateSession", {}).n("GlueClient", "CreateSessionCommand").sc(CreateSession$).build() {
-    };
-    var CreateTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateTable", {}).n("GlueClient", "CreateTableCommand").sc(CreateTable$).build() {
-    };
-    var CreateTableOptimizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateTableOptimizer", {}).n("GlueClient", "CreateTableOptimizerCommand").sc(CreateTableOptimizer$).build() {
-    };
-    var CreateTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateTrigger", {}).n("GlueClient", "CreateTriggerCommand").sc(CreateTrigger$).build() {
-    };
-    var CreateUsageProfileCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateUsageProfile", {}).n("GlueClient", "CreateUsageProfileCommand").sc(CreateUsageProfile$).build() {
-    };
-    var CreateUserDefinedFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateUserDefinedFunction", {}).n("GlueClient", "CreateUserDefinedFunctionCommand").sc(CreateUserDefinedFunction$).build() {
-    };
-    var CreateWorkflowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "CreateWorkflow", {}).n("GlueClient", "CreateWorkflowCommand").sc(CreateWorkflow$).build() {
-    };
-    var DeleteAssetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteAsset", {}).n("GlueClient", "DeleteAssetCommand").sc(DeleteAsset$).build() {
-    };
-    var DeleteAssetTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteAssetType", {}).n("GlueClient", "DeleteAssetTypeCommand").sc(DeleteAssetType$).build() {
-    };
-    var DeleteAttachmentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteAttachment", {}).n("GlueClient", "DeleteAttachmentCommand").sc(DeleteAttachment$).build() {
-    };
-    var DeleteBlueprintCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteBlueprint", {}).n("GlueClient", "DeleteBlueprintCommand").sc(DeleteBlueprint$).build() {
-    };
-    var DeleteCatalogCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteCatalog", {}).n("GlueClient", "DeleteCatalogCommand").sc(DeleteCatalog$).build() {
-    };
-    var DeleteClassifierCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteClassifier", {}).n("GlueClient", "DeleteClassifierCommand").sc(DeleteClassifier$).build() {
-    };
-    var DeleteColumnStatisticsForPartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteColumnStatisticsForPartition", {}).n("GlueClient", "DeleteColumnStatisticsForPartitionCommand").sc(DeleteColumnStatisticsForPartition$).build() {
-    };
-    var DeleteColumnStatisticsForTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteColumnStatisticsForTable", {}).n("GlueClient", "DeleteColumnStatisticsForTableCommand").sc(DeleteColumnStatisticsForTable$).build() {
-    };
-    var DeleteColumnStatisticsTaskSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteColumnStatisticsTaskSettings", {}).n("GlueClient", "DeleteColumnStatisticsTaskSettingsCommand").sc(DeleteColumnStatisticsTaskSettings$).build() {
-    };
-    var DeleteConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteConnection", {}).n("GlueClient", "DeleteConnectionCommand").sc(DeleteConnection$).build() {
-    };
-    var DeleteConnectionTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteConnectionType", {}).n("GlueClient", "DeleteConnectionTypeCommand").sc(DeleteConnectionType$).build() {
-    };
-    var DeleteCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteCrawler", {}).n("GlueClient", "DeleteCrawlerCommand").sc(DeleteCrawler$).build() {
-    };
-    var DeleteCustomEntityTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteCustomEntityType", {}).n("GlueClient", "DeleteCustomEntityTypeCommand").sc(DeleteCustomEntityType$).build() {
-    };
-    var DeleteDatabaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteDatabase", {}).n("GlueClient", "DeleteDatabaseCommand").sc(DeleteDatabase$).build() {
-    };
-    var DeleteDataQualityRulesetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteDataQualityRuleset", {}).n("GlueClient", "DeleteDataQualityRulesetCommand").sc(DeleteDataQualityRuleset$).build() {
-    };
-    var DeleteDevEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteDevEndpoint", {}).n("GlueClient", "DeleteDevEndpointCommand").sc(DeleteDevEndpoint$).build() {
-    };
-    var DeleteFormTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteFormType", {}).n("GlueClient", "DeleteFormTypeCommand").sc(DeleteFormType$).build() {
-    };
-    var DeleteGlossaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteGlossary", {}).n("GlueClient", "DeleteGlossaryCommand").sc(DeleteGlossary$).build() {
-    };
-    var DeleteGlossaryTermCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteGlossaryTerm", {}).n("GlueClient", "DeleteGlossaryTermCommand").sc(DeleteGlossaryTerm$).build() {
-    };
-    var DeleteGlueIdentityCenterConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteGlueIdentityCenterConfiguration", {}).n("GlueClient", "DeleteGlueIdentityCenterConfigurationCommand").sc(DeleteGlueIdentityCenterConfiguration$).build() {
-    };
-    var DeleteIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteIntegration", {}).n("GlueClient", "DeleteIntegrationCommand").sc(DeleteIntegration$).build() {
-    };
-    var DeleteIntegrationResourcePropertyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteIntegrationResourceProperty", {}).n("GlueClient", "DeleteIntegrationResourcePropertyCommand").sc(DeleteIntegrationResourceProperty$).build() {
-    };
-    var DeleteIntegrationTablePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteIntegrationTableProperties", {}).n("GlueClient", "DeleteIntegrationTablePropertiesCommand").sc(DeleteIntegrationTableProperties$).build() {
-    };
-    var DeleteJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteJob", {}).n("GlueClient", "DeleteJobCommand").sc(DeleteJob$).build() {
-    };
-    var DeleteMLTransformCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteMLTransform", {}).n("GlueClient", "DeleteMLTransformCommand").sc(DeleteMLTransform$).build() {
-    };
-    var DeletePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeletePartition", {}).n("GlueClient", "DeletePartitionCommand").sc(DeletePartition$).build() {
-    };
-    var DeletePartitionIndexCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeletePartitionIndex", {}).n("GlueClient", "DeletePartitionIndexCommand").sc(DeletePartitionIndex$).build() {
-    };
-    var DeleteRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteRegistry", {}).n("GlueClient", "DeleteRegistryCommand").sc(DeleteRegistry$).build() {
-    };
-    var DeleteResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteResourcePolicy", {}).n("GlueClient", "DeleteResourcePolicyCommand").sc(DeleteResourcePolicy$).build() {
-    };
-    var DeleteSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteSchema", {}).n("GlueClient", "DeleteSchemaCommand").sc(DeleteSchema$).build() {
-    };
-    var DeleteSchemaVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteSchemaVersions", {}).n("GlueClient", "DeleteSchemaVersionsCommand").sc(DeleteSchemaVersions$).build() {
-    };
-    var DeleteSecurityConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteSecurityConfiguration", {}).n("GlueClient", "DeleteSecurityConfigurationCommand").sc(DeleteSecurityConfiguration$).build() {
-    };
-    var DeleteSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteSession", {}).n("GlueClient", "DeleteSessionCommand").sc(DeleteSession$).build() {
-    };
-    var DeleteTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteTable", {}).n("GlueClient", "DeleteTableCommand").sc(DeleteTable$).build() {
-    };
-    var DeleteTableOptimizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteTableOptimizer", {}).n("GlueClient", "DeleteTableOptimizerCommand").sc(DeleteTableOptimizer$).build() {
-    };
-    var DeleteTableVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteTableVersion", {}).n("GlueClient", "DeleteTableVersionCommand").sc(DeleteTableVersion$).build() {
-    };
-    var DeleteTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteTrigger", {}).n("GlueClient", "DeleteTriggerCommand").sc(DeleteTrigger$).build() {
-    };
-    var DeleteUsageProfileCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteUsageProfile", {}).n("GlueClient", "DeleteUsageProfileCommand").sc(DeleteUsageProfile$).build() {
-    };
-    var DeleteUserDefinedFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteUserDefinedFunction", {}).n("GlueClient", "DeleteUserDefinedFunctionCommand").sc(DeleteUserDefinedFunction$).build() {
-    };
-    var DeleteWorkflowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DeleteWorkflow", {}).n("GlueClient", "DeleteWorkflowCommand").sc(DeleteWorkflow$).build() {
-    };
-    var DescribeConnectionTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DescribeConnectionType", {}).n("GlueClient", "DescribeConnectionTypeCommand").sc(DescribeConnectionType$).build() {
-    };
-    var DescribeEntityCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DescribeEntity", {}).n("GlueClient", "DescribeEntityCommand").sc(DescribeEntity$).build() {
-    };
-    var DescribeInboundIntegrationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DescribeInboundIntegrations", {}).n("GlueClient", "DescribeInboundIntegrationsCommand").sc(DescribeInboundIntegrations$).build() {
-    };
-    var DescribeIntegrationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DescribeIntegrations", {}).n("GlueClient", "DescribeIntegrationsCommand").sc(DescribeIntegrations$).build() {
-    };
-    var DisassociateGlossaryTermsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "DisassociateGlossaryTerms", {}).n("GlueClient", "DisassociateGlossaryTermsCommand").sc(DisassociateGlossaryTerms$).build() {
-    };
-    var GetAssetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetAsset", {}).n("GlueClient", "GetAssetCommand").sc(GetAsset$).build() {
-    };
-    var GetAssetTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetAssetType", {}).n("GlueClient", "GetAssetTypeCommand").sc(GetAssetType$).build() {
-    };
-    var GetBlueprintCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetBlueprint", {}).n("GlueClient", "GetBlueprintCommand").sc(GetBlueprint$).build() {
-    };
-    var GetBlueprintRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetBlueprintRun", {}).n("GlueClient", "GetBlueprintRunCommand").sc(GetBlueprintRun$).build() {
-    };
-    var GetBlueprintRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetBlueprintRuns", {}).n("GlueClient", "GetBlueprintRunsCommand").sc(GetBlueprintRuns$).build() {
-    };
-    var GetCatalogCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCatalog", {}).n("GlueClient", "GetCatalogCommand").sc(GetCatalog$).build() {
-    };
-    var GetCatalogImportStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCatalogImportStatus", {}).n("GlueClient", "GetCatalogImportStatusCommand").sc(GetCatalogImportStatus$).build() {
-    };
-    var GetCatalogsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCatalogs", {}).n("GlueClient", "GetCatalogsCommand").sc(GetCatalogs$).build() {
-    };
-    var GetClassifierCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetClassifier", {}).n("GlueClient", "GetClassifierCommand").sc(GetClassifier$).build() {
-    };
-    var GetClassifiersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetClassifiers", {}).n("GlueClient", "GetClassifiersCommand").sc(GetClassifiers$).build() {
-    };
-    var GetColumnStatisticsForPartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetColumnStatisticsForPartition", {}).n("GlueClient", "GetColumnStatisticsForPartitionCommand").sc(GetColumnStatisticsForPartition$).build() {
-    };
-    var GetColumnStatisticsForTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetColumnStatisticsForTable", {}).n("GlueClient", "GetColumnStatisticsForTableCommand").sc(GetColumnStatisticsForTable$).build() {
-    };
-    var GetColumnStatisticsTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetColumnStatisticsTaskRun", {}).n("GlueClient", "GetColumnStatisticsTaskRunCommand").sc(GetColumnStatisticsTaskRun$).build() {
-    };
-    var GetColumnStatisticsTaskRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetColumnStatisticsTaskRuns", {}).n("GlueClient", "GetColumnStatisticsTaskRunsCommand").sc(GetColumnStatisticsTaskRuns$).build() {
-    };
-    var GetColumnStatisticsTaskSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetColumnStatisticsTaskSettings", {}).n("GlueClient", "GetColumnStatisticsTaskSettingsCommand").sc(GetColumnStatisticsTaskSettings$).build() {
-    };
-    var GetConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetConnection", {}).n("GlueClient", "GetConnectionCommand").sc(GetConnection$).build() {
-    };
-    var GetConnectionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetConnections", {}).n("GlueClient", "GetConnectionsCommand").sc(GetConnections$).build() {
-    };
-    var GetCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCrawler", {}).n("GlueClient", "GetCrawlerCommand").sc(GetCrawler$).build() {
-    };
-    var GetCrawlerMetricsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCrawlerMetrics", {}).n("GlueClient", "GetCrawlerMetricsCommand").sc(GetCrawlerMetrics$).build() {
-    };
-    var GetCrawlersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCrawlers", {}).n("GlueClient", "GetCrawlersCommand").sc(GetCrawlers$).build() {
-    };
-    var GetCustomEntityTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetCustomEntityType", {}).n("GlueClient", "GetCustomEntityTypeCommand").sc(GetCustomEntityType$).build() {
-    };
-    var GetDashboardUrlCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDashboardUrl", {}).n("GlueClient", "GetDashboardUrlCommand").sc(GetDashboardUrl$).build() {
-    };
-    var GetDatabaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDatabase", {}).n("GlueClient", "GetDatabaseCommand").sc(GetDatabase$).build() {
-    };
-    var GetDatabasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDatabases", {}).n("GlueClient", "GetDatabasesCommand").sc(GetDatabases$).build() {
-    };
-    var GetDataCatalogEncryptionSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataCatalogEncryptionSettings", {}).n("GlueClient", "GetDataCatalogEncryptionSettingsCommand").sc(GetDataCatalogEncryptionSettings$).build() {
-    };
-    var GetDataflowGraphCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataflowGraph", {}).n("GlueClient", "GetDataflowGraphCommand").sc(GetDataflowGraph$).build() {
-    };
-    var GetDataQualityModelCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityModel", {}).n("GlueClient", "GetDataQualityModelCommand").sc(GetDataQualityModel$).build() {
-    };
-    var GetDataQualityModelResultCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityModelResult", {}).n("GlueClient", "GetDataQualityModelResultCommand").sc(GetDataQualityModelResult$).build() {
-    };
-    var GetDataQualityResultCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityResult", {}).n("GlueClient", "GetDataQualityResultCommand").sc(GetDataQualityResult$).build() {
-    };
-    var GetDataQualityRuleRecommendationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityRuleRecommendationRun", {}).n("GlueClient", "GetDataQualityRuleRecommendationRunCommand").sc(GetDataQualityRuleRecommendationRun$).build() {
-    };
-    var GetDataQualityRulesetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityRuleset", {}).n("GlueClient", "GetDataQualityRulesetCommand").sc(GetDataQualityRuleset$).build() {
-    };
-    var GetDataQualityRulesetEvaluationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDataQualityRulesetEvaluationRun", {}).n("GlueClient", "GetDataQualityRulesetEvaluationRunCommand").sc(GetDataQualityRulesetEvaluationRun$).build() {
-    };
-    var GetDevEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDevEndpoint", {}).n("GlueClient", "GetDevEndpointCommand").sc(GetDevEndpoint$).build() {
-    };
-    var GetDevEndpointsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetDevEndpoints", {}).n("GlueClient", "GetDevEndpointsCommand").sc(GetDevEndpoints$).build() {
-    };
-    var GetEntityRecordsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetEntityRecords", {}).n("GlueClient", "GetEntityRecordsCommand").sc(GetEntityRecords$).build() {
-    };
-    var GetFormTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetFormType", {}).n("GlueClient", "GetFormTypeCommand").sc(GetFormType$).build() {
-    };
-    var GetGlossaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetGlossary", {}).n("GlueClient", "GetGlossaryCommand").sc(GetGlossary$).build() {
-    };
-    var GetGlossaryTermCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetGlossaryTerm", {}).n("GlueClient", "GetGlossaryTermCommand").sc(GetGlossaryTerm$).build() {
-    };
-    var GetGlueIdentityCenterConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetGlueIdentityCenterConfiguration", {}).n("GlueClient", "GetGlueIdentityCenterConfigurationCommand").sc(GetGlueIdentityCenterConfiguration$).build() {
-    };
-    var GetIntegrationResourcePropertyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetIntegrationResourceProperty", {}).n("GlueClient", "GetIntegrationResourcePropertyCommand").sc(GetIntegrationResourceProperty$).build() {
-    };
-    var GetIntegrationTablePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetIntegrationTableProperties", {}).n("GlueClient", "GetIntegrationTablePropertiesCommand").sc(GetIntegrationTableProperties$).build() {
-    };
-    var GetJobBookmarkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetJobBookmark", {}).n("GlueClient", "GetJobBookmarkCommand").sc(GetJobBookmark$).build() {
-    };
-    var GetJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetJob", {}).n("GlueClient", "GetJobCommand").sc(GetJob$).build() {
-    };
-    var GetJobRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetJobRun", {}).n("GlueClient", "GetJobRunCommand").sc(GetJobRun$).build() {
-    };
-    var GetJobRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetJobRuns", {}).n("GlueClient", "GetJobRunsCommand").sc(GetJobRuns$).build() {
-    };
-    var GetJobsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetJobs", {}).n("GlueClient", "GetJobsCommand").sc(GetJobs$).build() {
-    };
-    var GetMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMapping", {}).n("GlueClient", "GetMappingCommand").sc(GetMapping$).build() {
-    };
-    var GetMaterializedViewRefreshTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMaterializedViewRefreshTaskRun", {}).n("GlueClient", "GetMaterializedViewRefreshTaskRunCommand").sc(GetMaterializedViewRefreshTaskRun$).build() {
-    };
-    var GetMLTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMLTaskRun", {}).n("GlueClient", "GetMLTaskRunCommand").sc(GetMLTaskRun$).build() {
-    };
-    var GetMLTaskRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMLTaskRuns", {}).n("GlueClient", "GetMLTaskRunsCommand").sc(GetMLTaskRuns$).build() {
-    };
-    var GetMLTransformCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMLTransform", {}).n("GlueClient", "GetMLTransformCommand").sc(GetMLTransform$).build() {
-    };
-    var GetMLTransformsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetMLTransforms", {}).n("GlueClient", "GetMLTransformsCommand").sc(GetMLTransforms$).build() {
-    };
-    var GetPartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetPartition", {}).n("GlueClient", "GetPartitionCommand").sc(GetPartition$).build() {
-    };
-    var GetPartitionIndexesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetPartitionIndexes", {}).n("GlueClient", "GetPartitionIndexesCommand").sc(GetPartitionIndexes$).build() {
-    };
-    var GetPartitionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetPartitions", {}).n("GlueClient", "GetPartitionsCommand").sc(GetPartitions$).build() {
-    };
-    var GetPlanCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetPlan", {}).n("GlueClient", "GetPlanCommand").sc(GetPlan$).build() {
-    };
-    var GetRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetRegistry", {}).n("GlueClient", "GetRegistryCommand").sc(GetRegistry$).build() {
-    };
-    var GetResourcePoliciesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetResourcePolicies", {}).n("GlueClient", "GetResourcePoliciesCommand").sc(GetResourcePolicies$).build() {
-    };
-    var GetResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetResourcePolicy", {}).n("GlueClient", "GetResourcePolicyCommand").sc(GetResourcePolicy$).build() {
-    };
-    var GetSchemaByDefinitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSchemaByDefinition", {}).n("GlueClient", "GetSchemaByDefinitionCommand").sc(GetSchemaByDefinition$).build() {
-    };
-    var GetSchemaCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSchema", {}).n("GlueClient", "GetSchemaCommand").sc(GetSchema$).build() {
-    };
-    var GetSchemaVersionCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSchemaVersion", {}).n("GlueClient", "GetSchemaVersionCommand").sc(GetSchemaVersion$).build() {
-    };
-    var GetSchemaVersionsDiffCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSchemaVersionsDiff", {}).n("GlueClient", "GetSchemaVersionsDiffCommand").sc(GetSchemaVersionsDiff$).build() {
-    };
-    var GetSecurityConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSecurityConfiguration", {}).n("GlueClient", "GetSecurityConfigurationCommand").sc(GetSecurityConfiguration$).build() {
-    };
-    var GetSecurityConfigurationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSecurityConfigurations", {}).n("GlueClient", "GetSecurityConfigurationsCommand").sc(GetSecurityConfigurations$).build() {
-    };
-    var GetSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSession", {}).n("GlueClient", "GetSessionCommand").sc(GetSession$).build() {
-    };
-    var GetSessionEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetSessionEndpoint", {}).n("GlueClient", "GetSessionEndpointCommand").sc(GetSessionEndpoint$).build() {
-    };
-    var GetStatementCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetStatement", {}).n("GlueClient", "GetStatementCommand").sc(GetStatement$).build() {
-    };
-    var GetTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTable", {}).n("GlueClient", "GetTableCommand").sc(GetTable$).build() {
-    };
-    var GetTableOptimizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTableOptimizer", {}).n("GlueClient", "GetTableOptimizerCommand").sc(GetTableOptimizer$).build() {
-    };
-    var GetTablesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTables", {}).n("GlueClient", "GetTablesCommand").sc(GetTables$).build() {
-    };
-    var GetTableVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTableVersion", {}).n("GlueClient", "GetTableVersionCommand").sc(GetTableVersion$).build() {
-    };
-    var GetTableVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTableVersions", {}).n("GlueClient", "GetTableVersionsCommand").sc(GetTableVersions$).build() {
-    };
-    var GetTagsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTags", {}).n("GlueClient", "GetTagsCommand").sc(GetTags$).build() {
-    };
-    var GetTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTrigger", {}).n("GlueClient", "GetTriggerCommand").sc(GetTrigger$).build() {
-    };
-    var GetTriggersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetTriggers", {}).n("GlueClient", "GetTriggersCommand").sc(GetTriggers$).build() {
-    };
-    var GetUnfilteredPartitionMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUnfilteredPartitionMetadata", {}).n("GlueClient", "GetUnfilteredPartitionMetadataCommand").sc(GetUnfilteredPartitionMetadata$).build() {
-    };
-    var GetUnfilteredPartitionsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUnfilteredPartitionsMetadata", {}).n("GlueClient", "GetUnfilteredPartitionsMetadataCommand").sc(GetUnfilteredPartitionsMetadata$).build() {
-    };
-    var GetUnfilteredTableMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUnfilteredTableMetadata", {}).n("GlueClient", "GetUnfilteredTableMetadataCommand").sc(GetUnfilteredTableMetadata$).build() {
-    };
-    var GetUsageProfileCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUsageProfile", {}).n("GlueClient", "GetUsageProfileCommand").sc(GetUsageProfile$).build() {
-    };
-    var GetUserDefinedFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUserDefinedFunction", {}).n("GlueClient", "GetUserDefinedFunctionCommand").sc(GetUserDefinedFunction$).build() {
-    };
-    var GetUserDefinedFunctionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetUserDefinedFunctions", {}).n("GlueClient", "GetUserDefinedFunctionsCommand").sc(GetUserDefinedFunctions$).build() {
-    };
-    var GetWorkflowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetWorkflow", {}).n("GlueClient", "GetWorkflowCommand").sc(GetWorkflow$).build() {
-    };
-    var GetWorkflowRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetWorkflowRun", {}).n("GlueClient", "GetWorkflowRunCommand").sc(GetWorkflowRun$).build() {
-    };
-    var GetWorkflowRunPropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetWorkflowRunProperties", {}).n("GlueClient", "GetWorkflowRunPropertiesCommand").sc(GetWorkflowRunProperties$).build() {
-    };
-    var GetWorkflowRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "GetWorkflowRuns", {}).n("GlueClient", "GetWorkflowRunsCommand").sc(GetWorkflowRuns$).build() {
-    };
-    var ImportCatalogToGlueCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ImportCatalogToGlue", {}).n("GlueClient", "ImportCatalogToGlueCommand").sc(ImportCatalogToGlue$).build() {
-    };
-    var ListAssetTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListAssetTypes", {}).n("GlueClient", "ListAssetTypesCommand").sc(ListAssetTypes$).build() {
-    };
-    var ListBlueprintsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListBlueprints", {}).n("GlueClient", "ListBlueprintsCommand").sc(ListBlueprints$).build() {
-    };
-    var ListColumnStatisticsTaskRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListColumnStatisticsTaskRuns", {}).n("GlueClient", "ListColumnStatisticsTaskRunsCommand").sc(ListColumnStatisticsTaskRuns$).build() {
-    };
-    var ListConnectionTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListConnectionTypes", {}).n("GlueClient", "ListConnectionTypesCommand").sc(ListConnectionTypes$).build() {
-    };
-    var ListCrawlersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListCrawlers", {}).n("GlueClient", "ListCrawlersCommand").sc(ListCrawlers$).build() {
-    };
-    var ListCrawlsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListCrawls", {}).n("GlueClient", "ListCrawlsCommand").sc(ListCrawls$).build() {
-    };
-    var ListCustomEntityTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListCustomEntityTypes", {}).n("GlueClient", "ListCustomEntityTypesCommand").sc(ListCustomEntityTypes$).build() {
-    };
-    var ListDataQualityResultsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityResults", {}).n("GlueClient", "ListDataQualityResultsCommand").sc(ListDataQualityResults$).build() {
-    };
-    var ListDataQualityRuleRecommendationRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityRuleRecommendationRuns", {}).n("GlueClient", "ListDataQualityRuleRecommendationRunsCommand").sc(ListDataQualityRuleRecommendationRuns$).build() {
-    };
-    var ListDataQualityRulesetEvaluationRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityRulesetEvaluationRuns", {}).n("GlueClient", "ListDataQualityRulesetEvaluationRunsCommand").sc(ListDataQualityRulesetEvaluationRuns$).build() {
-    };
-    var ListDataQualityRulesetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityRulesets", {}).n("GlueClient", "ListDataQualityRulesetsCommand").sc(ListDataQualityRulesets$).build() {
-    };
-    var ListDataQualityStatisticAnnotationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityStatisticAnnotations", {}).n("GlueClient", "ListDataQualityStatisticAnnotationsCommand").sc(ListDataQualityStatisticAnnotations$).build() {
-    };
-    var ListDataQualityStatisticsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDataQualityStatistics", {}).n("GlueClient", "ListDataQualityStatisticsCommand").sc(ListDataQualityStatistics$).build() {
-    };
-    var ListDevEndpointsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListDevEndpoints", {}).n("GlueClient", "ListDevEndpointsCommand").sc(ListDevEndpoints$).build() {
-    };
-    var ListEntitiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListEntities", {}).n("GlueClient", "ListEntitiesCommand").sc(ListEntities$).build() {
-    };
-    var ListFormTypesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListFormTypes", {}).n("GlueClient", "ListFormTypesCommand").sc(ListFormTypes$).build() {
-    };
-    var ListGlossariesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListGlossaries", {}).n("GlueClient", "ListGlossariesCommand").sc(ListGlossaries$).build() {
-    };
-    var ListGlossaryTermsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListGlossaryTerms", {}).n("GlueClient", "ListGlossaryTermsCommand").sc(ListGlossaryTerms$).build() {
-    };
-    var ListIntegrationResourcePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListIntegrationResourceProperties", {}).n("GlueClient", "ListIntegrationResourcePropertiesCommand").sc(ListIntegrationResourceProperties$).build() {
-    };
-    var ListIterableFormsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListIterableForms", {}).n("GlueClient", "ListIterableFormsCommand").sc(ListIterableForms$).build() {
-    };
-    var ListJobsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListJobs", {}).n("GlueClient", "ListJobsCommand").sc(ListJobs$).build() {
-    };
-    var ListMaterializedViewRefreshTaskRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListMaterializedViewRefreshTaskRuns", {}).n("GlueClient", "ListMaterializedViewRefreshTaskRunsCommand").sc(ListMaterializedViewRefreshTaskRuns$).build() {
-    };
-    var ListMLTransformsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListMLTransforms", {}).n("GlueClient", "ListMLTransformsCommand").sc(ListMLTransforms$).build() {
-    };
-    var ListRegistriesCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListRegistries", {}).n("GlueClient", "ListRegistriesCommand").sc(ListRegistries$).build() {
-    };
-    var ListSchemasCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListSchemas", {}).n("GlueClient", "ListSchemasCommand").sc(ListSchemas$).build() {
-    };
-    var ListSchemaVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListSchemaVersions", {}).n("GlueClient", "ListSchemaVersionsCommand").sc(ListSchemaVersions$).build() {
-    };
-    var ListSessionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListSessions", {}).n("GlueClient", "ListSessionsCommand").sc(ListSessions$).build() {
-    };
-    var ListStatementsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListStatements", {}).n("GlueClient", "ListStatementsCommand").sc(ListStatements$).build() {
-    };
-    var ListTableOptimizerRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListTableOptimizerRuns", {}).n("GlueClient", "ListTableOptimizerRunsCommand").sc(ListTableOptimizerRuns$).build() {
-    };
-    var ListTriggersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListTriggers", {}).n("GlueClient", "ListTriggersCommand").sc(ListTriggers$).build() {
-    };
-    var ListUsageProfilesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListUsageProfiles", {}).n("GlueClient", "ListUsageProfilesCommand").sc(ListUsageProfiles$).build() {
-    };
-    var ListWorkflowsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ListWorkflows", {}).n("GlueClient", "ListWorkflowsCommand").sc(ListWorkflows$).build() {
-    };
-    var ModifyIntegrationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ModifyIntegration", {}).n("GlueClient", "ModifyIntegrationCommand").sc(ModifyIntegration$).build() {
-    };
-    var PutAssetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutAsset", {}).n("GlueClient", "PutAssetCommand").sc(PutAsset$).build() {
-    };
-    var PutAssetTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutAssetType", {}).n("GlueClient", "PutAssetTypeCommand").sc(PutAssetType$).build() {
-    };
-    var PutAttachmentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutAttachment", {}).n("GlueClient", "PutAttachmentCommand").sc(PutAttachment$).build() {
-    };
-    var PutDataCatalogEncryptionSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutDataCatalogEncryptionSettings", {}).n("GlueClient", "PutDataCatalogEncryptionSettingsCommand").sc(PutDataCatalogEncryptionSettings$).build() {
-    };
-    var PutDataQualityProfileAnnotationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutDataQualityProfileAnnotation", {}).n("GlueClient", "PutDataQualityProfileAnnotationCommand").sc(PutDataQualityProfileAnnotation$).build() {
-    };
-    var PutFormTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutFormType", {}).n("GlueClient", "PutFormTypeCommand").sc(PutFormType$).build() {
-    };
-    var PutResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutResourcePolicy", {}).n("GlueClient", "PutResourcePolicyCommand").sc(PutResourcePolicy$).build() {
-    };
-    var PutSchemaVersionMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutSchemaVersionMetadata", {}).n("GlueClient", "PutSchemaVersionMetadataCommand").sc(PutSchemaVersionMetadata$).build() {
-    };
-    var PutWorkflowRunPropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "PutWorkflowRunProperties", {}).n("GlueClient", "PutWorkflowRunPropertiesCommand").sc(PutWorkflowRunProperties$).build() {
-    };
-    var QuerySchemaVersionMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "QuerySchemaVersionMetadata", {}).n("GlueClient", "QuerySchemaVersionMetadataCommand").sc(QuerySchemaVersionMetadata$).build() {
-    };
-    var RegisterConnectionTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "RegisterConnectionType", {}).n("GlueClient", "RegisterConnectionTypeCommand").sc(RegisterConnectionType$).build() {
-    };
-    var RegisterSchemaVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "RegisterSchemaVersion", {}).n("GlueClient", "RegisterSchemaVersionCommand").sc(RegisterSchemaVersion$).build() {
-    };
-    var RemoveSchemaVersionMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "RemoveSchemaVersionMetadata", {}).n("GlueClient", "RemoveSchemaVersionMetadataCommand").sc(RemoveSchemaVersionMetadata$).build() {
-    };
-    var ResetJobBookmarkCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ResetJobBookmark", {}).n("GlueClient", "ResetJobBookmarkCommand").sc(ResetJobBookmark$).build() {
-    };
-    var ResumeWorkflowRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "ResumeWorkflowRun", {}).n("GlueClient", "ResumeWorkflowRunCommand").sc(ResumeWorkflowRun$).build() {
-    };
-    var RunStatementCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "RunStatement", {}).n("GlueClient", "RunStatementCommand").sc(RunStatement$).build() {
-    };
-    var SearchAssetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "SearchAssets", {}).n("GlueClient", "SearchAssetsCommand").sc(SearchAssets$).build() {
-    };
-    var SearchTablesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "SearchTables", {}).n("GlueClient", "SearchTablesCommand").sc(SearchTables$).build() {
-    };
-    var StartBlueprintRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartBlueprintRun", {}).n("GlueClient", "StartBlueprintRunCommand").sc(StartBlueprintRun$).build() {
-    };
-    var StartColumnStatisticsTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartColumnStatisticsTaskRun", {}).n("GlueClient", "StartColumnStatisticsTaskRunCommand").sc(StartColumnStatisticsTaskRun$).build() {
-    };
-    var StartColumnStatisticsTaskRunScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartColumnStatisticsTaskRunSchedule", {}).n("GlueClient", "StartColumnStatisticsTaskRunScheduleCommand").sc(StartColumnStatisticsTaskRunSchedule$).build() {
-    };
-    var StartCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartCrawler", {}).n("GlueClient", "StartCrawlerCommand").sc(StartCrawler$).build() {
-    };
-    var StartCrawlerScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartCrawlerSchedule", {}).n("GlueClient", "StartCrawlerScheduleCommand").sc(StartCrawlerSchedule$).build() {
-    };
-    var StartDataQualityRuleRecommendationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartDataQualityRuleRecommendationRun", {}).n("GlueClient", "StartDataQualityRuleRecommendationRunCommand").sc(StartDataQualityRuleRecommendationRun$).build() {
-    };
-    var StartDataQualityRulesetEvaluationRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartDataQualityRulesetEvaluationRun", {}).n("GlueClient", "StartDataQualityRulesetEvaluationRunCommand").sc(StartDataQualityRulesetEvaluationRun$).build() {
-    };
-    var StartExportLabelsTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartExportLabelsTaskRun", {}).n("GlueClient", "StartExportLabelsTaskRunCommand").sc(StartExportLabelsTaskRun$).build() {
-    };
-    var StartImportLabelsTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartImportLabelsTaskRun", {}).n("GlueClient", "StartImportLabelsTaskRunCommand").sc(StartImportLabelsTaskRun$).build() {
-    };
-    var StartJobRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartJobRun", {}).n("GlueClient", "StartJobRunCommand").sc(StartJobRun$).build() {
-    };
-    var StartMaterializedViewRefreshTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartMaterializedViewRefreshTaskRun", {}).n("GlueClient", "StartMaterializedViewRefreshTaskRunCommand").sc(StartMaterializedViewRefreshTaskRun$).build() {
-    };
-    var StartMLEvaluationTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartMLEvaluationTaskRun", {}).n("GlueClient", "StartMLEvaluationTaskRunCommand").sc(StartMLEvaluationTaskRun$).build() {
-    };
-    var StartMLLabelingSetGenerationTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartMLLabelingSetGenerationTaskRun", {}).n("GlueClient", "StartMLLabelingSetGenerationTaskRunCommand").sc(StartMLLabelingSetGenerationTaskRun$).build() {
-    };
-    var StartTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartTrigger", {}).n("GlueClient", "StartTriggerCommand").sc(StartTrigger$).build() {
-    };
-    var StartWorkflowRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StartWorkflowRun", {}).n("GlueClient", "StartWorkflowRunCommand").sc(StartWorkflowRun$).build() {
-    };
-    var StopColumnStatisticsTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopColumnStatisticsTaskRun", {}).n("GlueClient", "StopColumnStatisticsTaskRunCommand").sc(StopColumnStatisticsTaskRun$).build() {
-    };
-    var StopColumnStatisticsTaskRunScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopColumnStatisticsTaskRunSchedule", {}).n("GlueClient", "StopColumnStatisticsTaskRunScheduleCommand").sc(StopColumnStatisticsTaskRunSchedule$).build() {
-    };
-    var StopCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopCrawler", {}).n("GlueClient", "StopCrawlerCommand").sc(StopCrawler$).build() {
-    };
-    var StopCrawlerScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopCrawlerSchedule", {}).n("GlueClient", "StopCrawlerScheduleCommand").sc(StopCrawlerSchedule$).build() {
-    };
-    var StopMaterializedViewRefreshTaskRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopMaterializedViewRefreshTaskRun", {}).n("GlueClient", "StopMaterializedViewRefreshTaskRunCommand").sc(StopMaterializedViewRefreshTaskRun$).build() {
-    };
-    var StopSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopSession", {}).n("GlueClient", "StopSessionCommand").sc(StopSession$).build() {
-    };
-    var StopTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopTrigger", {}).n("GlueClient", "StopTriggerCommand").sc(StopTrigger$).build() {
-    };
-    var StopWorkflowRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "StopWorkflowRun", {}).n("GlueClient", "StopWorkflowRunCommand").sc(StopWorkflowRun$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "TagResource", {}).n("GlueClient", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var TestConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "TestConnection", {}).n("GlueClient", "TestConnectionCommand").sc(TestConnection$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UntagResource", {}).n("GlueClient", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateAssetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateAsset", {}).n("GlueClient", "UpdateAssetCommand").sc(UpdateAsset$).build() {
-    };
-    var UpdateBlueprintCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateBlueprint", {}).n("GlueClient", "UpdateBlueprintCommand").sc(UpdateBlueprint$).build() {
-    };
-    var UpdateCatalogCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateCatalog", {}).n("GlueClient", "UpdateCatalogCommand").sc(UpdateCatalog$).build() {
-    };
-    var UpdateClassifierCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateClassifier", {}).n("GlueClient", "UpdateClassifierCommand").sc(UpdateClassifier$).build() {
-    };
-    var UpdateColumnStatisticsForPartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateColumnStatisticsForPartition", {}).n("GlueClient", "UpdateColumnStatisticsForPartitionCommand").sc(UpdateColumnStatisticsForPartition$).build() {
-    };
-    var UpdateColumnStatisticsForTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateColumnStatisticsForTable", {}).n("GlueClient", "UpdateColumnStatisticsForTableCommand").sc(UpdateColumnStatisticsForTable$).build() {
-    };
-    var UpdateColumnStatisticsTaskSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateColumnStatisticsTaskSettings", {}).n("GlueClient", "UpdateColumnStatisticsTaskSettingsCommand").sc(UpdateColumnStatisticsTaskSettings$).build() {
-    };
-    var UpdateConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateConnection", {}).n("GlueClient", "UpdateConnectionCommand").sc(UpdateConnection$).build() {
-    };
-    var UpdateCrawlerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateCrawler", {}).n("GlueClient", "UpdateCrawlerCommand").sc(UpdateCrawler$).build() {
-    };
-    var UpdateCrawlerScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateCrawlerSchedule", {}).n("GlueClient", "UpdateCrawlerScheduleCommand").sc(UpdateCrawlerSchedule$).build() {
-    };
-    var UpdateDatabaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateDatabase", {}).n("GlueClient", "UpdateDatabaseCommand").sc(UpdateDatabase$).build() {
-    };
-    var UpdateDataQualityRulesetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateDataQualityRuleset", {}).n("GlueClient", "UpdateDataQualityRulesetCommand").sc(UpdateDataQualityRuleset$).build() {
-    };
-    var UpdateDevEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateDevEndpoint", {}).n("GlueClient", "UpdateDevEndpointCommand").sc(UpdateDevEndpoint$).build() {
-    };
-    var UpdateGlossaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateGlossary", {}).n("GlueClient", "UpdateGlossaryCommand").sc(UpdateGlossary$).build() {
-    };
-    var UpdateGlossaryTermCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateGlossaryTerm", {}).n("GlueClient", "UpdateGlossaryTermCommand").sc(UpdateGlossaryTerm$).build() {
-    };
-    var UpdateGlueIdentityCenterConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateGlueIdentityCenterConfiguration", {}).n("GlueClient", "UpdateGlueIdentityCenterConfigurationCommand").sc(UpdateGlueIdentityCenterConfiguration$).build() {
-    };
-    var UpdateIntegrationResourcePropertyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateIntegrationResourceProperty", {}).n("GlueClient", "UpdateIntegrationResourcePropertyCommand").sc(UpdateIntegrationResourceProperty$).build() {
-    };
-    var UpdateIntegrationTablePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateIntegrationTableProperties", {}).n("GlueClient", "UpdateIntegrationTablePropertiesCommand").sc(UpdateIntegrationTableProperties$).build() {
-    };
-    var UpdateJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateJob", {}).n("GlueClient", "UpdateJobCommand").sc(UpdateJob$).build() {
-    };
-    var UpdateJobFromSourceControlCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateJobFromSourceControl", {}).n("GlueClient", "UpdateJobFromSourceControlCommand").sc(UpdateJobFromSourceControl$).build() {
-    };
-    var UpdateMLTransformCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateMLTransform", {}).n("GlueClient", "UpdateMLTransformCommand").sc(UpdateMLTransform$).build() {
-    };
-    var UpdatePartitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdatePartition", {}).n("GlueClient", "UpdatePartitionCommand").sc(UpdatePartition$).build() {
-    };
-    var UpdateRegistryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateRegistry", {}).n("GlueClient", "UpdateRegistryCommand").sc(UpdateRegistry$).build() {
-    };
-    var UpdateSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateSchema", {}).n("GlueClient", "UpdateSchemaCommand").sc(UpdateSchema$).build() {
-    };
-    var UpdateSourceControlFromJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateSourceControlFromJob", {}).n("GlueClient", "UpdateSourceControlFromJobCommand").sc(UpdateSourceControlFromJob$).build() {
-    };
-    var UpdateTableCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateTable", {}).n("GlueClient", "UpdateTableCommand").sc(UpdateTable$).build() {
-    };
-    var UpdateTableOptimizerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateTableOptimizer", {}).n("GlueClient", "UpdateTableOptimizerCommand").sc(UpdateTableOptimizer$).build() {
-    };
-    var UpdateTriggerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateTrigger", {}).n("GlueClient", "UpdateTriggerCommand").sc(UpdateTrigger$).build() {
-    };
-    var UpdateUsageProfileCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateUsageProfile", {}).n("GlueClient", "UpdateUsageProfileCommand").sc(UpdateUsageProfile$).build() {
-    };
-    var UpdateUserDefinedFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateUserDefinedFunction", {}).n("GlueClient", "UpdateUserDefinedFunctionCommand").sc(UpdateUserDefinedFunction$).build() {
-    };
-    var UpdateWorkflowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGlue", "UpdateWorkflow", {}).n("GlueClient", "UpdateWorkflowCommand").sc(UpdateWorkflow$).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSGlue", "GlueClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AssociateGlossaryTermsCommand = class extends command5(_ep05, _mw05, "AssociateGlossaryTerms", AssociateGlossaryTerms$) {
+    };
+    var BatchCreatePartitionCommand = class extends command5(_ep05, _mw05, "BatchCreatePartition", BatchCreatePartition$) {
+    };
+    var BatchDeleteConnectionCommand = class extends command5(_ep05, _mw05, "BatchDeleteConnection", BatchDeleteConnection$) {
+    };
+    var BatchDeletePartitionCommand = class extends command5(_ep05, _mw05, "BatchDeletePartition", BatchDeletePartition$) {
+    };
+    var BatchDeleteTableCommand = class extends command5(_ep05, _mw05, "BatchDeleteTable", BatchDeleteTable$) {
+    };
+    var BatchDeleteTableVersionCommand = class extends command5(_ep05, _mw05, "BatchDeleteTableVersion", BatchDeleteTableVersion$) {
+    };
+    var BatchGetBlueprintsCommand = class extends command5(_ep05, _mw05, "BatchGetBlueprints", BatchGetBlueprints$) {
+    };
+    var BatchGetCrawlersCommand = class extends command5(_ep05, _mw05, "BatchGetCrawlers", BatchGetCrawlers$) {
+    };
+    var BatchGetCustomEntityTypesCommand = class extends command5(_ep05, _mw05, "BatchGetCustomEntityTypes", BatchGetCustomEntityTypes$) {
+    };
+    var BatchGetDataQualityResultCommand = class extends command5(_ep05, _mw05, "BatchGetDataQualityResult", BatchGetDataQualityResult$) {
+    };
+    var BatchGetDevEndpointsCommand = class extends command5(_ep05, _mw05, "BatchGetDevEndpoints", BatchGetDevEndpoints$) {
+    };
+    var BatchGetIterableFormsCommand = class extends command5(_ep05, _mw05, "BatchGetIterableForms", BatchGetIterableForms$) {
+    };
+    var BatchGetJobsCommand = class extends command5(_ep05, _mw05, "BatchGetJobs", BatchGetJobs$) {
+    };
+    var BatchGetPartitionCommand = class extends command5(_ep05, _mw05, "BatchGetPartition", BatchGetPartition$) {
+    };
+    var BatchGetTableOptimizerCommand = class extends command5(_ep05, _mw05, "BatchGetTableOptimizer", BatchGetTableOptimizer$) {
+    };
+    var BatchGetTriggersCommand = class extends command5(_ep05, _mw05, "BatchGetTriggers", BatchGetTriggers$) {
+    };
+    var BatchGetWorkflowsCommand = class extends command5(_ep05, _mw05, "BatchGetWorkflows", BatchGetWorkflows$) {
+    };
+    var BatchPutDataQualityStatisticAnnotationCommand = class extends command5(_ep05, _mw05, "BatchPutDataQualityStatisticAnnotation", BatchPutDataQualityStatisticAnnotation$) {
+    };
+    var BatchStopJobRunCommand = class extends command5(_ep05, _mw05, "BatchStopJobRun", BatchStopJobRun$) {
+    };
+    var BatchUpdatePartitionCommand = class extends command5(_ep05, _mw05, "BatchUpdatePartition", BatchUpdatePartition$) {
+    };
+    var CancelDataQualityRuleRecommendationRunCommand = class extends command5(_ep05, _mw05, "CancelDataQualityRuleRecommendationRun", CancelDataQualityRuleRecommendationRun$) {
+    };
+    var CancelDataQualityRulesetEvaluationRunCommand = class extends command5(_ep05, _mw05, "CancelDataQualityRulesetEvaluationRun", CancelDataQualityRulesetEvaluationRun$) {
+    };
+    var CancelMLTaskRunCommand = class extends command5(_ep05, _mw05, "CancelMLTaskRun", CancelMLTaskRun$) {
+    };
+    var CancelStatementCommand = class extends command5(_ep05, _mw05, "CancelStatement", CancelStatement$) {
+    };
+    var CheckSchemaVersionValidityCommand = class extends command5(_ep05, _mw05, "CheckSchemaVersionValidity", CheckSchemaVersionValidity$) {
+    };
+    var CreateBlueprintCommand = class extends command5(_ep05, _mw05, "CreateBlueprint", CreateBlueprint$) {
+    };
+    var CreateCatalogCommand = class extends command5(_ep05, _mw05, "CreateCatalog", CreateCatalog$) {
+    };
+    var CreateClassifierCommand = class extends command5(_ep05, _mw05, "CreateClassifier", CreateClassifier$) {
+    };
+    var CreateColumnStatisticsTaskSettingsCommand = class extends command5(_ep05, _mw05, "CreateColumnStatisticsTaskSettings", CreateColumnStatisticsTaskSettings$) {
+    };
+    var CreateConnectionCommand = class extends command5(_ep05, _mw05, "CreateConnection", CreateConnection$) {
+    };
+    var CreateCrawlerCommand = class extends command5(_ep05, _mw05, "CreateCrawler", CreateCrawler$) {
+    };
+    var CreateCustomEntityTypeCommand = class extends command5(_ep05, _mw05, "CreateCustomEntityType", CreateCustomEntityType$) {
+    };
+    var CreateDatabaseCommand = class extends command5(_ep05, _mw05, "CreateDatabase", CreateDatabase$) {
+    };
+    var CreateDataQualityRulesetCommand = class extends command5(_ep05, _mw05, "CreateDataQualityRuleset", CreateDataQualityRuleset$) {
+    };
+    var CreateDevEndpointCommand = class extends command5(_ep05, _mw05, "CreateDevEndpoint", CreateDevEndpoint$) {
+    };
+    var CreateGlossaryCommand = class extends command5(_ep05, _mw05, "CreateGlossary", CreateGlossary$) {
+    };
+    var CreateGlossaryTermCommand = class extends command5(_ep05, _mw05, "CreateGlossaryTerm", CreateGlossaryTerm$) {
+    };
+    var CreateGlueIdentityCenterConfigurationCommand = class extends command5(_ep05, _mw05, "CreateGlueIdentityCenterConfiguration", CreateGlueIdentityCenterConfiguration$) {
+    };
+    var CreateIntegrationCommand = class extends command5(_ep05, _mw05, "CreateIntegration", CreateIntegration$) {
+    };
+    var CreateIntegrationResourcePropertyCommand = class extends command5(_ep05, _mw05, "CreateIntegrationResourceProperty", CreateIntegrationResourceProperty$) {
+    };
+    var CreateIntegrationTablePropertiesCommand = class extends command5(_ep05, _mw05, "CreateIntegrationTableProperties", CreateIntegrationTableProperties$) {
+    };
+    var CreateJobCommand = class extends command5(_ep05, _mw05, "CreateJob", CreateJob$) {
+    };
+    var CreateMLTransformCommand = class extends command5(_ep05, _mw05, "CreateMLTransform", CreateMLTransform$) {
+    };
+    var CreatePartitionCommand = class extends command5(_ep05, _mw05, "CreatePartition", CreatePartition$) {
+    };
+    var CreatePartitionIndexCommand = class extends command5(_ep05, _mw05, "CreatePartitionIndex", CreatePartitionIndex$) {
+    };
+    var CreateRegistryCommand = class extends command5(_ep05, _mw05, "CreateRegistry", CreateRegistry$) {
+    };
+    var CreateSchemaCommand = class extends command5(_ep05, _mw05, "CreateSchema", CreateSchema$) {
+    };
+    var CreateScriptCommand = class extends command5(_ep05, _mw05, "CreateScript", CreateScript$) {
+    };
+    var CreateSecurityConfigurationCommand = class extends command5(_ep05, _mw05, "CreateSecurityConfiguration", CreateSecurityConfiguration$) {
+    };
+    var CreateSessionCommand = class extends command5(_ep05, _mw05, "CreateSession", CreateSession$) {
+    };
+    var CreateTableCommand = class extends command5(_ep05, _mw05, "CreateTable", CreateTable$) {
+    };
+    var CreateTableOptimizerCommand = class extends command5(_ep05, _mw05, "CreateTableOptimizer", CreateTableOptimizer$) {
+    };
+    var CreateTriggerCommand = class extends command5(_ep05, _mw05, "CreateTrigger", CreateTrigger$) {
+    };
+    var CreateUsageProfileCommand = class extends command5(_ep05, _mw05, "CreateUsageProfile", CreateUsageProfile$) {
+    };
+    var CreateUserDefinedFunctionCommand = class extends command5(_ep05, _mw05, "CreateUserDefinedFunction", CreateUserDefinedFunction$) {
+    };
+    var CreateWorkflowCommand = class extends command5(_ep05, _mw05, "CreateWorkflow", CreateWorkflow$) {
+    };
+    var DeleteAssetCommand = class extends command5(_ep05, _mw05, "DeleteAsset", DeleteAsset$) {
+    };
+    var DeleteAssetTypeCommand = class extends command5(_ep05, _mw05, "DeleteAssetType", DeleteAssetType$) {
+    };
+    var DeleteAttachmentCommand = class extends command5(_ep05, _mw05, "DeleteAttachment", DeleteAttachment$) {
+    };
+    var DeleteBlueprintCommand = class extends command5(_ep05, _mw05, "DeleteBlueprint", DeleteBlueprint$) {
+    };
+    var DeleteCatalogCommand = class extends command5(_ep05, _mw05, "DeleteCatalog", DeleteCatalog$) {
+    };
+    var DeleteClassifierCommand = class extends command5(_ep05, _mw05, "DeleteClassifier", DeleteClassifier$) {
+    };
+    var DeleteColumnStatisticsForPartitionCommand = class extends command5(_ep05, _mw05, "DeleteColumnStatisticsForPartition", DeleteColumnStatisticsForPartition$) {
+    };
+    var DeleteColumnStatisticsForTableCommand = class extends command5(_ep05, _mw05, "DeleteColumnStatisticsForTable", DeleteColumnStatisticsForTable$) {
+    };
+    var DeleteColumnStatisticsTaskSettingsCommand = class extends command5(_ep05, _mw05, "DeleteColumnStatisticsTaskSettings", DeleteColumnStatisticsTaskSettings$) {
+    };
+    var DeleteConnectionCommand = class extends command5(_ep05, _mw05, "DeleteConnection", DeleteConnection$) {
+    };
+    var DeleteConnectionTypeCommand = class extends command5(_ep05, _mw05, "DeleteConnectionType", DeleteConnectionType$) {
+    };
+    var DeleteCrawlerCommand = class extends command5(_ep05, _mw05, "DeleteCrawler", DeleteCrawler$) {
+    };
+    var DeleteCustomEntityTypeCommand = class extends command5(_ep05, _mw05, "DeleteCustomEntityType", DeleteCustomEntityType$) {
+    };
+    var DeleteDatabaseCommand = class extends command5(_ep05, _mw05, "DeleteDatabase", DeleteDatabase$) {
+    };
+    var DeleteDataQualityRulesetCommand = class extends command5(_ep05, _mw05, "DeleteDataQualityRuleset", DeleteDataQualityRuleset$) {
+    };
+    var DeleteDevEndpointCommand = class extends command5(_ep05, _mw05, "DeleteDevEndpoint", DeleteDevEndpoint$) {
+    };
+    var DeleteFormTypeCommand = class extends command5(_ep05, _mw05, "DeleteFormType", DeleteFormType$) {
+    };
+    var DeleteGlossaryCommand = class extends command5(_ep05, _mw05, "DeleteGlossary", DeleteGlossary$) {
+    };
+    var DeleteGlossaryTermCommand = class extends command5(_ep05, _mw05, "DeleteGlossaryTerm", DeleteGlossaryTerm$) {
+    };
+    var DeleteGlueIdentityCenterConfigurationCommand = class extends command5(_ep05, _mw05, "DeleteGlueIdentityCenterConfiguration", DeleteGlueIdentityCenterConfiguration$) {
+    };
+    var DeleteIntegrationCommand = class extends command5(_ep05, _mw05, "DeleteIntegration", DeleteIntegration$) {
+    };
+    var DeleteIntegrationResourcePropertyCommand = class extends command5(_ep05, _mw05, "DeleteIntegrationResourceProperty", DeleteIntegrationResourceProperty$) {
+    };
+    var DeleteIntegrationTablePropertiesCommand = class extends command5(_ep05, _mw05, "DeleteIntegrationTableProperties", DeleteIntegrationTableProperties$) {
+    };
+    var DeleteJobCommand = class extends command5(_ep05, _mw05, "DeleteJob", DeleteJob$) {
+    };
+    var DeleteMLTransformCommand = class extends command5(_ep05, _mw05, "DeleteMLTransform", DeleteMLTransform$) {
+    };
+    var DeletePartitionCommand = class extends command5(_ep05, _mw05, "DeletePartition", DeletePartition$) {
+    };
+    var DeletePartitionIndexCommand = class extends command5(_ep05, _mw05, "DeletePartitionIndex", DeletePartitionIndex$) {
+    };
+    var DeleteRegistryCommand = class extends command5(_ep05, _mw05, "DeleteRegistry", DeleteRegistry$) {
+    };
+    var DeleteResourcePolicyCommand = class extends command5(_ep05, _mw05, "DeleteResourcePolicy", DeleteResourcePolicy$) {
+    };
+    var DeleteSchemaCommand = class extends command5(_ep05, _mw05, "DeleteSchema", DeleteSchema$) {
+    };
+    var DeleteSchemaVersionsCommand = class extends command5(_ep05, _mw05, "DeleteSchemaVersions", DeleteSchemaVersions$) {
+    };
+    var DeleteSecurityConfigurationCommand = class extends command5(_ep05, _mw05, "DeleteSecurityConfiguration", DeleteSecurityConfiguration$) {
+    };
+    var DeleteSessionCommand = class extends command5(_ep05, _mw05, "DeleteSession", DeleteSession$) {
+    };
+    var DeleteTableCommand = class extends command5(_ep05, _mw05, "DeleteTable", DeleteTable$) {
+    };
+    var DeleteTableOptimizerCommand = class extends command5(_ep05, _mw05, "DeleteTableOptimizer", DeleteTableOptimizer$) {
+    };
+    var DeleteTableVersionCommand = class extends command5(_ep05, _mw05, "DeleteTableVersion", DeleteTableVersion$) {
+    };
+    var DeleteTriggerCommand = class extends command5(_ep05, _mw05, "DeleteTrigger", DeleteTrigger$) {
+    };
+    var DeleteUsageProfileCommand = class extends command5(_ep05, _mw05, "DeleteUsageProfile", DeleteUsageProfile$) {
+    };
+    var DeleteUserDefinedFunctionCommand = class extends command5(_ep05, _mw05, "DeleteUserDefinedFunction", DeleteUserDefinedFunction$) {
+    };
+    var DeleteWorkflowCommand = class extends command5(_ep05, _mw05, "DeleteWorkflow", DeleteWorkflow$) {
+    };
+    var DescribeConnectionTypeCommand = class extends command5(_ep05, _mw05, "DescribeConnectionType", DescribeConnectionType$) {
+    };
+    var DescribeEntityCommand = class extends command5(_ep05, _mw05, "DescribeEntity", DescribeEntity$) {
+    };
+    var DescribeInboundIntegrationsCommand = class extends command5(_ep05, _mw05, "DescribeInboundIntegrations", DescribeInboundIntegrations$) {
+    };
+    var DescribeIntegrationsCommand = class extends command5(_ep05, _mw05, "DescribeIntegrations", DescribeIntegrations$) {
+    };
+    var DisassociateGlossaryTermsCommand = class extends command5(_ep05, _mw05, "DisassociateGlossaryTerms", DisassociateGlossaryTerms$) {
+    };
+    var GetAssetCommand = class extends command5(_ep05, _mw05, "GetAsset", GetAsset$) {
+    };
+    var GetAssetTypeCommand = class extends command5(_ep05, _mw05, "GetAssetType", GetAssetType$) {
+    };
+    var GetBlueprintCommand = class extends command5(_ep05, _mw05, "GetBlueprint", GetBlueprint$) {
+    };
+    var GetBlueprintRunCommand = class extends command5(_ep05, _mw05, "GetBlueprintRun", GetBlueprintRun$) {
+    };
+    var GetBlueprintRunsCommand = class extends command5(_ep05, _mw05, "GetBlueprintRuns", GetBlueprintRuns$) {
+    };
+    var GetCatalogCommand = class extends command5(_ep05, _mw05, "GetCatalog", GetCatalog$) {
+    };
+    var GetCatalogImportStatusCommand = class extends command5(_ep05, _mw05, "GetCatalogImportStatus", GetCatalogImportStatus$) {
+    };
+    var GetCatalogsCommand = class extends command5(_ep05, _mw05, "GetCatalogs", GetCatalogs$) {
+    };
+    var GetClassifierCommand = class extends command5(_ep05, _mw05, "GetClassifier", GetClassifier$) {
+    };
+    var GetClassifiersCommand = class extends command5(_ep05, _mw05, "GetClassifiers", GetClassifiers$) {
+    };
+    var GetColumnStatisticsForPartitionCommand = class extends command5(_ep05, _mw05, "GetColumnStatisticsForPartition", GetColumnStatisticsForPartition$) {
+    };
+    var GetColumnStatisticsForTableCommand = class extends command5(_ep05, _mw05, "GetColumnStatisticsForTable", GetColumnStatisticsForTable$) {
+    };
+    var GetColumnStatisticsTaskRunCommand = class extends command5(_ep05, _mw05, "GetColumnStatisticsTaskRun", GetColumnStatisticsTaskRun$) {
+    };
+    var GetColumnStatisticsTaskRunsCommand = class extends command5(_ep05, _mw05, "GetColumnStatisticsTaskRuns", GetColumnStatisticsTaskRuns$) {
+    };
+    var GetColumnStatisticsTaskSettingsCommand = class extends command5(_ep05, _mw05, "GetColumnStatisticsTaskSettings", GetColumnStatisticsTaskSettings$) {
+    };
+    var GetConnectionCommand = class extends command5(_ep05, _mw05, "GetConnection", GetConnection$) {
+    };
+    var GetConnectionsCommand = class extends command5(_ep05, _mw05, "GetConnections", GetConnections$) {
+    };
+    var GetCrawlerCommand = class extends command5(_ep05, _mw05, "GetCrawler", GetCrawler$) {
+    };
+    var GetCrawlerMetricsCommand = class extends command5(_ep05, _mw05, "GetCrawlerMetrics", GetCrawlerMetrics$) {
+    };
+    var GetCrawlersCommand = class extends command5(_ep05, _mw05, "GetCrawlers", GetCrawlers$) {
+    };
+    var GetCustomEntityTypeCommand = class extends command5(_ep05, _mw05, "GetCustomEntityType", GetCustomEntityType$) {
+    };
+    var GetDashboardUrlCommand = class extends command5(_ep05, _mw05, "GetDashboardUrl", GetDashboardUrl$) {
+    };
+    var GetDatabaseCommand = class extends command5(_ep05, _mw05, "GetDatabase", GetDatabase$) {
+    };
+    var GetDatabasesCommand = class extends command5(_ep05, _mw05, "GetDatabases", GetDatabases$) {
+    };
+    var GetDataCatalogEncryptionSettingsCommand = class extends command5(_ep05, _mw05, "GetDataCatalogEncryptionSettings", GetDataCatalogEncryptionSettings$) {
+    };
+    var GetDataflowGraphCommand = class extends command5(_ep05, _mw05, "GetDataflowGraph", GetDataflowGraph$) {
+    };
+    var GetDataQualityModelCommand = class extends command5(_ep05, _mw05, "GetDataQualityModel", GetDataQualityModel$) {
+    };
+    var GetDataQualityModelResultCommand = class extends command5(_ep05, _mw05, "GetDataQualityModelResult", GetDataQualityModelResult$) {
+    };
+    var GetDataQualityResultCommand = class extends command5(_ep05, _mw05, "GetDataQualityResult", GetDataQualityResult$) {
+    };
+    var GetDataQualityRuleRecommendationRunCommand = class extends command5(_ep05, _mw05, "GetDataQualityRuleRecommendationRun", GetDataQualityRuleRecommendationRun$) {
+    };
+    var GetDataQualityRulesetCommand = class extends command5(_ep05, _mw05, "GetDataQualityRuleset", GetDataQualityRuleset$) {
+    };
+    var GetDataQualityRulesetEvaluationRunCommand = class extends command5(_ep05, _mw05, "GetDataQualityRulesetEvaluationRun", GetDataQualityRulesetEvaluationRun$) {
+    };
+    var GetDevEndpointCommand = class extends command5(_ep05, _mw05, "GetDevEndpoint", GetDevEndpoint$) {
+    };
+    var GetDevEndpointsCommand = class extends command5(_ep05, _mw05, "GetDevEndpoints", GetDevEndpoints$) {
+    };
+    var GetEntityRecordsCommand = class extends command5(_ep05, _mw05, "GetEntityRecords", GetEntityRecords$) {
+    };
+    var GetFormTypeCommand = class extends command5(_ep05, _mw05, "GetFormType", GetFormType$) {
+    };
+    var GetGlossaryCommand = class extends command5(_ep05, _mw05, "GetGlossary", GetGlossary$) {
+    };
+    var GetGlossaryTermCommand = class extends command5(_ep05, _mw05, "GetGlossaryTerm", GetGlossaryTerm$) {
+    };
+    var GetGlueIdentityCenterConfigurationCommand = class extends command5(_ep05, _mw05, "GetGlueIdentityCenterConfiguration", GetGlueIdentityCenterConfiguration$) {
+    };
+    var GetIntegrationResourcePropertyCommand = class extends command5(_ep05, _mw05, "GetIntegrationResourceProperty", GetIntegrationResourceProperty$) {
+    };
+    var GetIntegrationTablePropertiesCommand = class extends command5(_ep05, _mw05, "GetIntegrationTableProperties", GetIntegrationTableProperties$) {
+    };
+    var GetJobBookmarkCommand = class extends command5(_ep05, _mw05, "GetJobBookmark", GetJobBookmark$) {
+    };
+    var GetJobCommand = class extends command5(_ep05, _mw05, "GetJob", GetJob$) {
+    };
+    var GetJobRunCommand = class extends command5(_ep05, _mw05, "GetJobRun", GetJobRun$) {
+    };
+    var GetJobRunsCommand = class extends command5(_ep05, _mw05, "GetJobRuns", GetJobRuns$) {
+    };
+    var GetJobsCommand = class extends command5(_ep05, _mw05, "GetJobs", GetJobs$) {
+    };
+    var GetMappingCommand = class extends command5(_ep05, _mw05, "GetMapping", GetMapping$) {
+    };
+    var GetMaterializedViewRefreshTaskRunCommand = class extends command5(_ep05, _mw05, "GetMaterializedViewRefreshTaskRun", GetMaterializedViewRefreshTaskRun$) {
+    };
+    var GetMLTaskRunCommand = class extends command5(_ep05, _mw05, "GetMLTaskRun", GetMLTaskRun$) {
+    };
+    var GetMLTaskRunsCommand = class extends command5(_ep05, _mw05, "GetMLTaskRuns", GetMLTaskRuns$) {
+    };
+    var GetMLTransformCommand = class extends command5(_ep05, _mw05, "GetMLTransform", GetMLTransform$) {
+    };
+    var GetMLTransformsCommand = class extends command5(_ep05, _mw05, "GetMLTransforms", GetMLTransforms$) {
+    };
+    var GetPartitionCommand = class extends command5(_ep05, _mw05, "GetPartition", GetPartition$) {
+    };
+    var GetPartitionIndexesCommand = class extends command5(_ep05, _mw05, "GetPartitionIndexes", GetPartitionIndexes$) {
+    };
+    var GetPartitionsCommand = class extends command5(_ep05, _mw05, "GetPartitions", GetPartitions$) {
+    };
+    var GetPlanCommand = class extends command5(_ep05, _mw05, "GetPlan", GetPlan$) {
+    };
+    var GetRegistryCommand = class extends command5(_ep05, _mw05, "GetRegistry", GetRegistry$) {
+    };
+    var GetResourcePoliciesCommand = class extends command5(_ep05, _mw05, "GetResourcePolicies", GetResourcePolicies$) {
+    };
+    var GetResourcePolicyCommand = class extends command5(_ep05, _mw05, "GetResourcePolicy", GetResourcePolicy$) {
+    };
+    var GetSchemaByDefinitionCommand = class extends command5(_ep05, _mw05, "GetSchemaByDefinition", GetSchemaByDefinition$) {
+    };
+    var GetSchemaCommand2 = class extends command5(_ep05, _mw05, "GetSchema", GetSchema$) {
+    };
+    var GetSchemaVersionCommand2 = class extends command5(_ep05, _mw05, "GetSchemaVersion", GetSchemaVersion$) {
+    };
+    var GetSchemaVersionsDiffCommand = class extends command5(_ep05, _mw05, "GetSchemaVersionsDiff", GetSchemaVersionsDiff$) {
+    };
+    var GetSecurityConfigurationCommand = class extends command5(_ep05, _mw05, "GetSecurityConfiguration", GetSecurityConfiguration$) {
+    };
+    var GetSecurityConfigurationsCommand = class extends command5(_ep05, _mw05, "GetSecurityConfigurations", GetSecurityConfigurations$) {
+    };
+    var GetSessionCommand = class extends command5(_ep05, _mw05, "GetSession", GetSession$) {
+    };
+    var GetSessionEndpointCommand = class extends command5(_ep05, _mw05, "GetSessionEndpoint", GetSessionEndpoint$) {
+    };
+    var GetStatementCommand = class extends command5(_ep05, _mw05, "GetStatement", GetStatement$) {
+    };
+    var GetTableCommand = class extends command5(_ep05, _mw05, "GetTable", GetTable$) {
+    };
+    var GetTableOptimizerCommand = class extends command5(_ep05, _mw05, "GetTableOptimizer", GetTableOptimizer$) {
+    };
+    var GetTablesCommand = class extends command5(_ep05, _mw05, "GetTables", GetTables$) {
+    };
+    var GetTableVersionCommand = class extends command5(_ep05, _mw05, "GetTableVersion", GetTableVersion$) {
+    };
+    var GetTableVersionsCommand = class extends command5(_ep05, _mw05, "GetTableVersions", GetTableVersions$) {
+    };
+    var GetTagsCommand2 = class extends command5(_ep05, _mw05, "GetTags", GetTags$) {
+    };
+    var GetTriggerCommand = class extends command5(_ep05, _mw05, "GetTrigger", GetTrigger$) {
+    };
+    var GetTriggersCommand = class extends command5(_ep05, _mw05, "GetTriggers", GetTriggers$) {
+    };
+    var GetUnfilteredPartitionMetadataCommand = class extends command5(_ep05, _mw05, "GetUnfilteredPartitionMetadata", GetUnfilteredPartitionMetadata$) {
+    };
+    var GetUnfilteredPartitionsMetadataCommand = class extends command5(_ep05, _mw05, "GetUnfilteredPartitionsMetadata", GetUnfilteredPartitionsMetadata$) {
+    };
+    var GetUnfilteredTableMetadataCommand = class extends command5(_ep05, _mw05, "GetUnfilteredTableMetadata", GetUnfilteredTableMetadata$) {
+    };
+    var GetUsageProfileCommand = class extends command5(_ep05, _mw05, "GetUsageProfile", GetUsageProfile$) {
+    };
+    var GetUserDefinedFunctionCommand = class extends command5(_ep05, _mw05, "GetUserDefinedFunction", GetUserDefinedFunction$) {
+    };
+    var GetUserDefinedFunctionsCommand = class extends command5(_ep05, _mw05, "GetUserDefinedFunctions", GetUserDefinedFunctions$) {
+    };
+    var GetWorkflowCommand = class extends command5(_ep05, _mw05, "GetWorkflow", GetWorkflow$) {
+    };
+    var GetWorkflowRunCommand = class extends command5(_ep05, _mw05, "GetWorkflowRun", GetWorkflowRun$) {
+    };
+    var GetWorkflowRunPropertiesCommand = class extends command5(_ep05, _mw05, "GetWorkflowRunProperties", GetWorkflowRunProperties$) {
+    };
+    var GetWorkflowRunsCommand = class extends command5(_ep05, _mw05, "GetWorkflowRuns", GetWorkflowRuns$) {
+    };
+    var ImportCatalogToGlueCommand = class extends command5(_ep05, _mw05, "ImportCatalogToGlue", ImportCatalogToGlue$) {
+    };
+    var ListAssetTypesCommand = class extends command5(_ep05, _mw05, "ListAssetTypes", ListAssetTypes$) {
+    };
+    var ListBlueprintsCommand = class extends command5(_ep05, _mw05, "ListBlueprints", ListBlueprints$) {
+    };
+    var ListColumnStatisticsTaskRunsCommand = class extends command5(_ep05, _mw05, "ListColumnStatisticsTaskRuns", ListColumnStatisticsTaskRuns$) {
+    };
+    var ListConnectionTypesCommand = class extends command5(_ep05, _mw05, "ListConnectionTypes", ListConnectionTypes$) {
+    };
+    var ListCrawlersCommand = class extends command5(_ep05, _mw05, "ListCrawlers", ListCrawlers$) {
+    };
+    var ListCrawlsCommand = class extends command5(_ep05, _mw05, "ListCrawls", ListCrawls$) {
+    };
+    var ListCustomEntityTypesCommand = class extends command5(_ep05, _mw05, "ListCustomEntityTypes", ListCustomEntityTypes$) {
+    };
+    var ListDataQualityResultsCommand = class extends command5(_ep05, _mw05, "ListDataQualityResults", ListDataQualityResults$) {
+    };
+    var ListDataQualityRuleRecommendationRunsCommand = class extends command5(_ep05, _mw05, "ListDataQualityRuleRecommendationRuns", ListDataQualityRuleRecommendationRuns$) {
+    };
+    var ListDataQualityRulesetEvaluationRunsCommand = class extends command5(_ep05, _mw05, "ListDataQualityRulesetEvaluationRuns", ListDataQualityRulesetEvaluationRuns$) {
+    };
+    var ListDataQualityRulesetsCommand = class extends command5(_ep05, _mw05, "ListDataQualityRulesets", ListDataQualityRulesets$) {
+    };
+    var ListDataQualityStatisticAnnotationsCommand = class extends command5(_ep05, _mw05, "ListDataQualityStatisticAnnotations", ListDataQualityStatisticAnnotations$) {
+    };
+    var ListDataQualityStatisticsCommand = class extends command5(_ep05, _mw05, "ListDataQualityStatistics", ListDataQualityStatistics$) {
+    };
+    var ListDevEndpointsCommand = class extends command5(_ep05, _mw05, "ListDevEndpoints", ListDevEndpoints$) {
+    };
+    var ListEntitiesCommand = class extends command5(_ep05, _mw05, "ListEntities", ListEntities$) {
+    };
+    var ListFormTypesCommand = class extends command5(_ep05, _mw05, "ListFormTypes", ListFormTypes$) {
+    };
+    var ListGlossariesCommand = class extends command5(_ep05, _mw05, "ListGlossaries", ListGlossaries$) {
+    };
+    var ListGlossaryTermsCommand = class extends command5(_ep05, _mw05, "ListGlossaryTerms", ListGlossaryTerms$) {
+    };
+    var ListIntegrationResourcePropertiesCommand = class extends command5(_ep05, _mw05, "ListIntegrationResourceProperties", ListIntegrationResourceProperties$) {
+    };
+    var ListIterableFormsCommand = class extends command5(_ep05, _mw05, "ListIterableForms", ListIterableForms$) {
+    };
+    var ListJobsCommand = class extends command5(_ep05, _mw05, "ListJobs", ListJobs$) {
+    };
+    var ListMaterializedViewRefreshTaskRunsCommand = class extends command5(_ep05, _mw05, "ListMaterializedViewRefreshTaskRuns", ListMaterializedViewRefreshTaskRuns$) {
+    };
+    var ListMLTransformsCommand = class extends command5(_ep05, _mw05, "ListMLTransforms", ListMLTransforms$) {
+    };
+    var ListRegistriesCommand3 = class extends command5(_ep05, _mw05, "ListRegistries", ListRegistries$) {
+    };
+    var ListSchemasCommand3 = class extends command5(_ep05, _mw05, "ListSchemas", ListSchemas$) {
+    };
+    var ListSchemaVersionsCommand = class extends command5(_ep05, _mw05, "ListSchemaVersions", ListSchemaVersions$) {
+    };
+    var ListSessionsCommand = class extends command5(_ep05, _mw05, "ListSessions", ListSessions$) {
+    };
+    var ListStatementsCommand = class extends command5(_ep05, _mw05, "ListStatements", ListStatements$) {
+    };
+    var ListTableOptimizerRunsCommand = class extends command5(_ep05, _mw05, "ListTableOptimizerRuns", ListTableOptimizerRuns$) {
+    };
+    var ListTriggersCommand = class extends command5(_ep05, _mw05, "ListTriggers", ListTriggers$) {
+    };
+    var ListUsageProfilesCommand = class extends command5(_ep05, _mw05, "ListUsageProfiles", ListUsageProfiles$) {
+    };
+    var ListWorkflowsCommand = class extends command5(_ep05, _mw05, "ListWorkflows", ListWorkflows$) {
+    };
+    var ModifyIntegrationCommand = class extends command5(_ep05, _mw05, "ModifyIntegration", ModifyIntegration$) {
+    };
+    var PutAssetCommand = class extends command5(_ep05, _mw05, "PutAsset", PutAsset$) {
+    };
+    var PutAssetTypeCommand = class extends command5(_ep05, _mw05, "PutAssetType", PutAssetType$) {
+    };
+    var PutAttachmentCommand = class extends command5(_ep05, _mw05, "PutAttachment", PutAttachment$) {
+    };
+    var PutDataCatalogEncryptionSettingsCommand = class extends command5(_ep05, _mw05, "PutDataCatalogEncryptionSettings", PutDataCatalogEncryptionSettings$) {
+    };
+    var PutDataQualityProfileAnnotationCommand = class extends command5(_ep05, _mw05, "PutDataQualityProfileAnnotation", PutDataQualityProfileAnnotation$) {
+    };
+    var PutFormTypeCommand = class extends command5(_ep05, _mw05, "PutFormType", PutFormType$) {
+    };
+    var PutResourcePolicyCommand = class extends command5(_ep05, _mw05, "PutResourcePolicy", PutResourcePolicy$) {
+    };
+    var PutSchemaVersionMetadataCommand = class extends command5(_ep05, _mw05, "PutSchemaVersionMetadata", PutSchemaVersionMetadata$) {
+    };
+    var PutWorkflowRunPropertiesCommand = class extends command5(_ep05, _mw05, "PutWorkflowRunProperties", PutWorkflowRunProperties$) {
+    };
+    var QuerySchemaVersionMetadataCommand = class extends command5(_ep05, _mw05, "QuerySchemaVersionMetadata", QuerySchemaVersionMetadata$) {
+    };
+    var RegisterConnectionTypeCommand = class extends command5(_ep05, _mw05, "RegisterConnectionType", RegisterConnectionType$) {
+    };
+    var RegisterSchemaVersionCommand = class extends command5(_ep05, _mw05, "RegisterSchemaVersion", RegisterSchemaVersion$) {
+    };
+    var RemoveSchemaVersionMetadataCommand = class extends command5(_ep05, _mw05, "RemoveSchemaVersionMetadata", RemoveSchemaVersionMetadata$) {
+    };
+    var ResetJobBookmarkCommand = class extends command5(_ep05, _mw05, "ResetJobBookmark", ResetJobBookmark$) {
+    };
+    var ResumeWorkflowRunCommand = class extends command5(_ep05, _mw05, "ResumeWorkflowRun", ResumeWorkflowRun$) {
+    };
+    var RunStatementCommand = class extends command5(_ep05, _mw05, "RunStatement", RunStatement$) {
+    };
+    var SearchAssetsCommand = class extends command5(_ep05, _mw05, "SearchAssets", SearchAssets$) {
+    };
+    var SearchTablesCommand = class extends command5(_ep05, _mw05, "SearchTables", SearchTables$) {
+    };
+    var StartBlueprintRunCommand = class extends command5(_ep05, _mw05, "StartBlueprintRun", StartBlueprintRun$) {
+    };
+    var StartColumnStatisticsTaskRunCommand = class extends command5(_ep05, _mw05, "StartColumnStatisticsTaskRun", StartColumnStatisticsTaskRun$) {
+    };
+    var StartColumnStatisticsTaskRunScheduleCommand = class extends command5(_ep05, _mw05, "StartColumnStatisticsTaskRunSchedule", StartColumnStatisticsTaskRunSchedule$) {
+    };
+    var StartCrawlerCommand = class extends command5(_ep05, _mw05, "StartCrawler", StartCrawler$) {
+    };
+    var StartCrawlerScheduleCommand = class extends command5(_ep05, _mw05, "StartCrawlerSchedule", StartCrawlerSchedule$) {
+    };
+    var StartDataQualityRuleRecommendationRunCommand = class extends command5(_ep05, _mw05, "StartDataQualityRuleRecommendationRun", StartDataQualityRuleRecommendationRun$) {
+    };
+    var StartDataQualityRulesetEvaluationRunCommand = class extends command5(_ep05, _mw05, "StartDataQualityRulesetEvaluationRun", StartDataQualityRulesetEvaluationRun$) {
+    };
+    var StartExportLabelsTaskRunCommand = class extends command5(_ep05, _mw05, "StartExportLabelsTaskRun", StartExportLabelsTaskRun$) {
+    };
+    var StartImportLabelsTaskRunCommand = class extends command5(_ep05, _mw05, "StartImportLabelsTaskRun", StartImportLabelsTaskRun$) {
+    };
+    var StartJobRunCommand = class extends command5(_ep05, _mw05, "StartJobRun", StartJobRun$) {
+    };
+    var StartMaterializedViewRefreshTaskRunCommand = class extends command5(_ep05, _mw05, "StartMaterializedViewRefreshTaskRun", StartMaterializedViewRefreshTaskRun$) {
+    };
+    var StartMLEvaluationTaskRunCommand = class extends command5(_ep05, _mw05, "StartMLEvaluationTaskRun", StartMLEvaluationTaskRun$) {
+    };
+    var StartMLLabelingSetGenerationTaskRunCommand = class extends command5(_ep05, _mw05, "StartMLLabelingSetGenerationTaskRun", StartMLLabelingSetGenerationTaskRun$) {
+    };
+    var StartTriggerCommand = class extends command5(_ep05, _mw05, "StartTrigger", StartTrigger$) {
+    };
+    var StartWorkflowRunCommand = class extends command5(_ep05, _mw05, "StartWorkflowRun", StartWorkflowRun$) {
+    };
+    var StopColumnStatisticsTaskRunCommand = class extends command5(_ep05, _mw05, "StopColumnStatisticsTaskRun", StopColumnStatisticsTaskRun$) {
+    };
+    var StopColumnStatisticsTaskRunScheduleCommand = class extends command5(_ep05, _mw05, "StopColumnStatisticsTaskRunSchedule", StopColumnStatisticsTaskRunSchedule$) {
+    };
+    var StopCrawlerCommand = class extends command5(_ep05, _mw05, "StopCrawler", StopCrawler$) {
+    };
+    var StopCrawlerScheduleCommand = class extends command5(_ep05, _mw05, "StopCrawlerSchedule", StopCrawlerSchedule$) {
+    };
+    var StopMaterializedViewRefreshTaskRunCommand = class extends command5(_ep05, _mw05, "StopMaterializedViewRefreshTaskRun", StopMaterializedViewRefreshTaskRun$) {
+    };
+    var StopSessionCommand = class extends command5(_ep05, _mw05, "StopSession", StopSession$) {
+    };
+    var StopTriggerCommand = class extends command5(_ep05, _mw05, "StopTrigger", StopTrigger$) {
+    };
+    var StopWorkflowRunCommand = class extends command5(_ep05, _mw05, "StopWorkflowRun", StopWorkflowRun$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var TestConnectionCommand = class extends command5(_ep05, _mw05, "TestConnection", TestConnection$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateAssetCommand = class extends command5(_ep05, _mw05, "UpdateAsset", UpdateAsset$) {
+    };
+    var UpdateBlueprintCommand = class extends command5(_ep05, _mw05, "UpdateBlueprint", UpdateBlueprint$) {
+    };
+    var UpdateCatalogCommand = class extends command5(_ep05, _mw05, "UpdateCatalog", UpdateCatalog$) {
+    };
+    var UpdateClassifierCommand = class extends command5(_ep05, _mw05, "UpdateClassifier", UpdateClassifier$) {
+    };
+    var UpdateColumnStatisticsForPartitionCommand = class extends command5(_ep05, _mw05, "UpdateColumnStatisticsForPartition", UpdateColumnStatisticsForPartition$) {
+    };
+    var UpdateColumnStatisticsForTableCommand = class extends command5(_ep05, _mw05, "UpdateColumnStatisticsForTable", UpdateColumnStatisticsForTable$) {
+    };
+    var UpdateColumnStatisticsTaskSettingsCommand = class extends command5(_ep05, _mw05, "UpdateColumnStatisticsTaskSettings", UpdateColumnStatisticsTaskSettings$) {
+    };
+    var UpdateConnectionCommand = class extends command5(_ep05, _mw05, "UpdateConnection", UpdateConnection$) {
+    };
+    var UpdateCrawlerCommand = class extends command5(_ep05, _mw05, "UpdateCrawler", UpdateCrawler$) {
+    };
+    var UpdateCrawlerScheduleCommand = class extends command5(_ep05, _mw05, "UpdateCrawlerSchedule", UpdateCrawlerSchedule$) {
+    };
+    var UpdateDatabaseCommand = class extends command5(_ep05, _mw05, "UpdateDatabase", UpdateDatabase$) {
+    };
+    var UpdateDataQualityRulesetCommand = class extends command5(_ep05, _mw05, "UpdateDataQualityRuleset", UpdateDataQualityRuleset$) {
+    };
+    var UpdateDevEndpointCommand = class extends command5(_ep05, _mw05, "UpdateDevEndpoint", UpdateDevEndpoint$) {
+    };
+    var UpdateGlossaryCommand = class extends command5(_ep05, _mw05, "UpdateGlossary", UpdateGlossary$) {
+    };
+    var UpdateGlossaryTermCommand = class extends command5(_ep05, _mw05, "UpdateGlossaryTerm", UpdateGlossaryTerm$) {
+    };
+    var UpdateGlueIdentityCenterConfigurationCommand = class extends command5(_ep05, _mw05, "UpdateGlueIdentityCenterConfiguration", UpdateGlueIdentityCenterConfiguration$) {
+    };
+    var UpdateIntegrationResourcePropertyCommand = class extends command5(_ep05, _mw05, "UpdateIntegrationResourceProperty", UpdateIntegrationResourceProperty$) {
+    };
+    var UpdateIntegrationTablePropertiesCommand = class extends command5(_ep05, _mw05, "UpdateIntegrationTableProperties", UpdateIntegrationTableProperties$) {
+    };
+    var UpdateJobCommand = class extends command5(_ep05, _mw05, "UpdateJob", UpdateJob$) {
+    };
+    var UpdateJobFromSourceControlCommand = class extends command5(_ep05, _mw05, "UpdateJobFromSourceControl", UpdateJobFromSourceControl$) {
+    };
+    var UpdateMLTransformCommand = class extends command5(_ep05, _mw05, "UpdateMLTransform", UpdateMLTransform$) {
+    };
+    var UpdatePartitionCommand = class extends command5(_ep05, _mw05, "UpdatePartition", UpdatePartition$) {
+    };
+    var UpdateRegistryCommand = class extends command5(_ep05, _mw05, "UpdateRegistry", UpdateRegistry$) {
+    };
+    var UpdateSchemaCommand = class extends command5(_ep05, _mw05, "UpdateSchema", UpdateSchema$) {
+    };
+    var UpdateSourceControlFromJobCommand = class extends command5(_ep05, _mw05, "UpdateSourceControlFromJob", UpdateSourceControlFromJob$) {
+    };
+    var UpdateTableCommand = class extends command5(_ep05, _mw05, "UpdateTable", UpdateTable$) {
+    };
+    var UpdateTableOptimizerCommand = class extends command5(_ep05, _mw05, "UpdateTableOptimizer", UpdateTableOptimizer$) {
+    };
+    var UpdateTriggerCommand = class extends command5(_ep05, _mw05, "UpdateTrigger", UpdateTrigger$) {
+    };
+    var UpdateUsageProfileCommand = class extends command5(_ep05, _mw05, "UpdateUsageProfile", UpdateUsageProfile$) {
+    };
+    var UpdateUserDefinedFunctionCommand = class extends command5(_ep05, _mw05, "UpdateUserDefinedFunction", UpdateUserDefinedFunction$) {
+    };
+    var UpdateWorkflowCommand = class extends command5(_ep05, _mw05, "UpdateWorkflow", UpdateWorkflow$) {
     };
     var paginateDescribeEntity = createPaginator2(GlueClient2, DescribeEntityCommand, "NextToken", "NextToken", "");
     var paginateGetBlueprintRuns = createPaginator2(GlueClient2, GetBlueprintRunsCommand, "NextToken", "NextToken", "MaxResults");
@@ -79038,8 +77643,9 @@ var require_dist_cjs24 = __commonJS({
   "node_modules/@aws-sdk/client-lambda/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException$1, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException$1, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -79104,7 +77710,7 @@ var require_dist_cjs24 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -84599,349 +83205,178 @@ var require_dist_cjs24 = __commonJS({
         super.destroy();
       }
     };
-    var AddLayerVersionPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "AddLayerVersionPermission", {}).n("LambdaClient", "AddLayerVersionPermissionCommand").sc(AddLayerVersionPermission$).build() {
-    };
-    var AddPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "AddPermission", {}).n("LambdaClient", "AddPermissionCommand").sc(AddPermission$).build() {
-    };
-    var CheckpointDurableExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CheckpointDurableExecution", {}).n("LambdaClient", "CheckpointDurableExecutionCommand").sc(CheckpointDurableExecution$).build() {
-    };
-    var CreateAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateAlias", {}).n("LambdaClient", "CreateAliasCommand").sc(CreateAlias$).build() {
-    };
-    var CreateCapacityProviderCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateCapacityProvider", {}).n("LambdaClient", "CreateCapacityProviderCommand").sc(CreateCapacityProvider$).build() {
-    };
-    var CreateCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateCodeSigningConfig", {}).n("LambdaClient", "CreateCodeSigningConfigCommand").sc(CreateCodeSigningConfig$).build() {
-    };
-    var CreateEventSourceMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateEventSourceMapping", {}).n("LambdaClient", "CreateEventSourceMappingCommand").sc(CreateEventSourceMapping$).build() {
-    };
-    var CreateFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateFunction", {}).n("LambdaClient", "CreateFunctionCommand").sc(CreateFunction$).build() {
-    };
-    var CreateFunctionUrlConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "CreateFunctionUrlConfig", {}).n("LambdaClient", "CreateFunctionUrlConfigCommand").sc(CreateFunctionUrlConfig$).build() {
-    };
-    var DeleteAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteAlias", {}).n("LambdaClient", "DeleteAliasCommand").sc(DeleteAlias$).build() {
-    };
-    var DeleteCapacityProviderCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteCapacityProvider", {}).n("LambdaClient", "DeleteCapacityProviderCommand").sc(DeleteCapacityProvider$).build() {
-    };
-    var DeleteCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteCodeSigningConfig", {}).n("LambdaClient", "DeleteCodeSigningConfigCommand").sc(DeleteCodeSigningConfig$).build() {
-    };
-    var DeleteEventSourceMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteEventSourceMapping", {}).n("LambdaClient", "DeleteEventSourceMappingCommand").sc(DeleteEventSourceMapping$).build() {
-    };
-    var DeleteFunctionCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteFunctionCodeSigningConfig", {}).n("LambdaClient", "DeleteFunctionCodeSigningConfigCommand").sc(DeleteFunctionCodeSigningConfig$).build() {
-    };
-    var DeleteFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteFunction", {}).n("LambdaClient", "DeleteFunctionCommand").sc(DeleteFunction$).build() {
-    };
-    var DeleteFunctionConcurrencyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteFunctionConcurrency", {}).n("LambdaClient", "DeleteFunctionConcurrencyCommand").sc(DeleteFunctionConcurrency$).build() {
-    };
-    var DeleteFunctionEventInvokeConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteFunctionEventInvokeConfig", {}).n("LambdaClient", "DeleteFunctionEventInvokeConfigCommand").sc(DeleteFunctionEventInvokeConfig$).build() {
-    };
-    var DeleteFunctionUrlConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteFunctionUrlConfig", {}).n("LambdaClient", "DeleteFunctionUrlConfigCommand").sc(DeleteFunctionUrlConfig$).build() {
-    };
-    var DeleteLayerVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteLayerVersion", {}).n("LambdaClient", "DeleteLayerVersionCommand").sc(DeleteLayerVersion$).build() {
-    };
-    var DeleteProvisionedConcurrencyConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "DeleteProvisionedConcurrencyConfig", {}).n("LambdaClient", "DeleteProvisionedConcurrencyConfigCommand").sc(DeleteProvisionedConcurrencyConfig$).build() {
-    };
-    var GetAccountSettingsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetAccountSettings", {}).n("LambdaClient", "GetAccountSettingsCommand").sc(GetAccountSettings$).build() {
-    };
-    var GetAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetAlias", {}).n("LambdaClient", "GetAliasCommand").sc(GetAlias$).build() {
-    };
-    var GetCapacityProviderCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetCapacityProvider", {}).n("LambdaClient", "GetCapacityProviderCommand").sc(GetCapacityProvider$).build() {
-    };
-    var GetCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetCodeSigningConfig", {}).n("LambdaClient", "GetCodeSigningConfigCommand").sc(GetCodeSigningConfig$).build() {
-    };
-    var GetDurableExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetDurableExecution", {}).n("LambdaClient", "GetDurableExecutionCommand").sc(GetDurableExecution$).build() {
-    };
-    var GetDurableExecutionHistoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetDurableExecutionHistory", {}).n("LambdaClient", "GetDurableExecutionHistoryCommand").sc(GetDurableExecutionHistory$).build() {
-    };
-    var GetDurableExecutionStateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetDurableExecutionState", {}).n("LambdaClient", "GetDurableExecutionStateCommand").sc(GetDurableExecutionState$).build() {
-    };
-    var GetEventSourceMappingCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetEventSourceMapping", {}).n("LambdaClient", "GetEventSourceMappingCommand").sc(GetEventSourceMapping$).build() {
-    };
-    var GetFunctionCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionCodeSigningConfig", {}).n("LambdaClient", "GetFunctionCodeSigningConfigCommand").sc(GetFunctionCodeSigningConfig$).build() {
-    };
-    var GetFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunction", {}).n("LambdaClient", "GetFunctionCommand").sc(GetFunction$).build() {
-    };
-    var GetFunctionConcurrencyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionConcurrency", {}).n("LambdaClient", "GetFunctionConcurrencyCommand").sc(GetFunctionConcurrency$).build() {
-    };
-    var GetFunctionConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionConfiguration", {}).n("LambdaClient", "GetFunctionConfigurationCommand").sc(GetFunctionConfiguration$).build() {
-    };
-    var GetFunctionEventInvokeConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionEventInvokeConfig", {}).n("LambdaClient", "GetFunctionEventInvokeConfigCommand").sc(GetFunctionEventInvokeConfig$).build() {
-    };
-    var GetFunctionRecursionConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionRecursionConfig", {}).n("LambdaClient", "GetFunctionRecursionConfigCommand").sc(GetFunctionRecursionConfig$).build() {
-    };
-    var GetFunctionScalingConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionScalingConfig", {}).n("LambdaClient", "GetFunctionScalingConfigCommand").sc(GetFunctionScalingConfig$).build() {
-    };
-    var GetFunctionUrlConfigCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetFunctionUrlConfig", {}).n("LambdaClient", "GetFunctionUrlConfigCommand").sc(GetFunctionUrlConfig$).build() {
-    };
-    var GetLayerVersionByArnCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetLayerVersionByArn", {}).n("LambdaClient", "GetLayerVersionByArnCommand").sc(GetLayerVersionByArn$).build() {
-    };
-    var GetLayerVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetLayerVersion", {}).n("LambdaClient", "GetLayerVersionCommand").sc(GetLayerVersion$).build() {
-    };
-    var GetLayerVersionPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetLayerVersionPolicy", {}).n("LambdaClient", "GetLayerVersionPolicyCommand").sc(GetLayerVersionPolicy$).build() {
-    };
-    var GetPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetPolicy", {}).n("LambdaClient", "GetPolicyCommand").sc(GetPolicy$).build() {
-    };
-    var GetProvisionedConcurrencyConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetProvisionedConcurrencyConfig", {}).n("LambdaClient", "GetProvisionedConcurrencyConfigCommand").sc(GetProvisionedConcurrencyConfig$).build() {
-    };
-    var GetRuntimeManagementConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "GetRuntimeManagementConfig", {}).n("LambdaClient", "GetRuntimeManagementConfigCommand").sc(GetRuntimeManagementConfig$).build() {
-    };
-    var InvokeAsyncCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "InvokeAsync", {}).n("LambdaClient", "InvokeAsyncCommand").sc(InvokeAsync$).build() {
-    };
-    var InvokeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "Invoke", {}).n("LambdaClient", "InvokeCommand").sc(Invoke$).build() {
-    };
-    var InvokeWithResponseStreamCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "InvokeWithResponseStream", {
-      eventStream: {
-        output: true
-      }
-    }).n("LambdaClient", "InvokeWithResponseStreamCommand").sc(InvokeWithResponseStream$).build() {
-    };
-    var ListAliasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListAliases", {}).n("LambdaClient", "ListAliasesCommand").sc(ListAliases$).build() {
-    };
-    var ListCapacityProvidersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListCapacityProviders", {}).n("LambdaClient", "ListCapacityProvidersCommand").sc(ListCapacityProviders$).build() {
-    };
-    var ListCodeSigningConfigsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListCodeSigningConfigs", {}).n("LambdaClient", "ListCodeSigningConfigsCommand").sc(ListCodeSigningConfigs$).build() {
-    };
-    var ListDurableExecutionsByFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListDurableExecutionsByFunction", {}).n("LambdaClient", "ListDurableExecutionsByFunctionCommand").sc(ListDurableExecutionsByFunction$).build() {
-    };
-    var ListEventSourceMappingsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListEventSourceMappings", {}).n("LambdaClient", "ListEventSourceMappingsCommand").sc(ListEventSourceMappings$).build() {
-    };
-    var ListFunctionEventInvokeConfigsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListFunctionEventInvokeConfigs", {}).n("LambdaClient", "ListFunctionEventInvokeConfigsCommand").sc(ListFunctionEventInvokeConfigs$).build() {
-    };
-    var ListFunctionsByCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListFunctionsByCodeSigningConfig", {}).n("LambdaClient", "ListFunctionsByCodeSigningConfigCommand").sc(ListFunctionsByCodeSigningConfig$).build() {
-    };
-    var ListFunctionsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListFunctions", {}).n("LambdaClient", "ListFunctionsCommand").sc(ListFunctions$).build() {
-    };
-    var ListFunctionUrlConfigsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListFunctionUrlConfigs", {}).n("LambdaClient", "ListFunctionUrlConfigsCommand").sc(ListFunctionUrlConfigs$).build() {
-    };
-    var ListFunctionVersionsByCapacityProviderCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListFunctionVersionsByCapacityProvider", {}).n("LambdaClient", "ListFunctionVersionsByCapacityProviderCommand").sc(ListFunctionVersionsByCapacityProvider$).build() {
-    };
-    var ListLayersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListLayers", {}).n("LambdaClient", "ListLayersCommand").sc(ListLayers$).build() {
-    };
-    var ListLayerVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListLayerVersions", {}).n("LambdaClient", "ListLayerVersionsCommand").sc(ListLayerVersions$).build() {
-    };
-    var ListProvisionedConcurrencyConfigsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListProvisionedConcurrencyConfigs", {}).n("LambdaClient", "ListProvisionedConcurrencyConfigsCommand").sc(ListProvisionedConcurrencyConfigs$).build() {
-    };
-    var ListTagsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListTags", {}).n("LambdaClient", "ListTagsCommand").sc(ListTags$).build() {
-    };
-    var ListVersionsByFunctionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "ListVersionsByFunction", {}).n("LambdaClient", "ListVersionsByFunctionCommand").sc(ListVersionsByFunction$).build() {
-    };
-    var PublishLayerVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PublishLayerVersion", {}).n("LambdaClient", "PublishLayerVersionCommand").sc(PublishLayerVersion$).build() {
-    };
-    var PublishVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PublishVersion", {}).n("LambdaClient", "PublishVersionCommand").sc(PublishVersion$).build() {
-    };
-    var PutFunctionCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutFunctionCodeSigningConfig", {}).n("LambdaClient", "PutFunctionCodeSigningConfigCommand").sc(PutFunctionCodeSigningConfig$).build() {
-    };
-    var PutFunctionConcurrencyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutFunctionConcurrency", {}).n("LambdaClient", "PutFunctionConcurrencyCommand").sc(PutFunctionConcurrency$).build() {
-    };
-    var PutFunctionEventInvokeConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutFunctionEventInvokeConfig", {}).n("LambdaClient", "PutFunctionEventInvokeConfigCommand").sc(PutFunctionEventInvokeConfig$).build() {
-    };
-    var PutFunctionRecursionConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutFunctionRecursionConfig", {}).n("LambdaClient", "PutFunctionRecursionConfigCommand").sc(PutFunctionRecursionConfig$).build() {
-    };
-    var PutFunctionScalingConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutFunctionScalingConfig", {}).n("LambdaClient", "PutFunctionScalingConfigCommand").sc(PutFunctionScalingConfig$).build() {
-    };
-    var PutProvisionedConcurrencyConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutProvisionedConcurrencyConfig", {}).n("LambdaClient", "PutProvisionedConcurrencyConfigCommand").sc(PutProvisionedConcurrencyConfig$).build() {
-    };
-    var PutRuntimeManagementConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "PutRuntimeManagementConfig", {}).n("LambdaClient", "PutRuntimeManagementConfigCommand").sc(PutRuntimeManagementConfig$).build() {
-    };
-    var RemoveLayerVersionPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "RemoveLayerVersionPermission", {}).n("LambdaClient", "RemoveLayerVersionPermissionCommand").sc(RemoveLayerVersionPermission$).build() {
-    };
-    var RemovePermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "RemovePermission", {}).n("LambdaClient", "RemovePermissionCommand").sc(RemovePermission$).build() {
-    };
-    var SendDurableExecutionCallbackFailureCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "SendDurableExecutionCallbackFailure", {}).n("LambdaClient", "SendDurableExecutionCallbackFailureCommand").sc(SendDurableExecutionCallbackFailure$).build() {
-    };
-    var SendDurableExecutionCallbackHeartbeatCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "SendDurableExecutionCallbackHeartbeat", {}).n("LambdaClient", "SendDurableExecutionCallbackHeartbeatCommand").sc(SendDurableExecutionCallbackHeartbeat$).build() {
-    };
-    var SendDurableExecutionCallbackSuccessCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "SendDurableExecutionCallbackSuccess", {}).n("LambdaClient", "SendDurableExecutionCallbackSuccessCommand").sc(SendDurableExecutionCallbackSuccess$).build() {
-    };
-    var StopDurableExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "StopDurableExecution", {}).n("LambdaClient", "StopDurableExecutionCommand").sc(StopDurableExecution$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "TagResource", {}).n("LambdaClient", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UntagResource", {}).n("LambdaClient", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateAlias", {}).n("LambdaClient", "UpdateAliasCommand").sc(UpdateAlias$).build() {
-    };
-    var UpdateCapacityProviderCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateCapacityProvider", {}).n("LambdaClient", "UpdateCapacityProviderCommand").sc(UpdateCapacityProvider$).build() {
-    };
-    var UpdateCodeSigningConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateCodeSigningConfig", {}).n("LambdaClient", "UpdateCodeSigningConfigCommand").sc(UpdateCodeSigningConfig$).build() {
-    };
-    var UpdateEventSourceMappingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateEventSourceMapping", {}).n("LambdaClient", "UpdateEventSourceMappingCommand").sc(UpdateEventSourceMapping$).build() {
-    };
-    var UpdateFunctionCodeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateFunctionCode", {}).n("LambdaClient", "UpdateFunctionCodeCommand").sc(UpdateFunctionCode$).build() {
-    };
-    var UpdateFunctionConfigurationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateFunctionConfiguration", {}).n("LambdaClient", "UpdateFunctionConfigurationCommand").sc(UpdateFunctionConfiguration$).build() {
-    };
-    var UpdateFunctionEventInvokeConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateFunctionEventInvokeConfig", {}).n("LambdaClient", "UpdateFunctionEventInvokeConfigCommand").sc(UpdateFunctionEventInvokeConfig$).build() {
-    };
-    var UpdateFunctionUrlConfigCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSGirApiService", "UpdateFunctionUrlConfig", {}).n("LambdaClient", "UpdateFunctionUrlConfigCommand").sc(UpdateFunctionUrlConfig$).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSGirApiService", "LambdaClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AddLayerVersionPermissionCommand = class extends command5(_ep05, _mw05, "AddLayerVersionPermission", AddLayerVersionPermission$) {
+    };
+    var AddPermissionCommand = class extends command5(_ep05, _mw05, "AddPermission", AddPermission$) {
+    };
+    var CheckpointDurableExecutionCommand = class extends command5(_ep05, _mw05, "CheckpointDurableExecution", CheckpointDurableExecution$) {
+    };
+    var CreateAliasCommand = class extends command5(_ep05, _mw05, "CreateAlias", CreateAlias$) {
+    };
+    var CreateCapacityProviderCommand = class extends command5(_ep05, _mw05, "CreateCapacityProvider", CreateCapacityProvider$) {
+    };
+    var CreateCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "CreateCodeSigningConfig", CreateCodeSigningConfig$) {
+    };
+    var CreateEventSourceMappingCommand = class extends command5(_ep05, _mw05, "CreateEventSourceMapping", CreateEventSourceMapping$) {
+    };
+    var CreateFunctionCommand = class extends command5(_ep05, _mw05, "CreateFunction", CreateFunction$) {
+    };
+    var CreateFunctionUrlConfigCommand = class extends command5(_ep05, _mw05, "CreateFunctionUrlConfig", CreateFunctionUrlConfig$) {
+    };
+    var DeleteAliasCommand = class extends command5(_ep05, _mw05, "DeleteAlias", DeleteAlias$) {
+    };
+    var DeleteCapacityProviderCommand = class extends command5(_ep05, _mw05, "DeleteCapacityProvider", DeleteCapacityProvider$) {
+    };
+    var DeleteCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "DeleteCodeSigningConfig", DeleteCodeSigningConfig$) {
+    };
+    var DeleteEventSourceMappingCommand = class extends command5(_ep05, _mw05, "DeleteEventSourceMapping", DeleteEventSourceMapping$) {
+    };
+    var DeleteFunctionCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "DeleteFunctionCodeSigningConfig", DeleteFunctionCodeSigningConfig$) {
+    };
+    var DeleteFunctionCommand = class extends command5(_ep05, _mw05, "DeleteFunction", DeleteFunction$) {
+    };
+    var DeleteFunctionConcurrencyCommand = class extends command5(_ep05, _mw05, "DeleteFunctionConcurrency", DeleteFunctionConcurrency$) {
+    };
+    var DeleteFunctionEventInvokeConfigCommand = class extends command5(_ep05, _mw05, "DeleteFunctionEventInvokeConfig", DeleteFunctionEventInvokeConfig$) {
+    };
+    var DeleteFunctionUrlConfigCommand = class extends command5(_ep05, _mw05, "DeleteFunctionUrlConfig", DeleteFunctionUrlConfig$) {
+    };
+    var DeleteLayerVersionCommand = class extends command5(_ep05, _mw05, "DeleteLayerVersion", DeleteLayerVersion$) {
+    };
+    var DeleteProvisionedConcurrencyConfigCommand = class extends command5(_ep05, _mw05, "DeleteProvisionedConcurrencyConfig", DeleteProvisionedConcurrencyConfig$) {
+    };
+    var GetAccountSettingsCommand = class extends command5(_ep05, _mw05, "GetAccountSettings", GetAccountSettings$) {
+    };
+    var GetAliasCommand = class extends command5(_ep05, _mw05, "GetAlias", GetAlias$) {
+    };
+    var GetCapacityProviderCommand = class extends command5(_ep05, _mw05, "GetCapacityProvider", GetCapacityProvider$) {
+    };
+    var GetCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "GetCodeSigningConfig", GetCodeSigningConfig$) {
+    };
+    var GetDurableExecutionCommand = class extends command5(_ep05, _mw05, "GetDurableExecution", GetDurableExecution$) {
+    };
+    var GetDurableExecutionHistoryCommand = class extends command5(_ep05, _mw05, "GetDurableExecutionHistory", GetDurableExecutionHistory$) {
+    };
+    var GetDurableExecutionStateCommand = class extends command5(_ep05, _mw05, "GetDurableExecutionState", GetDurableExecutionState$) {
+    };
+    var GetEventSourceMappingCommand2 = class extends command5(_ep05, _mw05, "GetEventSourceMapping", GetEventSourceMapping$) {
+    };
+    var GetFunctionCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "GetFunctionCodeSigningConfig", GetFunctionCodeSigningConfig$) {
+    };
+    var GetFunctionCommand = class extends command5(_ep05, _mw05, "GetFunction", GetFunction$) {
+    };
+    var GetFunctionConcurrencyCommand = class extends command5(_ep05, _mw05, "GetFunctionConcurrency", GetFunctionConcurrency$) {
+    };
+    var GetFunctionConfigurationCommand = class extends command5(_ep05, _mw05, "GetFunctionConfiguration", GetFunctionConfiguration$) {
+    };
+    var GetFunctionEventInvokeConfigCommand = class extends command5(_ep05, _mw05, "GetFunctionEventInvokeConfig", GetFunctionEventInvokeConfig$) {
+    };
+    var GetFunctionRecursionConfigCommand = class extends command5(_ep05, _mw05, "GetFunctionRecursionConfig", GetFunctionRecursionConfig$) {
+    };
+    var GetFunctionScalingConfigCommand = class extends command5(_ep05, _mw05, "GetFunctionScalingConfig", GetFunctionScalingConfig$) {
+    };
+    var GetFunctionUrlConfigCommand2 = class extends command5(_ep05, _mw05, "GetFunctionUrlConfig", GetFunctionUrlConfig$) {
+    };
+    var GetLayerVersionByArnCommand = class extends command5(_ep05, _mw05, "GetLayerVersionByArn", GetLayerVersionByArn$) {
+    };
+    var GetLayerVersionCommand = class extends command5(_ep05, _mw05, "GetLayerVersion", GetLayerVersion$) {
+    };
+    var GetLayerVersionPolicyCommand = class extends command5(_ep05, _mw05, "GetLayerVersionPolicy", GetLayerVersionPolicy$) {
+    };
+    var GetPolicyCommand = class extends command5(_ep05, _mw05, "GetPolicy", GetPolicy$) {
+    };
+    var GetProvisionedConcurrencyConfigCommand = class extends command5(_ep05, _mw05, "GetProvisionedConcurrencyConfig", GetProvisionedConcurrencyConfig$) {
+    };
+    var GetRuntimeManagementConfigCommand = class extends command5(_ep05, _mw05, "GetRuntimeManagementConfig", GetRuntimeManagementConfig$) {
+    };
+    var InvokeAsyncCommand = class extends command5(_ep05, _mw05, "InvokeAsync", InvokeAsync$) {
+    };
+    var InvokeCommand = class extends command5(_ep05, _mw05, "Invoke", Invoke$) {
+    };
+    var InvokeWithResponseStreamCommand = class extends command5(_ep05, _mw05, "InvokeWithResponseStream", InvokeWithResponseStream$) {
+    };
+    var ListAliasesCommand = class extends command5(_ep05, _mw05, "ListAliases", ListAliases$) {
+    };
+    var ListCapacityProvidersCommand = class extends command5(_ep05, _mw05, "ListCapacityProviders", ListCapacityProviders$) {
+    };
+    var ListCodeSigningConfigsCommand = class extends command5(_ep05, _mw05, "ListCodeSigningConfigs", ListCodeSigningConfigs$) {
+    };
+    var ListDurableExecutionsByFunctionCommand = class extends command5(_ep05, _mw05, "ListDurableExecutionsByFunction", ListDurableExecutionsByFunction$) {
+    };
+    var ListEventSourceMappingsCommand2 = class extends command5(_ep05, _mw05, "ListEventSourceMappings", ListEventSourceMappings$) {
+    };
+    var ListFunctionEventInvokeConfigsCommand = class extends command5(_ep05, _mw05, "ListFunctionEventInvokeConfigs", ListFunctionEventInvokeConfigs$) {
+    };
+    var ListFunctionsByCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "ListFunctionsByCodeSigningConfig", ListFunctionsByCodeSigningConfig$) {
+    };
+    var ListFunctionsCommand2 = class extends command5(_ep05, _mw05, "ListFunctions", ListFunctions$) {
+    };
+    var ListFunctionUrlConfigsCommand = class extends command5(_ep05, _mw05, "ListFunctionUrlConfigs", ListFunctionUrlConfigs$) {
+    };
+    var ListFunctionVersionsByCapacityProviderCommand = class extends command5(_ep05, _mw05, "ListFunctionVersionsByCapacityProvider", ListFunctionVersionsByCapacityProvider$) {
+    };
+    var ListLayersCommand = class extends command5(_ep05, _mw05, "ListLayers", ListLayers$) {
+    };
+    var ListLayerVersionsCommand = class extends command5(_ep05, _mw05, "ListLayerVersions", ListLayerVersions$) {
+    };
+    var ListProvisionedConcurrencyConfigsCommand = class extends command5(_ep05, _mw05, "ListProvisionedConcurrencyConfigs", ListProvisionedConcurrencyConfigs$) {
+    };
+    var ListTagsCommand2 = class extends command5(_ep05, _mw05, "ListTags", ListTags$) {
+    };
+    var ListVersionsByFunctionCommand = class extends command5(_ep05, _mw05, "ListVersionsByFunction", ListVersionsByFunction$) {
+    };
+    var PublishLayerVersionCommand = class extends command5(_ep05, _mw05, "PublishLayerVersion", PublishLayerVersion$) {
+    };
+    var PublishVersionCommand = class extends command5(_ep05, _mw05, "PublishVersion", PublishVersion$) {
+    };
+    var PutFunctionCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "PutFunctionCodeSigningConfig", PutFunctionCodeSigningConfig$) {
+    };
+    var PutFunctionConcurrencyCommand = class extends command5(_ep05, _mw05, "PutFunctionConcurrency", PutFunctionConcurrency$) {
+    };
+    var PutFunctionEventInvokeConfigCommand = class extends command5(_ep05, _mw05, "PutFunctionEventInvokeConfig", PutFunctionEventInvokeConfig$) {
+    };
+    var PutFunctionRecursionConfigCommand = class extends command5(_ep05, _mw05, "PutFunctionRecursionConfig", PutFunctionRecursionConfig$) {
+    };
+    var PutFunctionScalingConfigCommand = class extends command5(_ep05, _mw05, "PutFunctionScalingConfig", PutFunctionScalingConfig$) {
+    };
+    var PutProvisionedConcurrencyConfigCommand = class extends command5(_ep05, _mw05, "PutProvisionedConcurrencyConfig", PutProvisionedConcurrencyConfig$) {
+    };
+    var PutRuntimeManagementConfigCommand = class extends command5(_ep05, _mw05, "PutRuntimeManagementConfig", PutRuntimeManagementConfig$) {
+    };
+    var RemoveLayerVersionPermissionCommand = class extends command5(_ep05, _mw05, "RemoveLayerVersionPermission", RemoveLayerVersionPermission$) {
+    };
+    var RemovePermissionCommand = class extends command5(_ep05, _mw05, "RemovePermission", RemovePermission$) {
+    };
+    var SendDurableExecutionCallbackFailureCommand = class extends command5(_ep05, _mw05, "SendDurableExecutionCallbackFailure", SendDurableExecutionCallbackFailure$) {
+    };
+    var SendDurableExecutionCallbackHeartbeatCommand = class extends command5(_ep05, _mw05, "SendDurableExecutionCallbackHeartbeat", SendDurableExecutionCallbackHeartbeat$) {
+    };
+    var SendDurableExecutionCallbackSuccessCommand = class extends command5(_ep05, _mw05, "SendDurableExecutionCallbackSuccess", SendDurableExecutionCallbackSuccess$) {
+    };
+    var StopDurableExecutionCommand = class extends command5(_ep05, _mw05, "StopDurableExecution", StopDurableExecution$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateAliasCommand = class extends command5(_ep05, _mw05, "UpdateAlias", UpdateAlias$) {
+    };
+    var UpdateCapacityProviderCommand = class extends command5(_ep05, _mw05, "UpdateCapacityProvider", UpdateCapacityProvider$) {
+    };
+    var UpdateCodeSigningConfigCommand = class extends command5(_ep05, _mw05, "UpdateCodeSigningConfig", UpdateCodeSigningConfig$) {
+    };
+    var UpdateEventSourceMappingCommand = class extends command5(_ep05, _mw05, "UpdateEventSourceMapping", UpdateEventSourceMapping$) {
+    };
+    var UpdateFunctionCodeCommand = class extends command5(_ep05, _mw05, "UpdateFunctionCode", UpdateFunctionCode$) {
+    };
+    var UpdateFunctionConfigurationCommand = class extends command5(_ep05, _mw05, "UpdateFunctionConfiguration", UpdateFunctionConfiguration$) {
+    };
+    var UpdateFunctionEventInvokeConfigCommand = class extends command5(_ep05, _mw05, "UpdateFunctionEventInvokeConfig", UpdateFunctionEventInvokeConfig$) {
+    };
+    var UpdateFunctionUrlConfigCommand = class extends command5(_ep05, _mw05, "UpdateFunctionUrlConfig", UpdateFunctionUrlConfig$) {
     };
     var paginateGetDurableExecutionHistory = createPaginator2(LambdaClient3, GetDurableExecutionHistoryCommand, "Marker", "NextMarker", "MaxItems");
     var paginateGetDurableExecutionState = createPaginator2(LambdaClient3, GetDurableExecutionStateCommand, "Marker", "NextMarker", "MaxItems");
@@ -86322,8 +84757,9 @@ var require_dist_cjs25 = __commonJS({
   "node_modules/@aws-sdk/client-eventbridge/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveParams: resolveParams2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -86625,7 +85061,7 @@ var require_dist_cjs25 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -89665,236 +88101,125 @@ var require_dist_cjs25 = __commonJS({
         super.destroy();
       }
     };
-    var ActivateEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ActivateEventSource", {}).n("EventBridgeClient", "ActivateEventSourceCommand").sc(ActivateEventSource$).build() {
-    };
-    var CancelReplayCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CancelReplay", {}).n("EventBridgeClient", "CancelReplayCommand").sc(CancelReplay$).build() {
-    };
-    var CreateApiDestinationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreateApiDestination", {}).n("EventBridgeClient", "CreateApiDestinationCommand").sc(CreateApiDestination$).build() {
-    };
-    var CreateArchiveCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreateArchive", {}).n("EventBridgeClient", "CreateArchiveCommand").sc(CreateArchive$).build() {
-    };
-    var CreateConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreateConnection", {}).n("EventBridgeClient", "CreateConnectionCommand").sc(CreateConnection$).build() {
-    };
-    var CreateEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreateEndpoint", {}).n("EventBridgeClient", "CreateEndpointCommand").sc(CreateEndpoint$).build() {
-    };
-    var CreateEventBusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreateEventBus", {}).n("EventBridgeClient", "CreateEventBusCommand").sc(CreateEventBus$).build() {
-    };
-    var CreatePartnerEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "CreatePartnerEventSource", {}).n("EventBridgeClient", "CreatePartnerEventSourceCommand").sc(CreatePartnerEventSource$).build() {
-    };
-    var DeactivateEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeactivateEventSource", {}).n("EventBridgeClient", "DeactivateEventSourceCommand").sc(DeactivateEventSource$).build() {
-    };
-    var DeauthorizeConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeauthorizeConnection", {}).n("EventBridgeClient", "DeauthorizeConnectionCommand").sc(DeauthorizeConnection$).build() {
-    };
-    var DeleteApiDestinationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteApiDestination", {}).n("EventBridgeClient", "DeleteApiDestinationCommand").sc(DeleteApiDestination$).build() {
-    };
-    var DeleteArchiveCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteArchive", {}).n("EventBridgeClient", "DeleteArchiveCommand").sc(DeleteArchive$).build() {
-    };
-    var DeleteConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteConnection", {}).n("EventBridgeClient", "DeleteConnectionCommand").sc(DeleteConnection$).build() {
-    };
-    var DeleteEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteEndpoint", {}).n("EventBridgeClient", "DeleteEndpointCommand").sc(DeleteEndpoint$).build() {
-    };
-    var DeleteEventBusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteEventBus", {}).n("EventBridgeClient", "DeleteEventBusCommand").sc(DeleteEventBus$).build() {
-    };
-    var DeletePartnerEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeletePartnerEventSource", {}).n("EventBridgeClient", "DeletePartnerEventSourceCommand").sc(DeletePartnerEventSource$).build() {
-    };
-    var DeleteRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DeleteRule", {}).n("EventBridgeClient", "DeleteRuleCommand").sc(DeleteRule$).build() {
-    };
-    var DescribeApiDestinationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeApiDestination", {}).n("EventBridgeClient", "DescribeApiDestinationCommand").sc(DescribeApiDestination$).build() {
-    };
-    var DescribeArchiveCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeArchive", {}).n("EventBridgeClient", "DescribeArchiveCommand").sc(DescribeArchive$).build() {
-    };
-    var DescribeConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeConnection", {}).n("EventBridgeClient", "DescribeConnectionCommand").sc(DescribeConnection$).build() {
-    };
-    var DescribeEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeEndpoint", {}).n("EventBridgeClient", "DescribeEndpointCommand").sc(DescribeEndpoint$).build() {
-    };
-    var DescribeEventBusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeEventBus", {}).n("EventBridgeClient", "DescribeEventBusCommand").sc(DescribeEventBus$).build() {
-    };
-    var DescribeEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeEventSource", {}).n("EventBridgeClient", "DescribeEventSourceCommand").sc(DescribeEventSource$).build() {
-    };
-    var DescribePartnerEventSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribePartnerEventSource", {}).n("EventBridgeClient", "DescribePartnerEventSourceCommand").sc(DescribePartnerEventSource$).build() {
-    };
-    var DescribeReplayCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeReplay", {}).n("EventBridgeClient", "DescribeReplayCommand").sc(DescribeReplay$).build() {
-    };
-    var DescribeRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DescribeRule", {}).n("EventBridgeClient", "DescribeRuleCommand").sc(DescribeRule$).build() {
-    };
-    var DisableRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "DisableRule", {}).n("EventBridgeClient", "DisableRuleCommand").sc(DisableRule$).build() {
-    };
-    var EnableRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "EnableRule", {}).n("EventBridgeClient", "EnableRuleCommand").sc(EnableRule$).build() {
-    };
-    var ListApiDestinationsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListApiDestinations", {}).n("EventBridgeClient", "ListApiDestinationsCommand").sc(ListApiDestinations$).build() {
-    };
-    var ListArchivesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListArchives", {}).n("EventBridgeClient", "ListArchivesCommand").sc(ListArchives$).build() {
-    };
-    var ListConnectionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListConnections", {}).n("EventBridgeClient", "ListConnectionsCommand").sc(ListConnections$).build() {
-    };
-    var ListEndpointsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListEndpoints", {}).n("EventBridgeClient", "ListEndpointsCommand").sc(ListEndpoints$).build() {
-    };
-    var ListEventBusesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListEventBuses", {}).n("EventBridgeClient", "ListEventBusesCommand").sc(ListEventBuses$).build() {
-    };
-    var ListEventSourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListEventSources", {}).n("EventBridgeClient", "ListEventSourcesCommand").sc(ListEventSources$).build() {
-    };
-    var ListPartnerEventSourceAccountsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListPartnerEventSourceAccounts", {}).n("EventBridgeClient", "ListPartnerEventSourceAccountsCommand").sc(ListPartnerEventSourceAccounts$).build() {
-    };
-    var ListPartnerEventSourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListPartnerEventSources", {}).n("EventBridgeClient", "ListPartnerEventSourcesCommand").sc(ListPartnerEventSources$).build() {
-    };
-    var ListReplaysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListReplays", {}).n("EventBridgeClient", "ListReplaysCommand").sc(ListReplays$).build() {
-    };
-    var ListRuleNamesByTargetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListRuleNamesByTarget", {}).n("EventBridgeClient", "ListRuleNamesByTargetCommand").sc(ListRuleNamesByTarget$).build() {
-    };
-    var ListRulesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListRules", {}).n("EventBridgeClient", "ListRulesCommand").sc(ListRules$).build() {
-    };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListTagsForResource", {}).n("EventBridgeClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
-    };
-    var ListTargetsByRuleCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "ListTargetsByRule", {}).n("EventBridgeClient", "ListTargetsByRuleCommand").sc(ListTargetsByRule$).build() {
-    };
-    var PutEventsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
+    var command5 = makeBuilder2(commonParams5, "AWSEvents", "EventBridgeClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _ep1 = {
       EndpointId: { type: "contextParams", name: "EndpointId" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "PutEvents", {}).n("EventBridgeClient", "PutEventsCommand").sc(PutEvents$).build() {
     };
-    var PutPartnerEventsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "PutPartnerEvents", {}).n("EventBridgeClient", "PutPartnerEventsCommand").sc(PutPartnerEvents$).build() {
+    var _mw05 = (Command2, cs, config, o4) => [];
+    var ActivateEventSourceCommand = class extends command5(_ep05, _mw05, "ActivateEventSource", ActivateEventSource$) {
     };
-    var PutPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "PutPermission", {}).n("EventBridgeClient", "PutPermissionCommand").sc(PutPermission$).build() {
+    var CancelReplayCommand = class extends command5(_ep05, _mw05, "CancelReplay", CancelReplay$) {
     };
-    var PutRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "PutRule", {}).n("EventBridgeClient", "PutRuleCommand").sc(PutRule$).build() {
+    var CreateApiDestinationCommand = class extends command5(_ep05, _mw05, "CreateApiDestination", CreateApiDestination$) {
     };
-    var PutTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "PutTargets", {}).n("EventBridgeClient", "PutTargetsCommand").sc(PutTargets$).build() {
+    var CreateArchiveCommand = class extends command5(_ep05, _mw05, "CreateArchive", CreateArchive$) {
     };
-    var RemovePermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "RemovePermission", {}).n("EventBridgeClient", "RemovePermissionCommand").sc(RemovePermission$).build() {
+    var CreateConnectionCommand = class extends command5(_ep05, _mw05, "CreateConnection", CreateConnection$) {
     };
-    var RemoveTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "RemoveTargets", {}).n("EventBridgeClient", "RemoveTargetsCommand").sc(RemoveTargets$).build() {
+    var CreateEndpointCommand = class extends command5(_ep05, _mw05, "CreateEndpoint", CreateEndpoint$) {
     };
-    var StartReplayCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "StartReplay", {}).n("EventBridgeClient", "StartReplayCommand").sc(StartReplay$).build() {
+    var CreateEventBusCommand = class extends command5(_ep05, _mw05, "CreateEventBus", CreateEventBus$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "TagResource", {}).n("EventBridgeClient", "TagResourceCommand").sc(TagResource$).build() {
+    var CreatePartnerEventSourceCommand = class extends command5(_ep05, _mw05, "CreatePartnerEventSource", CreatePartnerEventSource$) {
     };
-    var TestEventPatternCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "TestEventPattern", {}).n("EventBridgeClient", "TestEventPatternCommand").sc(TestEventPattern$).build() {
+    var DeactivateEventSourceCommand = class extends command5(_ep05, _mw05, "DeactivateEventSource", DeactivateEventSource$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UntagResource", {}).n("EventBridgeClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var DeauthorizeConnectionCommand = class extends command5(_ep05, _mw05, "DeauthorizeConnection", DeauthorizeConnection$) {
     };
-    var UpdateApiDestinationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UpdateApiDestination", {}).n("EventBridgeClient", "UpdateApiDestinationCommand").sc(UpdateApiDestination$).build() {
+    var DeleteApiDestinationCommand = class extends command5(_ep05, _mw05, "DeleteApiDestination", DeleteApiDestination$) {
     };
-    var UpdateArchiveCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UpdateArchive", {}).n("EventBridgeClient", "UpdateArchiveCommand").sc(UpdateArchive$).build() {
+    var DeleteArchiveCommand = class extends command5(_ep05, _mw05, "DeleteArchive", DeleteArchive$) {
     };
-    var UpdateConnectionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UpdateConnection", {}).n("EventBridgeClient", "UpdateConnectionCommand").sc(UpdateConnection$).build() {
+    var DeleteConnectionCommand = class extends command5(_ep05, _mw05, "DeleteConnection", DeleteConnection$) {
     };
-    var UpdateEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UpdateEndpoint", {}).n("EventBridgeClient", "UpdateEndpointCommand").sc(UpdateEndpoint$).build() {
+    var DeleteEndpointCommand = class extends command5(_ep05, _mw05, "DeleteEndpoint", DeleteEndpoint$) {
     };
-    var UpdateEventBusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSEvents", "UpdateEventBus", {}).n("EventBridgeClient", "UpdateEventBusCommand").sc(UpdateEventBus$).build() {
+    var DeleteEventBusCommand = class extends command5(_ep05, _mw05, "DeleteEventBus", DeleteEventBus$) {
+    };
+    var DeletePartnerEventSourceCommand = class extends command5(_ep05, _mw05, "DeletePartnerEventSource", DeletePartnerEventSource$) {
+    };
+    var DeleteRuleCommand = class extends command5(_ep05, _mw05, "DeleteRule", DeleteRule$) {
+    };
+    var DescribeApiDestinationCommand = class extends command5(_ep05, _mw05, "DescribeApiDestination", DescribeApiDestination$) {
+    };
+    var DescribeArchiveCommand = class extends command5(_ep05, _mw05, "DescribeArchive", DescribeArchive$) {
+    };
+    var DescribeConnectionCommand = class extends command5(_ep05, _mw05, "DescribeConnection", DescribeConnection$) {
+    };
+    var DescribeEndpointCommand = class extends command5(_ep05, _mw05, "DescribeEndpoint", DescribeEndpoint$) {
+    };
+    var DescribeEventBusCommand = class extends command5(_ep05, _mw05, "DescribeEventBus", DescribeEventBus$) {
+    };
+    var DescribeEventSourceCommand = class extends command5(_ep05, _mw05, "DescribeEventSource", DescribeEventSource$) {
+    };
+    var DescribePartnerEventSourceCommand = class extends command5(_ep05, _mw05, "DescribePartnerEventSource", DescribePartnerEventSource$) {
+    };
+    var DescribeReplayCommand = class extends command5(_ep05, _mw05, "DescribeReplay", DescribeReplay$) {
+    };
+    var DescribeRuleCommand = class extends command5(_ep05, _mw05, "DescribeRule", DescribeRule$) {
+    };
+    var DisableRuleCommand = class extends command5(_ep05, _mw05, "DisableRule", DisableRule$) {
+    };
+    var EnableRuleCommand = class extends command5(_ep05, _mw05, "EnableRule", EnableRule$) {
+    };
+    var ListApiDestinationsCommand2 = class extends command5(_ep05, _mw05, "ListApiDestinations", ListApiDestinations$) {
+    };
+    var ListArchivesCommand = class extends command5(_ep05, _mw05, "ListArchives", ListArchives$) {
+    };
+    var ListConnectionsCommand = class extends command5(_ep05, _mw05, "ListConnections", ListConnections$) {
+    };
+    var ListEndpointsCommand = class extends command5(_ep05, _mw05, "ListEndpoints", ListEndpoints$) {
+    };
+    var ListEventBusesCommand = class extends command5(_ep05, _mw05, "ListEventBuses", ListEventBuses$) {
+    };
+    var ListEventSourcesCommand = class extends command5(_ep05, _mw05, "ListEventSources", ListEventSources$) {
+    };
+    var ListPartnerEventSourceAccountsCommand = class extends command5(_ep05, _mw05, "ListPartnerEventSourceAccounts", ListPartnerEventSourceAccounts$) {
+    };
+    var ListPartnerEventSourcesCommand = class extends command5(_ep05, _mw05, "ListPartnerEventSources", ListPartnerEventSources$) {
+    };
+    var ListReplaysCommand = class extends command5(_ep05, _mw05, "ListReplays", ListReplays$) {
+    };
+    var ListRuleNamesByTargetCommand = class extends command5(_ep05, _mw05, "ListRuleNamesByTarget", ListRuleNamesByTarget$) {
+    };
+    var ListRulesCommand2 = class extends command5(_ep05, _mw05, "ListRules", ListRules$) {
+    };
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
+    };
+    var ListTargetsByRuleCommand2 = class extends command5(_ep05, _mw05, "ListTargetsByRule", ListTargetsByRule$) {
+    };
+    var PutEventsCommand = class extends command5(_ep1, _mw05, "PutEvents", PutEvents$) {
+    };
+    var PutPartnerEventsCommand = class extends command5(_ep05, _mw05, "PutPartnerEvents", PutPartnerEvents$) {
+    };
+    var PutPermissionCommand = class extends command5(_ep05, _mw05, "PutPermission", PutPermission$) {
+    };
+    var PutRuleCommand = class extends command5(_ep05, _mw05, "PutRule", PutRule$) {
+    };
+    var PutTargetsCommand = class extends command5(_ep05, _mw05, "PutTargets", PutTargets$) {
+    };
+    var RemovePermissionCommand = class extends command5(_ep05, _mw05, "RemovePermission", RemovePermission$) {
+    };
+    var RemoveTargetsCommand = class extends command5(_ep05, _mw05, "RemoveTargets", RemoveTargets$) {
+    };
+    var StartReplayCommand = class extends command5(_ep05, _mw05, "StartReplay", StartReplay$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var TestEventPatternCommand = class extends command5(_ep05, _mw05, "TestEventPattern", TestEventPattern$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateApiDestinationCommand = class extends command5(_ep05, _mw05, "UpdateApiDestination", UpdateApiDestination$) {
+    };
+    var UpdateArchiveCommand = class extends command5(_ep05, _mw05, "UpdateArchive", UpdateArchive$) {
+    };
+    var UpdateConnectionCommand = class extends command5(_ep05, _mw05, "UpdateConnection", UpdateConnection$) {
+    };
+    var UpdateEndpointCommand = class extends command5(_ep05, _mw05, "UpdateEndpoint", UpdateEndpoint$) {
+    };
+    var UpdateEventBusCommand = class extends command5(_ep05, _mw05, "UpdateEventBus", UpdateEventBus$) {
     };
     var commands5 = {
       ActivateEventSourceCommand,
@@ -90409,8 +88734,9 @@ var require_dist_cjs26 = __commonJS({
   "node_modules/@aws-sdk/client-pipes/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -90474,7 +88800,7 @@ var require_dist_cjs26 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -92366,45 +90692,28 @@ var require_dist_cjs26 = __commonJS({
         super.destroy();
       }
     };
-    var CreatePipeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "CreatePipe", {}).n("PipesClient", "CreatePipeCommand").sc(CreatePipe$).build() {
+    var command5 = makeBuilder2(commonParams5, "Pipes", "PipesClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var CreatePipeCommand = class extends command5(_ep05, _mw05, "CreatePipe", CreatePipe$) {
     };
-    var DeletePipeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "DeletePipe", {}).n("PipesClient", "DeletePipeCommand").sc(DeletePipe$).build() {
+    var DeletePipeCommand = class extends command5(_ep05, _mw05, "DeletePipe", DeletePipe$) {
     };
-    var DescribePipeCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "DescribePipe", {}).n("PipesClient", "DescribePipeCommand").sc(DescribePipe$).build() {
+    var DescribePipeCommand2 = class extends command5(_ep05, _mw05, "DescribePipe", DescribePipe$) {
     };
-    var ListPipesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "ListPipes", {}).n("PipesClient", "ListPipesCommand").sc(ListPipes$).build() {
+    var ListPipesCommand2 = class extends command5(_ep05, _mw05, "ListPipes", ListPipes$) {
     };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "ListTagsForResource", {}).n("PipesClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
-    var StartPipeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "StartPipe", {}).n("PipesClient", "StartPipeCommand").sc(StartPipe$).build() {
+    var StartPipeCommand = class extends command5(_ep05, _mw05, "StartPipe", StartPipe$) {
     };
-    var StopPipeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "StopPipe", {}).n("PipesClient", "StopPipeCommand").sc(StopPipe$).build() {
+    var StopPipeCommand = class extends command5(_ep05, _mw05, "StopPipe", StopPipe$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "TagResource", {}).n("PipesClient", "TagResourceCommand").sc(TagResource$).build() {
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "UntagResource", {}).n("PipesClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
     };
-    var UpdatePipeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("Pipes", "UpdatePipe", {}).n("PipesClient", "UpdatePipeCommand").sc(UpdatePipe$).build() {
+    var UpdatePipeCommand = class extends command5(_ep05, _mw05, "UpdatePipe", UpdatePipe$) {
     };
     var paginateListPipes = createPaginator2(PipesClient2, ListPipesCommand2, "NextToken", "NextToken", "Limit");
     var commands5 = {
@@ -92709,8 +91018,9 @@ var require_dist_cjs27 = __commonJS({
   "node_modules/@aws-sdk/client-bedrock-agent/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -92774,7 +91084,7 @@ var require_dist_cjs27 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -98755,305 +97065,158 @@ var require_dist_cjs27 = __commonJS({
         super.destroy();
       }
     };
-    var AssociateAgentCollaboratorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "AssociateAgentCollaborator", {}).n("BedrockAgentClient", "AssociateAgentCollaboratorCommand").sc(AssociateAgentCollaborator$).build() {
-    };
-    var AssociateAgentKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "AssociateAgentKnowledgeBase", {}).n("BedrockAgentClient", "AssociateAgentKnowledgeBaseCommand").sc(AssociateAgentKnowledgeBase$).build() {
-    };
-    var CreateAgentActionGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateAgentActionGroup", {}).n("BedrockAgentClient", "CreateAgentActionGroupCommand").sc(CreateAgentActionGroup$).build() {
-    };
-    var CreateAgentAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateAgentAlias", {}).n("BedrockAgentClient", "CreateAgentAliasCommand").sc(CreateAgentAlias$).build() {
-    };
-    var CreateAgentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateAgent", {}).n("BedrockAgentClient", "CreateAgentCommand").sc(CreateAgent$).build() {
-    };
-    var CreateDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateDataSource", {}).n("BedrockAgentClient", "CreateDataSourceCommand").sc(CreateDataSource$).build() {
-    };
-    var CreateFlowAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateFlowAlias", {}).n("BedrockAgentClient", "CreateFlowAliasCommand").sc(CreateFlowAlias$).build() {
-    };
-    var CreateFlowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateFlow", {}).n("BedrockAgentClient", "CreateFlowCommand").sc(CreateFlow$).build() {
-    };
-    var CreateFlowVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateFlowVersion", {}).n("BedrockAgentClient", "CreateFlowVersionCommand").sc(CreateFlowVersion$).build() {
-    };
-    var CreateKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreateKnowledgeBase", {}).n("BedrockAgentClient", "CreateKnowledgeBaseCommand").sc(CreateKnowledgeBase$).build() {
-    };
-    var CreatePromptCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreatePrompt", {}).n("BedrockAgentClient", "CreatePromptCommand").sc(CreatePrompt$).build() {
-    };
-    var CreatePromptVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "CreatePromptVersion", {}).n("BedrockAgentClient", "CreatePromptVersionCommand").sc(CreatePromptVersion$).build() {
-    };
-    var DeleteAgentActionGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteAgentActionGroup", {}).n("BedrockAgentClient", "DeleteAgentActionGroupCommand").sc(DeleteAgentActionGroup$).build() {
-    };
-    var DeleteAgentAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteAgentAlias", {}).n("BedrockAgentClient", "DeleteAgentAliasCommand").sc(DeleteAgentAlias$).build() {
-    };
-    var DeleteAgentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteAgent", {}).n("BedrockAgentClient", "DeleteAgentCommand").sc(DeleteAgent$).build() {
-    };
-    var DeleteAgentVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteAgentVersion", {}).n("BedrockAgentClient", "DeleteAgentVersionCommand").sc(DeleteAgentVersion$).build() {
-    };
-    var DeleteDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteDataSource", {}).n("BedrockAgentClient", "DeleteDataSourceCommand").sc(DeleteDataSource$).build() {
-    };
-    var DeleteFlowAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteFlowAlias", {}).n("BedrockAgentClient", "DeleteFlowAliasCommand").sc(DeleteFlowAlias$).build() {
-    };
-    var DeleteFlowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteFlow", {}).n("BedrockAgentClient", "DeleteFlowCommand").sc(DeleteFlow$).build() {
-    };
-    var DeleteFlowVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteFlowVersion", {}).n("BedrockAgentClient", "DeleteFlowVersionCommand").sc(DeleteFlowVersion$).build() {
-    };
-    var DeleteKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteKnowledgeBase", {}).n("BedrockAgentClient", "DeleteKnowledgeBaseCommand").sc(DeleteKnowledgeBase$).build() {
-    };
-    var DeleteKnowledgeBaseDocumentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteKnowledgeBaseDocuments", {}).n("BedrockAgentClient", "DeleteKnowledgeBaseDocumentsCommand").sc(DeleteKnowledgeBaseDocuments$).build() {
-    };
-    var DeletePromptCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeletePrompt", {}).n("BedrockAgentClient", "DeletePromptCommand").sc(DeletePrompt$).build() {
-    };
-    var DeleteResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DeleteResourcePolicy", {}).n("BedrockAgentClient", "DeleteResourcePolicyCommand").sc(DeleteResourcePolicy$).build() {
-    };
-    var DisassociateAgentCollaboratorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DisassociateAgentCollaborator", {}).n("BedrockAgentClient", "DisassociateAgentCollaboratorCommand").sc(DisassociateAgentCollaborator$).build() {
-    };
-    var DisassociateAgentKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "DisassociateAgentKnowledgeBase", {}).n("BedrockAgentClient", "DisassociateAgentKnowledgeBaseCommand").sc(DisassociateAgentKnowledgeBase$).build() {
-    };
-    var GetAgentActionGroupCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgentActionGroup", {}).n("BedrockAgentClient", "GetAgentActionGroupCommand").sc(GetAgentActionGroup$).build() {
-    };
-    var GetAgentAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgentAlias", {}).n("BedrockAgentClient", "GetAgentAliasCommand").sc(GetAgentAlias$).build() {
-    };
-    var GetAgentCollaboratorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgentCollaborator", {}).n("BedrockAgentClient", "GetAgentCollaboratorCommand").sc(GetAgentCollaborator$).build() {
-    };
-    var GetAgentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgent", {}).n("BedrockAgentClient", "GetAgentCommand").sc(GetAgent$).build() {
-    };
-    var GetAgentKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgentKnowledgeBase", {}).n("BedrockAgentClient", "GetAgentKnowledgeBaseCommand").sc(GetAgentKnowledgeBase$).build() {
-    };
-    var GetAgentVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetAgentVersion", {}).n("BedrockAgentClient", "GetAgentVersionCommand").sc(GetAgentVersion$).build() {
-    };
-    var GetDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetDataSource", {}).n("BedrockAgentClient", "GetDataSourceCommand").sc(GetDataSource$).build() {
-    };
-    var GetFlowAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetFlowAlias", {}).n("BedrockAgentClient", "GetFlowAliasCommand").sc(GetFlowAlias$).build() {
-    };
-    var GetFlowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetFlow", {}).n("BedrockAgentClient", "GetFlowCommand").sc(GetFlow$).build() {
-    };
-    var GetFlowVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetFlowVersion", {}).n("BedrockAgentClient", "GetFlowVersionCommand").sc(GetFlowVersion$).build() {
-    };
-    var GetIngestionJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetIngestionJob", {}).n("BedrockAgentClient", "GetIngestionJobCommand").sc(GetIngestionJob$).build() {
-    };
-    var GetKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetKnowledgeBase", {}).n("BedrockAgentClient", "GetKnowledgeBaseCommand").sc(GetKnowledgeBase$).build() {
-    };
-    var GetKnowledgeBaseDocumentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetKnowledgeBaseDocuments", {}).n("BedrockAgentClient", "GetKnowledgeBaseDocumentsCommand").sc(GetKnowledgeBaseDocuments$).build() {
-    };
-    var GetPromptCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetPrompt", {}).n("BedrockAgentClient", "GetPromptCommand").sc(GetPrompt$).build() {
-    };
-    var GetResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "GetResourcePolicy", {}).n("BedrockAgentClient", "GetResourcePolicyCommand").sc(GetResourcePolicy$).build() {
-    };
-    var IngestKnowledgeBaseDocumentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "IngestKnowledgeBaseDocuments", {}).n("BedrockAgentClient", "IngestKnowledgeBaseDocumentsCommand").sc(IngestKnowledgeBaseDocuments$).build() {
-    };
-    var ListAgentActionGroupsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgentActionGroups", {}).n("BedrockAgentClient", "ListAgentActionGroupsCommand").sc(ListAgentActionGroups$).build() {
-    };
-    var ListAgentAliasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgentAliases", {}).n("BedrockAgentClient", "ListAgentAliasesCommand").sc(ListAgentAliases$).build() {
-    };
-    var ListAgentCollaboratorsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgentCollaborators", {}).n("BedrockAgentClient", "ListAgentCollaboratorsCommand").sc(ListAgentCollaborators$).build() {
-    };
-    var ListAgentKnowledgeBasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgentKnowledgeBases", {}).n("BedrockAgentClient", "ListAgentKnowledgeBasesCommand").sc(ListAgentKnowledgeBases$).build() {
-    };
-    var ListAgentsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgents", {}).n("BedrockAgentClient", "ListAgentsCommand").sc(ListAgents$).build() {
-    };
-    var ListAgentVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListAgentVersions", {}).n("BedrockAgentClient", "ListAgentVersionsCommand").sc(ListAgentVersions$).build() {
-    };
-    var ListDataSourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListDataSources", {}).n("BedrockAgentClient", "ListDataSourcesCommand").sc(ListDataSources$).build() {
-    };
-    var ListFlowAliasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListFlowAliases", {}).n("BedrockAgentClient", "ListFlowAliasesCommand").sc(ListFlowAliases$).build() {
-    };
-    var ListFlowsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListFlows", {}).n("BedrockAgentClient", "ListFlowsCommand").sc(ListFlows$).build() {
-    };
-    var ListFlowVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListFlowVersions", {}).n("BedrockAgentClient", "ListFlowVersionsCommand").sc(ListFlowVersions$).build() {
-    };
-    var ListIngestionJobsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListIngestionJobs", {}).n("BedrockAgentClient", "ListIngestionJobsCommand").sc(ListIngestionJobs$).build() {
-    };
-    var ListKnowledgeBaseDocumentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListKnowledgeBaseDocuments", {}).n("BedrockAgentClient", "ListKnowledgeBaseDocumentsCommand").sc(ListKnowledgeBaseDocuments$).build() {
-    };
-    var ListKnowledgeBasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListKnowledgeBases", {}).n("BedrockAgentClient", "ListKnowledgeBasesCommand").sc(ListKnowledgeBases$).build() {
-    };
-    var ListPromptsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListPrompts", {}).n("BedrockAgentClient", "ListPromptsCommand").sc(ListPrompts$).build() {
-    };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ListTagsForResource", {}).n("BedrockAgentClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
-    };
-    var PrepareAgentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "PrepareAgent", {}).n("BedrockAgentClient", "PrepareAgentCommand").sc(PrepareAgent$).build() {
-    };
-    var PrepareFlowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "PrepareFlow", {}).n("BedrockAgentClient", "PrepareFlowCommand").sc(PrepareFlow$).build() {
-    };
-    var PutResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "PutResourcePolicy", {}).n("BedrockAgentClient", "PutResourcePolicyCommand").sc(PutResourcePolicy$).build() {
-    };
-    var StartIngestionJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "StartIngestionJob", {}).n("BedrockAgentClient", "StartIngestionJobCommand").sc(StartIngestionJob$).build() {
-    };
-    var StopIngestionJobCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "StopIngestionJob", {}).n("BedrockAgentClient", "StopIngestionJobCommand").sc(StopIngestionJob$).build() {
-    };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "TagResource", {}).n("BedrockAgentClient", "TagResourceCommand").sc(TagResource$).build() {
-    };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UntagResource", {}).n("BedrockAgentClient", "UntagResourceCommand").sc(UntagResource$).build() {
-    };
-    var UpdateAgentActionGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateAgentActionGroup", {}).n("BedrockAgentClient", "UpdateAgentActionGroupCommand").sc(UpdateAgentActionGroup$).build() {
-    };
-    var UpdateAgentAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateAgentAlias", {}).n("BedrockAgentClient", "UpdateAgentAliasCommand").sc(UpdateAgentAlias$).build() {
-    };
-    var UpdateAgentCollaboratorCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateAgentCollaborator", {}).n("BedrockAgentClient", "UpdateAgentCollaboratorCommand").sc(UpdateAgentCollaborator$).build() {
-    };
-    var UpdateAgentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateAgent", {}).n("BedrockAgentClient", "UpdateAgentCommand").sc(UpdateAgent$).build() {
-    };
-    var UpdateAgentKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateAgentKnowledgeBase", {}).n("BedrockAgentClient", "UpdateAgentKnowledgeBaseCommand").sc(UpdateAgentKnowledgeBase$).build() {
-    };
-    var UpdateDataSourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateDataSource", {}).n("BedrockAgentClient", "UpdateDataSourceCommand").sc(UpdateDataSource$).build() {
-    };
-    var UpdateFlowAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateFlowAlias", {}).n("BedrockAgentClient", "UpdateFlowAliasCommand").sc(UpdateFlowAlias$).build() {
-    };
-    var UpdateFlowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateFlow", {}).n("BedrockAgentClient", "UpdateFlowCommand").sc(UpdateFlow$).build() {
-    };
-    var UpdateKnowledgeBaseCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdateKnowledgeBase", {}).n("BedrockAgentClient", "UpdateKnowledgeBaseCommand").sc(UpdateKnowledgeBase$).build() {
-    };
-    var UpdatePromptCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "UpdatePrompt", {}).n("BedrockAgentClient", "UpdatePromptCommand").sc(UpdatePrompt$).build() {
-    };
-    var ValidateFlowDefinitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonBedrockAgentBuildTimeLambda", "ValidateFlowDefinition", {}).n("BedrockAgentClient", "ValidateFlowDefinitionCommand").sc(ValidateFlowDefinition$).build() {
+    var command5 = makeBuilder2(commonParams5, "AmazonBedrockAgentBuildTimeLambda", "BedrockAgentClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AssociateAgentCollaboratorCommand = class extends command5(_ep05, _mw05, "AssociateAgentCollaborator", AssociateAgentCollaborator$) {
+    };
+    var AssociateAgentKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "AssociateAgentKnowledgeBase", AssociateAgentKnowledgeBase$) {
+    };
+    var CreateAgentActionGroupCommand = class extends command5(_ep05, _mw05, "CreateAgentActionGroup", CreateAgentActionGroup$) {
+    };
+    var CreateAgentAliasCommand = class extends command5(_ep05, _mw05, "CreateAgentAlias", CreateAgentAlias$) {
+    };
+    var CreateAgentCommand = class extends command5(_ep05, _mw05, "CreateAgent", CreateAgent$) {
+    };
+    var CreateDataSourceCommand = class extends command5(_ep05, _mw05, "CreateDataSource", CreateDataSource$) {
+    };
+    var CreateFlowAliasCommand = class extends command5(_ep05, _mw05, "CreateFlowAlias", CreateFlowAlias$) {
+    };
+    var CreateFlowCommand = class extends command5(_ep05, _mw05, "CreateFlow", CreateFlow$) {
+    };
+    var CreateFlowVersionCommand = class extends command5(_ep05, _mw05, "CreateFlowVersion", CreateFlowVersion$) {
+    };
+    var CreateKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "CreateKnowledgeBase", CreateKnowledgeBase$) {
+    };
+    var CreatePromptCommand = class extends command5(_ep05, _mw05, "CreatePrompt", CreatePrompt$) {
+    };
+    var CreatePromptVersionCommand = class extends command5(_ep05, _mw05, "CreatePromptVersion", CreatePromptVersion$) {
+    };
+    var DeleteAgentActionGroupCommand = class extends command5(_ep05, _mw05, "DeleteAgentActionGroup", DeleteAgentActionGroup$) {
+    };
+    var DeleteAgentAliasCommand = class extends command5(_ep05, _mw05, "DeleteAgentAlias", DeleteAgentAlias$) {
+    };
+    var DeleteAgentCommand = class extends command5(_ep05, _mw05, "DeleteAgent", DeleteAgent$) {
+    };
+    var DeleteAgentVersionCommand = class extends command5(_ep05, _mw05, "DeleteAgentVersion", DeleteAgentVersion$) {
+    };
+    var DeleteDataSourceCommand = class extends command5(_ep05, _mw05, "DeleteDataSource", DeleteDataSource$) {
+    };
+    var DeleteFlowAliasCommand = class extends command5(_ep05, _mw05, "DeleteFlowAlias", DeleteFlowAlias$) {
+    };
+    var DeleteFlowCommand = class extends command5(_ep05, _mw05, "DeleteFlow", DeleteFlow$) {
+    };
+    var DeleteFlowVersionCommand = class extends command5(_ep05, _mw05, "DeleteFlowVersion", DeleteFlowVersion$) {
+    };
+    var DeleteKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "DeleteKnowledgeBase", DeleteKnowledgeBase$) {
+    };
+    var DeleteKnowledgeBaseDocumentsCommand = class extends command5(_ep05, _mw05, "DeleteKnowledgeBaseDocuments", DeleteKnowledgeBaseDocuments$) {
+    };
+    var DeletePromptCommand = class extends command5(_ep05, _mw05, "DeletePrompt", DeletePrompt$) {
+    };
+    var DeleteResourcePolicyCommand = class extends command5(_ep05, _mw05, "DeleteResourcePolicy", DeleteResourcePolicy$) {
+    };
+    var DisassociateAgentCollaboratorCommand = class extends command5(_ep05, _mw05, "DisassociateAgentCollaborator", DisassociateAgentCollaborator$) {
+    };
+    var DisassociateAgentKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "DisassociateAgentKnowledgeBase", DisassociateAgentKnowledgeBase$) {
+    };
+    var GetAgentActionGroupCommand2 = class extends command5(_ep05, _mw05, "GetAgentActionGroup", GetAgentActionGroup$) {
+    };
+    var GetAgentAliasCommand = class extends command5(_ep05, _mw05, "GetAgentAlias", GetAgentAlias$) {
+    };
+    var GetAgentCollaboratorCommand = class extends command5(_ep05, _mw05, "GetAgentCollaborator", GetAgentCollaborator$) {
+    };
+    var GetAgentCommand = class extends command5(_ep05, _mw05, "GetAgent", GetAgent$) {
+    };
+    var GetAgentKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "GetAgentKnowledgeBase", GetAgentKnowledgeBase$) {
+    };
+    var GetAgentVersionCommand = class extends command5(_ep05, _mw05, "GetAgentVersion", GetAgentVersion$) {
+    };
+    var GetDataSourceCommand = class extends command5(_ep05, _mw05, "GetDataSource", GetDataSource$) {
+    };
+    var GetFlowAliasCommand = class extends command5(_ep05, _mw05, "GetFlowAlias", GetFlowAlias$) {
+    };
+    var GetFlowCommand = class extends command5(_ep05, _mw05, "GetFlow", GetFlow$) {
+    };
+    var GetFlowVersionCommand = class extends command5(_ep05, _mw05, "GetFlowVersion", GetFlowVersion$) {
+    };
+    var GetIngestionJobCommand = class extends command5(_ep05, _mw05, "GetIngestionJob", GetIngestionJob$) {
+    };
+    var GetKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "GetKnowledgeBase", GetKnowledgeBase$) {
+    };
+    var GetKnowledgeBaseDocumentsCommand = class extends command5(_ep05, _mw05, "GetKnowledgeBaseDocuments", GetKnowledgeBaseDocuments$) {
+    };
+    var GetPromptCommand = class extends command5(_ep05, _mw05, "GetPrompt", GetPrompt$) {
+    };
+    var GetResourcePolicyCommand = class extends command5(_ep05, _mw05, "GetResourcePolicy", GetResourcePolicy$) {
+    };
+    var IngestKnowledgeBaseDocumentsCommand = class extends command5(_ep05, _mw05, "IngestKnowledgeBaseDocuments", IngestKnowledgeBaseDocuments$) {
+    };
+    var ListAgentActionGroupsCommand2 = class extends command5(_ep05, _mw05, "ListAgentActionGroups", ListAgentActionGroups$) {
+    };
+    var ListAgentAliasesCommand = class extends command5(_ep05, _mw05, "ListAgentAliases", ListAgentAliases$) {
+    };
+    var ListAgentCollaboratorsCommand = class extends command5(_ep05, _mw05, "ListAgentCollaborators", ListAgentCollaborators$) {
+    };
+    var ListAgentKnowledgeBasesCommand = class extends command5(_ep05, _mw05, "ListAgentKnowledgeBases", ListAgentKnowledgeBases$) {
+    };
+    var ListAgentsCommand2 = class extends command5(_ep05, _mw05, "ListAgents", ListAgents$) {
+    };
+    var ListAgentVersionsCommand = class extends command5(_ep05, _mw05, "ListAgentVersions", ListAgentVersions$) {
+    };
+    var ListDataSourcesCommand = class extends command5(_ep05, _mw05, "ListDataSources", ListDataSources$) {
+    };
+    var ListFlowAliasesCommand = class extends command5(_ep05, _mw05, "ListFlowAliases", ListFlowAliases$) {
+    };
+    var ListFlowsCommand = class extends command5(_ep05, _mw05, "ListFlows", ListFlows$) {
+    };
+    var ListFlowVersionsCommand = class extends command5(_ep05, _mw05, "ListFlowVersions", ListFlowVersions$) {
+    };
+    var ListIngestionJobsCommand = class extends command5(_ep05, _mw05, "ListIngestionJobs", ListIngestionJobs$) {
+    };
+    var ListKnowledgeBaseDocumentsCommand = class extends command5(_ep05, _mw05, "ListKnowledgeBaseDocuments", ListKnowledgeBaseDocuments$) {
+    };
+    var ListKnowledgeBasesCommand = class extends command5(_ep05, _mw05, "ListKnowledgeBases", ListKnowledgeBases$) {
+    };
+    var ListPromptsCommand = class extends command5(_ep05, _mw05, "ListPrompts", ListPrompts$) {
+    };
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
+    };
+    var PrepareAgentCommand = class extends command5(_ep05, _mw05, "PrepareAgent", PrepareAgent$) {
+    };
+    var PrepareFlowCommand = class extends command5(_ep05, _mw05, "PrepareFlow", PrepareFlow$) {
+    };
+    var PutResourcePolicyCommand = class extends command5(_ep05, _mw05, "PutResourcePolicy", PutResourcePolicy$) {
+    };
+    var StartIngestionJobCommand = class extends command5(_ep05, _mw05, "StartIngestionJob", StartIngestionJob$) {
+    };
+    var StopIngestionJobCommand = class extends command5(_ep05, _mw05, "StopIngestionJob", StopIngestionJob$) {
+    };
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
+    };
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
+    };
+    var UpdateAgentActionGroupCommand = class extends command5(_ep05, _mw05, "UpdateAgentActionGroup", UpdateAgentActionGroup$) {
+    };
+    var UpdateAgentAliasCommand = class extends command5(_ep05, _mw05, "UpdateAgentAlias", UpdateAgentAlias$) {
+    };
+    var UpdateAgentCollaboratorCommand = class extends command5(_ep05, _mw05, "UpdateAgentCollaborator", UpdateAgentCollaborator$) {
+    };
+    var UpdateAgentCommand = class extends command5(_ep05, _mw05, "UpdateAgent", UpdateAgent$) {
+    };
+    var UpdateAgentKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "UpdateAgentKnowledgeBase", UpdateAgentKnowledgeBase$) {
+    };
+    var UpdateDataSourceCommand = class extends command5(_ep05, _mw05, "UpdateDataSource", UpdateDataSource$) {
+    };
+    var UpdateFlowAliasCommand = class extends command5(_ep05, _mw05, "UpdateFlowAlias", UpdateFlowAlias$) {
+    };
+    var UpdateFlowCommand = class extends command5(_ep05, _mw05, "UpdateFlow", UpdateFlow$) {
+    };
+    var UpdateKnowledgeBaseCommand = class extends command5(_ep05, _mw05, "UpdateKnowledgeBase", UpdateKnowledgeBase$) {
+    };
+    var UpdatePromptCommand = class extends command5(_ep05, _mw05, "UpdatePrompt", UpdatePrompt$) {
+    };
+    var ValidateFlowDefinitionCommand = class extends command5(_ep05, _mw05, "ValidateFlowDefinition", ValidateFlowDefinition$) {
     };
     var paginateListAgentActionGroups = createPaginator2(BedrockAgentClient2, ListAgentActionGroupsCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListAgentAliases = createPaginator2(BedrockAgentClient2, ListAgentAliasesCommand, "nextToken", "nextToken", "maxResults");
@@ -100227,8 +98390,9 @@ var require_dist_cjs28 = __commonJS({
   "node_modules/@aws-sdk/client-elastic-load-balancing-v2/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -100292,7 +98456,7 @@ var require_dist_cjs28 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -104251,209 +102415,110 @@ var require_dist_cjs28 = __commonJS({
         super.destroy();
       }
     };
-    var AddListenerCertificatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "AddListenerCertificates", {}).n("ElasticLoadBalancingV2Client", "AddListenerCertificatesCommand").sc(AddListenerCertificates$).build() {
+    var command5 = makeBuilder2(commonParams5, "ElasticLoadBalancing_v10", "ElasticLoadBalancingV2Client", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AddListenerCertificatesCommand = class extends command5(_ep05, _mw05, "AddListenerCertificates", AddListenerCertificates$) {
     };
-    var AddTagsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "AddTags", {}).n("ElasticLoadBalancingV2Client", "AddTagsCommand").sc(AddTags$).build() {
+    var AddTagsCommand = class extends command5(_ep05, _mw05, "AddTags", AddTags$) {
     };
-    var AddTrustStoreRevocationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "AddTrustStoreRevocations", {}).n("ElasticLoadBalancingV2Client", "AddTrustStoreRevocationsCommand").sc(AddTrustStoreRevocations$).build() {
+    var AddTrustStoreRevocationsCommand = class extends command5(_ep05, _mw05, "AddTrustStoreRevocations", AddTrustStoreRevocations$) {
     };
-    var CreateListenerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "CreateListener", {}).n("ElasticLoadBalancingV2Client", "CreateListenerCommand").sc(CreateListener$).build() {
+    var CreateListenerCommand = class extends command5(_ep05, _mw05, "CreateListener", CreateListener$) {
     };
-    var CreateLoadBalancerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "CreateLoadBalancer", {}).n("ElasticLoadBalancingV2Client", "CreateLoadBalancerCommand").sc(CreateLoadBalancer$).build() {
+    var CreateLoadBalancerCommand = class extends command5(_ep05, _mw05, "CreateLoadBalancer", CreateLoadBalancer$) {
     };
-    var CreateRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "CreateRule", {}).n("ElasticLoadBalancingV2Client", "CreateRuleCommand").sc(CreateRule$).build() {
+    var CreateRuleCommand = class extends command5(_ep05, _mw05, "CreateRule", CreateRule$) {
     };
-    var CreateTargetGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "CreateTargetGroup", {}).n("ElasticLoadBalancingV2Client", "CreateTargetGroupCommand").sc(CreateTargetGroup$).build() {
+    var CreateTargetGroupCommand = class extends command5(_ep05, _mw05, "CreateTargetGroup", CreateTargetGroup$) {
     };
-    var CreateTrustStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "CreateTrustStore", {}).n("ElasticLoadBalancingV2Client", "CreateTrustStoreCommand").sc(CreateTrustStore$).build() {
+    var CreateTrustStoreCommand = class extends command5(_ep05, _mw05, "CreateTrustStore", CreateTrustStore$) {
     };
-    var DeleteListenerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteListener", {}).n("ElasticLoadBalancingV2Client", "DeleteListenerCommand").sc(DeleteListener$).build() {
+    var DeleteListenerCommand = class extends command5(_ep05, _mw05, "DeleteListener", DeleteListener$) {
     };
-    var DeleteLoadBalancerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteLoadBalancer", {}).n("ElasticLoadBalancingV2Client", "DeleteLoadBalancerCommand").sc(DeleteLoadBalancer$).build() {
+    var DeleteLoadBalancerCommand = class extends command5(_ep05, _mw05, "DeleteLoadBalancer", DeleteLoadBalancer$) {
     };
-    var DeleteRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteRule", {}).n("ElasticLoadBalancingV2Client", "DeleteRuleCommand").sc(DeleteRule$).build() {
+    var DeleteRuleCommand = class extends command5(_ep05, _mw05, "DeleteRule", DeleteRule$) {
     };
-    var DeleteSharedTrustStoreAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteSharedTrustStoreAssociation", {}).n("ElasticLoadBalancingV2Client", "DeleteSharedTrustStoreAssociationCommand").sc(DeleteSharedTrustStoreAssociation$).build() {
+    var DeleteSharedTrustStoreAssociationCommand = class extends command5(_ep05, _mw05, "DeleteSharedTrustStoreAssociation", DeleteSharedTrustStoreAssociation$) {
     };
-    var DeleteTargetGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteTargetGroup", {}).n("ElasticLoadBalancingV2Client", "DeleteTargetGroupCommand").sc(DeleteTargetGroup$).build() {
+    var DeleteTargetGroupCommand = class extends command5(_ep05, _mw05, "DeleteTargetGroup", DeleteTargetGroup$) {
     };
-    var DeleteTrustStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeleteTrustStore", {}).n("ElasticLoadBalancingV2Client", "DeleteTrustStoreCommand").sc(DeleteTrustStore$).build() {
+    var DeleteTrustStoreCommand = class extends command5(_ep05, _mw05, "DeleteTrustStore", DeleteTrustStore$) {
     };
-    var DeregisterTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DeregisterTargets", {}).n("ElasticLoadBalancingV2Client", "DeregisterTargetsCommand").sc(DeregisterTargets$).build() {
+    var DeregisterTargetsCommand = class extends command5(_ep05, _mw05, "DeregisterTargets", DeregisterTargets$) {
     };
-    var DescribeAccountLimitsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeAccountLimits", {}).n("ElasticLoadBalancingV2Client", "DescribeAccountLimitsCommand").sc(DescribeAccountLimits$).build() {
+    var DescribeAccountLimitsCommand = class extends command5(_ep05, _mw05, "DescribeAccountLimits", DescribeAccountLimits$) {
     };
-    var DescribeCapacityReservationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeCapacityReservation", {}).n("ElasticLoadBalancingV2Client", "DescribeCapacityReservationCommand").sc(DescribeCapacityReservation$).build() {
+    var DescribeCapacityReservationCommand = class extends command5(_ep05, _mw05, "DescribeCapacityReservation", DescribeCapacityReservation$) {
     };
-    var DescribeListenerAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeListenerAttributes", {}).n("ElasticLoadBalancingV2Client", "DescribeListenerAttributesCommand").sc(DescribeListenerAttributes$).build() {
+    var DescribeListenerAttributesCommand = class extends command5(_ep05, _mw05, "DescribeListenerAttributes", DescribeListenerAttributes$) {
     };
-    var DescribeListenerCertificatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeListenerCertificates", {}).n("ElasticLoadBalancingV2Client", "DescribeListenerCertificatesCommand").sc(DescribeListenerCertificates$).build() {
+    var DescribeListenerCertificatesCommand = class extends command5(_ep05, _mw05, "DescribeListenerCertificates", DescribeListenerCertificates$) {
     };
-    var DescribeListenersCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeListeners", {}).n("ElasticLoadBalancingV2Client", "DescribeListenersCommand").sc(DescribeListeners$).build() {
+    var DescribeListenersCommand2 = class extends command5(_ep05, _mw05, "DescribeListeners", DescribeListeners$) {
     };
-    var DescribeLoadBalancerAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeLoadBalancerAttributes", {}).n("ElasticLoadBalancingV2Client", "DescribeLoadBalancerAttributesCommand").sc(DescribeLoadBalancerAttributes$).build() {
+    var DescribeLoadBalancerAttributesCommand = class extends command5(_ep05, _mw05, "DescribeLoadBalancerAttributes", DescribeLoadBalancerAttributes$) {
     };
-    var DescribeLoadBalancersCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeLoadBalancers", {}).n("ElasticLoadBalancingV2Client", "DescribeLoadBalancersCommand").sc(DescribeLoadBalancers$).build() {
+    var DescribeLoadBalancersCommand2 = class extends command5(_ep05, _mw05, "DescribeLoadBalancers", DescribeLoadBalancers$) {
     };
-    var DescribeRulesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeRules", {}).n("ElasticLoadBalancingV2Client", "DescribeRulesCommand").sc(DescribeRules$).build() {
+    var DescribeRulesCommand2 = class extends command5(_ep05, _mw05, "DescribeRules", DescribeRules$) {
     };
-    var DescribeSSLPoliciesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeSSLPolicies", {}).n("ElasticLoadBalancingV2Client", "DescribeSSLPoliciesCommand").sc(DescribeSSLPolicies$).build() {
+    var DescribeSSLPoliciesCommand = class extends command5(_ep05, _mw05, "DescribeSSLPolicies", DescribeSSLPolicies$) {
     };
-    var DescribeTagsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTags", {}).n("ElasticLoadBalancingV2Client", "DescribeTagsCommand").sc(DescribeTags$).build() {
+    var DescribeTagsCommand = class extends command5(_ep05, _mw05, "DescribeTags", DescribeTags$) {
     };
-    var DescribeTargetGroupAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTargetGroupAttributes", {}).n("ElasticLoadBalancingV2Client", "DescribeTargetGroupAttributesCommand").sc(DescribeTargetGroupAttributes$).build() {
+    var DescribeTargetGroupAttributesCommand = class extends command5(_ep05, _mw05, "DescribeTargetGroupAttributes", DescribeTargetGroupAttributes$) {
     };
-    var DescribeTargetGroupsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTargetGroups", {}).n("ElasticLoadBalancingV2Client", "DescribeTargetGroupsCommand").sc(DescribeTargetGroups$).build() {
+    var DescribeTargetGroupsCommand = class extends command5(_ep05, _mw05, "DescribeTargetGroups", DescribeTargetGroups$) {
     };
-    var DescribeTargetHealthCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTargetHealth", {}).n("ElasticLoadBalancingV2Client", "DescribeTargetHealthCommand").sc(DescribeTargetHealth$).build() {
+    var DescribeTargetHealthCommand = class extends command5(_ep05, _mw05, "DescribeTargetHealth", DescribeTargetHealth$) {
     };
-    var DescribeTrustStoreAssociationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTrustStoreAssociations", {}).n("ElasticLoadBalancingV2Client", "DescribeTrustStoreAssociationsCommand").sc(DescribeTrustStoreAssociations$).build() {
+    var DescribeTrustStoreAssociationsCommand = class extends command5(_ep05, _mw05, "DescribeTrustStoreAssociations", DescribeTrustStoreAssociations$) {
     };
-    var DescribeTrustStoreRevocationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTrustStoreRevocations", {}).n("ElasticLoadBalancingV2Client", "DescribeTrustStoreRevocationsCommand").sc(DescribeTrustStoreRevocations$).build() {
+    var DescribeTrustStoreRevocationsCommand = class extends command5(_ep05, _mw05, "DescribeTrustStoreRevocations", DescribeTrustStoreRevocations$) {
     };
-    var DescribeTrustStoresCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "DescribeTrustStores", {}).n("ElasticLoadBalancingV2Client", "DescribeTrustStoresCommand").sc(DescribeTrustStores$).build() {
+    var DescribeTrustStoresCommand = class extends command5(_ep05, _mw05, "DescribeTrustStores", DescribeTrustStores$) {
     };
-    var GetResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "GetResourcePolicy", {}).n("ElasticLoadBalancingV2Client", "GetResourcePolicyCommand").sc(GetResourcePolicy$).build() {
+    var GetResourcePolicyCommand = class extends command5(_ep05, _mw05, "GetResourcePolicy", GetResourcePolicy$) {
     };
-    var GetTrustStoreCaCertificatesBundleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "GetTrustStoreCaCertificatesBundle", {}).n("ElasticLoadBalancingV2Client", "GetTrustStoreCaCertificatesBundleCommand").sc(GetTrustStoreCaCertificatesBundle$).build() {
+    var GetTrustStoreCaCertificatesBundleCommand = class extends command5(_ep05, _mw05, "GetTrustStoreCaCertificatesBundle", GetTrustStoreCaCertificatesBundle$) {
     };
-    var GetTrustStoreRevocationContentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "GetTrustStoreRevocationContent", {}).n("ElasticLoadBalancingV2Client", "GetTrustStoreRevocationContentCommand").sc(GetTrustStoreRevocationContent$).build() {
+    var GetTrustStoreRevocationContentCommand = class extends command5(_ep05, _mw05, "GetTrustStoreRevocationContent", GetTrustStoreRevocationContent$) {
     };
-    var ModifyCapacityReservationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyCapacityReservation", {}).n("ElasticLoadBalancingV2Client", "ModifyCapacityReservationCommand").sc(ModifyCapacityReservation$).build() {
+    var ModifyCapacityReservationCommand = class extends command5(_ep05, _mw05, "ModifyCapacityReservation", ModifyCapacityReservation$) {
     };
-    var ModifyIpPoolsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyIpPools", {}).n("ElasticLoadBalancingV2Client", "ModifyIpPoolsCommand").sc(ModifyIpPools$).build() {
+    var ModifyIpPoolsCommand = class extends command5(_ep05, _mw05, "ModifyIpPools", ModifyIpPools$) {
     };
-    var ModifyListenerAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyListenerAttributes", {}).n("ElasticLoadBalancingV2Client", "ModifyListenerAttributesCommand").sc(ModifyListenerAttributes$).build() {
+    var ModifyListenerAttributesCommand = class extends command5(_ep05, _mw05, "ModifyListenerAttributes", ModifyListenerAttributes$) {
     };
-    var ModifyListenerCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyListener", {}).n("ElasticLoadBalancingV2Client", "ModifyListenerCommand").sc(ModifyListener$).build() {
+    var ModifyListenerCommand = class extends command5(_ep05, _mw05, "ModifyListener", ModifyListener$) {
     };
-    var ModifyLoadBalancerAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyLoadBalancerAttributes", {}).n("ElasticLoadBalancingV2Client", "ModifyLoadBalancerAttributesCommand").sc(ModifyLoadBalancerAttributes$).build() {
+    var ModifyLoadBalancerAttributesCommand = class extends command5(_ep05, _mw05, "ModifyLoadBalancerAttributes", ModifyLoadBalancerAttributes$) {
     };
-    var ModifyRuleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyRule", {}).n("ElasticLoadBalancingV2Client", "ModifyRuleCommand").sc(ModifyRule$).build() {
+    var ModifyRuleCommand = class extends command5(_ep05, _mw05, "ModifyRule", ModifyRule$) {
     };
-    var ModifyTargetGroupAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyTargetGroupAttributes", {}).n("ElasticLoadBalancingV2Client", "ModifyTargetGroupAttributesCommand").sc(ModifyTargetGroupAttributes$).build() {
+    var ModifyTargetGroupAttributesCommand = class extends command5(_ep05, _mw05, "ModifyTargetGroupAttributes", ModifyTargetGroupAttributes$) {
     };
-    var ModifyTargetGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyTargetGroup", {}).n("ElasticLoadBalancingV2Client", "ModifyTargetGroupCommand").sc(ModifyTargetGroup$).build() {
+    var ModifyTargetGroupCommand = class extends command5(_ep05, _mw05, "ModifyTargetGroup", ModifyTargetGroup$) {
     };
-    var ModifyTrustStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "ModifyTrustStore", {}).n("ElasticLoadBalancingV2Client", "ModifyTrustStoreCommand").sc(ModifyTrustStore$).build() {
+    var ModifyTrustStoreCommand = class extends command5(_ep05, _mw05, "ModifyTrustStore", ModifyTrustStore$) {
     };
-    var RegisterTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "RegisterTargets", {}).n("ElasticLoadBalancingV2Client", "RegisterTargetsCommand").sc(RegisterTargets$).build() {
+    var RegisterTargetsCommand = class extends command5(_ep05, _mw05, "RegisterTargets", RegisterTargets$) {
     };
-    var RemoveListenerCertificatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "RemoveListenerCertificates", {}).n("ElasticLoadBalancingV2Client", "RemoveListenerCertificatesCommand").sc(RemoveListenerCertificates$).build() {
+    var RemoveListenerCertificatesCommand = class extends command5(_ep05, _mw05, "RemoveListenerCertificates", RemoveListenerCertificates$) {
     };
-    var RemoveTagsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "RemoveTags", {}).n("ElasticLoadBalancingV2Client", "RemoveTagsCommand").sc(RemoveTags$).build() {
+    var RemoveTagsCommand = class extends command5(_ep05, _mw05, "RemoveTags", RemoveTags$) {
     };
-    var RemoveTrustStoreRevocationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "RemoveTrustStoreRevocations", {}).n("ElasticLoadBalancingV2Client", "RemoveTrustStoreRevocationsCommand").sc(RemoveTrustStoreRevocations$).build() {
+    var RemoveTrustStoreRevocationsCommand = class extends command5(_ep05, _mw05, "RemoveTrustStoreRevocations", RemoveTrustStoreRevocations$) {
     };
-    var SetIpAddressTypeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "SetIpAddressType", {}).n("ElasticLoadBalancingV2Client", "SetIpAddressTypeCommand").sc(SetIpAddressType$).build() {
+    var SetIpAddressTypeCommand = class extends command5(_ep05, _mw05, "SetIpAddressType", SetIpAddressType$) {
     };
-    var SetRulePrioritiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "SetRulePriorities", {}).n("ElasticLoadBalancingV2Client", "SetRulePrioritiesCommand").sc(SetRulePriorities$).build() {
+    var SetRulePrioritiesCommand = class extends command5(_ep05, _mw05, "SetRulePriorities", SetRulePriorities$) {
     };
-    var SetSecurityGroupsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "SetSecurityGroups", {}).n("ElasticLoadBalancingV2Client", "SetSecurityGroupsCommand").sc(SetSecurityGroups$).build() {
+    var SetSecurityGroupsCommand = class extends command5(_ep05, _mw05, "SetSecurityGroups", SetSecurityGroups$) {
     };
-    var SetSubnetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ElasticLoadBalancing_v10", "SetSubnets", {}).n("ElasticLoadBalancingV2Client", "SetSubnetsCommand").sc(SetSubnets$).build() {
+    var SetSubnetsCommand = class extends command5(_ep05, _mw05, "SetSubnets", SetSubnets$) {
     };
     var paginateDescribeAccountLimits = createPaginator2(ElasticLoadBalancingV2Client2, DescribeAccountLimitsCommand, "Marker", "NextMarker", "");
     var paginateDescribeListenerCertificates = createPaginator2(ElasticLoadBalancingV2Client2, DescribeListenerCertificatesCommand, "Marker", "NextMarker", "");
@@ -105315,8 +103380,9 @@ var require_dist_cjs29 = __commonJS({
   "node_modules/@aws-sdk/client-verifiedpermissions/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -105380,7 +103446,7 @@ var require_dist_cjs29 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -108066,141 +106132,76 @@ var require_dist_cjs29 = __commonJS({
         super.destroy();
       }
     };
-    var BatchGetPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "BatchGetPolicy", {}).n("VerifiedPermissionsClient", "BatchGetPolicyCommand").sc(BatchGetPolicy$).build() {
+    var command5 = makeBuilder2(commonParams5, "VerifiedPermissions", "VerifiedPermissionsClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var BatchGetPolicyCommand = class extends command5(_ep05, _mw05, "BatchGetPolicy", BatchGetPolicy$) {
     };
-    var BatchIsAuthorizedCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "BatchIsAuthorized", {}).n("VerifiedPermissionsClient", "BatchIsAuthorizedCommand").sc(BatchIsAuthorized$).build() {
+    var BatchIsAuthorizedCommand = class extends command5(_ep05, _mw05, "BatchIsAuthorized", BatchIsAuthorized$) {
     };
-    var BatchIsAuthorizedWithTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "BatchIsAuthorizedWithToken", {}).n("VerifiedPermissionsClient", "BatchIsAuthorizedWithTokenCommand").sc(BatchIsAuthorizedWithToken$).build() {
+    var BatchIsAuthorizedWithTokenCommand = class extends command5(_ep05, _mw05, "BatchIsAuthorizedWithToken", BatchIsAuthorizedWithToken$) {
     };
-    var CreateIdentitySourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "CreateIdentitySource", {}).n("VerifiedPermissionsClient", "CreateIdentitySourceCommand").sc(CreateIdentitySource$).build() {
+    var CreateIdentitySourceCommand = class extends command5(_ep05, _mw05, "CreateIdentitySource", CreateIdentitySource$) {
     };
-    var CreatePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "CreatePolicy", {}).n("VerifiedPermissionsClient", "CreatePolicyCommand").sc(CreatePolicy$).build() {
+    var CreatePolicyCommand = class extends command5(_ep05, _mw05, "CreatePolicy", CreatePolicy$) {
     };
-    var CreatePolicyStoreAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "CreatePolicyStoreAlias", {}).n("VerifiedPermissionsClient", "CreatePolicyStoreAliasCommand").sc(CreatePolicyStoreAlias$).build() {
+    var CreatePolicyStoreAliasCommand = class extends command5(_ep05, _mw05, "CreatePolicyStoreAlias", CreatePolicyStoreAlias$) {
     };
-    var CreatePolicyStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "CreatePolicyStore", {}).n("VerifiedPermissionsClient", "CreatePolicyStoreCommand").sc(CreatePolicyStore$).build() {
+    var CreatePolicyStoreCommand = class extends command5(_ep05, _mw05, "CreatePolicyStore", CreatePolicyStore$) {
     };
-    var CreatePolicyTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "CreatePolicyTemplate", {}).n("VerifiedPermissionsClient", "CreatePolicyTemplateCommand").sc(CreatePolicyTemplate$).build() {
+    var CreatePolicyTemplateCommand = class extends command5(_ep05, _mw05, "CreatePolicyTemplate", CreatePolicyTemplate$) {
     };
-    var DeleteIdentitySourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "DeleteIdentitySource", {}).n("VerifiedPermissionsClient", "DeleteIdentitySourceCommand").sc(DeleteIdentitySource$).build() {
+    var DeleteIdentitySourceCommand = class extends command5(_ep05, _mw05, "DeleteIdentitySource", DeleteIdentitySource$) {
     };
-    var DeletePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "DeletePolicy", {}).n("VerifiedPermissionsClient", "DeletePolicyCommand").sc(DeletePolicy$).build() {
+    var DeletePolicyCommand = class extends command5(_ep05, _mw05, "DeletePolicy", DeletePolicy$) {
     };
-    var DeletePolicyStoreAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "DeletePolicyStoreAlias", {}).n("VerifiedPermissionsClient", "DeletePolicyStoreAliasCommand").sc(DeletePolicyStoreAlias$).build() {
+    var DeletePolicyStoreAliasCommand = class extends command5(_ep05, _mw05, "DeletePolicyStoreAlias", DeletePolicyStoreAlias$) {
     };
-    var DeletePolicyStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "DeletePolicyStore", {}).n("VerifiedPermissionsClient", "DeletePolicyStoreCommand").sc(DeletePolicyStore$).build() {
+    var DeletePolicyStoreCommand = class extends command5(_ep05, _mw05, "DeletePolicyStore", DeletePolicyStore$) {
     };
-    var DeletePolicyTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "DeletePolicyTemplate", {}).n("VerifiedPermissionsClient", "DeletePolicyTemplateCommand").sc(DeletePolicyTemplate$).build() {
+    var DeletePolicyTemplateCommand = class extends command5(_ep05, _mw05, "DeletePolicyTemplate", DeletePolicyTemplate$) {
     };
-    var GetIdentitySourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetIdentitySource", {}).n("VerifiedPermissionsClient", "GetIdentitySourceCommand").sc(GetIdentitySource$).build() {
+    var GetIdentitySourceCommand = class extends command5(_ep05, _mw05, "GetIdentitySource", GetIdentitySource$) {
     };
-    var GetPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetPolicy", {}).n("VerifiedPermissionsClient", "GetPolicyCommand").sc(GetPolicy$).build() {
+    var GetPolicyCommand = class extends command5(_ep05, _mw05, "GetPolicy", GetPolicy$) {
     };
-    var GetPolicyStoreAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetPolicyStoreAlias", {}).n("VerifiedPermissionsClient", "GetPolicyStoreAliasCommand").sc(GetPolicyStoreAlias$).build() {
+    var GetPolicyStoreAliasCommand = class extends command5(_ep05, _mw05, "GetPolicyStoreAlias", GetPolicyStoreAlias$) {
     };
-    var GetPolicyStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetPolicyStore", {}).n("VerifiedPermissionsClient", "GetPolicyStoreCommand").sc(GetPolicyStore$).build() {
+    var GetPolicyStoreCommand = class extends command5(_ep05, _mw05, "GetPolicyStore", GetPolicyStore$) {
     };
-    var GetPolicyTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetPolicyTemplate", {}).n("VerifiedPermissionsClient", "GetPolicyTemplateCommand").sc(GetPolicyTemplate$).build() {
+    var GetPolicyTemplateCommand = class extends command5(_ep05, _mw05, "GetPolicyTemplate", GetPolicyTemplate$) {
     };
-    var GetSchemaCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "GetSchema", {}).n("VerifiedPermissionsClient", "GetSchemaCommand").sc(GetSchema$).build() {
+    var GetSchemaCommand2 = class extends command5(_ep05, _mw05, "GetSchema", GetSchema$) {
     };
-    var IsAuthorizedCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "IsAuthorized", {}).n("VerifiedPermissionsClient", "IsAuthorizedCommand").sc(IsAuthorized$).build() {
+    var IsAuthorizedCommand = class extends command5(_ep05, _mw05, "IsAuthorized", IsAuthorized$) {
     };
-    var IsAuthorizedWithTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "IsAuthorizedWithToken", {}).n("VerifiedPermissionsClient", "IsAuthorizedWithTokenCommand").sc(IsAuthorizedWithToken$).build() {
+    var IsAuthorizedWithTokenCommand = class extends command5(_ep05, _mw05, "IsAuthorizedWithToken", IsAuthorizedWithToken$) {
     };
-    var ListIdentitySourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListIdentitySources", {}).n("VerifiedPermissionsClient", "ListIdentitySourcesCommand").sc(ListIdentitySources$).build() {
+    var ListIdentitySourcesCommand = class extends command5(_ep05, _mw05, "ListIdentitySources", ListIdentitySources$) {
     };
-    var ListPoliciesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListPolicies", {}).n("VerifiedPermissionsClient", "ListPoliciesCommand").sc(ListPolicies$).build() {
+    var ListPoliciesCommand = class extends command5(_ep05, _mw05, "ListPolicies", ListPolicies$) {
     };
-    var ListPolicyStoreAliasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListPolicyStoreAliases", {}).n("VerifiedPermissionsClient", "ListPolicyStoreAliasesCommand").sc(ListPolicyStoreAliases$).build() {
+    var ListPolicyStoreAliasesCommand = class extends command5(_ep05, _mw05, "ListPolicyStoreAliases", ListPolicyStoreAliases$) {
     };
-    var ListPolicyStoresCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListPolicyStores", {}).n("VerifiedPermissionsClient", "ListPolicyStoresCommand").sc(ListPolicyStores$).build() {
+    var ListPolicyStoresCommand2 = class extends command5(_ep05, _mw05, "ListPolicyStores", ListPolicyStores$) {
     };
-    var ListPolicyTemplatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListPolicyTemplates", {}).n("VerifiedPermissionsClient", "ListPolicyTemplatesCommand").sc(ListPolicyTemplates$).build() {
+    var ListPolicyTemplatesCommand = class extends command5(_ep05, _mw05, "ListPolicyTemplates", ListPolicyTemplates$) {
     };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "ListTagsForResource", {}).n("VerifiedPermissionsClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
-    var PutSchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "PutSchema", {}).n("VerifiedPermissionsClient", "PutSchemaCommand").sc(PutSchema$).build() {
+    var PutSchemaCommand = class extends command5(_ep05, _mw05, "PutSchema", PutSchema$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "TagResource", {}).n("VerifiedPermissionsClient", "TagResourceCommand").sc(TagResource$).build() {
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "UntagResource", {}).n("VerifiedPermissionsClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
     };
-    var UpdateIdentitySourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "UpdateIdentitySource", {}).n("VerifiedPermissionsClient", "UpdateIdentitySourceCommand").sc(UpdateIdentitySource$).build() {
+    var UpdateIdentitySourceCommand = class extends command5(_ep05, _mw05, "UpdateIdentitySource", UpdateIdentitySource$) {
     };
-    var UpdatePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "UpdatePolicy", {}).n("VerifiedPermissionsClient", "UpdatePolicyCommand").sc(UpdatePolicy$).build() {
+    var UpdatePolicyCommand = class extends command5(_ep05, _mw05, "UpdatePolicy", UpdatePolicy$) {
     };
-    var UpdatePolicyStoreCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "UpdatePolicyStore", {}).n("VerifiedPermissionsClient", "UpdatePolicyStoreCommand").sc(UpdatePolicyStore$).build() {
+    var UpdatePolicyStoreCommand = class extends command5(_ep05, _mw05, "UpdatePolicyStore", UpdatePolicyStore$) {
     };
-    var UpdatePolicyTemplateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("VerifiedPermissions", "UpdatePolicyTemplate", {}).n("VerifiedPermissionsClient", "UpdatePolicyTemplateCommand").sc(UpdatePolicyTemplate$).build() {
+    var UpdatePolicyTemplateCommand = class extends command5(_ep05, _mw05, "UpdatePolicyTemplate", UpdatePolicyTemplate$) {
     };
     var paginateListIdentitySources = createPaginator2(VerifiedPermissionsClient2, ListIdentitySourcesCommand, "nextToken", "nextToken", "maxResults");
     var paginateListPolicies = createPaginator2(VerifiedPermissionsClient2, ListPoliciesCommand, "nextToken", "nextToken", "maxResults");
@@ -108562,8 +106563,9 @@ var require_dist_cjs30 = __commonJS({
   "node_modules/@aws-sdk/client-sfn/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2, getLongPollPlugin: getLongPollPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -108627,7 +106629,7 @@ var require_dist_cjs30 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -111633,156 +109635,85 @@ var require_dist_cjs30 = __commonJS({
         super.destroy();
       }
     };
-    var CreateActivityCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "CreateActivity", {}).n("SFNClient", "CreateActivityCommand").sc(CreateActivity$).build() {
+    var command5 = makeBuilder2(commonParams5, "AWSStepFunctions", "SFNClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var _mw1 = (Command2, cs, config, o3) => [
+      getLongPollPlugin2(config)
+    ];
+    var CreateActivityCommand = class extends command5(_ep05, _mw05, "CreateActivity", CreateActivity$) {
     };
-    var CreateStateMachineAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "CreateStateMachineAlias", {}).n("SFNClient", "CreateStateMachineAliasCommand").sc(CreateStateMachineAlias$).build() {
+    var CreateStateMachineAliasCommand = class extends command5(_ep05, _mw05, "CreateStateMachineAlias", CreateStateMachineAlias$) {
     };
-    var CreateStateMachineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "CreateStateMachine", {}).n("SFNClient", "CreateStateMachineCommand").sc(CreateStateMachine$).build() {
+    var CreateStateMachineCommand = class extends command5(_ep05, _mw05, "CreateStateMachine", CreateStateMachine$) {
     };
-    var DeleteActivityCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DeleteActivity", {}).n("SFNClient", "DeleteActivityCommand").sc(DeleteActivity$).build() {
+    var DeleteActivityCommand = class extends command5(_ep05, _mw05, "DeleteActivity", DeleteActivity$) {
     };
-    var DeleteStateMachineAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DeleteStateMachineAlias", {}).n("SFNClient", "DeleteStateMachineAliasCommand").sc(DeleteStateMachineAlias$).build() {
+    var DeleteStateMachineAliasCommand = class extends command5(_ep05, _mw05, "DeleteStateMachineAlias", DeleteStateMachineAlias$) {
     };
-    var DeleteStateMachineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DeleteStateMachine", {}).n("SFNClient", "DeleteStateMachineCommand").sc(DeleteStateMachine$).build() {
+    var DeleteStateMachineCommand = class extends command5(_ep05, _mw05, "DeleteStateMachine", DeleteStateMachine$) {
     };
-    var DeleteStateMachineVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DeleteStateMachineVersion", {}).n("SFNClient", "DeleteStateMachineVersionCommand").sc(DeleteStateMachineVersion$).build() {
+    var DeleteStateMachineVersionCommand = class extends command5(_ep05, _mw05, "DeleteStateMachineVersion", DeleteStateMachineVersion$) {
     };
-    var DescribeActivityCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeActivity", {}).n("SFNClient", "DescribeActivityCommand").sc(DescribeActivity$).build() {
+    var DescribeActivityCommand = class extends command5(_ep05, _mw05, "DescribeActivity", DescribeActivity$) {
     };
-    var DescribeExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeExecution", {}).n("SFNClient", "DescribeExecutionCommand").sc(DescribeExecution$).build() {
+    var DescribeExecutionCommand = class extends command5(_ep05, _mw05, "DescribeExecution", DescribeExecution$) {
     };
-    var DescribeMapRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeMapRun", {}).n("SFNClient", "DescribeMapRunCommand").sc(DescribeMapRun$).build() {
+    var DescribeMapRunCommand = class extends command5(_ep05, _mw05, "DescribeMapRun", DescribeMapRun$) {
     };
-    var DescribeStateMachineAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeStateMachineAlias", {}).n("SFNClient", "DescribeStateMachineAliasCommand").sc(DescribeStateMachineAlias$).build() {
+    var DescribeStateMachineAliasCommand = class extends command5(_ep05, _mw05, "DescribeStateMachineAlias", DescribeStateMachineAlias$) {
     };
-    var DescribeStateMachineCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeStateMachine", {}).n("SFNClient", "DescribeStateMachineCommand").sc(DescribeStateMachine$).build() {
+    var DescribeStateMachineCommand2 = class extends command5(_ep05, _mw05, "DescribeStateMachine", DescribeStateMachine$) {
     };
-    var DescribeStateMachineForExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "DescribeStateMachineForExecution", {}).n("SFNClient", "DescribeStateMachineForExecutionCommand").sc(DescribeStateMachineForExecution$).build() {
+    var DescribeStateMachineForExecutionCommand = class extends command5(_ep05, _mw05, "DescribeStateMachineForExecution", DescribeStateMachineForExecution$) {
     };
-    var GetActivityTaskCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getLongPollPlugin2(config)
-      ];
-    }).s("AWSStepFunctions", "GetActivityTask", {}).n("SFNClient", "GetActivityTaskCommand").sc(GetActivityTask$).build() {
+    var GetActivityTaskCommand = class extends command5(_ep05, _mw1, "GetActivityTask", GetActivityTask$) {
     };
-    var GetExecutionHistoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "GetExecutionHistory", {}).n("SFNClient", "GetExecutionHistoryCommand").sc(GetExecutionHistory$).build() {
+    var GetExecutionHistoryCommand = class extends command5(_ep05, _mw05, "GetExecutionHistory", GetExecutionHistory$) {
     };
-    var ListActivitiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListActivities", {}).n("SFNClient", "ListActivitiesCommand").sc(ListActivities$).build() {
+    var ListActivitiesCommand = class extends command5(_ep05, _mw05, "ListActivities", ListActivities$) {
     };
-    var ListExecutionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListExecutions", {}).n("SFNClient", "ListExecutionsCommand").sc(ListExecutions$).build() {
+    var ListExecutionsCommand = class extends command5(_ep05, _mw05, "ListExecutions", ListExecutions$) {
     };
-    var ListMapRunsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListMapRuns", {}).n("SFNClient", "ListMapRunsCommand").sc(ListMapRuns$).build() {
+    var ListMapRunsCommand = class extends command5(_ep05, _mw05, "ListMapRuns", ListMapRuns$) {
     };
-    var ListStateMachineAliasesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListStateMachineAliases", {}).n("SFNClient", "ListStateMachineAliasesCommand").sc(ListStateMachineAliases$).build() {
+    var ListStateMachineAliasesCommand = class extends command5(_ep05, _mw05, "ListStateMachineAliases", ListStateMachineAliases$) {
     };
-    var ListStateMachinesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListStateMachines", {}).n("SFNClient", "ListStateMachinesCommand").sc(ListStateMachines$).build() {
+    var ListStateMachinesCommand2 = class extends command5(_ep05, _mw05, "ListStateMachines", ListStateMachines$) {
     };
-    var ListStateMachineVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListStateMachineVersions", {}).n("SFNClient", "ListStateMachineVersionsCommand").sc(ListStateMachineVersions$).build() {
+    var ListStateMachineVersionsCommand = class extends command5(_ep05, _mw05, "ListStateMachineVersions", ListStateMachineVersions$) {
     };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ListTagsForResource", {}).n("SFNClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
-    var PublishStateMachineVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "PublishStateMachineVersion", {}).n("SFNClient", "PublishStateMachineVersionCommand").sc(PublishStateMachineVersion$).build() {
+    var PublishStateMachineVersionCommand = class extends command5(_ep05, _mw05, "PublishStateMachineVersion", PublishStateMachineVersion$) {
     };
-    var RedriveExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "RedriveExecution", {}).n("SFNClient", "RedriveExecutionCommand").sc(RedriveExecution$).build() {
+    var RedriveExecutionCommand = class extends command5(_ep05, _mw05, "RedriveExecution", RedriveExecution$) {
     };
-    var SendTaskFailureCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "SendTaskFailure", {}).n("SFNClient", "SendTaskFailureCommand").sc(SendTaskFailure$).build() {
+    var SendTaskFailureCommand = class extends command5(_ep05, _mw05, "SendTaskFailure", SendTaskFailure$) {
     };
-    var SendTaskHeartbeatCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "SendTaskHeartbeat", {}).n("SFNClient", "SendTaskHeartbeatCommand").sc(SendTaskHeartbeat$).build() {
+    var SendTaskHeartbeatCommand = class extends command5(_ep05, _mw05, "SendTaskHeartbeat", SendTaskHeartbeat$) {
     };
-    var SendTaskSuccessCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "SendTaskSuccess", {}).n("SFNClient", "SendTaskSuccessCommand").sc(SendTaskSuccess$).build() {
+    var SendTaskSuccessCommand = class extends command5(_ep05, _mw05, "SendTaskSuccess", SendTaskSuccess$) {
     };
-    var StartExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "StartExecution", {}).n("SFNClient", "StartExecutionCommand").sc(StartExecution$).build() {
+    var StartExecutionCommand = class extends command5(_ep05, _mw05, "StartExecution", StartExecution$) {
     };
-    var StartSyncExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "StartSyncExecution", {}).n("SFNClient", "StartSyncExecutionCommand").sc(StartSyncExecution$).build() {
+    var StartSyncExecutionCommand = class extends command5(_ep05, _mw05, "StartSyncExecution", StartSyncExecution$) {
     };
-    var StopExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "StopExecution", {}).n("SFNClient", "StopExecutionCommand").sc(StopExecution$).build() {
+    var StopExecutionCommand = class extends command5(_ep05, _mw05, "StopExecution", StopExecution$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "TagResource", {}).n("SFNClient", "TagResourceCommand").sc(TagResource$).build() {
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
     };
-    var TestStateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "TestState", {}).n("SFNClient", "TestStateCommand").sc(TestState$).build() {
+    var TestStateCommand = class extends command5(_ep05, _mw05, "TestState", TestState$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "UntagResource", {}).n("SFNClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
     };
-    var UpdateMapRunCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "UpdateMapRun", {}).n("SFNClient", "UpdateMapRunCommand").sc(UpdateMapRun$).build() {
+    var UpdateMapRunCommand = class extends command5(_ep05, _mw05, "UpdateMapRun", UpdateMapRun$) {
     };
-    var UpdateStateMachineAliasCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "UpdateStateMachineAlias", {}).n("SFNClient", "UpdateStateMachineAliasCommand").sc(UpdateStateMachineAlias$).build() {
+    var UpdateStateMachineAliasCommand = class extends command5(_ep05, _mw05, "UpdateStateMachineAlias", UpdateStateMachineAlias$) {
     };
-    var UpdateStateMachineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "UpdateStateMachine", {}).n("SFNClient", "UpdateStateMachineCommand").sc(UpdateStateMachine$).build() {
+    var UpdateStateMachineCommand = class extends command5(_ep05, _mw05, "UpdateStateMachine", UpdateStateMachine$) {
     };
-    var ValidateStateMachineDefinitionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AWSStepFunctions", "ValidateStateMachineDefinition", {}).n("SFNClient", "ValidateStateMachineDefinitionCommand").sc(ValidateStateMachineDefinition$).build() {
+    var ValidateStateMachineDefinitionCommand = class extends command5(_ep05, _mw05, "ValidateStateMachineDefinition", ValidateStateMachineDefinition$) {
     };
     var paginateGetExecutionHistory = createPaginator2(SFNClient2, GetExecutionHistoryCommand, "nextToken", "nextToken", "maxResults");
     var paginateListActivities = createPaginator2(SFNClient2, ListActivitiesCommand, "nextToken", "nextToken", "maxResults");
@@ -112302,8 +110233,9 @@ var require_dist_cjs31 = __commonJS({
   "node_modules/@aws-sdk/client-ssm/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -112367,7 +110299,7 @@ var require_dist_cjs31 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -123392,589 +121324,300 @@ var require_dist_cjs31 = __commonJS({
         super.destroy();
       }
     };
-    var AddTagsToResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "AddTagsToResource", {}).n("SSMClient", "AddTagsToResourceCommand").sc(AddTagsToResource$).build() {
-    };
-    var AssociateOpsItemRelatedItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "AssociateOpsItemRelatedItem", {}).n("SSMClient", "AssociateOpsItemRelatedItemCommand").sc(AssociateOpsItemRelatedItem$).build() {
-    };
-    var CancelCommandCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CancelCommand", {}).n("SSMClient", "CancelCommandCommand").sc(CancelCommand$).build() {
-    };
-    var CancelMaintenanceWindowExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CancelMaintenanceWindowExecution", {}).n("SSMClient", "CancelMaintenanceWindowExecutionCommand").sc(CancelMaintenanceWindowExecution$).build() {
-    };
-    var CreateActivationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateActivation", {}).n("SSMClient", "CreateActivationCommand").sc(CreateActivation$).build() {
-    };
-    var CreateAssociationBatchCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateAssociationBatch", {}).n("SSMClient", "CreateAssociationBatchCommand").sc(CreateAssociationBatch$).build() {
-    };
-    var CreateAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateAssociation", {}).n("SSMClient", "CreateAssociationCommand").sc(CreateAssociation$).build() {
-    };
-    var CreateDocumentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateDocument", {}).n("SSMClient", "CreateDocumentCommand").sc(CreateDocument$).build() {
-    };
-    var CreateMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateMaintenanceWindow", {}).n("SSMClient", "CreateMaintenanceWindowCommand").sc(CreateMaintenanceWindow$).build() {
-    };
-    var CreateOpsItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateOpsItem", {}).n("SSMClient", "CreateOpsItemCommand").sc(CreateOpsItem$).build() {
-    };
-    var CreateOpsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateOpsMetadata", {}).n("SSMClient", "CreateOpsMetadataCommand").sc(CreateOpsMetadata$).build() {
-    };
-    var CreatePatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreatePatchBaseline", {}).n("SSMClient", "CreatePatchBaselineCommand").sc(CreatePatchBaseline$).build() {
-    };
-    var CreateResourceDataSyncCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "CreateResourceDataSync", {}).n("SSMClient", "CreateResourceDataSyncCommand").sc(CreateResourceDataSync$).build() {
-    };
-    var DeleteActivationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteActivation", {}).n("SSMClient", "DeleteActivationCommand").sc(DeleteActivation$).build() {
-    };
-    var DeleteAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteAssociation", {}).n("SSMClient", "DeleteAssociationCommand").sc(DeleteAssociation$).build() {
-    };
-    var DeleteDocumentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteDocument", {}).n("SSMClient", "DeleteDocumentCommand").sc(DeleteDocument$).build() {
-    };
-    var DeleteInventoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteInventory", {}).n("SSMClient", "DeleteInventoryCommand").sc(DeleteInventory$).build() {
-    };
-    var DeleteMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteMaintenanceWindow", {}).n("SSMClient", "DeleteMaintenanceWindowCommand").sc(DeleteMaintenanceWindow$).build() {
-    };
-    var DeleteOpsItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteOpsItem", {}).n("SSMClient", "DeleteOpsItemCommand").sc(DeleteOpsItem$).build() {
-    };
-    var DeleteOpsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteOpsMetadata", {}).n("SSMClient", "DeleteOpsMetadataCommand").sc(DeleteOpsMetadata$).build() {
-    };
-    var DeleteParameterCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteParameter", {}).n("SSMClient", "DeleteParameterCommand").sc(DeleteParameter$).build() {
-    };
-    var DeleteParametersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteParameters", {}).n("SSMClient", "DeleteParametersCommand").sc(DeleteParameters$).build() {
-    };
-    var DeletePatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeletePatchBaseline", {}).n("SSMClient", "DeletePatchBaselineCommand").sc(DeletePatchBaseline$).build() {
-    };
-    var DeleteResourceDataSyncCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteResourceDataSync", {}).n("SSMClient", "DeleteResourceDataSyncCommand").sc(DeleteResourceDataSync$).build() {
-    };
-    var DeleteResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeleteResourcePolicy", {}).n("SSMClient", "DeleteResourcePolicyCommand").sc(DeleteResourcePolicy$).build() {
-    };
-    var DeregisterManagedInstanceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeregisterManagedInstance", {}).n("SSMClient", "DeregisterManagedInstanceCommand").sc(DeregisterManagedInstance$).build() {
-    };
-    var DeregisterPatchBaselineForPatchGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeregisterPatchBaselineForPatchGroup", {}).n("SSMClient", "DeregisterPatchBaselineForPatchGroupCommand").sc(DeregisterPatchBaselineForPatchGroup$).build() {
-    };
-    var DeregisterTargetFromMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeregisterTargetFromMaintenanceWindow", {}).n("SSMClient", "DeregisterTargetFromMaintenanceWindowCommand").sc(DeregisterTargetFromMaintenanceWindow$).build() {
-    };
-    var DeregisterTaskFromMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DeregisterTaskFromMaintenanceWindow", {}).n("SSMClient", "DeregisterTaskFromMaintenanceWindowCommand").sc(DeregisterTaskFromMaintenanceWindow$).build() {
-    };
-    var DescribeActivationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeActivations", {}).n("SSMClient", "DescribeActivationsCommand").sc(DescribeActivations$).build() {
-    };
-    var DescribeAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAssociation", {}).n("SSMClient", "DescribeAssociationCommand").sc(DescribeAssociation$).build() {
-    };
-    var DescribeAssociationExecutionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAssociationExecutions", {}).n("SSMClient", "DescribeAssociationExecutionsCommand").sc(DescribeAssociationExecutions$).build() {
-    };
-    var DescribeAssociationExecutionTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAssociationExecutionTargets", {}).n("SSMClient", "DescribeAssociationExecutionTargetsCommand").sc(DescribeAssociationExecutionTargets$).build() {
-    };
-    var DescribeAutomationExecutionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAutomationExecutions", {}).n("SSMClient", "DescribeAutomationExecutionsCommand").sc(DescribeAutomationExecutions$).build() {
-    };
-    var DescribeAutomationStepExecutionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAutomationStepExecutions", {}).n("SSMClient", "DescribeAutomationStepExecutionsCommand").sc(DescribeAutomationStepExecutions$).build() {
-    };
-    var DescribeAvailablePatchesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeAvailablePatches", {}).n("SSMClient", "DescribeAvailablePatchesCommand").sc(DescribeAvailablePatches$).build() {
-    };
-    var DescribeDocumentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeDocument", {}).n("SSMClient", "DescribeDocumentCommand").sc(DescribeDocument$).build() {
-    };
-    var DescribeDocumentPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeDocumentPermission", {}).n("SSMClient", "DescribeDocumentPermissionCommand").sc(DescribeDocumentPermission$).build() {
-    };
-    var DescribeEffectiveInstanceAssociationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeEffectiveInstanceAssociations", {}).n("SSMClient", "DescribeEffectiveInstanceAssociationsCommand").sc(DescribeEffectiveInstanceAssociations$).build() {
-    };
-    var DescribeEffectivePatchesForPatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeEffectivePatchesForPatchBaseline", {}).n("SSMClient", "DescribeEffectivePatchesForPatchBaselineCommand").sc(DescribeEffectivePatchesForPatchBaseline$).build() {
-    };
-    var DescribeInstanceAssociationsStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstanceAssociationsStatus", {}).n("SSMClient", "DescribeInstanceAssociationsStatusCommand").sc(DescribeInstanceAssociationsStatus$).build() {
-    };
-    var DescribeInstanceInformationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstanceInformation", {}).n("SSMClient", "DescribeInstanceInformationCommand").sc(DescribeInstanceInformation$).build() {
-    };
-    var DescribeInstancePatchesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstancePatches", {}).n("SSMClient", "DescribeInstancePatchesCommand").sc(DescribeInstancePatches$).build() {
-    };
-    var DescribeInstancePatchStatesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstancePatchStates", {}).n("SSMClient", "DescribeInstancePatchStatesCommand").sc(DescribeInstancePatchStates$).build() {
-    };
-    var DescribeInstancePatchStatesForPatchGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstancePatchStatesForPatchGroup", {}).n("SSMClient", "DescribeInstancePatchStatesForPatchGroupCommand").sc(DescribeInstancePatchStatesForPatchGroup$).build() {
-    };
-    var DescribeInstancePropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInstanceProperties", {}).n("SSMClient", "DescribeInstancePropertiesCommand").sc(DescribeInstanceProperties$).build() {
-    };
-    var DescribeInventoryDeletionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeInventoryDeletions", {}).n("SSMClient", "DescribeInventoryDeletionsCommand").sc(DescribeInventoryDeletions$).build() {
-    };
-    var DescribeMaintenanceWindowExecutionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutions", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionsCommand").sc(DescribeMaintenanceWindowExecutions$).build() {
-    };
-    var DescribeMaintenanceWindowExecutionTaskInvocationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutionTaskInvocations", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionTaskInvocationsCommand").sc(DescribeMaintenanceWindowExecutionTaskInvocations$).build() {
-    };
-    var DescribeMaintenanceWindowExecutionTasksCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowExecutionTasks", {}).n("SSMClient", "DescribeMaintenanceWindowExecutionTasksCommand").sc(DescribeMaintenanceWindowExecutionTasks$).build() {
-    };
-    var DescribeMaintenanceWindowScheduleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowSchedule", {}).n("SSMClient", "DescribeMaintenanceWindowScheduleCommand").sc(DescribeMaintenanceWindowSchedule$).build() {
-    };
-    var DescribeMaintenanceWindowsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindows", {}).n("SSMClient", "DescribeMaintenanceWindowsCommand").sc(DescribeMaintenanceWindows$).build() {
-    };
-    var DescribeMaintenanceWindowsForTargetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowsForTarget", {}).n("SSMClient", "DescribeMaintenanceWindowsForTargetCommand").sc(DescribeMaintenanceWindowsForTarget$).build() {
-    };
-    var DescribeMaintenanceWindowTargetsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowTargets", {}).n("SSMClient", "DescribeMaintenanceWindowTargetsCommand").sc(DescribeMaintenanceWindowTargets$).build() {
-    };
-    var DescribeMaintenanceWindowTasksCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeMaintenanceWindowTasks", {}).n("SSMClient", "DescribeMaintenanceWindowTasksCommand").sc(DescribeMaintenanceWindowTasks$).build() {
-    };
-    var DescribeOpsItemsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeOpsItems", {}).n("SSMClient", "DescribeOpsItemsCommand").sc(DescribeOpsItems$).build() {
-    };
-    var DescribeParametersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeParameters", {}).n("SSMClient", "DescribeParametersCommand").sc(DescribeParameters$).build() {
-    };
-    var DescribePatchBaselinesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribePatchBaselines", {}).n("SSMClient", "DescribePatchBaselinesCommand").sc(DescribePatchBaselines$).build() {
-    };
-    var DescribePatchGroupsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribePatchGroups", {}).n("SSMClient", "DescribePatchGroupsCommand").sc(DescribePatchGroups$).build() {
-    };
-    var DescribePatchGroupStateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribePatchGroupState", {}).n("SSMClient", "DescribePatchGroupStateCommand").sc(DescribePatchGroupState$).build() {
-    };
-    var DescribePatchPropertiesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribePatchProperties", {}).n("SSMClient", "DescribePatchPropertiesCommand").sc(DescribePatchProperties$).build() {
-    };
-    var DescribeSessionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DescribeSessions", {}).n("SSMClient", "DescribeSessionsCommand").sc(DescribeSessions$).build() {
-    };
-    var DisassociateOpsItemRelatedItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "DisassociateOpsItemRelatedItem", {}).n("SSMClient", "DisassociateOpsItemRelatedItemCommand").sc(DisassociateOpsItemRelatedItem$).build() {
-    };
-    var GetAccessTokenCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetAccessToken", {}).n("SSMClient", "GetAccessTokenCommand").sc(GetAccessToken$).build() {
-    };
-    var GetAutomationExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetAutomationExecution", {}).n("SSMClient", "GetAutomationExecutionCommand").sc(GetAutomationExecution$).build() {
-    };
-    var GetCalendarStateCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetCalendarState", {}).n("SSMClient", "GetCalendarStateCommand").sc(GetCalendarState$).build() {
-    };
-    var GetCommandInvocationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetCommandInvocation", {}).n("SSMClient", "GetCommandInvocationCommand").sc(GetCommandInvocation$).build() {
-    };
-    var GetConnectionStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetConnectionStatus", {}).n("SSMClient", "GetConnectionStatusCommand").sc(GetConnectionStatus$).build() {
-    };
-    var GetDefaultPatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetDefaultPatchBaseline", {}).n("SSMClient", "GetDefaultPatchBaselineCommand").sc(GetDefaultPatchBaseline$).build() {
-    };
-    var GetDeployablePatchSnapshotForInstanceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetDeployablePatchSnapshotForInstance", {}).n("SSMClient", "GetDeployablePatchSnapshotForInstanceCommand").sc(GetDeployablePatchSnapshotForInstance$).build() {
-    };
-    var GetDocumentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetDocument", {}).n("SSMClient", "GetDocumentCommand").sc(GetDocument$).build() {
-    };
-    var GetExecutionPreviewCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetExecutionPreview", {}).n("SSMClient", "GetExecutionPreviewCommand").sc(GetExecutionPreview$).build() {
-    };
-    var GetInventoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetInventory", {}).n("SSMClient", "GetInventoryCommand").sc(GetInventory$).build() {
-    };
-    var GetInventorySchemaCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetInventorySchema", {}).n("SSMClient", "GetInventorySchemaCommand").sc(GetInventorySchema$).build() {
-    };
-    var GetMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetMaintenanceWindow", {}).n("SSMClient", "GetMaintenanceWindowCommand").sc(GetMaintenanceWindow$).build() {
-    };
-    var GetMaintenanceWindowExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetMaintenanceWindowExecution", {}).n("SSMClient", "GetMaintenanceWindowExecutionCommand").sc(GetMaintenanceWindowExecution$).build() {
-    };
-    var GetMaintenanceWindowExecutionTaskCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetMaintenanceWindowExecutionTask", {}).n("SSMClient", "GetMaintenanceWindowExecutionTaskCommand").sc(GetMaintenanceWindowExecutionTask$).build() {
-    };
-    var GetMaintenanceWindowExecutionTaskInvocationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetMaintenanceWindowExecutionTaskInvocation", {}).n("SSMClient", "GetMaintenanceWindowExecutionTaskInvocationCommand").sc(GetMaintenanceWindowExecutionTaskInvocation$).build() {
-    };
-    var GetMaintenanceWindowTaskCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetMaintenanceWindowTask", {}).n("SSMClient", "GetMaintenanceWindowTaskCommand").sc(GetMaintenanceWindowTask$).build() {
-    };
-    var GetOpsItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetOpsItem", {}).n("SSMClient", "GetOpsItemCommand").sc(GetOpsItem$).build() {
-    };
-    var GetOpsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetOpsMetadata", {}).n("SSMClient", "GetOpsMetadataCommand").sc(GetOpsMetadata$).build() {
-    };
-    var GetOpsSummaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetOpsSummary", {}).n("SSMClient", "GetOpsSummaryCommand").sc(GetOpsSummary$).build() {
-    };
-    var GetParameterCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetParameter", {}).n("SSMClient", "GetParameterCommand").sc(GetParameter$).build() {
-    };
-    var GetParameterHistoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetParameterHistory", {}).n("SSMClient", "GetParameterHistoryCommand").sc(GetParameterHistory$).build() {
-    };
-    var GetParametersByPathCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetParametersByPath", {}).n("SSMClient", "GetParametersByPathCommand").sc(GetParametersByPath$).build() {
-    };
-    var GetParametersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetParameters", {}).n("SSMClient", "GetParametersCommand").sc(GetParameters$).build() {
-    };
-    var GetPatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetPatchBaseline", {}).n("SSMClient", "GetPatchBaselineCommand").sc(GetPatchBaseline$).build() {
-    };
-    var GetPatchBaselineForPatchGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetPatchBaselineForPatchGroup", {}).n("SSMClient", "GetPatchBaselineForPatchGroupCommand").sc(GetPatchBaselineForPatchGroup$).build() {
-    };
-    var GetResourcePoliciesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetResourcePolicies", {}).n("SSMClient", "GetResourcePoliciesCommand").sc(GetResourcePolicies$).build() {
-    };
-    var GetServiceSettingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "GetServiceSetting", {}).n("SSMClient", "GetServiceSettingCommand").sc(GetServiceSetting$).build() {
-    };
-    var LabelParameterVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "LabelParameterVersion", {}).n("SSMClient", "LabelParameterVersionCommand").sc(LabelParameterVersion$).build() {
-    };
-    var ListAssociationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListAssociations", {}).n("SSMClient", "ListAssociationsCommand").sc(ListAssociations$).build() {
-    };
-    var ListAssociationVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListAssociationVersions", {}).n("SSMClient", "ListAssociationVersionsCommand").sc(ListAssociationVersions$).build() {
-    };
-    var ListCommandInvocationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListCommandInvocations", {}).n("SSMClient", "ListCommandInvocationsCommand").sc(ListCommandInvocations$).build() {
-    };
-    var ListCommandsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListCommands", {}).n("SSMClient", "ListCommandsCommand").sc(ListCommands$).build() {
-    };
-    var ListComplianceItemsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListComplianceItems", {}).n("SSMClient", "ListComplianceItemsCommand").sc(ListComplianceItems$).build() {
-    };
-    var ListComplianceSummariesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListComplianceSummaries", {}).n("SSMClient", "ListComplianceSummariesCommand").sc(ListComplianceSummaries$).build() {
-    };
-    var ListDocumentMetadataHistoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListDocumentMetadataHistory", {}).n("SSMClient", "ListDocumentMetadataHistoryCommand").sc(ListDocumentMetadataHistory$).build() {
-    };
-    var ListDocumentsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListDocuments", {}).n("SSMClient", "ListDocumentsCommand").sc(ListDocuments$).build() {
-    };
-    var ListDocumentVersionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListDocumentVersions", {}).n("SSMClient", "ListDocumentVersionsCommand").sc(ListDocumentVersions$).build() {
-    };
-    var ListInventoryEntriesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListInventoryEntries", {}).n("SSMClient", "ListInventoryEntriesCommand").sc(ListInventoryEntries$).build() {
-    };
-    var ListNodesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListNodes", {}).n("SSMClient", "ListNodesCommand").sc(ListNodes$).build() {
-    };
-    var ListNodesSummaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListNodesSummary", {}).n("SSMClient", "ListNodesSummaryCommand").sc(ListNodesSummary$).build() {
-    };
-    var ListOpsItemEventsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListOpsItemEvents", {}).n("SSMClient", "ListOpsItemEventsCommand").sc(ListOpsItemEvents$).build() {
-    };
-    var ListOpsItemRelatedItemsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListOpsItemRelatedItems", {}).n("SSMClient", "ListOpsItemRelatedItemsCommand").sc(ListOpsItemRelatedItems$).build() {
-    };
-    var ListOpsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListOpsMetadata", {}).n("SSMClient", "ListOpsMetadataCommand").sc(ListOpsMetadata$).build() {
-    };
-    var ListResourceComplianceSummariesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListResourceComplianceSummaries", {}).n("SSMClient", "ListResourceComplianceSummariesCommand").sc(ListResourceComplianceSummaries$).build() {
-    };
-    var ListResourceDataSyncCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListResourceDataSync", {}).n("SSMClient", "ListResourceDataSyncCommand").sc(ListResourceDataSync$).build() {
-    };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ListTagsForResource", {}).n("SSMClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
-    };
-    var ModifyDocumentPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ModifyDocumentPermission", {}).n("SSMClient", "ModifyDocumentPermissionCommand").sc(ModifyDocumentPermission$).build() {
-    };
-    var PutComplianceItemsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "PutComplianceItems", {}).n("SSMClient", "PutComplianceItemsCommand").sc(PutComplianceItems$).build() {
-    };
-    var PutInventoryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "PutInventory", {}).n("SSMClient", "PutInventoryCommand").sc(PutInventory$).build() {
-    };
-    var PutParameterCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "PutParameter", {}).n("SSMClient", "PutParameterCommand").sc(PutParameter$).build() {
-    };
-    var PutResourcePolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "PutResourcePolicy", {}).n("SSMClient", "PutResourcePolicyCommand").sc(PutResourcePolicy$).build() {
-    };
-    var RegisterDefaultPatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "RegisterDefaultPatchBaseline", {}).n("SSMClient", "RegisterDefaultPatchBaselineCommand").sc(RegisterDefaultPatchBaseline$).build() {
-    };
-    var RegisterPatchBaselineForPatchGroupCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "RegisterPatchBaselineForPatchGroup", {}).n("SSMClient", "RegisterPatchBaselineForPatchGroupCommand").sc(RegisterPatchBaselineForPatchGroup$).build() {
-    };
-    var RegisterTargetWithMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "RegisterTargetWithMaintenanceWindow", {}).n("SSMClient", "RegisterTargetWithMaintenanceWindowCommand").sc(RegisterTargetWithMaintenanceWindow$).build() {
-    };
-    var RegisterTaskWithMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "RegisterTaskWithMaintenanceWindow", {}).n("SSMClient", "RegisterTaskWithMaintenanceWindowCommand").sc(RegisterTaskWithMaintenanceWindow$).build() {
-    };
-    var RemoveTagsFromResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "RemoveTagsFromResource", {}).n("SSMClient", "RemoveTagsFromResourceCommand").sc(RemoveTagsFromResource$).build() {
-    };
-    var ResetServiceSettingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ResetServiceSetting", {}).n("SSMClient", "ResetServiceSettingCommand").sc(ResetServiceSetting$).build() {
-    };
-    var ResumeSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "ResumeSession", {}).n("SSMClient", "ResumeSessionCommand").sc(ResumeSession$).build() {
-    };
-    var SendAutomationSignalCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "SendAutomationSignal", {}).n("SSMClient", "SendAutomationSignalCommand").sc(SendAutomationSignal$).build() {
-    };
-    var SendCommandCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "SendCommand", {}).n("SSMClient", "SendCommandCommand").sc(SendCommand$).build() {
-    };
-    var StartAccessRequestCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartAccessRequest", {}).n("SSMClient", "StartAccessRequestCommand").sc(StartAccessRequest$).build() {
-    };
-    var StartAssociationsOnceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartAssociationsOnce", {}).n("SSMClient", "StartAssociationsOnceCommand").sc(StartAssociationsOnce$).build() {
-    };
-    var StartAutomationExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartAutomationExecution", {}).n("SSMClient", "StartAutomationExecutionCommand").sc(StartAutomationExecution$).build() {
-    };
-    var StartChangeRequestExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartChangeRequestExecution", {}).n("SSMClient", "StartChangeRequestExecutionCommand").sc(StartChangeRequestExecution$).build() {
-    };
-    var StartExecutionPreviewCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartExecutionPreview", {}).n("SSMClient", "StartExecutionPreviewCommand").sc(StartExecutionPreview$).build() {
-    };
-    var StartSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StartSession", {}).n("SSMClient", "StartSessionCommand").sc(StartSession$).build() {
-    };
-    var StopAutomationExecutionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "StopAutomationExecution", {}).n("SSMClient", "StopAutomationExecutionCommand").sc(StopAutomationExecution$).build() {
-    };
-    var TerminateSessionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "TerminateSession", {}).n("SSMClient", "TerminateSessionCommand").sc(TerminateSession$).build() {
-    };
-    var UnlabelParameterVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UnlabelParameterVersion", {}).n("SSMClient", "UnlabelParameterVersionCommand").sc(UnlabelParameterVersion$).build() {
-    };
-    var UpdateAssociationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateAssociation", {}).n("SSMClient", "UpdateAssociationCommand").sc(UpdateAssociation$).build() {
-    };
-    var UpdateAssociationStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateAssociationStatus", {}).n("SSMClient", "UpdateAssociationStatusCommand").sc(UpdateAssociationStatus$).build() {
-    };
-    var UpdateDocumentCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateDocument", {}).n("SSMClient", "UpdateDocumentCommand").sc(UpdateDocument$).build() {
-    };
-    var UpdateDocumentDefaultVersionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateDocumentDefaultVersion", {}).n("SSMClient", "UpdateDocumentDefaultVersionCommand").sc(UpdateDocumentDefaultVersion$).build() {
-    };
-    var UpdateDocumentMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateDocumentMetadata", {}).n("SSMClient", "UpdateDocumentMetadataCommand").sc(UpdateDocumentMetadata$).build() {
-    };
-    var UpdateMaintenanceWindowCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateMaintenanceWindow", {}).n("SSMClient", "UpdateMaintenanceWindowCommand").sc(UpdateMaintenanceWindow$).build() {
-    };
-    var UpdateMaintenanceWindowTargetCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateMaintenanceWindowTarget", {}).n("SSMClient", "UpdateMaintenanceWindowTargetCommand").sc(UpdateMaintenanceWindowTarget$).build() {
-    };
-    var UpdateMaintenanceWindowTaskCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateMaintenanceWindowTask", {}).n("SSMClient", "UpdateMaintenanceWindowTaskCommand").sc(UpdateMaintenanceWindowTask$).build() {
-    };
-    var UpdateManagedInstanceRoleCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateManagedInstanceRole", {}).n("SSMClient", "UpdateManagedInstanceRoleCommand").sc(UpdateManagedInstanceRole$).build() {
-    };
-    var UpdateOpsItemCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateOpsItem", {}).n("SSMClient", "UpdateOpsItemCommand").sc(UpdateOpsItem$).build() {
-    };
-    var UpdateOpsMetadataCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateOpsMetadata", {}).n("SSMClient", "UpdateOpsMetadataCommand").sc(UpdateOpsMetadata$).build() {
-    };
-    var UpdatePatchBaselineCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdatePatchBaseline", {}).n("SSMClient", "UpdatePatchBaselineCommand").sc(UpdatePatchBaseline$).build() {
-    };
-    var UpdateResourceDataSyncCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateResourceDataSync", {}).n("SSMClient", "UpdateResourceDataSyncCommand").sc(UpdateResourceDataSync$).build() {
-    };
-    var UpdateServiceSettingCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSSM", "UpdateServiceSetting", {}).n("SSMClient", "UpdateServiceSettingCommand").sc(UpdateServiceSetting$).build() {
+    var command5 = makeBuilder2(commonParams5, "AmazonSSM", "SSMClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AddTagsToResourceCommand = class extends command5(_ep05, _mw05, "AddTagsToResource", AddTagsToResource$) {
+    };
+    var AssociateOpsItemRelatedItemCommand = class extends command5(_ep05, _mw05, "AssociateOpsItemRelatedItem", AssociateOpsItemRelatedItem$) {
+    };
+    var CancelCommandCommand = class extends command5(_ep05, _mw05, "CancelCommand", CancelCommand$) {
+    };
+    var CancelMaintenanceWindowExecutionCommand = class extends command5(_ep05, _mw05, "CancelMaintenanceWindowExecution", CancelMaintenanceWindowExecution$) {
+    };
+    var CreateActivationCommand = class extends command5(_ep05, _mw05, "CreateActivation", CreateActivation$) {
+    };
+    var CreateAssociationBatchCommand = class extends command5(_ep05, _mw05, "CreateAssociationBatch", CreateAssociationBatch$) {
+    };
+    var CreateAssociationCommand = class extends command5(_ep05, _mw05, "CreateAssociation", CreateAssociation$) {
+    };
+    var CreateDocumentCommand = class extends command5(_ep05, _mw05, "CreateDocument", CreateDocument$) {
+    };
+    var CreateMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "CreateMaintenanceWindow", CreateMaintenanceWindow$) {
+    };
+    var CreateOpsItemCommand = class extends command5(_ep05, _mw05, "CreateOpsItem", CreateOpsItem$) {
+    };
+    var CreateOpsMetadataCommand = class extends command5(_ep05, _mw05, "CreateOpsMetadata", CreateOpsMetadata$) {
+    };
+    var CreatePatchBaselineCommand = class extends command5(_ep05, _mw05, "CreatePatchBaseline", CreatePatchBaseline$) {
+    };
+    var CreateResourceDataSyncCommand = class extends command5(_ep05, _mw05, "CreateResourceDataSync", CreateResourceDataSync$) {
+    };
+    var DeleteActivationCommand = class extends command5(_ep05, _mw05, "DeleteActivation", DeleteActivation$) {
+    };
+    var DeleteAssociationCommand = class extends command5(_ep05, _mw05, "DeleteAssociation", DeleteAssociation$) {
+    };
+    var DeleteDocumentCommand = class extends command5(_ep05, _mw05, "DeleteDocument", DeleteDocument$) {
+    };
+    var DeleteInventoryCommand = class extends command5(_ep05, _mw05, "DeleteInventory", DeleteInventory$) {
+    };
+    var DeleteMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "DeleteMaintenanceWindow", DeleteMaintenanceWindow$) {
+    };
+    var DeleteOpsItemCommand = class extends command5(_ep05, _mw05, "DeleteOpsItem", DeleteOpsItem$) {
+    };
+    var DeleteOpsMetadataCommand = class extends command5(_ep05, _mw05, "DeleteOpsMetadata", DeleteOpsMetadata$) {
+    };
+    var DeleteParameterCommand = class extends command5(_ep05, _mw05, "DeleteParameter", DeleteParameter$) {
+    };
+    var DeleteParametersCommand = class extends command5(_ep05, _mw05, "DeleteParameters", DeleteParameters$) {
+    };
+    var DeletePatchBaselineCommand = class extends command5(_ep05, _mw05, "DeletePatchBaseline", DeletePatchBaseline$) {
+    };
+    var DeleteResourceDataSyncCommand = class extends command5(_ep05, _mw05, "DeleteResourceDataSync", DeleteResourceDataSync$) {
+    };
+    var DeleteResourcePolicyCommand = class extends command5(_ep05, _mw05, "DeleteResourcePolicy", DeleteResourcePolicy$) {
+    };
+    var DeregisterManagedInstanceCommand = class extends command5(_ep05, _mw05, "DeregisterManagedInstance", DeregisterManagedInstance$) {
+    };
+    var DeregisterPatchBaselineForPatchGroupCommand = class extends command5(_ep05, _mw05, "DeregisterPatchBaselineForPatchGroup", DeregisterPatchBaselineForPatchGroup$) {
+    };
+    var DeregisterTargetFromMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "DeregisterTargetFromMaintenanceWindow", DeregisterTargetFromMaintenanceWindow$) {
+    };
+    var DeregisterTaskFromMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "DeregisterTaskFromMaintenanceWindow", DeregisterTaskFromMaintenanceWindow$) {
+    };
+    var DescribeActivationsCommand = class extends command5(_ep05, _mw05, "DescribeActivations", DescribeActivations$) {
+    };
+    var DescribeAssociationCommand = class extends command5(_ep05, _mw05, "DescribeAssociation", DescribeAssociation$) {
+    };
+    var DescribeAssociationExecutionsCommand = class extends command5(_ep05, _mw05, "DescribeAssociationExecutions", DescribeAssociationExecutions$) {
+    };
+    var DescribeAssociationExecutionTargetsCommand = class extends command5(_ep05, _mw05, "DescribeAssociationExecutionTargets", DescribeAssociationExecutionTargets$) {
+    };
+    var DescribeAutomationExecutionsCommand = class extends command5(_ep05, _mw05, "DescribeAutomationExecutions", DescribeAutomationExecutions$) {
+    };
+    var DescribeAutomationStepExecutionsCommand = class extends command5(_ep05, _mw05, "DescribeAutomationStepExecutions", DescribeAutomationStepExecutions$) {
+    };
+    var DescribeAvailablePatchesCommand = class extends command5(_ep05, _mw05, "DescribeAvailablePatches", DescribeAvailablePatches$) {
+    };
+    var DescribeDocumentCommand = class extends command5(_ep05, _mw05, "DescribeDocument", DescribeDocument$) {
+    };
+    var DescribeDocumentPermissionCommand = class extends command5(_ep05, _mw05, "DescribeDocumentPermission", DescribeDocumentPermission$) {
+    };
+    var DescribeEffectiveInstanceAssociationsCommand = class extends command5(_ep05, _mw05, "DescribeEffectiveInstanceAssociations", DescribeEffectiveInstanceAssociations$) {
+    };
+    var DescribeEffectivePatchesForPatchBaselineCommand = class extends command5(_ep05, _mw05, "DescribeEffectivePatchesForPatchBaseline", DescribeEffectivePatchesForPatchBaseline$) {
+    };
+    var DescribeInstanceAssociationsStatusCommand = class extends command5(_ep05, _mw05, "DescribeInstanceAssociationsStatus", DescribeInstanceAssociationsStatus$) {
+    };
+    var DescribeInstanceInformationCommand = class extends command5(_ep05, _mw05, "DescribeInstanceInformation", DescribeInstanceInformation$) {
+    };
+    var DescribeInstancePatchesCommand = class extends command5(_ep05, _mw05, "DescribeInstancePatches", DescribeInstancePatches$) {
+    };
+    var DescribeInstancePatchStatesCommand = class extends command5(_ep05, _mw05, "DescribeInstancePatchStates", DescribeInstancePatchStates$) {
+    };
+    var DescribeInstancePatchStatesForPatchGroupCommand = class extends command5(_ep05, _mw05, "DescribeInstancePatchStatesForPatchGroup", DescribeInstancePatchStatesForPatchGroup$) {
+    };
+    var DescribeInstancePropertiesCommand = class extends command5(_ep05, _mw05, "DescribeInstanceProperties", DescribeInstanceProperties$) {
+    };
+    var DescribeInventoryDeletionsCommand = class extends command5(_ep05, _mw05, "DescribeInventoryDeletions", DescribeInventoryDeletions$) {
+    };
+    var DescribeMaintenanceWindowExecutionsCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowExecutions", DescribeMaintenanceWindowExecutions$) {
+    };
+    var DescribeMaintenanceWindowExecutionTaskInvocationsCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowExecutionTaskInvocations", DescribeMaintenanceWindowExecutionTaskInvocations$) {
+    };
+    var DescribeMaintenanceWindowExecutionTasksCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowExecutionTasks", DescribeMaintenanceWindowExecutionTasks$) {
+    };
+    var DescribeMaintenanceWindowScheduleCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowSchedule", DescribeMaintenanceWindowSchedule$) {
+    };
+    var DescribeMaintenanceWindowsCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindows", DescribeMaintenanceWindows$) {
+    };
+    var DescribeMaintenanceWindowsForTargetCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowsForTarget", DescribeMaintenanceWindowsForTarget$) {
+    };
+    var DescribeMaintenanceWindowTargetsCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowTargets", DescribeMaintenanceWindowTargets$) {
+    };
+    var DescribeMaintenanceWindowTasksCommand = class extends command5(_ep05, _mw05, "DescribeMaintenanceWindowTasks", DescribeMaintenanceWindowTasks$) {
+    };
+    var DescribeOpsItemsCommand = class extends command5(_ep05, _mw05, "DescribeOpsItems", DescribeOpsItems$) {
+    };
+    var DescribeParametersCommand = class extends command5(_ep05, _mw05, "DescribeParameters", DescribeParameters$) {
+    };
+    var DescribePatchBaselinesCommand = class extends command5(_ep05, _mw05, "DescribePatchBaselines", DescribePatchBaselines$) {
+    };
+    var DescribePatchGroupsCommand = class extends command5(_ep05, _mw05, "DescribePatchGroups", DescribePatchGroups$) {
+    };
+    var DescribePatchGroupStateCommand = class extends command5(_ep05, _mw05, "DescribePatchGroupState", DescribePatchGroupState$) {
+    };
+    var DescribePatchPropertiesCommand = class extends command5(_ep05, _mw05, "DescribePatchProperties", DescribePatchProperties$) {
+    };
+    var DescribeSessionsCommand = class extends command5(_ep05, _mw05, "DescribeSessions", DescribeSessions$) {
+    };
+    var DisassociateOpsItemRelatedItemCommand = class extends command5(_ep05, _mw05, "DisassociateOpsItemRelatedItem", DisassociateOpsItemRelatedItem$) {
+    };
+    var GetAccessTokenCommand = class extends command5(_ep05, _mw05, "GetAccessToken", GetAccessToken$) {
+    };
+    var GetAutomationExecutionCommand = class extends command5(_ep05, _mw05, "GetAutomationExecution", GetAutomationExecution$) {
+    };
+    var GetCalendarStateCommand = class extends command5(_ep05, _mw05, "GetCalendarState", GetCalendarState$) {
+    };
+    var GetCommandInvocationCommand = class extends command5(_ep05, _mw05, "GetCommandInvocation", GetCommandInvocation$) {
+    };
+    var GetConnectionStatusCommand = class extends command5(_ep05, _mw05, "GetConnectionStatus", GetConnectionStatus$) {
+    };
+    var GetDefaultPatchBaselineCommand = class extends command5(_ep05, _mw05, "GetDefaultPatchBaseline", GetDefaultPatchBaseline$) {
+    };
+    var GetDeployablePatchSnapshotForInstanceCommand = class extends command5(_ep05, _mw05, "GetDeployablePatchSnapshotForInstance", GetDeployablePatchSnapshotForInstance$) {
+    };
+    var GetDocumentCommand = class extends command5(_ep05, _mw05, "GetDocument", GetDocument$) {
+    };
+    var GetExecutionPreviewCommand = class extends command5(_ep05, _mw05, "GetExecutionPreview", GetExecutionPreview$) {
+    };
+    var GetInventoryCommand = class extends command5(_ep05, _mw05, "GetInventory", GetInventory$) {
+    };
+    var GetInventorySchemaCommand = class extends command5(_ep05, _mw05, "GetInventorySchema", GetInventorySchema$) {
+    };
+    var GetMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "GetMaintenanceWindow", GetMaintenanceWindow$) {
+    };
+    var GetMaintenanceWindowExecutionCommand = class extends command5(_ep05, _mw05, "GetMaintenanceWindowExecution", GetMaintenanceWindowExecution$) {
+    };
+    var GetMaintenanceWindowExecutionTaskCommand = class extends command5(_ep05, _mw05, "GetMaintenanceWindowExecutionTask", GetMaintenanceWindowExecutionTask$) {
+    };
+    var GetMaintenanceWindowExecutionTaskInvocationCommand = class extends command5(_ep05, _mw05, "GetMaintenanceWindowExecutionTaskInvocation", GetMaintenanceWindowExecutionTaskInvocation$) {
+    };
+    var GetMaintenanceWindowTaskCommand = class extends command5(_ep05, _mw05, "GetMaintenanceWindowTask", GetMaintenanceWindowTask$) {
+    };
+    var GetOpsItemCommand = class extends command5(_ep05, _mw05, "GetOpsItem", GetOpsItem$) {
+    };
+    var GetOpsMetadataCommand = class extends command5(_ep05, _mw05, "GetOpsMetadata", GetOpsMetadata$) {
+    };
+    var GetOpsSummaryCommand = class extends command5(_ep05, _mw05, "GetOpsSummary", GetOpsSummary$) {
+    };
+    var GetParameterCommand = class extends command5(_ep05, _mw05, "GetParameter", GetParameter$) {
+    };
+    var GetParameterHistoryCommand = class extends command5(_ep05, _mw05, "GetParameterHistory", GetParameterHistory$) {
+    };
+    var GetParametersByPathCommand2 = class extends command5(_ep05, _mw05, "GetParametersByPath", GetParametersByPath$) {
+    };
+    var GetParametersCommand = class extends command5(_ep05, _mw05, "GetParameters", GetParameters$) {
+    };
+    var GetPatchBaselineCommand = class extends command5(_ep05, _mw05, "GetPatchBaseline", GetPatchBaseline$) {
+    };
+    var GetPatchBaselineForPatchGroupCommand = class extends command5(_ep05, _mw05, "GetPatchBaselineForPatchGroup", GetPatchBaselineForPatchGroup$) {
+    };
+    var GetResourcePoliciesCommand = class extends command5(_ep05, _mw05, "GetResourcePolicies", GetResourcePolicies$) {
+    };
+    var GetServiceSettingCommand = class extends command5(_ep05, _mw05, "GetServiceSetting", GetServiceSetting$) {
+    };
+    var LabelParameterVersionCommand = class extends command5(_ep05, _mw05, "LabelParameterVersion", LabelParameterVersion$) {
+    };
+    var ListAssociationsCommand = class extends command5(_ep05, _mw05, "ListAssociations", ListAssociations$) {
+    };
+    var ListAssociationVersionsCommand = class extends command5(_ep05, _mw05, "ListAssociationVersions", ListAssociationVersions$) {
+    };
+    var ListCommandInvocationsCommand = class extends command5(_ep05, _mw05, "ListCommandInvocations", ListCommandInvocations$) {
+    };
+    var ListCommandsCommand = class extends command5(_ep05, _mw05, "ListCommands", ListCommands$) {
+    };
+    var ListComplianceItemsCommand = class extends command5(_ep05, _mw05, "ListComplianceItems", ListComplianceItems$) {
+    };
+    var ListComplianceSummariesCommand = class extends command5(_ep05, _mw05, "ListComplianceSummaries", ListComplianceSummaries$) {
+    };
+    var ListDocumentMetadataHistoryCommand = class extends command5(_ep05, _mw05, "ListDocumentMetadataHistory", ListDocumentMetadataHistory$) {
+    };
+    var ListDocumentsCommand = class extends command5(_ep05, _mw05, "ListDocuments", ListDocuments$) {
+    };
+    var ListDocumentVersionsCommand = class extends command5(_ep05, _mw05, "ListDocumentVersions", ListDocumentVersions$) {
+    };
+    var ListInventoryEntriesCommand = class extends command5(_ep05, _mw05, "ListInventoryEntries", ListInventoryEntries$) {
+    };
+    var ListNodesCommand = class extends command5(_ep05, _mw05, "ListNodes", ListNodes$) {
+    };
+    var ListNodesSummaryCommand = class extends command5(_ep05, _mw05, "ListNodesSummary", ListNodesSummary$) {
+    };
+    var ListOpsItemEventsCommand = class extends command5(_ep05, _mw05, "ListOpsItemEvents", ListOpsItemEvents$) {
+    };
+    var ListOpsItemRelatedItemsCommand = class extends command5(_ep05, _mw05, "ListOpsItemRelatedItems", ListOpsItemRelatedItems$) {
+    };
+    var ListOpsMetadataCommand = class extends command5(_ep05, _mw05, "ListOpsMetadata", ListOpsMetadata$) {
+    };
+    var ListResourceComplianceSummariesCommand = class extends command5(_ep05, _mw05, "ListResourceComplianceSummaries", ListResourceComplianceSummaries$) {
+    };
+    var ListResourceDataSyncCommand = class extends command5(_ep05, _mw05, "ListResourceDataSync", ListResourceDataSync$) {
+    };
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
+    };
+    var ModifyDocumentPermissionCommand = class extends command5(_ep05, _mw05, "ModifyDocumentPermission", ModifyDocumentPermission$) {
+    };
+    var PutComplianceItemsCommand = class extends command5(_ep05, _mw05, "PutComplianceItems", PutComplianceItems$) {
+    };
+    var PutInventoryCommand = class extends command5(_ep05, _mw05, "PutInventory", PutInventory$) {
+    };
+    var PutParameterCommand = class extends command5(_ep05, _mw05, "PutParameter", PutParameter$) {
+    };
+    var PutResourcePolicyCommand = class extends command5(_ep05, _mw05, "PutResourcePolicy", PutResourcePolicy$) {
+    };
+    var RegisterDefaultPatchBaselineCommand = class extends command5(_ep05, _mw05, "RegisterDefaultPatchBaseline", RegisterDefaultPatchBaseline$) {
+    };
+    var RegisterPatchBaselineForPatchGroupCommand = class extends command5(_ep05, _mw05, "RegisterPatchBaselineForPatchGroup", RegisterPatchBaselineForPatchGroup$) {
+    };
+    var RegisterTargetWithMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "RegisterTargetWithMaintenanceWindow", RegisterTargetWithMaintenanceWindow$) {
+    };
+    var RegisterTaskWithMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "RegisterTaskWithMaintenanceWindow", RegisterTaskWithMaintenanceWindow$) {
+    };
+    var RemoveTagsFromResourceCommand = class extends command5(_ep05, _mw05, "RemoveTagsFromResource", RemoveTagsFromResource$) {
+    };
+    var ResetServiceSettingCommand = class extends command5(_ep05, _mw05, "ResetServiceSetting", ResetServiceSetting$) {
+    };
+    var ResumeSessionCommand = class extends command5(_ep05, _mw05, "ResumeSession", ResumeSession$) {
+    };
+    var SendAutomationSignalCommand = class extends command5(_ep05, _mw05, "SendAutomationSignal", SendAutomationSignal$) {
+    };
+    var SendCommandCommand = class extends command5(_ep05, _mw05, "SendCommand", SendCommand$) {
+    };
+    var StartAccessRequestCommand = class extends command5(_ep05, _mw05, "StartAccessRequest", StartAccessRequest$) {
+    };
+    var StartAssociationsOnceCommand = class extends command5(_ep05, _mw05, "StartAssociationsOnce", StartAssociationsOnce$) {
+    };
+    var StartAutomationExecutionCommand = class extends command5(_ep05, _mw05, "StartAutomationExecution", StartAutomationExecution$) {
+    };
+    var StartChangeRequestExecutionCommand = class extends command5(_ep05, _mw05, "StartChangeRequestExecution", StartChangeRequestExecution$) {
+    };
+    var StartExecutionPreviewCommand = class extends command5(_ep05, _mw05, "StartExecutionPreview", StartExecutionPreview$) {
+    };
+    var StartSessionCommand = class extends command5(_ep05, _mw05, "StartSession", StartSession$) {
+    };
+    var StopAutomationExecutionCommand = class extends command5(_ep05, _mw05, "StopAutomationExecution", StopAutomationExecution$) {
+    };
+    var TerminateSessionCommand = class extends command5(_ep05, _mw05, "TerminateSession", TerminateSession$) {
+    };
+    var UnlabelParameterVersionCommand = class extends command5(_ep05, _mw05, "UnlabelParameterVersion", UnlabelParameterVersion$) {
+    };
+    var UpdateAssociationCommand = class extends command5(_ep05, _mw05, "UpdateAssociation", UpdateAssociation$) {
+    };
+    var UpdateAssociationStatusCommand = class extends command5(_ep05, _mw05, "UpdateAssociationStatus", UpdateAssociationStatus$) {
+    };
+    var UpdateDocumentCommand = class extends command5(_ep05, _mw05, "UpdateDocument", UpdateDocument$) {
+    };
+    var UpdateDocumentDefaultVersionCommand = class extends command5(_ep05, _mw05, "UpdateDocumentDefaultVersion", UpdateDocumentDefaultVersion$) {
+    };
+    var UpdateDocumentMetadataCommand = class extends command5(_ep05, _mw05, "UpdateDocumentMetadata", UpdateDocumentMetadata$) {
+    };
+    var UpdateMaintenanceWindowCommand = class extends command5(_ep05, _mw05, "UpdateMaintenanceWindow", UpdateMaintenanceWindow$) {
+    };
+    var UpdateMaintenanceWindowTargetCommand = class extends command5(_ep05, _mw05, "UpdateMaintenanceWindowTarget", UpdateMaintenanceWindowTarget$) {
+    };
+    var UpdateMaintenanceWindowTaskCommand = class extends command5(_ep05, _mw05, "UpdateMaintenanceWindowTask", UpdateMaintenanceWindowTask$) {
+    };
+    var UpdateManagedInstanceRoleCommand = class extends command5(_ep05, _mw05, "UpdateManagedInstanceRole", UpdateManagedInstanceRole$) {
+    };
+    var UpdateOpsItemCommand = class extends command5(_ep05, _mw05, "UpdateOpsItem", UpdateOpsItem$) {
+    };
+    var UpdateOpsMetadataCommand = class extends command5(_ep05, _mw05, "UpdateOpsMetadata", UpdateOpsMetadata$) {
+    };
+    var UpdatePatchBaselineCommand = class extends command5(_ep05, _mw05, "UpdatePatchBaseline", UpdatePatchBaseline$) {
+    };
+    var UpdateResourceDataSyncCommand = class extends command5(_ep05, _mw05, "UpdateResourceDataSync", UpdateResourceDataSync$) {
+    };
+    var UpdateServiceSettingCommand = class extends command5(_ep05, _mw05, "UpdateServiceSetting", UpdateServiceSetting$) {
     };
     var paginateDescribeActivations = createPaginator2(SSMClient2, DescribeActivationsCommand, "NextToken", "NextToken", "MaxResults");
     var paginateDescribeAssociationExecutions = createPaginator2(SSMClient2, DescribeAssociationExecutionsCommand, "NextToken", "NextToken", "MaxResults");
@@ -126194,8 +123837,9 @@ var require_dist_cjs32 = __commonJS({
   "node_modules/@aws-sdk/client-sns/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -126259,7 +123903,7 @@ var require_dist_cjs32 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -128641,173 +126285,92 @@ var require_dist_cjs32 = __commonJS({
         super.destroy();
       }
     };
-    var AddPermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "AddPermission", {}).n("SNSClient", "AddPermissionCommand").sc(AddPermission$).build() {
+    var command5 = makeBuilder2(commonParams5, "AmazonSimpleNotificationService", "SNSClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var AddPermissionCommand = class extends command5(_ep05, _mw05, "AddPermission", AddPermission$) {
     };
-    var CheckIfPhoneNumberIsOptedOutCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "CheckIfPhoneNumberIsOptedOut", {}).n("SNSClient", "CheckIfPhoneNumberIsOptedOutCommand").sc(CheckIfPhoneNumberIsOptedOut$).build() {
+    var CheckIfPhoneNumberIsOptedOutCommand = class extends command5(_ep05, _mw05, "CheckIfPhoneNumberIsOptedOut", CheckIfPhoneNumberIsOptedOut$) {
     };
-    var ConfirmSubscriptionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ConfirmSubscription", {}).n("SNSClient", "ConfirmSubscriptionCommand").sc(ConfirmSubscription$).build() {
+    var ConfirmSubscriptionCommand = class extends command5(_ep05, _mw05, "ConfirmSubscription", ConfirmSubscription$) {
     };
-    var CreatePlatformApplicationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "CreatePlatformApplication", {}).n("SNSClient", "CreatePlatformApplicationCommand").sc(CreatePlatformApplication$).build() {
+    var CreatePlatformApplicationCommand = class extends command5(_ep05, _mw05, "CreatePlatformApplication", CreatePlatformApplication$) {
     };
-    var CreatePlatformEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "CreatePlatformEndpoint", {}).n("SNSClient", "CreatePlatformEndpointCommand").sc(CreatePlatformEndpoint$).build() {
+    var CreatePlatformEndpointCommand = class extends command5(_ep05, _mw05, "CreatePlatformEndpoint", CreatePlatformEndpoint$) {
     };
-    var CreateSMSSandboxPhoneNumberCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "CreateSMSSandboxPhoneNumber", {}).n("SNSClient", "CreateSMSSandboxPhoneNumberCommand").sc(CreateSMSSandboxPhoneNumber$).build() {
+    var CreateSMSSandboxPhoneNumberCommand = class extends command5(_ep05, _mw05, "CreateSMSSandboxPhoneNumber", CreateSMSSandboxPhoneNumber$) {
     };
-    var CreateTopicCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "CreateTopic", {}).n("SNSClient", "CreateTopicCommand").sc(CreateTopic$).build() {
+    var CreateTopicCommand = class extends command5(_ep05, _mw05, "CreateTopic", CreateTopic$) {
     };
-    var DeleteEndpointCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "DeleteEndpoint", {}).n("SNSClient", "DeleteEndpointCommand").sc(DeleteEndpoint$).build() {
+    var DeleteEndpointCommand = class extends command5(_ep05, _mw05, "DeleteEndpoint", DeleteEndpoint$) {
     };
-    var DeletePlatformApplicationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "DeletePlatformApplication", {}).n("SNSClient", "DeletePlatformApplicationCommand").sc(DeletePlatformApplication$).build() {
+    var DeletePlatformApplicationCommand = class extends command5(_ep05, _mw05, "DeletePlatformApplication", DeletePlatformApplication$) {
     };
-    var DeleteSMSSandboxPhoneNumberCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "DeleteSMSSandboxPhoneNumber", {}).n("SNSClient", "DeleteSMSSandboxPhoneNumberCommand").sc(DeleteSMSSandboxPhoneNumber$).build() {
+    var DeleteSMSSandboxPhoneNumberCommand = class extends command5(_ep05, _mw05, "DeleteSMSSandboxPhoneNumber", DeleteSMSSandboxPhoneNumber$) {
     };
-    var DeleteTopicCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "DeleteTopic", {}).n("SNSClient", "DeleteTopicCommand").sc(DeleteTopic$).build() {
+    var DeleteTopicCommand = class extends command5(_ep05, _mw05, "DeleteTopic", DeleteTopic$) {
     };
-    var GetDataProtectionPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetDataProtectionPolicy", {}).n("SNSClient", "GetDataProtectionPolicyCommand").sc(GetDataProtectionPolicy$).build() {
+    var GetDataProtectionPolicyCommand = class extends command5(_ep05, _mw05, "GetDataProtectionPolicy", GetDataProtectionPolicy$) {
     };
-    var GetEndpointAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetEndpointAttributes", {}).n("SNSClient", "GetEndpointAttributesCommand").sc(GetEndpointAttributes$).build() {
+    var GetEndpointAttributesCommand = class extends command5(_ep05, _mw05, "GetEndpointAttributes", GetEndpointAttributes$) {
     };
-    var GetPlatformApplicationAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetPlatformApplicationAttributes", {}).n("SNSClient", "GetPlatformApplicationAttributesCommand").sc(GetPlatformApplicationAttributes$).build() {
+    var GetPlatformApplicationAttributesCommand = class extends command5(_ep05, _mw05, "GetPlatformApplicationAttributes", GetPlatformApplicationAttributes$) {
     };
-    var GetSMSAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetSMSAttributes", {}).n("SNSClient", "GetSMSAttributesCommand").sc(GetSMSAttributes$).build() {
+    var GetSMSAttributesCommand = class extends command5(_ep05, _mw05, "GetSMSAttributes", GetSMSAttributes$) {
     };
-    var GetSMSSandboxAccountStatusCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetSMSSandboxAccountStatus", {}).n("SNSClient", "GetSMSSandboxAccountStatusCommand").sc(GetSMSSandboxAccountStatus$).build() {
+    var GetSMSSandboxAccountStatusCommand = class extends command5(_ep05, _mw05, "GetSMSSandboxAccountStatus", GetSMSSandboxAccountStatus$) {
     };
-    var GetSubscriptionAttributesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetSubscriptionAttributes", {}).n("SNSClient", "GetSubscriptionAttributesCommand").sc(GetSubscriptionAttributes$).build() {
+    var GetSubscriptionAttributesCommand2 = class extends command5(_ep05, _mw05, "GetSubscriptionAttributes", GetSubscriptionAttributes$) {
     };
-    var GetTopicAttributesCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "GetTopicAttributes", {}).n("SNSClient", "GetTopicAttributesCommand").sc(GetTopicAttributes$).build() {
+    var GetTopicAttributesCommand2 = class extends command5(_ep05, _mw05, "GetTopicAttributes", GetTopicAttributes$) {
     };
-    var ListEndpointsByPlatformApplicationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListEndpointsByPlatformApplication", {}).n("SNSClient", "ListEndpointsByPlatformApplicationCommand").sc(ListEndpointsByPlatformApplication$).build() {
+    var ListEndpointsByPlatformApplicationCommand = class extends command5(_ep05, _mw05, "ListEndpointsByPlatformApplication", ListEndpointsByPlatformApplication$) {
     };
-    var ListOriginationNumbersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListOriginationNumbers", {}).n("SNSClient", "ListOriginationNumbersCommand").sc(ListOriginationNumbers$).build() {
+    var ListOriginationNumbersCommand = class extends command5(_ep05, _mw05, "ListOriginationNumbers", ListOriginationNumbers$) {
     };
-    var ListPhoneNumbersOptedOutCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListPhoneNumbersOptedOut", {}).n("SNSClient", "ListPhoneNumbersOptedOutCommand").sc(ListPhoneNumbersOptedOut$).build() {
+    var ListPhoneNumbersOptedOutCommand = class extends command5(_ep05, _mw05, "ListPhoneNumbersOptedOut", ListPhoneNumbersOptedOut$) {
     };
-    var ListPlatformApplicationsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListPlatformApplications", {}).n("SNSClient", "ListPlatformApplicationsCommand").sc(ListPlatformApplications$).build() {
+    var ListPlatformApplicationsCommand = class extends command5(_ep05, _mw05, "ListPlatformApplications", ListPlatformApplications$) {
     };
-    var ListSMSSandboxPhoneNumbersCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListSMSSandboxPhoneNumbers", {}).n("SNSClient", "ListSMSSandboxPhoneNumbersCommand").sc(ListSMSSandboxPhoneNumbers$).build() {
+    var ListSMSSandboxPhoneNumbersCommand = class extends command5(_ep05, _mw05, "ListSMSSandboxPhoneNumbers", ListSMSSandboxPhoneNumbers$) {
     };
-    var ListSubscriptionsByTopicCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListSubscriptionsByTopic", {}).n("SNSClient", "ListSubscriptionsByTopicCommand").sc(ListSubscriptionsByTopic$).build() {
+    var ListSubscriptionsByTopicCommand2 = class extends command5(_ep05, _mw05, "ListSubscriptionsByTopic", ListSubscriptionsByTopic$) {
     };
-    var ListSubscriptionsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListSubscriptions", {}).n("SNSClient", "ListSubscriptionsCommand").sc(ListSubscriptions$).build() {
+    var ListSubscriptionsCommand = class extends command5(_ep05, _mw05, "ListSubscriptions", ListSubscriptions$) {
     };
-    var ListTagsForResourceCommand4 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListTagsForResource", {}).n("SNSClient", "ListTagsForResourceCommand").sc(ListTagsForResource$).build() {
+    var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
-    var ListTopicsCommand2 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "ListTopics", {}).n("SNSClient", "ListTopicsCommand").sc(ListTopics$).build() {
+    var ListTopicsCommand2 = class extends command5(_ep05, _mw05, "ListTopics", ListTopics$) {
     };
-    var OptInPhoneNumberCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "OptInPhoneNumber", {}).n("SNSClient", "OptInPhoneNumberCommand").sc(OptInPhoneNumber$).build() {
+    var OptInPhoneNumberCommand = class extends command5(_ep05, _mw05, "OptInPhoneNumber", OptInPhoneNumber$) {
     };
-    var PublishBatchCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "PublishBatch", {}).n("SNSClient", "PublishBatchCommand").sc(PublishBatch$).build() {
+    var PublishBatchCommand = class extends command5(_ep05, _mw05, "PublishBatch", PublishBatch$) {
     };
-    var PublishCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "Publish", {}).n("SNSClient", "PublishCommand").sc(Publish$).build() {
+    var PublishCommand = class extends command5(_ep05, _mw05, "Publish", Publish$) {
     };
-    var PutDataProtectionPolicyCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "PutDataProtectionPolicy", {}).n("SNSClient", "PutDataProtectionPolicyCommand").sc(PutDataProtectionPolicy$).build() {
+    var PutDataProtectionPolicyCommand = class extends command5(_ep05, _mw05, "PutDataProtectionPolicy", PutDataProtectionPolicy$) {
     };
-    var RemovePermissionCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "RemovePermission", {}).n("SNSClient", "RemovePermissionCommand").sc(RemovePermission$).build() {
+    var RemovePermissionCommand = class extends command5(_ep05, _mw05, "RemovePermission", RemovePermission$) {
     };
-    var SetEndpointAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "SetEndpointAttributes", {}).n("SNSClient", "SetEndpointAttributesCommand").sc(SetEndpointAttributes$).build() {
+    var SetEndpointAttributesCommand = class extends command5(_ep05, _mw05, "SetEndpointAttributes", SetEndpointAttributes$) {
     };
-    var SetPlatformApplicationAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "SetPlatformApplicationAttributes", {}).n("SNSClient", "SetPlatformApplicationAttributesCommand").sc(SetPlatformApplicationAttributes$).build() {
+    var SetPlatformApplicationAttributesCommand = class extends command5(_ep05, _mw05, "SetPlatformApplicationAttributes", SetPlatformApplicationAttributes$) {
     };
-    var SetSMSAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "SetSMSAttributes", {}).n("SNSClient", "SetSMSAttributesCommand").sc(SetSMSAttributes$).build() {
+    var SetSMSAttributesCommand = class extends command5(_ep05, _mw05, "SetSMSAttributes", SetSMSAttributes$) {
     };
-    var SetSubscriptionAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "SetSubscriptionAttributes", {}).n("SNSClient", "SetSubscriptionAttributesCommand").sc(SetSubscriptionAttributes$).build() {
+    var SetSubscriptionAttributesCommand = class extends command5(_ep05, _mw05, "SetSubscriptionAttributes", SetSubscriptionAttributes$) {
     };
-    var SetTopicAttributesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "SetTopicAttributes", {}).n("SNSClient", "SetTopicAttributesCommand").sc(SetTopicAttributes$).build() {
+    var SetTopicAttributesCommand = class extends command5(_ep05, _mw05, "SetTopicAttributes", SetTopicAttributes$) {
     };
-    var SubscribeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "Subscribe", {}).n("SNSClient", "SubscribeCommand").sc(Subscribe$).build() {
+    var SubscribeCommand = class extends command5(_ep05, _mw05, "Subscribe", Subscribe$) {
     };
-    var TagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "TagResource", {}).n("SNSClient", "TagResourceCommand").sc(TagResource$).build() {
+    var TagResourceCommand = class extends command5(_ep05, _mw05, "TagResource", TagResource$) {
     };
-    var UnsubscribeCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "Unsubscribe", {}).n("SNSClient", "UnsubscribeCommand").sc(Unsubscribe$).build() {
+    var UnsubscribeCommand = class extends command5(_ep05, _mw05, "Unsubscribe", Unsubscribe$) {
     };
-    var UntagResourceCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "UntagResource", {}).n("SNSClient", "UntagResourceCommand").sc(UntagResource$).build() {
+    var UntagResourceCommand = class extends command5(_ep05, _mw05, "UntagResource", UntagResource$) {
     };
-    var VerifySMSSandboxPhoneNumberCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonSimpleNotificationService", "VerifySMSSandboxPhoneNumber", {}).n("SNSClient", "VerifySMSSandboxPhoneNumberCommand").sc(VerifySMSSandboxPhoneNumber$).build() {
+    var VerifySMSSandboxPhoneNumberCommand = class extends command5(_ep05, _mw05, "VerifySMSSandboxPhoneNumber", VerifySMSSandboxPhoneNumber$) {
     };
     var paginateListEndpointsByPlatformApplication = createPaginator2(SNSClient2, ListEndpointsByPlatformApplicationCommand, "NextToken", "NextToken", "");
     var paginateListOriginationNumbers = createPaginator2(SNSClient2, ListOriginationNumbersCommand, "NextToken", "NextToken", "MaxResults");
@@ -131525,12 +129088,13 @@ var init_sha = __esm({
 // node_modules/@aws-sdk/client-s3/dist-cjs/index.js
 var require_dist_cjs33 = __commonJS({
   "node_modules/@aws-sdk/client-s3/dist-cjs/index.js"(exports2) {
-    var { NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS: NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS2, NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS: NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS2, resolveFlexibleChecksumsConfig: resolveFlexibleChecksumsConfig2, getFlexibleChecksumsPlugin: getFlexibleChecksumsPlugin2 } = (init_flexible_checksums(), __toCommonJS(flexible_checksums_exports));
+    var { getFlexibleChecksumsPlugin: getFlexibleChecksumsPlugin2, NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS: NODE_RESPONSE_CHECKSUM_VALIDATION_CONFIG_OPTIONS2, NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS: NODE_REQUEST_CHECKSUM_CALCULATION_CONFIG_OPTIONS2, resolveFlexibleChecksumsConfig: resolveFlexibleChecksumsConfig2 } = (init_flexible_checksums(), __toCommonJS(flexible_checksums_exports));
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { getThrow200ExceptionsPlugin: getThrow200ExceptionsPlugin2, S3RestXmlProtocol: S3RestXmlProtocol2, NODE_USE_ARN_REGION_CONFIG_OPTIONS: NODE_USE_ARN_REGION_CONFIG_OPTIONS2, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS: NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS2, resolveS3Config: resolveS3Config2, getValidateBucketNamePlugin: getValidateBucketNamePlugin2, getAddExpectContinuePlugin: getAddExpectContinuePlugin2, getRegionRedirectMiddlewarePlugin: getRegionRedirectMiddlewarePlugin2, getS3ExpressPlugin: getS3ExpressPlugin2, getS3ExpressHttpSigningPlugin: getS3ExpressHttpSigningPlugin2, getSsecPlugin: getSsecPlugin2, getLocationConstraintPlugin: getLocationConstraintPlugin2, getS3ExpiresMiddlewarePlugin: getS3ExpiresMiddlewarePlugin2, getCheckContentLengthHeaderPlugin: getCheckContentLengthHeaderPlugin2 } = (init_s32(), __toCommonJS(s3_exports));
+    var { getThrow200ExceptionsPlugin: getThrow200ExceptionsPlugin2, getSsecPlugin: getSsecPlugin2, getLocationConstraintPlugin: getLocationConstraintPlugin2, getS3ExpiresMiddlewarePlugin: getS3ExpiresMiddlewarePlugin2, getCheckContentLengthHeaderPlugin: getCheckContentLengthHeaderPlugin2, S3RestXmlProtocol: S3RestXmlProtocol2, NODE_USE_ARN_REGION_CONFIG_OPTIONS: NODE_USE_ARN_REGION_CONFIG_OPTIONS2, NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS: NODE_DISABLE_S3_EXPRESS_SESSION_AUTH_OPTIONS2, resolveS3Config: resolveS3Config2, getValidateBucketNamePlugin: getValidateBucketNamePlugin2, getAddExpectContinuePlugin: getAddExpectContinuePlugin2, getRegionRedirectMiddlewarePlugin: getRegionRedirectMiddlewarePlugin2, getS3ExpressPlugin: getS3ExpressPlugin2, getS3ExpressHttpSigningPlugin: getS3ExpressHttpSigningPlugin2 } = (init_s32(), __toCommonJS(s3_exports));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, Command: Command2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, makeBuilder: makeBuilder2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, createWaiter: createWaiter2, checkExceptions: checkExceptions2, WaiterState: WaiterState2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveParams: resolveParams2, getEndpointPlugin: getEndpointPlugin2, resolveEndpointConfig: resolveEndpointConfig2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -133650,6 +131214,123 @@ var require_dist_cjs33 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
+    var command5 = makeBuilder2(commonParams5, "AmazonS3", "S3Client", getEndpointPlugin2);
+    var _ep05 = {
+      Bucket: { type: "contextParams", name: "Bucket" },
+      Key: { type: "contextParams", name: "Key" }
+    };
+    var _ep1 = {
+      DisableS3ExpressSessionAuth: { type: "staticContextParams", value: true },
+      Bucket: { type: "contextParams", name: "Bucket" },
+      Key: { type: "contextParams", name: "Key" },
+      CopySource: { type: "contextParams", name: "CopySource" }
+    };
+    var _ep2 = {
+      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
+      DisableAccessPoints: { type: "staticContextParams", value: true },
+      Bucket: { type: "contextParams", name: "Bucket" }
+    };
+    var _ep3 = {
+      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
+      Bucket: { type: "contextParams", name: "Bucket" }
+    };
+    var _ep4 = {
+      DisableS3ExpressSessionAuth: { type: "staticContextParams", value: true },
+      Bucket: { type: "contextParams", name: "Bucket" }
+    };
+    var _ep5 = {
+      Bucket: { type: "contextParams", name: "Bucket" }
+    };
+    var _ep6 = {};
+    var _ep7 = {
+      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true }
+    };
+    var _ep8 = {
+      Bucket: { type: "contextParams", name: "Bucket" },
+      Prefix: { type: "contextParams", name: "Prefix" }
+    };
+    var _ep9 = {
+      UseObjectLambdaEndpoint: { type: "staticContextParams", value: true }
+    };
+    var _mw05 = (Command2, cs, config, o4) => [
+      getThrow200ExceptionsPlugin2(config)
+    ];
+    var _mw1 = (Command2, cs, config, o4) => [
+      getThrow200ExceptionsPlugin2(config),
+      getSsecPlugin2(config)
+    ];
+    var _mw2 = (Command2, cs, config, o4) => [
+      getThrow200ExceptionsPlugin2(config),
+      getLocationConstraintPlugin2(config)
+    ];
+    var _mw3 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: true
+      })
+    ];
+    var _mw4 = (Command2, cs, config, o4) => [];
+    var _mw5 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: true
+      }),
+      getThrow200ExceptionsPlugin2(config)
+    ];
+    var _mw6 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestChecksumRequired: false,
+        requestValidationModeMember: "ChecksumMode",
+        responseAlgorithms: ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "SHA512", "MD5", "XXHASH64", "XXHASH3", "XXHASH128"]
+      })
+    ];
+    var _mw7 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestChecksumRequired: false,
+        requestValidationModeMember: "ChecksumMode",
+        responseAlgorithms: ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "SHA512", "MD5", "XXHASH64", "XXHASH3", "XXHASH128"]
+      }),
+      getSsecPlugin2(config),
+      getS3ExpiresMiddlewarePlugin2(config)
+    ];
+    var _mw8 = (Command2, cs, config, o4) => [
+      getThrow200ExceptionsPlugin2(config),
+      getSsecPlugin2(config),
+      getS3ExpiresMiddlewarePlugin2(config)
+    ];
+    var _mw9 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: false
+      })
+    ];
+    var _mw10 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: false
+      }),
+      getThrow200ExceptionsPlugin2(config)
+    ];
+    var _mw11 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: false
+      }),
+      getCheckContentLengthHeaderPlugin2(config),
+      getThrow200ExceptionsPlugin2(config),
+      getSsecPlugin2(config)
+    ];
+    var _mw12 = (Command2, cs, config, o4) => [
+      getSsecPlugin2(config)
+    ];
+    var _mw13 = (Command2, cs, config, o4) => [
+      getFlexibleChecksumsPlugin2(config, {
+        requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
+        requestChecksumRequired: false
+      }),
+      getThrow200ExceptionsPlugin2(config),
+      getSsecPlugin2(config)
+    ];
     var S3ServiceException = class _S3ServiceException extends ServiceException2 {
       constructor(options) {
         super(options);
@@ -139353,18 +137034,9 @@ var require_dist_cjs33 = __commonJS({
       () => WriteGetObjectResponseRequest$,
       () => __Unit
     ];
-    var CreateSessionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      DisableS3ExpressSessionAuth: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "CreateSession", {}).n("S3Client", "CreateSessionCommand").sc(CreateSession$).build() {
+    var CreateSessionCommand = class extends command5(_ep4, _mw05, "CreateSession", CreateSession$) {
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -139536,1262 +137208,227 @@ var require_dist_cjs33 = __commonJS({
         super.destroy();
       }
     };
-    var AbortMultipartUploadCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "AbortMultipartUpload", {}).n("S3Client", "AbortMultipartUploadCommand").sc(AbortMultipartUpload$).build() {
-    };
-    var CompleteMultipartUploadCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "CompleteMultipartUpload", {}).n("S3Client", "CompleteMultipartUploadCommand").sc(CompleteMultipartUpload$).build() {
-    };
-    var CopyObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      DisableS3ExpressSessionAuth: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" },
-      CopySource: { type: "contextParams", name: "CopySource" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "CopyObject", {}).n("S3Client", "CopyObjectCommand").sc(CopyObject$).build() {
-    };
-    var CreateBucketCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      DisableAccessPoints: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getLocationConstraintPlugin2(config)
-      ];
-    }).s("AmazonS3", "CreateBucket", {}).n("S3Client", "CreateBucketCommand").sc(CreateBucket$).build() {
-    };
-    var CreateBucketMetadataConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "CreateBucketMetadataConfiguration", {}).n("S3Client", "CreateBucketMetadataConfigurationCommand").sc(CreateBucketMetadataConfiguration$).build() {
-    };
-    var CreateBucketMetadataTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "CreateBucketMetadataTableConfiguration", {}).n("S3Client", "CreateBucketMetadataTableConfigurationCommand").sc(CreateBucketMetadataTableConfiguration$).build() {
-    };
-    var CreateMultipartUploadCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "CreateMultipartUpload", {}).n("S3Client", "CreateMultipartUploadCommand").sc(CreateMultipartUpload$).build() {
-    };
-    var DeleteBucketAnalyticsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketAnalyticsConfiguration", {}).n("S3Client", "DeleteBucketAnalyticsConfigurationCommand").sc(DeleteBucketAnalyticsConfiguration$).build() {
-    };
-    var DeleteBucketCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucket", {}).n("S3Client", "DeleteBucketCommand").sc(DeleteBucket$).build() {
-    };
-    var DeleteBucketCorsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketCors", {}).n("S3Client", "DeleteBucketCorsCommand").sc(DeleteBucketCors$).build() {
-    };
-    var DeleteBucketEncryptionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketEncryption", {}).n("S3Client", "DeleteBucketEncryptionCommand").sc(DeleteBucketEncryption$).build() {
-    };
-    var DeleteBucketIntelligentTieringConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketIntelligentTieringConfiguration", {}).n("S3Client", "DeleteBucketIntelligentTieringConfigurationCommand").sc(DeleteBucketIntelligentTieringConfiguration$).build() {
-    };
-    var DeleteBucketInventoryConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketInventoryConfiguration", {}).n("S3Client", "DeleteBucketInventoryConfigurationCommand").sc(DeleteBucketInventoryConfiguration$).build() {
-    };
-    var DeleteBucketLifecycleCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketLifecycle", {}).n("S3Client", "DeleteBucketLifecycleCommand").sc(DeleteBucketLifecycle$).build() {
-    };
-    var DeleteBucketMetadataConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketMetadataConfiguration", {}).n("S3Client", "DeleteBucketMetadataConfigurationCommand").sc(DeleteBucketMetadataConfiguration$).build() {
-    };
-    var DeleteBucketMetadataTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketMetadataTableConfiguration", {}).n("S3Client", "DeleteBucketMetadataTableConfigurationCommand").sc(DeleteBucketMetadataTableConfiguration$).build() {
-    };
-    var DeleteBucketMetricsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketMetricsConfiguration", {}).n("S3Client", "DeleteBucketMetricsConfigurationCommand").sc(DeleteBucketMetricsConfiguration$).build() {
-    };
-    var DeleteBucketOwnershipControlsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketOwnershipControls", {}).n("S3Client", "DeleteBucketOwnershipControlsCommand").sc(DeleteBucketOwnershipControls$).build() {
-    };
-    var DeleteBucketPolicyCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketPolicy", {}).n("S3Client", "DeleteBucketPolicyCommand").sc(DeleteBucketPolicy$).build() {
-    };
-    var DeleteBucketReplicationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketReplication", {}).n("S3Client", "DeleteBucketReplicationCommand").sc(DeleteBucketReplication$).build() {
-    };
-    var DeleteBucketTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketTagging", {}).n("S3Client", "DeleteBucketTaggingCommand").sc(DeleteBucketTagging$).build() {
-    };
-    var DeleteBucketWebsiteCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeleteBucketWebsite", {}).n("S3Client", "DeleteBucketWebsiteCommand").sc(DeleteBucketWebsite$).build() {
-    };
-    var DeleteObjectAnnotationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "DeleteObjectAnnotation", {}).n("S3Client", "DeleteObjectAnnotationCommand").sc(DeleteObjectAnnotation$).build() {
-    };
-    var DeleteObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "DeleteObject", {}).n("S3Client", "DeleteObjectCommand").sc(DeleteObject$).build() {
-    };
-    var DeleteObjectsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "DeleteObjects", {}).n("S3Client", "DeleteObjectsCommand").sc(DeleteObjects$).build() {
-    };
-    var DeleteObjectTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "DeleteObjectTagging", {}).n("S3Client", "DeleteObjectTaggingCommand").sc(DeleteObjectTagging$).build() {
-    };
-    var DeletePublicAccessBlockCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "DeletePublicAccessBlock", {}).n("S3Client", "DeletePublicAccessBlockCommand").sc(DeletePublicAccessBlock$).build() {
-    };
-    var GetBucketAbacCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketAbac", {}).n("S3Client", "GetBucketAbacCommand").sc(GetBucketAbac$).build() {
-    };
-    var GetBucketAccelerateConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketAccelerateConfiguration", {}).n("S3Client", "GetBucketAccelerateConfigurationCommand").sc(GetBucketAccelerateConfiguration$).build() {
-    };
-    var GetBucketAclCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketAcl", {}).n("S3Client", "GetBucketAclCommand").sc(GetBucketAcl$).build() {
-    };
-    var GetBucketAnalyticsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketAnalyticsConfiguration", {}).n("S3Client", "GetBucketAnalyticsConfigurationCommand").sc(GetBucketAnalyticsConfiguration$).build() {
-    };
-    var GetBucketCorsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketCors", {}).n("S3Client", "GetBucketCorsCommand").sc(GetBucketCors$).build() {
-    };
-    var GetBucketEncryptionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketEncryption", {}).n("S3Client", "GetBucketEncryptionCommand").sc(GetBucketEncryption$).build() {
-    };
-    var GetBucketIntelligentTieringConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketIntelligentTieringConfiguration", {}).n("S3Client", "GetBucketIntelligentTieringConfigurationCommand").sc(GetBucketIntelligentTieringConfiguration$).build() {
-    };
-    var GetBucketInventoryConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketInventoryConfiguration", {}).n("S3Client", "GetBucketInventoryConfigurationCommand").sc(GetBucketInventoryConfiguration$).build() {
-    };
-    var GetBucketLifecycleConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketLifecycleConfiguration", {}).n("S3Client", "GetBucketLifecycleConfigurationCommand").sc(GetBucketLifecycleConfiguration$).build() {
-    };
-    var GetBucketLocationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketLocation", {}).n("S3Client", "GetBucketLocationCommand").sc(GetBucketLocation$).build() {
-    };
-    var GetBucketLoggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketLogging", {}).n("S3Client", "GetBucketLoggingCommand").sc(GetBucketLogging$).build() {
-    };
-    var GetBucketMetadataConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketMetadataConfiguration", {}).n("S3Client", "GetBucketMetadataConfigurationCommand").sc(GetBucketMetadataConfiguration$).build() {
-    };
-    var GetBucketMetadataTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketMetadataTableConfiguration", {}).n("S3Client", "GetBucketMetadataTableConfigurationCommand").sc(GetBucketMetadataTableConfiguration$).build() {
-    };
-    var GetBucketMetricsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketMetricsConfiguration", {}).n("S3Client", "GetBucketMetricsConfigurationCommand").sc(GetBucketMetricsConfiguration$).build() {
-    };
-    var GetBucketNotificationConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketNotificationConfiguration", {}).n("S3Client", "GetBucketNotificationConfigurationCommand").sc(GetBucketNotificationConfiguration$).build() {
-    };
-    var GetBucketOwnershipControlsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketOwnershipControls", {}).n("S3Client", "GetBucketOwnershipControlsCommand").sc(GetBucketOwnershipControls$).build() {
-    };
-    var GetBucketPolicyCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "GetBucketPolicy", {}).n("S3Client", "GetBucketPolicyCommand").sc(GetBucketPolicy$).build() {
-    };
-    var GetBucketPolicyStatusCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketPolicyStatus", {}).n("S3Client", "GetBucketPolicyStatusCommand").sc(GetBucketPolicyStatus$).build() {
-    };
-    var GetBucketReplicationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketReplication", {}).n("S3Client", "GetBucketReplicationCommand").sc(GetBucketReplication$).build() {
-    };
-    var GetBucketRequestPaymentCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketRequestPayment", {}).n("S3Client", "GetBucketRequestPaymentCommand").sc(GetBucketRequestPayment$).build() {
-    };
-    var GetBucketTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketTagging", {}).n("S3Client", "GetBucketTaggingCommand").sc(GetBucketTagging$).build() {
-    };
-    var GetBucketVersioningCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketVersioning", {}).n("S3Client", "GetBucketVersioningCommand").sc(GetBucketVersioning$).build() {
-    };
-    var GetBucketWebsiteCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetBucketWebsite", {}).n("S3Client", "GetBucketWebsiteCommand").sc(GetBucketWebsite$).build() {
-    };
-    var GetObjectAclCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectAcl", {}).n("S3Client", "GetObjectAclCommand").sc(GetObjectAcl$).build() {
-    };
-    var GetObjectAnnotationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestChecksumRequired: false,
-          requestValidationModeMember: "ChecksumMode",
-          "responseAlgorithms": ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "SHA512", "MD5", "XXHASH64", "XXHASH3", "XXHASH128"]
-        })
-      ];
-    }).s("AmazonS3", "GetObjectAnnotation", {}).n("S3Client", "GetObjectAnnotationCommand").sc(GetObjectAnnotation$).build() {
-    };
-    var GetObjectAttributesCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectAttributes", {}).n("S3Client", "GetObjectAttributesCommand").sc(GetObjectAttributes$).build() {
-    };
-    var GetObjectCommand2 = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestChecksumRequired: false,
-          requestValidationModeMember: "ChecksumMode",
-          "responseAlgorithms": ["CRC64NVME", "CRC32", "CRC32C", "SHA256", "SHA1", "SHA512", "MD5", "XXHASH64", "XXHASH3", "XXHASH128"]
-        }),
-        getSsecPlugin2(config),
-        getS3ExpiresMiddlewarePlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObject", {}).n("S3Client", "GetObjectCommand").sc(GetObject$).build() {
-    };
-    var GetObjectLegalHoldCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectLegalHold", {}).n("S3Client", "GetObjectLegalHoldCommand").sc(GetObjectLegalHold$).build() {
-    };
-    var GetObjectLockConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectLockConfiguration", {}).n("S3Client", "GetObjectLockConfigurationCommand").sc(GetObjectLockConfiguration$).build() {
-    };
-    var GetObjectRetentionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectRetention", {}).n("S3Client", "GetObjectRetentionCommand").sc(GetObjectRetention$).build() {
-    };
-    var GetObjectTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetObjectTagging", {}).n("S3Client", "GetObjectTaggingCommand").sc(GetObjectTagging$).build() {
-    };
-    var GetObjectTorrentCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "GetObjectTorrent", {}).n("S3Client", "GetObjectTorrentCommand").sc(GetObjectTorrent$).build() {
-    };
-    var GetPublicAccessBlockCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "GetPublicAccessBlock", {}).n("S3Client", "GetPublicAccessBlockCommand").sc(GetPublicAccessBlock$).build() {
-    };
-    var HeadBucketCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "HeadBucket", {}).n("S3Client", "HeadBucketCommand").sc(HeadBucket$).build() {
-    };
-    var HeadObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config),
-        getS3ExpiresMiddlewarePlugin2(config)
-      ];
-    }).s("AmazonS3", "HeadObject", {}).n("S3Client", "HeadObjectCommand").sc(HeadObject$).build() {
-    };
-    var ListBucketAnalyticsConfigurationsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListBucketAnalyticsConfigurations", {}).n("S3Client", "ListBucketAnalyticsConfigurationsCommand").sc(ListBucketAnalyticsConfigurations$).build() {
-    };
-    var ListBucketIntelligentTieringConfigurationsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListBucketIntelligentTieringConfigurations", {}).n("S3Client", "ListBucketIntelligentTieringConfigurationsCommand").sc(ListBucketIntelligentTieringConfigurations$).build() {
-    };
-    var ListBucketInventoryConfigurationsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListBucketInventoryConfigurations", {}).n("S3Client", "ListBucketInventoryConfigurationsCommand").sc(ListBucketInventoryConfigurations$).build() {
-    };
-    var ListBucketMetricsConfigurationsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListBucketMetricsConfigurations", {}).n("S3Client", "ListBucketMetricsConfigurationsCommand").sc(ListBucketMetricsConfigurations$).build() {
-    };
-    var ListBucketsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListBuckets", {}).n("S3Client", "ListBucketsCommand").sc(ListBuckets$).build() {
-    };
-    var ListDirectoryBucketsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListDirectoryBuckets", {}).n("S3Client", "ListDirectoryBucketsCommand").sc(ListDirectoryBuckets$).build() {
-    };
-    var ListMultipartUploadsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Prefix: { type: "contextParams", name: "Prefix" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListMultipartUploads", {}).n("S3Client", "ListMultipartUploadsCommand").sc(ListMultipartUploads$).build() {
-    };
-    var ListObjectAnnotationsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListObjectAnnotations", {}).n("S3Client", "ListObjectAnnotationsCommand").sc(ListObjectAnnotations$).build() {
-    };
-    var ListObjectsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Prefix: { type: "contextParams", name: "Prefix" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListObjects", {}).n("S3Client", "ListObjectsCommand").sc(ListObjects$).build() {
-    };
-    var ListObjectsV2Command = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Prefix: { type: "contextParams", name: "Prefix" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListObjectsV2", {}).n("S3Client", "ListObjectsV2Command").sc(ListObjectsV2$).build() {
-    };
-    var ListObjectVersionsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Prefix: { type: "contextParams", name: "Prefix" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListObjectVersions", {}).n("S3Client", "ListObjectVersionsCommand").sc(ListObjectVersions$).build() {
-    };
-    var ListPartsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "ListParts", {}).n("S3Client", "ListPartsCommand").sc(ListParts$).build() {
-    };
-    var PutBucketAbacCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        })
-      ];
-    }).s("AmazonS3", "PutBucketAbac", {}).n("S3Client", "PutBucketAbacCommand").sc(PutBucketAbac$).build() {
-    };
-    var PutBucketAccelerateConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        })
-      ];
-    }).s("AmazonS3", "PutBucketAccelerateConfiguration", {}).n("S3Client", "PutBucketAccelerateConfigurationCommand").sc(PutBucketAccelerateConfiguration$).build() {
-    };
-    var PutBucketAclCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketAcl", {}).n("S3Client", "PutBucketAclCommand").sc(PutBucketAcl$).build() {
-    };
-    var PutBucketAnalyticsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "PutBucketAnalyticsConfiguration", {}).n("S3Client", "PutBucketAnalyticsConfigurationCommand").sc(PutBucketAnalyticsConfiguration$).build() {
-    };
-    var PutBucketCorsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketCors", {}).n("S3Client", "PutBucketCorsCommand").sc(PutBucketCors$).build() {
-    };
-    var PutBucketEncryptionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketEncryption", {}).n("S3Client", "PutBucketEncryptionCommand").sc(PutBucketEncryption$).build() {
-    };
-    var PutBucketIntelligentTieringConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "PutBucketIntelligentTieringConfiguration", {}).n("S3Client", "PutBucketIntelligentTieringConfigurationCommand").sc(PutBucketIntelligentTieringConfiguration$).build() {
-    };
-    var PutBucketInventoryConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "PutBucketInventoryConfiguration", {}).n("S3Client", "PutBucketInventoryConfigurationCommand").sc(PutBucketInventoryConfiguration$).build() {
-    };
-    var PutBucketLifecycleConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutBucketLifecycleConfiguration", {}).n("S3Client", "PutBucketLifecycleConfigurationCommand").sc(PutBucketLifecycleConfiguration$).build() {
-    };
-    var PutBucketLoggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketLogging", {}).n("S3Client", "PutBucketLoggingCommand").sc(PutBucketLogging$).build() {
-    };
-    var PutBucketMetricsConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "PutBucketMetricsConfiguration", {}).n("S3Client", "PutBucketMetricsConfigurationCommand").sc(PutBucketMetricsConfiguration$).build() {
-    };
-    var PutBucketNotificationConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "PutBucketNotificationConfiguration", {}).n("S3Client", "PutBucketNotificationConfigurationCommand").sc(PutBucketNotificationConfiguration$).build() {
-    };
-    var PutBucketOwnershipControlsCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketOwnershipControls", {}).n("S3Client", "PutBucketOwnershipControlsCommand").sc(PutBucketOwnershipControls$).build() {
-    };
-    var PutBucketPolicyCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketPolicy", {}).n("S3Client", "PutBucketPolicyCommand").sc(PutBucketPolicy$).build() {
-    };
-    var PutBucketReplicationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketReplication", {}).n("S3Client", "PutBucketReplicationCommand").sc(PutBucketReplication$).build() {
-    };
-    var PutBucketRequestPaymentCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketRequestPayment", {}).n("S3Client", "PutBucketRequestPaymentCommand").sc(PutBucketRequestPayment$).build() {
-    };
-    var PutBucketTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketTagging", {}).n("S3Client", "PutBucketTaggingCommand").sc(PutBucketTagging$).build() {
-    };
-    var PutBucketVersioningCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketVersioning", {}).n("S3Client", "PutBucketVersioningCommand").sc(PutBucketVersioning$).build() {
-    };
-    var PutBucketWebsiteCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutBucketWebsite", {}).n("S3Client", "PutBucketWebsiteCommand").sc(PutBucketWebsite$).build() {
-    };
-    var PutObjectAclCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectAcl", {}).n("S3Client", "PutObjectAclCommand").sc(PutObjectAcl$).build() {
-    };
-    var PutObjectAnnotationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectAnnotation", {}).n("S3Client", "PutObjectAnnotationCommand").sc(PutObjectAnnotation$).build() {
-    };
-    var PutObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        }),
-        getCheckContentLengthHeaderPlugin2(config),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObject", {}).n("S3Client", "PutObjectCommand").sc(PutObject$).build() {
-    };
-    var PutObjectLegalHoldCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectLegalHold", {}).n("S3Client", "PutObjectLegalHoldCommand").sc(PutObjectLegalHold$).build() {
-    };
-    var PutObjectLockConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectLockConfiguration", {}).n("S3Client", "PutObjectLockConfigurationCommand").sc(PutObjectLockConfiguration$).build() {
-    };
-    var PutObjectRetentionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectRetention", {}).n("S3Client", "PutObjectRetentionCommand").sc(PutObjectRetention$).build() {
-    };
-    var PutObjectTaggingCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "PutObjectTagging", {}).n("S3Client", "PutObjectTaggingCommand").sc(PutObjectTagging$).build() {
-    };
-    var PutPublicAccessBlockCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "PutPublicAccessBlock", {}).n("S3Client", "PutPublicAccessBlockCommand").sc(PutPublicAccessBlock$).build() {
-    };
-    var RenameObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "RenameObject", {}).n("S3Client", "RenameObjectCommand").sc(RenameObject$).build() {
-    };
-    var RestoreObjectCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "RestoreObject", {}).n("S3Client", "RestoreObjectCommand").sc(RestoreObject$).build() {
-    };
-    var SelectObjectContentCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "SelectObjectContent", {
-      eventStream: {
-        output: true
-      }
-    }).n("S3Client", "SelectObjectContentCommand").sc(SelectObjectContent$).build() {
-    };
-    var UpdateBucketMetadataAnnotationTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "UpdateBucketMetadataAnnotationTableConfiguration", {}).n("S3Client", "UpdateBucketMetadataAnnotationTableConfigurationCommand").sc(UpdateBucketMetadataAnnotationTableConfiguration$).build() {
-    };
-    var UpdateBucketMetadataInventoryTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "UpdateBucketMetadataInventoryTableConfiguration", {}).n("S3Client", "UpdateBucketMetadataInventoryTableConfigurationCommand").sc(UpdateBucketMetadataInventoryTableConfiguration$).build() {
-    };
-    var UpdateBucketMetadataJournalTableConfigurationCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseS3ExpressControlEndpoint: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        })
-      ];
-    }).s("AmazonS3", "UpdateBucketMetadataJournalTableConfiguration", {}).n("S3Client", "UpdateBucketMetadataJournalTableConfigurationCommand").sc(UpdateBucketMetadataJournalTableConfiguration$).build() {
-    };
-    var UpdateObjectEncryptionCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: true
-        }),
-        getThrow200ExceptionsPlugin2(config)
-      ];
-    }).s("AmazonS3", "UpdateObjectEncryption", {}).n("S3Client", "UpdateObjectEncryptionCommand").sc(UpdateObjectEncryption$).build() {
-    };
-    var UploadPartCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      Bucket: { type: "contextParams", name: "Bucket" },
-      Key: { type: "contextParams", name: "Key" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getFlexibleChecksumsPlugin2(config, {
-          requestAlgorithmMember: { "httpHeader": "x-amz-sdk-checksum-algorithm", "name": "ChecksumAlgorithm" },
-          requestChecksumRequired: false
-        }),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "UploadPart", {}).n("S3Client", "UploadPartCommand").sc(UploadPart$).build() {
-    };
-    var UploadPartCopyCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      DisableS3ExpressSessionAuth: { type: "staticContextParams", value: true },
-      Bucket: { type: "contextParams", name: "Bucket" }
-    }).m(function(Command3, cs, config, o4) {
-      return [
-        getEndpointPlugin2(config, Command3.getEndpointParameterInstructions()),
-        getThrow200ExceptionsPlugin2(config),
-        getSsecPlugin2(config)
-      ];
-    }).s("AmazonS3", "UploadPartCopy", {}).n("S3Client", "UploadPartCopyCommand").sc(UploadPartCopy$).build() {
-    };
-    var WriteGetObjectResponseCommand = class extends Command2.classBuilder().ep({
-      ...commonParams5,
-      UseObjectLambdaEndpoint: { type: "staticContextParams", value: true }
-    }).m(function(Command3, cs, config, o4) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("AmazonS3", "WriteGetObjectResponse", {}).n("S3Client", "WriteGetObjectResponseCommand").sc(WriteGetObjectResponse$).build() {
+    var AbortMultipartUploadCommand = class extends command5(_ep05, _mw05, "AbortMultipartUpload", AbortMultipartUpload$) {
+    };
+    var CompleteMultipartUploadCommand = class extends command5(_ep05, _mw1, "CompleteMultipartUpload", CompleteMultipartUpload$) {
+    };
+    var CopyObjectCommand = class extends command5(_ep1, _mw1, "CopyObject", CopyObject$) {
+    };
+    var CreateBucketCommand = class extends command5(_ep2, _mw2, "CreateBucket", CreateBucket$) {
+    };
+    var CreateBucketMetadataConfigurationCommand = class extends command5(_ep3, _mw3, "CreateBucketMetadataConfiguration", CreateBucketMetadataConfiguration$) {
+    };
+    var CreateBucketMetadataTableConfigurationCommand = class extends command5(_ep3, _mw3, "CreateBucketMetadataTableConfiguration", CreateBucketMetadataTableConfiguration$) {
+    };
+    var CreateMultipartUploadCommand = class extends command5(_ep05, _mw1, "CreateMultipartUpload", CreateMultipartUpload$) {
+    };
+    var DeleteBucketAnalyticsConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketAnalyticsConfiguration", DeleteBucketAnalyticsConfiguration$) {
+    };
+    var DeleteBucketCommand = class extends command5(_ep3, _mw4, "DeleteBucket", DeleteBucket$) {
+    };
+    var DeleteBucketCorsCommand = class extends command5(_ep3, _mw4, "DeleteBucketCors", DeleteBucketCors$) {
+    };
+    var DeleteBucketEncryptionCommand = class extends command5(_ep3, _mw4, "DeleteBucketEncryption", DeleteBucketEncryption$) {
+    };
+    var DeleteBucketIntelligentTieringConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketIntelligentTieringConfiguration", DeleteBucketIntelligentTieringConfiguration$) {
+    };
+    var DeleteBucketInventoryConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketInventoryConfiguration", DeleteBucketInventoryConfiguration$) {
+    };
+    var DeleteBucketLifecycleCommand = class extends command5(_ep3, _mw4, "DeleteBucketLifecycle", DeleteBucketLifecycle$) {
+    };
+    var DeleteBucketMetadataConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketMetadataConfiguration", DeleteBucketMetadataConfiguration$) {
+    };
+    var DeleteBucketMetadataTableConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketMetadataTableConfiguration", DeleteBucketMetadataTableConfiguration$) {
+    };
+    var DeleteBucketMetricsConfigurationCommand = class extends command5(_ep3, _mw4, "DeleteBucketMetricsConfiguration", DeleteBucketMetricsConfiguration$) {
+    };
+    var DeleteBucketOwnershipControlsCommand = class extends command5(_ep3, _mw4, "DeleteBucketOwnershipControls", DeleteBucketOwnershipControls$) {
+    };
+    var DeleteBucketPolicyCommand = class extends command5(_ep3, _mw4, "DeleteBucketPolicy", DeleteBucketPolicy$) {
+    };
+    var DeleteBucketReplicationCommand = class extends command5(_ep3, _mw4, "DeleteBucketReplication", DeleteBucketReplication$) {
+    };
+    var DeleteBucketTaggingCommand = class extends command5(_ep3, _mw4, "DeleteBucketTagging", DeleteBucketTagging$) {
+    };
+    var DeleteBucketWebsiteCommand = class extends command5(_ep3, _mw4, "DeleteBucketWebsite", DeleteBucketWebsite$) {
+    };
+    var DeleteObjectAnnotationCommand = class extends command5(_ep5, _mw05, "DeleteObjectAnnotation", DeleteObjectAnnotation$) {
+    };
+    var DeleteObjectCommand = class extends command5(_ep05, _mw05, "DeleteObject", DeleteObject$) {
+    };
+    var DeleteObjectsCommand = class extends command5(_ep5, _mw5, "DeleteObjects", DeleteObjects$) {
+    };
+    var DeleteObjectTaggingCommand = class extends command5(_ep5, _mw05, "DeleteObjectTagging", DeleteObjectTagging$) {
+    };
+    var DeletePublicAccessBlockCommand = class extends command5(_ep3, _mw4, "DeletePublicAccessBlock", DeletePublicAccessBlock$) {
+    };
+    var GetBucketAbacCommand = class extends command5(_ep5, _mw05, "GetBucketAbac", GetBucketAbac$) {
+    };
+    var GetBucketAccelerateConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketAccelerateConfiguration", GetBucketAccelerateConfiguration$) {
+    };
+    var GetBucketAclCommand = class extends command5(_ep3, _mw05, "GetBucketAcl", GetBucketAcl$) {
+    };
+    var GetBucketAnalyticsConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketAnalyticsConfiguration", GetBucketAnalyticsConfiguration$) {
+    };
+    var GetBucketCorsCommand = class extends command5(_ep3, _mw05, "GetBucketCors", GetBucketCors$) {
+    };
+    var GetBucketEncryptionCommand = class extends command5(_ep3, _mw05, "GetBucketEncryption", GetBucketEncryption$) {
+    };
+    var GetBucketIntelligentTieringConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketIntelligentTieringConfiguration", GetBucketIntelligentTieringConfiguration$) {
+    };
+    var GetBucketInventoryConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketInventoryConfiguration", GetBucketInventoryConfiguration$) {
+    };
+    var GetBucketLifecycleConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketLifecycleConfiguration", GetBucketLifecycleConfiguration$) {
+    };
+    var GetBucketLocationCommand = class extends command5(_ep3, _mw05, "GetBucketLocation", GetBucketLocation$) {
+    };
+    var GetBucketLoggingCommand = class extends command5(_ep3, _mw05, "GetBucketLogging", GetBucketLogging$) {
+    };
+    var GetBucketMetadataConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketMetadataConfiguration", GetBucketMetadataConfiguration$) {
+    };
+    var GetBucketMetadataTableConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketMetadataTableConfiguration", GetBucketMetadataTableConfiguration$) {
+    };
+    var GetBucketMetricsConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketMetricsConfiguration", GetBucketMetricsConfiguration$) {
+    };
+    var GetBucketNotificationConfigurationCommand = class extends command5(_ep3, _mw05, "GetBucketNotificationConfiguration", GetBucketNotificationConfiguration$) {
+    };
+    var GetBucketOwnershipControlsCommand = class extends command5(_ep3, _mw05, "GetBucketOwnershipControls", GetBucketOwnershipControls$) {
+    };
+    var GetBucketPolicyCommand = class extends command5(_ep3, _mw4, "GetBucketPolicy", GetBucketPolicy$) {
+    };
+    var GetBucketPolicyStatusCommand = class extends command5(_ep3, _mw05, "GetBucketPolicyStatus", GetBucketPolicyStatus$) {
+    };
+    var GetBucketReplicationCommand = class extends command5(_ep3, _mw05, "GetBucketReplication", GetBucketReplication$) {
+    };
+    var GetBucketRequestPaymentCommand = class extends command5(_ep3, _mw05, "GetBucketRequestPayment", GetBucketRequestPayment$) {
+    };
+    var GetBucketTaggingCommand = class extends command5(_ep3, _mw05, "GetBucketTagging", GetBucketTagging$) {
+    };
+    var GetBucketVersioningCommand = class extends command5(_ep3, _mw05, "GetBucketVersioning", GetBucketVersioning$) {
+    };
+    var GetBucketWebsiteCommand = class extends command5(_ep3, _mw05, "GetBucketWebsite", GetBucketWebsite$) {
+    };
+    var GetObjectAclCommand = class extends command5(_ep05, _mw05, "GetObjectAcl", GetObjectAcl$) {
+    };
+    var GetObjectAnnotationCommand = class extends command5(_ep05, _mw6, "GetObjectAnnotation", GetObjectAnnotation$) {
+    };
+    var GetObjectAttributesCommand = class extends command5(_ep5, _mw1, "GetObjectAttributes", GetObjectAttributes$) {
+    };
+    var GetObjectCommand2 = class extends command5(_ep05, _mw7, "GetObject", GetObject$) {
+    };
+    var GetObjectLegalHoldCommand = class extends command5(_ep5, _mw05, "GetObjectLegalHold", GetObjectLegalHold$) {
+    };
+    var GetObjectLockConfigurationCommand = class extends command5(_ep5, _mw05, "GetObjectLockConfiguration", GetObjectLockConfiguration$) {
+    };
+    var GetObjectRetentionCommand = class extends command5(_ep5, _mw05, "GetObjectRetention", GetObjectRetention$) {
+    };
+    var GetObjectTaggingCommand = class extends command5(_ep5, _mw05, "GetObjectTagging", GetObjectTagging$) {
+    };
+    var GetObjectTorrentCommand = class extends command5(_ep5, _mw4, "GetObjectTorrent", GetObjectTorrent$) {
+    };
+    var GetPublicAccessBlockCommand = class extends command5(_ep3, _mw05, "GetPublicAccessBlock", GetPublicAccessBlock$) {
+    };
+    var HeadBucketCommand = class extends command5(_ep5, _mw05, "HeadBucket", HeadBucket$) {
+    };
+    var HeadObjectCommand = class extends command5(_ep05, _mw8, "HeadObject", HeadObject$) {
+    };
+    var ListBucketAnalyticsConfigurationsCommand = class extends command5(_ep3, _mw05, "ListBucketAnalyticsConfigurations", ListBucketAnalyticsConfigurations$) {
+    };
+    var ListBucketIntelligentTieringConfigurationsCommand = class extends command5(_ep3, _mw05, "ListBucketIntelligentTieringConfigurations", ListBucketIntelligentTieringConfigurations$) {
+    };
+    var ListBucketInventoryConfigurationsCommand = class extends command5(_ep3, _mw05, "ListBucketInventoryConfigurations", ListBucketInventoryConfigurations$) {
+    };
+    var ListBucketMetricsConfigurationsCommand = class extends command5(_ep3, _mw05, "ListBucketMetricsConfigurations", ListBucketMetricsConfigurations$) {
+    };
+    var ListBucketsCommand = class extends command5(_ep6, _mw05, "ListBuckets", ListBuckets$) {
+    };
+    var ListDirectoryBucketsCommand = class extends command5(_ep7, _mw05, "ListDirectoryBuckets", ListDirectoryBuckets$) {
+    };
+    var ListMultipartUploadsCommand = class extends command5(_ep8, _mw05, "ListMultipartUploads", ListMultipartUploads$) {
+    };
+    var ListObjectAnnotationsCommand = class extends command5(_ep5, _mw05, "ListObjectAnnotations", ListObjectAnnotations$) {
+    };
+    var ListObjectsCommand = class extends command5(_ep8, _mw05, "ListObjects", ListObjects$) {
+    };
+    var ListObjectsV2Command = class extends command5(_ep8, _mw05, "ListObjectsV2", ListObjectsV2$) {
+    };
+    var ListObjectVersionsCommand = class extends command5(_ep8, _mw05, "ListObjectVersions", ListObjectVersions$) {
+    };
+    var ListPartsCommand = class extends command5(_ep05, _mw1, "ListParts", ListParts$) {
+    };
+    var PutBucketAbacCommand = class extends command5(_ep5, _mw9, "PutBucketAbac", PutBucketAbac$) {
+    };
+    var PutBucketAccelerateConfigurationCommand = class extends command5(_ep3, _mw9, "PutBucketAccelerateConfiguration", PutBucketAccelerateConfiguration$) {
+    };
+    var PutBucketAclCommand = class extends command5(_ep3, _mw3, "PutBucketAcl", PutBucketAcl$) {
+    };
+    var PutBucketAnalyticsConfigurationCommand = class extends command5(_ep3, _mw4, "PutBucketAnalyticsConfiguration", PutBucketAnalyticsConfiguration$) {
+    };
+    var PutBucketCorsCommand = class extends command5(_ep3, _mw3, "PutBucketCors", PutBucketCors$) {
+    };
+    var PutBucketEncryptionCommand = class extends command5(_ep3, _mw3, "PutBucketEncryption", PutBucketEncryption$) {
+    };
+    var PutBucketIntelligentTieringConfigurationCommand = class extends command5(_ep3, _mw4, "PutBucketIntelligentTieringConfiguration", PutBucketIntelligentTieringConfiguration$) {
+    };
+    var PutBucketInventoryConfigurationCommand = class extends command5(_ep3, _mw4, "PutBucketInventoryConfiguration", PutBucketInventoryConfiguration$) {
+    };
+    var PutBucketLifecycleConfigurationCommand = class extends command5(_ep3, _mw5, "PutBucketLifecycleConfiguration", PutBucketLifecycleConfiguration$) {
+    };
+    var PutBucketLoggingCommand = class extends command5(_ep3, _mw3, "PutBucketLogging", PutBucketLogging$) {
+    };
+    var PutBucketMetricsConfigurationCommand = class extends command5(_ep3, _mw4, "PutBucketMetricsConfiguration", PutBucketMetricsConfiguration$) {
+    };
+    var PutBucketNotificationConfigurationCommand = class extends command5(_ep3, _mw4, "PutBucketNotificationConfiguration", PutBucketNotificationConfiguration$) {
+    };
+    var PutBucketOwnershipControlsCommand = class extends command5(_ep3, _mw3, "PutBucketOwnershipControls", PutBucketOwnershipControls$) {
+    };
+    var PutBucketPolicyCommand = class extends command5(_ep3, _mw3, "PutBucketPolicy", PutBucketPolicy$) {
+    };
+    var PutBucketReplicationCommand = class extends command5(_ep3, _mw3, "PutBucketReplication", PutBucketReplication$) {
+    };
+    var PutBucketRequestPaymentCommand = class extends command5(_ep3, _mw3, "PutBucketRequestPayment", PutBucketRequestPayment$) {
+    };
+    var PutBucketTaggingCommand = class extends command5(_ep3, _mw3, "PutBucketTagging", PutBucketTagging$) {
+    };
+    var PutBucketVersioningCommand = class extends command5(_ep3, _mw3, "PutBucketVersioning", PutBucketVersioning$) {
+    };
+    var PutBucketWebsiteCommand = class extends command5(_ep3, _mw3, "PutBucketWebsite", PutBucketWebsite$) {
+    };
+    var PutObjectAclCommand = class extends command5(_ep05, _mw5, "PutObjectAcl", PutObjectAcl$) {
+    };
+    var PutObjectAnnotationCommand = class extends command5(_ep05, _mw10, "PutObjectAnnotation", PutObjectAnnotation$) {
+    };
+    var PutObjectCommand = class extends command5(_ep05, _mw11, "PutObject", PutObject$) {
+    };
+    var PutObjectLegalHoldCommand = class extends command5(_ep5, _mw5, "PutObjectLegalHold", PutObjectLegalHold$) {
+    };
+    var PutObjectLockConfigurationCommand = class extends command5(_ep5, _mw5, "PutObjectLockConfiguration", PutObjectLockConfiguration$) {
+    };
+    var PutObjectRetentionCommand = class extends command5(_ep5, _mw5, "PutObjectRetention", PutObjectRetention$) {
+    };
+    var PutObjectTaggingCommand = class extends command5(_ep5, _mw5, "PutObjectTagging", PutObjectTagging$) {
+    };
+    var PutPublicAccessBlockCommand = class extends command5(_ep3, _mw3, "PutPublicAccessBlock", PutPublicAccessBlock$) {
+    };
+    var RenameObjectCommand = class extends command5(_ep05, _mw05, "RenameObject", RenameObject$) {
+    };
+    var RestoreObjectCommand = class extends command5(_ep5, _mw10, "RestoreObject", RestoreObject$) {
+    };
+    var SelectObjectContentCommand = class extends command5(_ep5, _mw12, "SelectObjectContent", SelectObjectContent$) {
+    };
+    var UpdateBucketMetadataAnnotationTableConfigurationCommand = class extends command5(_ep3, _mw3, "UpdateBucketMetadataAnnotationTableConfiguration", UpdateBucketMetadataAnnotationTableConfiguration$) {
+    };
+    var UpdateBucketMetadataInventoryTableConfigurationCommand = class extends command5(_ep3, _mw3, "UpdateBucketMetadataInventoryTableConfiguration", UpdateBucketMetadataInventoryTableConfiguration$) {
+    };
+    var UpdateBucketMetadataJournalTableConfigurationCommand = class extends command5(_ep3, _mw3, "UpdateBucketMetadataJournalTableConfiguration", UpdateBucketMetadataJournalTableConfiguration$) {
+    };
+    var UpdateObjectEncryptionCommand = class extends command5(_ep5, _mw5, "UpdateObjectEncryption", UpdateObjectEncryption$) {
+    };
+    var UploadPartCommand = class extends command5(_ep05, _mw13, "UploadPart", UploadPart$) {
+    };
+    var UploadPartCopyCommand = class extends command5(_ep4, _mw1, "UploadPartCopy", UploadPartCopy$) {
+    };
+    var WriteGetObjectResponseCommand = class extends command5(_ep9, _mw4, "WriteGetObjectResponse", WriteGetObjectResponse$) {
     };
     var paginateListBuckets = createPaginator2(S3Client2, ListBucketsCommand, "ContinuationToken", "ContinuationToken", "MaxBuckets");
     var paginateListDirectoryBuckets = createPaginator2(S3Client2, ListDirectoryBucketsCommand, "ContinuationToken", "ContinuationToken", "MaxDirectoryBuckets");
@@ -142155,8 +138792,9 @@ var require_dist_cjs34 = __commonJS({
   "node_modules/@aws-sdk/client-resource-groups-tagging-api/dist-cjs/index.js"(exports2) {
     var { awsEndpointFunctions: awsEndpointFunctions2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion$1, createDefaultUserAgentProvider: createDefaultUserAgentProvider2, NODE_APP_ID_CONFIG_OPTIONS: NODE_APP_ID_CONFIG_OPTIONS2, getAwsRegionExtensionConfiguration: getAwsRegionExtensionConfiguration2, resolveAwsRegionExtensionConfiguration: resolveAwsRegionExtensionConfiguration2, resolveUserAgentConfig: resolveUserAgentConfig2, resolveHostHeaderConfig: resolveHostHeaderConfig2, getUserAgentPlugin: getUserAgentPlugin2, getHostHeaderPlugin: getHostHeaderPlugin2, getLoggerPlugin: getLoggerPlugin2, getRecursionDetectionPlugin: getRecursionDetectionPlugin2 } = (init_client3(), __toCommonJS(client_exports2));
     var { getHttpAuthSchemeEndpointRuleSetPlugin: getHttpAuthSchemeEndpointRuleSetPlugin2, DefaultIdentityProviderConfig: DefaultIdentityProviderConfig2, getHttpSigningPlugin: getHttpSigningPlugin2, createPaginator: createPaginator2 } = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, Command: Command2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
-    exports2.$Command = Command2;
+    var { normalizeProvider: normalizeProvider3, getSmithyContext: getSmithyContext2, ServiceException: ServiceException2, NoOpLogger: NoOpLogger2, emitWarningIfUnsupportedVersion: emitWarningIfUnsupportedVersion3, loadConfigsForDefaultMode: loadConfigsForDefaultMode2, getDefaultExtensionConfiguration: getDefaultExtensionConfiguration2, resolveDefaultRuntimeConfig: resolveDefaultRuntimeConfig2, Client: Client2, makeBuilder: makeBuilder2, createAggregatedClient: createAggregatedClient2 } = (init_client2(), __toCommonJS(client_exports));
+    var { Command: $Command } = (init_client2(), __toCommonJS(client_exports));
+    exports2.$Command = $Command;
     exports2.__Client = Client2;
     var { resolveDefaultsModeConfig: resolveDefaultsModeConfig2, loadConfig: loadConfig2, NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS: NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS2, NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS: NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS2, NODE_REGION_CONFIG_OPTIONS: NODE_REGION_CONFIG_OPTIONS2, NODE_REGION_CONFIG_FILE_OPTIONS: NODE_REGION_CONFIG_FILE_OPTIONS2, resolveRegionConfig: resolveRegionConfig2 } = (init_config2(), __toCommonJS(config_exports));
     var { BinaryDecisionDiagram: BinaryDecisionDiagram2, EndpointCache: EndpointCache2, decideEndpoint: decideEndpoint2, customEndpointFunctions: customEndpointFunctions2, resolveEndpointConfig: resolveEndpointConfig2, getEndpointPlugin: getEndpointPlugin2 } = (init_endpoints(), __toCommonJS(endpoints_exports));
@@ -142220,7 +138858,7 @@ var require_dist_cjs34 = __commonJS({
       Region: { type: "builtInParams", name: "region" },
       UseDualStack: { type: "builtInParams", name: "useDualstackEndpoint" }
     };
-    var version = "3.1076.0";
+    var version = "3.1077.0";
     var packageInfo = {
       version
     };
@@ -143020,41 +139658,26 @@ var require_dist_cjs34 = __commonJS({
         super.destroy();
       }
     };
-    var DescribeReportCreationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "DescribeReportCreation", {}).n("ResourceGroupsTaggingAPIClient", "DescribeReportCreationCommand").sc(DescribeReportCreation$).build() {
+    var command5 = makeBuilder2(commonParams5, "ResourceGroupsTaggingAPI_20170126", "ResourceGroupsTaggingAPIClient", getEndpointPlugin2);
+    var _ep05 = {};
+    var _mw05 = (Command2, cs, config, o3) => [];
+    var DescribeReportCreationCommand = class extends command5(_ep05, _mw05, "DescribeReportCreation", DescribeReportCreation$) {
     };
-    var GetComplianceSummaryCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "GetComplianceSummary", {}).n("ResourceGroupsTaggingAPIClient", "GetComplianceSummaryCommand").sc(GetComplianceSummary$).build() {
+    var GetComplianceSummaryCommand = class extends command5(_ep05, _mw05, "GetComplianceSummary", GetComplianceSummary$) {
     };
-    var GetResourcesCommand3 = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "GetResources", {}).n("ResourceGroupsTaggingAPIClient", "GetResourcesCommand").sc(GetResources$).build() {
+    var GetResourcesCommand3 = class extends command5(_ep05, _mw05, "GetResources", GetResources$) {
     };
-    var GetTagKeysCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "GetTagKeys", {}).n("ResourceGroupsTaggingAPIClient", "GetTagKeysCommand").sc(GetTagKeys$).build() {
+    var GetTagKeysCommand = class extends command5(_ep05, _mw05, "GetTagKeys", GetTagKeys$) {
     };
-    var GetTagValuesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "GetTagValues", {}).n("ResourceGroupsTaggingAPIClient", "GetTagValuesCommand").sc(GetTagValues$).build() {
+    var GetTagValuesCommand = class extends command5(_ep05, _mw05, "GetTagValues", GetTagValues$) {
     };
-    var ListRequiredTagsCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "ListRequiredTags", {}).n("ResourceGroupsTaggingAPIClient", "ListRequiredTagsCommand").sc(ListRequiredTags$).build() {
+    var ListRequiredTagsCommand = class extends command5(_ep05, _mw05, "ListRequiredTags", ListRequiredTags$) {
     };
-    var StartReportCreationCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "StartReportCreation", {}).n("ResourceGroupsTaggingAPIClient", "StartReportCreationCommand").sc(StartReportCreation$).build() {
+    var StartReportCreationCommand = class extends command5(_ep05, _mw05, "StartReportCreation", StartReportCreation$) {
     };
-    var TagResourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "TagResources", {}).n("ResourceGroupsTaggingAPIClient", "TagResourcesCommand").sc(TagResources$).build() {
+    var TagResourcesCommand = class extends command5(_ep05, _mw05, "TagResources", TagResources$) {
     };
-    var UntagResourcesCommand = class extends Command2.classBuilder().ep(commonParams5).m(function(Command3, cs, config, o3) {
-      return [getEndpointPlugin2(config, Command3.getEndpointParameterInstructions())];
-    }).s("ResourceGroupsTaggingAPI_20170126", "UntagResources", {}).n("ResourceGroupsTaggingAPIClient", "UntagResourcesCommand").sc(UntagResources$).build() {
+    var UntagResourcesCommand = class extends command5(_ep05, _mw05, "UntagResources", UntagResources$) {
     };
     var paginateGetComplianceSummary = createPaginator2(ResourceGroupsTaggingAPIClient2, GetComplianceSummaryCommand, "PaginationToken", "PaginationToken", "MaxResults");
     var paginateGetResources = createPaginator2(ResourceGroupsTaggingAPIClient2, GetResourcesCommand3, "PaginationToken", "PaginationToken", "ResourcesPerPage");
