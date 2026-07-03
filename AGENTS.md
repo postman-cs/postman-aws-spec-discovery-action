@@ -86,3 +86,12 @@ npm run verify:dist  # CI/hook gate: rebuild + git diff (dev runs build)
 - Output path is sandboxed: must resolve within `repo-root` (path escapes are blocked)
 - `overrides.undici` in package.json pins undici >=6.24.0 for Node 20 fetch compatibility
 - SSM provider fetches URLs only over HTTPS; non-HTTPS URLs are preserved as pointer artifacts
+
+## CI
+
+`.github/workflows/ci.yml` runs a single `gate` job that fans out lint, typecheck, test, dist, and commitlint
+as backgrounded shell processes on one runner: wall-clock is `max(gate)`, not
+`sum`, setup runs once, and every gate prints its result under a `::group::`
+block even when another fails.
+
+See the workspace `docs/CI.md` for the shared rationale.
