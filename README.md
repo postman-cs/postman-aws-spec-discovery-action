@@ -276,6 +276,15 @@ Each provider is probed at startup; providers your role cannot read are silently
 
 ## How it works
 
+```mermaid
+flowchart TB
+    CRED["credential preflight<br/>sts:GetCallerIdentity"] --> PROBE["provider probes<br/>API Gateway, AppSync,<br/>EventBridge, SNS, ..."]
+    IAC["IaC / workflow / config scan<br/>service signals"] --> SCORE
+    PROBE --> SCORE["candidate scoring<br/>confidence + narrowing"]
+    SCORE --> EXPORT["best match exported<br/>to output-dir"]
+    EXPORT --> OUT["spec-path / spec-url outputs<br/>feed onboarding or bootstrap"]
+```
+
 At startup the action validates credentials with `sts:GetCallerIdentity`, probes each provider with a lightweight IAM read, and scans bounded IaC, workflow, and config files for service signals. Candidates are scored by confidence; the best match is exported to `output-dir`, alongside an `openapi.derived.json` sidecar when the artifact can be represented as OpenAPI. Progressive narrowing keeps broad accounts tractable: IaC fingerprints, CloudFormation stack correlation, `postman:repo` tags, and naming heuristics run before any full enumeration. Full details, including candidate scoring, stage auto-selection, Backstage and SSM conventions, CI auto-detection, OpenAPI normalization, IAM policies, and troubleshooting, live in [docs/providers.md](docs/providers.md).
 
 SNS is handled as a contract resolver, since SNS has no native exportable spec. Contracts resolve through a 9-level precedence chain (repo-local AsyncAPI down to manual review), with subscription-aware enrichment and metadata/webhook sidecars. See [docs/sns-contract-resolution.md](docs/sns-contract-resolution.md).
@@ -317,9 +326,13 @@ SNS is handled as a contract resolver, since SNS has no native exportable spec. 
 
 This action sends a single non-identifying usage event when a run completes, so the
 Postman team can measure adoption across CI systems. The event contains the
-action name and version, your Postman team ID, the detected CI provider and
-runner kind, the run outcome, the CI run identifier, an event timestamp, and a one-way SHA-256 hash of the repository
-identifier. Each event also carries a schema version and a constant event marker (always `completion`). The Postman team ID is sent in the clear on a legitimate-interest
+action name and version, your Postman team ID, the run outcome, an event
+timestamp, the detected CI provider, runner kind, and runner OS, the CI run
+identifier and event trigger, a one-way SHA-256 hash of the repository
+identifier, the detected git provider (github, gitlab, bitbucket, or
+azure-devops), a one-way SHA-256 hash of the VCS organization name, a coarse
+account type (service or user), and a coarse ref kind (default-branch, branch,
+or tag). Each event also carries a schema version and a constant event marker (always `completion`). The Postman team ID is sent in the clear on a legitimate-interest
 basis to measure product adoption.
 
 The `events.pm-cse.dev` endpoint is operated by the Postman Customer Success
