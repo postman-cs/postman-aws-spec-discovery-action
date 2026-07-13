@@ -158475,6 +158475,7 @@ __export(cli_exports, {
   toDotenv: () => toDotenv
 });
 module.exports = __toCommonJS(cli_exports);
+var import_node_fs4 = require("node:fs");
 var import_promises11 = require("node:fs/promises");
 var import_node_path16 = __toESM(require("node:path"), 1);
 
@@ -166203,8 +166204,22 @@ function normalizeInputValue(value) {
   return trimmed ? trimmed : void 0;
 }
 function getInput(name, env2 = process.env) {
-  const envName = `INPUT_${name.replace(/-/g, "_").toUpperCase()}`;
-  return normalizeInputValue(env2[envName]);
+  const normalizedName = `INPUT_${name.replace(/-/g, "_").toUpperCase()}`;
+  const runnerName = `INPUT_${name.replace(/ /g, "_").toUpperCase()}`;
+  const normalizedRaw = env2[normalizedName];
+  const runnerRaw = runnerName === normalizedName ? void 0 : env2[runnerName];
+  const hasNormalized = normalizedRaw !== void 0;
+  const hasRunner = runnerRaw !== void 0;
+  if (hasNormalized && hasRunner) {
+    const normalizedValue = normalizeInputValue(normalizedRaw);
+    const runnerValue = normalizeInputValue(runnerRaw);
+    if (normalizedValue !== runnerValue) {
+      throw new Error(
+        `Conflicting values for ${name}: ${normalizedName}=${JSON.stringify(normalizedValue)} vs ${runnerName}=${JSON.stringify(runnerValue)}`
+      );
+    }
+  }
+  return normalizeInputValue(hasNormalized ? normalizedRaw : runnerRaw);
 }
 function parseBoolean2(input, inputName, fallback2 = true) {
   if (!input) {
@@ -166219,13 +166234,16 @@ function parseBoolean2(input, inputName, fallback2 = true) {
   }
   throw new Error(`${inputName} must be a boolean-like value, got: ${input}`);
 }
-function parsePositiveInteger(input, inputName, fallback2) {
+function parseBoundedInteger(input, inputName, fallback2, min, max) {
   if (!input) {
     return fallback2;
   }
-  const value = Number.parseInt(input, 10);
-  if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`${inputName} must be a non-negative integer, got: ${input}`);
+  if (!/^\d+$/.test(input)) {
+    throw new Error(`${inputName} must be a non-negative integer between ${min} and ${max}, got: ${input}`);
+  }
+  const value = Number(input);
+  if (!Number.isSafeInteger(value) || value < min || value > max) {
+    throw new Error(`${inputName} must be a non-negative integer between ${min} and ${max}, got: ${input}`);
   }
   return value;
 }
@@ -166271,9 +166289,9 @@ function parseStringArrayJson(raw, inputName) {
 }
 function resolveInputs(env2 = process.env) {
   const mode = parseMode(getInput("mode", env2) ?? DEFAULT_MODE);
-  const awsRegion = getInput("aws-region", env2) ?? "";
+  const awsRegion = getInput("aws-region", env2) ?? normalizeInputValue(env2.AWS_REGION) ?? normalizeInputValue(env2.AWS_DEFAULT_REGION) ?? "";
   if (!awsRegion) {
-    throw new Error("aws-region is required");
+    throw new Error("aws-region is required (set --aws-region / INPUT_AWS_REGION, or AWS_REGION / AWS_DEFAULT_REGION)");
   }
   const repoRoot = getInput("repo-root", env2) ?? normalizeInputValue(env2.GITHUB_WORKSPACE) ?? normalizeInputValue(env2.CI_PROJECT_DIR) ?? normalizeInputValue(env2.BITBUCKET_CLONE_DIR) ?? normalizeInputValue(env2.BUILD_SOURCESDIRECTORY) ?? DEFAULT_REPO_ROOT;
   const gatewayId = getInput("gateway-id", env2);
@@ -166325,12 +166343,12 @@ function resolveInputs(env2 = process.env) {
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
-    maxCandidates: parsePositiveInteger(maxCandidatesRaw, "max-candidates", 50),
+    maxCandidates: parseBoundedInteger(maxCandidatesRaw, "max-candidates", 50, 1, 1e4),
     dryRun: parseBoolean2(dryRunRaw, "dry-run", false),
     preflightChecks: parseBoolean2(preflightChecksRaw, "preflight-checks", true),
     preflightPermissionProbe: parseBoolean2(preflightPermissionProbeRaw, "preflight-permission-probe", true),
-    requestTimeoutMs: parsePositiveInteger(requestTimeoutMsRaw, "request-timeout-ms", 3e4),
-    maxAttempts: parsePositiveInteger(maxAttemptsRaw, "max-attempts", 3),
+    requestTimeoutMs: parseBoundedInteger(requestTimeoutMsRaw, "request-timeout-ms", 3e4, 1, 3e5),
+    maxAttempts: parseBoundedInteger(maxAttemptsRaw, "max-attempts", 3, 1, 100),
     includeV2: parseBoolean2(includeV2Raw, "include-v2", true)
   };
 }
@@ -168393,61 +168411,136 @@ var ConsoleReporter = class {
     console.error(`warning: ${sanitizeLogMessage(message)}`);
   }
 };
-function readFlag(argv, name) {
-  const prefix = `--${name}=`;
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === `--${name}`) {
-      return argv[index + 1];
-    }
-    if (arg?.startsWith(prefix)) {
-      return arg.slice(prefix.length);
-    }
-  }
-  return void 0;
-}
+var CLI_INPUT_NAMES = [
+  "mode",
+  "aws-region",
+  "gateway-id",
+  "repo-url",
+  "repo-slug",
+  "git-provider",
+  "ref",
+  "sha",
+  "repo-root",
+  "expected-service-name",
+  "expected-gateway-ids-json",
+  "stage",
+  "api-filter",
+  "service-mapping-json",
+  "output-dir",
+  "max-candidates",
+  "dry-run",
+  "preflight-checks",
+  "preflight-permission-probe",
+  "request-timeout-ms",
+  "max-attempts",
+  "include-v2",
+  "postman-api-key",
+  "postman-access-token"
+];
+var META_OPTIONS = /* @__PURE__ */ new Set(["result-json", "dotenv-path", "help", "version"]);
+var KNOWN_OPTIONS = /* @__PURE__ */ new Set([...CLI_INPUT_NAMES, ...META_OPTIONS]);
 function normalizeCliFlag(name) {
   return `INPUT_${name.replace(/-/g, "_").toUpperCase()}`;
 }
+function printHelp(writeStdout) {
+  writeStdout(`Usage: postman-aws-spec-discovery [options]
+
+Discover AWS-hosted API specs and emit JSON / dotenv artifacts for downstream
+Postman onboarding steps.
+
+Options mirror action inputs as --kebab-case flags (for example --aws-region,
+--dry-run, --output-dir). Additional CLI-only options:
+
+  --result-json <path>   Write the full result JSON (default: postman-aws-spec-discovery-result.json)
+  --dotenv-path <path>   Optional dotenv export for downstream jobs
+  --help                 Show this help text and exit
+  --version              Print the package version and exit
+`);
+}
+function printVersion(writeStdout) {
+  writeStdout(`${resolveActionVersion2()}
+`);
+}
 function parseCliArgs(argv, env2 = process.env) {
-  const inputNames = [
-    "mode",
-    "aws-region",
-    "gateway-id",
-    "repo-url",
-    "repo-slug",
-    "git-provider",
-    "ref",
-    "sha",
-    "repo-root",
-    "expected-service-name",
-    "expected-gateway-ids-json",
-    "stage",
-    "api-filter",
-    "service-mapping-json",
-    "output-dir",
-    "max-candidates",
-    "dry-run",
-    "preflight-checks",
-    "preflight-permission-probe",
-    "request-timeout-ms",
-    "max-attempts",
-    "include-v2",
-    "postman-api-key",
-    "postman-access-token"
-  ];
   const inputEnv = { ...env2 };
-  for (const name of inputNames) {
-    const value = readFlag(argv, name);
-    if (value !== void 0) {
-      inputEnv[normalizeCliFlag(name)] = value;
+  const seen = /* @__PURE__ */ new Set();
+  let command5 = "run";
+  let resultJsonPath = normalizeInputish(env2.INPUT_RESULT_JSON) ?? "postman-aws-spec-discovery-result.json";
+  let dotenvPath = normalizeInputish(env2.INPUT_DOTENV_PATH);
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (!token) {
+      continue;
     }
+    if (!token.startsWith("--")) {
+      throw new Error(`Unexpected positional argument: ${token}`);
+    }
+    const raw = token.slice(2);
+    const equalsIndex = raw.indexOf("=");
+    const optionName = equalsIndex >= 0 ? raw.slice(0, equalsIndex) : raw;
+    if (!optionName || !KNOWN_OPTIONS.has(optionName)) {
+      throw new Error(`Unknown option: --${optionName || raw}`);
+    }
+    if (seen.has(optionName)) {
+      throw new Error(`Duplicate option: --${optionName}`);
+    }
+    seen.add(optionName);
+    if (optionName === "help" || optionName === "version") {
+      if (equalsIndex >= 0) {
+        throw new Error(`Option --${optionName} does not accept a value`);
+      }
+      command5 = optionName;
+      continue;
+    }
+    let rawValue;
+    if (equalsIndex >= 0) {
+      rawValue = raw.slice(equalsIndex + 1);
+    } else {
+      const next = argv[index + 1];
+      if (next !== void 0 && !next.startsWith("--")) {
+        rawValue = next;
+        index += 1;
+      } else {
+        throw new Error(`Missing value for --${optionName}`);
+      }
+    }
+    if (rawValue === "") {
+      throw new Error(`Missing value for --${optionName}`);
+    }
+    if (optionName === "result-json") {
+      resultJsonPath = rawValue;
+      continue;
+    }
+    if (optionName === "dotenv-path") {
+      dotenvPath = rawValue;
+      continue;
+    }
+    const envName = normalizeCliFlag(optionName);
+    const runnerEnvName = `INPUT_${optionName.toUpperCase()}`;
+    if (runnerEnvName !== envName) {
+      delete inputEnv[runnerEnvName];
+    }
+    inputEnv[envName] = rawValue;
+  }
+  if (command5 !== "run") {
+    if (seen.size !== 1) {
+      throw new Error(`Option --${command5} cannot be combined with other options`);
+    }
+    return { kind: command5 };
   }
   return {
+    kind: "run",
     inputEnv,
-    resultJsonPath: readFlag(argv, "result-json") ?? "postman-aws-spec-discovery-result.json",
-    dotenvPath: readFlag(argv, "dotenv-path")
+    resultJsonPath,
+    dotenvPath
   };
+}
+function normalizeInputish(value) {
+  if (value === void 0) {
+    return void 0;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : void 0;
 }
 function toDotenv(outputs) {
   const envPairs = {
@@ -168488,15 +168581,32 @@ async function writeOptionalFile(filePath, content) {
   await (0, import_promises11.mkdir)(import_node_path16.default.dirname(resolved), { recursive: true });
   await (0, import_promises11.writeFile)(resolved, content, "utf8");
 }
-async function runCli(argv = process.argv.slice(2)) {
-  const config = parseCliArgs(argv, process.env);
+async function runCli(argv = process.argv.slice(2), runtime = {}) {
+  const env2 = runtime.env ?? process.env;
+  const writeStdout = runtime.writeStdout ?? ((chunk) => {
+    process.stdout.write(chunk);
+  });
+  const parsed = parseCliArgs(argv, env2);
+  if (parsed.kind === "help") {
+    printHelp(writeStdout);
+    return;
+  }
+  if (parsed.kind === "version") {
+    printVersion(writeStdout);
+    return;
+  }
+  const config = parsed;
   const inputs = resolveInputs(config.inputEnv);
   const reporter = new ConsoleReporter();
-  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion: resolveActionVersion2(), logger: reporter });
-  telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? process.env.POSTMAN_TEAM_ID);
+  const telemetry = createTelemetryContext({
+    action: "postman-aws-spec-discovery-action",
+    actionVersion: resolveActionVersion2(),
+    logger: reporter
+  });
+  telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? env2.POSTMAN_TEAM_ID);
   const { accountType } = await prepareTelemetryCredentials({
-    postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? process.env.POSTMAN_API_KEY,
-    postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? process.env.POSTMAN_ACCESS_TOKEN
+    postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? env2.POSTMAN_API_KEY,
+    postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? env2.POSTMAN_ACCESS_TOKEN
   });
   try {
     const result = await execute(inputs, {
@@ -168509,7 +168619,7 @@ async function runCli(argv = process.argv.slice(2)) {
     });
     await writeOptionalFile(config.resultJsonPath, JSON.stringify(result, null, 2));
     await writeOptionalFile(config.dotenvPath, toDotenv(result.outputs));
-    process.stdout.write(`${JSON.stringify(result, null, 2)}
+    writeStdout(`${JSON.stringify(result, null, 2)}
 `);
     telemetry.setAccountType(accountType);
     telemetry.emitCompletion("success");
@@ -168519,9 +168629,24 @@ async function runCli(argv = process.argv.slice(2)) {
     throw error2;
   }
 }
-var currentModulePath = typeof __filename === "string" ? __filename : "";
-var entrypoint = process.argv[1];
-if (entrypoint && currentModulePath === entrypoint) {
+function shouldRunMain() {
+  const cjsModule = typeof module !== "undefined" ? module : void 0;
+  const cjsRequire = typeof require !== "undefined" ? require : void 0;
+  if (cjsModule && cjsRequire && cjsRequire.main === cjsModule) {
+    return true;
+  }
+  const currentModulePath = typeof __filename === "string" ? __filename : "";
+  const entrypointPath = process.argv[1];
+  if (!currentModulePath || !entrypointPath) {
+    return false;
+  }
+  try {
+    return (0, import_node_fs4.realpathSync)(currentModulePath) === (0, import_node_fs4.realpathSync)(entrypointPath);
+  } catch {
+    return import_node_path16.default.resolve(currentModulePath) === import_node_path16.default.resolve(entrypointPath);
+  }
+}
+if (shouldRunMain()) {
   runCli().catch((error2) => {
     const message = formatUserSafeError(error2);
     process.stderr.write(`${message}
