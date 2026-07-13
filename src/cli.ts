@@ -96,10 +96,6 @@ function printVersion(writeStdout: (chunk: string) => void): void {
 }
 
 export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.env): ParsedCliArgs {
-  const knownInputEnvNames = new Set(CLI_INPUT_NAMES.map((name) => normalizeCliFlag(name)));
-  const knownMetaEnvNames = new Set(['INPUT_RESULT_JSON', 'INPUT_DOTENV_PATH']);
-  const knownEnvNames = new Set([...knownInputEnvNames, ...knownMetaEnvNames]);
-
   const inputEnv: NodeJS.ProcessEnv = { ...env };
   const seen = new Set<string>();
   let command: 'run' | 'help' | 'version' = 'run';
@@ -154,23 +150,19 @@ export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.en
     }
 
     if (optionName === 'result-json') {
-      const envValue = normalizeInputish(env.INPUT_RESULT_JSON);
-      if (envValue !== undefined && envValue !== rawValue) {
-        throw new Error('Conflicting values for --result-json and INPUT_RESULT_JSON');
-      }
       resultJsonPath = rawValue;
       continue;
     }
     if (optionName === 'dotenv-path') {
-      const envValue = normalizeInputish(env.INPUT_DOTENV_PATH);
-      if (envValue !== undefined && envValue !== rawValue) {
-        throw new Error('Conflicting values for --dotenv-path and INPUT_DOTENV_PATH');
-      }
       dotenvPath = rawValue;
       continue;
     }
 
     const envName = normalizeCliFlag(optionName);
+    const runnerEnvName = `INPUT_${optionName.toUpperCase()}`;
+    if (runnerEnvName !== envName) {
+      delete inputEnv[runnerEnvName];
+    }
     inputEnv[envName] = rawValue;
   }
 
@@ -179,17 +171,6 @@ export function parseCliArgs(argv: string[], env: NodeJS.ProcessEnv = process.en
       throw new Error(`Option --${command} cannot be combined with other options`);
     }
     return { kind: command };
-  }
-
-  for (const key of Object.keys(env)) {
-    if (!key.startsWith('INPUT_')) {
-      continue;
-    }
-    const runnerNormalized = `INPUT_${key.slice('INPUT_'.length).replace(/-/g, '_')}`;
-    if (knownEnvNames.has(key) || knownEnvNames.has(runnerNormalized)) {
-      continue;
-    }
-    throw new Error(`Unknown INPUT alias: ${key}`);
   }
 
   return {

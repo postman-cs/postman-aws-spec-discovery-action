@@ -168462,9 +168462,6 @@ function printVersion(writeStdout) {
 `);
 }
 function parseCliArgs(argv, env2 = process.env) {
-  const knownInputEnvNames = new Set(CLI_INPUT_NAMES.map((name) => normalizeCliFlag(name)));
-  const knownMetaEnvNames = /* @__PURE__ */ new Set(["INPUT_RESULT_JSON", "INPUT_DOTENV_PATH"]);
-  const knownEnvNames = /* @__PURE__ */ new Set([...knownInputEnvNames, ...knownMetaEnvNames]);
   const inputEnv = { ...env2 };
   const seen = /* @__PURE__ */ new Set();
   let command5 = "run";
@@ -168511,22 +168508,18 @@ function parseCliArgs(argv, env2 = process.env) {
       throw new Error(`Missing value for --${optionName}`);
     }
     if (optionName === "result-json") {
-      const envValue = normalizeInputish(env2.INPUT_RESULT_JSON);
-      if (envValue !== void 0 && envValue !== rawValue) {
-        throw new Error("Conflicting values for --result-json and INPUT_RESULT_JSON");
-      }
       resultJsonPath = rawValue;
       continue;
     }
     if (optionName === "dotenv-path") {
-      const envValue = normalizeInputish(env2.INPUT_DOTENV_PATH);
-      if (envValue !== void 0 && envValue !== rawValue) {
-        throw new Error("Conflicting values for --dotenv-path and INPUT_DOTENV_PATH");
-      }
       dotenvPath = rawValue;
       continue;
     }
     const envName = normalizeCliFlag(optionName);
+    const runnerEnvName = `INPUT_${optionName.toUpperCase()}`;
+    if (runnerEnvName !== envName) {
+      delete inputEnv[runnerEnvName];
+    }
     inputEnv[envName] = rawValue;
   }
   if (command5 !== "run") {
@@ -168534,16 +168527,6 @@ function parseCliArgs(argv, env2 = process.env) {
       throw new Error(`Option --${command5} cannot be combined with other options`);
     }
     return { kind: command5 };
-  }
-  for (const key of Object.keys(env2)) {
-    if (!key.startsWith("INPUT_")) {
-      continue;
-    }
-    const runnerNormalized = `INPUT_${key.slice("INPUT_".length).replace(/-/g, "_")}`;
-    if (knownEnvNames.has(key) || knownEnvNames.has(runnerNormalized)) {
-      continue;
-    }
-    throw new Error(`Unknown INPUT alias: ${key}`);
   }
   return {
     kind: "run",

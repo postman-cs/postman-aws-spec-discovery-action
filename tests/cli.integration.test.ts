@@ -33,13 +33,31 @@ describe('parseCliArgs', () => {
     expect(() => parseCliArgs(['--help', '--version'], {})).toThrow(/cannot be combined/);
   });
 
-  it('lets explicit CLI values override normalized INPUT environment values', () => {
-    const parsed = parseCliArgs(['--dry-run', 'false'], { INPUT_DRY_RUN: 'true' });
+  it('lets explicit CLI values override normalized and runner-form INPUT environment values', () => {
+    const parsed = parseCliArgs(['--dry-run', 'false'], {
+      INPUT_DRY_RUN: 'true',
+      'INPUT_DRY-RUN': 'not-a-boolean'
+    } as NodeJS.ProcessEnv);
     expect(parsed.kind).toBe('run');
     if (parsed.kind !== 'run') {
       return;
     }
     expect(parsed.inputEnv.INPUT_DRY_RUN).toBe('false');
+    expect(parsed.inputEnv['INPUT_DRY-RUN']).toBeUndefined();
+  });
+
+  it('preserves unrelated ambient INPUT_* variables from wrappers', () => {
+    const parsed = parseCliArgs(['--aws-region', 'us-east-1'], {
+      INPUT_COMPOSITE_MODE: 'publish',
+      'INPUT_WRAPPER-FLAG': 'unexpected'
+    } as NodeJS.ProcessEnv);
+    expect(parsed.kind).toBe('run');
+    if (parsed.kind !== 'run') {
+      return;
+    }
+    expect(parsed.inputEnv.INPUT_COMPOSITE_MODE).toBe('publish');
+    expect(parsed.inputEnv['INPUT_WRAPPER-FLAG']).toBe('unexpected');
+    expect(parsed.inputEnv.INPUT_AWS_REGION).toBe('us-east-1');
   });
 });
 
