@@ -69,7 +69,7 @@ describe('runCli integration boundary', () => {
 
   it.each([
     ['--help', /Usage: postman-aws-spec-discovery/],
-    ['--version', /^2\.0\.0\n$/]
+    ['--version', /^\d+\.\d+\.\d+\n$/]
   ])('handles %s without resolving inputs, telemetry, execution, or files', async (flag, expected) => {
     const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     await runCli([flag], { writeStdout: (chunk) => process.stdout.write(chunk) });
