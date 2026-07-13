@@ -20,12 +20,65 @@ vi.mock('../src/lib/aws/client.js', () => ({
   }
 }));
 
-import { runCli } from '../src/cli.js';
+import { parseCliArgs, runCli } from '../src/cli.js';
+
+describe('parseCliArgs', () => {
+  it('rejects unknown, positional, missing, and duplicate arguments', () => {
+    expect(() => parseCliArgs(['--unknown', 'value'], {})).toThrow(/Unknown option: --unknown/);
+    expect(() => parseCliArgs(['us-east-1'], {})).toThrow(/Unexpected positional argument/);
+    expect(() => parseCliArgs(['--aws-region'], {})).toThrow(/Missing value for --aws-region/);
+    expect(() => parseCliArgs(['--aws-region', '--dry-run', 'true'], {})).toThrow(/Missing value for --aws-region/);
+    expect(() => parseCliArgs(['--dry-run'], {})).toThrow(/Missing value for --dry-run/);
+    expect(() => parseCliArgs(['--dry-run=false', '--dry-run', 'true'], {})).toThrow(/Duplicate option: --dry-run/);
+    expect(() => parseCliArgs(['--help', '--version'], {})).toThrow(/cannot be combined/);
+  });
+
+  it('lets explicit CLI values override normalized INPUT environment values', () => {
+    const parsed = parseCliArgs(['--dry-run', 'false'], { INPUT_DRY_RUN: 'true' });
+    expect(parsed.kind).toBe('run');
+    if (parsed.kind !== 'run') {
+      return;
+    }
+    expect(parsed.inputEnv.INPUT_DRY_RUN).toBe('false');
+  });
+});
 
 describe('runCli integration boundary', () => {
   beforeEach(() => {
     executeMock.mockReset();
     resolveInputsMock.mockReset();
+  });
+
+  it.each([
+    ['--help', /Usage: postman-aws-spec-discovery/],
+    ['--version', /^2\.0\.0\n$/]
+  ])('handles %s without resolving inputs, telemetry, execution, or files', async (flag, expected) => {
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    await runCli([flag], { writeStdout: (chunk) => process.stdout.write(chunk) });
+
+    expect(stdout.mock.calls.map(([chunk]) => String(chunk)).join('')).toMatch(expected);
+    expect(resolveInputsMock).not.toHaveBeenCalled();
+    expect(executeMock).not.toHaveBeenCalled();
+    stdout.mockRestore();
+  });
+
+  it('ignores malformed input environment when printing help', async () => {
+    let stdout = '';
+    await runCli(['--help'], {
+      env: { INPUT_UNKNOWN: 'value', INPUT_DRY_RUN: 'not-a-boolean' },
+      writeStdout: (chunk) => {
+        stdout += chunk;
+      }
+    });
+    expect(stdout).toContain('Usage: postman-aws-spec-discovery');
+    expect(resolveInputsMock).not.toHaveBeenCalled();
+    expect(executeMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed dry-run before input resolution or execution', async () => {
+    await expect(runCli(['--dry-run'])).rejects.toThrow(/Missing value for --dry-run/);
+    expect(resolveInputsMock).not.toHaveBeenCalled();
+    expect(executeMock).not.toHaveBeenCalled();
   });
 
   it('writes result JSON and dotenv artifacts', async () => {
