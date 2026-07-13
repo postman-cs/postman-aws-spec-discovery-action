@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs",
+    "build": "npm run typecheck && rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs && chmod 755 dist/cli.cjs",
     "verify:dist": "npm run build && git diff --ignore-space-at-eol --text --exit-code -- dist",
     "docs:tables": "node scripts/render-action-tables.mjs",
     "lint": "eslint .",
