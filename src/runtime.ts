@@ -170,8 +170,24 @@ function normalizeInputValue(value: string | undefined): string | undefined {
 }
 
 export function getInput(name: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
-  const envName = `INPUT_${name.replace(/-/g, '_').toUpperCase()}`;
-  return normalizeInputValue(env[envName]);
+  const normalizedName = `INPUT_${name.replace(/-/g, '_').toUpperCase()}`;
+  const runnerName = `INPUT_${name.replace(/ /g, '_').toUpperCase()}`;
+  const normalizedRaw = env[normalizedName];
+  const runnerRaw = runnerName === normalizedName ? undefined : env[runnerName];
+  const hasNormalized = normalizedRaw !== undefined;
+  const hasRunner = runnerRaw !== undefined;
+
+  if (hasNormalized && hasRunner) {
+    const normalizedValue = normalizeInputValue(normalizedRaw);
+    const runnerValue = normalizeInputValue(runnerRaw);
+    if (normalizedValue !== runnerValue) {
+      throw new Error(
+        `Conflicting values for ${name}: ${normalizedName}=${JSON.stringify(normalizedValue)} vs ${runnerName}=${JSON.stringify(runnerValue)}`
+      );
+    }
+  }
+
+  return normalizeInputValue(hasNormalized ? normalizedRaw : runnerRaw);
 }
 
 function parseBoolean(input: string | undefined, inputName: string, fallback = true): boolean {
@@ -188,13 +204,22 @@ function parseBoolean(input: string | undefined, inputName: string, fallback = t
   throw new Error(`${inputName} must be a boolean-like value, got: ${input}`);
 }
 
-function parsePositiveInteger(input: string | undefined, inputName: string, fallback: number): number {
+function parseBoundedInteger(
+  input: string | undefined,
+  inputName: string,
+  fallback: number,
+  min: number,
+  max: number
+): number {
   if (!input) {
     return fallback;
   }
-  const value = Number.parseInt(input, 10);
-  if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`${inputName} must be a non-negative integer, got: ${input}`);
+  if (!/^\d+$/.test(input)) {
+    throw new Error(`${inputName} must be a non-negative integer between ${min} and ${max}, got: ${input}`);
+  }
+  const value = Number(input);
+  if (!Number.isSafeInteger(value) || value < min || value > max) {
+    throw new Error(`${inputName} must be a non-negative integer between ${min} and ${max}, got: ${input}`);
   }
   return value;
 }
@@ -244,9 +269,13 @@ function parseStringArrayJson(raw: string, inputName: string): string[] {
 
 export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInputs {
   const mode = parseMode(getInput('mode', env) ?? DEFAULT_MODE);
-  const awsRegion = getInput('aws-region', env) ?? '';
+  const awsRegion =
+    getInput('aws-region', env) ??
+    normalizeInputValue(env.AWS_REGION) ??
+    normalizeInputValue(env.AWS_DEFAULT_REGION) ??
+    '';
   if (!awsRegion) {
-    throw new Error('aws-region is required');
+    throw new Error('aws-region is required (set --aws-region / INPUT_AWS_REGION, or AWS_REGION / AWS_DEFAULT_REGION)');
   }
   const repoRoot =
     getInput('repo-root', env) ??
@@ -307,24 +336,24 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
-    maxCandidates: parsePositiveInteger(maxCandidatesRaw, 'max-candidates', 50),
+    maxCandidates: parseBoundedInteger(maxCandidatesRaw, 'max-candidates', 50, 1, 10000),
     dryRun: parseBoolean(dryRunRaw, 'dry-run', false),
     preflightChecks: parseBoolean(preflightChecksRaw, 'preflight-checks', true),
     preflightPermissionProbe: parseBoolean(preflightPermissionProbeRaw, 'preflight-permission-probe', true),
-    requestTimeoutMs: parsePositiveInteger(requestTimeoutMsRaw, 'request-timeout-ms', 30000),
-    maxAttempts: parsePositiveInteger(maxAttemptsRaw, 'max-attempts', 3),
+    requestTimeoutMs: parseBoundedInteger(requestTimeoutMsRaw, 'request-timeout-ms', 30000, 1, 300000),
+    maxAttempts: parseBoundedInteger(maxAttemptsRaw, 'max-attempts', 3, 1, 100),
     includeV2: parseBoolean(includeV2Raw, 'include-v2', true)
   };
 }
 
 export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
-  const requiredRegion = inputReader.getInput('aws-region', { required: true }).trim();
+  const requiredRegion = inputReader.getInput('aws-region').trim();
   return resolveInputs({
-    INPUT_AWS_REGION: requiredRegion,
+    ...process.env,
+    INPUT_AWS_REGION: requiredRegion || undefined,
     INPUT_GATEWAY_ID: normalizeInputValue(inputReader.getInput('gateway-id')),
     INPUT_STAGE: normalizeInputValue(inputReader.getInput('stage')),
-    INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput('output-dir')) ?? actionContract.inputs['output-dir'].default,
-    ...process.env
+    INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput('output-dir')) ?? actionContract.inputs['output-dir'].default
   });
 }
 
