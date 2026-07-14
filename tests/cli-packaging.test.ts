@@ -1,5 +1,5 @@
 import { execFile, spawnSync } from 'node:child_process';
-import { access, constants, lstat, mkdir, mkdtemp, readFile, rm, stat, symlink } from 'node:fs/promises';
+import { access, constants, lstat, mkdir, mkdtemp, readFile, readdir, rm, stat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +22,7 @@ async function makeTempDir(prefix: string): Promise<string> {
 }
 
 describe('CLI packaging contract', () => {
-  it('commits a Node shebang and executable mode on dist/cli.cjs', async () => {
+  it('commits a Node shebang and git-index executable mode on dist/cli.cjs', async () => {
     const cliPath = path.join(repoRoot, 'dist', 'cli.cjs');
     const contents = await readFile(cliPath, 'utf8');
     expect(contents.startsWith('#!/usr/bin/env node\n')).toBe(true);
@@ -30,6 +30,69 @@ describe('CLI packaging contract', () => {
     const mode = (await stat(cliPath)).mode & 0o777;
     expect(mode & 0o111).not.toBe(0);
     await access(cliPath, constants.X_OK);
+
+    const staged = await execFileAsync('git', ['ls-files', '--stage', 'dist/cli.cjs'], {
+      cwd: repoRoot,
+      encoding: 'utf8'
+    });
+    expect(staged.stdout).toMatch(/^100755 /);
+  });
+
+  it('keeps an exact dist census of cli/index entrypoints', async () => {
+    const distDir = path.join(repoRoot, 'dist');
+    const entries = (
+      await execFileAsync('git', ['ls-files', '--', 'dist'], {
+        cwd: repoRoot,
+        encoding: 'utf8'
+      })
+    ).stdout
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((filePath) => path.basename(filePath))
+      .sort();
+    expect(entries).toEqual(['cli.cjs', 'index.cjs']);
+
+    const onDisk = await (await import('node:fs/promises')).readdir(distDir);
+    expect(onDisk.filter((name) => !name.startsWith('.')).sort()).toEqual(['cli.cjs', 'index.cjs']);
+  });
+
+  it('splits bundle/build and keeps the assert-only dist contract read-only', async () => {
+    const packageJson = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    expect(packageJson.scripts.bundle).toContain("--banner:js='#!/usr/bin/env node'");
+    expect(packageJson.scripts.bundle).toContain('chmod 755 dist/cli.cjs');
+    expect(packageJson.scripts.build).toBe('npm run typecheck && npm run bundle');
+    expect(packageJson.scripts['verify:dist:assert']).toBe('node scripts/verify-dist-artifact.mjs');
+    expect(packageJson.scripts['verify:dist']).toBe(
+      'npm run build && git diff --ignore-space-at-eol --text --exit-code -- dist && npm run verify:dist:assert'
+    );
+  });
+
+  it('does not rebuild dist from any test', async () => {
+    const testEntries = await readdir(path.join(repoRoot, 'tests'), { recursive: true });
+    const testSources = await Promise.all(
+      testEntries
+        .filter((entry) => entry.endsWith('.test.ts'))
+        .map((entry) => readFile(path.join(repoRoot, 'tests', entry), 'utf8'))
+    );
+    const allTests = testSources.join('\n');
+    const rebuildInvocation = new RegExp(
+      String.raw`(?:execFile|spawn)\w*\([\s\S]{0,200}(?:npm[\s'",]+run[\s'",]+(?:build|bundle)|esbuild)`,
+      'i'
+    );
+    expect(allTests).not.toMatch(rebuildInvocation);
+    // Build the forbidden cleanup token at runtime so this assertion text cannot self-match.
+    const rebuildCleanup = ['rm', '-rf', 'dist'].join(' ');
+    expect(allTests.includes(rebuildCleanup)).toBe(false);
+  });
+
+  it('bundles once before CI fan-out and runs only the read-only dist assertion in-gate', async () => {
+    const workflow = await readFile(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+    expect(workflow.match(/npm run bundle/g)).toHaveLength(1);
+    expect(workflow).toContain('run dist       npm run verify:dist:assert');
+    expect(workflow).not.toContain('run dist       npm run verify:dist\n');
+    expect(workflow.indexOf('- run: npm run bundle')).toBeLessThan(workflow.indexOf('- name: Run gates'));
   });
 
   it('packs, installs, and runs .bin --help via symlink invocation', async () => {

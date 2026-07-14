@@ -1,6 +1,6 @@
 # postman-aws-spec-discovery-action
 
-Zero-config AWS API spec discovery. Probes IAM permissions to auto-detect available providers, scans repo for IaC signals, resolves the best spec source, and exports it. Supports 8 AWS providers. Dual entry: GitHub Action and CLI.
+Zero-config AWS API spec discovery. Probes IAM permissions to auto-detect available providers, scans repo for IaC signals, resolves best spec source, and exports it. Supports 8 AWS providers. Dual entry: GitHub Action and CLI.
 
 ## Structure
 
@@ -50,13 +50,14 @@ discovered-specs/        # Sample output from discovery runs
 
 ```bash
 npm ci && npm test && npm run typecheck && npm run build
-npm run verify:dist  # CI/hook gate: rebuild + git diff (dev runs build)
+npm run verify:dist:assert  # read-only artifact + git diff (CI after one bundle)
+npm run verify:dist         # rebuild + diff + assert (pre-push / release)
 ```
 
 ## Discovery Flow
 
 1. **Preflight**: Validate AWS credentials via `sts:GetCallerIdentity`
-2. **Provider probing**: Each provider does a lightweight IAM probe; silently skip if denied
+2. **Provider probing**: Each provider does lightweight IAM probe; silently skip if denied
 3. **Repo scanning**: Fingerprint IaC files for provider hints and existing spec files
 4. **Progressive narrowing** (API Gateway): IaC refs -> CFN stacks -> tag filtering -> naming heuristic -> full enumeration
 5. **SNS resolution** (when SNS signals present): 9-level precedence chain (repo-local -> generated artifacts -> SSM -> remote URLs -> EventBridge-derived -> code-derived -> manual-review), subscription enrichment, metadata and webhook sidecar generation
@@ -81,17 +82,20 @@ npm run verify:dist  # CI/hook gate: rebuild + git diff (dev runs build)
 
 ## Gotchas
 
-- `runtime.ts` contains the real execution logic; `index.ts` is just the GitHub Action shell
-- In tests, a custom `createAwsClient` injection builds a minimal registry with only API Gateway to avoid real AWS probes
+- Never commit AWS credentials, Postman tokens, or other secrets; mask before logging
+- `runtime.ts` contains real execution logic; `index.ts` is just GitHub Action shell
+- In tests, custom `createAwsClient` injection builds minimal registry with only API Gateway to avoid real AWS probes
 - Output path is sandboxed: must resolve within `repo-root` (path escapes are blocked)
 - `overrides.undici` in package.json pins undici >=6.24.0 for Node 20 fetch compatibility
 - SSM provider fetches URLs only over HTTPS; non-HTTPS URLs are preserved as pointer artifacts
 
 ## CI
 
-`.github/workflows/ci.yml` runs a single `gate` job that fans out lint, typecheck, test, dist, and commitlint
+`.github/workflows/ci.yml` runs `npm run bundle` once, then single `gate` job
+fans out lint, typecheck, test, read-only `verify:dist:assert`, and commitlint
 as backgrounded shell processes on one runner: wall-clock is `max(gate)`, not
 `sum`, setup runs once, and every gate prints its result under a `::group::`
-block even when another fails.
+block even when another fails. Building before fan-out prevents pack tests from
+racing an in-gate `rm -rf dist` rebuild.
 
-See the workspace `docs/CI.md` for the shared rationale.
+See workspace-root `../../docs/CI.md` for shared rationale.
