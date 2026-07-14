@@ -63,10 +63,10 @@ describe('CLI packaging contract', () => {
     expect(packageJson.scripts.bundle).toContain("--banner:js='#!/usr/bin/env node'");
     expect(packageJson.scripts.bundle).toContain('chmod 755 dist/cli.cjs');
     expect(packageJson.scripts.build).toBe('npm run typecheck && npm run bundle');
-    expect(packageJson.scripts['verify:dist:assert']).toBe('node scripts/verify-dist-artifact.mjs');
-    expect(packageJson.scripts['verify:dist']).toBe(
-      'npm run build && git diff --ignore-space-at-eol --text --exit-code -- dist && npm run verify:dist:assert'
+    expect(packageJson.scripts['verify:dist:assert']).toBe(
+      'git diff --ignore-space-at-eol --text --exit-code -- dist && node scripts/verify-dist-artifact.mjs'
     );
+    expect(packageJson.scripts['verify:dist']).toBe('npm run build && npm run verify:dist:assert');
   });
 
   it('does not rebuild dist from any test', async () => {
