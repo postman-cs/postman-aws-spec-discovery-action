@@ -5,7 +5,10 @@ import path from 'node:path';
 import { AwsApiGatewaySdkClient } from './lib/aws/client.js';
 import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
 import { defaultWriteSpecFile, execute, resolveInputs, type ReporterLike } from './runtime.js';
-import { prepareTelemetryCredentials } from './lib/postman/telemetry-credentials.js';
+import {
+  prepareTelemetryCredentials,
+  resolveTelemetryTeamId
+} from './lib/postman/telemetry-credentials.js';
 import { createTelemetryContext } from '@postman-cse/automation-telemetry-core';
 import { resolveActionVersion } from './action-version.js';
 
@@ -260,7 +263,7 @@ export async function runCli(
     actionVersion: resolveActionVersion(),
     logger: reporter
   });
-  telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? env.POSTMAN_TEAM_ID);
+  telemetry.setTeamId(resolveTelemetryTeamId(config.inputEnv));
   // Optional telemetry enrichment (D1): mint/re-mint access token when PMAK is
   // present, resolve account_type once, best-effort, before either completion emit.
   const { accountType } = await prepareTelemetryCredentials({

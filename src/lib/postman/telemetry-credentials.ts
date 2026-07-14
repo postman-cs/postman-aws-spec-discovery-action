@@ -15,6 +15,10 @@ export interface PreparedTelemetryCredentials {
   accountType?: string;
 }
 
+export function resolveTelemetryTeamId(env: NodeJS.ProcessEnv): string | undefined {
+  return String(env.POSTMAN_TEAM_ID ?? '').trim() || undefined;
+}
+
 /**
  * Wire AccessTokenProvider for telemetry enrichment. When only a service-account
  * PMAK is present, mint a fresh access token so iapub session identity (and thus

@@ -91,6 +91,8 @@ describe('CLI packaging contract', () => {
     const workflow = await readFile(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
     expect(workflow.match(/npm run bundle/g)).toHaveLength(1);
     expect(workflow).toContain('run dist       npm run verify:dist:assert');
+    expect(workflow).toContain('MAX_PARALLEL_GATES=2');
+    expect(workflow).toContain('wait -n -p finished_pid');
     expect(workflow).not.toContain('run dist       npm run verify:dist\n');
     expect(workflow.indexOf('- run: npm run bundle')).toBeLessThan(workflow.indexOf('- name: Run gates'));
   });
