@@ -167984,6 +167984,9 @@ var AccessTokenProvider = class {
 };
 
 // src/lib/postman/telemetry-credentials.ts
+function resolveTelemetryTeamId(env2) {
+  return String(env2.POSTMAN_TEAM_ID ?? "").trim() || void 0;
+}
 async function prepareTelemetryCredentials(options) {
   const apiKey = String(options.postmanApiKey || "").trim();
   const accessToken = String(options.postmanAccessToken || "").trim();
@@ -168603,7 +168606,7 @@ async function runCli(argv = process.argv.slice(2), runtime = {}) {
     actionVersion: resolveActionVersion2(),
     logger: reporter
   });
-  telemetry.setTeamId(config.inputEnv.POSTMAN_TEAM_ID ?? env2.POSTMAN_TEAM_ID);
+  telemetry.setTeamId(resolveTelemetryTeamId(config.inputEnv));
   const { accountType } = await prepareTelemetryCredentials({
     postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? env2.POSTMAN_API_KEY,
     postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? env2.POSTMAN_ACCESS_TOKEN

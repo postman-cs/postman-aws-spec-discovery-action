@@ -170523,6 +170523,9 @@ var AccessTokenProvider = class {
 };
 
 // src/lib/postman/telemetry-credentials.ts
+function resolveTelemetryTeamId(env2) {
+  return String(env2.POSTMAN_TEAM_ID ?? "").trim() || void 0;
+}
 async function prepareTelemetryCredentials(options) {
   const apiKey = String(options.postmanApiKey || "").trim();
   const accessToken = String(options.postmanAccessToken || "").trim();
@@ -170940,7 +170943,7 @@ function resolveActionVersion2() {
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
   const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion: resolveActionVersion2(), logger: actionCore });
-  telemetry.setTeamId(process.env.POSTMAN_TEAM_ID);
+  telemetry.setTeamId(resolveTelemetryTeamId(process.env));
   const postmanApiKey = getInput2("postman-api-key");
   const postmanAccessToken = getInput2("postman-access-token");
   if (postmanApiKey) {
