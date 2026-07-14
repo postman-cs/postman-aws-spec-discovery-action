@@ -91,11 +91,8 @@ npm run verify:dist         # rebuild + diff + assert (pre-push / release)
 
 ## CI
 
-`.github/workflows/ci.yml` runs `npm run bundle` once, then single `gate` job
-fans out lint, typecheck, test, read-only `verify:dist:assert`, and commitlint
-as backgrounded shell processes on one runner: wall-clock is `max(gate)`, not
-`sum`, setup runs once, and every gate prints its result under a `::group::`
-block even when another fails. Building before fan-out prevents pack tests from
-racing an in-gate `rm -rf dist` rebuild.
+`.github/workflows/ci.yml` bundles once, then queues at most two checks on one
+runner. Typecheck runs once. Dist uses read-only `verify:dist:assert`; no pack
+race. Every check prints a `::group::` result even when another check fails.
 
 See workspace-root `../../docs/CI.md` for shared rationale.
