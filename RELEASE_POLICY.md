@@ -6,9 +6,9 @@ Git tags and GitHub releases are the public release identifiers for this action.
 
 ## Tag policy
 
-- Immutable releases use `v1.x.y` tags.
-- The rolling `v1` alias moves to the latest compatible `v1.x.y` release.
-- Existing release tags are never force-pushed or rewritten.
+- Immutable releases use `vMAJOR.MINOR.PATCH` tags.
+- The rolling major alias (`vMAJOR`, e.g. `v2`) is force-moved by the release workflow's `advance-major-alias` job after a successful immutable publish.
+- Existing immutable release tags are never force-pushed or rewritten.
 - `v0` tags stay frozen at the last `v0` release.
 - Every immutable release tag has a GitHub release with generated notes.
 
@@ -27,7 +27,7 @@ Run the package validators from this directory before pushing an immutable tag:
 
 ## npm package
 
-The CLI publishes as `@postman-cse/onboarding-aws-spec-discovery` with versions that match the GitHub release tag. The rolling `v1` alias updates the action channel and skips npm publishing.
+The CLI publishes as `@postman-cse/onboarding-aws-spec-discovery` with versions that match the GitHub release tag. The rolling major alias updates the action channel and skips npm publishing.
 
 ## Compatibility
 
@@ -35,7 +35,7 @@ This action emits `spec-path`, `service-name`, and resolution metadata for downs
 
 ## Security fixes
 
-Security fixes ship on the latest `v1.x.y` tag and move onto the rolling `v1` alias. Older immutable tags stay published for reproducibility. See [Security Policy](SECURITY.md).
+Security fixes ship on the latest immutable `vMAJOR.MINOR.PATCH` tag and move onto the rolling major alias. Older immutable tags stay published for reproducibility. See [Security Policy](SECURITY.md).
 
 ## Suite release order
 
