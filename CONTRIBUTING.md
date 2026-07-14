@@ -30,7 +30,7 @@ npm run build       # Bundle to dist/ (esbuild)
 
 ### Rebuilding dist/
 
-This action ships bundled JavaScript in `dist/`. After any source change, run `npm run build` and include the updated `dist/` files in your commit. CI enforces this with a dedicated `check-dist` job (`npm run verify:dist`), and a pre-push hook rebuilds and stages `dist/` for you.
+This action ships bundled JavaScript in `dist/`. After any source change, run `npm run build` and include the updated `dist/` files in your commit. CI bundles once then runs read-only `npm run verify:dist:assert`; the pre-push hook uses `npm run verify:dist` (rebuild + diff + assert).
 
 ## Release E2E Status
 
