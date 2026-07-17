@@ -2,10 +2,12 @@
 /* global console, process */
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { Buffer } from 'node:buffer';
 import os from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { TextDecoder } from 'node:util';
+import { parse as parseYaml } from 'yaml';
 import {
   AppSyncClient,
   GetApiCommand as GetAppSyncApiCommand,
@@ -932,7 +934,7 @@ function valueFor(result, key) {
   return result.resolution?.[key] ?? result.outputs?.[key] ?? result.outputs?.[outputKey] ?? '';
 }
 
-async function inspectGeneratedArtifacts(workspace, result, testCase) {
+async function inspectGeneratedArtifacts(workspace, result, testCase, warnings = []) {
   const checks = [];
   if (testCase.specMarkers?.length) {
     const specPath = result.resolution?.specPath;
@@ -996,6 +998,44 @@ async function inspectGeneratedArtifacts(workspace, result, testCase) {
     }
     checks.push({ name: `metadata contractOrigin ${testCase.metadataOrigin}`, passed: origin === testCase.metadataOrigin });
   }
+  if (testCase.contractAudit) {
+    const audit = result.resolution?.openapiContractAudit;
+    const specPath = result.resolution?.specPath;
+    const content = specPath ? await readFile(path.join(workspace, specPath), 'utf8').catch(() => '') : '';
+    let operation;
+    try {
+      operation = parseYaml(content)?.paths?.[testCase.contractAudit.path]?.[testCase.contractAudit.method];
+    } catch {
+      operation = undefined;
+    }
+    const responseDeclarations = operation?.responses && typeof operation.responses === 'object'
+      ? Object.values(operation.responses)
+      : [];
+    const auditWarnings = warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'));
+    checks.push({
+      name: 'contract audit reports route-only schema coverage',
+      passed:
+        audit?.schemaVersion === 1 &&
+        audit?.status === 'schema-incomplete' &&
+        audit?.responsesWithoutContent >= 1
+    });
+    checks.push({
+      name: `${testCase.contractAudit.method.toUpperCase()} ${testCase.contractAudit.path} response omits or has empty content`,
+      passed:
+        responseDeclarations.length > 0 &&
+        responseDeclarations.some((response) => {
+          if (!response || typeof response !== 'object') return false;
+          if (!Object.hasOwn(response, 'content')) return true;
+          return response.content && typeof response.content === 'object'
+            ? Object.keys(response.content).length === 0
+            : response.content == null;
+        })
+    });
+    checks.push({
+      name: 'contract audit warning emitted exactly once',
+      passed: auditWarnings.length === 1
+    });
+  }
   return checks;
 }
 
@@ -1003,6 +1043,14 @@ async function runRuntimeGatewayCase(testCase) {
   const caseStartedAt = Date.now();
   const workspace = await mkdtemp(path.join(os.tmpdir(), `spec-discovery-live-${testCase.name}-`));
   try {
+    const warnings = [];
+    const reporter = {
+      ...quietCore,
+      warning(message) {
+        warnings.push(message);
+        quietCore.warning(message);
+      }
+    };
     const inputs = resolveInputs({
       INPUT_AWS_REGION: region,
       INPUT_REPO_ROOT: workspace,
@@ -1013,12 +1061,33 @@ async function runRuntimeGatewayCase(testCase) {
       INPUT_MAX_ATTEMPTS: '2'
     });
     const result = await execute(inputs, {
-      core: quietCore,
+      core: reporter,
       aws: new TargetedApiGatewayClient(region),
       writeSpecFile: defaultWriteSpecFile,
       providerRegistry: emptyProviderRegistry
     });
-    const artifactChecks = await inspectGeneratedArtifacts(workspace, result, testCase);
+    const artifactChecks = await inspectGeneratedArtifacts(workspace, result, testCase, warnings);
+    if (testCase.contractAudit?.livePath) {
+      const liveResponse = await globalThis.fetch(
+        `https://${testCase.gatewayId}.execute-api.${region}.amazonaws.com/${testCase.contractAudit.stage}${testCase.contractAudit.livePath}`
+      );
+      const liveBody = await liveResponse.text();
+      let liveJson;
+      try {
+        liveJson = JSON.parse(liveBody);
+      } catch {
+        liveJson = undefined;
+      }
+      const contentLength = liveResponse.headers.get('content-length');
+      artifactChecks.push({
+        name: 'live route returns HTTP 200 JSON status ok',
+        passed: liveResponse.status === 200 && liveJson?.status === 'ok'
+      });
+      artifactChecks.push({
+        name: 'live route Content-Length matches JSON response bytes',
+        passed: contentLength === null || Number(contentLength) === Buffer.byteLength(liveBody)
+      });
+    }
     return {
       name: testCase.name,
       passed: assertExpectation(testCase, result) && artifactChecks.every((check) => check.passed),
@@ -1134,6 +1203,7 @@ const gatewayCases = [
     name: 'api-gateway-rest',
     gatewayId: outputs.RestApiId,
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
+    contractAudit: { path: '/health', method: 'get', stage: 'prod', livePath: '/health' },
     oasDerivation: true
   },
   {
@@ -1453,6 +1523,12 @@ const allCases = [
 const results = await mapWithConcurrency(allCases, 5, ({ testCase, runner }) => runner(testCase));
 
 const failed = results.filter((result) => !result.passed);
+const routeOnlyResult = results.find((result) => result.name === 'api-gateway-rest');
+const routeOnlyChecks = routeOnlyResult?.artifactChecks.filter((check) =>
+  check.name.includes('contract audit') ||
+  check.name.includes('GET /health') ||
+  check.name.includes('live route')
+) ?? [];
 await mkdir(path.dirname(evidenceJsonPath), { recursive: true });
 await writeFile(evidenceJsonPath, `${JSON.stringify({
   capturedAt: new Date().toISOString(),
@@ -1472,14 +1548,19 @@ const summary = [
   `- Cases: ${results.length}`,
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
+  `- Route-only REST checks: ${routeOnlyChecks.filter((check) => check.passed).length}/${routeOnlyChecks.length} passed (export content omission, audit, warning, live JSON response, Content-Length)`,
   '',
-  '| Case | Runner | Source Type | Provider | Format | Derived OAS | Elapsed ms | Result |',
-  '| --- | --- | --- | --- | --- | --- | ---: | --- |',
+  '| Case | Runner | Source Type | Provider | Format | Contract audit | Derived OAS | Elapsed ms | Result |',
+  '| --- | --- | --- | --- | --- | --- | --- | ---: | --- |',
   ...results.map((result) => {
+    const audit = result.resolution?.openapiContractAudit;
+    const auditSummary = audit
+      ? `${audit.status} (${audit.responsesWithoutContent} response(s) without content)`
+      : '';
     const derived = [valueFor(result, 'derivedOpenApiVersion'), valueFor(result, 'derivedOpenApiCompleteness')]
       .filter(Boolean)
       .join(' ');
-    return `| ${result.name} | ${result.runner} | ${valueFor(result, 'sourceType')} | ${valueFor(result, 'providerType')} | ${valueFor(result, 'specFormat')} | ${derived} | ${result.elapsedMs} | ${result.passed ? 'pass' : 'fail'} |`;
+    return `| ${result.name} | ${result.runner} | ${valueFor(result, 'sourceType')} | ${valueFor(result, 'providerType')} | ${valueFor(result, 'specFormat')} | ${auditSummary} | ${derived} | ${result.elapsedMs} | ${result.passed ? 'pass' : 'fail'} |`;
   })
 ].join('\n');
 
