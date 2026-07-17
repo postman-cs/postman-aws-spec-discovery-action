@@ -7,6 +7,7 @@ import {
   type ActionMode,
   type DiscoveredService,
   type GatewayType,
+  type OpenApiContractAudit,
   type ProviderType,
   type ResolutionResult,
   type SourceType,
@@ -31,7 +32,11 @@ import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
-import { normalizeOpenApiYaml, type OperationIdRename } from './lib/spec/normalize-openapi.js';
+import {
+  formatOpenApiContractAuditWarning,
+  normalizeOpenApiYaml,
+  type OperationIdRename
+} from './lib/spec/normalize-openapi.js';
 import { deriveOpenApiDocument, type OpenApiDerivationResult } from './lib/spec/oas-derivation.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
@@ -505,23 +510,36 @@ function normalizeApiGatewaySpec(
   body: string,
   candidate: { id: string; gatewayType?: GatewayType; name?: string },
   reporter: Pick<ReporterLike, 'info' | 'warning'>
-): string {
-  let result: { content: string; renamed: OperationIdRename[]; normalized: boolean };
+): { content: string; openapiContractAudit?: OpenApiContractAudit; contractWarning?: string } {
+  let result: {
+    content: string;
+    renamed: OperationIdRename[];
+    normalized: boolean;
+    openapiContractAudit?: OpenApiContractAudit;
+  };
   try {
     result = normalizeOpenApiYaml(body);
   } catch (error) {
     reporter.warning(
       userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error)}`)
     );
-    return body;
+    return { content: body };
   }
-  if (!result.normalized || result.renamed.length === 0) return body;
-
-  for (const rename of result.renamed) {
-    const from = rename.original === null ? '<missing>' : rename.original;
-    reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+  if (result.normalized) {
+    for (const rename of result.renamed) {
+      const from = rename.original === null ? '<missing>' : rename.original;
+      reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+    }
   }
-  return result.content;
+  const contractWarning = result.openapiContractAudit
+    ? formatOpenApiContractAuditWarning(result.openapiContractAudit)
+    : undefined;
+  if (contractWarning) reporter.warning(userSafeWarning(contractWarning));
+  return {
+    content: result.normalized ? result.content : body,
+    openapiContractAudit: result.openapiContractAudit,
+    contractWarning
+  };
 }
 
 async function exportApiGatewaySpecBody(
@@ -951,6 +969,7 @@ async function exportProviderResolutionCandidate(
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    openapiContractAudit: inputs.dryRun ? undefined : result.openapiContractAudit,
     ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...(inputs.dryRun ? ['Dry run enabled; skipped provider spec file write'] : [])]
   };
@@ -1134,7 +1153,8 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
 
         const exportedStage = stage ?? '';
         const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
-        const specBody = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const normalized = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const specBody = normalized.content;
         const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
           repoRoot: resolvedRoot,
           relativeDir: path.dirname(relativeSpecPath).replace(/\\/g, '/'),
@@ -1157,6 +1177,7 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           stage: exportedStage,
           providerType: 'api-gateway',
           specFormat: 'openapi-yaml',
+          openapiContractAudit: normalized.openapiContractAudit,
           ...derivedOpenApi
         });
         for (const evidence of exported.evidence) {
@@ -1497,11 +1518,12 @@ export async function runResolution(
           ? selectedSource.stage
           : stageSelection.useLatestConfig ? undefined : selectedSource.stage
       );
-      const body = normalizeApiGatewaySpec(
+      const normalized = normalizeApiGatewaySpec(
         exported.content,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
         actionCore
       );
+      const body = normalized.content;
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: path.dirname(relativeSpecPath).replace(/\\/g, '/'),
@@ -1518,6 +1540,7 @@ export async function runResolution(
       selectedSource.specPath = relativeSpecPath;
       selectedSource.providerType = 'api-gateway';
       selectedSource.specFormat = 'openapi-yaml';
+      selectedSource.openapiContractAudit = normalized.openapiContractAudit;
       Object.assign(selectedSource, derivedOpenApi);
       if (selectedSource.gatewayType === 'WEBSOCKET') {
         selectedSource.evidence = [
@@ -1527,6 +1550,9 @@ export async function runResolution(
       }
       if (exported.evidence.length > 0) {
         selectedSource.evidence = [...selectedSource.evidence, ...exported.evidence];
+      }
+      if (normalized.contractWarning) {
+        selectedSource.evidence = [...selectedSource.evidence, normalized.contractWarning];
       }
     } catch (error) {
       const parsed = parseAwsError(error);
@@ -1715,6 +1741,10 @@ async function runMultiProviderDiscovery(
               // ignore malformed metadata sidecar
             }
           }
+          const contractWarning = result.openapiContractAudit
+            ? formatOpenApiContractAuditWarning(result.openapiContractAudit)
+            : undefined;
+          if (contractWarning) dependencies.core.warning(userSafeWarning(contractWarning));
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -1722,12 +1752,13 @@ async function runMultiProviderDiscovery(
             gatewayType,
             stage: result.stage ?? '',
             providerType: provider.type,
-	            specFormat: result.format,
-	            contractOrigin,
-	            variantCount,
-	            metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined,
-	            ...derivedOpenApi
-	          });
+            specFormat: result.format,
+            contractOrigin,
+            variantCount,
+            metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined,
+            openapiContractAudit: result.openapiContractAudit,
+            ...derivedOpenApi
+          });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
         } catch (error) {
           summary.failed += 1;

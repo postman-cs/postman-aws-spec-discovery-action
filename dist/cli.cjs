@@ -161508,6 +161508,95 @@ function resolveServiceCandidate(gateways, signals) {
 // src/lib/spec/normalize-openapi.ts
 var import_yaml4 = __toESM(require_dist(), 1);
 var HTTP_METHODS = /* @__PURE__ */ new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
+function asRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : void 0;
+}
+function resolveLocalObject(root5, value) {
+  let current = asRecord(value);
+  const seen = /* @__PURE__ */ new Set();
+  while (current && typeof current.$ref === "string") {
+    if (seen.has(current) || !current.$ref.startsWith("#/")) return void 0;
+    seen.add(current);
+    let resolved = root5;
+    for (const rawSegment of current.$ref.slice(2).split("/")) {
+      const segment = rawSegment.replace(/~1/g, "/").replace(/~0/g, "~");
+      resolved = asRecord(resolved)?.[segment];
+    }
+    current = asRecord(resolved);
+  }
+  return current;
+}
+function responseIsStaticallyBodyless(method, status) {
+  const normalized = status.toUpperCase();
+  return method === "head" || normalized === "1XX" || /^1[0-9][0-9]$/.test(normalized) || normalized === "204" || normalized === "205" || normalized === "304";
+}
+function isResponseDeclarationKey(value) {
+  return value.toLowerCase() === "default" || /^[1-5](?:[0-9]{2}|xx)$/i.test(value);
+}
+function auditOpenApiContractCoverage(value) {
+  const root5 = asRecord(value);
+  const paths = asRecord(root5?.paths);
+  if (!root5 || typeof root5.openapi !== "string" || !/^3\./.test(root5.openapi) || !paths) return void 0;
+  const audit = {
+    schemaVersion: 1,
+    status: "schema-complete",
+    operationCount: 0,
+    responseCount: 0,
+    responsesWithoutContent: 0,
+    responseMediaTypesWithoutSchema: 0,
+    requestMediaTypesWithoutSchema: 0,
+    defaultOnlyOperationCount: 0
+  };
+  for (const rawPathItem of Object.values(paths)) {
+    const pathItem = resolveLocalObject(root5, rawPathItem);
+    if (!pathItem) return void 0;
+    for (const [rawMethod, rawOperation] of Object.entries(pathItem)) {
+      const method = rawMethod.toLowerCase();
+      if (!HTTP_METHODS.has(method)) continue;
+      const operation2 = resolveLocalObject(root5, rawOperation);
+      if (!operation2) return void 0;
+      audit.operationCount += 1;
+      const requestBody = operation2.requestBody === void 0 ? void 0 : resolveLocalObject(root5, operation2.requestBody);
+      if (operation2.requestBody !== void 0 && !requestBody) return void 0;
+      const requestContent = asRecord(requestBody?.content);
+      for (const rawMedia of Object.values(requestContent ?? {})) {
+        const media = asRecord(rawMedia);
+        if (!media) return void 0;
+        if (media.schema === void 0) audit.requestMediaTypesWithoutSchema += 1;
+      }
+      const responses = asRecord(operation2.responses);
+      if (!responses) return void 0;
+      const responseKeys = Object.keys(responses).filter(isResponseDeclarationKey);
+      if (responseKeys.length === 0) return void 0;
+      if (responseKeys.some((status) => status.toLowerCase() === "default") && responseKeys.length === 1) {
+        audit.defaultOnlyOperationCount += 1;
+      }
+      for (const status of responseKeys) {
+        const rawResponse = responses[status];
+        audit.responseCount += 1;
+        const response = resolveLocalObject(root5, rawResponse);
+        if (!response) return void 0;
+        const content = asRecord(response?.content);
+        if ((!content || Object.keys(content).length === 0) && !responseIsStaticallyBodyless(method, status)) {
+          audit.responsesWithoutContent += 1;
+        }
+        for (const rawMedia of Object.values(content ?? {})) {
+          const media = asRecord(rawMedia);
+          if (!media) return void 0;
+          if (media.schema === void 0) audit.responseMediaTypesWithoutSchema += 1;
+        }
+      }
+    }
+  }
+  if (audit.responsesWithoutContent > 0 || audit.responseMediaTypesWithoutSchema > 0 || audit.requestMediaTypesWithoutSchema > 0) {
+    audit.status = "schema-incomplete";
+  }
+  return audit;
+}
+function formatOpenApiContractAuditWarning(audit) {
+  if (audit.status !== "schema-incomplete") return void 0;
+  return `AWS_OPENAPI_CONTRACT_INCOMPLETE: API Gateway export has ${audit.responsesWithoutContent} response declaration(s) without content, ${audit.responseMediaTypesWithoutSchema} response media declaration(s) without schema, and ${audit.requestMediaTypesWithoutSchema} request media declaration(s) without schema. Bootstrap keeps route and status checks but skips undocumented body assertions; define API Gateway models or enrich the OpenAPI before treating body-schema tests as strict CI gates.`;
+}
 function normalizeOpenApiYaml(content) {
   const passthrough = { content, renamed: [], normalized: false };
   let doc;
@@ -161555,10 +161644,11 @@ function normalizeOpenApiYaml(content) {
       }
     }
   }
+  const openapiContractAudit = auditOpenApiContractCoverage(doc.toJS());
   if (renamed.length === 0) {
-    return { content, renamed: [], normalized: true };
+    return { content, renamed: [], normalized: true, openapiContractAudit };
   }
-  return { content: String(doc), renamed, normalized: true };
+  return { content: String(doc), renamed, normalized: true, openapiContractAudit };
 }
 function scalarString(node) {
   if ((0, import_yaml4.isScalar)(node) && typeof node.value === "string") return node.value;
@@ -162605,12 +162695,15 @@ var ApiGatewayProvider = class {
         }
       }
     }
+    const contractWarning = normalized.openapiContractAudit ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit) : void 0;
+    if (contractWarning) evidence.push(contractWarning);
     return {
       content: normalized.content,
       format: "openapi-yaml",
       filename: "index.yaml",
       stage,
       derivedOpenApiCompleteness: exported.fallback || gatewayType === "WEBSOCKET" ? "partial" : void 0,
+      openapiContractAudit: normalized.openapiContractAudit,
       evidence
     };
   }
@@ -162647,7 +162740,11 @@ function isKnownRestExportLimitation(message) {
 function safeNormalizeOpenApi(content) {
   try {
     const result = normalizeOpenApiYaml(content);
-    return { content: result.content, renamed: result.renamed };
+    return {
+      content: result.content,
+      renamed: result.renamed,
+      openapiContractAudit: result.openapiContractAudit
+    };
   } catch {
     return { content, renamed: [] };
   }
@@ -166585,14 +166682,21 @@ function normalizeApiGatewaySpec(body, candidate, reporter) {
     reporter.warning(
       userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error2)}`)
     );
-    return body;
+    return { content: body };
   }
-  if (!result.normalized || result.renamed.length === 0) return body;
-  for (const rename of result.renamed) {
-    const from = rename.original === null ? "<missing>" : rename.original;
-    reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+  if (result.normalized) {
+    for (const rename of result.renamed) {
+      const from = rename.original === null ? "<missing>" : rename.original;
+      reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
+    }
   }
-  return result.content;
+  const contractWarning = result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit) : void 0;
+  if (contractWarning) reporter.warning(userSafeWarning(contractWarning));
+  return {
+    content: result.normalized ? result.content : body,
+    openapiContractAudit: result.openapiContractAudit,
+    contractWarning
+  };
 }
 async function exportApiGatewaySpecBody(aws, candidate, stage) {
   try {
@@ -166950,6 +167054,7 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    openapiContractAudit: inputs.dryRun ? void 0 : result.openapiContractAudit,
     ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...inputs.dryRun ? ["Dry run enabled; skipped provider spec file write"] : []]
   };
@@ -167117,7 +167222,8 @@ async function runDiscovery(inputs, dependencies) {
         }
         const exportedStage = stage ?? "";
         const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
-        const specBody = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const normalized = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
+        const specBody = normalized.content;
         const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
           repoRoot: resolvedRoot,
           relativeDir: import_node_path14.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
@@ -167140,6 +167246,7 @@ async function runDiscovery(inputs, dependencies) {
           stage: exportedStage,
           providerType: "api-gateway",
           specFormat: "openapi-yaml",
+          openapiContractAudit: normalized.openapiContractAudit,
           ...derivedOpenApi
         });
         for (const evidence of exported.evidence) {
@@ -167432,11 +167539,12 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType },
         selectedSource.gatewayType === "REST" ? selectedSource.stage : stageSelection.useLatestConfig ? void 0 : selectedSource.stage
       );
-      const body = normalizeApiGatewaySpec(
+      const normalized = normalizeApiGatewaySpec(
         exported.content,
         { id: selectedSource.gatewayId, gatewayType: selectedSource.gatewayType, name: selectedSource.serviceName },
         actionCore
       );
+      const body = normalized.content;
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: import_node_path14.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
@@ -167453,6 +167561,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       selectedSource.specPath = relativeSpecPath;
       selectedSource.providerType = "api-gateway";
       selectedSource.specFormat = "openapi-yaml";
+      selectedSource.openapiContractAudit = normalized.openapiContractAudit;
       Object.assign(selectedSource, derivedOpenApi);
       if (selectedSource.gatewayType === "WEBSOCKET") {
         selectedSource.evidence = [
@@ -167462,6 +167571,9 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       }
       if (exported.evidence.length > 0) {
         selectedSource.evidence = [...selectedSource.evidence, ...exported.evidence];
+      }
+      if (normalized.contractWarning) {
+        selectedSource.evidence = [...selectedSource.evidence, normalized.contractWarning];
       }
     } catch (error2) {
       const parsed = parseAwsError(error2);
@@ -167629,6 +167741,8 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             } catch {
             }
           }
+          const contractWarning = result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit) : void 0;
+          if (contractWarning) dependencies.core.warning(userSafeWarning(contractWarning));
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -167640,6 +167754,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             contractOrigin,
             variantCount,
             metadataPath: metadataSidecar ? import_node_path14.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
+            openapiContractAudit: result.openapiContractAudit,
             ...derivedOpenApi
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
@@ -167832,7 +167947,7 @@ function computeSessionRetryDelayMs(response, attempt, random) {
   const ceiling = Math.min(SESSION_RETRY_MAX_DELAY_MS, SESSION_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
   return Math.round(random() * ceiling);
 }
-function asRecord(value) {
+function asRecord2(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return void 0;
   }
@@ -167887,17 +168002,17 @@ async function resolveTelemetryAccountType(accessToken, fetchImpl) {
 async function parseSessionResponse(response) {
   let payload2;
   try {
-    payload2 = asRecord(await response.json());
+    payload2 = asRecord2(await response.json());
   } catch {
     return void 0;
   }
   if (!payload2) {
     return void 0;
   }
-  const root5 = asRecord(payload2.session) ?? payload2;
-  const identity = asRecord(root5.identity);
-  const data2 = asRecord(root5.data);
-  const user = asRecord(data2?.user);
+  const root5 = asRecord2(payload2.session) ?? payload2;
+  const identity = asRecord2(root5.identity);
+  const data2 = asRecord2(root5.data);
+  const user = asRecord2(data2?.user);
   const roleEntries = Array.isArray(user?.roles) ? user.roles.map((entry) => coerceText(entry) ?? coerceId(entry)).filter((entry) => Boolean(entry)) : [];
   const singleRole = coerceText(user?.role);
   const roles = roleEntries.length > 0 ? roleEntries : singleRole ? [singleRole] : void 0;
