@@ -1,4 +1,4 @@
-import type { DerivedOpenApiCompleteness, ProviderType, SpecFormat } from '../../contracts.js';
+import type { DerivedOpenApiCompleteness, OpenApiContractAudit, ProviderType, SpecFormat } from '../../contracts.js';
 
 export interface SpecCandidate {
   id: string;
@@ -25,6 +25,7 @@ export interface SpecExportResult {
   stage?: string;
   evidence: string[];
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
+  openapiContractAudit?: OpenApiContractAudit;
   sidecars?: Array<{
     filename: string;
     content: string;

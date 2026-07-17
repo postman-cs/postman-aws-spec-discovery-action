@@ -78,6 +78,17 @@ export type DerivedOpenApiCompleteness = 'full' | 'partial';
 
 export type DerivedOpenApiFormat = 'openapi-json' | 'openapi-yaml';
 
+export interface OpenApiContractAudit {
+  schemaVersion: 1;
+  status: 'schema-complete' | 'schema-incomplete';
+  operationCount: number;
+  responseCount: number;
+  responsesWithoutContent: number;
+  responseMediaTypesWithoutSchema: number;
+  requestMediaTypesWithoutSchema: number;
+  defaultOnlyOperationCount: number;
+}
+
 export interface ResolvedServiceCandidate {
   serviceName: string;
   gatewayId: string;
@@ -107,6 +118,7 @@ export interface ResolutionResult {
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
   derivedOpenApiFormat?: DerivedOpenApiFormat;
   derivedOpenApiEvidence?: string[];
+  openapiContractAudit?: OpenApiContractAudit;
   evidence: string[];
 }
 
@@ -126,6 +138,7 @@ export interface DiscoveredService {
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
   derivedOpenApiFormat?: DerivedOpenApiFormat;
   derivedOpenApiEvidence?: string[];
+  openapiContractAudit?: OpenApiContractAudit;
 }
 
 export const actionContract: AwsSpecDiscoveryActionContract = {

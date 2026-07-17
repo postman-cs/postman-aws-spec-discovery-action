@@ -467,6 +467,7 @@ describe('runDiscovery', () => {
       expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
       expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
       expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      expect(result.openapiContractAudit).toBeUndefined();
       expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
       expect(aws.exportRestApi).not.toHaveBeenCalled();
       expect(writeSpecFile).not.toHaveBeenCalled();
@@ -1150,7 +1151,7 @@ describe('SNS runtime integration', () => {
   });
 
   it('includes SNS results in discover-many services output', async () => {
-    const { core } = createCoreStub();
+    const { core, warnings } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
       listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')])
     });
@@ -1159,7 +1160,15 @@ describe('SNS runtime integration', () => {
     const awsClient = createAwsClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'orders-api' }]),
       listRestStages: vi.fn().mockResolvedValue(['prod']),
-      exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
+      exportRestApi: vi.fn().mockResolvedValue([
+        'openapi: 3.0.3',
+        'info: { title: orders-api, version: "1" }',
+        'paths:',
+        '  /health:',
+        '    get:',
+        '      responses:',
+        '        default: { description: Default response }'
+      ].join('\n'))
     });
 
     const result = await execute(
@@ -1192,9 +1201,23 @@ describe('SNS runtime integration', () => {
     const providerTypes = result.discovered.map((entry) => entry.providerType);
     expect(providerTypes).toContain('api-gateway');
     expect(providerTypes).toContain('sns');
-    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{ providerType?: string }>;
+    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
+      providerType?: string;
+      openapiContractAudit?: DiscoveredService['openapiContractAudit'];
+    }>;
     expect(services.map((entry) => entry.providerType)).toContain('api-gateway');
     expect(services.map((entry) => entry.providerType)).toContain('sns');
+    const discoveredGateway = result.discovered.find((entry) => entry.providerType === 'api-gateway');
+    const outputGateway = services.find((entry) => entry.providerType === 'api-gateway');
+    expect(discoveredGateway?.openapiContractAudit).toMatchObject({
+      schemaVersion: 1,
+      status: 'schema-incomplete',
+      responsesWithoutContent: 1,
+      defaultOnlyOperationCount: 1
+    });
+    expect(outputGateway?.openapiContractAudit).toEqual(discoveredGateway?.openapiContractAudit);
+    expect(services.find((entry) => entry.providerType === 'sns')?.openapiContractAudit).toBeUndefined();
+    expect(warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toHaveLength(1);
   });
 
   it('writes SNS metadata sidecar in discover-many and records metadataPath', async () => {
@@ -1876,7 +1899,7 @@ describe('provider-agnostic resolve-one', () => {
 describe('runAction', () => {
   it('emits resolution outputs in resolve-one mode', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'run-action-resolution-'));
-    const { core, outputs } = createCoreStub({
+    const { core, outputs, warnings } = createCoreStub({
       'aws-region': 'us-east-1',
       'gateway-id': 'rest-1'
     });
@@ -1887,7 +1910,15 @@ describe('runAction', () => {
       getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'billing' }),
       getRestTags: vi.fn().mockResolvedValue({}),
       listRestStages: vi.fn().mockResolvedValue(['prod']),
-      exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: billing')
+      exportRestApi: vi.fn().mockResolvedValue([
+        'openapi: 3.0.3',
+        'info: { title: billing, version: "1" }',
+        'paths:',
+        '  /health:',
+        '    get:',
+        '      responses:',
+        '        default: { description: Default response }'
+      ].join('\n'))
     });
 
     try {
@@ -1909,7 +1940,20 @@ describe('runAction', () => {
       expect(outputs['spec-format']).toBe('openapi-yaml');
       expect(outputs['export-summary-json']).toContain('"attempted":0');
       expect([...written.keys()].some((entry) => entry.endsWith('/discovered-specs/billing/index.yaml'))).toBe(true);
-      expect(() => JSON.parse(outputs['resolution-json'] ?? '{}')).not.toThrow();
+      const resolution = JSON.parse(outputs['resolution-json'] ?? '{}') as {
+        evidence?: string[];
+        openapiContractAudit?: DiscoveredService['openapiContractAudit'];
+      };
+      expect(resolution.openapiContractAudit).toMatchObject({
+        schemaVersion: 1,
+        status: 'schema-incomplete',
+        responsesWithoutContent: 1,
+        defaultOnlyOperationCount: 1
+      });
+      expect(resolution.evidence).toEqual(expect.arrayContaining([
+        expect.stringContaining('AWS_OPENAPI_CONTRACT_INCOMPLETE:')
+      ]));
+      expect(warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toHaveLength(1);
     } finally {
       if (previousWorkspace === undefined) {
         delete process.env.GITHUB_WORKSPACE;
