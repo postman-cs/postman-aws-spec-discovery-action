@@ -118,6 +118,8 @@ if (entrypoint && currentModulePath === entrypoint) {
 
 export * from './runtime.js';
 export {
+  auditOpenApiContractCoverage,
+  formatOpenApiContractAuditWarning,
   normalizeOpenApiYaml,
   type OperationIdRename,
   type NormalizeOpenApiResult

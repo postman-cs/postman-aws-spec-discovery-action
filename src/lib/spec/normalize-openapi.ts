@@ -1,7 +1,7 @@
 // Normalize OpenAPI specs exported by AWS to satisfy validator requirements
 // that the AWS export pipeline does not enforce.
 //
-// Today this handles one rule:
+// It handles two independent concerns:
 //
 //   "Every operation must have a unique operationId" -- OpenAPI 3.x spec
 //
@@ -29,9 +29,11 @@
 //
 // We use `yaml`'s document-level API so quoting, ordering, and the bits of
 // formatting AWS emits are preserved -- the only diff is the operationId
-// values themselves.
+// values themselves. It also records whether the exported document contains
+// enough request/response schema detail for downstream body-contract checks.
 
 import { isMap, isScalar, parseDocument, type Document, type Scalar, type YAMLMap } from 'yaml';
+import type { OpenApiContractAudit } from '../../contracts.js';
 
 const HTTP_METHODS = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']);
 
@@ -47,6 +49,126 @@ export interface NormalizeOpenApiResult {
   renamed: OperationIdRename[];
   /** True if the document was recognized as an OpenAPI spec and walked. */
   normalized: boolean;
+  openapiContractAudit?: OpenApiContractAudit;
+}
+
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): JsonRecord | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as JsonRecord
+    : undefined;
+}
+
+function resolveLocalObject(root: JsonRecord, value: unknown): JsonRecord | undefined {
+  let current = asRecord(value);
+  const seen = new Set<JsonRecord>();
+  while (current && typeof current.$ref === 'string') {
+    if (seen.has(current) || !current.$ref.startsWith('#/')) return undefined;
+    seen.add(current);
+    let resolved: unknown = root;
+    for (const rawSegment of current.$ref.slice(2).split('/')) {
+      const segment = rawSegment.replace(/~1/g, '/').replace(/~0/g, '~');
+      resolved = asRecord(resolved)?.[segment];
+    }
+    current = asRecord(resolved);
+  }
+  return current;
+}
+
+function responseIsStaticallyBodyless(method: string, status: string): boolean {
+  const normalized = status.toUpperCase();
+  return method === 'head'
+    || normalized === '1XX'
+    || /^1[0-9][0-9]$/.test(normalized)
+    || normalized === '204'
+    || normalized === '205'
+    || normalized === '304';
+}
+
+function isResponseDeclarationKey(value: string): boolean {
+  return value.toLowerCase() === 'default' || /^[1-5](?:[0-9]{2}|xx)$/i.test(value);
+}
+
+export function auditOpenApiContractCoverage(value: unknown): OpenApiContractAudit | undefined {
+  const root = asRecord(value);
+  const paths = asRecord(root?.paths);
+  if (!root || typeof root.openapi !== 'string' || !/^3\./.test(root.openapi) || !paths) return undefined;
+
+  const audit: OpenApiContractAudit = {
+    schemaVersion: 1,
+    status: 'schema-complete',
+    operationCount: 0,
+    responseCount: 0,
+    responsesWithoutContent: 0,
+    responseMediaTypesWithoutSchema: 0,
+    requestMediaTypesWithoutSchema: 0,
+    defaultOnlyOperationCount: 0
+  };
+
+  for (const rawPathItem of Object.values(paths)) {
+    const pathItem = resolveLocalObject(root, rawPathItem);
+    if (!pathItem) return undefined;
+    for (const [rawMethod, rawOperation] of Object.entries(pathItem)) {
+      const method = rawMethod.toLowerCase();
+      if (!HTTP_METHODS.has(method)) continue;
+      const operation = resolveLocalObject(root, rawOperation);
+      if (!operation) return undefined;
+      audit.operationCount += 1;
+
+      const requestBody = operation.requestBody === undefined
+        ? undefined
+        : resolveLocalObject(root, operation.requestBody);
+      if (operation.requestBody !== undefined && !requestBody) return undefined;
+      const requestContent = asRecord(requestBody?.content);
+      for (const rawMedia of Object.values(requestContent ?? {})) {
+        const media = asRecord(rawMedia);
+        if (!media) return undefined;
+        if (media.schema === undefined) audit.requestMediaTypesWithoutSchema += 1;
+      }
+
+      const responses = asRecord(operation.responses);
+      if (!responses) return undefined;
+      const responseKeys = Object.keys(responses).filter(isResponseDeclarationKey);
+      if (responseKeys.length === 0) return undefined;
+      if (responseKeys.some((status) => status.toLowerCase() === 'default') && responseKeys.length === 1) {
+        audit.defaultOnlyOperationCount += 1;
+      }
+      for (const status of responseKeys) {
+        const rawResponse = responses[status];
+        audit.responseCount += 1;
+        const response = resolveLocalObject(root, rawResponse);
+        if (!response) return undefined;
+        const content = asRecord(response?.content);
+        if ((!content || Object.keys(content).length === 0) && !responseIsStaticallyBodyless(method, status)) {
+          audit.responsesWithoutContent += 1;
+        }
+        for (const rawMedia of Object.values(content ?? {})) {
+          const media = asRecord(rawMedia);
+          if (!media) return undefined;
+          if (media.schema === undefined) audit.responseMediaTypesWithoutSchema += 1;
+        }
+      }
+    }
+  }
+
+  if (
+    audit.responsesWithoutContent > 0
+    || audit.responseMediaTypesWithoutSchema > 0
+    || audit.requestMediaTypesWithoutSchema > 0
+  ) {
+    audit.status = 'schema-incomplete';
+  }
+  return audit;
+}
+
+export function formatOpenApiContractAuditWarning(audit: OpenApiContractAudit): string | undefined {
+  if (audit.status !== 'schema-incomplete') return undefined;
+  return 'AWS_OPENAPI_CONTRACT_INCOMPLETE: API Gateway export has '
+    + `${audit.responsesWithoutContent} response declaration(s) without content, `
+    + `${audit.responseMediaTypesWithoutSchema} response media declaration(s) without schema, and `
+    + `${audit.requestMediaTypesWithoutSchema} request media declaration(s) without schema. `
+    + 'Bootstrap keeps route and status checks but skips undocumented body assertions; define API Gateway models or enrich the OpenAPI before treating body-schema tests as strict CI gates.';
 }
 
 /**
@@ -120,11 +242,12 @@ export function normalizeOpenApiYaml(content: string): NormalizeOpenApiResult {
     }
   }
 
+  const openapiContractAudit = auditOpenApiContractCoverage(doc.toJS());
   if (renamed.length === 0) {
-    return { content, renamed: [], normalized: true };
+    return { content, renamed: [], normalized: true, openapiContractAudit };
   }
 
-  return { content: String(doc), renamed, normalized: true };
+  return { content: String(doc), renamed, normalized: true, openapiContractAudit };
 }
 
 function scalarString(node: unknown): string | undefined {

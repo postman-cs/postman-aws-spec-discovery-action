@@ -125,7 +125,19 @@ describe('runCli integration boundary', () => {
         mode: 'resolve-one',
         discovered: [],
         outputs: {
-          'resolution-json': '{"status":"resolved"}',
+          'resolution-json': JSON.stringify({
+            status: 'resolved',
+            openapiContractAudit: {
+              schemaVersion: 1,
+              status: 'schema-incomplete',
+              operationCount: 1,
+              responseCount: 1,
+              responsesWithoutContent: 1,
+              responseMediaTypesWithoutSchema: 0,
+              requestMediaTypesWithoutSchema: 0,
+              defaultOnlyOperationCount: 1
+            }
+          }),
           'resolution-status': 'resolved',
           'source-type': 'repo-spec',
           'mapping-confidence': '90',
@@ -148,6 +160,7 @@ describe('runCli integration boundary', () => {
       const resultJson = await readFile(path.join(tempDir, 'result.json'), 'utf8');
       const dotenv = await readFile(path.join(tempDir, 'result.env'), 'utf8');
       expect(resultJson).toContain('"mode": "resolve-one"');
+      expect(JSON.parse(resultJson).outputs['resolution-json']).toContain('"openapiContractAudit"');
       expect(dotenv).toContain('POSTMAN_AWS_SPEC_RESOLUTION_STATUS=');
       expect(dotenv).toContain('POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON=');
     } finally {
