@@ -1,6 +1,6 @@
-import type { GatewayType } from '../../contracts.js';
+import type { GatewayType, OpenApiContractAudit } from '../../contracts.js';
 import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from '../aws/client.js';
-import { normalizeOpenApiYaml } from '../spec/normalize-openapi.js';
+import { formatOpenApiContractAuditWarning, normalizeOpenApiYaml } from '../spec/normalize-openapi.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 export interface ApiGatewayProviderOptions {
@@ -117,6 +117,10 @@ export class ApiGatewayProvider implements SpecProvider {
         }
       }
     }
+    const contractWarning = normalized.openapiContractAudit
+      ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit)
+      : undefined;
+    if (contractWarning) evidence.push(contractWarning);
 
     return {
       content: normalized.content,
@@ -124,6 +128,7 @@ export class ApiGatewayProvider implements SpecProvider {
       filename: 'index.yaml',
       stage,
       derivedOpenApiCompleteness: exported.fallback || gatewayType === 'WEBSOCKET' ? 'partial' : undefined,
+      openapiContractAudit: normalized.openapiContractAudit,
       evidence
     };
   }
@@ -175,10 +180,18 @@ function isKnownRestExportLimitation(message: string): boolean {
 // If we throw here the export step fails outright, which is strictly
 // worse than letting the original spec through and letting bootstrap's
 // validator surface the underlying problem.
-function safeNormalizeOpenApi(content: string): { content: string; renamed: { path: string; method: string; original: string | null; renamed: string }[] } {
+function safeNormalizeOpenApi(content: string): {
+  content: string;
+  renamed: { path: string; method: string; original: string | null; renamed: string }[];
+  openapiContractAudit?: OpenApiContractAudit;
+} {
   try {
     const result = normalizeOpenApiYaml(content);
-    return { content: result.content, renamed: result.renamed };
+    return {
+      content: result.content,
+      renamed: result.renamed,
+      openapiContractAudit: result.openapiContractAudit
+    };
   } catch {
     return { content, renamed: [] };
   }

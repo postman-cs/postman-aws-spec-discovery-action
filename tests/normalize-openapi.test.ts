@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { parse } from 'yaml';
 
-import { normalizeOpenApiYaml } from '../src/lib/spec/normalize-openapi.js';
+import { auditOpenApiContractCoverage, normalizeOpenApiYaml } from '../src/lib/spec/normalize-openapi.js';
 import { ApiGatewayProvider } from '../src/lib/providers/api-gateway.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 
@@ -163,6 +163,180 @@ describe('normalizeOpenApiYaml', () => {
     // The renamed entry should preserve `update` as the base.
     const renamedCopies = ids.filter((id) => id !== 'update' && id.startsWith('update'));
     expect(renamedCopies.length).toBeGreaterThan(0);
+  });
+});
+
+describe('auditOpenApiContractCoverage', () => {
+  it('classifies an AWS-style default-only route response without content as schema-incomplete', () => {
+    const audit = auditOpenApiContractCoverage({
+      openapi: '3.0.3',
+      paths: {
+        '/health': {
+          get: {
+            responses: {
+              default: { description: 'Default response' }
+            }
+          }
+        }
+      }
+    });
+
+    expect(audit).toEqual({
+      schemaVersion: 1,
+      status: 'schema-incomplete',
+      operationCount: 1,
+      responseCount: 1,
+      responsesWithoutContent: 1,
+      responseMediaTypesWithoutSchema: 0,
+      requestMediaTypesWithoutSchema: 0,
+      defaultOnlyOperationCount: 1
+    });
+  });
+
+  it('counts declared request and response media entries without schemas', () => {
+    const audit = auditOpenApiContractCoverage({
+      openapi: '3.0.3',
+      paths: {
+        '/orders': {
+          post: {
+            requestBody: { content: { 'application/json': {} } },
+            responses: {
+              '200': {
+                description: 'OK',
+                content: { 'application/json': {}, 'application/problem+json': { schema: { type: 'object' } } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    expect(audit).toMatchObject({
+      status: 'schema-incomplete',
+      operationCount: 1,
+      responseCount: 1,
+      responsesWithoutContent: 0,
+      responseMediaTypesWithoutSchema: 1,
+      requestMediaTypesWithoutSchema: 1,
+      defaultOnlyOperationCount: 0
+    });
+  });
+
+  it('exempts HEAD, 1xx, 1XX, 204, 205, and 304 response declarations without content', () => {
+    const audit = auditOpenApiContractCoverage({
+      openapi: '3.1.0',
+      paths: {
+        '/head': {
+          head: { responses: { '200': { description: 'Representation metadata' }, default: { description: 'Default' } } }
+        },
+        '/status': {
+          get: {
+            responses: {
+              '101': { description: 'Switching protocols' },
+              '1XX': { description: 'Informational' },
+              '204': { description: 'No content' },
+              '205': { description: 'Reset content' },
+              '304': { description: 'Not modified' }
+            }
+          }
+        }
+      }
+    });
+
+    expect(audit).toMatchObject({
+      status: 'schema-complete',
+      operationCount: 2,
+      responseCount: 7,
+      responsesWithoutContent: 0,
+      responseMediaTypesWithoutSchema: 0,
+      requestMediaTypesWithoutSchema: 0,
+      defaultOnlyOperationCount: 0
+    });
+  });
+
+  it('keeps a schema-rich default-only operation complete while recording the fallback shape', () => {
+    const document = {
+      openapi: '3.0.3',
+      paths: {
+        '/health': {
+          get: {
+            responses: {
+              default: {
+                description: 'Response',
+                content: { 'application/json': { schema: { type: 'object' } } }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    expect(auditOpenApiContractCoverage(document)).toEqual(auditOpenApiContractCoverage(document));
+    expect(auditOpenApiContractCoverage(document)).toMatchObject({
+      status: 'schema-complete',
+      defaultOnlyOperationCount: 1
+    });
+  });
+
+  it('ignores response extensions when identifying a default-only operation', () => {
+    expect(auditOpenApiContractCoverage({
+      openapi: '3.0.3',
+      paths: {
+        '/health': {
+          get: {
+            responses: {
+              default: {
+                description: 'Response',
+                content: { 'application/json': { schema: { type: 'object' } } }
+              },
+              'x-amazon-apigateway-integration': { type: 'mock' }
+            }
+          }
+        }
+      }
+    })).toMatchObject({
+      status: 'schema-complete',
+      responseCount: 1,
+      defaultOnlyOperationCount: 1
+    });
+  });
+
+  it('returns no audit when an operation or response reference cannot be resolved locally', () => {
+    expect(auditOpenApiContractCoverage({
+      openapi: '3.0.3',
+      paths: { '/external': { $ref: 'https://example.invalid/path-item.yaml' } }
+    })).toBeUndefined();
+    expect(auditOpenApiContractCoverage({
+      openapi: '3.0.3',
+      paths: {
+        '/external': {
+          get: { responses: { default: { $ref: 'https://example.invalid/response.yaml' } } }
+        }
+      }
+    })).toBeUndefined();
+  });
+
+  it('returns no audit for malformed or non-OpenAPI input', () => {
+    expect(auditOpenApiContractCoverage(null)).toBeUndefined();
+    expect(auditOpenApiContractCoverage({ paths: {} })).toBeUndefined();
+    expect(auditOpenApiContractCoverage({ openapi: '3.0.3' })).toBeUndefined();
+  });
+
+  it('attaches the audit to normalized OpenAPI output', () => {
+    const normalized = normalizeOpenApiYaml([
+      'openapi: 3.0.3',
+      'info: { title: t, version: v }',
+      'paths:',
+      '  /health:',
+      '    get:',
+      '      responses:',
+      '        default: { description: Default response }'
+    ].join('\n'));
+
+    expect(normalized.openapiContractAudit).toMatchObject({
+      status: 'schema-incomplete',
+      responsesWithoutContent: 1
+    });
   });
 });
 

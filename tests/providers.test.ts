@@ -235,6 +235,37 @@ describe('ApiGatewayProvider', () => {
     expect(result.content).toContain('openapi');
   });
 
+  it('attaches a schema-coverage audit and actionable evidence to route-only REST exports', async () => {
+    const client = createGatewayClientStub({
+      exportRestApi: vi.fn().mockResolvedValue([
+        'openapi: 3.0.3',
+        'info: { title: test, version: "1" }',
+        'paths:',
+        '  /health:',
+        '    get:',
+        '      responses:',
+        '        default: { description: Default response }'
+      ].join('\n'))
+    });
+    const provider = new ApiGatewayProvider(client, { includeV2: true });
+
+    const result = await provider.exportSpec(
+      { id: 'rest-1', name: 'test', providerType: 'api-gateway', tags: {}, evidence: [], meta: { gatewayType: 'REST' } },
+      { stage: 'prod' }
+    );
+
+    expect(result.openapiContractAudit).toMatchObject({
+      schemaVersion: 1,
+      status: 'schema-incomplete',
+      responsesWithoutContent: 1,
+      defaultOnlyOperationCount: 1
+    });
+    expect(result.evidence).toEqual(expect.arrayContaining([
+      expect.stringContaining('AWS_OPENAPI_CONTRACT_INCOMPLETE:')
+    ]));
+    expect(result.derivedOpenApiCompleteness).toBeUndefined();
+  });
+
   it('falls back to REST API models and methods when REST export hits a known limitation', async () => {
     const client = createGatewayClientStub({
       exportRestApi: vi.fn().mockRejectedValue(

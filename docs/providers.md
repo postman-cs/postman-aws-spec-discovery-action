@@ -63,6 +63,29 @@ The action also detects Backstage `catalog-info.yaml` files in the repo root or 
 
 Native artifacts are preserved as the primary output. The action also emits `openapi.derived.json` when it can represent the selected artifact as OpenAPI for downstream onboarding and review. Canonical derived sidecars are always parseable JSON; GraphQL-derived sidecars preserve operation names, variable shapes, and schema components, AsyncAPI-derived sidecars preserve channel payload schemas, examples, and `x-asyncapi-*` channel metadata, Postman-derived sidecars preserve request parameters, JSON examples, auth metadata, and response examples when present, and JSON Schema/Avro-derived sidecars preserve named component schemas with `$ref` request bodies. Provider-specific sidecars such as SNS `webhook.openapi.json` remain separate. See [`validation/evidence/README.md`](../validation/evidence/README.md) for the current evidence ledger.
 
+## API Gateway contract coverage
+
+API Gateway exports routes and status declarations even when the API has no request or response models. In that case the exported OpenAPI can omit response `content` or include media types without schemas. Omission means the body contract is undocumented, not that the live response must be empty.
+
+For each actual API Gateway export, the action records `openapiContractAudit` inside the existing `resolution-json` output or each API Gateway entry in `services-json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "status": "schema-incomplete",
+  "operationCount": 1,
+  "responseCount": 1,
+  "responsesWithoutContent": 1,
+  "responseMediaTypesWithoutSchema": 0,
+  "requestMediaTypesWithoutSchema": 0,
+  "defaultOnlyOperationCount": 1
+}
+```
+
+`AWS_OPENAPI_CONTRACT_INCOMPLETE` is advisory. Downstream bootstrap still enforces documented routes and status codes, but it does not invent empty-body or schema assertions where the export has no body contract. Define API Gateway models or enrich the source OpenAPI when request and response body schemas must be strict CI gates.
+
+This audit is independent of `derived-openapi-completeness`. Derived completeness describes how faithfully the selected artifact was represented as the canonical OpenAPI sidecar; it does not claim that the source API documented every request or response schema. Dry runs, non-OpenAPI payloads, and non-API-Gateway providers do not receive a guessed audit.
+
 ## Security and IAM
 
 This action is read-only against AWS APIs and does not mutate AWS resources.

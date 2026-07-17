@@ -53,7 +53,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-06-01T20:47:14.021Z
+- Captured at: 2026-07-17T22:53:54.693Z
 - Cases: 15
 - Passed: 15
 - Failed: 0
@@ -118,7 +118,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-06-01T20:47:14.231Z
+- Captured at: 2026-07-17T22:53:54.998Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -138,7 +138,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-06-01T20:47:14.411Z
+- Captured at: 2026-07-17T22:53:55.238Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
