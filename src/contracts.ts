@@ -119,7 +119,23 @@ export interface ResolutionResult {
   derivedOpenApiFormat?: DerivedOpenApiFormat;
   derivedOpenApiEvidence?: string[];
   openapiContractAudit?: OpenApiContractAudit;
+  narrowing?: NarrowingMetadata;
+  providerProbes?: ProviderProbeResult[];
   evidence: string[];
+}
+
+export interface NarrowingMetadata {
+  tier: string;
+  mode: 'select' | 'narrow';
+  droppedCount: number;
+}
+
+export type ProviderProbeReason = 'iam' | 'timeout' | 'error';
+
+export interface ProviderProbeResult {
+  provider: ProviderType;
+  status: 'available' | 'skipped';
+  reason?: ProviderProbeReason;
 }
 
 export interface DiscoveredService {
@@ -246,6 +262,10 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'derived-openapi-evidence-json': {
       description: 'JSON array of evidence entries explaining derived OpenAPI quality and limitations.'
+    },
+    'narrowing-strategy': {
+      description:
+        'Progressive narrowing tier applied to API Gateway candidates (iac-fingerprint, cfn-correlation, tag-prefilter, naming-heuristic), or none when no tier matched.'
     }
   }
 };

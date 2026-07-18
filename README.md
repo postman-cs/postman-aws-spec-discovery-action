@@ -243,6 +243,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | `derived-openapi-completeness` | Derived OpenAPI completeness: full or partial. |
 | `derived-openapi-format` | Format of the derived OpenAPI sidecar, currently openapi-json. |
 | `derived-openapi-evidence-json` | JSON array of evidence entries explaining derived OpenAPI quality and limitations. |
+| `narrowing-strategy` | Progressive narrowing tier applied to API Gateway candidates (iac-fingerprint, cfn-correlation, tag-prefilter, naming-heuristic), or none when no tier matched. |
 <!-- outputs-table:end -->
 
 ## Supported providers

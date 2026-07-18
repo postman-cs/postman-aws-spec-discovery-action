@@ -1275,6 +1275,7 @@ export async function runResolution(
 
   // If too many candidates, try progressive narrowing before failing
   let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
+  let resolutionNarrowing: { tier: string; mode: 'select' | 'narrow'; droppedCount: number } | undefined;
   if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
     const candidateCountBeforeNarrowing = finalCandidates.length;
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
@@ -1291,9 +1292,26 @@ export async function runResolution(
     });
 
     if (narrowingResult) {
-      const narrowedIds = new Set(narrowingResult.gatewayIds);
-      finalCandidates = finalCandidates.filter((c) => narrowedIds.has(c.id));
-      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${candidateCountBeforeNarrowing} candidates to ${finalCandidates.length}`);
+      if (narrowingResult.mode === 'select' && narrowingResult.gatewayIds.length === 1) {
+        const selectedId = narrowingResult.gatewayIds[0];
+        finalCandidates = finalCandidates.filter((c) => c.id === selectedId);
+        actionCore.info(`Narrowing (${narrowingResult.tier}) selected candidate ${selectedId}`);
+      } else {
+        const intersecting = new Set(narrowingResult.gatewayIds);
+        const first = narrowingResult.gatewayIds
+          .map((id) => finalCandidates.find((c) => c.id === id))
+          .filter((c): c is (typeof finalCandidates)[number] => Boolean(c));
+        const rest = finalCandidates.filter((c) => !intersecting.has(c.id));
+        finalCandidates = [...first, ...rest];
+        actionCore.info(
+          `Narrowing (${narrowingResult.tier}) ranked ${first.length} of ${candidateCountBeforeNarrowing} candidates first and demoted ${rest.length} (not deleted)`
+        );
+      }
+      resolutionNarrowing = {
+        tier: narrowingResult.tier,
+        mode: narrowingResult.mode,
+        droppedCount: narrowingResult.droppedCount
+      };
     }
 
     // If still over limit after narrowing, warn instead of hard-fail
@@ -1432,6 +1450,9 @@ export async function runResolution(
     snsCandidate: resolvedSnsCandidate,
     fallbackServiceName: inferFallbackServiceName(inputs)
   });
+  if (resolutionNarrowing) {
+    selectedSource.narrowing = resolutionNarrowing;
+  }
   const preferredProviderCandidate = providerCandidates[0];
   if (shouldPreferProviderCandidate(preferredProviderCandidate, selectedSource)) {
     const exportFailures: string[] = [];
@@ -1778,6 +1799,7 @@ export function buildExecutionOutputs(result: {
   discovered: DiscoveredService[];
   resolution?: ResolutionResult;
   exportSummary?: DiscoverySummary;
+  providerProbes?: import('./contracts.js').ProviderProbeResult[];
 }): Record<string, string> {
   if (result.mode === 'discover-many') {
     const discovered = result.discovered;
@@ -1794,7 +1816,8 @@ export function buildExecutionOutputs(result: {
         status: unresolved ? 'unresolved' : 'resolved',
         sourceType: 'discover-many',
         count: discovered.length,
-        summary
+        summary,
+        providerProbes: result.providerProbes ?? []
       }),
       'service-name': '',
       'gateway-id': '',
@@ -1809,7 +1832,8 @@ export function buildExecutionOutputs(result: {
       'derived-openapi-version': '',
       'derived-openapi-completeness': '',
       'derived-openapi-format': '',
-      'derived-openapi-evidence-json': ''
+      'derived-openapi-evidence-json': '',
+      'narrowing-strategy': 'none'
     };
   }
 
@@ -1820,8 +1844,9 @@ export function buildExecutionOutputs(result: {
     confidence: 0,
     evidence: ['No resolution result produced']
   };
+  const resolutionWithProbes = { ...resolution, providerProbes: resolution.providerProbes ?? result.providerProbes ?? [] };
   return {
-    'resolution-json': JSON.stringify(resolution),
+    'resolution-json': JSON.stringify(resolutionWithProbes),
     'resolution-status': resolution.status,
     'source-type': resolution.sourceType,
     'mapping-confidence': String(resolution.confidence),
@@ -1841,7 +1866,8 @@ export function buildExecutionOutputs(result: {
     'derived-openapi-version': resolution.derivedOpenApiVersion ?? '',
     'derived-openapi-completeness': resolution.derivedOpenApiCompleteness ?? '',
     'derived-openapi-format': resolution.derivedOpenApiFormat ?? '',
-    'derived-openapi-evidence-json': JSON.stringify(resolution.derivedOpenApiEvidence ?? [])
+    'derived-openapi-evidence-json': JSON.stringify(resolution.derivedOpenApiEvidence ?? []),
+    'narrowing-strategy': resolution.narrowing?.tier ?? 'none'
   };
 }
 
@@ -1851,12 +1877,14 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
   if (inputs.mode === 'discover-many') {
     // Use injected registry or build one and auto-detect via IAM probing
     const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+    let discoverManyProbes: import('./contracts.js').ProviderProbeResult[] = [];
     const availableProviders = dependencies.providerRegistry
       ? registry.all()
       : await dependencies.core.group('Probe available providers', async () => {
-          const available = await registry.probeAvailable();
-          dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
-          return available;
+          const { availableProviders: probed, probes } = await registry.probeAvailableDetailed();
+          discoverManyProbes = probes;
+          dependencies.core.info(`Available providers: ${probed.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+          return probed;
         });
 
     // Always include API Gateway discovery (backward compat)
@@ -1901,19 +1929,24 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       mode: inputs.mode,
       discovered,
       exportSummary: summary,
-      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary })
+      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary, providerProbes: dependencies.providerRegistry ? [] : discoverManyProbes })
     };
   }
 
   const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+  let resolveOneProbes: import('./contracts.js').ProviderProbeResult[] = [];
   const providers = dependencies.providerRegistry
     ? registry.all()
     : await dependencies.core.group('Probe available providers', async () => {
-        const available = await registry.probeAvailable();
-        dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
-        return available;
+        const { availableProviders: probed, probes } = await registry.probeAvailableDetailed();
+        resolveOneProbes = probes;
+        dependencies.core.info(`Available providers: ${probed.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+        return probed;
       });
   const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, { providers });
+  if (!dependencies.providerRegistry) {
+    resolution.providerProbes = resolveOneProbes;
+  }
   return {
     mode: inputs.mode,
     discovered: [],
