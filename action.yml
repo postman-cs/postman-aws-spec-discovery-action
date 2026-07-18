@@ -71,6 +71,8 @@ outputs:
     description: "Format of the derived OpenAPI sidecar, currently openapi-json."
   derived-openapi-evidence-json:
     description: "JSON array of evidence entries explaining derived OpenAPI quality and limitations."
+  narrowing-strategy:
+    description: "Progressive narrowing tier applied to API Gateway candidates (iac-fingerprint, cfn-correlation, tag-prefilter, naming-heuristic), or none when no tier matched."
 runs:
   using: node24
   main: dist/index.cjs

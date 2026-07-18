@@ -1,5 +1,12 @@
 import type { DerivedOpenApiCompleteness, OpenApiContractAudit, ProviderType, SpecFormat } from '../../contracts.js';
 
+export type { ProviderProbeReason, ProviderProbeResult } from '../../contracts.js';
+
+export interface ProviderProbeSummary {
+  availableProviders: SpecProvider[];
+  probes: import('../../contracts.js').ProviderProbeResult[];
+}
+
 export interface SpecCandidate {
   id: string;
   name: string;
