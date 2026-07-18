@@ -161,8 +161,69 @@ Resources:
     Type: AWS::ApiGateway::Stage
     Properties:
       RestApiId: !Ref TestRestApi
-      DeploymentId: !Ref TestRestDeploymentContractControlsV2
+      DeploymentId: !Ref TestRestDeploymentModeledV3
       StageName: prod
+
+  TestRestOrdersResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref TestRestApi
+      ParentId: !GetAtt TestRestApi.RootResourceId
+      PathPart: orders
+
+  TestRestCreateOrderModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref TestRestApi
+      Name: CreateOrder
+      ContentType: application/json
+      Schema:
+        type: object
+        required:
+          - sku
+        properties:
+          sku:
+            type: string
+          quantity:
+            type: integer
+
+  TestRestBodyValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref TestRestApi
+      Name: body-only
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
+
+  TestRestOrdersPostMethod:
+    Type: AWS::ApiGateway::Method
+    DependsOn: TestRestCreateOrderModel
+    Properties:
+      RestApiId: !Ref TestRestApi
+      ResourceId: !Ref TestRestOrdersResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      RequestModels:
+        application/json: CreateOrder
+      RequestValidatorId: !Ref TestRestBodyValidator
+      MethodResponses:
+        - StatusCode: '200'
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseTemplates:
+              application/json: '{"status":"created"}'
+
+  TestRestDeploymentModeledV3:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - TestRestApi
+      - TestRestOrdersPostMethod
+    Properties:
+      RestApiId: !Ref TestRestApi
 
   TestHttpApi:
     Type: AWS::ApiGatewayV2::Api

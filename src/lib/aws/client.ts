@@ -7,10 +7,12 @@ import {
   GetResourcesCommand,
   GetRestApiCommand,
   GetRestApisCommand,
+  GetRequestValidatorsCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand,
   paginateGetRestApis,
   type Model,
+  type RequestValidator,
   type Resource
 } from '@aws-sdk/client-api-gateway';
 import {
@@ -42,7 +44,7 @@ import {
   type WebSocketModelSummary,
   type WebSocketRouteResponseSummary
 } from '../spec/websocket-openapi.js';
-import { synthesizeRestApiFallbackOpenApi } from '../spec/rest-api-fallback-openapi.js';
+import { mergeRestApiModelsAndValidators, synthesizeRestApiFallbackOpenApi } from '../spec/rest-api-fallback-openapi.js';
 
 export interface RestApiSummary {
   id: string;
@@ -431,7 +433,53 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         }
       })
     );
-    return await readExportBody(response.body);
+    const nativeExport = await readExportBody(response.body);
+    // W6: additively enrich the native export with Models and RequestValidators.
+    // Fail-soft -- any enrichment error returns the exact native body.
+    try {
+      const [resources, models, validators] = await Promise.all([
+        this.listRestResourcesWithMethods(apiId),
+        this.listRestModels(apiId),
+        this.listRestRequestValidators(apiId)
+      ]);
+      return mergeRestApiModelsAndValidators({
+        nativeExport,
+        resources: resources.map((resource) => ({
+          path: resource.path,
+          resourceMethods: resource.resourceMethods as never
+        })),
+        models: models.map((model) => ({ name: model.name, schema: model.schema, contentType: model.contentType })),
+        validators: validators.map((validator) => ({
+          id: validator.id,
+          name: validator.name,
+          validateRequestBody: validator.validateRequestBody,
+          validateRequestParameters: validator.validateRequestParameters
+        }))
+      });
+    } catch {
+      return nativeExport;
+    }
+  }
+
+  private async listRestRequestValidators(apiId: string): Promise<RequestValidator[]> {
+    const validators: RequestValidator[] = [];
+    let position: string | undefined;
+    const seenPositions = new Set<string>();
+    do {
+      const response = await this.restClient.send(
+        new GetRequestValidatorsCommand({
+          restApiId: apiId,
+          position,
+          limit: 500
+        })
+      );
+      validators.push(...(response.items ?? []));
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
+    } while (position);
+    return validators;
   }
 
   public async exportRestApiFallback(apiId: string, stage?: string): Promise<string> {
@@ -453,6 +501,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private async listRestResourcesWithMethods(apiId: string): Promise<Resource[]> {
     const resources: Resource[] = [];
     let position: string | undefined;
+    const seenPositions = new Set<string>();
     do {
       const response = await this.restClient.send(
         new GetResourcesCommand({
@@ -463,7 +512,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       resources.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
     } while (position);
     return resources;
   }
@@ -471,6 +523,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private async listRestModels(apiId: string): Promise<Model[]> {
     const models: Model[] = [];
     let position: string | undefined;
+    const seenPositions = new Set<string>();
     do {
       const response = await this.restClient.send(
         new GetModelsCommand({
@@ -480,7 +533,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       models.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
     } while (position);
     return models;
   }

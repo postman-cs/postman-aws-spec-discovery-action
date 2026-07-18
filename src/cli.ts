@@ -214,7 +214,8 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_VERSION: outputs['derived-openapi-version'] ?? '',
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_COMPLETENESS: outputs['derived-openapi-completeness'] ?? '',
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT: outputs['derived-openapi-format'] ?? '',
-    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON: outputs['derived-openapi-evidence-json'] ?? ''
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON: outputs['derived-openapi-evidence-json'] ?? '',
+    POSTMAN_AWS_SPEC_NARROWING_STRATEGY: outputs['narrowing-strategy'] ?? 'none'
   };
 
   return Object.entries(envPairs)

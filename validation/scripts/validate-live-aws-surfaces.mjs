@@ -24,6 +24,7 @@ import {
   GetExportCommand,
   GetModelsCommand,
   GetResourcesCommand,
+  GetRequestValidatorsCommand,
   GetRestApiCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand
@@ -115,6 +116,7 @@ const {
   StepFunctionsProvider,
   VerifiedPermissionsProvider,
   deriveOpenApiDocument,
+  mergeRestApiModelsAndValidators,
   synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi
 } = await import(distEntry);
@@ -195,7 +197,46 @@ class TargetedApiGatewayClient {
       accepts: 'application/yaml',
       parameters: { extensions: 'apigateway' }
     }));
-    return await readBody(response.body);
+    const nativeExport = await readBody(response.body);
+    try {
+      const [resources, models, validators] = await Promise.all([
+        this.listRestResourcesWithMethods(apiId),
+        this.listRestModels(apiId),
+        this.listRestRequestValidators(apiId)
+      ]);
+      return mergeRestApiModelsAndValidators({
+        nativeExport,
+        resources: resources.map((resource) => ({ path: resource.path, resourceMethods: resource.resourceMethods })),
+        models: models.map((model) => ({ name: model.name, schema: model.schema, contentType: model.contentType })),
+        validators: validators.map((validator) => ({
+          id: validator.id,
+          name: validator.name,
+          validateRequestBody: validator.validateRequestBody,
+          validateRequestParameters: validator.validateRequestParameters
+        }))
+      });
+    } catch {
+      return nativeExport;
+    }
+  }
+
+  async listRestRequestValidators(apiId) {
+    const validators = [];
+    let position;
+    const seenPositions = new Set();
+    do {
+      const response = await sendWithBackoff(this.rest, new GetRequestValidatorsCommand({
+        restApiId: apiId,
+        position,
+        limit: 500
+      }));
+      validators.push(...(response.items ?? []));
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
+    } while (position);
+    return validators;
   }
 
   async exportRestApiFallback(apiId, stage) {
@@ -217,6 +258,7 @@ class TargetedApiGatewayClient {
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
     let position;
+    const seenPositions = new Set();
     do {
       const response = await sendWithBackoff(this.rest, new GetResourcesCommand({
         restApiId: apiId,
@@ -225,7 +267,10 @@ class TargetedApiGatewayClient {
         embed: ['methods']
       }));
       resources.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
     } while (position);
     return resources;
   }
@@ -233,6 +278,7 @@ class TargetedApiGatewayClient {
   async listRestModels(apiId) {
     const models = [];
     let position;
+    const seenPositions = new Set();
     do {
       const response = await sendWithBackoff(this.rest, new GetModelsCommand({
         restApiId: apiId,
@@ -240,7 +286,10 @@ class TargetedApiGatewayClient {
         limit: 500
       }));
       models.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
+      position = next;
     } while (position);
     return models;
   }
@@ -934,8 +983,70 @@ function valueFor(result, key) {
   return result.resolution?.[key] ?? result.outputs?.[key] ?? result.outputs?.[outputKey] ?? '';
 }
 
+
+const OPENAPI_HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
+function operationHasConcreteSchema(operation) {
+  const mediaEntries = [];
+  if (operation?.requestBody?.content && typeof operation.requestBody.content === 'object') {
+    mediaEntries.push(...Object.values(operation.requestBody.content));
+  }
+  if (operation?.responses && typeof operation.responses === 'object') {
+    for (const response of Object.values(operation.responses)) {
+      if (response?.content && typeof response.content === 'object') {
+        mediaEntries.push(...Object.values(response.content));
+      }
+    }
+  }
+  return mediaEntries.some((media) => {
+    const schema = media?.schema;
+    return Boolean(schema && typeof schema === 'object' && Object.keys(schema).length > 0);
+  });
+}
+
+// Validation-only completeness check: classifies an operation as incomplete when it has
+// no concrete schema or $ref in any request-body or response media entry. Inspects the
+// exported artifact generically; never special-cases fixture names.
+function classifyIncompleteOperations(content) {
+  let document;
+  try {
+    document = parseYaml(content);
+  } catch {
+    return [];
+  }
+  const entries = [];
+  const paths = document?.paths && typeof document.paths === 'object' ? document.paths : {};
+  for (const [pathKey, pathItem] of Object.entries(paths)) {
+    if (!pathItem || typeof pathItem !== 'object') continue;
+    for (const method of OPENAPI_HTTP_METHODS) {
+      const operation = pathItem[method];
+      if (!operation || typeof operation !== 'object') continue;
+      if (!operationHasConcreteSchema(operation)) {
+        entries.push({ code: 'AWS_OPENAPI_CONTRACT_INCOMPLETE', path: pathKey, method });
+      }
+    }
+  }
+  return entries;
+}
+
 async function inspectGeneratedArtifacts(workspace, result, testCase, warnings = []) {
   const checks = [];
+  if (testCase.contractCompleteness) {
+    const specPath = result.resolution?.specPath;
+    const content = specPath ? await readFile(path.join(workspace, specPath), 'utf8').catch(() => '') : '';
+    const incompleteOperations = classifyIncompleteOperations(content);
+    const { completePath, completeMethod, incompletePath, incompleteMethod } = testCase.contractCompleteness;
+    checks.push({
+      name: `modeled ${completeMethod.toUpperCase()} ${completePath} has no AWS_OPENAPI_CONTRACT_INCOMPLETE entry`,
+      passed:
+        content.length > 0 &&
+        !incompleteOperations.some((entry) => entry.path === completePath && entry.method === completeMethod)
+    });
+    checks.push({
+      name: `route-only ${incompleteMethod.toUpperCase()} ${incompletePath} yields an AWS_OPENAPI_CONTRACT_INCOMPLETE entry`,
+      passed: incompleteOperations.some((entry) => entry.path === incompletePath && entry.method === incompleteMethod)
+    });
+  }
   if (testCase.specMarkers?.length) {
     const specPath = result.resolution?.specPath;
     const content = specPath ? await readFile(path.join(workspace, specPath), 'utf8').catch(() => '') : '';
@@ -1271,6 +1382,22 @@ const gatewayCases = [
     gatewayId: outputs.RestApiId,
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
     contractAudit: { path: '/health', method: 'get', stage: 'prod', livePath: '/health', liveControls: true },
+    oasDerivation: true
+  },
+  {
+    name: 'api-gateway-rest-modeled-route',
+    gatewayId: outputs.RestApiId,
+    contractCompleteness: { completePath: '/orders', completeMethod: 'post', incompletePath: '/health', incompleteMethod: 'get' },
+    expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
+    specMarkers: [
+      'CreateOrder',
+      '#/components/schemas/CreateOrder',
+      'x-amazon-apigateway-request-validators',
+      'body-only',
+      'validateRequestBody: true',
+      'validateRequestParameters: false',
+      'x-amazon-apigateway-request-validator: body-only'
+    ],
     oasDerivation: true
   },
   {

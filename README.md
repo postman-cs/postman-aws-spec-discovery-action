@@ -243,6 +243,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | `derived-openapi-completeness` | Derived OpenAPI completeness: full or partial. |
 | `derived-openapi-format` | Format of the derived OpenAPI sidecar, currently openapi-json. |
 | `derived-openapi-evidence-json` | JSON array of evidence entries explaining derived OpenAPI quality and limitations. |
+| `narrowing-strategy` | Progressive narrowing tier applied to API Gateway candidates (iac-fingerprint, cfn-correlation, tag-prefilter, naming-heuristic), or none when no tier matched. |
 <!-- outputs-table:end -->
 
 ## Supported providers
@@ -280,7 +281,7 @@ flowchart TB
     EXPORT --> OUT["spec-path / spec-url outputs<br/>feed onboarding or bootstrap"]
 ```
 
-At startup the action validates credentials with `sts:GetCallerIdentity`, probes each provider with a lightweight IAM read, and scans bounded IaC, workflow, and config files for service signals. Candidates are scored by confidence; the best match is exported to `output-dir`, alongside an `openapi.derived.json` sidecar when the artifact can be represented as OpenAPI. Progressive narrowing keeps broad accounts tractable: IaC fingerprints, CloudFormation stack correlation, `postman:repo` tags, and naming heuristics run before any full enumeration. Full details, including candidate scoring, stage auto-selection, Backstage and SSM conventions, CI auto-detection, OpenAPI normalization, IAM policies, and troubleshooting, live in [docs/providers.md](docs/providers.md).
+At startup the action validates credentials with `sts:GetCallerIdentity`, probes each provider with a lightweight IAM read, and scans bounded IaC, workflow, and config files for service signals. Candidates are scored by confidence; the best match is exported to `output-dir`, alongside an `openapi.derived.json` sidecar when the artifact can be represented as OpenAPI. Progressive narrowing keeps broad accounts tractable: IaC fingerprints, CloudFormation stack correlation, `postman:repo` tags, and naming heuristics run before any full enumeration. When no direct repository spec exists, local CDK/SAM build artifacts ('cdk.out/*.template.json', '.aws-sam/build/template.yaml') are inspected for inline OpenAPI documents before remote providers. Native REST exports are additively enriched with existing API Gateway Models and RequestValidators. Ambiguous runs emit ranked candidates in 'candidates-json' and a GitHub Step Summary. Full details, including candidate scoring, stage auto-selection, Backstage and SSM conventions, CI auto-detection, OpenAPI normalization, IAM policies, and troubleshooting, live in [docs/providers.md](docs/providers.md).
 
 SNS is handled as a contract resolver, since SNS has no native exportable spec. Contracts resolve through a 9-level precedence chain (repo-local AsyncAPI down to manual review), with subscription-aware enrichment and metadata/webhook sidecars. See [docs/sns-contract-resolution.md](docs/sns-contract-resolution.md).
 
