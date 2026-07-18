@@ -36,13 +36,123 @@ Resources:
                     statusCode: '200'
                     responseTemplates:
                       application/json: '{"status":"ok"}'
+          /no-content:
+            get:
+              responses:
+                '204':
+                  description: No content
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 204}'
+                responses:
+                  default:
+                    statusCode: '204'
+                    responseTemplates:
+                      application/json: ''
+          /no-content-with-body:
+            get:
+              responses:
+                '204':
+                  description: No content
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 204}'
+                responses:
+                  default:
+                    statusCode: '204'
+                    responseTemplates:
+                      application/json: '{"unexpected":true}'
+          /schema-valid:
+            get:
+              responses:
+                '200':
+                  description: Valid schema response
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required:
+                          - status
+                        properties:
+                          status:
+                            type: string
+                        additionalProperties: false
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseTemplates:
+                      application/json: '{"status":"valid"}'
+          /schema-invalid:
+            get:
+              responses:
+                '200':
+                  description: Invalid schema response
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required:
+                          - status
+                        properties:
+                          status:
+                            type: string
+                        additionalProperties: false
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseTemplates:
+                      application/json: '{"status":42}'
+          /unknown-length:
+            get:
+              responses:
+                '200':
+                  description: Unknown body with matching length
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseTemplates:
+                      application/json: '{"status":"length"}'
+          /unknown-length-mismatch:
+            get:
+              responses:
+                '200':
+                  description: Unknown body with controlled mismatched length
+                  headers:
+                    Content-Length:
+                      schema:
+                        type: integer
+              x-amazon-apigateway-integration:
+                type: MOCK
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Content-Length: "'1'"
+                    responseTemplates:
+                      application/json: '{"status":"length-mismatch"}'
       Tags:
         - Key: postman:project-name
           Value: spec-discovery-test
         - Key: env
           Value: test
 
-  TestRestDeployment:
+  TestRestDeploymentContractControlsV2:
     Type: AWS::ApiGateway::Deployment
     DependsOn: TestRestApi
     Properties:
@@ -52,7 +162,7 @@ Resources:
     Type: AWS::ApiGateway::Stage
     Properties:
       RestApiId: !Ref TestRestApi
-      DeploymentId: !Ref TestRestDeployment
+      DeploymentId: !Ref TestRestDeploymentContractControlsV2
       StageName: prod
 
   # 2. HTTP API Gateway
