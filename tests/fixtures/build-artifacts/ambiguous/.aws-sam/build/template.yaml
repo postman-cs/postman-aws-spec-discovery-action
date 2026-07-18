@@ -5,7 +5,9 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
-      EndpointConfiguration: PRIVATE
+      EndpointConfiguration:
+        Types:
+          - PRIVATE
       DefinitionBody:
         openapi: 3.0.3
         info:
