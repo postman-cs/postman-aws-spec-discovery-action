@@ -4,6 +4,7 @@ import * as core from '@actions/core';
 import { contractOutputNames, type DiscoveredService } from './contracts.js';
 import { AwsApiGatewaySdkClient, type AwsGatewayClient } from './lib/aws/client.js';
 import { formatUserSafeError } from './lib/logging/sanitize.js';
+import { appendAmbiguityStepSummary } from './lib/logging/step-summary.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
 import {
@@ -97,6 +98,25 @@ async function runActionInner(
     actionCore.setOutput(name, value);
   }
 
+  const ambiguityResolution = result.resolution;
+  if (
+    result.mode !== 'discover-many' &&
+    ambiguityResolution?.status === 'unresolved' &&
+    (ambiguityResolution.rankedCandidates?.length ?? 0) >= 2
+  ) {
+    await appendAmbiguityStepSummary(
+      {
+        status: ambiguityResolution.status,
+        sourceType: ambiguityResolution.sourceType,
+        narrowingTier: ambiguityResolution.narrowing?.tier ?? 'none',
+        candidates: ambiguityResolution.rankedCandidates ?? [],
+        probes: ambiguityResolution.providerProbes ?? []
+      },
+      process.env,
+      (message) => actionCore.warning(message)
+    );
+  }
+
   actionCore.info(
     result.mode === 'discover-many'
       ? `Discovered ${result.discovered.length} service(s)`
@@ -148,7 +168,7 @@ export {
   type WebSocketOpenApiInput,
   type WebSocketRouteSummary
 } from './lib/spec/websocket-openapi.js';
-export { synthesizeRestApiFallbackOpenApi } from './lib/spec/rest-api-fallback-openapi.js';
+export { mergeRestApiModelsAndValidators, synthesizeRestApiFallbackOpenApi } from './lib/spec/rest-api-fallback-openapi.js';
 export {
   deriveOpenApiDocument,
   type OpenApiDerivationInput,

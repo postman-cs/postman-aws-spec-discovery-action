@@ -121,6 +121,7 @@ export interface ResolutionResult {
   openapiContractAudit?: OpenApiContractAudit;
   narrowing?: NarrowingMetadata;
   providerProbes?: ProviderProbeResult[];
+  rankedCandidates?: AmbiguousCandidateView[];
   evidence: string[];
 }
 
@@ -136,6 +137,15 @@ export interface ProviderProbeResult {
   provider: ProviderType;
   status: 'available' | 'skipped';
   reason?: ProviderProbeReason;
+}
+
+export interface AmbiguousCandidateView {
+  rank: number;
+  serviceName: string;
+  gatewayId: string;
+  gatewayType: GatewayType;
+  confidence: number;
+  evidence: string[];
 }
 
 export interface DiscoveredService {

@@ -26,12 +26,12 @@ import { AlbListenerRulesSdkClient } from './lib/aws/alb-client.js';
 import { LambdaEventSourceSdkClient } from './lib/aws/lambda-event-source-client.js';
 import { VerifiedPermissionsSdkClient } from './lib/aws/verified-permissions-client.js';
 import { StepFunctionsSdkClient } from './lib/aws/step-functions-client.js';
-import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
+import { formatUserSafeError, sanitizeLogMessage, sanitizeJsonValue } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
-import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
+import { findExistingRepoSpecTyped, findLocalCfnArtifactSpecs } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
-import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
+import { resolveServiceCandidate, rankServiceCandidates } from './lib/resolve/service-resolver.js';
 import {
   formatOpenApiContractAuditWarning,
   normalizeOpenApiYaml,
@@ -1254,6 +1254,70 @@ export async function runResolution(
     }
   }
 
+  // Local CDK/SAM build-artifact probe (W5): runs only when no direct repo spec was found.
+  // Local files only -- no AWS calls, no S3/HTTP fetches.
+  if (!existingSpecPath) {
+    const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
+    if (localArtifactSpecs.length === 1) {
+      const artifact = localArtifactSpecs[0];
+      const serviceName = artifact.logicalId;
+      const relativeDir = path.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, '/');
+      const relativeSpecPath = path.join(relativeDir, artifact.filename).replace(/\\/g, '/');
+      const evidence = [
+        `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
+      ];
+      const base: ResolutionResult = {
+        status: 'resolved',
+        sourceType: 'cfn-embedded',
+        serviceName,
+        confidence: 75,
+        gatewayType: artifact.gatewayType,
+        providerType: 'cloudformation',
+        specFormat: artifact.format,
+        specPath: relativeSpecPath,
+        evidence
+      };
+      if (inputs.dryRun) {
+        return { ...base, evidence: [...evidence, 'Dry run enabled; skipped local build artifact write'] };
+      }
+      try {
+        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+          repoRoot: inputs.repoRoot,
+          relativeDir,
+          native: { relativePath: relativeSpecPath, content: artifact.content },
+          derivation: { content: artifact.content, format: artifact.format, title: serviceName },
+          dryRun: inputs.dryRun,
+          writeSpecFile
+        });
+        return { ...base, ...derivedOpenApi };
+      } catch (error) {
+        actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error)}`));
+      }
+    } else if (localArtifactSpecs.length > 1) {
+      const rankedCandidates = sanitizeJsonValue(
+        localArtifactSpecs.map((artifact, index) => ({
+          rank: index + 1,
+          serviceName: artifact.logicalId,
+          gatewayId: artifact.artifactRef,
+          gatewayType: artifact.gatewayType,
+          confidence: 50,
+          evidence: [`Embedded OpenAPI document in local build artifact ${artifact.artifactPath}`]
+        }))
+      );
+      return {
+        status: 'unresolved',
+        sourceType: 'manual-review',
+        serviceName: inferFallbackServiceName(inputs) ?? 'unknown-service',
+        confidence: 0,
+        rankedCandidates,
+        evidence: [
+          `Found ${localArtifactSpecs.length} embedded OpenAPI documents across local CDK/SAM build artifacts; manual review required`,
+          ...rankedCandidates.map((candidate) => `Candidate ${candidate.rank}: ${candidate.gatewayId}`)
+        ]
+      };
+    }
+  }
+
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
@@ -1337,6 +1401,7 @@ export async function runResolution(
   }
 
   const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
+  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals);
 
   let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
   let resolvedSnsExport: SpecExportResult | undefined;
@@ -1452,6 +1517,18 @@ export async function runResolution(
   });
   if (resolutionNarrowing) {
     selectedSource.narrowing = resolutionNarrowing;
+  }
+  if (resolvedCandidate?.ambiguous && rankedGatewayCandidates.length > 1 && selectedSource.status === 'unresolved') {
+    selectedSource.rankedCandidates = sanitizeJsonValue(
+      rankedGatewayCandidates.map((candidate, index) => ({
+        rank: index + 1,
+        serviceName: candidate.serviceName,
+        gatewayId: candidate.gatewayId,
+        gatewayType: candidate.gatewayType,
+        confidence: candidate.confidence,
+        evidence: candidate.evidence
+      }))
+    );
   }
   const preferredProviderCandidate = providerCandidates[0];
   if (shouldPreferProviderCandidate(preferredProviderCandidate, selectedSource)) {
@@ -1856,7 +1933,10 @@ export function buildExecutionOutputs(result: {
     'services-json': '[]',
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
-    'candidates-json': '',
+    'candidates-json':
+      resolution.status === 'unresolved' && (resolution.rankedCandidates?.length ?? 0) >= 2
+        ? JSON.stringify(resolution.rankedCandidates)
+        : '',
     'provider-type': resolution.providerType ?? (resolution.sourceType === 'gateway-export' ? 'api-gateway' : ''),
     'spec-format': resolution.specFormat ?? '',
     'contract-origin': resolution.contractOrigin ?? '',

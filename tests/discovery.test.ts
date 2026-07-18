@@ -2244,6 +2244,60 @@ describe('hardening helpers', () => {
     expect(result.sourceType).toBe('manual-review');
   });
 
+  it('U3.3 populates candidates-json with ranked candidate views for ambiguous resolve-one', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-ambiguity-'));
+    try {
+      const aws = createAwsClientStub({
+        listRestApis: vi.fn().mockResolvedValue([
+          { id: 'ccccdddddd', name: 'payments-api-copy' },
+          { id: 'aaaaabbbbb', name: 'payments-api' }
+        ])
+      });
+      const resolution = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/payments' },
+          expectedServiceName: 'payments',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        aws,
+        createCoreStub().core,
+        vi.fn().mockResolvedValue(undefined)
+      );
+
+      expect(resolution.status).toBe('unresolved');
+      expect(resolution.sourceType).toBe('manual-review');
+      expect(resolution.rankedCandidates).toBeDefined();
+
+      const outputs = buildExecutionOutputs({ mode: 'resolve-one', discovered: [], resolution });
+      expect(outputs['resolution-status']).toBe('unresolved');
+      expect(outputs['source-type']).toBe('manual-review');
+      const parsed = JSON.parse(outputs['candidates-json'] ?? '') as Array<Record<string, unknown>>;
+      expect(parsed).toHaveLength(2);
+      expect(parsed.map((candidate) => candidate.rank)).toEqual([1, 2]);
+      for (const candidate of parsed) {
+        expect(Object.keys(candidate).sort()).toEqual(['confidence', 'evidence', 'gatewayId', 'gatewayType', 'rank', 'serviceName']);
+      }
+      expect(parsed[0]?.gatewayId).toBe('aaaaabbbbb');
+      expect(parsed[1]?.gatewayId).toBe('ccccdddddd');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('finds only valid OpenAPI repo specs', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-spec-test-'));
     try {

@@ -24,6 +24,7 @@ import {
   GetExportCommand,
   GetModelsCommand,
   GetResourcesCommand,
+  GetRequestValidatorsCommand,
   GetRestApiCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand
@@ -115,6 +116,7 @@ const {
   StepFunctionsProvider,
   VerifiedPermissionsProvider,
   deriveOpenApiDocument,
+  mergeRestApiModelsAndValidators,
   synthesizeRestApiFallbackOpenApi,
   synthesizeWebSocketOpenApi
 } = await import(distEntry);
@@ -195,7 +197,42 @@ class TargetedApiGatewayClient {
       accepts: 'application/yaml',
       parameters: { extensions: 'apigateway' }
     }));
-    return await readBody(response.body);
+    const nativeExport = await readBody(response.body);
+    try {
+      const [resources, models, validators] = await Promise.all([
+        this.listRestResourcesWithMethods(apiId),
+        this.listRestModels(apiId),
+        this.listRestRequestValidators(apiId)
+      ]);
+      return mergeRestApiModelsAndValidators({
+        nativeExport,
+        resources: resources.map((resource) => ({ path: resource.path, resourceMethods: resource.resourceMethods })),
+        models: models.map((model) => ({ name: model.name, schema: model.schema, contentType: model.contentType })),
+        validators: validators.map((validator) => ({
+          id: validator.id,
+          name: validator.name,
+          validateRequestBody: validator.validateRequestBody,
+          validateRequestParameters: validator.validateRequestParameters
+        }))
+      });
+    } catch {
+      return nativeExport;
+    }
+  }
+
+  async listRestRequestValidators(apiId) {
+    const validators = [];
+    let position;
+    do {
+      const response = await sendWithBackoff(this.rest, new GetRequestValidatorsCommand({
+        restApiId: apiId,
+        position,
+        limit: 500
+      }));
+      validators.push(...(response.items ?? []));
+      position = response.position;
+    } while (position);
+    return validators;
   }
 
   async exportRestApiFallback(apiId, stage) {
@@ -1271,6 +1308,21 @@ const gatewayCases = [
     gatewayId: outputs.RestApiId,
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
     contractAudit: { path: '/health', method: 'get', stage: 'prod', livePath: '/health', liveControls: true },
+    oasDerivation: true
+  },
+  {
+    name: 'api-gateway-rest-modeled',
+    gatewayId: outputs.RestApiId,
+    expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
+    specMarkers: [
+      'CreateOrder',
+      '#/components/schemas/CreateOrder',
+      'x-amazon-apigateway-request-validators',
+      'body-only',
+      'validateRequestBody: true',
+      'validateRequestParameters: false',
+      'x-amazon-apigateway-request-validator: body-only'
+    ],
     oasDerivation: true
   },
   {

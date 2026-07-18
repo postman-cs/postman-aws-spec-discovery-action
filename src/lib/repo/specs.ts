@@ -1,8 +1,14 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, lstat, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
-import type { SpecFormat } from '../../contracts.js';
+import type { GatewayType, SpecFormat } from '../../contracts.js';
+import {
+  extractInlineEmbeddedSpec,
+  parseCfnTemplateBody,
+  type ParsedTemplate,
+  type TemplateResource
+} from '../providers/cloudformation.js';
 
 const DIRECT_SPEC_CANDIDATES = [
   'openapi.yaml',
@@ -301,4 +307,106 @@ function specCandidateScore(candidate: string): number {
   if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|reference|public)\//.test(normalized)) score += 20;
   if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
   return score;
+}
+
+const CFN_ARTIFACT_API_TYPES: Record<string, GatewayType> = {
+  'AWS::ApiGateway::RestApi': 'REST',
+  'AWS::Serverless::Api': 'REST',
+  'AWS::ApiGatewayV2::Api': 'HTTP',
+  'AWS::Serverless::HttpApi': 'HTTP'
+};
+
+export interface LocalCfnArtifactSpec {
+  /** Relative artifact path plus `#` plus logical ID. */
+  artifactRef: string;
+  /** Relative template path under repoRoot (posix separators). */
+  artifactPath: string;
+  logicalId: string;
+  gatewayType: GatewayType;
+  content: string;
+  format: SpecFormat;
+  filename: string;
+}
+
+async function isRegularNonSymlinkFile(absolutePath: string): Promise<boolean> {
+  try {
+    const link = await lstat(absolutePath);
+    if (link.isSymbolicLink()) {
+      return false;
+    }
+    return link.isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Inspect only synthesized CDK templates (`cdk.out/*.template.json`) and the SAM build
+ * template (`.aws-sam/build/template.yaml`) for inline OpenAPI documents embedded in API
+ * resources. Local-only: no AWS calls, no S3/HTTP fetches, no recursive scanning. Paths
+ * are sorted lexically and logical IDs are sorted lexically within each template.
+ */
+export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<LocalCfnArtifactSpec[]> {
+  const resolvedRoot = path.resolve(repoRoot);
+  const artifactPaths: string[] = [];
+
+  const cdkOutDir = path.join(resolvedRoot, 'cdk.out');
+  try {
+    const cdkLink = await lstat(cdkOutDir);
+    if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
+      const entries = await readdir(cdkOutDir);
+      for (const entry of entries.filter((name) => name.endsWith('.template.json')).sort()) {
+        artifactPaths.push(path.posix.join('cdk.out', entry));
+      }
+    }
+  } catch {
+    // cdk.out absent -- silent
+  }
+
+  const samTemplate = path.posix.join('.aws-sam', 'build', 'template.yaml');
+  if (await isRegularNonSymlinkFile(path.join(resolvedRoot, samTemplate))) {
+    artifactPaths.push(samTemplate);
+  }
+
+  const specs: LocalCfnArtifactSpec[] = [];
+  for (const artifactPath of artifactPaths.sort()) {
+    const absolutePath = path.join(resolvedRoot, artifactPath);
+    if (!absolutePath.startsWith(resolvedRoot + path.sep)) {
+      continue;
+    }
+    if (!(await isRegularNonSymlinkFile(absolutePath))) {
+      continue;
+    }
+    let template: ParsedTemplate;
+    try {
+      template = parseCfnTemplateBody(await readFile(absolutePath, 'utf8'));
+    } catch {
+      continue;
+    }
+    const resources = template?.Resources;
+    if (!resources || typeof resources !== 'object') {
+      continue;
+    }
+    for (const logicalId of Object.keys(resources).sort()) {
+      const resource = resources[logicalId] as TemplateResource | undefined;
+      const gatewayType = resource?.Type ? CFN_ARTIFACT_API_TYPES[resource.Type] : undefined;
+      if (!resource || !gatewayType) {
+        continue;
+      }
+      const extracted = extractInlineEmbeddedSpec(resource);
+      if (!extracted) {
+        continue;
+      }
+      specs.push({
+        artifactRef: `${artifactPath}#${logicalId}`,
+        artifactPath,
+        logicalId,
+        gatewayType,
+        content: extracted.content,
+        format: extracted.format,
+        filename: extracted.filename
+      });
+    }
+  }
+  return specs;
 }
