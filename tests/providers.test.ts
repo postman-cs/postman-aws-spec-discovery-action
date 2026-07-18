@@ -3906,3 +3906,60 @@ describe('SnsSdkClient', () => {
     await expect(client.getSubscriptionAttributes(subscriptionArn)).resolves.toEqual({});
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// U4.x: typed provider probe results (v2.1)
+// ---------------------------------------------------------------------------
+describe('U4 typed provider probe results', () => {
+  it('U4.1 typed true/false probe results, ordered, no reason on false', async () => {
+    const registry = new ProviderRegistry();
+    const available = createAppSyncClientStub({ probe: vi.fn().mockResolvedValue(true) });
+    const unavailable = createSchemasClientStub({ probe: vi.fn().mockResolvedValue(false) });
+    registry.register(new AppSyncProvider(available));
+    registry.register(new EventBridgeSchemasProvider(unavailable));
+
+    const { availableProviders, probes } = await registry.probeAvailableDetailed();
+    expect(availableProviders.map((p) => p.type)).toEqual(['appsync']);
+    expect(probes).toEqual([
+      { provider: 'appsync', status: 'available' },
+      { provider: 'eventbridge-schemas', status: 'skipped' }
+    ]);
+    expect(probes[1]).not.toHaveProperty('reason');
+  });
+
+  it.each([
+    ['AccessDeniedException', Object.assign(new Error('denied'), { name: 'AccessDeniedException' }), 'iam'],
+    ['AccessDenied', Object.assign(new Error('denied'), { name: 'AccessDenied' }), 'iam'],
+    ['UnauthorizedOperation', Object.assign(new Error('denied'), { name: 'UnauthorizedOperation' }), 'iam'],
+    ['http 403 metadata', Object.assign(new Error('forbidden'), { $metadata: { httpStatusCode: 403 } }), 'iam'],
+    ['message contains AccessDenied', new Error('AccessDeniedException: not authorized'), 'iam'],
+    ['generic error', new Error('boom'), 'error']
+  ])('U4.2 probe rejection %s maps to skipped:%s', async (_label, rejection, reason) => {
+    const registry = new ProviderRegistry();
+    registry.register(new AppSyncProvider(createAppSyncClientStub({ probe: vi.fn().mockRejectedValue(rejection) })));
+    const { availableProviders, probes } = await registry.probeAvailableDetailed();
+    expect(availableProviders).toHaveLength(0);
+    expect(probes).toEqual([{ provider: 'appsync', status: 'skipped', reason }]);
+  });
+
+  it('U4.2b timeout maps to skipped:timeout', async () => {
+    const registry = new ProviderRegistry();
+    registry.register(
+      new AppSyncProvider(createAppSyncClientStub({ probe: vi.fn().mockImplementation(() => new Promise(() => {})) }))
+    );
+    const { probes } = await registry.probeAvailableDetailed();
+    expect(probes).toEqual([{ provider: 'appsync', status: 'skipped', reason: 'timeout' }]);
+  }, 10000);
+
+  it('U4.3 one rejecting provider does not reject discovery of a healthy one', async () => {
+    const registry = new ProviderRegistry();
+    registry.register(new AppSyncProvider(createAppSyncClientStub({ probe: vi.fn().mockRejectedValue(new Error('AccessDeniedException')) })));
+    registry.register(new EventBridgeSchemasProvider(createSchemasClientStub({ probe: vi.fn().mockResolvedValue(true) })));
+    const { availableProviders, probes } = await registry.probeAvailableDetailed();
+    expect(availableProviders.map((p) => p.type)).toEqual(['eventbridge-schemas']);
+    expect(probes).toHaveLength(2);
+    expect(probes[0]).toEqual({ provider: 'appsync', status: 'skipped', reason: 'iam' });
+    expect(probes[1]).toEqual({ provider: 'eventbridge-schemas', status: 'available' });
+  });
+});

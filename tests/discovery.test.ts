@@ -2498,3 +2498,135 @@ describe('hardening helpers', () => {
     expect(dotenv).toContain('POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON=');
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// U2.x: narrowing-strategy output (v2.1)
+// ---------------------------------------------------------------------------
+describe('U2 narrowing-strategy output', () => {
+  const baseResolution = {
+    status: 'resolved' as const,
+    sourceType: 'gateway-export' as const,
+    serviceName: 'orders-api',
+    confidence: 100,
+    gatewayId: 'rest-1',
+    gatewayType: 'REST' as const,
+    evidence: ['x']
+  };
+
+  it('U2.1 applied narrowing scalar and JSON object', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: {
+        ...baseResolution,
+        narrowing: { tier: 'iac-fingerprint', mode: 'narrow', droppedCount: 3 }
+      }
+    });
+    expect(outputs['narrowing-strategy']).toBe('iac-fingerprint');
+    const parsed = JSON.parse(outputs['resolution-json'] ?? '{}') as { narrowing?: unknown };
+    expect(parsed.narrowing).toEqual({ tier: 'iac-fingerprint', mode: 'narrow', droppedCount: 3 });
+  });
+
+  it('U2.2 none and absent JSON object when no tier ran', () => {
+    const outputs = buildExecutionOutputs({ mode: 'resolve-one', discovered: [], resolution: baseResolution });
+    expect(outputs['narrowing-strategy']).toBe('none');
+    const parsed = JSON.parse(outputs['resolution-json'] ?? '{}') as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(parsed, 'narrowing')).toBe(false);
+  });
+
+  it('U2.2b discover-many always emits none and no narrowing member', () => {
+    const outputs = buildExecutionOutputs({ mode: 'discover-many', discovered: [] });
+    expect(outputs['narrowing-strategy']).toBe('none');
+    const parsed = JSON.parse(outputs['resolution-json'] ?? '{}') as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(parsed, 'narrowing')).toBe(false);
+  });
+
+  it('U2.4 prior output fields unchanged when narrowing present', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: { ...baseResolution, narrowing: { tier: 'naming-heuristic', mode: 'narrow', droppedCount: 1 } }
+    });
+    expect(outputs['resolution-status']).toBe('resolved');
+    expect(outputs['source-type']).toBe('gateway-export');
+    expect(outputs['service-name']).toBe('orders-api');
+    expect(outputs['gateway-id']).toBe('rest-1');
+    expect(outputs['mapping-confidence']).toBe('100');
+  });
+
+  it('U2.3 toDotenv exposes POSTMAN_AWS_SPEC_NARROWING_STRATEGY', () => {
+    const dotenv = toDotenv({
+      'resolution-json': '{}',
+      'resolution-status': 'resolved',
+      'source-type': 'gateway-export',
+      'mapping-confidence': '100',
+      'narrowing-strategy': 'tag-prefilter'
+    });
+    const line = dotenv.split('\n').find((l) => l.startsWith('POSTMAN_AWS_SPEC_NARROWING_STRATEGY='));
+    expect(line).toBe('POSTMAN_AWS_SPEC_NARROWING_STRATEGY="tag-prefilter"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// U4.4: providerProbes JSON propagation (v2.1)
+// ---------------------------------------------------------------------------
+describe('U4.4 providerProbes propagation', () => {
+  const baseResolution = {
+    status: 'resolved' as const,
+    sourceType: 'gateway-export' as const,
+    serviceName: 'orders-api',
+    confidence: 100,
+    gatewayId: 'rest-1',
+    gatewayType: 'REST' as const,
+    evidence: ['x']
+  };
+
+  it('U4.4 injected (unprobed) registry path emits providerProbes: [] in resolve-one', () => {
+    const outputs = buildExecutionOutputs({ mode: 'resolve-one', discovered: [], resolution: baseResolution });
+    const parsed = JSON.parse(outputs['resolution-json'] ?? '{}') as { providerProbes?: unknown };
+    expect(parsed.providerProbes).toEqual([]);
+  });
+
+  it('U4.4 resolve-one carries typed probe results into resolution-json', () => {
+    const outputs = buildExecutionOutputs({
+      mode: 'resolve-one',
+      discovered: [],
+      resolution: {
+        ...baseResolution,
+        providerProbes: [
+          { provider: 'api-gateway', status: 'available' },
+          { provider: 'appsync', status: 'skipped', reason: 'iam' }
+        ]
+      }
+    });
+    const parsed = JSON.parse(outputs['resolution-json'] ?? '{}') as { providerProbes?: unknown };
+    expect(parsed.providerProbes).toEqual([
+      { provider: 'api-gateway', status: 'available' },
+      { provider: 'appsync', status: 'skipped', reason: 'iam' }
+    ]);
+  });
+
+  it('U4.4 discover-many carries typed probe results into resolution-json and defaults to []', () => {
+    const probes = [
+      { provider: 'api-gateway' as const, status: 'available' as const },
+      { provider: 'appsync' as const, status: 'skipped' as const, reason: 'timeout' as const }
+    ];
+    const withProbes = buildExecutionOutputs({ mode: 'discover-many', discovered: [], providerProbes: probes });
+    expect(JSON.parse(withProbes['resolution-json'] ?? '{}').providerProbes).toEqual(probes);
+    const without = buildExecutionOutputs({ mode: 'discover-many', discovered: [] });
+    expect(JSON.parse(without['resolution-json'] ?? '{}').providerProbes).toEqual([]);
+  });
+
+  it('U4.4 registry probeAvailableDetailed ordering matches registration order', async () => {
+    const registry = new ProviderRegistry();
+    const fake = (type: string, probe: () => Promise<boolean>): SpecProvider =>
+      ({ type, probe, listCandidates: async () => [], exportSpec: async () => { throw new Error('unused'); } }) as unknown as SpecProvider;
+    registry.register(fake('appsync', () => Promise.resolve(true)));
+    registry.register(fake('eventbridge-schemas', () => Promise.resolve(false)));
+    registry.register(fake('glue', () => Promise.reject(Object.assign(new Error('x'), { name: 'AccessDeniedException' }))));
+    const { probes } = await registry.probeAvailableDetailed();
+    expect(probes.map((p) => p.provider)).toEqual(['appsync', 'eventbridge-schemas', 'glue']);
+    expect(probes[2]).toEqual({ provider: 'glue', status: 'skipped', reason: 'iam' });
+  });
+});
