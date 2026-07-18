@@ -159371,7 +159371,9 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       validators.push(...response.items ?? []);
-      position = response.position;
+      const next = response.position;
+      if (next !== void 0 && next === position) break;
+      position = next;
     } while (position);
     return validators;
   }
@@ -159403,7 +159405,9 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       resources.push(...response.items ?? []);
-      position = response.position;
+      const next = response.position;
+      if (next !== void 0 && next === position) break;
+      position = next;
     } while (position);
     return resources;
   }
@@ -159419,7 +159423,9 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       models.push(...response.items ?? []);
-      position = response.position;
+      const next = response.position;
+      if (next !== void 0 && next === position) break;
+      position = next;
     } while (position);
     return models;
   }
@@ -167747,13 +167753,17 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const narrowingResult = await actionCore.group("Progressive narrowing", async () => {
       let cfnClient;
       let taggingClient;
-      try {
-        cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
-      } catch {
-      }
-      try {
-        taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
-      } catch {
+      if (resolutionDependencies.narrowingClients) {
+        ({ cfnClient, taggingClient } = resolutionDependencies.narrowingClients);
+      } else {
+        try {
+          cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
+        } catch {
+        }
+        try {
+          taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+        } catch {
+        }
       }
       return runNarrowingPipeline(
         { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },

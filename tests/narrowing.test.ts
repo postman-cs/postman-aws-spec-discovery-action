@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { runNarrowingPipeline } from '../src/lib/resolve/narrowing-pipeline.js';
+import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js';
+import { chooseSource } from '../src/lib/resolve/source-selector.js';
 import type { RepoSignals } from '../src/lib/repo/signals.js';
 import type { CloudFormationSpecClient } from '../src/lib/aws/cloudformation-client.js';
 import type { TaggingSpecClient } from '../src/lib/aws/tagging-client.js';
@@ -256,6 +258,39 @@ describe('U1 partition-based narrowing', () => {
       );
       expect(result?.mode, `tag key ${key} must not select`).toBe('narrow');
     }
+  });
+
+
+  it('U1.4 naming-gate-multi: two fuzzy matches both retained and equal top confidence yields unresolved manual-review', async () => {
+    const all = [
+      { id: 'r1', name: 'payments-api' },
+      { id: 'r2', name: 'payments-api-copy' },
+      { id: 'r3', name: 'unrelated' }
+    ];
+    const result = await runNarrowingPipeline(
+      { repoSlug: 'org/payments-api', serviceHints: [], signals: createSignals() },
+      all
+    );
+    // Pipeline: both fuzzy matches retained together, never truncated to one, never select.
+    expect(result?.tier).toBe('naming-heuristic');
+    expect(result?.mode).toBe('narrow');
+    expect(result?.gatewayIds).toEqual(['r1', 'r2']);
+    expect(result?.droppedCount).toBe(1);
+
+    // Resolution: equal top confidence across both matches is ambiguous -> unresolved manual-review.
+    const candidate = resolveServiceCandidate(
+      [
+        { id: 'r1', name: 'payments-api', gatewayType: 'REST', tags: {} },
+        { id: 'r2', name: 'payments-api-copy', gatewayType: 'REST', tags: {} }
+      ],
+      { serviceHints: ['payments'], explicitGatewayIdHints: [], inferredGatewayIdHints: [], evidence: [] }
+    );
+    expect(candidate?.ambiguous).toBe(true);
+    const chosen = chooseSource({ fallbackServiceName: 'payments', candidate });
+    expect(chosen.status).toBe('unresolved');
+    expect(chosen.sourceType).toBe('manual-review');
+    expect(chosen.evidence.length).toBeGreaterThan(0);
+    expect(chosen.evidence.join(' ')).toMatch(/ambiguous/i);
   });
 
   it('U1.2b unknown IDs ignored and duplicates de-duplicated', async () => {

@@ -473,7 +473,9 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       validators.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return validators;
   }
@@ -507,7 +509,9 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       resources.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return resources;
   }
@@ -524,7 +528,9 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       models.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return models;
   }
