@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AwsApiGatewaySdkClient } from '../src/lib/aws/client.js';
 
-const { apiGatewayV2SendMock } = vi.hoisted(() => ({
-  apiGatewayV2SendMock: vi.fn()
+const { apiGatewayV2SendMock, apiGatewayRestSendMock } = vi.hoisted(() => ({
+  apiGatewayV2SendMock: vi.fn(),
+  apiGatewayRestSendMock: vi.fn()
 }));
 
 vi.mock('@aws-sdk/client-apigatewayv2', async () => {
@@ -17,9 +18,20 @@ vi.mock('@aws-sdk/client-apigatewayv2', async () => {
   };
 });
 
+vi.mock('@aws-sdk/client-api-gateway', async () => {
+  const actual = await vi.importActual<typeof import('@aws-sdk/client-api-gateway')>('@aws-sdk/client-api-gateway');
+  return {
+    ...actual,
+    APIGatewayClient: class {
+      public send = apiGatewayRestSendMock;
+    }
+  };
+});
+
 describe('AwsApiGatewaySdkClient', () => {
   beforeEach(() => {
     apiGatewayV2SendMock.mockReset();
+    apiGatewayRestSendMock.mockReset();
   });
 
   it('enriches WebSocket exports with API Gateway v2 models, integrations, authorizers, and route responses', async () => {
@@ -147,4 +159,68 @@ describe('AwsApiGatewaySdkClient', () => {
       })
     ]);
   });
+
+  it('U6.5 consumes two-page GetModels/GetResources/GetRequestValidators with limit 500 and position tokens', async () => {
+    const commandInputs: Array<{ name: string; input: Record<string, unknown> }> = [];
+    apiGatewayRestSendMock.mockImplementation(async (command: { constructor: { name: string }; input: Record<string, unknown> }) => {
+      commandInputs.push({ name: command.constructor.name, input: command.input });
+      switch (command.constructor.name) {
+        case 'GetExportCommand':
+          return { body: Buffer.from(['openapi: 3.0.1', 'info: { title: t, version: "1" }', 'paths:', '  /orders:', '    post:', '      responses:', '        "200": { description: OK }'].join('\n')) };
+        case 'GetResourcesCommand':
+          return command.input.position === undefined
+            ? { items: [{ path: '/orders', resourceMethods: { POST: { httpMethod: 'POST', requestModels: { 'application/json': 'CreateOrder' }, requestValidatorId: 'val1' } } }], position: 'page2' }
+            : { items: [] };
+        case 'GetModelsCommand':
+          return command.input.position === undefined
+            ? { items: [{ name: 'CreateOrder', schema: JSON.stringify({ type: 'object' }), contentType: 'application/json' }], position: 'page2' }
+            : { items: [] };
+        case 'GetRequestValidatorsCommand':
+          return command.input.position === undefined
+            ? { items: [{ id: 'val1', name: 'body-only', validateRequestBody: true, validateRequestParameters: false }], position: 'page2' }
+            : { items: [] };
+        default:
+          throw new Error(`Unexpected command ${command.constructor.name}`);
+      }
+    });
+
+    const client = new AwsApiGatewaySdkClient('us-east-1');
+    const output = await client.exportRestApi('rest-1', 'prod');
+    const parsed = parse(output) as Record<string, never>;
+    expect(parsed.components?.['schemas']?.['CreateOrder']).toEqual({ type: 'object' });
+    expect(parsed['x-amazon-apigateway-request-validators']).toEqual({
+      'body-only': { validateRequestBody: true, validateRequestParameters: false }
+    });
+    expect(parsed.paths?.['/orders']?.['post']?.['x-amazon-apigateway-request-validator']).toBe('body-only');
+
+    for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand']) {
+      const calls = commandInputs.filter((call) => call.name === name);
+      expect(calls, name).toHaveLength(2);
+      expect(calls[0]?.input.limit, name).toBe(500);
+      expect(calls[0]?.input.position, name).toBeUndefined();
+      expect(calls[1]?.input.position, name).toBe('page2');
+    }
+  });
+
+  it('U6.6 returns the exact native export when any enrichment call fails', async () => {
+    const nativeBody = ['openapi: 3.0.1', 'info: { title: t, version: "1" }', 'paths:', '  /orders:', '    post:', '      responses:', '        "200": { description: OK }'].join('\n');
+    apiGatewayRestSendMock.mockImplementation(async (command: { constructor: { name: string } }) => {
+      switch (command.constructor.name) {
+        case 'GetExportCommand':
+          return { body: Buffer.from(nativeBody) };
+        case 'GetResourcesCommand':
+          throw Object.assign(new Error('AccessDenied'), { name: 'AccessDeniedException' });
+        case 'GetModelsCommand':
+          return { items: [] };
+        case 'GetRequestValidatorsCommand':
+          return { items: [] };
+        default:
+          throw new Error(`Unexpected command ${command.constructor.name}`);
+      }
+    });
+
+    const client = new AwsApiGatewaySdkClient('us-east-1');
+    await expect(client.exportRestApi('rest-1', 'prod')).resolves.toBe(nativeBody);
+  });
+
 });
