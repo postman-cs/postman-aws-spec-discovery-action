@@ -464,6 +464,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private async listRestRequestValidators(apiId: string): Promise<RequestValidator[]> {
     const validators: RequestValidator[] = [];
     let position: string | undefined;
+    const seenPositions = new Set<string>();
     do {
       const response = await this.restClient.send(
         new GetRequestValidatorsCommand({
@@ -474,7 +475,8 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       );
       validators.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return validators;
@@ -499,6 +501,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private async listRestResourcesWithMethods(apiId: string): Promise<Resource[]> {
     const resources: Resource[] = [];
     let position: string | undefined;
+    const seenPositions = new Set<string>();
     do {
       const response = await this.restClient.send(
         new GetResourcesCommand({
@@ -510,7 +513,8 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       );
       resources.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return resources;
@@ -519,6 +523,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   private async listRestModels(apiId: string): Promise<Model[]> {
     const models: Model[] = [];
     let position: string | undefined;
+    const seenPositions = new Set<string>();
     do {
       const response = await this.restClient.send(
         new GetModelsCommand({
@@ -529,7 +534,8 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
       );
       models.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return models;

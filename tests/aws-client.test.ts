@@ -223,4 +223,28 @@ describe('AwsApiGatewaySdkClient', () => {
     await expect(client.exportRestApi('rest-1', 'prod')).resolves.toBe(nativeBody);
   });
 
+  it('terminates REST enrichment pagination when a position token cycle repeats', async () => {
+    const calls = new Map<string, number>();
+    apiGatewayRestSendMock.mockImplementation(async (command: { constructor: { name: string } }) => {
+      const name = command.constructor.name;
+      if (name === 'GetExportCommand') {
+        return { body: Buffer.from('openapi: 3.0.1\ninfo: { title: t, version: "1" }\npaths: {}') };
+      }
+      if (!['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand'].includes(name)) {
+        throw new Error(`Unexpected command ${name}`);
+      }
+      const count = (calls.get(name) ?? 0) + 1;
+      calls.set(name, count);
+      if (count > 3) throw new Error(`${name} pagination did not terminate`);
+      return { items: [], position: count === 1 ? 'page-a' : count === 2 ? 'page-b' : 'page-a' };
+    });
+
+    const client = new AwsApiGatewaySdkClient('us-east-1');
+    await client.exportRestApi('rest-1', 'prod');
+
+    for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand']) {
+      expect(calls.get(name), name).toBe(3);
+    }
+  });
+
 });

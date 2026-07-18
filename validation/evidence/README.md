@@ -35,7 +35,7 @@ Captured on 2026-06-01. Generated matrix sections in this document are refreshed
 
 ## Live AWS Status
 
-The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`, and `validate-live-aws-surfaces.mjs` passed 23 live AWS cases, including all AWS-derived P3 surfaces.
+The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`, and `validate-live-aws-surfaces.mjs` passed 24 live AWS cases, including the modeled REST route and all AWS-derived P3 surfaces.
 
 <!-- evidence:live-resource-summary:start -->
 ## Live Resource Summary
@@ -80,8 +80,8 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-aws-surfaces:start -->
 ## Live AWS Surface Evidence
 
-- Captured at: 2026-07-18T05:18:00.633Z
-- Elapsed ms: 14714
+- Captured at: 2026-07-18T05:22:33.717Z
+- Elapsed ms: 12938
 - Stack: spec-discovery-validation
 - Region: us-east-1
 - Cases: 24
@@ -92,30 +92,30 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 
 | Case | Runner | Source Type | Provider | Format | Contract audit | Derived OAS | Elapsed ms | Result |
 | --- | --- | --- | --- | --- | --- | --- | ---: | --- |
-| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1861 | pass |
-| api-gateway-rest-modeled-route | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1356 | pass |
-| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml |  | 3.0.3 partial | 469 | pass |
-| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | schema-complete (0 response(s) without content) | 3.0.3 full | 1507 | pass |
-| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (1 response(s) without content) | 3.0.3 partial | 1727 | pass |
-| appsync | runtime | appsync-schema | appsync | graphql-sdl |  | 3.1.0 partial | 877 | pass |
-| appsync-events | runtime | appsync-event-api | appsync-events | openapi-json |  | 3.1.0 partial | 672 | pass |
-| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json |  | 3.0.3 full | 1005 | pass |
-| eventbridge-rule | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 420 | pass |
-| eventbridge-pipe | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 633 | pass |
-| eventbridge-api-destination | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 351 | pass |
-| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json |  | 3.0.3 full | 864 | pass |
-| glue-schema | runtime | glue-schema | glue | avro |  | 3.1.0 partial | 860 | pass |
-| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml |  | 3.1.0 partial | 871 | pass |
-| ssm-url-registry | runtime | ssm-registry | ssm | json-schema |  | 3.1.0 partial | 1078 | pass |
-| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json |  | 3.1.0 partial | 741 | pass |
-| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml |  | 3.0.3 partial | 937 | pass |
-| lambda-event-source | runtime | lambda-event-source | lambda-event-source | openapi-json |  | 3.1.0 partial | 894 | pass |
-| verified-permissions | runtime | verified-permissions-schema | verified-permissions | openapi-json |  | 3.1.0 partial | 428 | pass |
-| step-functions | runtime | step-functions-asl | step-functions | openapi-json |  | 3.1.0 partial | 735 | pass |
-| alb-listener-rule | runtime | alb-listener-rule | alb-listener-rule | openapi-json |  | 3.1.0 partial | 488 | pass |
-| bedrock-action-group | runtime | bedrock-action-group | bedrock-action-group | openapi-json |  | 3.0.3 partial | 788 | pass |
-| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 10452 | pass |
-| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 10927 | pass |
+| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1717 | pass |
+| api-gateway-rest-modeled-route | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1353 | pass |
+| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml |  | 3.0.3 partial | 466 | pass |
+| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | schema-complete (0 response(s) without content) | 3.0.3 full | 1483 | pass |
+| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (1 response(s) without content) | 3.0.3 partial | 1709 | pass |
+| appsync | runtime | appsync-schema | appsync | graphql-sdl |  | 3.1.0 partial | 717 | pass |
+| appsync-events | runtime | appsync-event-api | appsync-events | openapi-json |  | 3.1.0 partial | 535 | pass |
+| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json |  | 3.0.3 full | 885 | pass |
+| eventbridge-rule | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 440 | pass |
+| eventbridge-pipe | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 529 | pass |
+| eventbridge-api-destination | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 320 | pass |
+| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json |  | 3.0.3 full | 757 | pass |
+| glue-schema | runtime | glue-schema | glue | avro |  | 3.1.0 partial | 830 | pass |
+| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml |  | 3.1.0 partial | 717 | pass |
+| ssm-url-registry | runtime | ssm-registry | ssm | json-schema |  | 3.1.0 partial | 831 | pass |
+| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json |  | 3.1.0 partial | 631 | pass |
+| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml |  | 3.0.3 partial | 753 | pass |
+| lambda-event-source | runtime | lambda-event-source | lambda-event-source | openapi-json |  | 3.1.0 partial | 799 | pass |
+| verified-permissions | runtime | verified-permissions-schema | verified-permissions | openapi-json |  | 3.1.0 partial | 413 | pass |
+| step-functions | runtime | step-functions-asl | step-functions | openapi-json |  | 3.1.0 partial | 497 | pass |
+| alb-listener-rule | runtime | alb-listener-rule | alb-listener-rule | openapi-json |  | 3.1.0 partial | 498 | pass |
+| bedrock-action-group | runtime | bedrock-action-group | bedrock-action-group | openapi-json |  | 3.0.3 partial | 969 | pass |
+| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9173 | pass |
+| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9562 | pass |
 <!-- evidence:live-aws-surfaces:end -->
 
 <!-- evidence:iac-repo-signals-matrix:start -->
