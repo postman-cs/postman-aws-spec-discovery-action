@@ -68,7 +68,7 @@ node validation/scripts/capture-live-manifest.mjs --stack-name spec-discovery-va
 node validation/scripts/validate-live-aws-surfaces.mjs
 ```
 
-API Gateway validation additionally retains an end-to-end route-only receipt: the exported response omits `content`, discovery reports `openapiContractAudit.status = schema-incomplete` with the `AWS_OPENAPI_CONTRACT_INCOMPLETE` warning, and the released bootstrap contract collection passes against the live JSON `/health` response. See `runbooks/api-gateway.md` for the exact evidence fields.
+API Gateway validation additionally retains an end-to-end route-only receipt: the exported response omits `content`, discovery reports `openapiContractAudit.status = schema-incomplete` with the `AWS_OPENAPI_CONTRACT_INCOMPLETE` warning, and the released bootstrap contract collection passes against the live JSON `/health` response. Live controls cover clean `204`, valid and invalid response schemas, matching nonzero Content-Length, and API Gateway's normalization of attempted carried-204 and mismatched-length responses. See `runbooks/api-gateway.md` for the exact evidence fields and generated-contract expectations.
 
 To create or refresh the live AWS stack:
 

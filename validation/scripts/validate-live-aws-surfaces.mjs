@@ -1088,6 +1088,73 @@ async function runRuntimeGatewayCase(testCase) {
         passed: contentLength === null || Number(contentLength) === Buffer.byteLength(liveBody)
       });
     }
+    if (testCase.contractAudit?.liveControls) {
+      const controls = await Promise.all([
+        '/no-content',
+        '/no-content-with-body',
+        '/schema-valid',
+        '/schema-invalid',
+        '/unknown-length',
+        '/unknown-length-mismatch'
+      ].map(async (controlPath) => {
+        const response = await globalThis.fetch(
+          `https://${testCase.gatewayId}.execute-api.${region}.amazonaws.com/${testCase.contractAudit.stage}${controlPath}`
+        );
+        const body = await response.text();
+        let json;
+        try {
+          json = JSON.parse(body);
+        } catch {
+          json = undefined;
+        }
+        return {
+          path: controlPath,
+          status: response.status,
+          bodyBytes: Buffer.byteLength(body),
+          contentLength: response.headers.get('content-length'),
+          json
+        };
+      }));
+      const byPath = new Map(controls.map((control) => [control.path, control]));
+      const lengthMatches = (control) =>
+        control?.contentLength === null || Number(control.contentLength) === control.bodyBytes;
+      artifactChecks.push(
+        {
+          name: 'live control clean 204 carries zero body bytes',
+          passed: byPath.get('/no-content')?.status === 204 && byPath.get('/no-content')?.bodyBytes === 0
+        },
+        {
+          name: 'live control API Gateway strips attempted 204 response body',
+          passed:
+            byPath.get('/no-content-with-body')?.status === 204 &&
+            byPath.get('/no-content-with-body')?.bodyBytes === 0
+        },
+        {
+          name: 'live control schema-valid route returns declared string shape',
+          passed:
+            byPath.get('/schema-valid')?.status === 200 &&
+            typeof byPath.get('/schema-valid')?.json?.status === 'string'
+        },
+        {
+          name: 'live control schema-invalid route returns controlled invalid shape',
+          passed:
+            byPath.get('/schema-invalid')?.status === 200 &&
+            typeof byPath.get('/schema-invalid')?.json?.status === 'number'
+        },
+        {
+          name: 'live control unknown body has matching nonzero Content-Length',
+          passed:
+            byPath.get('/unknown-length')?.bodyBytes > 0 &&
+            lengthMatches(byPath.get('/unknown-length'))
+        },
+        {
+          name: 'live control API Gateway rewrites attempted mismatched Content-Length',
+          passed:
+            byPath.get('/unknown-length-mismatch')?.bodyBytes > 0 &&
+            lengthMatches(byPath.get('/unknown-length-mismatch'))
+        }
+      );
+    }
     return {
       name: testCase.name,
       passed: assertExpectation(testCase, result) && artifactChecks.every((check) => check.passed),
@@ -1203,7 +1270,7 @@ const gatewayCases = [
     name: 'api-gateway-rest',
     gatewayId: outputs.RestApiId,
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
-    contractAudit: { path: '/health', method: 'get', stage: 'prod', livePath: '/health' },
+    contractAudit: { path: '/health', method: 'get', stage: 'prod', livePath: '/health', liveControls: true },
     oasDerivation: true
   },
   {
@@ -1529,6 +1596,9 @@ const routeOnlyChecks = routeOnlyResult?.artifactChecks.filter((check) =>
   check.name.includes('GET /health') ||
   check.name.includes('live route')
 ) ?? [];
+const liveControlChecks = routeOnlyResult?.artifactChecks.filter((check) =>
+  check.name.startsWith('live control ')
+) ?? [];
 await mkdir(path.dirname(evidenceJsonPath), { recursive: true });
 await writeFile(evidenceJsonPath, `${JSON.stringify({
   capturedAt: new Date().toISOString(),
@@ -1549,6 +1619,7 @@ const summary = [
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
   `- Route-only REST checks: ${routeOnlyChecks.filter((check) => check.passed).length}/${routeOnlyChecks.length} passed (export content omission, audit, warning, live JSON response, Content-Length)`,
+  `- Contract-control wire checks: ${liveControlChecks.filter((check) => check.passed).length}/${liveControlChecks.length} passed (clean 204, managed-service normalization, valid/invalid schema payloads, Content-Length)`,
   '',
   '| Case | Runner | Source Type | Provider | Format | Contract audit | Derived OAS | Elapsed ms | Result |',
   '| --- | --- | --- | --- | --- | --- | --- | ---: | --- |',
