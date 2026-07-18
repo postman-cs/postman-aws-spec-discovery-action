@@ -2244,6 +2244,63 @@ describe('hardening helpers', () => {
     expect(result.sourceType).toBe('manual-review');
   });
 
+  it('U1.7 cap-after-partition: 250 candidates narrow to one-candidate intersection then cap keeps 1+49 prefix', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-cap-partition-'));
+    try {
+      const enumerated = Array.from({ length: 249 }, (_, index) => ({ id: `rest-${String(index + 1).padStart(3, '0')}`, name: `unrelated-${index + 1}` }));
+      enumerated.splice(120, 0, { id: 'rest-payments', name: 'payments-api' });
+      expect(enumerated).toHaveLength(250);
+      const taggedIds: string[] = [];
+      const aws = createAwsClientStub({
+        listRestApis: vi.fn().mockResolvedValue(enumerated),
+        getRestTags: vi.fn().mockImplementation(async (id: string) => {
+          taggedIds.push(id);
+          return {};
+        })
+      });
+      const { core, infos, warnings } = createCoreStub();
+      const resolution = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'org/payments' },
+          expectedServiceName: 'payments',
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        aws,
+        core,
+        vi.fn().mockResolvedValue(undefined),
+        { narrowingClients: {} }
+      );
+
+      // Narrowing saw the FULL 250 (no pre-partition cap) and demoted 249, not deleted.
+      expect(infos.join(' ')).toContain('ranked 1 of 250 candidates first and demoted 249 (not deleted)');
+      // Cap runs only after partitioning: warning fired, exactly 50 survive.
+      expect(warnings.join(' ')).toContain('250 candidates after narrowing still exceeds limit (50). Using top 50');
+      expect(taggedIds).toHaveLength(50);
+      // Prefix composition: intersecting candidate first, then exactly 49 remainders in enumeration order.
+      expect(taggedIds[0]).toBe('rest-payments');
+      const expectedRemainder = enumerated.filter((candidate) => candidate.id !== 'rest-payments').slice(0, 49).map((candidate) => candidate.id);
+      expect(taggedIds.slice(1)).toEqual(expectedRemainder);
+      expect(resolution.narrowing).toEqual({ tier: 'naming-heuristic', mode: 'narrow', droppedCount: 249 });
+      expect(resolution.serviceName).toBe('payments');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('U3.3 populates candidates-json with ranked candidate views for ambiguous resolve-one', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-ambiguity-'));
     try {

@@ -230,7 +230,9 @@ class TargetedApiGatewayClient {
         limit: 500
       }));
       validators.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return validators;
   }
@@ -262,7 +264,9 @@ class TargetedApiGatewayClient {
         embed: ['methods']
       }));
       resources.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return resources;
   }
@@ -277,7 +281,9 @@ class TargetedApiGatewayClient {
         limit: 500
       }));
       models.push(...(response.items ?? []));
-      position = response.position;
+      const next = response.position;
+      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      position = next;
     } while (position);
     return models;
   }
@@ -971,8 +977,70 @@ function valueFor(result, key) {
   return result.resolution?.[key] ?? result.outputs?.[key] ?? result.outputs?.[outputKey] ?? '';
 }
 
+
+const OPENAPI_HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
+
+function operationHasConcreteSchema(operation) {
+  const mediaEntries = [];
+  if (operation?.requestBody?.content && typeof operation.requestBody.content === 'object') {
+    mediaEntries.push(...Object.values(operation.requestBody.content));
+  }
+  if (operation?.responses && typeof operation.responses === 'object') {
+    for (const response of Object.values(operation.responses)) {
+      if (response?.content && typeof response.content === 'object') {
+        mediaEntries.push(...Object.values(response.content));
+      }
+    }
+  }
+  return mediaEntries.some((media) => {
+    const schema = media?.schema;
+    return Boolean(schema && typeof schema === 'object' && Object.keys(schema).length > 0);
+  });
+}
+
+// Validation-only completeness check: classifies an operation as incomplete when it has
+// no concrete schema or $ref in any request-body or response media entry. Inspects the
+// exported artifact generically; never special-cases fixture names.
+function classifyIncompleteOperations(content) {
+  let document;
+  try {
+    document = parseYaml(content);
+  } catch {
+    return [];
+  }
+  const entries = [];
+  const paths = document?.paths && typeof document.paths === 'object' ? document.paths : {};
+  for (const [pathKey, pathItem] of Object.entries(paths)) {
+    if (!pathItem || typeof pathItem !== 'object') continue;
+    for (const method of OPENAPI_HTTP_METHODS) {
+      const operation = pathItem[method];
+      if (!operation || typeof operation !== 'object') continue;
+      if (!operationHasConcreteSchema(operation)) {
+        entries.push({ code: 'AWS_OPENAPI_CONTRACT_INCOMPLETE', path: pathKey, method });
+      }
+    }
+  }
+  return entries;
+}
+
 async function inspectGeneratedArtifacts(workspace, result, testCase, warnings = []) {
   const checks = [];
+  if (testCase.contractCompleteness) {
+    const specPath = result.resolution?.specPath;
+    const content = specPath ? await readFile(path.join(workspace, specPath), 'utf8').catch(() => '') : '';
+    const incompleteOperations = classifyIncompleteOperations(content);
+    const { completePath, completeMethod, incompletePath, incompleteMethod } = testCase.contractCompleteness;
+    checks.push({
+      name: `modeled ${completeMethod.toUpperCase()} ${completePath} has no AWS_OPENAPI_CONTRACT_INCOMPLETE entry`,
+      passed:
+        content.length > 0 &&
+        !incompleteOperations.some((entry) => entry.path === completePath && entry.method === completeMethod)
+    });
+    checks.push({
+      name: `route-only ${incompleteMethod.toUpperCase()} ${incompletePath} yields an AWS_OPENAPI_CONTRACT_INCOMPLETE entry`,
+      passed: incompleteOperations.some((entry) => entry.path === incompletePath && entry.method === incompleteMethod)
+    });
+  }
   if (testCase.specMarkers?.length) {
     const specPath = result.resolution?.specPath;
     const content = specPath ? await readFile(path.join(workspace, specPath), 'utf8').catch(() => '') : '';
@@ -1311,8 +1379,9 @@ const gatewayCases = [
     oasDerivation: true
   },
   {
-    name: 'api-gateway-rest-modeled',
+    name: 'api-gateway-rest-modeled-route',
     gatewayId: outputs.RestApiId,
+    contractCompleteness: { completePath: '/orders', completeMethod: 'post', incompletePath: '/health', incompleteMethod: 'get' },
     expect: { status: 'resolved', sourceType: 'gateway-export', gatewayType: 'REST', specFormat: 'openapi-yaml' },
     specMarkers: [
       'CreateOrder',

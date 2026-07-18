@@ -145,6 +145,8 @@ export interface ResolutionDependencies {
   }) => SnsResolutionProvider;
   eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: ResolveCodeDerivedContract;
+  /** Test seam: override the CloudFormation/Tagging clients used by progressive narrowing. */
+  narrowingClients?: { cfnClient?: CloudFormationSpecClient; taggingClient?: TaggingSpecClient };
 }
 
 interface SnsResolutionProvider {
@@ -1346,8 +1348,12 @@ export async function runResolution(
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
       let cfnClient: CloudFormationSpecClient | undefined;
       let taggingClient: TaggingSpecClient | undefined;
-      try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
-      try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+      if (resolutionDependencies.narrowingClients) {
+        ({ cfnClient, taggingClient } = resolutionDependencies.narrowingClients);
+      } else {
+        try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+        try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+      }
 
       return runNarrowingPipeline(
         { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },
