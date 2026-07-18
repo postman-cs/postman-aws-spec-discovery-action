@@ -223,6 +223,7 @@ class TargetedApiGatewayClient {
   async listRestRequestValidators(apiId) {
     const validators = [];
     let position;
+    const seenPositions = new Set();
     do {
       const response = await sendWithBackoff(this.rest, new GetRequestValidatorsCommand({
         restApiId: apiId,
@@ -231,7 +232,8 @@ class TargetedApiGatewayClient {
       }));
       validators.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return validators;
@@ -256,6 +258,7 @@ class TargetedApiGatewayClient {
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
     let position;
+    const seenPositions = new Set();
     do {
       const response = await sendWithBackoff(this.rest, new GetResourcesCommand({
         restApiId: apiId,
@@ -265,7 +268,8 @@ class TargetedApiGatewayClient {
       }));
       resources.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return resources;
@@ -274,6 +278,7 @@ class TargetedApiGatewayClient {
   async listRestModels(apiId) {
     const models = [];
     let position;
+    const seenPositions = new Set();
     do {
       const response = await sendWithBackoff(this.rest, new GetModelsCommand({
         restApiId: apiId,
@@ -282,7 +287,8 @@ class TargetedApiGatewayClient {
       }));
       models.push(...(response.items ?? []));
       const next = response.position;
-      if (next !== undefined && next === position) break; // defensive: repeated pagination token
+      if (next !== undefined && seenPositions.has(next)) break;
+      if (next !== undefined) seenPositions.add(next);
       position = next;
     } while (position);
     return models;

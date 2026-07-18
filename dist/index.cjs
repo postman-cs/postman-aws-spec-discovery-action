@@ -162001,6 +162001,7 @@ var AwsApiGatewaySdkClient = class {
   async listRestRequestValidators(apiId) {
     const validators = [];
     let position;
+    const seenPositions = /* @__PURE__ */ new Set();
     do {
       const response = await this.restClient.send(
         new import_client_api_gateway.GetRequestValidatorsCommand({
@@ -162011,7 +162012,8 @@ var AwsApiGatewaySdkClient = class {
       );
       validators.push(...response.items ?? []);
       const next = response.position;
-      if (next !== void 0 && next === position) break;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
       position = next;
     } while (position);
     return validators;
@@ -162034,6 +162036,7 @@ var AwsApiGatewaySdkClient = class {
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
     let position;
+    const seenPositions = /* @__PURE__ */ new Set();
     do {
       const response = await this.restClient.send(
         new import_client_api_gateway.GetResourcesCommand({
@@ -162045,7 +162048,8 @@ var AwsApiGatewaySdkClient = class {
       );
       resources.push(...response.items ?? []);
       const next = response.position;
-      if (next !== void 0 && next === position) break;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
       position = next;
     } while (position);
     return resources;
@@ -162053,6 +162057,7 @@ var AwsApiGatewaySdkClient = class {
   async listRestModels(apiId) {
     const models = [];
     let position;
+    const seenPositions = /* @__PURE__ */ new Set();
     do {
       const response = await this.restClient.send(
         new import_client_api_gateway.GetModelsCommand({
@@ -162063,7 +162068,8 @@ var AwsApiGatewaySdkClient = class {
       );
       models.push(...response.items ?? []);
       const next = response.position;
-      if (next !== void 0 && next === position) break;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
       position = next;
     } while (position);
     return models;
