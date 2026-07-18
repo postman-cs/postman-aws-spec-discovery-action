@@ -3,6 +3,9 @@
     "AlphaApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
+        "EndpointConfiguration": {
+          "Types": ["PRIVATE"]
+        },
         "Body": {
           "openapi": "3.0.3",
           "info": {
