@@ -219,6 +219,8 @@ You only need permissions for the providers you use. Providers you lack access t
 
 **Repository signals**: The action scans bounded IaC, workflow, and service config files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, CDK, and Pulumi.
 
+Local build artifacts (resolve-one): when no direct repository spec is found, discovery inspects only 'cdk.out/*.template.json' and '.aws-sam/build/template.yaml' for inline 'Body'/'DefinitionBody' OpenAPI documents (no AWS calls, no S3/HTTP fetches, no recursive scanning). Exactly one embedded document resolves as 'cfn-embedded'; multiple documents return 'manual-review' with one ranked candidate per document.
+
 CloudFormation / SAM:
 - `template.yaml`, `template.yml`, `serverless.yml`, `serverless.yaml`
 - Resource types: `AWS::ApiGateway::RestApi`, `AWS::ApiGatewayV2::Api`, `AWS::Serverless::Api`, `AWS::Serverless::HttpApi`, `AWS::AppSync::GraphQLApi`, `AWS::Serverless::GraphQLApi`, `AWS::Events::EventBus`, `AWS::Serverless::EventBridgeRule`, `SchemaRegistry`, `AWS::Glue::Schema`, `AWS::Glue::Registry`, `AWS::SNS::Topic`, `AWS::SNS::Subscription`, `AWS::Lambda::Url`, `FunctionUrlConfig`

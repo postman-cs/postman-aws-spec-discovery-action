@@ -143,10 +143,6 @@ describe('runNarrowingPipeline', () => {
 // U1.x: partition-based progressive narrowing (v2.1)
 // ---------------------------------------------------------------------------
 
-function candidates(n: number, prefix = 'c'): { id: string; name: string }[] {
-  return Array.from({ length: n }, (_, i) => ({ id: `${prefix}-${i}`, name: `svc-${i}` }));
-}
-
 describe('U1 partition-based narrowing', () => {
   it('U1.1 partition-never-delete: intersection first, all candidates retained, droppedCount counts demoted', async () => {
     const all = [
