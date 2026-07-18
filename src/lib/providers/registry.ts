@@ -1,16 +1,36 @@
-import type { ProviderType } from '../../contracts.js';
-import type { SpecProvider } from './types.js';
+import type { ProviderProbeResult, ProviderProbeSummary, SpecProvider } from './types.js';
+import type { ProviderProbeReason, ProviderType } from '../../contracts.js';
 
 const PROBE_TIMEOUT_MS = 3000;
 
+class ProbeTimeoutError extends Error {
+  public constructor() {
+    super('Probe timed out');
+    this.name = 'ProbeTimeoutError';
+  }
+}
+
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Probe timed out')), ms);
+    const timer = setTimeout(() => reject(new ProbeTimeoutError()), ms);
     promise.then(
       (value) => { clearTimeout(timer); resolve(value); },
       (error) => { clearTimeout(timer); reject(error); }
     );
   });
+}
+
+const IAM_ERROR_PATTERN = /AccessDenied|AccessDeniedException|UnauthorizedOperation/i;
+
+function reasonForError(error: unknown): ProviderProbeReason {
+  if (error instanceof ProbeTimeoutError) return 'timeout';
+  if (error && typeof error === 'object') {
+    const maybe = error as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+    if (maybe.$metadata?.httpStatusCode === 403) return 'iam';
+    if (maybe.name && IAM_ERROR_PATTERN.test(maybe.name)) return 'iam';
+    if (maybe.message && IAM_ERROR_PATTERN.test(maybe.message)) return 'iam';
+  }
+  return 'error';
 }
 
 export class ProviderRegistry {
@@ -28,17 +48,37 @@ export class ProviderRegistry {
     return [...this.providers.values()];
   }
 
-  /** Probe each registered provider and return only those the caller has access to. */
-  public async probeAvailable(): Promise<SpecProvider[]> {
-    const results = await Promise.allSettled(
-      [...this.providers.values()].map(async (provider) => {
-        const available = await withTimeout(provider.probe(), PROBE_TIMEOUT_MS);
-        return available ? provider : undefined;
-      })
+  /**
+   * Probe each registered provider. Never rejects. Returns the available provider
+   * instances plus one ordered typed result per registered provider, in registration order.
+   */
+  public async probeAvailableDetailed(): Promise<ProviderProbeSummary> {
+    const registered = [...this.providers.values()];
+    const settled = await Promise.allSettled(
+      registered.map(async (provider) => withTimeout(provider.probe(), PROBE_TIMEOUT_MS))
     );
-    return results
-      .filter((r): r is PromiseFulfilledResult<SpecProvider | undefined> => r.status === 'fulfilled')
-      .map((r) => r.value)
-      .filter((p): p is SpecProvider => p !== undefined);
+    const availableProviders: SpecProvider[] = [];
+    const probes: ProviderProbeResult[] = [];
+    for (let i = 0; i < registered.length; i += 1) {
+      const provider = registered[i];
+      const result = settled[i];
+      if (result.status === 'fulfilled') {
+        if (result.value === true) {
+          availableProviders.push(provider);
+          probes.push({ provider: provider.type, status: 'available' });
+        } else {
+          probes.push({ provider: provider.type, status: 'skipped' });
+        }
+      } else {
+        probes.push({ provider: provider.type, status: 'skipped', reason: reasonForError(result.reason) });
+      }
+    }
+    return { availableProviders, probes };
+  }
+
+  /** Backward-compatible: probe each registered provider and return only those the caller has access to. */
+  public async probeAvailable(): Promise<SpecProvider[]> {
+    const { availableProviders } = await this.probeAvailableDetailed();
+    return availableProviders;
   }
 }

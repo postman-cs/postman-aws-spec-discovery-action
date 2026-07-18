@@ -13127,8 +13127,8 @@ var init_createUserAgentStringParsingProvider = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
     createUserAgentStringParsingProvider = ({ serviceId, clientVersion }) => async (config) => {
       const module2 = await Promise.resolve().then(() => __toESM(require_es5()));
-      const parse7 = module2.parse ?? module2.default.parse ?? (() => "");
-      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse7(window.navigator.userAgent) : void 0;
+      const parse8 = module2.parse ?? module2.default.parse ?? (() => "");
+      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse8(window.navigator.userAgent) : void 0;
       const sections = [
         ["aws-sdk-js", clientVersion],
         ["ua", "2.1"],
@@ -28542,7 +28542,7 @@ var require_dist_cjs17 = __commonJS({
     };
     var GetRequestValidatorCommand = class extends command5(_ep05, _mw05, "GetRequestValidator", GetRequestValidator$) {
     };
-    var GetRequestValidatorsCommand = class extends command5(_ep05, _mw05, "GetRequestValidators", GetRequestValidators$) {
+    var GetRequestValidatorsCommand2 = class extends command5(_ep05, _mw05, "GetRequestValidators", GetRequestValidators$) {
     };
     var GetResourceCommand = class extends command5(_ep05, _mw05, "GetResource", GetResource$) {
     };
@@ -28733,7 +28733,7 @@ var require_dist_cjs17 = __commonJS({
       GetModelsCommand: GetModelsCommand2,
       GetModelTemplateCommand,
       GetRequestValidatorCommand,
-      GetRequestValidatorsCommand,
+      GetRequestValidatorsCommand: GetRequestValidatorsCommand2,
       GetResourceCommand,
       GetResourcesCommand: GetResourcesCommand3,
       GetRestApiCommand: GetRestApiCommand2,
@@ -29238,7 +29238,7 @@ var require_dist_cjs17 = __commonJS({
     exports2.GetRequestValidatorCommand = GetRequestValidatorCommand;
     exports2.GetRequestValidatorRequest$ = GetRequestValidatorRequest$;
     exports2.GetRequestValidators$ = GetRequestValidators$;
-    exports2.GetRequestValidatorsCommand = GetRequestValidatorsCommand;
+    exports2.GetRequestValidatorsCommand = GetRequestValidatorsCommand2;
     exports2.GetRequestValidatorsRequest$ = GetRequestValidatorsRequest$;
     exports2.GetResource$ = GetResource$;
     exports2.GetResourceCommand = GetResourceCommand;
@@ -43385,7 +43385,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse7(src, reviver, options) {
+    function parse8(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -43426,7 +43426,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports2.parse = parse7;
+    exports2.parse = parse8;
     exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument2;
     exports2.stringify = stringify4;
@@ -128440,11 +128440,11 @@ var init_throw_200_exceptions = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse6;
+var validate, parse7;
 var init_arn = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
     validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse6 = (arn) => {
+    parse7 = (arn) => {
       const segments = arn.split(":");
       if (segments.length < 6 || segments[0] !== "arn")
         throw new Error("Malformed ARN");
@@ -128834,7 +128834,7 @@ var init_bucketEndpointMiddleware = __esm({
         if (options.bucketEndpoint) {
           request.hostname = bucketName;
         } else if (validate(bucketName)) {
-          const bucketArn = parse6(bucketName);
+          const bucketArn = parse7(bucketName);
           const clientRegion = await options.region();
           const useDualstackEndpoint = await options.useDualstackEndpoint();
           const useFipsEndpoint = await options.useFipsEndpoint();
@@ -158914,6 +158914,120 @@ function safeOperationName(value) {
   if (words.length === 0) return "operation";
   return words.map((word, index) => index === 0 ? word.toLowerCase() : `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join("");
 }
+function parseNativeExport(nativeExport) {
+  try {
+    const parsed = nativeExport.trim().startsWith("{") ? JSON.parse(nativeExport) : (0, import_yaml2.parse)(nativeExport);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.paths) {
+      return parsed;
+    }
+  } catch {
+  }
+  return void 0;
+}
+function mergeRestApiModelsAndValidators(input) {
+  const document = parseNativeExport(input.nativeExport);
+  if (!document) {
+    return input.nativeExport;
+  }
+  const componentsValue = document.components;
+  if (componentsValue !== void 0 && (typeof componentsValue !== "object" || componentsValue === null || Array.isArray(componentsValue))) {
+    return (0, import_yaml2.stringify)(document);
+  }
+  const components = componentsValue ?? {};
+  const schemasValue = components.schemas;
+  if (schemasValue !== void 0 && (typeof schemasValue !== "object" || schemasValue === null || Array.isArray(schemasValue))) {
+    return (0, import_yaml2.stringify)(document);
+  }
+  const schemas = schemasValue ?? {};
+  let schemasAdded = false;
+  for (const model of input.models) {
+    if (!model.name || !model.schema || model.name === "Empty") continue;
+    if (Object.prototype.hasOwnProperty.call(schemas, model.name)) continue;
+    const parsedSchema = parseJson(model.schema);
+    if (parsedSchema && typeof parsedSchema === "object") {
+      schemas[model.name] = parsedSchema;
+      schemasAdded = true;
+    }
+  }
+  if (schemasAdded || Object.keys(schemas).length > 0) {
+    if (Object.keys(schemas).length > 0) {
+      components.schemas = schemas;
+    }
+    if (Object.keys(components).length > 0) {
+      document.components = components;
+    }
+  }
+  const validatorById = new Map(
+    input.validators.filter(
+      (validator) => Boolean(validator.id && validator.name)
+    ).map((validator) => [validator.id, validator])
+  );
+  if (validatorById.size > 0) {
+    const rootValue = document["x-amazon-apigateway-request-validators"];
+    if (rootValue === void 0 || rootValue && typeof rootValue === "object" && !Array.isArray(rootValue)) {
+      const root5 = rootValue ?? {};
+      for (const validator of validatorById.values()) {
+        if (!Object.prototype.hasOwnProperty.call(root5, validator.name)) {
+          root5[validator.name] = {
+            validateRequestBody: Boolean(validator.validateRequestBody),
+            validateRequestParameters: Boolean(validator.validateRequestParameters)
+          };
+        }
+      }
+      if (Object.keys(root5).length > 0) {
+        document["x-amazon-apigateway-request-validators"] = root5;
+      }
+    }
+  }
+  const pathsValue = document.paths;
+  const paths = pathsValue && typeof pathsValue === "object" && !Array.isArray(pathsValue) ? pathsValue : void 0;
+  if (paths) {
+    for (const resource of input.resources) {
+      if (!resource.path) continue;
+      const pathItemValue = paths[resource.path];
+      if (!pathItemValue || typeof pathItemValue !== "object" || Array.isArray(pathItemValue)) continue;
+      const pathItem = pathItemValue;
+      for (const [methodName, method] of Object.entries(resource.resourceMethods ?? {})) {
+        const operationValue = pathItem[methodName.toLowerCase()];
+        if (!operationValue || typeof operationValue !== "object" || Array.isArray(operationValue)) continue;
+        const operation2 = operationValue;
+        const requestModels = method.requestModels ?? {};
+        for (const [mediaType, modelName] of Object.entries(requestModels)) {
+          if (!modelName || !Object.prototype.hasOwnProperty.call(schemas, modelName)) continue;
+          const requestBodyValue = operation2.requestBody;
+          if (requestBodyValue !== void 0 && (typeof requestBodyValue !== "object" || requestBodyValue === null || Array.isArray(requestBodyValue))) {
+            continue;
+          }
+          const requestBody = requestBodyValue ?? {};
+          const contentValue = requestBody.content;
+          if (contentValue !== void 0 && (typeof contentValue !== "object" || contentValue === null || Array.isArray(contentValue))) {
+            continue;
+          }
+          const content = contentValue ?? {};
+          const mediaValue = content[mediaType];
+          if (mediaValue !== void 0 && (typeof mediaValue !== "object" || mediaValue === null || Array.isArray(mediaValue))) {
+            continue;
+          }
+          const media = mediaValue ?? {};
+          if (!Object.prototype.hasOwnProperty.call(media, "schema")) {
+            media.schema = { $ref: `#/components/schemas/${modelName}` };
+            content[mediaType] = media;
+            requestBody.content = content;
+            operation2.requestBody = requestBody;
+          }
+        }
+        const validatorId = method.requestValidatorId;
+        if (validatorId) {
+          const validator = validatorById.get(validatorId);
+          if (validator && !Object.prototype.hasOwnProperty.call(operation2, "x-amazon-apigateway-request-validator")) {
+            operation2["x-amazon-apigateway-request-validator"] = validator.name;
+          }
+        }
+      }
+    }
+  }
+  return (0, import_yaml2.stringify)(document);
+}
 
 // src/lib/aws/client.ts
 function toErrorMessage(error2) {
@@ -159220,7 +159334,50 @@ var AwsApiGatewaySdkClient = class {
         }
       })
     );
-    return await readExportBody(response.body);
+    const nativeExport = await readExportBody(response.body);
+    try {
+      const [resources, models, validators] = await Promise.all([
+        this.listRestResourcesWithMethods(apiId),
+        this.listRestModels(apiId),
+        this.listRestRequestValidators(apiId)
+      ]);
+      return mergeRestApiModelsAndValidators({
+        nativeExport,
+        resources: resources.map((resource) => ({
+          path: resource.path,
+          resourceMethods: resource.resourceMethods
+        })),
+        models: models.map((model) => ({ name: model.name, schema: model.schema, contentType: model.contentType })),
+        validators: validators.map((validator) => ({
+          id: validator.id,
+          name: validator.name,
+          validateRequestBody: validator.validateRequestBody,
+          validateRequestParameters: validator.validateRequestParameters
+        }))
+      });
+    } catch {
+      return nativeExport;
+    }
+  }
+  async listRestRequestValidators(apiId) {
+    const validators = [];
+    let position;
+    const seenPositions = /* @__PURE__ */ new Set();
+    do {
+      const response = await this.restClient.send(
+        new import_client_api_gateway.GetRequestValidatorsCommand({
+          restApiId: apiId,
+          position,
+          limit: 500
+        })
+      );
+      validators.push(...response.items ?? []);
+      const next = response.position;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
+      position = next;
+    } while (position);
+    return validators;
   }
   async exportRestApiFallback(apiId, stage) {
     const [api, resources, models] = await Promise.all([
@@ -159240,6 +159397,7 @@ var AwsApiGatewaySdkClient = class {
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
     let position;
+    const seenPositions = /* @__PURE__ */ new Set();
     do {
       const response = await this.restClient.send(
         new import_client_api_gateway.GetResourcesCommand({
@@ -159250,13 +159408,17 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       resources.push(...response.items ?? []);
-      position = response.position;
+      const next = response.position;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
+      position = next;
     } while (position);
     return resources;
   }
   async listRestModels(apiId) {
     const models = [];
     let position;
+    const seenPositions = /* @__PURE__ */ new Set();
     do {
       const response = await this.restClient.send(
         new import_client_api_gateway.GetModelsCommand({
@@ -159266,7 +159428,10 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       models.push(...response.items ?? []);
-      position = response.position;
+      const next = response.position;
+      if (next !== void 0 && seenPositions.has(next)) break;
+      if (next !== void 0) seenPositions.add(next);
+      position = next;
     } while (position);
     return models;
   }
@@ -159436,12 +159601,28 @@ var ACCOUNT_ID_RE = /\b\d{12}\b/g;
 var ARN_RE = /\barn:aws[a-z-]*:[^\s'"]+/gi;
 var ACCESS_KEY_RE = /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g;
 var SECRET_KEY_RE = /\b(?:(?:aws_)?secret(?:_access)?_key)\b\s*[:=]\s*["']?([A-Za-z0-9/+_=.-]{16,})/gi;
-var ABS_PATH_RE = /(?:[A-Za-z]:\\|\/)[^\s'"]+/g;
+var ABS_PATH_RE = /(?:^|(?<=[\s'"=([{,:]))(?:[A-Za-z]:\\|\/)[^\s'"]+/g;
 function isDebugLoggingEnabled(env2 = process.env) {
   return String(env2.ACTIONS_STEP_DEBUG || "").toLowerCase() === "true";
 }
 function sanitizeLogMessage(message) {
   return message.replace(ARN_RE, "[redacted-arn]").replace(ACCOUNT_ID_RE, "[redacted-account-id]").replace(ACCESS_KEY_RE, "[redacted-access-key]").replace(SECRET_KEY_RE, (_full, value) => `[redacted-secret-key:${"*".repeat(Math.min(value.length, 8))}]`).replace(ABS_PATH_RE, "[redacted-path]");
+}
+function sanitizeJsonValue(value) {
+  if (typeof value === "string") {
+    return sanitizeLogMessage(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeJsonValue(item));
+  }
+  if (value !== null && typeof value === "object") {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) {
+      out[key] = sanitizeJsonValue(item);
+    }
+    return out;
+  }
+  return value;
 }
 function errorMessage(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
@@ -159557,6 +159738,9 @@ var actionContract = {
     },
     "derived-openapi-evidence-json": {
       description: "JSON array of evidence entries explaining derived OpenAPI quality and limitations."
+    },
+    "narrowing-strategy": {
+      description: "Progressive narrowing tier applied to API Gateway candidates (iac-fingerprint, cfn-correlation, tag-prefilter, naming-heuristic), or none when no tier matched."
     }
   }
 };
@@ -160651,9 +160835,210 @@ function detectRepoContext(input, env2 = process.env) {
 }
 
 // src/lib/repo/specs.ts
-var import_promises3 = require("node:fs/promises");
-var import_node_path6 = __toESM(require("node:path"), 1);
+var import_promises4 = require("node:fs/promises");
+var import_node_path8 = __toESM(require("node:path"), 1);
+var import_yaml4 = __toESM(require_dist(), 1);
+
+// src/lib/providers/cloudformation.ts
 var import_yaml3 = __toESM(require_dist(), 1);
+var import_promises3 = require("node:fs/promises");
+var import_node_path7 = __toESM(require("node:path"), 1);
+
+// src/lib/utils/resolve-path-within-root.ts
+var import_node_path6 = __toESM(require("node:path"), 1);
+function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
+  const base = import_node_path6.default.resolve(rootPath);
+  const resolved = import_node_path6.default.resolve(base, targetPath);
+  const relative = import_node_path6.default.relative(base, resolved);
+  if (relative.startsWith("..") || import_node_path6.default.isAbsolute(relative)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
+  }
+  return resolved;
+}
+
+// src/lib/providers/cloudformation.ts
+var CFN_CUSTOM_TAGS = [
+  "!Ref",
+  "!Sub",
+  "!GetAtt",
+  "!Join",
+  "!Select",
+  "!Split",
+  "!If",
+  "!Equals",
+  "!Not",
+  "!And",
+  "!Or",
+  "!FindInMap",
+  "!Base64",
+  "!Cidr",
+  "!ImportValue",
+  "!GetAZs",
+  "!Transform",
+  "!Condition"
+].map((tag2) => ({ tag: tag2, identify: () => false, resolve: (_v) => _v }));
+function isOpenApiDocument(value) {
+  return Boolean(value && typeof value === "object" && (value.openapi || value.swagger));
+}
+function detectOpenApiContent(content) {
+  try {
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml3.parse)(content, { customTags: CFN_CUSTOM_TAGS });
+    return isOpenApiDocument(parsed);
+  } catch {
+    return false;
+  }
+}
+function openApiFormatForContent(content) {
+  return content.trim().startsWith("{") ? { format: "openapi-json", filename: "index.json" } : { format: "openapi-yaml", filename: "index.yaml" };
+}
+function parseS3Uri(uri) {
+  if (!uri.startsWith("s3://")) return void 0;
+  const withoutScheme = uri.slice("s3://".length);
+  const [bucket, ...rest] = withoutScheme.split("/");
+  const key = rest.join("/");
+  if (!bucket || !key) return void 0;
+  return { bucket, key };
+}
+function parseS3Location(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const record = value;
+  const bucket = typeof record.Bucket === "string" ? record.Bucket : typeof record.bucket === "string" ? record.bucket : void 0;
+  const key = typeof record.Key === "string" ? record.Key : typeof record.key === "string" ? record.key : void 0;
+  const version = typeof record.Version === "string" ? record.Version : typeof record.VersionId === "string" ? record.VersionId : typeof record.version === "string" ? record.version : void 0;
+  return bucket && key ? { bucket, key, version } : void 0;
+}
+async function readReferencedSpec(repoRoot, s3Client, value) {
+  if (typeof value === "string") {
+    const s32 = parseS3Uri(value);
+    if (s32) {
+      if (!s3Client) return void 0;
+      return s3Client.getObject(s32.bucket, s32.key, s32.version);
+    }
+    if (/^https?:\/\//i.test(value)) {
+      return void 0;
+    }
+    const localPath = resolvePathWithinRoot(import_node_path7.default.resolve(repoRoot), value, "definition-uri");
+    return (0, import_promises3.readFile)(localPath, "utf8");
+  }
+  const s3 = parseS3Location(value);
+  if (s3 && s3Client) {
+    return s3Client.getObject(s3.bucket, s3.key, s3.version);
+  }
+  return void 0;
+}
+async function extractEmbeddedSpec(resource, repoRoot, s3Client) {
+  const props = resource.Properties;
+  if (!props) return void 0;
+  const body = props.DefinitionBody ?? props.Body;
+  if (body && typeof body === "object" && isOpenApiDocument(body)) {
+    return { content: JSON.stringify(body, null, 2), format: "openapi-json", filename: "index.json" };
+  }
+  const ref = props.DefinitionUri ?? props.BodyS3Location;
+  const referenced = await readReferencedSpec(repoRoot, s3Client, ref);
+  if (referenced && detectOpenApiContent(referenced)) {
+    return { content: referenced, ...openApiFormatForContent(referenced) };
+  }
+  return void 0;
+}
+function parseCfnTemplateBody(templateBody) {
+  if (templateBody.trim().startsWith("{")) {
+    return JSON.parse(templateBody);
+  }
+  const originalWarn = process.emitWarning;
+  process.emitWarning = (() => {
+  });
+  try {
+    return (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+  } finally {
+    process.emitWarning = originalWarn;
+  }
+}
+function extractInlineEmbeddedSpec(resource) {
+  const props = resource.Properties;
+  if (!props) return void 0;
+  const body = props.DefinitionBody ?? props.Body;
+  if (body && typeof body === "object" && isOpenApiDocument(body)) {
+    return { content: JSON.stringify(body, null, 2), format: "openapi-json", filename: "index.json" };
+  }
+  return void 0;
+}
+var CloudFormationProvider = class {
+  constructor(client, repoRoot = ".", s3Client) {
+    this.client = client;
+    this.repoRoot = repoRoot;
+    this.s3Client = s3Client;
+  }
+  client;
+  repoRoot;
+  s3Client;
+  type = "cloudformation";
+  async probe() {
+    return this.client.probe();
+  }
+  async listCandidates() {
+    const stacks = await this.client.listActiveStacks();
+    const candidates = [];
+    for (const stack of stacks) {
+      const apiResources = await this.client.listApiResources(stack.name);
+      if (apiResources.length === 0) continue;
+      for (const resource of apiResources) {
+        candidates.push({
+          id: `${stack.name}/${resource.logicalId}`,
+          name: resource.logicalId,
+          providerType: "cloudformation",
+          tags: {},
+          evidence: [`Found ${resource.type} in CloudFormation stack ${stack.name}`],
+          meta: {
+            stackName: stack.name,
+            logicalId: resource.logicalId,
+            physicalId: resource.physicalId,
+            resourceType: resource.type
+          }
+        });
+      }
+    }
+    return candidates;
+  }
+  async exportSpec(candidate, _options) {
+    void _options;
+    const stackName = candidate.meta.stackName ?? "";
+    const logicalId = candidate.meta.logicalId ?? "";
+    const templateBody = await this.client.getTemplate(stackName);
+    let template;
+    try {
+      if (templateBody.trim().startsWith("{")) {
+        template = JSON.parse(templateBody);
+      } else {
+        const originalWarn = process.emitWarning;
+        process.emitWarning = (() => {
+        });
+        try {
+          template = (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+        } finally {
+          process.emitWarning = originalWarn;
+        }
+      }
+    } catch {
+      throw new Error(`Failed to parse CloudFormation template for stack ${stackName}`);
+    }
+    const resource = template.Resources?.[logicalId];
+    if (!resource) {
+      throw new Error(`Resource ${logicalId} not found in stack ${stackName} template`);
+    }
+    const spec = await extractEmbeddedSpec(resource, this.repoRoot, this.s3Client);
+    if (!spec) {
+      throw new Error(`No embedded or referenced OpenAPI spec found in ${candidate.meta.resourceType} resource ${logicalId} of stack ${stackName}`);
+    }
+    return {
+      content: spec.content,
+      format: spec.format,
+      filename: spec.filename,
+      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`]
+    };
+  }
+};
+
+// src/lib/repo/specs.ts
 var DIRECT_SPEC_CANDIDATES = [
   "openapi.yaml",
   "openapi.yml",
@@ -160734,7 +161119,7 @@ var MAX_SPEC_SCAN_FILES = 200;
 var MAX_SPEC_SCAN_DEPTH = 6;
 function isLikelyOpenApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml3.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -160749,7 +161134,7 @@ function isLikelyGraphqlSchema(content) {
 }
 function isLikelyAsyncApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml3.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml4.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -160799,13 +161184,13 @@ function formatFor(type, candidate) {
 async function findExistingRepoSpecTyped(repoRoot) {
   const candidates = await collectSpecCandidates(repoRoot);
   for (const candidate of candidates) {
-    const fullPath = import_node_path6.default.resolve(repoRoot, candidate);
+    const fullPath = import_node_path8.default.resolve(repoRoot, candidate);
     try {
-      const fileStat = await (0, import_promises3.stat)(fullPath);
+      const fileStat = await (0, import_promises4.stat)(fullPath);
       if (!fileStat.isFile()) {
         continue;
       }
-      const content = await (0, import_promises3.readFile)(fullPath, "utf8");
+      const content = await (0, import_promises4.readFile)(fullPath, "utf8");
       const match = detectRepoSpec(candidate, content);
       if (match) {
         return {
@@ -160821,7 +161206,7 @@ async function findExistingRepoSpecTyped(repoRoot) {
 }
 function detectRepoSpec(candidate, content) {
   const normalized = candidate.replace(/\\/g, "/").toLowerCase();
-  const basename = import_node_path6.default.basename(normalized);
+  const basename = import_node_path8.default.basename(normalized);
   let type;
   if ((basename.endsWith(".graphql") || basename.endsWith(".gql")) && isLikelyGraphqlSchema(content)) {
     type = "graphql";
@@ -160851,12 +161236,12 @@ async function collectSpecCandidates(repoRoot) {
   }
   const count = { value: 0 };
   for (const dir of COMMON_SCAN_DIRS) {
-    const root5 = import_node_path6.default.resolve(repoRoot, dir);
-    const fileStat = await (0, import_promises3.stat)(root5).catch(() => void 0);
+    const root5 = import_node_path8.default.resolve(repoRoot, dir);
+    const fileStat = await (0, import_promises4.stat)(root5).catch(() => void 0);
     if (!fileStat) continue;
     if (fileStat.isFile()) {
-      const relative = import_node_path6.default.relative(repoRoot, root5);
-      if (isSpecLikeFilename(import_node_path6.default.basename(relative))) {
+      const relative = import_node_path8.default.relative(repoRoot, root5);
+      if (isSpecLikeFilename(import_node_path8.default.basename(relative))) {
         candidates.add(relative);
       }
       continue;
@@ -160872,12 +161257,12 @@ async function collectSpecCandidates(repoRoot) {
 async function walkSpecCandidates(repoRoot, current, count, depth = 0) {
   if (depth > MAX_SPEC_SCAN_DEPTH || count.value >= MAX_SPEC_SCAN_FILES) return [];
   const results = [];
-  const entries = await (0, import_promises3.readdir)(current).catch(() => []);
+  const entries = await (0, import_promises4.readdir)(current).catch(() => []);
   for (const entry of entries) {
     if (count.value >= MAX_SPEC_SCAN_FILES) break;
     if (SKIP_DIRS.has(entry)) continue;
-    const fullPath = import_node_path6.default.join(current, entry);
-    const info = await (0, import_promises3.stat)(fullPath).catch(() => void 0);
+    const fullPath = import_node_path8.default.join(current, entry);
+    const info = await (0, import_promises4.stat)(fullPath).catch(() => void 0);
     if (!info) continue;
     if (info.isDirectory()) {
       results.push(...await walkSpecCandidates(repoRoot, fullPath, count, depth + 1));
@@ -160885,14 +161270,14 @@ async function walkSpecCandidates(repoRoot, current, count, depth = 0) {
     }
     if (info.isFile() && isSpecLikeFilename(entry)) {
       count.value += 1;
-      results.push(import_node_path6.default.relative(repoRoot, fullPath));
+      results.push(import_node_path8.default.relative(repoRoot, fullPath));
     }
   }
   return results;
 }
 function specCandidateScore(candidate) {
   const normalized = candidate.replace(/\\/g, "/").toLowerCase();
-  const basename = import_node_path6.default.basename(normalized);
+  const basename = import_node_path8.default.basename(normalized);
   let score = 0;
   if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename !== "smithy-build.json") score += 200;
   if (/^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 90;
@@ -160907,14 +161292,91 @@ function specCandidateScore(candidate) {
   if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
   return score;
 }
+var CFN_ARTIFACT_API_TYPES = {
+  "AWS::ApiGateway::RestApi": "REST",
+  "AWS::Serverless::Api": "REST",
+  "AWS::ApiGatewayV2::Api": "HTTP",
+  "AWS::Serverless::HttpApi": "HTTP"
+};
+async function isRegularNonSymlinkFile(absolutePath) {
+  try {
+    const link = await (0, import_promises4.lstat)(absolutePath);
+    if (link.isSymbolicLink()) {
+      return false;
+    }
+    return link.isFile();
+  } catch {
+    return false;
+  }
+}
+async function findLocalCfnArtifactSpecs(repoRoot) {
+  const resolvedRoot = import_node_path8.default.resolve(repoRoot);
+  const artifactPaths = [];
+  const cdkOutDir = import_node_path8.default.join(resolvedRoot, "cdk.out");
+  try {
+    const cdkLink = await (0, import_promises4.lstat)(cdkOutDir);
+    if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
+      const entries = await (0, import_promises4.readdir)(cdkOutDir);
+      for (const entry of entries.filter((name) => name.endsWith(".template.json")).sort()) {
+        artifactPaths.push(import_node_path8.default.posix.join("cdk.out", entry));
+      }
+    }
+  } catch {
+  }
+  const samTemplate = import_node_path8.default.posix.join(".aws-sam", "build", "template.yaml");
+  if (await isRegularNonSymlinkFile(import_node_path8.default.join(resolvedRoot, samTemplate))) {
+    artifactPaths.push(samTemplate);
+  }
+  const specs = [];
+  for (const artifactPath of artifactPaths.sort()) {
+    const absolutePath = import_node_path8.default.join(resolvedRoot, artifactPath);
+    if (!absolutePath.startsWith(resolvedRoot + import_node_path8.default.sep)) {
+      continue;
+    }
+    if (!await isRegularNonSymlinkFile(absolutePath)) {
+      continue;
+    }
+    let template;
+    try {
+      template = parseCfnTemplateBody(await (0, import_promises4.readFile)(absolutePath, "utf8"));
+    } catch {
+      continue;
+    }
+    const resources = template?.Resources;
+    if (!resources || typeof resources !== "object") {
+      continue;
+    }
+    for (const logicalId of Object.keys(resources).sort()) {
+      const resource = resources[logicalId];
+      const gatewayType = resource?.Type ? CFN_ARTIFACT_API_TYPES[resource.Type] : void 0;
+      if (!resource || !gatewayType) {
+        continue;
+      }
+      const extracted = extractInlineEmbeddedSpec(resource);
+      if (!extracted) {
+        continue;
+      }
+      specs.push({
+        artifactRef: `${artifactPath}#${logicalId}`,
+        artifactPath,
+        logicalId,
+        gatewayType,
+        content: extracted.content,
+        format: extracted.format,
+        filename: extracted.filename
+      });
+    }
+  }
+  return specs;
+}
 
 // src/lib/repo/signals.ts
-var import_promises5 = require("node:fs/promises");
-var import_node_path8 = __toESM(require("node:path"), 1);
+var import_promises6 = require("node:fs/promises");
+var import_node_path10 = __toESM(require("node:path"), 1);
 
 // src/lib/repo/scan.ts
-var import_promises4 = require("node:fs/promises");
-var import_node_path7 = __toESM(require("node:path"), 1);
+var import_promises5 = require("node:fs/promises");
+var import_node_path9 = __toESM(require("node:path"), 1);
 var SKIP_DIRS2 = /* @__PURE__ */ new Set([
   ".git",
   "node_modules",
@@ -160932,12 +161394,12 @@ var MAX_DEPTH = 4;
 async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value: 0 }) {
   if (depth > MAX_DEPTH || globalCount.value >= MAX_FILES) return [];
   const results = [];
-  const entries = await (0, import_promises4.readdir)(root5).catch(() => []);
+  const entries = await (0, import_promises5.readdir)(root5).catch(() => []);
   for (const entry of entries) {
     if (globalCount.value >= MAX_FILES) break;
     if (SKIP_DIRS2.has(entry)) continue;
-    const fullPath = import_node_path7.default.join(root5, entry);
-    const info = await (0, import_promises4.stat)(fullPath).catch(() => null);
+    const fullPath = import_node_path9.default.join(root5, entry);
+    const info = await (0, import_promises5.stat)(fullPath).catch(() => null);
     if (!info) continue;
     if (info.isDirectory()) {
       const sub = await findIaCFiles(fullPath, extensions, depth + 1, globalCount);
@@ -161102,11 +161564,11 @@ function detectProviderHints(content) {
   return [...found];
 }
 function toEvidencePath(repoRoot, filePath) {
-  const relative = import_node_path8.default.relative(repoRoot, filePath);
+  const relative = import_node_path10.default.relative(repoRoot, filePath);
   return relative.startsWith("..") ? filePath : relative;
 }
 function shouldDetectProviderHintsForFile(filePath) {
-  const ext = import_node_path8.default.extname(filePath).toLowerCase();
+  const ext = import_node_path10.default.extname(filePath).toLowerCase();
   return ext !== ".md" && ext !== ".markdown";
 }
 var FIXED_INSPECT_FILES = [
@@ -161121,16 +161583,16 @@ var FIXED_INSPECT_FILES = [
 ];
 function isKnownSignalConfigFile(relativePath2) {
   const normalized = relativePath2.replace(/\\/g, "/").toLowerCase();
-  const basename = import_node_path8.default.basename(normalized);
+  const basename = import_node_path10.default.basename(normalized);
   return /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) || normalized === ".gitlab-ci.yml" || normalized === ".circleci/config.yml" || normalized === ".buildkite/pipeline.yml" || /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename) || /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) || basename === "samconfig.toml" || basename === "redocly.yaml" || basename === "redocly.yml" || basename === "swagger-jsdoc.js" || basename === "swagger-jsdoc.ts" || basename === "tsoa.json" || basename === "openapi-generator.json" || basename === "openapi-generator.yaml" || basename === "openapi-generator.yml" || basename === "pulumi.yaml" || basename === "docker-compose.yml" || basename === "docker-compose.yaml" || basename === "compose.yml" || basename === "compose.yaml" || basename === "values.yaml" || basename === "values.yml" || basename === "chart.yaml" || basename === "chart.yml" || basename === "task-definition.json" || basename === "ecs-task-definition.json" || basename === "ecs-service.json" || basename === "service-definition.json" || basename === "application.yml" || basename === "application.yaml" || basename === "application.properties" || /^appsettings(?:\.[^.]+)?\.json$/.test(basename) || /(^|\/)(?:helm|charts)\/.+\.ya?ml$/.test(normalized) || /(^|\/)(?:k8s|kubernetes|manifests)\/.+\.ya?ml$/.test(normalized) || /(^|\/)ecs\/.+\.json$/.test(normalized);
 }
 async function collectInspectFiles(repoRoot) {
   const discovered = await findIaCFiles(repoRoot, [".yml", ".yaml", ".json", ".ts", ".js", ".toml", ".properties"]);
-  const discoveredRelative = discovered.map((filePath) => import_node_path8.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
+  const discoveredRelative = discovered.map((filePath) => import_node_path10.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
   return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
 }
 function isSnsEventContractFile(filePath) {
-  const lower = import_node_path8.default.basename(filePath).toLowerCase();
+  const lower = import_node_path10.default.basename(filePath).toLowerCase();
   return lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".schema.json");
 }
 async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expectedGatewayIds = []) {
@@ -161146,9 +161608,9 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   const snsEvidenceRoots = /* @__PURE__ */ new Set();
   const inspectFiles = await collectInspectFiles(repoRoot);
   for (const file of inspectFiles) {
-    const fullPath = import_node_path8.default.resolve(repoRoot, file);
+    const fullPath = import_node_path10.default.resolve(repoRoot, file);
     try {
-      const content = await (0, import_promises5.readFile)(fullPath, "utf8");
+      const content = await (0, import_promises6.readFile)(fullPath, "utf8");
       const extracted = extractGatewayIds(content);
       if (extracted.length > 0) {
         inferredGatewayHints.push(...extracted);
@@ -161170,7 +161632,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === "sns") {
-            snsEvidenceRoots.add(import_node_path8.default.dirname(fullPath));
+            snsEvidenceRoots.add(import_node_path10.default.dirname(fullPath));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -161189,9 +161651,9 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   }
   const graphqlFiles = ["schema.graphql", "schema.gql", "graphql/schema.graphql", "src/schema.graphql"];
   for (const file of graphqlFiles) {
-    const fullPath = import_node_path8.default.resolve(repoRoot, file);
+    const fullPath = import_node_path10.default.resolve(repoRoot, file);
     try {
-      await (0, import_promises5.readFile)(fullPath, "utf8");
+      await (0, import_promises6.readFile)(fullPath, "utf8");
       providerHintSet.add("appsync");
       evidence.push(`Found GraphQL schema file: ${file}`);
       break;
@@ -161200,7 +161662,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   }
   const iacFiles = await findIaCFiles(repoRoot, [".tf"]);
   for (const filePath of iacFiles) {
-    const content = await (0, import_promises5.readFile)(filePath, "utf8").catch(() => "");
+    const content = await (0, import_promises6.readFile)(filePath, "utf8").catch(() => "");
     if (!content) continue;
     const extracted = extractGatewayIds(content);
     if (extracted.length > 0) {
@@ -161222,7 +161684,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
       if (hint === "sns") {
-        snsEvidenceRoots.add(import_node_path8.default.dirname(filePath));
+        snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
       }
     }
     if (detectSnsEventBridgeBridgePattern(content)) {
@@ -161231,12 +161693,12 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add("eventbridge-schemas");
     }
   }
-  const cdkJson = import_node_path8.default.resolve(repoRoot, "cdk.json");
+  const cdkJson = import_node_path10.default.resolve(repoRoot, "cdk.json");
   try {
-    await (0, import_promises5.readFile)(cdkJson, "utf8");
+    await (0, import_promises6.readFile)(cdkJson, "utf8");
     const cdkFiles = await findIaCFiles(repoRoot, [".ts", ".js", ".py", ".java", ".cs"]);
     for (const filePath of cdkFiles) {
-      const content = await (0, import_promises5.readFile)(filePath, "utf8").catch(() => "");
+      const content = await (0, import_promises6.readFile)(filePath, "utf8").catch(() => "");
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -161253,7 +161715,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path8.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -161264,16 +161726,16 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
     }
   } catch {
   }
-  const pulumiYaml = import_node_path8.default.resolve(repoRoot, "Pulumi.yaml");
+  const pulumiYaml = import_node_path10.default.resolve(repoRoot, "Pulumi.yaml");
   try {
-    const pulumiContent = await (0, import_promises5.readFile)(pulumiYaml, "utf8");
+    const pulumiContent = await (0, import_promises6.readFile)(pulumiYaml, "utf8");
     for (const hint of detectProviderHints(pulumiContent)) {
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in Pulumi.yaml`);
     }
     const pulumiFiles = await findIaCFiles(repoRoot, [".ts", ".py", ".go", ".java", ".cs"]);
     for (const filePath of pulumiFiles) {
-      const content = await (0, import_promises5.readFile)(filePath, "utf8").catch(() => "");
+      const content = await (0, import_promises6.readFile)(filePath, "utf8").catch(() => "");
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -161290,7 +161752,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path8.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -161474,39 +161936,44 @@ function scoreCandidate(candidate, signals) {
     score += 40;
     evidence.push("Gateway tags match service hint");
   }
+  return { score, evidence };
+}
+function toResolved(candidate, signals, score, evidence) {
+  const mergedEvidence = [...signals.evidence, ...candidate.evidence ?? [], ...evidence];
+  const serviceName = (candidate.tags["postman:project-name"] ?? "").trim() || (candidate.tags.Name ?? "").trim() || candidate.name;
   return {
-    score,
-    evidence
+    serviceName,
+    gatewayId: candidate.id,
+    gatewayType: candidate.gatewayType,
+    confidence: score,
+    evidence: mergedEvidence.length > 0 ? mergedEvidence : ["No strong resolver evidence found"]
   };
 }
-function resolveServiceCandidate(gateways, signals) {
-  let best;
-  for (const candidate of gateways) {
+function rankServiceCandidates(gateways, signals) {
+  const ranked = gateways.map((candidate) => {
     const scored = scoreCandidate(candidate, signals);
-    const mergedEvidence = [...signals.evidence, ...candidate.evidence ?? [], ...scored.evidence];
-    const serviceName = (candidate.tags["postman:project-name"] ?? "").trim() || (candidate.tags.Name ?? "").trim() || candidate.name;
-    const resolved = {
-      serviceName,
-      gatewayId: candidate.id,
-      gatewayType: candidate.gatewayType,
-      confidence: scored.score,
-      evidence: mergedEvidence.length > 0 ? mergedEvidence : ["No strong resolver evidence found"]
-    };
-    if (!best || resolved.confidence > best.confidence || resolved.confidence === best.confidence && resolved.gatewayId < best.gatewayId) {
-      best = resolved;
-    } else if (best && resolved.confidence === best.confidence && resolved.confidence > 0) {
-      best.ambiguous = true;
-      best.evidence = [
-        ...best.evidence,
-        `Ambiguous match: ${best.gatewayId} and ${resolved.gatewayId} have equal confidence ${resolved.confidence}`
-      ];
-    }
+    return toResolved(candidate, signals, scored.score, scored.evidence);
+  });
+  ranked.sort((left, right) => right.confidence - left.confidence || (left.gatewayId < right.gatewayId ? -1 : left.gatewayId > right.gatewayId ? 1 : 0));
+  return ranked;
+}
+function resolveServiceCandidate(gateways, signals) {
+  const ranked = rankServiceCandidates(gateways, signals);
+  if (ranked.length === 0) return void 0;
+  const best = ranked[0];
+  const tied = ranked.filter((candidate) => candidate.confidence === best.confidence);
+  if (tied.length > 1 && best.confidence > 0) {
+    best.ambiguous = true;
+    best.evidence = [
+      ...best.evidence,
+      `Ambiguous match: ${tied.map((candidate) => candidate.gatewayId).join(" and ")} have equal confidence ${best.confidence}`
+    ];
   }
   return best;
 }
 
 // src/lib/spec/normalize-openapi.ts
-var import_yaml4 = __toESM(require_dist(), 1);
+var import_yaml5 = __toESM(require_dist(), 1);
 var HTTP_METHODS = /* @__PURE__ */ new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
 function asRecord(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : void 0;
@@ -161601,30 +162068,30 @@ function normalizeOpenApiYaml(content) {
   const passthrough = { content, renamed: [], normalized: false };
   let doc;
   try {
-    doc = (0, import_yaml4.parseDocument)(content, { prettyErrors: false });
+    doc = (0, import_yaml5.parseDocument)(content, { prettyErrors: false });
   } catch {
     return passthrough;
   }
   if (doc.errors.length > 0) return passthrough;
-  if (!(0, import_yaml4.isMap)(doc.contents)) return passthrough;
+  if (!(0, import_yaml5.isMap)(doc.contents)) return passthrough;
   const paths = doc.get("paths", true);
-  if (!(0, import_yaml4.isMap)(paths)) return passthrough;
+  if (!(0, import_yaml5.isMap)(paths)) return passthrough;
   const seen = /* @__PURE__ */ new Set();
   const renamed = [];
   for (const pathPair of paths.items) {
     const pathKey = scalarString(pathPair.key);
     if (pathKey === void 0) continue;
     const pathItem = pathPair.value;
-    if (!(0, import_yaml4.isMap)(pathItem)) continue;
+    if (!(0, import_yaml5.isMap)(pathItem)) continue;
     for (const methodPair of pathItem.items) {
       const method = scalarString(methodPair.key);
       if (method === void 0) continue;
       const methodLower = method.toLowerCase();
       if (!HTTP_METHODS.has(methodLower)) continue;
       const operation2 = methodPair.value;
-      if (!(0, import_yaml4.isMap)(operation2)) continue;
+      if (!(0, import_yaml5.isMap)(operation2)) continue;
       const opIdNode = operation2.get("operationId", true);
-      const originalId = (0, import_yaml4.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
+      const originalId = (0, import_yaml5.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
       const base = originalId && originalId.trim().length > 0 ? originalId : synthesizeOperationId(methodLower, pathKey);
       let finalId = base;
       if (seen.has(base)) {
@@ -161651,13 +162118,13 @@ function normalizeOpenApiYaml(content) {
   return { content: String(doc), renamed, normalized: true, openapiContractAudit };
 }
 function scalarString(node) {
-  if ((0, import_yaml4.isScalar)(node) && typeof node.value === "string") return node.value;
+  if ((0, import_yaml5.isScalar)(node) && typeof node.value === "string") return node.value;
   if (typeof node === "string") return node;
   return void 0;
 }
 function setOperationId(operation2, value) {
   const existing = operation2.get("operationId", true);
-  if ((0, import_yaml4.isScalar)(existing)) {
+  if ((0, import_yaml5.isScalar)(existing)) {
     existing.value = value;
     return;
   }
@@ -161683,7 +162150,7 @@ function slugifyPath(pathKey) {
 }
 
 // src/lib/spec/oas-derivation.ts
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
 function deriveOpenApiDocument(input) {
   const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
   if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
@@ -162523,7 +162990,7 @@ function schemaFromExample(value) {
 }
 function parseStructured(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
     return recordValue2(parsed);
   } catch {
     return {};
@@ -162575,9 +163042,15 @@ function kebabCase(value) {
 
 // src/lib/providers/registry.ts
 var PROBE_TIMEOUT_MS = 3e3;
+var ProbeTimeoutError = class extends Error {
+  constructor() {
+    super("Probe timed out");
+    this.name = "ProbeTimeoutError";
+  }
+};
 function withTimeout(promise, ms) {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Probe timed out")), ms);
+    const timer = setTimeout(() => reject(new ProbeTimeoutError()), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -162590,6 +163063,17 @@ function withTimeout(promise, ms) {
     );
   });
 }
+var IAM_ERROR_PATTERN = /AccessDenied|AccessDeniedException|UnauthorizedOperation/i;
+function reasonForError(error2) {
+  if (error2 instanceof ProbeTimeoutError) return "timeout";
+  if (error2 && typeof error2 === "object") {
+    const maybe = error2;
+    if (maybe.$metadata?.httpStatusCode === 403) return "iam";
+    if (maybe.name && IAM_ERROR_PATTERN.test(maybe.name)) return "iam";
+    if (maybe.message && IAM_ERROR_PATTERN.test(maybe.message)) return "iam";
+  }
+  return "error";
+}
 var ProviderRegistry = class {
   providers = /* @__PURE__ */ new Map();
   register(provider) {
@@ -162601,15 +163085,37 @@ var ProviderRegistry = class {
   all() {
     return [...this.providers.values()];
   }
-  /** Probe each registered provider and return only those the caller has access to. */
-  async probeAvailable() {
-    const results = await Promise.allSettled(
-      [...this.providers.values()].map(async (provider) => {
-        const available = await withTimeout(provider.probe(), PROBE_TIMEOUT_MS);
-        return available ? provider : void 0;
-      })
+  /**
+   * Probe each registered provider. Never rejects. Returns the available provider
+   * instances plus one ordered typed result per registered provider, in registration order.
+   */
+  async probeAvailableDetailed() {
+    const registered = [...this.providers.values()];
+    const settled = await Promise.allSettled(
+      registered.map(async (provider) => withTimeout(provider.probe(), PROBE_TIMEOUT_MS))
     );
-    return results.filter((r5) => r5.status === "fulfilled").map((r5) => r5.value).filter((p3) => p3 !== void 0);
+    const availableProviders = [];
+    const probes = [];
+    for (let i5 = 0; i5 < registered.length; i5 += 1) {
+      const provider = registered[i5];
+      const result = settled[i5];
+      if (result.status === "fulfilled") {
+        if (result.value === true) {
+          availableProviders.push(provider);
+          probes.push({ provider: provider.type, status: "available" });
+        } else {
+          probes.push({ provider: provider.type, status: "skipped" });
+        }
+      } else {
+        probes.push({ provider: provider.type, status: "skipped", reason: reasonForError(result.reason) });
+      }
+    }
+    return { availableProviders, probes };
+  }
+  /** Backward-compatible: probe each registered provider and return only those the caller has access to. */
+  async probeAvailable() {
+    const { availableProviders } = await this.probeAvailableDetailed();
+    return availableProviders;
   }
 };
 
@@ -162839,183 +163345,6 @@ var EventBridgeSchemasProvider = class {
       format: detected.format,
       filename: detected.filename,
       evidence: [`Exported EventBridge schema ${schemaName} from registry ${registryName}`]
-    };
-  }
-};
-
-// src/lib/providers/cloudformation.ts
-var import_yaml6 = __toESM(require_dist(), 1);
-var import_promises6 = require("node:fs/promises");
-var import_node_path10 = __toESM(require("node:path"), 1);
-
-// src/lib/utils/resolve-path-within-root.ts
-var import_node_path9 = __toESM(require("node:path"), 1);
-function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
-  const base = import_node_path9.default.resolve(rootPath);
-  const resolved = import_node_path9.default.resolve(base, targetPath);
-  const relative = import_node_path9.default.relative(base, resolved);
-  if (relative.startsWith("..") || import_node_path9.default.isAbsolute(relative)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
-  }
-  return resolved;
-}
-
-// src/lib/providers/cloudformation.ts
-var CFN_CUSTOM_TAGS = [
-  "!Ref",
-  "!Sub",
-  "!GetAtt",
-  "!Join",
-  "!Select",
-  "!Split",
-  "!If",
-  "!Equals",
-  "!Not",
-  "!And",
-  "!Or",
-  "!FindInMap",
-  "!Base64",
-  "!Cidr",
-  "!ImportValue",
-  "!GetAZs",
-  "!Transform",
-  "!Condition"
-].map((tag2) => ({ tag: tag2, identify: () => false, resolve: (_v) => _v }));
-function isOpenApiDocument(value) {
-  return Boolean(value && typeof value === "object" && (value.openapi || value.swagger));
-}
-function detectOpenApiContent(content) {
-  try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml6.parse)(content, { customTags: CFN_CUSTOM_TAGS });
-    return isOpenApiDocument(parsed);
-  } catch {
-    return false;
-  }
-}
-function openApiFormatForContent(content) {
-  return content.trim().startsWith("{") ? { format: "openapi-json", filename: "index.json" } : { format: "openapi-yaml", filename: "index.yaml" };
-}
-function parseS3Uri(uri) {
-  if (!uri.startsWith("s3://")) return void 0;
-  const withoutScheme = uri.slice("s3://".length);
-  const [bucket, ...rest] = withoutScheme.split("/");
-  const key = rest.join("/");
-  if (!bucket || !key) return void 0;
-  return { bucket, key };
-}
-function parseS3Location(value) {
-  if (!value || typeof value !== "object") return void 0;
-  const record = value;
-  const bucket = typeof record.Bucket === "string" ? record.Bucket : typeof record.bucket === "string" ? record.bucket : void 0;
-  const key = typeof record.Key === "string" ? record.Key : typeof record.key === "string" ? record.key : void 0;
-  const version = typeof record.Version === "string" ? record.Version : typeof record.VersionId === "string" ? record.VersionId : typeof record.version === "string" ? record.version : void 0;
-  return bucket && key ? { bucket, key, version } : void 0;
-}
-async function readReferencedSpec(repoRoot, s3Client, value) {
-  if (typeof value === "string") {
-    const s32 = parseS3Uri(value);
-    if (s32) {
-      if (!s3Client) return void 0;
-      return s3Client.getObject(s32.bucket, s32.key, s32.version);
-    }
-    if (/^https?:\/\//i.test(value)) {
-      return void 0;
-    }
-    const localPath = resolvePathWithinRoot(import_node_path10.default.resolve(repoRoot), value, "definition-uri");
-    return (0, import_promises6.readFile)(localPath, "utf8");
-  }
-  const s3 = parseS3Location(value);
-  if (s3 && s3Client) {
-    return s3Client.getObject(s3.bucket, s3.key, s3.version);
-  }
-  return void 0;
-}
-async function extractEmbeddedSpec(resource, repoRoot, s3Client) {
-  const props = resource.Properties;
-  if (!props) return void 0;
-  const body = props.DefinitionBody ?? props.Body;
-  if (body && typeof body === "object" && isOpenApiDocument(body)) {
-    return { content: JSON.stringify(body, null, 2), format: "openapi-json", filename: "index.json" };
-  }
-  const ref = props.DefinitionUri ?? props.BodyS3Location;
-  const referenced = await readReferencedSpec(repoRoot, s3Client, ref);
-  if (referenced && detectOpenApiContent(referenced)) {
-    return { content: referenced, ...openApiFormatForContent(referenced) };
-  }
-  return void 0;
-}
-var CloudFormationProvider = class {
-  constructor(client, repoRoot = ".", s3Client) {
-    this.client = client;
-    this.repoRoot = repoRoot;
-    this.s3Client = s3Client;
-  }
-  client;
-  repoRoot;
-  s3Client;
-  type = "cloudformation";
-  async probe() {
-    return this.client.probe();
-  }
-  async listCandidates() {
-    const stacks = await this.client.listActiveStacks();
-    const candidates = [];
-    for (const stack of stacks) {
-      const apiResources = await this.client.listApiResources(stack.name);
-      if (apiResources.length === 0) continue;
-      for (const resource of apiResources) {
-        candidates.push({
-          id: `${stack.name}/${resource.logicalId}`,
-          name: resource.logicalId,
-          providerType: "cloudformation",
-          tags: {},
-          evidence: [`Found ${resource.type} in CloudFormation stack ${stack.name}`],
-          meta: {
-            stackName: stack.name,
-            logicalId: resource.logicalId,
-            physicalId: resource.physicalId,
-            resourceType: resource.type
-          }
-        });
-      }
-    }
-    return candidates;
-  }
-  async exportSpec(candidate, _options) {
-    void _options;
-    const stackName = candidate.meta.stackName ?? "";
-    const logicalId = candidate.meta.logicalId ?? "";
-    const templateBody = await this.client.getTemplate(stackName);
-    let template;
-    try {
-      if (templateBody.trim().startsWith("{")) {
-        template = JSON.parse(templateBody);
-      } else {
-        const originalWarn = process.emitWarning;
-        process.emitWarning = (() => {
-        });
-        try {
-          template = (0, import_yaml6.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
-        } finally {
-          process.emitWarning = originalWarn;
-        }
-      }
-    } catch {
-      throw new Error(`Failed to parse CloudFormation template for stack ${stackName}`);
-    }
-    const resource = template.Resources?.[logicalId];
-    if (!resource) {
-      throw new Error(`Resource ${logicalId} not found in stack ${stackName} template`);
-    }
-    const spec = await extractEmbeddedSpec(resource, this.repoRoot, this.s3Client);
-    if (!spec) {
-      throw new Error(`No embedded or referenced OpenAPI spec found in ${candidate.meta.resourceType} resource ${logicalId} of stack ${stackName}`);
-    }
-    return {
-      content: spec.content,
-      format: spec.format,
-      filename: spec.filename,
-      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`]
     };
   }
 };
@@ -166329,8 +166658,7 @@ function tierIacFingerprint(signals) {
   const ids = [...signals.explicitGatewayIdHints, ...signals.inferredGatewayIdHints];
   if (ids.length === 0) return void 0;
   return {
-    gatewayIds: ids,
-    tier: "iac-fingerprint",
+    ids,
     evidence: [`IaC fingerprinting found ${ids.length} gateway ID(s) from repo files`]
   };
 }
@@ -166362,31 +166690,45 @@ async function tierCloudFormationCorrelation(ctx) {
     }
   }
   if (matchingIds.length === 0) return void 0;
-  return { gatewayIds: matchingIds, tier: "cfn-correlation", evidence };
+  return { ids: matchingIds, evidence };
 }
+var CANONICAL_REPO_TAG = "postman:repo";
+var GENERIC_TAG_KEYS = ["repo", "repository", "service", "github:repository"];
 async function tierTagPreFilter(ctx) {
   if (!ctx.taggingClient) return void 0;
   if (!ctx.repoSlug) return void 0;
-  const tagKeys = ["postman:repo", "repository", "repo", "github:repository"];
-  const tagValues = [ctx.repoSlug];
   const repoName = ctx.repoSlug.split("/").pop()?.trim();
+  const apiGatewayTypes = ["apigateway:restapis", "apigateway:apis"];
+  const extractId = (arn) => arn.match(/\/(?:restapis|apis)\/([a-z0-9_-]+)/)?.[1];
+  try {
+    const canonical = await ctx.taggingClient.getResourcesByTag(CANONICAL_REPO_TAG, [ctx.repoSlug], apiGatewayTypes);
+    const exactIds = canonical.filter((r5) => (r5.tags?.[CANONICAL_REPO_TAG] ?? "") === ctx.repoSlug).map((r5) => extractId(r5.arn)).filter((id) => Boolean(id));
+    const uniqueExact = [...new Set(exactIds)];
+    if (uniqueExact.length === 1) {
+      return {
+        ids: uniqueExact,
+        selectId: uniqueExact[0],
+        evidence: [`Exactly one API tagged ${CANONICAL_REPO_TAG}=${ctx.repoSlug}`]
+      };
+    }
+    if (uniqueExact.length > 1) {
+      return {
+        ids: uniqueExact,
+        evidence: [`Found ${uniqueExact.length} APIs tagged ${CANONICAL_REPO_TAG}=${ctx.repoSlug}`]
+      };
+    }
+  } catch {
+  }
+  const tagValues = [ctx.repoSlug];
   if (repoName) tagValues.push(repoName);
-  const apiGatewayTypes = [
-    "apigateway:restapis",
-    "apigateway:apis"
-  ];
-  for (const tagKey of tagKeys) {
+  for (const tagKey of [CANONICAL_REPO_TAG, ...GENERIC_TAG_KEYS]) {
     try {
       const resources = await ctx.taggingClient.getResourcesByTag(tagKey, tagValues, apiGatewayTypes);
       if (resources.length === 0) continue;
-      const ids = resources.map((r5) => {
-        const match = r5.arn.match(/\/(?:restapis|apis)\/([a-z0-9_-]+)/);
-        return match?.[1];
-      }).filter((id) => Boolean(id));
+      const ids = resources.map((r5) => extractId(r5.arn)).filter((id) => Boolean(id));
       if (ids.length > 0) {
         return {
-          gatewayIds: ids,
-          tier: "tag-prefilter",
+          ids,
           evidence: [`Found ${ids.length} API(s) tagged with ${tagKey}=${tagValues.join("|")}`]
         };
       }
@@ -166404,20 +166746,44 @@ function tierNamingHeuristic(candidateNames, ctx) {
   });
   if (matches.length === 0) return void 0;
   return {
-    gatewayIds: matches.map((m3) => m3.id),
-    tier: "naming-heuristic",
+    ids: matches.map((m3) => m3.id),
     evidence: [`Name matching narrowed ${candidateNames.length} candidates to ${matches.length} using repo slug`]
   };
 }
 async function runNarrowingPipeline(ctx, allCandidates) {
-  const t12 = tierIacFingerprint(ctx.signals);
-  if (t12) return t12;
-  const t22 = await tierCloudFormationCorrelation(ctx);
-  if (t22) return t22;
-  const t32 = await tierTagPreFilter(ctx);
-  if (t32) return t32;
-  const t42 = tierNamingHeuristic(allCandidates, ctx);
-  if (t42) return t42;
+  const enumeratedIds = allCandidates.map((c5) => c5.id);
+  const enumeratedSet = new Set(enumeratedIds);
+  const tiers = [
+    { tier: "iac-fingerprint", run: () => tierIacFingerprint(ctx.signals) },
+    { tier: "cfn-correlation", run: () => tierCloudFormationCorrelation(ctx) },
+    { tier: "tag-prefilter", run: () => tierTagPreFilter(ctx) },
+    { tier: "naming-heuristic", run: () => tierNamingHeuristic(allCandidates, ctx) }
+  ];
+  for (const { tier, run } of tiers) {
+    const hit = await run();
+    if (!hit) continue;
+    const intersecting = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const id of hit.ids) {
+      if (enumeratedSet.has(id) && !seen.has(id)) {
+        seen.add(id);
+        intersecting.push(id);
+      }
+    }
+    if (intersecting.length === 0) continue;
+    const demoted = allCandidates.length - intersecting.length;
+    const isSelect = hit.selectId !== void 0 && intersecting.length === 1 && intersecting[0] === hit.selectId;
+    return {
+      gatewayIds: intersecting,
+      tier,
+      mode: isSelect ? "select" : "narrow",
+      droppedCount: demoted,
+      evidence: [
+        ...hit.evidence,
+        `Narrowing (${tier}) ranked ${intersecting.length} candidate(s) first and demoted ${demoted} (not deleted)`
+      ]
+    };
+  }
   return void 0;
 }
 
@@ -167308,6 +167674,67 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
     }
   }
+  if (!existingSpecPath) {
+    const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
+    if (localArtifactSpecs.length === 1) {
+      const artifact = localArtifactSpecs[0];
+      const serviceName = artifact.logicalId;
+      const relativeDir = import_node_path14.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+      const relativeSpecPath = import_node_path14.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
+      const evidence = [
+        `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
+      ];
+      const base = {
+        status: "resolved",
+        sourceType: "cfn-embedded",
+        serviceName,
+        confidence: 75,
+        gatewayType: artifact.gatewayType,
+        providerType: "cloudformation",
+        specFormat: artifact.format,
+        specPath: relativeSpecPath,
+        evidence
+      };
+      if (inputs.dryRun) {
+        return { ...base, evidence: [...evidence, "Dry run enabled; skipped local build artifact write"] };
+      }
+      try {
+        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+          repoRoot: inputs.repoRoot,
+          relativeDir,
+          native: { relativePath: relativeSpecPath, content: artifact.content },
+          derivation: { content: artifact.content, format: artifact.format, title: serviceName },
+          dryRun: inputs.dryRun,
+          writeSpecFile
+        });
+        return { ...base, ...derivedOpenApi };
+      } catch (error2) {
+        actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error2)}`));
+      }
+    } else if (localArtifactSpecs.length > 1) {
+      const rankedCandidates = sanitizeJsonValue(
+        localArtifactSpecs.map((artifact, index) => ({
+          rank: index + 1,
+          serviceName: artifact.logicalId,
+          gatewayId: artifact.artifactRef,
+          gatewayType: artifact.gatewayType,
+          confidence: 50,
+          evidence: [`Embedded OpenAPI document in local build artifact ${artifact.artifactPath}`]
+        }))
+      );
+      return {
+        status: "unresolved",
+        sourceType: "manual-review",
+        serviceName: inferFallbackServiceName(inputs) ?? "unknown-service",
+        confidence: 0,
+        rankedCandidates,
+        evidence: [
+          `Found ${localArtifactSpecs.length} embedded OpenAPI documents across local CDK/SAM build artifacts; manual review required`,
+          ...rankedCandidates.map((candidate) => `Candidate ${candidate.rank}: ${candidate.gatewayId}`)
+        ]
+      };
+    }
+  }
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
@@ -167325,19 +167752,24 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     inputs.apiFilter
   );
   let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
+  let resolutionNarrowing;
   if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
     const candidateCountBeforeNarrowing = finalCandidates.length;
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group("Progressive narrowing", async () => {
       let cfnClient;
       let taggingClient;
-      try {
-        cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
-      } catch {
-      }
-      try {
-        taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
-      } catch {
+      if (resolutionDependencies.narrowingClients) {
+        ({ cfnClient, taggingClient } = resolutionDependencies.narrowingClients);
+      } else {
+        try {
+          cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts);
+        } catch {
+        }
+        try {
+          taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+        } catch {
+        }
       }
       return runNarrowingPipeline(
         { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },
@@ -167345,9 +167777,24 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       );
     });
     if (narrowingResult) {
-      const narrowedIds = new Set(narrowingResult.gatewayIds);
-      finalCandidates = finalCandidates.filter((c5) => narrowedIds.has(c5.id));
-      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${candidateCountBeforeNarrowing} candidates to ${finalCandidates.length}`);
+      if (narrowingResult.mode === "select" && narrowingResult.gatewayIds.length === 1) {
+        const selectedId = narrowingResult.gatewayIds[0];
+        finalCandidates = finalCandidates.filter((c5) => c5.id === selectedId);
+        actionCore.info(`Narrowing (${narrowingResult.tier}) selected candidate ${selectedId}`);
+      } else {
+        const intersecting = new Set(narrowingResult.gatewayIds);
+        const first = narrowingResult.gatewayIds.map((id) => finalCandidates.find((c5) => c5.id === id)).filter((c5) => Boolean(c5));
+        const rest = finalCandidates.filter((c5) => !intersecting.has(c5.id));
+        finalCandidates = [...first, ...rest];
+        actionCore.info(
+          `Narrowing (${narrowingResult.tier}) ranked ${first.length} of ${candidateCountBeforeNarrowing} candidates first and demoted ${rest.length} (not deleted)`
+        );
+      }
+      resolutionNarrowing = {
+        tier: narrowingResult.tier,
+        mode: narrowingResult.mode,
+        droppedCount: narrowingResult.droppedCount
+      };
     }
     if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
       actionCore.warning(
@@ -167369,6 +167816,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
   const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
+  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals);
   let resolvedSnsCandidate;
   let resolvedSnsExport;
   const snsManualReviewEvidence = [];
@@ -167459,6 +167907,21 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     snsCandidate: resolvedSnsCandidate,
     fallbackServiceName: inferFallbackServiceName(inputs)
   });
+  if (resolutionNarrowing) {
+    selectedSource.narrowing = resolutionNarrowing;
+  }
+  if (resolvedCandidate?.ambiguous && rankedGatewayCandidates.length > 1 && selectedSource.status === "unresolved") {
+    selectedSource.rankedCandidates = sanitizeJsonValue(
+      rankedGatewayCandidates.map((candidate, index) => ({
+        rank: index + 1,
+        serviceName: candidate.serviceName,
+        gatewayId: candidate.gatewayId,
+        gatewayType: candidate.gatewayType,
+        confidence: candidate.confidence,
+        evidence: candidate.evidence
+      }))
+    );
+  }
   const preferredProviderCandidate = providerCandidates[0];
   if (shouldPreferProviderCandidate(preferredProviderCandidate, selectedSource)) {
     const exportFailures = [];
@@ -167785,7 +168248,8 @@ function buildExecutionOutputs(result) {
         status: unresolved ? "unresolved" : "resolved",
         sourceType: "discover-many",
         count: discovered.length,
-        summary
+        summary,
+        providerProbes: result.providerProbes ?? []
       }),
       "service-name": "",
       "gateway-id": "",
@@ -167800,7 +168264,8 @@ function buildExecutionOutputs(result) {
       "derived-openapi-version": "",
       "derived-openapi-completeness": "",
       "derived-openapi-format": "",
-      "derived-openapi-evidence-json": ""
+      "derived-openapi-evidence-json": "",
+      "narrowing-strategy": "none"
     };
   }
   const resolution = result.resolution ?? {
@@ -167810,8 +168275,9 @@ function buildExecutionOutputs(result) {
     confidence: 0,
     evidence: ["No resolution result produced"]
   };
+  const resolutionWithProbes = { ...resolution, providerProbes: resolution.providerProbes ?? result.providerProbes ?? [] };
   return {
-    "resolution-json": JSON.stringify(resolution),
+    "resolution-json": JSON.stringify(resolutionWithProbes),
     "resolution-status": resolution.status,
     "source-type": resolution.sourceType,
     "mapping-confidence": String(resolution.confidence),
@@ -167821,7 +168287,7 @@ function buildExecutionOutputs(result) {
     "services-json": "[]",
     "service-count": "0",
     "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
-    "candidates-json": "",
+    "candidates-json": resolution.status === "unresolved" && (resolution.rankedCandidates?.length ?? 0) >= 2 ? JSON.stringify(resolution.rankedCandidates) : "",
     "provider-type": resolution.providerType ?? (resolution.sourceType === "gateway-export" ? "api-gateway" : ""),
     "spec-format": resolution.specFormat ?? "",
     "contract-origin": resolution.contractOrigin ?? "",
@@ -167831,17 +168297,20 @@ function buildExecutionOutputs(result) {
     "derived-openapi-version": resolution.derivedOpenApiVersion ?? "",
     "derived-openapi-completeness": resolution.derivedOpenApiCompleteness ?? "",
     "derived-openapi-format": resolution.derivedOpenApiFormat ?? "",
-    "derived-openapi-evidence-json": JSON.stringify(resolution.derivedOpenApiEvidence ?? [])
+    "derived-openapi-evidence-json": JSON.stringify(resolution.derivedOpenApiEvidence ?? []),
+    "narrowing-strategy": resolution.narrowing?.tier ?? "none"
   };
 }
 async function execute(inputs, dependencies) {
   await runPreflight(inputs, dependencies);
   if (inputs.mode === "discover-many") {
     const registry2 = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+    let discoverManyProbes = [];
     const availableProviders = dependencies.providerRegistry ? registry2.all() : await dependencies.core.group("Probe available providers", async () => {
-      const available = await registry2.probeAvailable();
-      dependencies.core.info(`Available providers: ${available.map((p3) => p3.type).join(", ") || "api-gateway only"}`);
-      return available;
+      const { availableProviders: probed, probes } = await registry2.probeAvailableDetailed();
+      discoverManyProbes = probes;
+      dependencies.core.info(`Available providers: ${probed.map((p3) => p3.type).join(", ") || "api-gateway only"}`);
+      return probed;
     });
     const apiGwProvider = registry2.get("api-gateway");
     if (availableProviders.length === 0 && apiGwProvider) {
@@ -167877,16 +168346,21 @@ async function execute(inputs, dependencies) {
       mode: inputs.mode,
       discovered,
       exportSummary: summary,
-      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary })
+      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary, providerProbes: dependencies.providerRegistry ? [] : discoverManyProbes })
     };
   }
   const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+  let resolveOneProbes = [];
   const providers = dependencies.providerRegistry ? registry.all() : await dependencies.core.group("Probe available providers", async () => {
-    const available = await registry.probeAvailable();
-    dependencies.core.info(`Available providers: ${available.map((p3) => p3.type).join(", ") || "api-gateway only"}`);
-    return available;
+    const { availableProviders: probed, probes } = await registry.probeAvailableDetailed();
+    resolveOneProbes = probes;
+    dependencies.core.info(`Available providers: ${probed.map((p3) => p3.type).join(", ") || "api-gateway only"}`);
+    return probed;
   });
   const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, { providers });
+  if (!dependencies.providerRegistry) {
+    resolution.providerProbes = resolveOneProbes;
+  }
   return {
     mode: inputs.mode,
     discovered: [],
@@ -168823,7 +169297,8 @@ function toDotenv(outputs) {
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_VERSION: outputs["derived-openapi-version"] ?? "",
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_COMPLETENESS: outputs["derived-openapi-completeness"] ?? "",
     POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT: outputs["derived-openapi-format"] ?? "",
-    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON: outputs["derived-openapi-evidence-json"] ?? ""
+    POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON: outputs["derived-openapi-evidence-json"] ?? "",
+    POSTMAN_AWS_SPEC_NARROWING_STRATEGY: outputs["narrowing-strategy"] ?? "none"
   };
   return Object.entries(envPairs).map(([key, value]) => `${key}=${JSON.stringify(value)}`).join("\n");
 }

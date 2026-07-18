@@ -7,16 +7,16 @@ import type { S3SpecClient } from '../aws/s3-client.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 
-interface TemplateResource {
+export interface TemplateResource {
   Type: string;
   Properties?: Record<string, unknown>;
 }
 
-interface ParsedTemplate {
+export interface ParsedTemplate {
   Resources?: Record<string, TemplateResource>;
 }
 
-const CFN_CUSTOM_TAGS = [
+export const CFN_CUSTOM_TAGS = [
   '!Ref', '!Sub', '!GetAtt', '!Join', '!Select', '!Split',
   '!If', '!Equals', '!Not', '!And', '!Or', '!FindInMap',
   '!Base64', '!Cidr', '!ImportValue', '!GetAZs', '!Transform',
@@ -29,13 +29,13 @@ interface S3Location {
   version?: string;
 }
 
-interface ExtractedSpec {
+export interface ExtractedSpec {
   content: string;
   format: SpecExportResult['format'];
   filename: string;
 }
 
-function isOpenApiDocument(value: unknown): boolean {
+export function isOpenApiDocument(value: unknown): boolean {
   return Boolean(value && typeof value === 'object' && ((value as Record<string, unknown>).openapi || (value as Record<string, unknown>).swagger));
 }
 
@@ -117,6 +117,34 @@ async function extractEmbeddedSpec(resource: TemplateResource, repoRoot: string,
     return { content: referenced, ...openApiFormatForContent(referenced) };
   }
 
+  return undefined;
+}
+
+/** Parse a CloudFormation/SAM template body (JSON or YAML with CFN intrinsics). */
+export function parseCfnTemplateBody(templateBody: string): ParsedTemplate {
+  if (templateBody.trim().startsWith('{')) {
+    return JSON.parse(templateBody) as ParsedTemplate;
+  }
+  const originalWarn = process.emitWarning;
+  process.emitWarning = (() => {}) as typeof process.emitWarning;
+  try {
+    return parse(templateBody, { customTags: CFN_CUSTOM_TAGS as never[] }) as ParsedTemplate;
+  } finally {
+    process.emitWarning = originalWarn;
+  }
+}
+
+/**
+ * Extract an inline OpenAPI/Swagger document from a template resource Body or
+ * DefinitionBody. Never follows DefinitionUri/BodyS3Location references.
+ */
+export function extractInlineEmbeddedSpec(resource: TemplateResource): ExtractedSpec | undefined {
+  const props = resource.Properties;
+  if (!props) return undefined;
+  const body = props.DefinitionBody ?? props.Body;
+  if (body && typeof body === 'object' && isOpenApiDocument(body)) {
+    return { content: JSON.stringify(body, null, 2), format: 'openapi-json', filename: 'index.json' };
+  }
   return undefined;
 }
 

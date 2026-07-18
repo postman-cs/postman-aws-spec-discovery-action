@@ -26,12 +26,12 @@ import { AlbListenerRulesSdkClient } from './lib/aws/alb-client.js';
 import { LambdaEventSourceSdkClient } from './lib/aws/lambda-event-source-client.js';
 import { VerifiedPermissionsSdkClient } from './lib/aws/verified-permissions-client.js';
 import { StepFunctionsSdkClient } from './lib/aws/step-functions-client.js';
-import { formatUserSafeError, sanitizeLogMessage } from './lib/logging/sanitize.js';
+import { formatUserSafeError, sanitizeLogMessage, sanitizeJsonValue } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
-import { findExistingRepoSpecTyped } from './lib/repo/specs.js';
+import { findExistingRepoSpecTyped, findLocalCfnArtifactSpecs } from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
-import { resolveServiceCandidate } from './lib/resolve/service-resolver.js';
+import { resolveServiceCandidate, rankServiceCandidates } from './lib/resolve/service-resolver.js';
 import {
   formatOpenApiContractAuditWarning,
   normalizeOpenApiYaml,
@@ -145,6 +145,8 @@ export interface ResolutionDependencies {
   }) => SnsResolutionProvider;
   eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: ResolveCodeDerivedContract;
+  /** Test seam: override the CloudFormation/Tagging clients used by progressive narrowing. */
+  narrowingClients?: { cfnClient?: CloudFormationSpecClient; taggingClient?: TaggingSpecClient };
 }
 
 interface SnsResolutionProvider {
@@ -1254,6 +1256,70 @@ export async function runResolution(
     }
   }
 
+  // Local CDK/SAM build-artifact probe (W5): runs only when no direct repo spec was found.
+  // Local files only -- no AWS calls, no S3/HTTP fetches.
+  if (!existingSpecPath) {
+    const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
+    if (localArtifactSpecs.length === 1) {
+      const artifact = localArtifactSpecs[0];
+      const serviceName = artifact.logicalId;
+      const relativeDir = path.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, '/');
+      const relativeSpecPath = path.join(relativeDir, artifact.filename).replace(/\\/g, '/');
+      const evidence = [
+        `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
+      ];
+      const base: ResolutionResult = {
+        status: 'resolved',
+        sourceType: 'cfn-embedded',
+        serviceName,
+        confidence: 75,
+        gatewayType: artifact.gatewayType,
+        providerType: 'cloudformation',
+        specFormat: artifact.format,
+        specPath: relativeSpecPath,
+        evidence
+      };
+      if (inputs.dryRun) {
+        return { ...base, evidence: [...evidence, 'Dry run enabled; skipped local build artifact write'] };
+      }
+      try {
+        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+          repoRoot: inputs.repoRoot,
+          relativeDir,
+          native: { relativePath: relativeSpecPath, content: artifact.content },
+          derivation: { content: artifact.content, format: artifact.format, title: serviceName },
+          dryRun: inputs.dryRun,
+          writeSpecFile
+        });
+        return { ...base, ...derivedOpenApi };
+      } catch (error) {
+        actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error)}`));
+      }
+    } else if (localArtifactSpecs.length > 1) {
+      const rankedCandidates = sanitizeJsonValue(
+        localArtifactSpecs.map((artifact, index) => ({
+          rank: index + 1,
+          serviceName: artifact.logicalId,
+          gatewayId: artifact.artifactRef,
+          gatewayType: artifact.gatewayType,
+          confidence: 50,
+          evidence: [`Embedded OpenAPI document in local build artifact ${artifact.artifactPath}`]
+        }))
+      );
+      return {
+        status: 'unresolved',
+        sourceType: 'manual-review',
+        serviceName: inferFallbackServiceName(inputs) ?? 'unknown-service',
+        confidence: 0,
+        rankedCandidates,
+        evidence: [
+          `Found ${localArtifactSpecs.length} embedded OpenAPI documents across local CDK/SAM build artifacts; manual review required`,
+          ...rankedCandidates.map((candidate) => `Candidate ${candidate.rank}: ${candidate.gatewayId}`)
+        ]
+      };
+    }
+  }
+
   const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
@@ -1275,14 +1341,19 @@ export async function runResolution(
 
   // If too many candidates, try progressive narrowing before failing
   let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
+  let resolutionNarrowing: { tier: string; mode: 'select' | 'narrow'; droppedCount: number } | undefined;
   if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
     const candidateCountBeforeNarrowing = finalCandidates.length;
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
       let cfnClient: CloudFormationSpecClient | undefined;
       let taggingClient: TaggingSpecClient | undefined;
-      try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
-      try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+      if (resolutionDependencies.narrowingClients) {
+        ({ cfnClient, taggingClient } = resolutionDependencies.narrowingClients);
+      } else {
+        try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+        try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
+      }
 
       return runNarrowingPipeline(
         { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },
@@ -1291,9 +1362,26 @@ export async function runResolution(
     });
 
     if (narrowingResult) {
-      const narrowedIds = new Set(narrowingResult.gatewayIds);
-      finalCandidates = finalCandidates.filter((c) => narrowedIds.has(c.id));
-      actionCore.info(`Narrowing (${narrowingResult.tier}) reduced ${candidateCountBeforeNarrowing} candidates to ${finalCandidates.length}`);
+      if (narrowingResult.mode === 'select' && narrowingResult.gatewayIds.length === 1) {
+        const selectedId = narrowingResult.gatewayIds[0];
+        finalCandidates = finalCandidates.filter((c) => c.id === selectedId);
+        actionCore.info(`Narrowing (${narrowingResult.tier}) selected candidate ${selectedId}`);
+      } else {
+        const intersecting = new Set(narrowingResult.gatewayIds);
+        const first = narrowingResult.gatewayIds
+          .map((id) => finalCandidates.find((c) => c.id === id))
+          .filter((c): c is (typeof finalCandidates)[number] => Boolean(c));
+        const rest = finalCandidates.filter((c) => !intersecting.has(c.id));
+        finalCandidates = [...first, ...rest];
+        actionCore.info(
+          `Narrowing (${narrowingResult.tier}) ranked ${first.length} of ${candidateCountBeforeNarrowing} candidates first and demoted ${rest.length} (not deleted)`
+        );
+      }
+      resolutionNarrowing = {
+        tier: narrowingResult.tier,
+        mode: narrowingResult.mode,
+        droppedCount: narrowingResult.droppedCount
+      };
     }
 
     // If still over limit after narrowing, warn instead of hard-fail
@@ -1319,6 +1407,7 @@ export async function runResolution(
   }
 
   const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
+  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals);
 
   let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
   let resolvedSnsExport: SpecExportResult | undefined;
@@ -1432,6 +1521,21 @@ export async function runResolution(
     snsCandidate: resolvedSnsCandidate,
     fallbackServiceName: inferFallbackServiceName(inputs)
   });
+  if (resolutionNarrowing) {
+    selectedSource.narrowing = resolutionNarrowing;
+  }
+  if (resolvedCandidate?.ambiguous && rankedGatewayCandidates.length > 1 && selectedSource.status === 'unresolved') {
+    selectedSource.rankedCandidates = sanitizeJsonValue(
+      rankedGatewayCandidates.map((candidate, index) => ({
+        rank: index + 1,
+        serviceName: candidate.serviceName,
+        gatewayId: candidate.gatewayId,
+        gatewayType: candidate.gatewayType,
+        confidence: candidate.confidence,
+        evidence: candidate.evidence
+      }))
+    );
+  }
   const preferredProviderCandidate = providerCandidates[0];
   if (shouldPreferProviderCandidate(preferredProviderCandidate, selectedSource)) {
     const exportFailures: string[] = [];
@@ -1778,6 +1882,7 @@ export function buildExecutionOutputs(result: {
   discovered: DiscoveredService[];
   resolution?: ResolutionResult;
   exportSummary?: DiscoverySummary;
+  providerProbes?: import('./contracts.js').ProviderProbeResult[];
 }): Record<string, string> {
   if (result.mode === 'discover-many') {
     const discovered = result.discovered;
@@ -1794,7 +1899,8 @@ export function buildExecutionOutputs(result: {
         status: unresolved ? 'unresolved' : 'resolved',
         sourceType: 'discover-many',
         count: discovered.length,
-        summary
+        summary,
+        providerProbes: result.providerProbes ?? []
       }),
       'service-name': '',
       'gateway-id': '',
@@ -1809,7 +1915,8 @@ export function buildExecutionOutputs(result: {
       'derived-openapi-version': '',
       'derived-openapi-completeness': '',
       'derived-openapi-format': '',
-      'derived-openapi-evidence-json': ''
+      'derived-openapi-evidence-json': '',
+      'narrowing-strategy': 'none'
     };
   }
 
@@ -1820,8 +1927,9 @@ export function buildExecutionOutputs(result: {
     confidence: 0,
     evidence: ['No resolution result produced']
   };
+  const resolutionWithProbes = { ...resolution, providerProbes: resolution.providerProbes ?? result.providerProbes ?? [] };
   return {
-    'resolution-json': JSON.stringify(resolution),
+    'resolution-json': JSON.stringify(resolutionWithProbes),
     'resolution-status': resolution.status,
     'source-type': resolution.sourceType,
     'mapping-confidence': String(resolution.confidence),
@@ -1831,7 +1939,10 @@ export function buildExecutionOutputs(result: {
     'services-json': '[]',
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
-    'candidates-json': '',
+    'candidates-json':
+      resolution.status === 'unresolved' && (resolution.rankedCandidates?.length ?? 0) >= 2
+        ? JSON.stringify(resolution.rankedCandidates)
+        : '',
     'provider-type': resolution.providerType ?? (resolution.sourceType === 'gateway-export' ? 'api-gateway' : ''),
     'spec-format': resolution.specFormat ?? '',
     'contract-origin': resolution.contractOrigin ?? '',
@@ -1841,7 +1952,8 @@ export function buildExecutionOutputs(result: {
     'derived-openapi-version': resolution.derivedOpenApiVersion ?? '',
     'derived-openapi-completeness': resolution.derivedOpenApiCompleteness ?? '',
     'derived-openapi-format': resolution.derivedOpenApiFormat ?? '',
-    'derived-openapi-evidence-json': JSON.stringify(resolution.derivedOpenApiEvidence ?? [])
+    'derived-openapi-evidence-json': JSON.stringify(resolution.derivedOpenApiEvidence ?? []),
+    'narrowing-strategy': resolution.narrowing?.tier ?? 'none'
   };
 }
 
@@ -1851,12 +1963,14 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
   if (inputs.mode === 'discover-many') {
     // Use injected registry or build one and auto-detect via IAM probing
     const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+    let discoverManyProbes: import('./contracts.js').ProviderProbeResult[] = [];
     const availableProviders = dependencies.providerRegistry
       ? registry.all()
       : await dependencies.core.group('Probe available providers', async () => {
-          const available = await registry.probeAvailable();
-          dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
-          return available;
+          const { availableProviders: probed, probes } = await registry.probeAvailableDetailed();
+          discoverManyProbes = probes;
+          dependencies.core.info(`Available providers: ${probed.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+          return probed;
         });
 
     // Always include API Gateway discovery (backward compat)
@@ -1901,19 +2015,24 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       mode: inputs.mode,
       discovered,
       exportSummary: summary,
-      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary })
+      outputs: buildExecutionOutputs({ mode: inputs.mode, discovered, exportSummary: summary, providerProbes: dependencies.providerRegistry ? [] : discoverManyProbes })
     };
   }
 
   const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+  let resolveOneProbes: import('./contracts.js').ProviderProbeResult[] = [];
   const providers = dependencies.providerRegistry
     ? registry.all()
     : await dependencies.core.group('Probe available providers', async () => {
-        const available = await registry.probeAvailable();
-        dependencies.core.info(`Available providers: ${available.map((p) => p.type).join(', ') || 'api-gateway only'}`);
-        return available;
+        const { availableProviders: probed, probes } = await registry.probeAvailableDetailed();
+        resolveOneProbes = probes;
+        dependencies.core.info(`Available providers: ${probed.map((p) => p.type).join(', ') || 'api-gateway only'}`);
+        return probed;
       });
   const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, { providers });
+  if (!dependencies.providerRegistry) {
+    resolution.providerProbes = resolveOneProbes;
+  }
   return {
     mode: inputs.mode,
     discovered: [],
