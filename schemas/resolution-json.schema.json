@@ -24,12 +24,19 @@
         "repo-spec",
         "gateway-export",
         "appsync-schema",
+        "appsync-event-api",
         "eventbridge-schema",
+        "eventbridge-surface",
         "cfn-embedded",
         "glue-schema",
+        "bedrock-action-group",
+        "alb-listener-rule",
         "sns-contract",
         "ssm-registry",
         "lambda-url-export",
+        "lambda-event-source",
+        "verified-permissions-schema",
+        "step-functions-asl",
         "manual-review",
         "discover-many"
       ]
@@ -62,12 +69,19 @@
       "enum": [
         "api-gateway",
         "appsync",
+        "appsync-events",
         "eventbridge-schemas",
+        "eventbridge",
         "cloudformation",
         "glue",
+        "bedrock-action-group",
+        "alb-listener-rule",
         "sns",
         "ssm",
-        "lambda-url"
+        "lambda-url",
+        "lambda-event-source",
+        "verified-permissions",
+        "step-functions"
       ]
     },
     "specFormat": {
@@ -87,6 +101,156 @@
     },
     "stage": {
       "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "partition": {
+          "type": "string"
+        },
+        "accountIndicator": {
+          "type": "string",
+          "description": "Redacted account identity indicator; must not be a raw 12-digit account ID."
+        },
+        "region": {
+          "type": "string"
+        },
+        "apiArn": {
+          "type": "string"
+        },
+        "apiId": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "configurationMode": {
+          "type": "string",
+          "enum": [
+            "deployed-stage",
+            "latest-configuration",
+            "partial-control-plane"
+          ]
+        },
+        "stage": {
+          "type": "string"
+        },
+        "deploymentId": {
+          "type": "string"
+        },
+        "exportOptions": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "sourceTier": {
+          "type": "string"
+        },
+        "sourceTagContract": {
+          "type": "string"
+        },
+        "queryTimestamp": {
+          "type": "string"
+        },
+        "artifactHash": {
+          "type": "string"
+        },
+        "providerProbes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "truncation": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "truncated": {
+              "type": "boolean"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "appsyncSourceAssociations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "associationId": {
+                "type": "string"
+              },
+              "sourceApiId": {
+                "type": "string"
+              },
+              "associationStatus": {
+                "type": "string"
+              },
+              "denied": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "appsyncAssociationEvidence": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "denied"
+          ]
+        }
+      }
+    },
+    "rankedCandidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "rank",
+          "serviceName",
+          "gatewayId",
+          "gatewayType",
+          "confidence",
+          "evidence"
+        ],
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "gatewayId": {
+            "type": "string"
+          },
+          "gatewayType": {
+            "type": "string",
+            "enum": [
+              "REST",
+              "HTTP",
+              "WEBSOCKET",
+              "SNS",
+              "LAMBDA_URL"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      }
     },
     "evidence": {
       "type": "array",

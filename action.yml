@@ -16,6 +16,26 @@ inputs:
     description: Optional API Gateway stage override (for example prod or staging).
     required: false
     default: ''
+  expected-account-id:
+    description: Optional AWS account ID that must match sts:GetCallerIdentity before export. Mismatch fails closed with a sanitized error.
+    required: false
+    default: ''
+  expected-partition:
+    description: Optional AWS partition (aws, aws-us-gov, or aws-cn) that must match the caller identity ARN before export. Mismatch fails closed with a sanitized error.
+    required: false
+    default: ''
+  spec-path:
+    description: Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection.
+    required: false
+    default: ''
+  service-root:
+    description: Optional monorepo service root relative to repo-root. Scopes Backstage entities and repository contract inventory to that directory.
+    required: false
+    default: ''
+  remote-fetch-allowlist-json:
+    description: Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS).
+    required: false
+    default: ''
   output-dir:
     description: Directory under the repository root where generated specs are written.
     required: false

@@ -72,7 +72,7 @@ For EU Postman data residency, set `postman-region: eu` on both the service-toke
 
 ### Zero-config, region only
 
-Providers are probed against your IAM permissions; anything your role cannot read is silently skipped.
+Providers are probed against your IAM permissions; anything your role cannot read is skipped for resolution and recorded as a typed probe denial in provenance.
 
 ```yaml
 - id: resolve
@@ -210,6 +210,11 @@ CLI environment-variable outputs are documented in [docs/providers.md](docs/prov
 | `aws-region` | AWS region used to resolve API Gateway, AppSync, SNS, EventBridge, Lambda, and other discovery providers. | yes | n/a |
 | `gateway-id` | Optional known API Gateway ID for this service. Use this when you want to bypass broader account discovery. | no | n/a |
 | `stage` | Optional API Gateway stage override (for example prod or staging). | no | n/a |
+| `expected-account-id` | Optional AWS account ID that must match sts:GetCallerIdentity before export. Mismatch fails closed with a sanitized error. | no | n/a |
+| `expected-partition` | Optional AWS partition (aws, aws-us-gov, or aws-cn) that must match the caller identity ARN before export. Mismatch fails closed with a sanitized error. | no | n/a |
+| `spec-path` | Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection. | no | n/a |
+| `service-root` | Optional monorepo service root relative to repo-root. Scopes Backstage entities and repository contract inventory to that directory. | no | n/a |
+| `remote-fetch-allowlist-json` | Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS). | no | n/a |
 | `output-dir` | Directory under the repository root where generated specs are written. | no | `discovered-specs` |
 | `postman-api-key` | Optional service-account PMAK used to mint or re-mint a postman-access-token for telemetry enrichment (account_type). Not used for any AWS or Postman asset operation. | no | n/a |
 | `postman-access-token` | Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. When omitted, postman-api-key alone can mint one for the same purpose. Not used for any AWS or Postman asset operation. | no | n/a |
@@ -268,7 +273,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | Verified Permissions schemas | Cedar schema metadata | IAM probe |
 | Step Functions ASL | State machine definitions | IAM probe |
 
-Each provider is probed at startup; providers your role cannot read are silently skipped. Per-provider artifacts, OpenAPI derivation behavior, output filenames, and IAM policies are detailed in [docs/providers.md](docs/providers.md).
+Each provider is probed at startup; providers your role cannot read are skipped for resolution and recorded in `providerProbes`. Remote spec URLs are deny-by-default unless `remote-fetch-allowlist-json` exactly allowlists them. Per-provider artifacts, OpenAPI derivation, stage/tag contracts, and IAM policies are detailed in [docs/providers.md](docs/providers.md). The enforceable support matrix is [`validation/SUPPORT_LEDGER.md`](validation/SUPPORT_LEDGER.md).
 
 ## How it works
 
@@ -281,7 +286,7 @@ flowchart TB
     EXPORT --> OUT["spec-path / spec-url outputs<br/>feed onboarding or bootstrap"]
 ```
 
-At startup the action validates credentials with `sts:GetCallerIdentity`, probes each provider with a lightweight IAM read, and scans bounded IaC, workflow, and config files for service signals. Candidates are scored by confidence; the best match is exported to `output-dir`, alongside an `openapi.derived.json` sidecar when the artifact can be represented as OpenAPI. Progressive narrowing keeps broad accounts tractable: IaC fingerprints, CloudFormation stack correlation, `postman:repo` tags, and naming heuristics run before any full enumeration. When no direct repository spec exists, local CDK/SAM build artifacts ('cdk.out/*.template.json', '.aws-sam/build/template.yaml') are inspected for inline OpenAPI documents before remote providers. Native REST exports are additively enriched with existing API Gateway Models and RequestValidators. Ambiguous runs emit ranked candidates in 'candidates-json' and a GitHub Step Summary. Full details, including candidate scoring, stage auto-selection, Backstage and SSM conventions, CI auto-detection, OpenAPI normalization, IAM policies, and troubleshooting, live in [docs/providers.md](docs/providers.md).
+At startup the action validates credentials with `sts:GetCallerIdentity` (and optional `expected-account-id` / `expected-partition` fail-closed checks), probes each provider with a lightweight IAM read, and scans bounded IaC, workflow, and config files for service signals. Authored repository contracts (including JSON Schema, Avro, Smithy project closures, and GraphQL groups) win when unambiguous; use `spec-path` or `service-root` for monorepos. Exact repository tag correlation prefers `postman:repo`, then the customer `GithubOrg`+`GithubRepo`, before naming heuristics. Static IaC extraction never executes build tools. Remote fetches are deny-by-default. Stage selection is evidence-safe and records `deployed-stage` versus `latest-configuration`. Ambiguous runs emit ranked `candidates-json` / `manual-review` rather than silent first-wins. Full details live in [docs/providers.md](docs/providers.md); coverage is enforced by [validation/SUPPORT_LEDGER.md](validation/SUPPORT_LEDGER.md).
 
 SNS is handled as a contract resolver, since SNS has no native exportable spec. Contracts resolve through a 9-level precedence chain (repo-local AsyncAPI down to manual review), with subscription-aware enrichment and metadata/webhook sidecars. See [docs/sns-contract-resolution.md](docs/sns-contract-resolution.md).
 

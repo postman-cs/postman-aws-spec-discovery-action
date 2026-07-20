@@ -2,9 +2,11 @@
 /* global console, process */
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { execFile } from 'node:child_process';
 import { Buffer } from 'node:buffer';
 import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { TextDecoder } from 'node:util';
 import { parse as parseYaml } from 'yaml';
@@ -51,6 +53,8 @@ import {
 } from '@aws-sdk/client-pipes';
 import {
   ApiGatewayV2Client,
+  CreateRouteCommand,
+  DeleteRouteCommand,
   ExportApiCommand,
   GetApiCommand,
   GetAuthorizersCommand,
@@ -72,13 +76,14 @@ import {
   DescribeStateMachineCommand,
   SFNClient
 } from '@aws-sdk/client-sfn';
-import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import { STSClient, AssumeRoleCommand, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import {
   GetPolicyStoreCommand,
   GetSchemaCommand,
   VerifiedPermissionsClient
 } from '@aws-sdk/client-verifiedpermissions';
 import { updateEvidenceReadmeSection } from './lib/evidence-readme.mjs';
+import { buildLiveRequiredMatrix, renderLiveRequiredMatrixMarkdown } from './lib/live-required-matrix.mjs';
 
 const repoRoot = process.cwd();
 
@@ -91,6 +96,22 @@ function arg(name, fallback) {
 }
 
 const manifestPath = arg('manifest', 'validation/evidence/live-resource-manifest.local.json');
+
+if (process.argv.includes('--emit-required-only')) {
+  const matrix = await buildLiveRequiredMatrix(repoRoot);
+  const capturedAt = new Date().toISOString();
+  const requiredSummary = renderLiveRequiredMatrixMarkdown(matrix, { capturedAt });
+  await updateEvidenceReadmeSection(arg('summary', 'validation/evidence/README.md'), 'live-required-matrix', requiredSummary);
+  await mkdir(path.dirname(arg('evidence-json', 'validation/evidence/live-aws-surfaces.local.json')), { recursive: true });
+  await writeFile(
+    path.join(repoRoot, 'validation/evidence/live-required-matrix.local.json'),
+    `${JSON.stringify({ capturedAt, matrix, mode: 'emit-required-only' }, null, 2)}\n`,
+    'utf8'
+  );
+  console.log(JSON.stringify({ status: 'ok', mode: 'emit-required-only', cases: matrix.length }, null, 2));
+  process.exit(0);
+}
+
 const evidenceJsonPath = arg('evidence-json', 'validation/evidence/live-aws-surfaces.local.json');
 const summaryPath = arg('summary', 'validation/evidence/README.md');
 const region = arg('region', 'us-east-1');
@@ -122,6 +143,7 @@ const {
 } = await import(distEntry);
 const manifest = JSON.parse(await readFile(path.join(repoRoot, manifestPath), 'utf8'));
 const outputs = manifest.outputs ?? {};
+const temporaryCredentialValues = new Set();
 
 class TargetedApiGatewayClient {
   constructor(targetRegion) {
@@ -1339,7 +1361,10 @@ async function runRuntimeProviderCase(testCase) {
       INPUT_PREFLIGHT_CHECKS: 'false',
       INPUT_REQUEST_TIMEOUT_MS: '10000',
       INPUT_MAX_ATTEMPTS: '2',
-      INPUT_MAX_CANDIDATES: '5'
+      INPUT_MAX_CANDIDATES: '5',
+      INPUT_REMOTE_FETCH_ALLOWLIST_JSON: testCase.remoteFetchAllowlist
+        ? JSON.stringify(testCase.remoteFetchAllowlist)
+        : undefined
     });
     const result = await execute(inputs, {
       core: quietCore,
@@ -1537,6 +1562,10 @@ const providerCases = [
     name: 'ssm-url-registry',
     expectedServiceName: 'spec-discovery-validation-url-topic',
     providerTypes: ['ssm'],
+    remoteFetchAllowlist: [
+      { hostname: 'json.schemastore.org', pathPrefix: '/package' },
+      { hostname: 'www.schemastore.org', pathPrefix: '/package' }
+    ],
     expect: { status: 'resolved', sourceType: 'ssm-registry', providerType: 'ssm', specFormat: 'json-schema' },
     oasDerivation: true
   },
@@ -1709,12 +1738,433 @@ async function mapWithConcurrency(items, limit, fn) {
   return results;
 }
 
+const RESULT_NAME_TO_REQUIRED_IDS = {
+  'api-gateway-rest': ['api-gateway-rest-native'],
+  'api-gateway-rest-fallback': ['api-gateway-rest-fallback'],
+  'api-gateway-http': ['api-gateway-http-deployed-stage'],
+  'api-gateway-websocket': ['api-gateway-websocket-partial-control-plane'],
+  'github-org-repo-tag-zero-config': ['github-org-repo-tag-zero-config'],
+  'github-org-repo-multi-environment-ambiguity': ['github-org-repo-multi-environment-ambiguity'],
+  'api-gateway-http-latest-configuration-divergence': ['api-gateway-http-latest-configuration-divergence'],
+  'appsync-merged-associations': ['appsync-merged-associations'],
+  'expected-identity-mismatch': ['expected-identity-mismatch'],
+  'provider-denial-typed': ['provider-denial-typed']
+};
+
+const EXISTING_PROVIDER_CASE_NAMES = new Set([
+  'appsync',
+  'appsync-events',
+  'eventbridge-schemas',
+  'eventbridge-rule',
+  'eventbridge-pipe',
+  'eventbridge-api-destination',
+  'cloudformation-embedded',
+  'glue-schema',
+  'ssm-registry',
+  'sns-ssm-content',
+  'sns-webhook-sidecar',
+  'lambda-url',
+  'lambda-event-source',
+  'bedrock-action-group',
+  'alb-listener-rule',
+  'verified-permissions',
+  'step-functions'
+]);
+
+function safeError(error) {
+  return String(error?.name ?? 'Error').replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 80) || 'Error';
+}
+
+function safeCaseFailure(name, check, elapsedMs = 0) {
+  return {
+    name,
+    passed: false,
+    expected: 'required live boundary',
+    resolution: { status: 'failed' },
+    outputs: {},
+    artifactChecks: [{ name: check, passed: false }],
+    elapsedMs,
+    runner: 'built-cli'
+  };
+}
+
+function parseCliJson(stdout) {
+  const lines = stdout.split('\n').map((line) => line.trim()).filter(Boolean);
+  for (const line of [...lines].reverse()) {
+    try { return JSON.parse(line); } catch { continue; }
+  }
+  try { return JSON.parse(stdout); } catch { return undefined; }
+}
+
+async function runBuiltCli(workspace, {
+  repository = 'postman-cs/spec-discovery-validation',
+  inputs = {},
+  files = {}
+} = {}) {
+  const invocationId = randomUUID();
+  const outputDir = `discovered-specs-${invocationId}`;
+  const resultJsonName = `.result-${invocationId}.json`;
+  const resultJsonPath = path.join(workspace, resultJsonName);
+  await Promise.all(Object.entries(files).map(async ([relativePath, content]) => {
+    const filePath = path.join(workspace, relativePath);
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, content, 'utf8');
+  }));
+  const env = {
+    ...process.env,
+    POSTMAN_ACTIONS_TELEMETRY: 'off',
+    DO_NOT_TRACK: '1',
+    GITHUB_REPOSITORY: repository,
+    INPUT_AWS_REGION: region,
+    INPUT_REPO_ROOT: workspace,
+    INPUT_OUTPUT_DIR: outputDir,
+    INPUT_PREFLIGHT_CHECKS: 'true',
+    INPUT_REQUEST_TIMEOUT_MS: '15000',
+    INPUT_MAX_ATTEMPTS: '2',
+    ...Object.fromEntries(Object.entries(inputs).map(([key, value]) => [`INPUT_${key}`, String(value)]))
+  };
+  const child = await new Promise((resolve) => {
+    execFile(process.execPath, [cliPath, '--result-json', resultJsonName], {
+      cwd: workspace,
+      env,
+      encoding: 'utf8',
+      maxBuffer: 10 * 1024 * 1024
+    }, (error, stdout = '', stderr = '') => resolve({
+      exitCode: error?.code ?? 0,
+      stdout,
+      stderr,
+      parsed: parseCliJson(stdout)
+    }));
+  });
+  const artifact = await readFile(resultJsonPath, 'utf8').then(JSON.parse).catch(() => undefined);
+  const result = artifact ?? child.parsed?.result ?? child.parsed;
+  return {
+    child: { exitCode: child.exitCode, stdout: child.stdout, stderr: child.stderr },
+    result: result && typeof result === 'object' ? result : {},
+    outputDir,
+    outputPath: path.join(workspace, outputDir),
+    resultJsonPath
+  };
+}
+
+function cliResultChecks(result, expected = {}, { requireProvenance = true } = {}) {
+  const resolution = result.resolution ?? {};
+  return [
+    { name: 'CLI emits structured result JSON', passed: Object.keys(result).length > 0 },
+    { name: 'CLI emits structured outputs', passed: Boolean(result.outputs && typeof result.outputs === 'object') },
+    ...(requireProvenance ? [{ name: 'CLI emits resolution provenance', passed: Boolean(resolution.provenance && typeof resolution.provenance === 'object') }] : []),
+    ...Object.entries(expected).map(([key, value]) => ({
+      name: `resolution ${key} matches expected value`,
+      passed: (resolution[key] ?? result.outputs?.[key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)]) === value
+    }))
+  ];
+}
+
+async function withAssumedRole(roleArn, fn) {
+  const previous = Object.fromEntries([
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_SESSION_TOKEN',
+    'AWS_PROFILE',
+    'AWS_DEFAULT_PROFILE'
+  ].map((key) => [key, process.env[key]]));
+  try {
+    const credentials = (await new STSClient({ region }).send(new AssumeRoleCommand({
+      RoleArn: roleArn,
+      RoleSessionName: `spec-discovery-validation-${randomUUID().slice(0, 12)}`
+    }))).Credentials;
+    if (!credentials?.AccessKeyId || !credentials.SecretAccessKey || !credentials.SessionToken) throw new Error('AssumeRoleCredentialsMissing');
+    temporaryCredentialValues.add(credentials.AccessKeyId);
+    temporaryCredentialValues.add(credentials.SecretAccessKey);
+    temporaryCredentialValues.add(credentials.SessionToken);
+    delete process.env.AWS_PROFILE;
+    delete process.env.AWS_DEFAULT_PROFILE;
+    process.env.AWS_ACCESS_KEY_ID = credentials.AccessKeyId;
+    process.env.AWS_SECRET_ACCESS_KEY = credentials.SecretAccessKey;
+    process.env.AWS_SESSION_TOKEN = credentials.SessionToken;
+    return await fn();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+}
+
+async function runOptionalRequiredCase(def) {
+  const caseStartedAt = Date.now();
+  const workspace = await mkdtemp(path.join(os.tmpdir(), `spec-discovery-live-${def.id}-`));
+  try {
+    return await def.run(workspace);
+  } catch (error) {
+    return {
+      name: def.id,
+      passed: false,
+      skipped: false,
+      expected: def.description,
+      resolution: { status: 'error' },
+      outputs: {},
+      artifactChecks: [{ name: `required case threw: ${safeError(error)}`, passed: false }],
+      elapsedMs: Date.now() - caseStartedAt,
+      runner: 'required-boundary'
+    };
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+}
+
+function missingPrerequisite(id, name) {
+  return safeCaseFailure(id, `missing prerequisite: ${name}`);
+}
+
+function childReceipt(child) {
+  return { exitCode: child.exitCode, stdout: child.stdout, stderr: child.stderr };
+}
+
+async function caseWorkspace(workspace, name) {
+  const child = path.join(workspace, name);
+  await mkdir(child, { recursive: true });
+  return child;
+}
+
+function resultRecord(name, expected, startedAt, checks, result = {}, outputs = {}, rawBuiltCli) {
+  return {
+    name,
+    passed: checks.every((check) => check.passed),
+    expected,
+    resolution: sanitizeDeep(result),
+    outputs: sanitizeDeep(outputs),
+    artifactChecks: checks,
+    elapsedMs: Date.now() - startedAt,
+    runner: 'built-cli',
+    rawBuiltCli
+  };
+}
+
+async function runTagContract(workspace, name, repository, gatewayType, contract) {
+  const childWorkspace = await caseWorkspace(workspace, name);
+  const run = await runBuiltCli(childWorkspace, { repository });
+  const resolution = run.result.resolution ?? {};
+  return {
+    run,
+    checks: [
+      ...cliResultChecks(run.result, { status: 'resolved', gatewayType }),
+      {
+        name: `${name} uses exact matched tag contract`,
+        passed: (resolution.evidence ?? []).includes(`Matched tag contract ${contract}`)
+      },
+      { name: `${name} exits successfully`, passed: run.child.exitCode === 0 }
+    ]
+  };
+}
+
+async function runHttpDivergence(workspace) {
+  const apiId = outputs.HttpApiId;
+  if (!apiId) return missingPrerequisite('api-gateway-http-latest-configuration-divergence', 'HttpApiId');
+  const started = Date.now();
+  const marker = `/validation-${randomUUID()}`;
+  const client = new ApiGatewayV2Client({ region, maxAttempts: 2 });
+  let routeId;
+  let record;
+  let cleanupError;
+  try {
+    const created = await client.send(new CreateRouteCommand({ ApiId: apiId, RouteKey: `GET ${marker}` }));
+    routeId = created.RouteId;
+    const stageWorkspace = await caseWorkspace(workspace, 'stage');
+    const latestWorkspace = await caseWorkspace(workspace, 'latest');
+    const stage = await runBuiltCli(stageWorkspace, {
+      inputs: { GATEWAY_ID: apiId, STAGE: '$default' }
+    });
+    const latest = await runBuiltCli(latestWorkspace, {
+      inputs: { GATEWAY_ID: apiId }
+    });
+    const stagePath = stage.result.resolution?.specPath;
+    const latestPath = latest.result.resolution?.specPath;
+    const stageSpec = stagePath ? await readFile(path.join(stageWorkspace, stagePath), 'utf8').catch(() => '') : '';
+    const latestSpec = latestPath ? await readFile(path.join(latestWorkspace, latestPath), 'utf8').catch(() => '') : '';
+    const checks = [
+      ...cliResultChecks(stage.result, { status: 'resolved' }),
+      ...cliResultChecks(latest.result, { status: 'resolved' }),
+      { name: 'stage export uses deployed-stage', passed: stage.result.resolution?.provenance?.configurationMode === 'deployed-stage' },
+      { name: 'no-stage export uses latest-configuration', passed: latest.result.resolution?.provenance?.configurationMode === 'latest-configuration' },
+      { name: 'marker absent from deployed stage artifact', passed: !stageSpec.includes(marker) },
+      { name: 'marker present in latest artifact', passed: latestSpec.includes(marker) },
+      { name: 'both CLI runs exit successfully', passed: stage.child.exitCode === 0 && latest.child.exitCode === 0 }
+    ];
+    record = resultRecord('api-gateway-http-latest-configuration-divergence', 'deployed stage differs from latest configuration', started, checks, { stage: stage.result.resolution, latest: latest.result.resolution }, {}, { stage: childReceipt(stage.child), latest: childReceipt(latest.child) });
+  } catch (error) {
+    record = safeCaseFailure('api-gateway-http-latest-configuration-divergence', safeError(error), Date.now() - started);
+  } finally {
+    if (routeId) {
+      try {
+        await client.send(new DeleteRouteCommand({ ApiId: apiId, RouteId: routeId }));
+        const remaining = await client.send(new GetRoutesCommand({ ApiId: apiId }));
+        if ((remaining.Items ?? []).some((route) => route.RouteId === routeId)) cleanupError = 'temporary route remained';
+      } catch (error) {
+        cleanupError = safeError(error);
+      }
+    }
+  }
+  if (cleanupError) {
+    record.passed = false;
+    record.artifactChecks.push({ name: `temporary route cleanup: ${cleanupError}`, passed: false });
+  }
+  return record;
+}
+
+const requiredBoundaryDefs = [
+  {
+    id: 'github-org-repo-tag-zero-config',
+    description: 'all canonical and GithubOrg/GithubRepo tag-only gateway resolutions',
+    async run(workspace) {
+      const started = Date.now();
+      const cases = [
+        ['canonical', 'postman-cs/spec-discovery-validation-canonical', 'REST', 'postman:repo'],
+        ['github-org-repo-rest', 'postman-cs/spec-discovery-validation-github-org-repo-rest', 'REST', 'GithubOrg+GithubRepo'],
+        ['github-org-repo-http', 'postman-cs/spec-discovery-validation-github-org-repo-http', 'HTTP', 'GithubOrg+GithubRepo'],
+        ['github-org-repo-websocket', 'postman-cs/spec-discovery-validation-github-org-repo-websocket', 'WEBSOCKET', 'GithubOrg+GithubRepo']
+      ];
+      const receipts = [];
+      const checks = [];
+      for (const [name, repository, type, contract] of cases) {
+        const item = await runTagContract(workspace, name, repository, type, contract);
+        receipts.push(childReceipt(item.run.child));
+        checks.push(...item.checks);
+      }
+      return resultRecord(this.id, this.description, started, checks, {}, {}, receipts);
+    }
+  },
+  {
+    id: 'github-org-repo-multi-environment-ambiguity',
+    description: 'exact the customer duplicates remain unresolved manual review',
+    async run(workspace) {
+      const started = Date.now();
+      const run = await runBuiltCli(await caseWorkspace(workspace, 'multi-env'), {
+        repository: 'postman-cs/spec-discovery-validation-multi-env'
+      });
+      const resolution = run.result.resolution ?? {};
+      const provenanceOrEvidence = JSON.stringify([resolution.provenance, resolution.evidence]);
+      const checks = [
+        ...cliResultChecks(run.result, {}, { requireProvenance: false }),
+        { name: 'resolution is unresolved', passed: resolution.status === 'unresolved' },
+        { name: 'source type is manual-review', passed: resolution.sourceType === 'manual-review' },
+        { name: 'at least two ranked candidates', passed: (resolution.rankedCandidates ?? []).length >= 2 },
+        { name: 'exact GithubOrg/GithubRepo tag contract is evidenced', passed: provenanceOrEvidence.includes('GithubOrg+GithubRepo') },
+        { name: 'CLI exits successfully', passed: run.child.exitCode === 0 }
+      ];
+      return resultRecord(this.id, this.description, started, checks, resolution, run.result.outputs, childReceipt(run.child));
+    }
+  },
+  { id: 'api-gateway-http-latest-configuration-divergence', description: 'HTTP route divergence with guaranteed cleanup', run: runHttpDivergence },
+  {
+    id: 'built-cli-boundary-matrix',
+    description: 'built CLI local, monorepo, and Backstage remote receipts',
+    async run(workspace) {
+      const started = Date.now();
+      if (!manifest.accountId || !manifest.partition) return missingPrerequisite(this.id, 'manifest accountId/partition');
+      const pins = { EXPECTED_ACCOUNT_ID: manifest.accountId, EXPECTED_PARTITION: manifest.partition };
+      const openapi = 'openapi: 3.0.3\ninfo: { title: validation, version: "1" }\npaths: {}\n';
+      const local = await runBuiltCli(await caseWorkspace(workspace, 'spec-path'), { inputs: { ...pins, SPEC_PATH: 'specs/local.yaml' }, files: { 'specs/local.yaml': openapi } });
+      const monorepo = await runBuiltCli(await caseWorkspace(workspace, 'service-root'), { inputs: { ...pins, SERVICE_ROOT: 'services/orders' }, files: { 'services/orders/openapi.yaml': openapi } });
+      const remote = await runBuiltCli(await caseWorkspace(workspace, 'backstage-remote'), { inputs: { ...pins, REMOTE_FETCH_ALLOWLIST_JSON: JSON.stringify([{ hostname: 'gist.githubusercontent.com', pathPrefix: '/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/' }]) }, files: { 'catalog-info.yaml': 'apiVersion: backstage.io/v1alpha1\nkind: API\nmetadata:\n  name: validation-remote-api\nspec:\n  type: openapi\n  lifecycle: production\n  owner: platform\n  definition:\n    $text: https://gist.githubusercontent.com/jaredboynton/a839de57db2c3c90b8f75906c56b00ee/raw/openapi.yaml\n' } });
+      const identityChecks = (run, label) => [
+        ...cliResultChecks(run.result, {}, { requireProvenance: false }),
+        { name: `${label} exits successfully`, passed: run.child.exitCode === 0 },
+        { name: `${label} correct expected account+partition pins accepted by live preflight`, passed: run.child.exitCode === 0 }
+      ];
+      const checks = [
+        ...identityChecks(local, 'spec-path'),
+        { name: 'spec-path selects specs/local.yaml', passed: String(local.result.resolution?.specPath ?? '').endsWith('specs/local.yaml') },
+        ...identityChecks(monorepo, 'service-root'),
+        { name: 'service-root selects orders OpenAPI', passed: String(monorepo.result.resolution?.specPath ?? '').includes('services/orders/') },
+        { name: 'service-root is evidenced', passed: JSON.stringify([monorepo.result.resolution?.provenance, monorepo.result.resolution?.evidence]).includes('services/orders') },
+        ...identityChecks(remote, 'Backstage remote'),
+        { name: 'remote source is repo OpenAPI', passed: remote.result.resolution?.sourceType === 'repo-spec' && remote.result.resolution?.specFormat?.includes('openapi') },
+        { name: 'Backstage remote catalog is evidenced', passed: JSON.stringify([remote.result.resolution?.provenance, remote.result.resolution?.evidence]).toLowerCase().includes('backstage') }
+      ];
+      return resultRecord(this.id, this.description, started, checks, {}, {}, [childReceipt(local.child), childReceipt(monorepo.child), childReceipt(remote.child)]);
+    }
+  },
+  {
+    id: 'appsync-merged-associations',
+    description: 'merged AppSync associations survive association IAM denial',
+    async run(workspace) {
+      const role = outputs.AppSyncAssociationDenialRoleArn;
+      if (!outputs.MergedGraphqlApiId || !role) return missingPrerequisite(this.id, !outputs.MergedGraphqlApiId ? 'MergedGraphqlApiId' : 'AppSyncAssociationDenialRoleArn');
+      const started = Date.now();
+      const { AppSyncSdkClient, AppSyncProvider } = await import(distEntry);
+      const inputs = resolveInputs({ INPUT_AWS_REGION: region, INPUT_REPO_ROOT: workspace, INPUT_OUTPUT_DIR: 'discovered-specs', INPUT_EXPECTED_SERVICE_NAME: 'spec-discovery-validation-merged', INPUT_PREFLIGHT_CHECKS: 'true' });
+      const executeOne = async () => {
+        const client = new AppSyncSdkClient(region, { sourceAssociationPageSize: 1 });
+        let schemaCalls = 0;
+        const wrapped = new Proxy(client, { get(target, property, receiver) { const value = Reflect.get(target, property, receiver); if (property === 'getSchema') return async (...args) => { schemaCalls += 1; return await value.apply(target, args); }; return typeof value === 'function' ? value.bind(target) : value; } });
+        const provider = new AppSyncProvider(wrapped);
+        const result = await execute(inputs, { core: quietCore, aws: new TargetedApiGatewayClient(region), writeSpecFile: defaultWriteSpecFile, providerRegistry: { ...emptyProviderRegistry, all: () => [provider], get: () => provider, probeAvailable: async () => [provider] } });
+        return { result, schemaCalls };
+      };
+      const normal = await executeOne();
+      const denied = await withAssumedRole(role, executeOne);
+      const associations = normal.result.resolution?.provenance?.appsyncSourceAssociations ?? [];
+      const checks = [
+        { name: 'normal merged SDL resolves', passed: normal.result.resolution?.status === 'resolved' },
+        { name: 'normal schema exported exactly once', passed: normal.schemaCalls === 1 },
+        { name: 'forced pages gather two associations', passed: associations.length >= 2 },
+        { name: 'normal association evidence complete', passed: normal.result.resolution?.provenance?.appsyncAssociationEvidence === 'complete' },
+        { name: 'denied merged SDL resolves', passed: denied.result.resolution?.status === 'resolved' },
+        { name: 'denied schema exported exactly once', passed: denied.schemaCalls === 1 },
+        { name: 'denied association evidence typed', passed: denied.result.resolution?.provenance?.appsyncAssociationEvidence === 'denied' }
+      ];
+      return resultRecord(this.id, this.description, started, checks, { normal: normal.result.resolution, denied: denied.result.resolution });
+    }
+  },
+  {
+    id: 'provider-denial-typed',
+    description: 'AppSync IAM skip does not suppress API Gateway',
+    async run(workspace) {
+      if (!outputs.ProviderDenialRoleArn || !outputs.RestApiId) return missingPrerequisite(this.id, !outputs.ProviderDenialRoleArn ? 'ProviderDenialRoleArn' : 'RestApiId');
+      const started = Date.now();
+      const childWorkspace = await caseWorkspace(workspace, 'provider-denial');
+      const run = await withAssumedRole(outputs.ProviderDenialRoleArn, () => runBuiltCli(childWorkspace, { inputs: { GATEWAY_ID: outputs.RestApiId, PREFLIGHT_PERMISSION_PROBE: 'true' } }));
+      const resolution = run.result.resolution ?? {};
+      const probes = resolution.providerProbes ?? resolution.provenance?.providerProbes ?? [];
+      const checks = [
+        ...cliResultChecks(run.result, { status: 'resolved', providerType: 'api-gateway' }),
+        { name: 'AppSync IAM probe skipped', passed: probes.some((probe) => probe.provider === 'appsync' && probe.status === 'skipped' && probe.reason === 'iam') },
+        { name: 'API Gateway probe available', passed: probes.some((probe) => probe.provider === 'api-gateway' && probe.status === 'available') },
+        { name: 'CLI exits successfully', passed: run.child.exitCode === 0 }
+      ];
+      return resultRecord(this.id, this.description, started, checks, resolution, run.result.outputs, childReceipt(run.child));
+    }
+  },
+  {
+    id: 'expected-identity-mismatch',
+    description: 'wrong expected identity fails before export',
+    async run(workspace) {
+      const started = Date.now();
+      const run = await runBuiltCli(await caseWorkspace(workspace, 'identity-mismatch'), { inputs: { EXPECTED_ACCOUNT_ID: '000000000000', EXPECTED_PARTITION: manifest.partition === 'aws' ? 'aws-us-gov' : 'aws' } });
+      const text = `${run.child.stdout}${run.child.stderr}`;
+      const sanitizedError = !/\b\d{12}\b|AKIA[0-9A-Z]{16}|arn:aws/i.test(text);
+      const checks = [
+        { name: 'CLI exits nonzero', passed: run.child.exitCode !== 0 },
+        { name: 'no result artifact emitted', passed: !run.result.resolution },
+        { name: 'no spec artifact emitted', passed: !existsSync(run.outputPath) },
+        { name: 'captured error is sanitized', passed: sanitizedError }
+      ];
+      return resultRecord(this.id, this.description, started, checks, { status: 'failed-closed' }, {}, { exitCode: run.child.exitCode, sanitizedError });
+    }
+  }
+];
+
 const startedAt = Date.now();
 const allCases = [
   ...gatewayCases.map((testCase) => ({ testCase, runner: testCase.runner ?? runRuntimeGatewayCase })),
   ...providerCases.map((testCase) => ({ testCase, runner: runRuntimeProviderCase }))
 ];
 const results = await mapWithConcurrency(allCases, 5, ({ testCase, runner }) => runner(testCase));
+const requiredBoundaryResults = [];
+for (const def of requiredBoundaryDefs) {
+  requiredBoundaryResults.push(await runOptionalRequiredCase(def));
+}
+results.push(...requiredBoundaryResults);
 
 const failed = results.filter((result) => !result.passed);
 const routeOnlyResult = results.find((result) => result.name === 'api-gateway-rest');
@@ -1732,8 +2182,35 @@ await writeFile(evidenceJsonPath, `${JSON.stringify({
   elapsedMs: Date.now() - startedAt,
   stackName: manifest.stackName,
   region,
-  results
+  results,
+  requiredBoundarySkipped: 0
 }, null, 2)}\n`, 'utf8');
+
+const builtCliResults = results.filter((result) => result.runner === 'built-cli');
+const builtCliReceipt = JSON.stringify({ capturedAt: new Date().toISOString(), results: builtCliResults });
+for (const key of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']) {
+  const credential = process.env[key];
+  if (credential && builtCliReceipt.includes(credential)) {
+    throw new Error('BuiltCliReceiptCredentialLeak');
+  }
+}
+for (const credential of temporaryCredentialValues) {
+  if (builtCliReceipt.includes(credential)) throw new Error('BuiltCliReceiptCredentialLeak');
+}
+await writeFile(
+  path.join(repoRoot, 'validation/evidence/built-cli-live.local.json'),
+  `${JSON.stringify({ capturedAt: new Date().toISOString(), results: builtCliResults }, null, 2)}\n`,
+  'utf8'
+);
+await updateEvidenceReadmeSection(summaryPath, 'built-cli-live', [
+  '## Built CLI Live Evidence',
+  '',
+  `- Captured at: ${new Date().toISOString()}`,
+  `- Built CLI cases: ${builtCliResults.length}`,
+  `- Passed: ${builtCliResults.filter((result) => result.passed).length}`,
+  `- Failed: ${builtCliResults.filter((result) => !result.passed).length}`,
+  '- Raw CLI stdout/stderr and detailed resolution receipts are stored only in `built-cli-live.local.json`.'
+].join('\n'));
 
 const summary = [
   '## Live AWS Surface Evidence',
@@ -1745,6 +2222,7 @@ const summary = [
   `- Cases: ${results.length}`,
   `- Passed: ${results.length - failed.length}`,
   `- Failed: ${failed.length}`,
+  '- Required-boundary skipped: 0',
   `- Route-only REST checks: ${routeOnlyChecks.filter((check) => check.passed).length}/${routeOnlyChecks.length} passed (export content omission, audit, warning, live JSON response, Content-Length)`,
   `- Contract-control wire checks: ${liveControlChecks.filter((check) => check.passed).length}/${liveControlChecks.length} passed (clean 204, managed-service normalization, valid/invalid schema payloads, Content-Length)`,
   '',
@@ -1764,9 +2242,84 @@ const summary = [
 
 await updateEvidenceReadmeSection(summaryPath, 'live-aws-surfaces', summary);
 
+const currentRunResults = {};
+for (const result of results) {
+  const mappedIds = RESULT_NAME_TO_REQUIRED_IDS[result.name] ?? [result.name];
+  for (const id of mappedIds) {
+    currentRunResults[id] = {
+      status: result.passed ? 'passed' : 'failed',
+      evidence: `current live runner ${result.runner ?? 'runtime'}`
+    };
+  }
+}
+const providerResults = results.filter((result) => EXISTING_PROVIDER_CASE_NAMES.has(result.name));
+if (providerResults.length > 0) {
+  const allProvidersPassed = providerResults.every((result) => result.passed);
+  currentRunResults['all-existing-live-supported-providers'] = {
+    status: allProvidersPassed ? 'passed' : 'failed',
+    evidence: `current live refresh of ${providerResults.length} provider cases`
+  };
+}
+
+const requiredMatrix = await buildLiveRequiredMatrix(repoRoot, { currentRunResults });
+await updateEvidenceReadmeSection(
+  summaryPath,
+  'live-required-matrix',
+  renderLiveRequiredMatrixMarkdown(requiredMatrix, { capturedAt: new Date().toISOString() })
+);
+await writeFile(
+  path.join(repoRoot, 'validation/evidence/live-required-matrix.local.json'),
+  `${JSON.stringify({
+    capturedAt: new Date().toISOString(),
+    matrix: requiredMatrix,
+    skipped: 0
+  }, null, 2)}\n`,
+  'utf8'
+);
+
+const safeCaseRecords = results.map((result) => ({
+  name: result.name,
+  runner: result.runner,
+  passed: result.passed,
+  elapsedMs: result.elapsedMs,
+  artifactChecks: result.artifactChecks.map((check, index) => ({ name: `check-${index + 1}`, passed: check.passed }))
+}));
+const liveValidationSummary = {
+  schemaVersion: 1,
+  capturedAt: new Date().toISOString(),
+  stackAlias: 'spec-discovery-validation',
+  region,
+  stackStatus: /^[A-Z_]+$/.test(manifest.status ?? '') ? manifest.status : undefined,
+  counts: {
+    cases: safeCaseRecords.length,
+    passed: safeCaseRecords.filter((record) => record.passed).length,
+    failed: safeCaseRecords.filter((record) => !record.passed).length,
+    currentRunRequired: requiredMatrix.filter((row) => row.runClass === 'current-run').length,
+    historicalPreservedRequired: requiredMatrix.filter((row) => row.runClass === 'historical-preserved').length
+  },
+  cases: safeCaseRecords,
+  requiredCases: requiredMatrix.map(({ id, status, runClass, ledgerIds, evidence }) => ({ id, status, runClass, ledgerIds, evidence }))
+};
+const serializedLiveValidationSummary = JSON.stringify(liveValidationSummary);
+const forbiddenSummaryPatterns = [/\b\d{12}\b/, /arn:/i, /AKIA[0-9A-Z]{16}/, /(?:X-Amz-|Signature=|Credential=)/i, /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i];
+if (forbiddenSummaryPatterns.some((pattern) => pattern.test(serializedLiveValidationSummary)) || [...temporaryCredentialValues].some((credential) => serializedLiveValidationSummary.includes(credential))) {
+  throw new Error('LiveValidationSummaryUnsafe');
+}
+await writeFile(
+  path.join(repoRoot, 'validation/evidence/live-validation-summary.json'),
+  `${JSON.stringify(liveValidationSummary, null, 2)}\n`,
+  'utf8'
+);
+
 if (failed.length > 0) {
-  console.error(JSON.stringify({ failed }, null, 2));
+  console.error(`failed cases: ${failed.map((result) => result.name).join(', ')}`);
+  console.error(`failed checks: ${failed.flatMap((result) => result.artifactChecks.filter((check) => !check.passed).map((check) => `${result.name}:${check.name}`)).join(', ')}`);
   process.exitCode = 1;
 } else {
-  console.log(JSON.stringify({ status: 'ok', cases: results.length, elapsedMs: Date.now() - startedAt }, null, 2));
+  console.log(JSON.stringify({
+    status: 'ok',
+    cases: results.length,
+    requiredBoundarySkipped: 0,
+    elapsedMs: Date.now() - startedAt
+  }, null, 2));
 }

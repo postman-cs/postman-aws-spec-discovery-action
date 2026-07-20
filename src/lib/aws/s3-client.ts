@@ -1,6 +1,10 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+/**
+ * Exact-object S3 client used for trusted BodyS3Location / s3:// DefinitionUri refs.
+ * Callers must never enumerate buckets; only exact bucket/key/version triples are eligible.
+ */
 export interface S3SpecClient {
   getObject(bucket: string, key: string, versionId?: string): Promise<string>;
 }

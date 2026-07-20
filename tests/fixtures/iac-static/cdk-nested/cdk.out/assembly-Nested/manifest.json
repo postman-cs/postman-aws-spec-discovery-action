@@ -1,0 +1,11 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "ChildStack": {
+      "type": "aws:cloudformation:stack",
+      "properties": {
+        "templateFile": "ChildStack.template.json"
+      }
+    }
+  }
+}

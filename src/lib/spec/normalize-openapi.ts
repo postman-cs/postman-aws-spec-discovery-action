@@ -162,13 +162,36 @@ export function auditOpenApiContractCoverage(value: unknown): OpenApiContractAud
   return audit;
 }
 
-export function formatOpenApiContractAuditWarning(audit: OpenApiContractAudit): string | undefined {
+export type OpenApiContractProtocol = 'REST' | 'HTTP' | 'WEBSOCKET';
+
+export const AWS_WEBSOCKET_CONTRACT_PARTIAL = 'AWS_WEBSOCKET_CONTRACT_PARTIAL: Route and response metadata is preserved in '
+  + 'x-amazon-apigateway-* extensions; no HTTP response schema was invented.';
+
+/**
+ * Format a protocol-aware contract warning from an OpenAPI schema-coverage audit.
+ * WebSocket synthesized docs invent a contentless HTTP 200; emit a partial-contract
+ * notice instead of the HTTP-body incomplete warning.
+ */
+export function formatOpenApiContractAuditWarning(
+  audit: OpenApiContractAudit,
+  protocol: OpenApiContractProtocol = 'REST'
+): string | undefined {
   if (audit.status !== 'schema-incomplete') return undefined;
-  return 'AWS_OPENAPI_CONTRACT_INCOMPLETE: API Gateway export has '
-    + `${audit.responsesWithoutContent} response declaration(s) without content, `
-    + `${audit.responseMediaTypesWithoutSchema} response media declaration(s) without schema, and `
-    + `${audit.requestMediaTypesWithoutSchema} request media declaration(s) without schema. `
-    + 'Bootstrap keeps route and status checks but skips undocumented body assertions; define API Gateway models or enrich the OpenAPI before treating body-schema tests as strict CI gates.';
+  // Synthesized WebSocket responses invent a contentless HTTP 200; do not treat that
+  // as an HTTP body-schema gap. Emit a protocol-specific partial-contract notice instead.
+  if (protocol === 'WEBSOCKET') {
+    return AWS_WEBSOCKET_CONTRACT_PARTIAL;
+  }
+  const label = protocol === 'HTTP' ? 'HTTP' : 'REST';
+  const remediation = protocol === 'HTTP'
+    ? 'Author schemas in the source OpenAPI or enrich the export.'
+    : 'Bind API Gateway Models to method request/response models.';
+  return `AWS_OPENAPI_CONTRACT_INCOMPLETE: ${label} export remains schema-incomplete after deterministic enrichment: `
+    + `${audit.responsesWithoutContent} responses without content, `
+    + `${audit.responseMediaTypesWithoutSchema} response media without schema, `
+    + `${audit.requestMediaTypesWithoutSchema} request media without schema. `
+    + 'Route/status checks remain enabled; body assertions are skipped only for undocumented media. '
+    + remediation;
 }
 
 /**
@@ -182,7 +205,10 @@ export function formatOpenApiContractAuditWarning(audit: OpenApiContractAudit): 
  * runs in the export hot path and a broken spec is the bootstrap action's
  * problem to surface, not ours.
  */
-export function normalizeOpenApiYaml(content: string): NormalizeOpenApiResult {
+export function normalizeOpenApiYaml(
+  content: string,
+  options: { skipContractAudit?: boolean } = {}
+): NormalizeOpenApiResult {
   const passthrough: NormalizeOpenApiResult = { content, renamed: [], normalized: false };
 
   let doc: Document;
@@ -242,7 +268,9 @@ export function normalizeOpenApiYaml(content: string): NormalizeOpenApiResult {
     }
   }
 
-  const openapiContractAudit = auditOpenApiContractCoverage(doc.toJS());
+  // WebSocket exports are synthesized control-plane descriptions, not HTTP-body
+  // contracts. Do not run the HTTP schema-coverage audit for those documents.
+  const openapiContractAudit = options.skipContractAudit ? undefined : auditOpenApiContractCoverage(doc.toJS());
   if (renamed.length === 0) {
     return { content, renamed: [], normalized: true, openapiContractAudit };
   }

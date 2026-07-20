@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "sources": ["model/core.smithy"],
+  "projections": {
+    "source": {},
+    "external": {
+      "imports": ["extra/addon.smithy"]
+    }
+  }
+}

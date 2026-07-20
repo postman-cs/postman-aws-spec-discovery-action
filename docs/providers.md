@@ -28,7 +28,7 @@ The action resolves the best available contract artifact first, then records whe
 | Verified Permissions schemas | Cedar schema metadata | OpenAPI 3.1 metadata document with no invented HTTP paths, live-validated against a policy store schema. | IAM probe |
 | Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata, live-validated against a Standard state machine. | IAM probe |
 
-Each provider is probed at startup. If your role lacks permission for a provider, it is silently skipped. No configuration needed.
+Each provider is probed at startup. Providers your role cannot read are skipped for resolution but recorded as typed probe results (`available` / `denied` / `error` / `timeout`) in `resolution-json` provenance (`providerProbes`). No extra provider configuration is required.
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root or bounded nested service directories and resolves API spec path or URL references automatically.
 
@@ -82,7 +82,7 @@ For each actual API Gateway export, the action records `openapiContractAudit` in
 }
 ```
 
-`AWS_OPENAPI_CONTRACT_INCOMPLETE` is advisory. Downstream bootstrap still enforces documented routes and status codes, but it does not invent empty-body or schema assertions where the export has no body contract. Define API Gateway models or enrich the source OpenAPI when request and response body schemas must be strict CI gates.
+`AWS_OPENAPI_CONTRACT_INCOMPLETE` is advisory and protocol-aware after deterministic enrichment. Downstream bootstrap still enforces documented routes and status codes, but it skips body assertions only for undocumented media. REST remediation: bind API Gateway Models to method request/response models. HTTP remediation: author schemas in the source OpenAPI or enrich the export. WebSocket exports emit `AWS_WEBSOCKET_CONTRACT_PARTIAL` instead — route/response metadata lives in `x-amazon-apigateway-*` extensions; no HTTP response schema is invented.
 
 This audit is independent of `derived-openapi-completeness`. Derived completeness describes how faithfully the selected artifact was represented as the canonical OpenAPI sidecar; it does not claim that the source API documented every request or response schema. Dry runs, non-OpenAPI payloads, and non-API-Gateway providers do not receive a guessed audit.
 
@@ -203,19 +203,21 @@ Full IAM policy (all providers):
 }
 ```
 
-You only need permissions for the providers you use. Providers you lack access to are silently skipped. SNS-specific permission notes live in [sns-contract-resolution.md](sns-contract-resolution.md).
+You only need permissions for the providers you use. Missing permissions produce typed denials in provenance rather than silent omission from evidence. SNS-specific permission notes live in [sns-contract-resolution.md](sns-contract-resolution.md).
 
 ## How auto-detection works
 
-**IAM probing**: At startup, the action probes each provider with a lightweight read call. If the call succeeds, that provider is included. If it fails (access denied, service not available), it is silently skipped.
+**IAM probing**: At startup, the action probes each provider with a lightweight read call. Successful probes are included. Access denied, errors, and timeouts are skipped for resolution and recorded in `providerProbes` (skipped providers are recorded as typed denials, not omitted from evidence).
 
-**Progressive narrowing**: When an AWS account has many API Gateway APIs, the action narrows candidates automatically instead of failing:
+**Exact repository correlation and progressive narrowing**: Exact tag correlation runs before heuristic selection at every account size:
 
-1. **IaC fingerprinting** -- extract gateway IDs from `template.yaml`, `serverless.yml`, and similar files already in the repo
-2. **CloudFormation stack correlation** -- find stacks named after the repo, extract API resource physical IDs
-3. **Tag-based pre-filtering** -- query the Resource Groups Tagging API for resources tagged `postman:repo`, `repository`, or similar
-4. **Naming heuristic** -- match the slugified repo name against API names
-5. **Full enumeration** -- only as a last resort, with soft truncation instead of hard failure
+1. **Exact `postman:repo=<owner>/<repo>`** -- canonical single-tag match
+2. **Exact GithubOrg/GithubRepo split tags** -- `GithubOrg=<owner>` AND `GithubRepo=<repo>` conjunction
+3. **IaC fingerprinting** -- extract gateway IDs from static CloudFormation/SAM, Serverless, Terraform, and related files
+4. **CloudFormation stack correlation** -- strongly correlated stacks and physical API IDs
+5. **Naming heuristic / bounded enumeration** -- ranked candidates for review only; never silent first-wins
+
+Multiple exact tag matches (for example per-environment duplicates) remain ambiguity-safe ranked `manual-review` unless explicit stage/environment/gateway evidence selects one.
 
 **Repository signals**: The action scans bounded IaC, workflow, and service config files for references to AWS services. Supported IaC frameworks include CloudFormation/SAM, Terraform, CDK, and Pulumi.
 
@@ -254,7 +256,7 @@ Additional signal sources:
 
 **Lambda Function URL behavior**: Lambda Function URLs do not have an AWS-native OpenAPI export. When a function URL is discovered, the action synthesizes an OpenAPI 3.0 YAML file with the function URL as the server, a catch-all `/{proxy}` path for common HTTP methods, an AWS SigV4 security scheme when `AuthType=AWS_IAM`, and `x-aws-*` extensions for the function ARN, auth type, invoke mode, and CORS config. In `resolve-one`, Lambda URL candidates are scored with other providers; API Gateway wins exact-confidence ties because it has a native export.
 
-**Existing specs**: The action checks known spec paths, then performs a bounded deterministic scan of common documentation and service roots before calling AWS. If a valid OpenAPI, Swagger, GraphQL, AsyncAPI, Postman collection, protobuf, or Smithy artifact is found, it is used as the primary artifact and `openapi.derived.json` is emitted when a derived OpenAPI representation is available.
+**Existing specs**: The action checks known spec paths, then performs a bounded deterministic scan of common documentation and service roots before calling AWS. If a valid OpenAPI, Swagger, GraphQL, AsyncAPI, Postman collection, JSON Schema, Avro, protobuf, or Smithy artifact is found, it is used as the primary artifact and `openapi.derived.json` is emitted when a derived OpenAPI representation is available. Smithy projects resolve a bounded local closure from `smithy-build.json` (sources/imports); the build JSON itself is never model source. Multi-file GraphQL is grouped by service root. Use `spec-path` or `service-root` to disambiguate monorepos.
 
 ```
 openapi.yaml          openapi.yml          openapi.json
@@ -297,19 +299,21 @@ The resolved service name follows this priority:
 3. `service-mapping-json` entry for the gateway ID (if provided)
 4. API Gateway name
 
-## Stage auto-selection
+## Stage precedence (evidence-safe)
 
-When no explicit `stage` input is provided, the action selects a stage automatically:
+When no explicit `stage` input is provided, stage selection is evidence-safe:
 
-1. If only one stage is deployed, it is used
-2. If multiple stages exist, the first match from this priority list is selected:
-   `prod` > `production` > `$default` > `main` > `staging` > `stage` > `dev` > `development`
-3. If no match is found, the result is `manual-review` with the available stages listed in evidence
-4. For HTTP APIs with no deployed stages, the latest API configuration is exported without a stage
+1. Explicit `stage` input
+2. Stage or deployment ID linked from trusted IaC/deployment evidence
+3. Exactly one deployed stage
+4. HTTP API `$default` only when it is the uniquely evidenced auto-deploy target
+5. Otherwise return all stages for ranked `manual-review`
+
+HTTP export without a stage is recorded as `provenance.configurationMode = latest-configuration`, which is distinct from deployed-stage truth (`deployed-stage`). WebSocket exports remain `partial-control-plane` unless AWS documents and live validation prove a faithful native export. Structured provenance also records partition, redacted account indicator, region, resource id/ARN, protocol, deployment id when exposed, source tier, and matched tag contract.
 
 ## Backstage catalog-info.yaml
 
-If a Backstage `catalog-info.yaml` (or `catalog-info.yml`) is present in the repo root or a bounded nested service/package/app directory with `kind: API` entities, the action resolves spec references automatically. Both simple string definitions and `$text` references are supported. Local paths are resolved relative to the catalog file that declared them. Multi-document YAML files with multiple `kind: API` entities are parsed; in `resolve-one` mode the first API's spec reference is used.
+If a Backstage `catalog-info.yaml` (or `catalog-info.yml`) is present in the repo root or a bounded nested service/package/app directory with `kind: API` entities, the action resolves spec references automatically. Both simple string definitions and `$text` references are supported. Local paths are resolved relative to the catalog file that declared them. Multi-document YAML files with multiple `kind: API` entities are parsed as separate candidates. In `resolve-one`, same-tier multiples return ranked `manual-review` unless `service-root` or `spec-path` selects one; `discover-many` emits one result per service group.
 
 Supported definition formats:
 
@@ -342,11 +346,11 @@ spec:
   definition: https://raw.githubusercontent.com/postman-cs/postman-aws-spec-discovery-action/main/examples/core-payments-openapi.yaml
 ```
 
-With that file committed at the repo root or inside a bounded service directory, the action resolves the spec URL automatically. No extra action inputs are required.
+Local catalog definitions resolve automatically when the file is committed at the repo root or inside a bounded service directory. Remote HTTPS definitions are deny-by-default and resolve only when `remote-fetch-allowlist-json` exactly allowlists the host/path; otherwise the fetch is denied and recorded without inventing content.
 
 ## SSM spec registry convention
 
-If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. Stored content is used directly; HTTPS URLs are fetched automatically. This is the recommended zero-config way to register specs for services that run on EKS, ECS, or behind ALBs.
+If your IAM role has `ssm:GetParametersByPath` access, the action checks `/postman/specs/` for registered spec URLs or content. Stored content is used directly. Remote HTTPS URLs are deny-by-default and fetch only when `remote-fetch-allowlist-json` exactly allowlists the host/path. This remains the recommended registry for services on EKS, ECS, or behind ALBs when content is inline or allowlisted.
 
 Store your spec reference in SSM Parameter Store:
 
@@ -374,7 +378,7 @@ aws ssm put-parameter \
   --value openapi-yaml
 ```
 
-Once those parameters exist, the action fetches the spec automatically during discovery. No repo changes or action inputs are needed.
+Once those parameters exist, inline content resolves automatically. URL parameters resolve only when the remote allowlist permits the exact host/path; otherwise a pointer artifact or denial is recorded.
 
 The SSM provider also recognizes `spec-url`, `spec-content`, and `spec-format` as alternative parameter key suffixes alongside `url`, `content`, and `format`.
 
@@ -391,13 +395,20 @@ If the URL cannot be fetched safely (for example non-HTTPS, timeout, or oversize
 
 ## Tag convention
 
-Tag your AWS resources for instant narrowing in broad accounts:
+Exact repository tag precedence (first exact tier wins when unambiguous):
 
 ```
 postman:repo = org/repo-name
 ```
 
-The action checks this tag via the Resource Groups Tagging API before enumerating all APIs.
+or the GithubOrg/GithubRepo split-tag conjunction:
+
+```
+GithubOrg = org
+GithubRepo = repo-name
+```
+
+Canonical `postman:repo` is preferred when present. `GithubOrg` + `GithubRepo` is an exact conjunction (both required). Exact correlation runs before naming heuristics. Multi-environment duplicates that share the same exact tag contract remain ambiguity-safe.
 
 ## CI provider auto-detection
 
@@ -495,6 +506,44 @@ When using `--dotenv-path`, the CLI writes action outputs as environment variabl
 | `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_FORMAT` | Derived sidecar format, currently `openapi-json` |
 | `POSTMAN_AWS_SPEC_DERIVED_OPENAPI_EVIDENCE_JSON` | JSON array of derivation evidence |
 
+## Remote fetch allowlisting (deny-by-default)
+
+Arbitrary remote specification fetches are deny-by-default. Set `remote-fetch-allowlist-json` to an exact host/path allowlist for trusted Backstage or SSM URL refs:
+
+```json
+[
+  { "hostname": "raw.githubusercontent.com", "pathPrefix": "/org/repo/" },
+  { "host": "backstage.example.com", "path": "/api/catalog/" }
+]
+```
+
+Absent or empty allowlist denies remote fetches. Every redirect hop revalidates protocol, host/path, and blocked addresses (loopback, private, link-local, metadata, multicast, reserved). Credentials are never logged.
+
+## Static IaC extraction (no build execution)
+
+Repository IaC is resolved statically:
+
+- CloudFormation/SAM: inline `Body`/`DefinitionBody`, local `DefinitionUri`, exact S3 object refs, nested local templates, literal outputs
+- CDK: existing cloud assembly manifests and nested templates/assets with freshness classification
+- Terraform/OpenTofu: literal bodies, local file refs, explicitly supplied local state/output artifacts
+- Serverless: static YAML/config and existing package artifacts; JavaScript/TypeScript config and plugins are refused
+
+The action does **not** execute `cdk synth`, `sam build`, Terraform, Serverless plugins, Gradle/Maven/Smithy builds, or Pulumi programs. Generated artifacts are classified `authored`, `generated-fresh`, `generated-stale`, or `freshness-unknown` and never outrank authored contracts by default.
+
+## Intentional exclusions
+
+These are not automatic resolution methods:
+
+- Organization-wide account, role, partition, or region sweeps
+- Automatic role creation, tag mutation, workflow distribution, or secret installation
+- Automatic remote Terraform/Pulumi state download
+- S3 bucket enumeration (exact trusted bucket/key/version only)
+- Unauthenticated GraphQL endpoint introspection when AppSync management-plane SDL is available
+- Fabricated OpenAPI for AWS resources that do not expose an API contract
+- Silent first-API / first-document / first-stage selection in monorepos, multi-document catalogs, multiple stages, or multiple exact repository-tag matches
+
+The enforceable matrix lives in [`validation/support-ledger.json`](../validation/support-ledger.json) and [`validation/SUPPORT_LEDGER.md`](../validation/SUPPORT_LEDGER.md).
+
 ## Troubleshooting
 
 - `AWS credentials are missing or invalid`
@@ -505,8 +554,8 @@ When using `--dotenv-path`, the CLI writes action outputs as environment variabl
   - Ambiguity, stage selection conflict, or API Gateway export limitations.
 - `Output path must stay within workspace/repo-root`
   - Use relative paths under `repo-root`; path escapes are blocked by design.
-- Provider silently skipped
-  - Check IAM permissions. The action logs which providers are available at startup.
+- Provider skipped / typed denial
+  - Check IAM permissions and `resolution-json` `providerProbes`. The action logs availability and records denials in provenance.
 
 ## Development
 

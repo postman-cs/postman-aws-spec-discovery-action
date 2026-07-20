@@ -1,0 +1,18 @@
+{
+  "status": "resolved",
+  "sourceType": "gateway-export",
+  "serviceName": "orders-http",
+  "confidence": 100,
+  "evidence": ["No deployed stage found; exporting latest HTTP API configuration (latest-configuration mode, distinct from deployed-stage truth)"],
+  "gatewayType": "HTTP",
+  "providerType": "api-gateway",
+  "specFormat": "openapi-yaml",
+  "provenance": {
+    "partition": "aws",
+    "accountIndicator": "acct-****9012",
+    "region": "us-east-1",
+    "protocol": "HTTP",
+    "configurationMode": "latest-configuration",
+    "sourceTier": "explicit-gateway-id"
+  }
+}

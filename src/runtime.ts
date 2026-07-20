@@ -1,10 +1,13 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
 import {
   actionContract,
   type ActionMode,
+  type ConfigurationMode,
+  type DeployedSourceProvenance,
   type DiscoveredService,
   type GatewayType,
   type OpenApiContractAudit,
@@ -13,7 +16,16 @@ import {
   type SourceType,
   type SpecFormat
 } from './contracts.js';
-import { parseAwsError, type AwsGatewayClient, type GatewayDomainMapping, type HttpApiSummary, type RestApiSummary } from './lib/aws/client.js';
+import {
+  accountIndicatorFromAccountId,
+  parseAwsError,
+  partitionFromArn,
+  type AwsGatewayClient,
+  type GatewayDomainMapping,
+  type GatewayStageSummary,
+  type HttpApiSummary,
+  type RestApiSummary
+} from './lib/aws/client.js';
 import { AppSyncSdkClient } from './lib/aws/appsync-client.js';
 import { EventBridgeSchemasSdkClient } from './lib/aws/schemas-client.js';
 import { CloudFormationSdkClient, type CloudFormationSpecClient } from './lib/aws/cloudformation-client.js';
@@ -28,12 +40,17 @@ import { VerifiedPermissionsSdkClient } from './lib/aws/verified-permissions-cli
 import { StepFunctionsSdkClient } from './lib/aws/step-functions-client.js';
 import { formatUserSafeError, sanitizeLogMessage, sanitizeJsonValue } from './lib/logging/sanitize.js';
 import { detectRepoContext, type RepoContext } from './lib/repo/context.js';
-import { findExistingRepoSpecTyped, findLocalCfnArtifactSpecs } from './lib/repo/specs.js';
+import {
+  inventoryRepoSpecs,
+  findLocalCfnArtifactSpecs,
+  type RepoSpecCandidate
+} from './lib/repo/specs.js';
 import { collectRepoSignals } from './lib/repo/signals.js';
 import { chooseSource } from './lib/resolve/source-selector.js';
 import { resolveServiceCandidate, rankServiceCandidates } from './lib/resolve/service-resolver.js';
 import {
   formatOpenApiContractAuditWarning,
+  AWS_WEBSOCKET_CONTRACT_PARTIAL,
   normalizeOpenApiYaml,
   type OperationIdRename
 } from './lib/spec/normalize-openapi.js';
@@ -58,10 +75,16 @@ import { SsmSdkClient } from './lib/aws/ssm-client.js';
 import { SnsSdkClient } from './lib/aws/sns-client.js';
 import { S3SdkClient } from './lib/aws/s3-client.js';
 import { TaggingSdkClient, type TaggingSpecClient } from './lib/aws/tagging-client.js';
-import { runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
-import { detectCatalogApis } from './lib/repo/catalog.js';
-import { fetchSpecFromUrl } from './lib/fetch/spec-fetcher.js';
-import { resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
+import { correlateExactRepoTags, runNarrowingPipeline } from './lib/resolve/narrowing-pipeline.js';
+import { detectCatalogApis, type CatalogApiRef } from './lib/repo/catalog.js';
+import {
+  createRemoteFetchPolicy,
+  DEFAULT_REMOTE_FETCH_POLICY,
+  fetchSpecFromUrl,
+  sanitizeUrlEvidence,
+  type RemoteFetchPolicy
+} from './lib/fetch/spec-fetcher.js';
+import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 import type { SnsContractResolutionContext, SnsContractResult } from './lib/providers/sns.js';
@@ -86,6 +109,16 @@ export interface ResolvedInputs {
   expectedServiceName?: string;
   expectedGatewayIds: string[];
   stage?: string;
+  /** Optional account ID that must match sts:GetCallerIdentity before export. */
+  expectedAccountId?: string;
+  /** Optional partition that must match the caller identity ARN before export. */
+  expectedPartition?: string;
+  /** Explicit repo-relative specification path (validated inside repo root). */
+  specPath?: string;
+  /** Optional monorepo service root (validated inside repo root). */
+  serviceRoot?: string;
+  /** Deny-by-default remote fetch policy derived from remote-fetch-allowlist-json. */
+  remoteFetchPolicy?: RemoteFetchPolicy;
   apiFilter?: RegExp;
   serviceMapping: Record<string, string>;
   outputDir: string;
@@ -104,9 +137,18 @@ interface GatewayCandidate {
   gatewayType: GatewayType;
 }
 
+interface TrustedStageEvidence {
+  stageName?: string;
+  deploymentId?: string;
+  source?: string;
+}
+
 interface ResolutionStageSelection {
   stage?: string;
+  deploymentId?: string;
   useLatestConfig?: boolean;
+  configurationMode?: ConfigurationMode;
+  rankedStages?: string[];
   evidence: string[];
   error?: string;
 }
@@ -139,12 +181,15 @@ export interface ResolutionDependencies {
   snsProvider?: SnsResolutionProvider;
   createSnsProvider?: (dependencies: {
     fetchSpecFromUrl: typeof fetchSpecFromUrl;
+    remoteFetchPolicy: RemoteFetchPolicy;
     catalogApis: Awaited<ReturnType<typeof detectCatalogApis>>;
     eventBridgeClient?: EventBridgeSchemasSpecClient;
     codeDerivedResolver?: ResolveCodeDerivedContract;
   }) => SnsResolutionProvider;
   eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: ResolveCodeDerivedContract;
+  /** Test seam: override remote catalog/SSM/SNS URL fetches. */
+  fetchSpecFromUrl?: typeof fetchSpecFromUrl;
   /** Test seam: override the CloudFormation/Tagging clients used by progressive narrowing. */
   narrowingClients?: { cfnClient?: CloudFormationSpecClient; taggingClient?: TaggingSpecClient };
 }
@@ -274,6 +319,68 @@ function parseStringArrayJson(raw: string, inputName: string): string[] {
   return parsed.map((value) => String(value).trim()).filter((value) => value.length > 0);
 }
 
+function parseRemoteFetchAllowlistJson(raw: string | undefined): RemoteFetchPolicy {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
+    return DEFAULT_REMOTE_FETCH_POLICY;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON for remote-fetch-allowlist-json: ${detail}`, { cause: error });
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error('remote-fetch-allowlist-json must be a JSON array of exact host/path entries');
+  }
+  if (parsed.length === 0) {
+    return DEFAULT_REMOTE_FETCH_POLICY;
+  }
+  const allowlist = parsed.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`remote-fetch-allowlist-json[${index}] must be an object with hostname/host and optional pathPrefix/path`);
+    }
+    const record = entry as Record<string, unknown>;
+    const hostname = typeof record.hostname === 'string'
+      ? record.hostname
+      : typeof record.host === 'string'
+        ? record.host
+        : undefined;
+    if (!hostname?.trim()) {
+      throw new Error(`remote-fetch-allowlist-json[${index}] requires a non-empty hostname or host`);
+    }
+    const pathPrefix = typeof record.pathPrefix === 'string'
+      ? record.pathPrefix
+      : typeof record.path === 'string'
+        ? record.path
+        : undefined;
+    return {
+      hostname: hostname.trim(),
+      ...(pathPrefix !== undefined ? { pathPrefix } : {})
+    };
+  });
+  return createRemoteFetchPolicy({ enabled: true, allowlist });
+}
+
+function validateRepoRelativeSelector(
+  repoRoot: string,
+  relativePath: string,
+  fieldName: string,
+  kind: 'file' | 'directory'
+): string {
+  const resolvedRoot = path.resolve(repoRoot);
+  const absolute = resolvePathWithinRoot(resolvedRoot, relativePath, fieldName);
+  const relative = path.relative(resolvedRoot, absolute).replace(/\\/g, '/');
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`${fieldName} must stay within repo-root; received ${relativePath}`);
+  }
+  if (kind === 'directory' && (relative === '' || relative === '.')) {
+    return '.';
+  }
+  return relative || '.';
+}
+
 export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInputs {
   const mode = parseMode(getInput('mode', env) ?? DEFAULT_MODE);
   const awsRegion =
@@ -295,6 +402,11 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
   const expectedServiceName = getInput('expected-service-name', env);
   const expectedGatewayIdsRaw = getInput('expected-gateway-ids-json', env) ?? DEFAULT_EXPECTED_GATEWAY_IDS_JSON;
   const stage = getInput('stage', env);
+  const expectedAccountIdRaw = getInput('expected-account-id', env);
+  const expectedPartitionRaw = getInput('expected-partition', env);
+  const specPathRaw = getInput('spec-path', env);
+  const serviceRootRaw = getInput('service-root', env);
+  const remoteFetchAllowlistRaw = getInput('remote-fetch-allowlist-json', env);
   const apiFilterRaw = getInput('api-filter', env);
   const serviceMappingRaw = getInput('service-mapping-json', env) ?? DEFAULT_SERVICE_MAPPING_JSON;
   const outputDir = getInput('output-dir', env) ?? DEFAULT_OUTPUT_DIR;
@@ -332,6 +444,16 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     (value): value is string => Boolean(value)
   );
 
+  const specPath = specPathRaw
+    ? validateRepoRelativeSelector(repoRoot, specPathRaw, 'spec-path', 'file')
+    : undefined;
+  const serviceRoot = serviceRootRaw
+    ? validateRepoRelativeSelector(repoRoot, serviceRootRaw, 'service-root', 'directory')
+    : undefined;
+
+  const expectedAccountId = normalizeExpectedAccountId(expectedAccountIdRaw);
+  const expectedPartition = normalizeExpectedPartition(expectedPartitionRaw);
+
   return {
     mode,
     awsRegion,
@@ -340,6 +462,11 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     expectedServiceName,
     expectedGatewayIds: [...new Set(expectedGatewayIds)],
     stage,
+    expectedAccountId,
+    expectedPartition,
+    specPath,
+    serviceRoot,
+    remoteFetchPolicy: parseRemoteFetchAllowlistJson(remoteFetchAllowlistRaw),
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
@@ -353,6 +480,24 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
   };
 }
 
+function normalizeExpectedAccountId(raw: string | undefined): string | undefined {
+  const value = (raw ?? '').trim();
+  if (!value) return undefined;
+  if (!/^\d{12}$/.test(value)) {
+    throw new Error('expected-account-id must be a 12-digit AWS account ID when provided');
+  }
+  return value;
+}
+
+function normalizeExpectedPartition(raw: string | undefined): string | undefined {
+  const value = (raw ?? '').trim().toLowerCase();
+  if (!value) return undefined;
+  if (!/^[a-z0-9-]+$/.test(value)) {
+    throw new Error('expected-partition must be a valid AWS partition identifier when provided');
+  }
+  return value;
+}
+
 export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
   const requiredRegion = inputReader.getInput('aws-region').trim();
   return resolveInputs({
@@ -360,6 +505,11 @@ export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
     INPUT_AWS_REGION: requiredRegion || undefined,
     INPUT_GATEWAY_ID: normalizeInputValue(inputReader.getInput('gateway-id')),
     INPUT_STAGE: normalizeInputValue(inputReader.getInput('stage')),
+    INPUT_EXPECTED_ACCOUNT_ID: normalizeInputValue(inputReader.getInput('expected-account-id')),
+    INPUT_EXPECTED_PARTITION: normalizeInputValue(inputReader.getInput('expected-partition')),
+    INPUT_SPEC_PATH: normalizeInputValue(inputReader.getInput('spec-path')),
+    INPUT_SERVICE_ROOT: normalizeInputValue(inputReader.getInput('service-root')),
+    INPUT_REMOTE_FETCH_ALLOWLIST_JSON: normalizeInputValue(inputReader.getInput('remote-fetch-allowlist-json')),
     INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput('output-dir')) ?? actionContract.inputs['output-dir'].default
   });
 }
@@ -520,7 +670,7 @@ function normalizeApiGatewaySpec(
     openapiContractAudit?: OpenApiContractAudit;
   };
   try {
-    result = normalizeOpenApiYaml(body);
+    result = normalizeOpenApiYaml(body, { skipContractAudit: candidate.gatewayType === 'WEBSOCKET' });
   } catch (error) {
     reporter.warning(
       userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error)}`)
@@ -533,8 +683,14 @@ function normalizeApiGatewaySpec(
       reporter.info(`operationId normalized: ${candidate.id} ${rename.method.toUpperCase()} ${rename.path} \`${from}\` -> \`${rename.renamed}\``);
     }
   }
-  const contractWarning = result.openapiContractAudit
-    ? formatOpenApiContractAuditWarning(result.openapiContractAudit)
+  const protocol =
+    candidate.gatewayType === 'HTTP' || candidate.gatewayType === 'WEBSOCKET'
+      ? candidate.gatewayType
+      : 'REST';
+  const contractWarning = candidate.gatewayType === 'WEBSOCKET'
+    ? AWS_WEBSOCKET_CONTRACT_PARTIAL
+    : result.openapiContractAudit
+    ? formatOpenApiContractAuditWarning(result.openapiContractAudit, protocol)
     : undefined;
   if (contractWarning) reporter.warning(userSafeWarning(contractWarning));
   return {
@@ -574,16 +730,14 @@ async function exportApiGatewaySpecBody(
   }
 }
 
-async function selectStage(aws: AwsGatewayClient, candidate: GatewayCandidate, preferredStage: string | undefined): Promise<string | undefined> {
-  if (preferredStage) {
-    return preferredStage;
-  }
-  if (candidate.gatewayType === 'REST') {
-    const stages = await aws.listRestStages(candidate.id);
-    return stages[0];
-  }
-  const stages = await aws.listHttpStages(candidate.id);
-  return stages[0];
+async function selectStage(
+  aws: AwsGatewayClient,
+  candidate: GatewayCandidate,
+  preferredStage: string | undefined,
+  preferLatestConfiguration = false,
+  trustedEvidence?: TrustedStageEvidence
+): Promise<ResolutionStageSelection> {
+  return resolveStageSelection(aws, candidate, preferredStage, preferLatestConfiguration, trustedEvidence);
 }
 
 function filterCandidates(restApis: RestApiSummary[], httpApis: HttpApiSummary[], includeV2: boolean, apiFilter?: RegExp): GatewayCandidate[] {
@@ -735,10 +889,55 @@ function catalogFormatFor(type: string | undefined, reference: string | undefine
   if (normalizedType === 'grpc' || normalizedRef.endsWith('.proto')) {
     return { format: 'protobuf', filename: 'schema.proto' };
   }
+  if (
+    normalizedType === 'json-schema'
+    || normalizedRef.endsWith('.schema.json')
+    || normalizedRef === 'schema.json'
+  ) {
+    return { format: 'json-schema', filename: path.posix.basename(normalizedRef) || 'schema.json' };
+  }
+  if (normalizedType === 'avro' || normalizedRef.endsWith('.avsc') || normalizedRef.endsWith('.avro')) {
+    return { format: 'avro', filename: path.posix.basename(normalizedRef) || 'schema.avsc' };
+  }
+  if (normalizedType === 'smithy' || normalizedRef.endsWith('.smithy') || normalizedRef.endsWith('smithy-build.json')) {
+    return { format: 'smithy', filename: path.posix.basename(normalizedRef) || 'model.smithy' };
+  }
   if (normalizedRef.endsWith('.json')) {
     return { format: 'openapi-json', filename: 'index.json' };
   }
   return { format: 'openapi-yaml', filename: 'index.yaml' };
+}
+
+function inferFormatFromContent(relativePath: string, content: string): SpecFormat | undefined {
+  const fromName = catalogFormatFor(undefined, relativePath).format;
+  const trimmed = content.trim();
+  if (fromName === 'json-schema' || fromName === 'avro' || fromName === 'smithy' || fromName === 'graphql-sdl' || fromName === 'protobuf') {
+    return fromName;
+  }
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+      if (typeof parsed.$schema === 'string' || parsed.type === 'object' || parsed.type === 'array') {
+        if (!parsed.openapi && !parsed.swagger && !parsed.asyncapi) {
+          return 'json-schema';
+        }
+      }
+      if (parsed.type === 'record' && typeof parsed.name === 'string') {
+        return 'avro';
+      }
+      if (typeof parsed.asyncapi === 'string') {
+        return 'asyncapi-json';
+      }
+      if (typeof parsed.openapi === 'string' || typeof parsed.swagger === 'string') {
+        return 'openapi-json';
+      }
+    } catch {
+      // fall through
+    }
+  }
+  if (/^\s*asyncapi\s*:/i.test(trimmed)) return 'asyncapi-yaml';
+  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) return 'openapi-yaml';
+  return fromName;
 }
 
 function normalizeSnsName(value: string): string {
@@ -959,6 +1158,18 @@ async function exportProviderResolutionCandidate(
     writeSpecFile
   });
 
+  const gatewayType = (resolved.candidate.meta.gatewayType ?? 'REST') as GatewayType;
+  const providerProvenance = result.provenance
+    ? buildDeployedSourceProvenance({
+        inputs,
+        apiId: resolved.candidate.id,
+        gatewayType: resolved.provider.type === 'api-gateway' ? gatewayType : undefined,
+        content: result.content,
+        sourceTier: resolved.provider.type,
+        base: result.provenance
+      })
+    : result.provenance;
+
   return {
     status: 'resolved',
     sourceType: resolved.sourceType,
@@ -966,11 +1177,12 @@ async function exportProviderResolutionCandidate(
     confidence: resolved.confidence,
     specPath: relativeProviderPath,
     gatewayId: resolved.candidate.id,
-    gatewayType: (resolved.candidate.meta.gatewayType ?? 'REST') as GatewayType,
+    gatewayType,
     providerType: resolved.provider.type,
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    provenance: providerProvenance ? sanitizeJsonValue(providerProvenance) : undefined,
     openapiContractAudit: inputs.dryRun ? undefined : result.openapiContractAudit,
     ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...(inputs.dryRun ? ['Dry run enabled; skipped provider spec file write'] : [])]
@@ -988,43 +1200,277 @@ function collectSnsEventBridgeBridgeEvidence(signals: Awaited<ReturnType<typeof 
   return signals.evidence.filter((entry) => /sns.*eventbridge|eventbridge.*sns|bridge pattern/i.test(entry));
 }
 
-function pickPreferredStage(stages: string[]): string | undefined {
-  const priority = ['prod', 'production', '$default', 'main', 'staging', 'stage', 'dev', 'development'];
-  const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
-  for (const preferred of priority) {
-    const match = lowered.get(preferred);
-    if (match) {
-      return match;
+function configurationModeForGateway(
+  gatewayType: GatewayType,
+  mode: 'deployed-stage' | 'latest-configuration'
+): ConfigurationMode {
+  if (gatewayType === 'WEBSOCKET') return 'partial-control-plane';
+  return mode;
+}
+
+async function collectTrustedStageEvidence(
+  aws: AwsGatewayClient,
+  candidate: GatewayCandidate
+): Promise<TrustedStageEvidence | undefined> {
+  const mappings: GatewayDomainMapping[] = [];
+  try {
+    if (candidate.gatewayType === 'REST' && aws.listRestDomainMappings) {
+      mappings.push(...(await aws.listRestDomainMappings()));
     }
+    if ((candidate.gatewayType === 'HTTP' || candidate.gatewayType === 'WEBSOCKET') && aws.listHttpDomainMappings) {
+      mappings.push(...(await aws.listHttpDomainMappings()));
+    }
+  } catch {
+    return undefined;
+  }
+  const linkedStages = mappings
+    .filter((mapping) => mapping.apiId === candidate.id)
+    .map((mapping) => (mapping.stage ?? '').trim())
+    .filter((stage) => stage.length > 0);
+  const unique = [...new Set(linkedStages)];
+  if (unique.length === 1) {
+    return { stageName: unique[0], source: 'custom-domain-mapping' };
   }
   return undefined;
 }
 
-async function resolveStageSelection(aws: AwsGatewayClient, candidate: GatewayCandidate, preferredStage: string | undefined): Promise<ResolutionStageSelection> {
-  const stages = candidate.gatewayType === 'REST' ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id);
-  if (preferredStage) {
-    if (stages.includes(preferredStage)) {
-      return { stage: preferredStage, evidence: [`Using explicitly requested stage ${preferredStage}`] };
+function stageNames(stages: GatewayStageSummary[]): string[] {
+  return stages.map((stage) => stage.stageName);
+}
+
+/** Accept StageSummary objects or legacy string[] stubs without dropping singleton/explicit evidence. */
+function normalizeStageList(raw: unknown): GatewayStageSummary[] {
+  if (!Array.isArray(raw)) return [];
+  const normalized: GatewayStageSummary[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      const stageName = item.trim();
+      if (stageName) normalized.push({ stageName });
+      continue;
     }
-    return { evidence: [], error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}` };
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    const stageName = String(record.stageName ?? record.StageName ?? '').trim();
+    if (!stageName) continue;
+    const summary: GatewayStageSummary = { stageName };
+    const deploymentId = String(record.deploymentId ?? record.DeploymentId ?? '').trim();
+    if (deploymentId) summary.deploymentId = deploymentId;
+    if (typeof record.autoDeploy === 'boolean') summary.autoDeploy = record.autoDeploy;
+    else if (typeof record.AutoDeploy === 'boolean') summary.autoDeploy = record.AutoDeploy;
+    if (typeof record.apiGatewayManaged === 'boolean') summary.apiGatewayManaged = record.apiGatewayManaged;
+    else if (typeof record.ApiGatewayManaged === 'boolean') summary.apiGatewayManaged = record.ApiGatewayManaged;
+    normalized.push(summary);
   }
+  return normalized;
+}
+
+async function resolveStageSelection(
+  aws: AwsGatewayClient,
+  candidate: GatewayCandidate,
+  preferredStage: string | undefined,
+  preferLatestConfiguration = false,
+  trustedEvidence?: TrustedStageEvidence
+): Promise<ResolutionStageSelection> {
+  const stages = normalizeStageList(
+    candidate.gatewayType === 'REST' ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id)
+  );
+
+  if (preferredStage) {
+    const match = stages.find((stage) => stage.stageName === preferredStage);
+    if (match) {
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, 'deployed-stage'),
+        evidence: [`Using explicitly requested stage ${preferredStage}`]
+      };
+    }
+    return {
+      evidence: [],
+      error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}`
+    };
+  }
+
+  if (preferLatestConfiguration && candidate.gatewayType === 'HTTP') {
+    return {
+      useLatestConfig: true,
+      configurationMode: 'latest-configuration',
+      evidence: ['Explicit HTTP gateway without stage; exporting latest HTTP API configuration (latest-configuration mode)']
+    };
+  }
+
+  const evidence = trustedEvidence ?? (await collectTrustedStageEvidence(aws, candidate));
+  if (evidence?.stageName) {
+    const matches = stages.filter((stage) => stage.stageName === evidence.stageName);
+    if (matches.length === 1) {
+      const match = matches[0];
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, 'deployed-stage'),
+        evidence: [
+          `Using trusted stage evidence ${match.stageName}${evidence.source ? ` from ${evidence.source}` : ''}`
+        ]
+      };
+    }
+  }
+  if (evidence?.deploymentId) {
+    const matches = stages.filter((stage) => stage.deploymentId === evidence.deploymentId);
+    if (matches.length === 1) {
+      const match = matches[0];
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, 'deployed-stage'),
+        evidence: [
+          `Using trusted deployment evidence ${evidence.deploymentId}${evidence.source ? ` from ${evidence.source}` : ''}`
+        ]
+      };
+    }
+  }
+
   if (stages.length === 0) {
-    if (candidate.gatewayType === 'HTTP' || candidate.gatewayType === 'WEBSOCKET') {
+    if (candidate.gatewayType === 'HTTP') {
       return {
         useLatestConfig: true,
-        evidence: [`No deployed stage found; exporting latest ${candidate.gatewayType} API configuration without stage`]
+        configurationMode: 'latest-configuration',
+        evidence: [
+          'No deployed stage found; exporting latest HTTP API configuration (latest-configuration mode, distinct from deployed-stage truth)'
+        ]
+      };
+    }
+    if (candidate.gatewayType === 'WEBSOCKET') {
+      return {
+        useLatestConfig: true,
+        configurationMode: 'partial-control-plane',
+        evidence: [
+          'No deployed stage found; synthesizing partial WebSocket control-plane reconstruction'
+        ]
       };
     }
     return { evidence: [], error: `No stages were found for REST API ${candidate.id}` };
   }
+
   if (stages.length === 1) {
-    return { stage: stages[0], evidence: [`Auto-selected only available stage ${stages[0]}`] };
+    const only = stages[0];
+    return {
+      stage: only.stageName,
+      deploymentId: only.deploymentId,
+      configurationMode: configurationModeForGateway(candidate.gatewayType, 'deployed-stage'),
+      evidence: [`Auto-selected only available stage ${only.stageName}`]
+    };
   }
-  const preferred = pickPreferredStage(stages);
-  if (preferred) {
-    return { stage: preferred, evidence: [`Auto-selected preferred stage ${preferred}`] };
+
+  if (candidate.gatewayType === 'HTTP') {
+    const defaultAutoDeploy = stages.filter(
+      (stage) => stage.stageName === '$default' && stage.autoDeploy === true
+    );
+    const otherAutoDeploy = stages.filter(
+      (stage) => stage.stageName !== '$default' && stage.autoDeploy === true
+    );
+    if (defaultAutoDeploy.length === 1 && otherAutoDeploy.length === 0) {
+      const only = defaultAutoDeploy[0];
+      return {
+        stage: only.stageName,
+        deploymentId: only.deploymentId,
+        configurationMode: 'deployed-stage',
+        evidence: ['Auto-selected uniquely evidenced HTTP $default auto-deploy stage']
+      };
+    }
   }
-  return { evidence: [], error: `Multiple stages found with no deterministic match: ${stages.join(', ')}` };
+
+  const ranked = [...stageNames(stages)].sort((left, right) => left.localeCompare(right));
+  return {
+    rankedStages: ranked,
+    evidence: [],
+    error: `Multiple stages found without uniquely evidenced selection; manual review required: ${ranked.join(', ')}`
+  };
+}
+
+function sha256Hex(content: string): string {
+  return createHash('sha256').update(content, 'utf8').digest('hex');
+}
+
+function gatewayApiArn(partition: string | undefined, region: string, gatewayType: GatewayType, apiId: string): string {
+  const resolvedPartition = partition || 'aws';
+  if (gatewayType === 'REST') {
+    return `arn:${resolvedPartition}:apigateway:${region}::/restapis/${apiId}`;
+  }
+  return `arn:${resolvedPartition}:apigateway:${region}::/apis/${apiId}`;
+}
+
+function buildGatewayExportOptions(
+  gatewayType: GatewayType,
+  stage: string | undefined,
+  useLatestConfig: boolean | undefined
+): Record<string, unknown> {
+  if (gatewayType === 'REST') {
+    return { exportType: 'oas30', stageName: stage, extensions: 'apigateway' };
+  }
+  if (gatewayType === 'WEBSOCKET') {
+    return {
+      reconstruction: 'partial-control-plane',
+      stageName: stage,
+      useLatestConfig: Boolean(useLatestConfig || !stage)
+    };
+  }
+  return {
+    includeExtensions: Boolean(stage),
+    stageName: stage,
+    configurationMode: stage ? 'deployed-stage' : 'latest-configuration'
+  };
+}
+
+function buildDeployedSourceProvenance(input: {
+  inputs: ResolvedInputs;
+  identity?: { accountId?: string; arn?: string; partition?: string };
+  gatewayType?: GatewayType;
+  apiId?: string;
+  stageSelection?: ResolutionStageSelection;
+  content?: string;
+  sourceTier?: string;
+  sourceTagContract?: string;
+  providerProbes?: ResolutionResult['providerProbes'];
+  truncation?: DeployedSourceProvenance['truncation'];
+  base?: DeployedSourceProvenance;
+}): DeployedSourceProvenance {
+  const partition = input.identity?.partition ?? partitionFromArn(input.identity?.arn) ?? input.base?.partition;
+  const provenance: DeployedSourceProvenance = {
+    ...input.base,
+    partition,
+    accountIndicator: accountIndicatorFromAccountId(input.identity?.accountId) ?? input.base?.accountIndicator,
+    region: input.inputs.awsRegion,
+    queryTimestamp: input.base?.queryTimestamp ?? new Date().toISOString()
+  };
+  if (input.apiId) {
+    provenance.apiId = input.apiId;
+    if (input.gatewayType) {
+      provenance.apiArn = gatewayApiArn(partition, input.inputs.awsRegion, input.gatewayType, input.apiId);
+      provenance.protocol = input.gatewayType;
+    }
+  }
+  if (input.stageSelection?.configurationMode) {
+    provenance.configurationMode = input.stageSelection.configurationMode;
+  }
+  if (input.stageSelection?.stage) {
+    provenance.stage = input.stageSelection.stage;
+  }
+  if (input.stageSelection?.deploymentId) {
+    provenance.deploymentId = input.stageSelection.deploymentId;
+  }
+  if (input.gatewayType) {
+    provenance.exportOptions = buildGatewayExportOptions(
+      input.gatewayType,
+      input.stageSelection?.stage,
+      input.stageSelection?.useLatestConfig
+    );
+  }
+  if (input.sourceTier) provenance.sourceTier = input.sourceTier;
+  if (input.sourceTagContract) provenance.sourceTagContract = input.sourceTagContract;
+  if (input.content) provenance.artifactHash = sha256Hex(input.content);
+  if (input.providerProbes) provenance.providerProbes = input.providerProbes;
+  if (input.truncation) provenance.truncation = input.truncation;
+  return provenance;
 }
 
 function toManualReviewResult(base: ResolutionResult, extraEvidence: string[]): ResolutionResult {
@@ -1044,8 +1490,12 @@ function isRestExportFallbackError(error: { name?: string; message: string }): b
   return error.name === 'BadRequestException' || isKnownRestExportLimitation(error.message);
 }
 
+function shouldResolveCallerIdentity(inputs: ResolvedInputs): boolean {
+  return inputs.preflightChecks || Boolean(inputs.expectedAccountId) || Boolean(inputs.expectedPartition);
+}
+
 async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDependencies): Promise<void> {
-  if (!inputs.preflightChecks) {
+  if (!shouldResolveCallerIdentity(inputs)) {
     dependencies.core.info('Preflight checks skipped by configuration');
     return;
   }
@@ -1081,6 +1531,26 @@ async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDepen
     }
     throw error;
   }
+  const partition = identity.partition ?? partitionFromArn(identity.arn);
+  if (inputs.expectedAccountId) {
+    const actual = (identity.accountId ?? '').trim();
+    if (actual !== inputs.expectedAccountId) {
+      throw new Error(
+        userSafeWarning(
+          `AWS account mismatch: expected account ${accountIndicatorFromAccountId(inputs.expectedAccountId) ?? '[redacted-account-id]'} does not match caller identity ${accountIndicatorFromAccountId(actual) ?? '[redacted-account-id]'}. Export aborted.`
+        )
+      );
+    }
+  }
+  if (inputs.expectedPartition) {
+    if (!partition || partition !== inputs.expectedPartition) {
+      throw new Error(
+        userSafeWarning(
+          `AWS partition mismatch: expected partition ${inputs.expectedPartition} does not match caller identity partition ${partition ?? 'unknown'}. Export aborted.`
+        )
+      );
+    }
+  }
   if (inputs.preflightPermissionProbe) {
     try {
       await dependencies.aws.probeApiGatewayReadAccess();
@@ -1090,9 +1560,9 @@ async function runPreflight(inputs: ResolvedInputs, dependencies: DiscoveryDepen
       );
     }
   }
-  const accountSuffix = identity.accountId ? identity.accountId.slice(-4) : 'unknown';
+  const accountIndicator = accountIndicatorFromAccountId(identity.accountId) ?? '***unknown';
   dependencies.core.info(
-    `Preflight OK: region=${inputs.awsRegion}, account=***${accountSuffix}, identity=${identity.arn ? 'available' : 'unknown'}`
+    `Preflight OK: region=${inputs.awsRegion}, partition=${partition ?? 'unknown'}, account=${accountIndicator}, identity=${identity.arn ? 'available' : 'unknown'}`
   );
 }
 
@@ -1129,13 +1599,40 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
   const resolvedRoot = path.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, 'output-dir');
 
+  let callerIdentity: Awaited<ReturnType<AwsGatewayClient['getCallerIdentity']>> | undefined;
+  if (shouldResolveCallerIdentity(inputs)) {
+    try {
+      callerIdentity = await dependencies.aws.getCallerIdentity();
+    } catch {
+      callerIdentity = undefined;
+    }
+  }
+
   await dependencies.core.group('Export OpenAPI specs', async () => {
     for (const candidate of selectedCandidates) {
       try {
-        const stage = await selectStage(dependencies.aws, candidate, inputs.stage);
-        if (!stage && candidate.gatewayType !== 'WEBSOCKET') {
+        const stageSelection = await selectStage(
+          dependencies.aws,
+          candidate,
+          inputs.stage,
+          inputs.expectedGatewayIds.includes(candidate.id)
+        );
+        if (stageSelection.error) {
           summary.skipped += 1;
-          dependencies.core.warning(userSafeWarning(`Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`));
+          dependencies.core.warning(
+            userSafeWarning(
+              `Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}): ${stageSelection.error}`
+            )
+          );
+          continue;
+        }
+        if (!stageSelection.stage && !stageSelection.useLatestConfig && candidate.gatewayType !== 'WEBSOCKET') {
+          summary.skipped += 1;
+          dependencies.core.warning(
+            userSafeWarning(
+              `Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`
+            )
+          );
           continue;
         }
 
@@ -1153,7 +1650,7 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           continue;
         }
 
-        const exportedStage = stage ?? '';
+        const exportedStage = stageSelection.useLatestConfig ? undefined : stageSelection.stage;
         const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
         const normalized = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
         const specBody = normalized.content;
@@ -1171,18 +1668,27 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
           writeSpecFile: dependencies.writeSpecFile
         });
         summary.exported += 1;
+        const provenance = buildDeployedSourceProvenance({
+          inputs,
+          identity: callerIdentity,
+          gatewayType: candidate.gatewayType,
+          apiId: candidate.id,
+          stageSelection,
+          content: specBody
+        });
         discovered.push({
           serviceName,
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
-          stage: exportedStage,
+          stage: stageSelection.stage ?? '',
           providerType: 'api-gateway',
           specFormat: 'openapi-yaml',
           openapiContractAudit: normalized.openapiContractAudit,
+          provenance: sanitizeJsonValue(provenance),
           ...derivedOpenApi
         });
-        for (const evidence of exported.evidence) {
+        for (const evidence of [...stageSelection.evidence, ...exported.evidence]) {
           dependencies.core.info(evidence);
         }
         dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
@@ -1198,6 +1704,421 @@ export async function runDiscovery(inputs: ResolvedInputs, dependencies: Discove
   return { discovered, summary };
 }
 
+interface RepoContractSelection {
+  catalogApis: CatalogApiRef[] | undefined;
+  existingSpecPath?: string;
+  existingSpecFormat?: SpecFormat;
+  existingSpecEvidence?: string[];
+  existingSpecContent?: string;
+  existingSpecShouldWriteNative: boolean;
+  earlyResult?: ResolutionResult;
+}
+
+function rankedRepoAmbiguity(
+  inputs: ResolvedInputs,
+  candidates: Array<{ serviceName: string; gatewayId: string; gatewayType: GatewayType; confidence: number; evidence: string[] }>,
+  evidencePrefix: string
+): ResolutionResult {
+  const rankedCandidates = sanitizeJsonValue(
+    candidates.map((candidate, index) => ({
+      rank: index + 1,
+      serviceName: candidate.serviceName,
+      gatewayId: candidate.gatewayId,
+      gatewayType: candidate.gatewayType,
+      confidence: candidate.confidence,
+      evidence: candidate.evidence
+    }))
+  );
+  return {
+    status: 'unresolved',
+    sourceType: 'manual-review',
+    serviceName: inferFallbackServiceName(inputs) ?? 'unknown-service',
+    confidence: 0,
+    rankedCandidates,
+    evidence: [
+      evidencePrefix,
+      ...rankedCandidates.map((candidate) => `Candidate ${candidate.rank}: ${candidate.gatewayId}`)
+    ]
+  };
+}
+
+function sameTierRepoCandidates(candidates: RepoSpecCandidate[]): RepoSpecCandidate[] {
+  const top = candidates[0];
+  if (!top) return [];
+  // Same-tier means the winning artifact class + contract kind, not merely equal numeric score.
+  // Basename heuristics (openapi.yaml vs api.yaml) must not silently collapse authored peers.
+  return candidates.filter(
+    (candidate) => candidate.artifactClass === top.artifactClass && candidate.type === top.type
+  );
+}
+
+function topCandidatePerServiceRoot(candidates: RepoSpecCandidate[]): RepoSpecCandidate[] {
+  const byRoot = new Map<string, RepoSpecCandidate>();
+  for (const candidate of candidates) {
+    const existing = byRoot.get(candidate.serviceRoot);
+    if (!existing) {
+      byRoot.set(candidate.serviceRoot, candidate);
+      continue;
+    }
+    if (
+      candidate.score > existing.score
+      || (candidate.score === existing.score && candidate.path.localeCompare(existing.path) < 0)
+    ) {
+      byRoot.set(candidate.serviceRoot, candidate);
+    }
+  }
+  return [...byRoot.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, candidate]) => candidate);
+}
+
+function gatewayTypeForRepoFormat(format: SpecFormat | undefined): GatewayType {
+  if (format === 'asyncapi-yaml' || format === 'asyncapi-json') return 'SNS';
+  return 'REST';
+}
+
+function serviceNameForRepoCandidate(inputs: ResolvedInputs, candidate: RepoSpecCandidate): string {
+  if (candidate.serviceRoot && candidate.serviceRoot !== '.') {
+    return path.posix.basename(candidate.serviceRoot);
+  }
+  return (
+    inferFallbackServiceName(inputs)
+    ?? (path.posix.basename(candidate.path, path.posix.extname(candidate.path)) || 'service')
+  );
+}
+
+/**
+ * Smithy projects and multi-file GraphQL groups carry aggregated model content.
+ * Never expose smithy-build.json as the native model path; materialize a composed
+ * artifact under output-dir instead.
+ */
+function materializeAggregatedRepoArtifact(
+  inputs: ResolvedInputs,
+  candidate: RepoSpecCandidate
+): { path: string; writeNative: boolean; content?: string; evidence: string[] } {
+  const members = candidate.memberPaths ?? [];
+  const isSmithyProject =
+    candidate.type === 'smithy'
+    && (members.length > 0 || path.posix.basename(candidate.path).toLowerCase() === 'smithy-build.json');
+  const isGraphqlAggregate = candidate.type === 'graphql' && members.length > 1;
+
+  if ((!isSmithyProject && !isGraphqlAggregate) || !candidate.content?.trim()) {
+    return {
+      path: candidate.path,
+      writeNative: false,
+      content: candidate.content,
+      evidence: candidate.evidence
+    };
+  }
+
+  const serviceName = serviceNameForRepoCandidate(inputs, candidate);
+  const filename = candidate.type === 'smithy' ? 'model.smithy' : 'schema.graphql';
+  const aggregatePath = path
+    .join(inputs.outputDir, projectFolderName(serviceName), filename)
+    .replace(/\\/g, '/');
+  return {
+    path: aggregatePath,
+    writeNative: true,
+    content: candidate.content,
+    evidence: [
+      ...candidate.evidence,
+      `Materialized aggregated ${candidate.type === 'smithy' ? 'Smithy' : 'GraphQL'} model at ${aggregatePath}`
+    ]
+  };
+}
+
+async function selectExplicitRepoSpec(
+  inputs: ResolvedInputs
+): Promise<Omit<RepoContractSelection, 'catalogApis' | 'earlyResult'>> {
+  const relative = inputs.specPath!;
+  const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative, {
+    fieldName: 'spec-path',
+    countAsReference: false
+  });
+  const content = await readFile(resolved.canonicalPath, 'utf8');
+  const format = inferFormatFromContent(relative, content);
+  return {
+    existingSpecPath: relative.replace(/\\/g, '/'),
+    existingSpecFormat: format,
+    existingSpecEvidence: [`Resolved from explicit spec-path ${relative}`],
+    existingSpecContent: content,
+    existingSpecShouldWriteNative: false
+  };
+}
+
+async function selectCatalogContract(
+  inputs: ResolvedInputs,
+  catalogApis: CatalogApiRef[],
+  actionCore: Pick<ReporterLike, 'info' | 'warning'>,
+  fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl
+): Promise<Omit<RepoContractSelection, 'catalogApis'> | undefined> {
+  const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+  const viable: Array<{
+    api: CatalogApiRef;
+    kind: 'local' | 'remote';
+    path?: string;
+    format?: SpecFormat;
+    content?: string;
+    evidence: string[];
+    writeNative: boolean;
+  }> = [];
+
+  for (const api of catalogApis) {
+    if (api.specPath) {
+      try {
+        const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, api.specPath, {
+          fieldName: 'catalog-spec-path',
+          countAsReference: false
+        });
+        const content = await readFile(resolved.canonicalPath, 'utf8');
+        const relative = path.relative(path.resolve(inputs.repoRoot), resolved.canonicalPath).replace(/\\/g, '/');
+        viable.push({
+          api,
+          kind: 'local',
+          path: relative,
+          format: catalogFormatFor(api.type, api.specPath).format,
+          content,
+          evidence: [`Resolved from Backstage catalog local ${api.type ?? 'api'} definition (${api.name})`],
+          writeNative: false
+        });
+      } catch (error) {
+        actionCore.warning(
+          userSafeWarning(
+            `Backstage catalog spec path ${api.specPath} for ${api.name} was not usable (${formatUserSafeError(error)}); continuing discovery`
+          )
+        );
+      }
+      continue;
+    }
+
+    if (api.specUrl) {
+      const safeUrl = sanitizeUrlEvidence(api.specUrl);
+      try {
+        actionCore.info(`Fetching spec from Backstage catalog URL: ${safeUrl}`);
+        const fetched = await fetchRemoteSpec(api.specUrl, {
+          timeoutMs: 15000,
+          policy: remotePolicy
+        });
+        const catalogFormat = catalogFormatFor(api.type, api.specUrl);
+        const targetPath = path.join(inputs.outputDir, projectFolderName(api.name), catalogFormat.filename).replace(/\\/g, '/');
+        viable.push({
+          api,
+          kind: 'remote',
+          path: targetPath,
+          format: catalogFormat.format,
+          content: fetched.content,
+          evidence: [`Resolved from Backstage catalog remote ${api.type ?? 'api'} definition (${api.name})`],
+          writeNative: true
+        });
+        actionCore.info(`Fetched remote spec from catalog URL for ${targetPath}`);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        actionCore.warning(userSafeWarning(`Failed to fetch spec from catalog URL ${safeUrl}: ${detail}`));
+      }
+    }
+  }
+
+  if (viable.length === 0) {
+    return undefined;
+  }
+
+  if (viable.length > 1) {
+    return {
+      earlyResult: rankedRepoAmbiguity(
+        inputs,
+        viable.map((entry) => ({
+          serviceName: entry.api.name,
+          gatewayId: entry.path ?? entry.api.specUrl ?? entry.api.name,
+          gatewayType: gatewayTypeForRepoFormat(entry.format),
+          confidence: 70,
+          evidence: entry.evidence
+        })),
+        `Found ${viable.length} Backstage API entities with usable definitions; manual review required`
+      ),
+      existingSpecShouldWriteNative: false
+    };
+  }
+
+  const selected = viable[0]!;
+  return {
+    existingSpecPath: selected.path,
+    existingSpecFormat: selected.format,
+    existingSpecEvidence: selected.evidence,
+    existingSpecContent: selected.content,
+    existingSpecShouldWriteNative: selected.writeNative
+  };
+}
+
+async function selectInventoryContract(
+  inputs: ResolvedInputs
+): Promise<Omit<RepoContractSelection, 'catalogApis'> | undefined> {
+  const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
+    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {})
+  });
+  const candidates = inventory.candidates;
+  if (candidates.length === 0) {
+    return undefined;
+  }
+
+  if (!inputs.serviceRoot) {
+    const rootWinners = topCandidatePerServiceRoot(
+      candidates.filter((candidate) => candidate.artifactClass === 'authored')
+    );
+    if (rootWinners.length > 1) {
+      return {
+        earlyResult: rankedRepoAmbiguity(
+          inputs,
+          rootWinners.map((candidate) => ({
+            serviceName:
+              candidate.serviceRoot === '.'
+                ? path.posix.basename(candidate.path)
+                : path.posix.basename(candidate.serviceRoot),
+            gatewayId: candidate.path,
+            gatewayType: gatewayTypeForRepoFormat(candidate.format),
+            confidence: Math.max(50, Math.min(95, candidate.score)),
+            evidence: candidate.evidence
+          })),
+          `Found ${rootWinners.length} repository service groups; set service-root or spec-path for resolve-one`
+        ),
+        existingSpecShouldWriteNative: false
+      };
+    }
+  }
+
+  const sameTier = sameTierRepoCandidates(candidates);
+  if (sameTier.length > 1) {
+    return {
+      earlyResult: rankedRepoAmbiguity(
+        inputs,
+        sameTier.map((candidate) => ({
+          serviceName:
+            candidate.serviceRoot === '.'
+              ? path.posix.basename(candidate.path)
+              : path.posix.basename(candidate.serviceRoot),
+          gatewayId: candidate.path,
+          gatewayType: gatewayTypeForRepoFormat(candidate.format),
+          confidence: Math.max(50, Math.min(95, candidate.score)),
+          evidence: candidate.evidence
+        })),
+        `Found ${sameTier.length} same-tier repository contracts; manual review required`
+      ),
+      existingSpecShouldWriteNative: false
+    };
+  }
+
+  const selected = candidates[0]!;
+  const materialized = materializeAggregatedRepoArtifact(inputs, selected);
+  return {
+    existingSpecPath: materialized.path,
+    existingSpecFormat: selected.format,
+    existingSpecEvidence: materialized.evidence,
+    existingSpecContent: materialized.content,
+    existingSpecShouldWriteNative: materialized.writeNative
+  };
+}
+
+async function resolveRepoContractSelection(
+  inputs: ResolvedInputs,
+  actionCore: Pick<ReporterLike, 'info' | 'warning'>,
+  fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl
+): Promise<RepoContractSelection> {
+  const catalogApis = await detectCatalogApis(inputs.repoRoot, {
+    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
+    ...(inputs.expectedServiceName ? { serviceName: inputs.expectedServiceName } : {})
+  });
+
+  if (inputs.specPath) {
+    const explicit = await selectExplicitRepoSpec(inputs);
+    return { catalogApis, ...explicit };
+  }
+
+  if (catalogApis && catalogApis.length > 0) {
+    const catalogSelection = await selectCatalogContract(inputs, catalogApis, actionCore, fetchRemoteSpec);
+    if (catalogSelection?.earlyResult || catalogSelection?.existingSpecPath) {
+      return { catalogApis, ...catalogSelection, existingSpecShouldWriteNative: catalogSelection.existingSpecShouldWriteNative };
+    }
+  }
+
+  const inventorySelection = await selectInventoryContract(inputs);
+  if (inventorySelection) {
+    return { catalogApis, ...inventorySelection };
+  }
+
+  return { catalogApis, existingSpecShouldWriteNative: false };
+}
+
+async function discoverRepoServiceGroups(
+  inputs: ResolvedInputs,
+  dependencies: DiscoveryDependencies
+): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary; nativePaths: Set<string> }> {
+  const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
+    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {})
+  });
+  const byRoot = new Map<string, RepoSpecCandidate[]>();
+  for (const candidate of inventory.candidates) {
+    const bucket = byRoot.get(candidate.serviceRoot) ?? [];
+    bucket.push(candidate);
+    byRoot.set(candidate.serviceRoot, bucket);
+  }
+
+  const discovered: DiscoveredService[] = [];
+  const nativePaths = new Set<string>();
+  const summary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+  const roots = [...byRoot.keys()].sort((left, right) => left.localeCompare(right));
+
+  for (const serviceRoot of roots) {
+    const group = (byRoot.get(serviceRoot) ?? []).sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (left.artifactClass !== right.artifactClass) {
+        return left.artifactClass === 'authored' ? -1 : 1;
+      }
+      return left.path.localeCompare(right.path);
+    });
+    const sameTier = sameTierRepoCandidates(group);
+    summary.attempted += 1;
+    if (sameTier.length !== 1) {
+      summary.skipped += 1;
+      dependencies.core.info(
+        `Skipping ambiguous repository service group ${serviceRoot} (${sameTier.length} same-tier candidates)`
+      );
+      continue;
+    }
+    const selected = sameTier[0]!;
+    const materialized = materializeAggregatedRepoArtifact(inputs, selected);
+    if (nativePaths.has(materialized.path) || nativePaths.has(selected.path)) {
+      summary.skipped += 1;
+      continue;
+    }
+    nativePaths.add(materialized.path);
+    nativePaths.add(selected.path);
+    const serviceName = serviceNameForRepoCandidate(inputs, selected);
+    if (!inputs.dryRun && materialized.writeNative && materialized.content) {
+      try {
+        const absolute = resolvePathWithinRoot(inputs.repoRoot, materialized.path, 'output-dir');
+        await dependencies.writeSpecFile(absolute, materialized.content);
+      } catch (error) {
+        summary.failed += 1;
+        dependencies.core.warning(
+          userSafeWarning(`Failed writing aggregated repo contract ${materialized.path}: ${formatUserSafeError(error)}`)
+        );
+        continue;
+      }
+    }
+    discovered.push({
+      serviceName,
+      specPath: materialized.path,
+      gatewayId: `repo-spec:${materialized.path}`,
+      gatewayType: gatewayTypeForRepoFormat(selected.format),
+      stage: '',
+      specFormat: selected.format
+    });
+    summary.exported += 1;
+    dependencies.core.info(`Discovered repository service group ${serviceRoot} -> ${materialized.path}`);
+  }
+
+  return { discovered, summary, nativePaths };
+}
+
 export async function runResolution(
   inputs: ResolvedInputs,
   awsClient: AwsGatewayClient,
@@ -1205,56 +2126,18 @@ export async function runResolution(
   writeSpecFile: (outputPath: string, content: string) => Promise<void>,
   resolutionDependencies: ResolutionDependencies = {}
 ): Promise<ResolutionResult> {
-  // Check for Backstage catalog-info.yaml first -- it may reference a spec path
-  const catalogApis = await detectCatalogApis(inputs.repoRoot);
-  const catalogApi = catalogApis?.[0];
-  const catalogSpecPath = catalogApi?.specPath;
-  const catalogSpecUrl = catalogApi?.specUrl;
-
-  const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
-  let existingSpecPath: string | undefined;
-  let existingSpecFormat: SpecFormat | undefined;
-  let existingSpecEvidence: string[] | undefined;
-  let existingSpecContent: string | undefined;
-  let existingSpecShouldWriteNative = false;
-
-  if (catalogSpecPath) {
-    const resolvedCatalogPath = resolvePathWithinRoot(inputs.repoRoot, catalogSpecPath, 'catalog-spec-path');
-    const catalogStat = await stat(resolvedCatalogPath).catch(() => undefined);
-    if (catalogStat?.isFile()) {
-      existingSpecPath = catalogSpecPath.replace(/\\/g, '/');
-      existingSpecFormat = catalogFormatFor(catalogApi?.type, catalogSpecPath).format;
-      existingSpecEvidence = [`Resolved from Backstage catalog local ${catalogApi?.type ?? 'api'} definition`];
-    } else {
-      actionCore.warning(userSafeWarning(`Backstage catalog spec path ${catalogSpecPath} was not found; continuing discovery`));
-    }
+  const fetchRemoteSpec = resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec);
+  const catalogApis = repoSelection.catalogApis;
+  if (repoSelection.earlyResult) {
+    return repoSelection.earlyResult;
   }
 
-  if (!existingSpecPath && repoSpec) {
-    existingSpecPath = repoSpec.path;
-    existingSpecFormat = repoSpec.format;
-    existingSpecEvidence = repoSpec.evidence;
-  }
-
-  // If Backstage catalog references a remote URL and no local spec exists, fetch it
-  if (!existingSpecPath && catalogSpecUrl) {
-    try {
-      actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
-      const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15000 });
-      const folderName = catalogApi?.name ?? 'catalog-api';
-      const catalogFormat = catalogFormatFor(catalogApi?.type, catalogSpecUrl);
-      const targetPath = path.join(inputs.outputDir, folderName, catalogFormat.filename);
-      existingSpecPath = targetPath.replace(/\\/g, '/');
-      existingSpecFormat = catalogFormat.format;
-      existingSpecEvidence = [`Resolved from Backstage catalog remote ${catalogApi?.type ?? 'api'} definition`];
-      existingSpecContent = fetched.content;
-      existingSpecShouldWriteNative = true;
-      actionCore.info(`Fetched remote spec from catalog URL for ${existingSpecPath}`);
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
-    }
-  }
+  const existingSpecPath = repoSelection.existingSpecPath;
+  const existingSpecFormat = repoSelection.existingSpecFormat;
+  const existingSpecEvidence = repoSelection.existingSpecEvidence;
+  const existingSpecContent = repoSelection.existingSpecContent;
+  const existingSpecShouldWriteNative = repoSelection.existingSpecShouldWriteNative;
 
   // Local CDK/SAM build-artifact probe (W5): runs only when no direct repo spec was found.
   // Local files only -- no AWS calls, no S3/HTTP fetches.
@@ -1339,12 +2222,62 @@ export async function runResolution(
           inputs.apiFilter
         );
 
-  // If too many candidates, try progressive narrowing before failing
+  // Exact repo-tag correlation runs at every account size (not only when over max-candidates).
   let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
   let resolutionNarrowing: { tier: string; mode: 'select' | 'narrow'; droppedCount: number } | undefined;
-  if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
+  let exactTagEvidence: string[] = [];
+  let exactTagRestricted = false;
+  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+
+  const resolveTaggingClient = (): TaggingSpecClient | undefined => {
+    if (resolutionDependencies.narrowingClients) {
+      return resolutionDependencies.narrowingClients.taggingClient;
+    }
+    try {
+      return new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+    } catch {
+      return undefined;
+    }
+  };
+
+  const exactCorrelation = await actionCore.group('Exact repository tag correlation', async () =>
+    correlateExactRepoTags({
+      repoSlug: inputs.repoContext.repoSlug,
+      taggingClient: resolveTaggingClient()
+    })
+  );
+
+  if (exactCorrelation) {
+    const beforeCount = finalCandidates.length;
+    const matched = exactCorrelation.gatewayIds
+      .map((id) => finalCandidates.find((candidate) => candidate.id === id))
+      .filter((candidate): candidate is (typeof finalCandidates)[number] => Boolean(candidate));
+    if (matched.length > 0) {
+      // One exact match selects; multiple exact per-environment matches stay as the candidate set.
+      // Do not collapse environments by list order and do not retain non-matching gateways.
+      finalCandidates = matched;
+      exactTagRestricted = true;
+      exactTagEvidence = exactCorrelation.evidence;
+      const mode: 'select' | 'narrow' =
+        exactCorrelation.mode === 'select' && matched.length === 1 ? 'select' : 'narrow';
+      resolutionNarrowing = {
+        tier: 'tag-prefilter',
+        mode,
+        droppedCount: beforeCount - matched.length
+      };
+      if (mode === 'select') {
+        actionCore.info(`Exact tag correlation (${exactCorrelation.tagContract}) selected candidate ${matched[0].id}`);
+      } else {
+        actionCore.info(
+          `Exact tag correlation (${exactCorrelation.tagContract}) retained ${matched.length} per-environment candidate(s) for ambiguity-safe review`
+        );
+      }
+    }
+  }
+
+  // Progressive narrowing (IaC/CFN/generic-tag/naming) only for broad accounts when exact tags did not already restrict.
+  if (!exactTagRestricted && inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
     const candidateCountBeforeNarrowing = finalCandidates.length;
-    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
       let cfnClient: CloudFormationSpecClient | undefined;
       let taggingClient: TaggingSpecClient | undefined;
@@ -1393,9 +2326,10 @@ export async function runResolution(
     }
   }
 
+  const resolverOptions = { repoSlug: inputs.repoContext.repoSlug };
   const gateways = [];
   for (const candidate of finalCandidates) {
-    const candidateEvidence: string[] = [];
+    const candidateEvidence: string[] = [...exactTagEvidence];
     let tags: Record<string, string> = {};
     try {
       tags = candidate.gatewayType === 'REST' ? await awsClient.getRestTags(candidate.id) : await awsClient.getHttpTags(candidate.id);
@@ -1406,8 +2340,8 @@ export async function runResolution(
     gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
 
-  const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
-  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals);
+  const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals, resolverOptions);
+  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals, resolverOptions);
 
   let resolvedSnsCandidate: SnsResolvedCandidate | undefined;
   let resolvedSnsExport: SpecExportResult | undefined;
@@ -1423,7 +2357,8 @@ export async function runResolution(
   if (shouldAttemptSns) {
     const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const snsRuntimeDependencies = {
-      fetchSpecFromUrl,
+      fetchSpecFromUrl: fetchRemoteSpec,
+      remoteFetchPolicy: inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY,
       catalogApis,
       eventBridgeClient:
         resolutionDependencies.eventBridgeClient ?? new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts),
@@ -1524,6 +2459,17 @@ export async function runResolution(
   if (resolutionNarrowing) {
     selectedSource.narrowing = resolutionNarrowing;
   }
+  if (selectedSource.status === 'unresolved' && resolvedCandidate?.ambiguous) {
+    const rankedViews = rankServiceCandidates(gateways, enrichedSignals, resolverOptions).map((candidate, index) => ({
+      rank: index + 1,
+      serviceName: candidate.serviceName,
+      gatewayId: candidate.gatewayId,
+      gatewayType: candidate.gatewayType,
+      confidence: candidate.confidence,
+      evidence: candidate.evidence
+    }));
+    selectedSource.rankedCandidates = sanitizeJsonValue(rankedViews);
+  }
   if (resolvedCandidate?.ambiguous && rankedGatewayCandidates.length > 1 && selectedSource.status === 'unresolved') {
     selectedSource.rankedCandidates = sanitizeJsonValue(
       rankedGatewayCandidates.map((candidate, index) => ({
@@ -1595,7 +2541,12 @@ export async function runResolution(
     }
     let stageSelection: ResolutionStageSelection;
     try {
-      stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
+      stageSelection = await resolveStageSelection(
+        awsClient,
+        selectedGateway,
+        inputs.stage,
+        inputs.expectedGatewayIds.includes(selectedGateway.id)
+      );
     } catch (error) {
       return toManualReviewResult(selectedSource, [`Stage lookup failed for ${selectedSource.gatewayId}: ${formatUserSafeError(error)}`]);
     }
@@ -1646,6 +2597,26 @@ export async function runResolution(
       selectedSource.specFormat = 'openapi-yaml';
       selectedSource.openapiContractAudit = normalized.openapiContractAudit;
       Object.assign(selectedSource, derivedOpenApi);
+      let resolveIdentity: Awaited<ReturnType<AwsGatewayClient['getCallerIdentity']>> | undefined;
+      if (shouldResolveCallerIdentity(inputs)) {
+        try {
+          resolveIdentity = await awsClient.getCallerIdentity();
+        } catch {
+          resolveIdentity = undefined;
+        }
+      }
+      selectedSource.provenance = sanitizeJsonValue(
+        buildDeployedSourceProvenance({
+          inputs,
+          identity: resolveIdentity,
+          gatewayType: selectedSource.gatewayType,
+          apiId: selectedSource.gatewayId,
+          stageSelection,
+          content: body,
+          sourceTier: selectedSource.narrowing?.tier,
+          providerProbes: selectedSource.providerProbes
+        })
+      );
       if (selectedSource.gatewayType === 'WEBSOCKET') {
         selectedSource.evidence = [
           ...selectedSource.evidence,
@@ -1748,8 +2719,13 @@ export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGate
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new BedrockActionGroupProvider(new BedrockActionGroupsSdkClient(inputs.awsRegion, sdkOpts), new S3SdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new AlbListenerRulesProvider(new AlbListenerRulesSdkClient(inputs.awsRegion, sdkOpts)));
-  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
-  registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
+  const remoteFetchPolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts), { remoteFetchPolicy }));
+  registry.register(
+    new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), {
+      remoteFetchPolicy
+    })
+  );
   registry.register(new LambdaUrlProvider(new LambdaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new LambdaEventSourceProvider(new LambdaEventSourceSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new VerifiedPermissionsProvider(new VerifiedPermissionsSdkClient(inputs.awsRegion, sdkOpts)));
@@ -1845,10 +2821,24 @@ async function runMultiProviderDiscovery(
               // ignore malformed metadata sidecar
             }
           }
+          const contractProtocol =
+            gatewayType === 'HTTP' || gatewayType === 'WEBSOCKET' ? gatewayType : 'REST';
           const contractWarning = result.openapiContractAudit
-            ? formatOpenApiContractAuditWarning(result.openapiContractAudit)
+            ? formatOpenApiContractAuditWarning(result.openapiContractAudit, contractProtocol)
             : undefined;
           if (contractWarning) dependencies.core.warning(userSafeWarning(contractWarning));
+          const multiProvenance = result.provenance
+            ? sanitizeJsonValue(
+                buildDeployedSourceProvenance({
+                  inputs,
+                  apiId: candidate.id,
+                  gatewayType: provider.type === 'api-gateway' ? gatewayType : undefined,
+                  content: result.content,
+                  sourceTier: provider.type,
+                  base: result.provenance
+                })
+              )
+            : undefined;
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -1861,6 +2851,7 @@ async function runMultiProviderDiscovery(
             variantCount,
             metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined,
             openapiContractAudit: result.openapiContractAudit,
+            provenance: multiProvenance,
             ...derivedOpenApi
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
@@ -1895,13 +2886,16 @@ export function buildExecutionOutputs(result: {
       'source-type': 'discover-many',
       'mapping-confidence': unresolved ? '0' : discovered.length > 0 ? '100' : '0',
       'export-summary-json': JSON.stringify(summary),
-      'resolution-json': JSON.stringify({
-        status: unresolved ? 'unresolved' : 'resolved',
-        sourceType: 'discover-many',
-        count: discovered.length,
-        summary,
-        providerProbes: result.providerProbes ?? []
-      }),
+      'resolution-json': JSON.stringify(
+        sanitizeJsonValue({
+          status: unresolved ? 'unresolved' : 'resolved',
+          sourceType: 'discover-many',
+          count: discovered.length,
+          summary,
+          providerProbes: result.providerProbes ?? [],
+          services: discovered
+        })
+      ),
       'service-name': '',
       'gateway-id': '',
       'spec-path': '',
@@ -1927,7 +2921,10 @@ export function buildExecutionOutputs(result: {
     confidence: 0,
     evidence: ['No resolution result produced']
   };
-  const resolutionWithProbes = { ...resolution, providerProbes: resolution.providerProbes ?? result.providerProbes ?? [] };
+  const resolutionWithProbes = sanitizeJsonValue({
+    ...resolution,
+    providerProbes: resolution.providerProbes ?? result.providerProbes ?? []
+  });
   return {
     'resolution-json': JSON.stringify(resolutionWithProbes),
     'resolution-status': resolution.status,
@@ -1979,7 +2976,12 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       availableProviders.push(apiGwProvider);
     }
 
-    // Run legacy API Gateway discovery first (preserves existing behavior and tests)
+    // Deterministic repository service groups first (repo-first precedence).
+    const repoGroups = await dependencies.core.group('Discover repository service groups', async () =>
+      discoverRepoServiceGroups(inputs, dependencies)
+    );
+
+    // Run legacy API Gateway discovery next (preserves existing behavior and tests)
     const { discovered: legacyDiscovered, summary: legacySummary } = await runDiscovery(inputs, dependencies);
 
     // Run additional providers (skip api-gateway since we already ran it via legacy path)
@@ -1998,12 +3000,15 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       extraSummary = extraResult.summary;
     }
 
-    const discovered = [...legacyDiscovered, ...extraDiscovered];
+    const awsDiscovered = [...legacyDiscovered, ...extraDiscovered].filter(
+      (service) => !repoGroups.nativePaths.has(service.specPath)
+    );
+    const discovered = [...repoGroups.discovered, ...awsDiscovered];
     const summary: DiscoverySummary = {
-      attempted: legacySummary.attempted + extraSummary.attempted,
-      exported: legacySummary.exported + extraSummary.exported,
-      failed: legacySummary.failed + extraSummary.failed,
-      skipped: legacySummary.skipped + extraSummary.skipped
+      attempted: repoGroups.summary.attempted + legacySummary.attempted + extraSummary.attempted,
+      exported: repoGroups.summary.exported + legacySummary.exported + extraSummary.exported,
+      failed: repoGroups.summary.failed + legacySummary.failed + extraSummary.failed,
+      skipped: repoGroups.summary.skipped + legacySummary.skipped + extraSummary.skipped
     };
 
     if (summary.failed > 0) {

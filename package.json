@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "bundle": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs && chmod 755 dist/cli.cjs",
+    "bundle": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs && esbuild src/cli.ts --bundle --platform=node --target=node24 --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/cli.cjs && node scripts/sanitize-dist-identifiers.mjs && chmod 755 dist/cli.cjs",
     "build": "npm run typecheck && npm run bundle",
     "verify:dist:assert": "git diff --ignore-space-at-eol --text --exit-code -- dist && node scripts/verify-dist-artifact.mjs",
     "verify:dist": "npm run build && npm run verify:dist:assert",
@@ -27,7 +27,16 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:live:sns": "vitest run --config vitest.live.config.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "validate:fixtures": "node validation/scripts/check-validation-fixtures.mjs",
+    "validate:support-ledger": "node validation/scripts/validate-support-ledger.mjs",
+    "validate:resolution-closure": "node validation/scripts/validate-resolution-closure.mjs",
+    "validate:repo-spec": "node validation/scripts/validate-repo-spec-matrix.mjs",
+    "validate:iac-signals": "node validation/scripts/validate-iac-signals.mjs",
+    "validate:p3-surfaces": "node validation/scripts/validate-p3-surfaces.mjs",
+    "validate:live-required-plan": "node validation/scripts/emit-live-required-matrix.mjs",
+    "validate:offline": "npm run validate:fixtures && npm run validate:support-ledger && npm run validate:resolution-closure && npm run validate:repo-spec && npm run validate:iac-signals && npm run validate:p3-surfaces && npm run validate:live-required-plan",
+    "docs:support-ledger": "node validation/scripts/render-support-ledger.mjs"
   },
   "keywords": [
     "github-action",

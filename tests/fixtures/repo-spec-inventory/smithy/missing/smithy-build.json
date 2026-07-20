@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "sources": ["model/missing.smithy"],
+  "imports": ["does-not-exist"]
+}

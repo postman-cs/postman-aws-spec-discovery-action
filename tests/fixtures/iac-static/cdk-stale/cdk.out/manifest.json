@@ -1,0 +1,11 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "StaleStack": {
+      "type": "aws:cloudformation:stack",
+      "properties": {
+        "templateFile": "StaleStack.template.json"
+      }
+    }
+  }
+}

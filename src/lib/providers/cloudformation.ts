@@ -39,6 +39,49 @@ export function isOpenApiDocument(value: unknown): boolean {
   return Boolean(value && typeof value === 'object' && ((value as Record<string, unknown>).openapi || (value as Record<string, unknown>).swagger));
 }
 
+/** True when a template value is an unresolved CloudFormation intrinsic. */
+export function isCfnUnresolvedIntrinsic(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value === 'string') {
+    return /\$\{/.test(value) || /^!/.test(value.trim());
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = Object.keys(value as Record<string, unknown>);
+  if (keys.length === 0) return false;
+  return keys.every((key) => /^(Ref|Fn::|Condition)$/.test(key) || key.startsWith('Fn::'));
+}
+
+export function describeCfnUnresolved(value: unknown): string {
+  try {
+    return typeof value === 'string' ? value : JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+export interface CfnLiteralOutput {
+  name: string;
+  value: string;
+  noEcho: boolean;
+}
+
+/** Extract literal string Outputs only; unresolved Values are omitted. */
+export function extractLiteralCfnOutputs(template: ParsedTemplate & { Outputs?: Record<string, unknown> }): CfnLiteralOutput[] {
+  const outputs = template.Outputs;
+  if (!outputs || typeof outputs !== 'object') return [];
+  const results: CfnLiteralOutput[] = [];
+  for (const name of Object.keys(outputs).sort()) {
+    const entry = outputs[name];
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    const value = record.Value;
+    if (typeof value === 'string' && !isCfnUnresolvedIntrinsic(value)) {
+      results.push({ name, value, noEcho: Boolean(record.NoEcho) });
+    }
+  }
+  return results;
+}
+
 function detectOpenApiContent(content: string): boolean {
   try {
     const parsed = content.trim().startsWith('{') ? JSON.parse(content) : parse(content, { customTags: CFN_CUSTOM_TAGS as never[] });
@@ -80,6 +123,9 @@ function parseS3Location(value: unknown): S3Location | undefined {
 }
 
 async function readReferencedSpec(repoRoot: string, s3Client: S3SpecClient | undefined, value: unknown): Promise<string | undefined> {
+  if (isCfnUnresolvedIntrinsic(value)) {
+    return undefined;
+  }
   if (typeof value === 'string') {
     const s3 = parseS3Uri(value);
     if (s3) {

@@ -2,12 +2,22 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseAllDocuments } from 'yaml';
 import { findIaCFiles } from './scan.js';
+import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 
 export interface CatalogApiRef {
   name: string;
   type?: string;
   specPath?: string;
   specUrl?: string;
+  /** Catalog file that declared this API (posix, relative to repo root). */
+  catalogPath?: string;
+}
+
+export interface DetectCatalogApisOptions {
+  /** Optional monorepo service root (posix, relative to repo root). */
+  serviceRoot?: string;
+  /** Optional API / service name filter (case-insensitive exact match). */
+  serviceName?: string;
 }
 
 interface CatalogEntity {
@@ -21,13 +31,24 @@ interface CatalogEntity {
   };
 }
 
-export async function detectCatalogApis(repoRoot: string): Promise<CatalogApiRef[] | undefined> {
+export async function detectCatalogApis(
+  repoRoot: string,
+  options: DetectCatalogApisOptions = {}
+): Promise<CatalogApiRef[] | undefined> {
   const candidates = await catalogCandidates(repoRoot);
   const apis: CatalogApiRef[] = [];
 
   for (const catalogPath of candidates) {
-    const content = await readFile(path.resolve(repoRoot, catalogPath), 'utf8').catch(() => undefined);
-    if (!content) continue;
+    let content: string | undefined;
+    try {
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, catalogPath, {
+        fieldName: 'catalog-info',
+        countAsReference: false
+      });
+      content = await readFile(resolved.canonicalPath, 'utf8');
+    } catch {
+      continue;
+    }
     let docs: CatalogEntity[];
     try {
       docs = parseAllDocuments(content)
@@ -39,7 +60,44 @@ export async function detectCatalogApis(repoRoot: string): Promise<CatalogApiRef
     apis.push(...extractCatalogApis(catalogPath, docs));
   }
 
-  return apis.length > 0 ? apis : undefined;
+  const scoped = scopeCatalogApis(apis, options);
+  return scoped.length > 0 ? scoped : undefined;
+}
+
+function scopeCatalogApis(apis: CatalogApiRef[], options: DetectCatalogApisOptions): CatalogApiRef[] {
+  const serviceRoot = options.serviceRoot?.replace(/\\/g, '/').replace(/\/+$/, '');
+  const serviceName = options.serviceName?.trim().toLowerCase();
+  return apis.filter((api) => {
+    if (serviceName && api.name.trim().toLowerCase() !== serviceName) {
+      return false;
+    }
+    if (!serviceRoot || serviceRoot === '.' || serviceRoot === '') {
+      return true;
+    }
+    if (api.catalogPath) {
+      const catalogDir = path.posix.dirname(api.catalogPath.replace(/\\/g, '/'));
+      if (catalogDir === serviceRoot || catalogDir.startsWith(`${serviceRoot}/`)) {
+        return true;
+      }
+    }
+    if (api.specPath) {
+      const normalized = api.specPath.replace(/\\/g, '/').replace(/^\.\//, '');
+      if (normalized === serviceRoot || normalized.startsWith(`${serviceRoot}/`)) {
+        return true;
+      }
+    }
+    // Remote-only entities under an explicit service root match by name filter above, or by catalog location.
+    if (!api.specPath && api.specUrl) {
+      return Boolean(api.catalogPath && isUnderServiceRoot(api.catalogPath, serviceRoot));
+    }
+    return false;
+  });
+}
+
+function isUnderServiceRoot(relativePath: string, serviceRoot: string): boolean {
+  const normalized = relativePath.replace(/\\/g, '/');
+  const dir = path.posix.dirname(normalized);
+  return dir === serviceRoot || dir.startsWith(`${serviceRoot}/`) || normalized.startsWith(`${serviceRoot}/`);
 }
 
 async function catalogCandidates(repoRoot: string): Promise<string[]> {
@@ -83,7 +141,7 @@ function extractCatalogApis(catalogPath: string, docs: CatalogEntity[]): Catalog
       }
     }
 
-    apis.push({ name, type, specPath, specUrl });
+    apis.push({ name, type, specPath, specUrl, catalogPath: catalogPath.replace(/\\/g, '/') });
   }
 
   return apis;

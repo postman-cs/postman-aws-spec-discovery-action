@@ -4,9 +4,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { parse } from 'yaml';
 
-import { auditOpenApiContractCoverage, normalizeOpenApiYaml } from '../src/lib/spec/normalize-openapi.js';
+import {
+  auditOpenApiContractCoverage,
+  formatOpenApiContractAuditWarning,
+  normalizeOpenApiYaml
+} from '../src/lib/spec/normalize-openapi.js';
 import { ApiGatewayProvider } from '../src/lib/providers/api-gateway.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
+import { synthesizeWebSocketOpenApi } from '../src/lib/spec/websocket-openapi.js';
 
 const fixturesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
@@ -337,6 +342,68 @@ describe('auditOpenApiContractCoverage', () => {
       status: 'schema-incomplete',
       responsesWithoutContent: 1
     });
+  });
+});
+
+describe('formatOpenApiContractAuditWarning', () => {
+  const incompleteAudit = {
+    schemaVersion: 1 as const,
+    status: 'schema-incomplete' as const,
+    operationCount: 1,
+    responseCount: 2,
+    responsesWithoutContent: 1,
+    responseMediaTypesWithoutSchema: 2,
+    requestMediaTypesWithoutSchema: 3,
+    defaultOnlyOperationCount: 0
+  };
+
+  it('rewrites REST incomplete warnings with gap counts and model remediation', () => {
+    expect(formatOpenApiContractAuditWarning(incompleteAudit, 'REST')).toBe(
+      'AWS_OPENAPI_CONTRACT_INCOMPLETE: REST export remains schema-incomplete after deterministic enrichment: '
+      + '1 responses without content, 2 response media without schema, 3 request media without schema. '
+      + 'Route/status checks remain enabled; body assertions are skipped only for undocumented media. '
+      + 'Bind API Gateway Models to method request/response models.'
+    );
+  });
+
+  it('rewrites HTTP incomplete warnings with OpenAPI enrichment remediation', () => {
+    expect(formatOpenApiContractAuditWarning(incompleteAudit, 'HTTP')).toBe(
+      'AWS_OPENAPI_CONTRACT_INCOMPLETE: HTTP export remains schema-incomplete after deterministic enrichment: '
+      + '1 responses without content, 2 response media without schema, 3 request media without schema. '
+      + 'Route/status checks remain enabled; body assertions are skipped only for undocumented media. '
+      + 'Author schemas in the source OpenAPI or enrich the export.'
+    );
+  });
+
+  it('returns undefined for schema-complete REST and HTTP audits', () => {
+    expect(formatOpenApiContractAuditWarning({
+      ...incompleteAudit,
+      status: 'schema-complete',
+      responsesWithoutContent: 0,
+      responseMediaTypesWithoutSchema: 0,
+      requestMediaTypesWithoutSchema: 0
+    }, 'REST')).toBeUndefined();
+  });
+
+  it('emits AWS_WEBSOCKET_CONTRACT_PARTIAL instead of the HTTP-body incomplete warning', () => {
+    expect(formatOpenApiContractAuditWarning(incompleteAudit, 'WEBSOCKET')).toBe(
+      'AWS_WEBSOCKET_CONTRACT_PARTIAL: Route and response metadata is preserved in '
+      + 'x-amazon-apigateway-* extensions; no HTTP response schema was invented.'
+    );
+  });
+
+  it('does not emit AWS_OPENAPI_CONTRACT_INCOMPLETE for synthesized WebSocket OpenAPI', () => {
+    const content = synthesizeWebSocketOpenApi({
+      apiId: 'ws-1',
+      apiName: 'orders-ws',
+      region: 'us-east-1',
+      routes: [{ routeKey: 'sendMessage' }]
+    });
+    const normalized = normalizeOpenApiYaml(content, { skipContractAudit: true });
+    expect(normalized.openapiContractAudit).toBeUndefined();
+    const warning = formatOpenApiContractAuditWarning(incompleteAudit, 'WEBSOCKET');
+    expect(warning).toMatch(/^AWS_WEBSOCKET_CONTRACT_PARTIAL:/);
+    expect(warning).not.toContain('AWS_OPENAPI_CONTRACT_INCOMPLETE');
   });
 });
 

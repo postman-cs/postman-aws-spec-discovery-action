@@ -4,11 +4,18 @@ import { parse } from 'yaml';
 
 import type { GatewayType, SpecFormat } from '../../contracts.js';
 import {
+  contentBearingIacCandidates,
+  resolveStaticIacCandidates,
+  toRepoArtifactClass
+} from '../iac/index.js';
+import {
   extractInlineEmbeddedSpec,
   parseCfnTemplateBody,
   type ParsedTemplate,
   type TemplateResource
 } from '../providers/cloudformation.js';
+import { groupGraphqlByServiceRoot, serviceRootFor } from './graphql-compose.js';
+import { resolveSmithyProject } from './smithy-project.js';
 
 const DIRECT_SPEC_CANDIDATES = [
   'openapi.yaml',
@@ -49,7 +56,11 @@ const DIRECT_SPEC_CANDIDATES = [
   'api/asyncapi.json',
   'proto/service.proto',
   'schema.proto',
-  'smithy-build.json'
+  'smithy-build.json',
+  'schema.json',
+  'order.schema.json',
+  'schema.avsc',
+  'order.avsc'
 ];
 
 const COMMON_SCAN_DIRS = [
@@ -68,17 +79,24 @@ const COMMON_SCAN_DIRS = [
   'proto',
   'protobuf',
   'smithy',
+  'model',
+  'models',
+  'schemas',
+  'schema',
   'services',
   'packages',
-  'apps'
+  'apps',
+  'dist',
+  'build',
+  'generated',
+  'cdk.out',
+  '.aws-sam'
 ];
 
 const SKIP_DIRS = new Set([
   '.git',
   'node_modules',
   '.terraform',
-  'dist',
-  'build',
   'discovered-specs',
   'vendor',
   'test',
@@ -89,8 +107,105 @@ const SKIP_DIRS = new Set([
   '.pulumi'
 ]);
 
-const MAX_SPEC_SCAN_FILES = 200;
-const MAX_SPEC_SCAN_DEPTH = 6;
+const GENERATED_PATH_RE = /(^|\/)(dist|build|cdk\.out|\.aws-sam|generated|out|target)(\/|$)/i;
+
+export const DEFAULT_INVENTORY_BOUNDS = {
+  maxDepth: 6,
+  maxFiles: 200,
+  maxFileBytes: 1_048_576,
+  maxCumulativeBytes: 8_388_608
+} as const;
+
+export type RepoSpecKind =
+  | 'openapi'
+  | 'graphql'
+  | 'asyncapi'
+  | 'postman-collection'
+  | 'protobuf'
+  | 'smithy'
+  | 'json-schema'
+  | 'avro';
+
+export type RepoSpecArtifactClass = 'authored' | 'generated';
+
+export type RepoSpecInventoryErrorCode =
+  | 'malformed-config'
+  | 'missing-import'
+  | 'cycle'
+  | 'path-escape'
+  | 'bounds-exceeded'
+  | 'unreadable';
+
+export interface RepoSpecInventoryError {
+  code: RepoSpecInventoryErrorCode;
+  path: string;
+  message: string;
+}
+
+export interface RepoSpecCandidate {
+  path: string;
+  type: RepoSpecKind;
+  format?: SpecFormat;
+  serviceRoot: string;
+  artifactClass: RepoSpecArtifactClass;
+  evidence: string[];
+  /** Ambiguity-relevant rank (1 = highest). */
+  rank: number;
+  /** Internal ranking score (higher is better). */
+  score: number;
+  /** Aggregated model content for multi-file Smithy/GraphQL candidates. */
+  content?: string;
+  memberPaths?: string[];
+  projections?: string[];
+}
+
+export interface RepoSpecInventory {
+  candidates: RepoSpecCandidate[];
+  errors: RepoSpecInventoryError[];
+}
+
+export interface InventoryRepoSpecsOptions {
+  maxDepth?: number;
+  maxFiles?: number;
+  maxFileBytes?: number;
+  maxCumulativeBytes?: number;
+  /** Optional monorepo/service scope (relative posix path). */
+  serviceRoot?: string;
+}
+
+export interface RepoSpecMatch {
+  path: string;
+  type: RepoSpecKind;
+  format?: SpecFormat;
+  evidence?: string[];
+  content?: string;
+  serviceRoot?: string;
+  artifactClass?: RepoSpecArtifactClass;
+  memberPaths?: string[];
+}
+
+interface ScanBudget {
+  files: number;
+  cumulativeBytes: number;
+  maxFiles: number;
+  maxFileBytes: number;
+  maxCumulativeBytes: number;
+  maxDepth: number;
+  truncated: boolean;
+}
+
+interface RawCandidate {
+  path: string;
+  type: RepoSpecKind;
+  format?: SpecFormat;
+  serviceRoot: string;
+  artifactClass: RepoSpecArtifactClass;
+  evidence: string[];
+  score: number;
+  content?: string;
+  memberPaths?: string[];
+  projections?: string[];
+}
 
 function isLikelyOpenApiDocument(content: string): boolean {
   try {
@@ -106,7 +221,12 @@ function isLikelyOpenApiDocument(content: string): boolean {
 
 function isLikelyGraphqlSchema(content: string): boolean {
   const trimmed = content.trim();
-  return /\btype\s+Query\b/.test(trimmed) || /\bschema\s*\{/.test(trimmed);
+  return /\btype\s+Query\b/.test(trimmed)
+    || /\btype\s+Mutation\b/.test(trimmed)
+    || /\btype\s+Subscription\b/.test(trimmed)
+    || /\bschema\s*\{/.test(trimmed)
+    // Type-only/partial SDL files are valid members of a multi-file service group.
+    || /\b(type|input|interface|enum|union|scalar)\s+[A-Za-z_]/.test(trimmed);
 }
 
 function isLikelyAsyncApiDocument(content: string): boolean {
@@ -134,19 +254,39 @@ function isLikelyProtobuf(content: string): boolean {
   return /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content) || /\b(service|message)\s+\w+\s*\{/.test(content);
 }
 
-function isLikelySmithy(content: string, filename: string): boolean {
-  if (filename.endsWith('smithy-build.json')) {
-    try {
-      const parsed = JSON.parse(content);
-      return Boolean(parsed && typeof parsed === 'object');
-    } catch {
-      return false;
-    }
-  }
+function isLikelySmithyModel(content: string): boolean {
   return /^\s*\$version:\s*["']2(?:\.\d+)?["']/m.test(content) || /\b(namespace|service|structure)\s+[\w#.]+/.test(content);
 }
 
-function formatFor(type: RepoSpecMatch['type'], candidate: string): SpecFormat | undefined {
+function isLikelyJsonSchema(content: string): boolean {
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    if (parsed.openapi || parsed.swagger || parsed.asyncapi) return false;
+    if (typeof parsed.$schema === 'string' && /json-schema/i.test(parsed.$schema)) return true;
+    if (typeof parsed.$id === 'string' && (parsed.type || parsed.properties || parsed.$defs || parsed.definitions)) return true;
+    if (parsed.type === 'object' && (parsed.properties || parsed.required || parsed.$defs || parsed.definitions)) return true;
+    if (parsed.$defs || parsed.definitions) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function isLikelyAvro(content: string): boolean {
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    if (parsed.type === 'record' && Array.isArray(parsed.fields) && typeof parsed.name === 'string') return true;
+    if (parsed.type === 'enum' && Array.isArray(parsed.symbols) && typeof parsed.name === 'string') return true;
+    if (parsed.type === 'fixed' && typeof parsed.size === 'number' && typeof parsed.name === 'string') return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function formatFor(type: RepoSpecKind, candidate: string): SpecFormat | undefined {
   switch (type) {
     case 'openapi':
       return candidate.endsWith('.json') ? 'openapi-json' : 'openapi-yaml';
@@ -160,51 +300,42 @@ function formatFor(type: RepoSpecMatch['type'], candidate: string): SpecFormat |
       return 'protobuf';
     case 'smithy':
       return 'smithy';
+    case 'json-schema':
+      return 'json-schema';
+    case 'avro':
+      return 'avro';
   }
 }
 
-export interface RepoSpecMatch {
-  path: string;
-  type: 'openapi' | 'graphql' | 'asyncapi' | 'postman-collection' | 'protobuf' | 'smithy';
-  format?: SpecFormat;
-  evidence?: string[];
+function artifactClassFor(relativePath: string): RepoSpecArtifactClass {
+  return GENERATED_PATH_RE.test(toPosix(relativePath)) ? 'generated' : 'authored';
 }
 
-export async function findExistingRepoSpec(repoRoot: string): Promise<string | undefined> {
-  const match = await findExistingRepoSpecTyped(repoRoot);
-  return match?.path;
+function toPosix(value: string): string {
+  return value.replace(/\\/g, '/');
 }
 
-export async function findExistingRepoSpecTyped(repoRoot: string): Promise<RepoSpecMatch | undefined> {
-  const candidates = await collectSpecCandidates(repoRoot);
-  for (const candidate of candidates) {
-    const fullPath = path.resolve(repoRoot, candidate);
-    try {
-      const fileStat = await stat(fullPath);
-      if (!fileStat.isFile()) {
-        continue;
-      }
-      const content = await readFile(fullPath, 'utf8');
-      const match = detectRepoSpec(candidate, content);
-      if (match) {
-        return {
-          ...match,
-          path: candidate.replace(/\\/g, '/'),
-          evidence: [`Resolved from repository specification ${candidate.replace(/\\/g, '/')}`]
-        };
-      }
-    } catch {
-      // Continue search.
+function isPathInsideRoot(root: string, target: string): boolean {
+  const relative = path.relative(path.resolve(root), path.resolve(target));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+async function isRegularNonSymlinkFile(absolutePath: string): Promise<boolean> {
+  try {
+    const link = await lstat(absolutePath);
+    if (link.isSymbolicLink()) {
+      return false;
     }
+    return link.isFile();
+  } catch {
+    return false;
   }
-
-  return undefined;
 }
 
 function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch, 'path' | 'evidence'> | undefined {
-  const normalized = candidate.replace(/\\/g, '/').toLowerCase();
-  const basename = path.basename(normalized);
-  let type: RepoSpecMatch['type'] | undefined;
+  const normalized = toPosix(candidate).toLowerCase();
+  const basename = path.posix.basename(normalized);
+  let type: RepoSpecKind | undefined;
 
   if ((basename.endsWith('.graphql') || basename.endsWith('.gql')) && isLikelyGraphqlSchema(content)) {
     type = 'graphql';
@@ -214,12 +345,27 @@ function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch,
     if (isLikelyPostmanCollection(content)) type = 'postman-collection';
   } else if (basename.endsWith('.proto')) {
     if (isLikelyProtobuf(content)) type = 'protobuf';
-  } else if (basename.endsWith('.smithy') || basename === 'smithy-build.json') {
-    if (isLikelySmithy(content, basename)) type = 'smithy';
+  } else if (basename.endsWith('.smithy')) {
+    if (isLikelySmithyModel(content)) type = 'smithy';
+  } else if (basename === 'smithy-build.json') {
+    // Inventory resolves project closure separately; never treat JSON config as model.
+    return undefined;
+  } else if (basename.endsWith('.avsc') || basename.endsWith('.avro')) {
+    if (isLikelyAvro(content)) type = 'avro';
+  } else if (
+    basename === 'schema.json'
+    || basename.endsWith('.schema.json')
+    || (basename.endsWith('.json') && !basename.endsWith('.postman_collection.json') && isLikelyJsonSchema(content))
+  ) {
+    if (isLikelyJsonSchema(content)) type = 'json-schema';
   } else if (isLikelyOpenApiDocument(content)) {
     type = 'openapi';
   } else if (isLikelyAsyncApiDocument(content)) {
     type = 'asyncapi';
+  } else if (isLikelyAvro(content)) {
+    type = 'avro';
+  } else if (isLikelyJsonSchema(content)) {
+    type = 'json-schema';
   }
 
   return type ? { type, format: formatFor(type, normalized) } : undefined;
@@ -228,85 +374,402 @@ function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch,
 function isSpecLikeFilename(filename: string): boolean {
   const lower = filename.toLowerCase();
   return (
-    /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) ||
-    lower === 'asyncapi.yaml' ||
-    lower === 'asyncapi.yml' ||
-    lower === 'asyncapi.json' ||
-    lower === 'schema.graphql' ||
-    lower === 'schema.gql' ||
-    lower.endsWith('.postman_collection.json') ||
-    lower.endsWith('.proto') ||
-    lower.endsWith('.smithy') ||
-    lower === 'smithy-build.json'
+    /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower)
+    || lower === 'asyncapi.yaml'
+    || lower === 'asyncapi.yml'
+    || lower === 'asyncapi.json'
+    || lower.endsWith('.graphql')
+    || lower.endsWith('.gql')
+    || lower.endsWith('.postman_collection.json')
+    || lower.endsWith('.proto')
+    || lower.endsWith('.smithy')
+    || lower === 'smithy-build.json'
+    || lower === 'schema.json'
+    || lower.endsWith('.schema.json')
+    || lower.endsWith('.avsc')
+    || lower.endsWith('.avro')
   );
 }
 
-async function collectSpecCandidates(repoRoot: string): Promise<string[]> {
+function specCandidateScore(candidate: string, type: RepoSpecKind, artifactClass: RepoSpecArtifactClass): number {
+  const normalized = toPosix(candidate).toLowerCase();
+  const basename = path.posix.basename(normalized);
+  let score = 0;
+  if (artifactClass === 'authored') score += 500;
+  if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename !== 'smithy-build.json') score += 200;
+  if (type === 'openapi' || /^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 90;
+  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 85;
+  if (type === 'asyncapi' || basename.startsWith('asyncapi')) score += 80;
+  if (type === 'graphql' || basename === 'schema.graphql' || basename === 'schema.gql') score += 75;
+  if (type === 'smithy' && basename === 'smithy-build.json') score += 95;
+  if (type === 'smithy' && basename.endsWith('.smithy')) score += 70;
+  if (type === 'json-schema' || basename === 'schema.json' || basename.endsWith('.schema.json')) score += 65;
+  if (type === 'avro' || basename.endsWith('.avsc') || basename.endsWith('.avro')) score += 60;
+  if (type === 'postman-collection' || basename.endsWith('.postman_collection.json')) score += 55;
+  if (type === 'protobuf' || basename.endsWith('.proto')) score += 50;
+  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|model|models|schemas|schema|reference|public)\//.test(normalized)) score += 20;
+  if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
+  if (artifactClass === 'generated') score -= 400;
+  return score;
+}
+
+/**
+ * Bounded deterministic repository contract inventory.
+ * Returns ranked candidates with service-root / artifact-class metadata and a clean error contract.
+ */
+export async function inventoryRepoSpecs(
+  repoRoot: string,
+  options: InventoryRepoSpecsOptions = {}
+): Promise<RepoSpecInventory> {
+  const resolvedRoot = path.resolve(repoRoot);
+  const budget: ScanBudget = {
+    files: 0,
+    cumulativeBytes: 0,
+    maxFiles: options.maxFiles ?? DEFAULT_INVENTORY_BOUNDS.maxFiles,
+    maxFileBytes: options.maxFileBytes ?? DEFAULT_INVENTORY_BOUNDS.maxFileBytes,
+    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_INVENTORY_BOUNDS.maxCumulativeBytes,
+    maxDepth: options.maxDepth ?? DEFAULT_INVENTORY_BOUNDS.maxDepth,
+    truncated: false
+  };
+  const errors: RepoSpecInventoryError[] = [];
+  const scopeRoot = options.serviceRoot ? toPosix(options.serviceRoot) : undefined;
+
+  const pathCandidates = await collectSpecCandidatePaths(resolvedRoot, budget, errors);
+  const scopedPaths = scopeRoot
+    ? pathCandidates.filter((candidate) => {
+      const posix = toPosix(candidate);
+      return posix === scopeRoot
+        || posix.startsWith(`${scopeRoot}/`)
+        || serviceRootFor(posix) === scopeRoot;
+    })
+    : pathCandidates;
+
+  const smithyBuildPaths = scopedPaths.filter((candidate) => path.posix.basename(toPosix(candidate)).toLowerCase() === 'smithy-build.json');
+  const smithyMemberPaths = new Set<string>();
+  const raw: RawCandidate[] = [];
+
+  for (const buildPath of smithyBuildPaths.sort((a, b) => a.localeCompare(b))) {
+    const closure = await resolveSmithyProject(resolvedRoot, buildPath, {
+      maxFiles: budget.maxFiles,
+      maxFileBytes: budget.maxFileBytes,
+      maxCumulativeBytes: budget.maxCumulativeBytes,
+      maxDepth: budget.maxDepth
+    });
+    for (const error of closure.errors) {
+      errors.push(error);
+    }
+    for (const member of closure.memberPaths) {
+      smithyMemberPaths.add(member);
+    }
+    if (closure.errors.length > 0 || closure.memberPaths.length === 0 || !closure.content.trim()) {
+      continue;
+    }
+    const artifactClass = artifactClassFor(buildPath);
+    raw.push({
+      path: toPosix(buildPath),
+      type: 'smithy',
+      format: 'smithy',
+      serviceRoot: serviceRootFor(buildPath),
+      artifactClass,
+      evidence: closure.evidence,
+      score: specCandidateScore(buildPath, 'smithy', artifactClass),
+      content: closure.content,
+      memberPaths: closure.memberPaths,
+      projections: closure.projections
+    });
+  }
+
+  const graphqlFiles: { path: string; content: string }[] = [];
+  const singleFileCandidates: RawCandidate[] = [];
+
+  for (const candidate of scopedPaths.sort((a, b) => a.localeCompare(b))) {
+    const relative = toPosix(candidate);
+    const basename = path.posix.basename(relative).toLowerCase();
+    if (basename === 'smithy-build.json') continue;
+    if (relative.endsWith('.smithy') && smithyMemberPaths.has(relative)) continue;
+
+    const absolute = path.resolve(resolvedRoot, relative);
+    if (!isPathInsideRoot(resolvedRoot, absolute)) {
+      errors.push({
+        code: 'path-escape',
+        path: relative,
+        message: `Candidate path escapes repository root: ${relative}`
+      });
+      continue;
+    }
+    if (!(await isRegularNonSymlinkFile(absolute))) {
+      continue;
+    }
+
+    const content = await readBoundedFile(absolute, relative, budget, errors);
+    if (content === undefined) continue;
+
+    const detected = detectRepoSpec(relative, content);
+    if (!detected) continue;
+
+    if (detected.type === 'graphql') {
+      graphqlFiles.push({ path: relative, content });
+      continue;
+    }
+
+    const artifactClass = artifactClassFor(relative);
+    singleFileCandidates.push({
+      path: relative,
+      type: detected.type,
+      format: detected.format,
+      serviceRoot: serviceRootFor(relative),
+      artifactClass,
+      evidence: [`Resolved from repository specification ${relative}`],
+      score: specCandidateScore(relative, detected.type, artifactClass),
+      content
+    });
+  }
+
+  for (const group of groupGraphqlByServiceRoot(graphqlFiles)) {
+    if (scopeRoot && group.serviceRoot !== scopeRoot && group.serviceRoot !== '.') {
+      // Still include groups whose files matched scoped filter above.
+    }
+    const artifactClass = group.memberPaths.every((member) => artifactClassFor(member) === 'generated')
+      ? 'generated'
+      : 'authored';
+    raw.push({
+      path: group.path,
+      type: 'graphql',
+      format: 'graphql-sdl',
+      serviceRoot: group.serviceRoot,
+      artifactClass,
+      evidence: group.evidence,
+      score: specCandidateScore(group.path, 'graphql', artifactClass) + (group.memberPaths.length > 1 ? 10 : 0),
+      content: group.content,
+      memberPaths: group.memberPaths
+    });
+  }
+
+  raw.push(...singleFileCandidates);
+
+  // Integrate static IaC OpenAPI candidates (generated/local) without changing public inventory shape.
+  // Generated classes stay below authored via scoring; content is never invented from route hints.
+  try {
+    const iacResolution = await resolveStaticIacCandidates(resolvedRoot, {
+      maxDepth: budget.maxDepth,
+      maxFiles: Math.max(0, budget.maxFiles - budget.files),
+      maxFileBytes: budget.maxFileBytes,
+      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes)
+    });
+    for (const error of iacResolution.errors) {
+      if (error.code === 'path-escape' || error.code === 'bounds-exceeded') {
+        errors.push({
+          code: error.code === 'path-escape' ? 'path-escape' : 'bounds-exceeded',
+          path: error.path,
+          message: error.message
+        });
+      }
+    }
+    const existingPaths = new Set(raw.map((candidate) => candidate.path));
+    for (const iac of contentBearingIacCandidates(iacResolution)) {
+      if (!iac.content || !iac.sourcePath) continue;
+      // Generated build artifacts (cdk.out / .aws-sam / .serverless) stay out of
+      // repo-spec inventory so runtime continues to use findLocalCfnArtifactSpecs
+      // (cfn-embedded / manual-review). Only authored static IaC merges here.
+      if (iac.artifactClass !== 'authored') continue;
+      if (scopeRoot) {
+        const posix = toPosix(iac.sourcePath);
+        if (
+          posix !== scopeRoot
+          && !posix.startsWith(`${scopeRoot}/`)
+          && serviceRootFor(posix) !== scopeRoot
+        ) {
+          continue;
+        }
+      }
+      const inventoryPath = toPosix(iac.sourcePath);
+      if (existingPaths.has(inventoryPath)) continue;
+      const artifactClass = toRepoArtifactClass(iac.artifactClass);
+      raw.push({
+        path: inventoryPath,
+        type: 'openapi',
+        format: iac.format ?? 'openapi-json',
+        serviceRoot: serviceRootFor(inventoryPath),
+        artifactClass,
+        evidence: [
+          ...iac.evidence,
+          `Static IaC ${iac.source}/${iac.kind} (${iac.artifactClass})`
+        ],
+        score: specCandidateScore(inventoryPath, 'openapi', artifactClass),
+        content: iac.content
+      });
+      existingPaths.add(inventoryPath);
+    }
+  } catch {
+    // Static IaC integration must not break authored inventory.
+  }
+
+  const sorted = raw.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    if (left.artifactClass !== right.artifactClass) {
+      return left.artifactClass === 'authored' ? -1 : 1;
+    }
+    return left.path.localeCompare(right.path);
+  });
+
+  const candidates: RepoSpecCandidate[] = sorted.map((candidate, index) => ({
+    ...candidate,
+    rank: index + 1
+  }));
+
+  if (budget.truncated) {
+    errors.push({
+      code: 'bounds-exceeded',
+      path: scopeRoot ?? '.',
+      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
+    });
+  }
+
+  return { candidates, errors };
+}
+
+async function readBoundedFile(
+  absolute: string,
+  relative: string,
+  budget: ScanBudget,
+  errors: RepoSpecInventoryError[]
+): Promise<string | undefined> {
+  let content: string;
+  try {
+    content = await readFile(absolute, 'utf8');
+  } catch (error) {
+    errors.push({
+      code: 'unreadable',
+      path: relative,
+      message: `Failed to read candidate: ${error instanceof Error ? error.message : String(error)}`
+    });
+    return undefined;
+  }
+  const bytes = Buffer.byteLength(content, 'utf8');
+  if (bytes > budget.maxFileBytes) {
+    errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Candidate exceeds maxFileBytes=${budget.maxFileBytes}`
+    });
+    return undefined;
+  }
+  if (budget.cumulativeBytes + bytes > budget.maxCumulativeBytes) {
+    budget.truncated = true;
+    errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Scan exceeds maxCumulativeBytes=${budget.maxCumulativeBytes}`
+    });
+    return undefined;
+  }
+  budget.cumulativeBytes += bytes;
+  return content;
+}
+
+async function collectSpecCandidatePaths(
+  repoRoot: string,
+  budget: ScanBudget,
+  errors: RepoSpecInventoryError[]
+): Promise<string[]> {
   const candidates = new Set<string>();
   for (const candidate of DIRECT_SPEC_CANDIDATES) {
     candidates.add(candidate);
   }
 
-  const count = { value: 0 };
   for (const dir of COMMON_SCAN_DIRS) {
+    if (budget.files >= budget.maxFiles) {
+      budget.truncated = true;
+      break;
+    }
     const root = path.resolve(repoRoot, dir);
+    if (!isPathInsideRoot(repoRoot, root)) {
+      errors.push({
+        code: 'path-escape',
+        path: dir,
+        message: `Scan directory escapes repository root: ${dir}`
+      });
+      continue;
+    }
     const fileStat = await stat(root).catch(() => undefined);
     if (!fileStat) continue;
     if (fileStat.isFile()) {
-      const relative = path.relative(repoRoot, root);
+      const relative = toPosix(path.relative(repoRoot, root));
       if (isSpecLikeFilename(path.basename(relative))) {
         candidates.add(relative);
       }
       continue;
     }
     if (!fileStat.isDirectory()) continue;
-    for (const file of await walkSpecCandidates(repoRoot, root, count)) {
+    for (const file of await walkSpecCandidates(repoRoot, root, budget, 0)) {
       candidates.add(file);
     }
-    if (count.value >= MAX_SPEC_SCAN_FILES) break;
   }
 
-  return [...candidates].sort((left, right) => specCandidateScore(right) - specCandidateScore(left) || left.localeCompare(right));
+  return [...candidates].map(toPosix).sort((a, b) => a.localeCompare(b));
 }
 
-async function walkSpecCandidates(repoRoot: string, current: string, count: { value: number }, depth = 0): Promise<string[]> {
-  if (depth > MAX_SPEC_SCAN_DEPTH || count.value >= MAX_SPEC_SCAN_FILES) return [];
+async function walkSpecCandidates(
+  repoRoot: string,
+  current: string,
+  budget: ScanBudget,
+  depth: number
+): Promise<string[]> {
+  if (depth > budget.maxDepth || budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || depth > budget.maxDepth) {
+      budget.truncated = true;
+    }
+    return [];
+  }
   const results: string[] = [];
-  const entries = await readdir(current).catch(() => [] as string[]);
+  const entries = (await readdir(current).catch(() => [] as string[])).sort((a, b) => a.localeCompare(b));
   for (const entry of entries) {
-    if (count.value >= MAX_SPEC_SCAN_FILES) break;
+    if (budget.files >= budget.maxFiles) {
+      budget.truncated = true;
+      break;
+    }
     if (SKIP_DIRS.has(entry)) continue;
     const fullPath = path.join(current, entry);
-    const info = await stat(fullPath).catch(() => undefined);
-    if (!info) continue;
+    if (!isPathInsideRoot(repoRoot, fullPath)) {
+      continue;
+    }
+    const info = await lstat(fullPath).catch(() => undefined);
+    if (!info || info.isSymbolicLink()) continue;
     if (info.isDirectory()) {
-      results.push(...await walkSpecCandidates(repoRoot, fullPath, count, depth + 1));
+      results.push(...await walkSpecCandidates(repoRoot, fullPath, budget, depth + 1));
       continue;
     }
     if (info.isFile() && isSpecLikeFilename(entry)) {
-      count.value += 1;
-      results.push(path.relative(repoRoot, fullPath));
+      budget.files += 1;
+      results.push(toPosix(path.relative(repoRoot, fullPath)));
     }
   }
   return results;
 }
 
-function specCandidateScore(candidate: string): number {
-  const normalized = candidate.replace(/\\/g, '/').toLowerCase();
-  const basename = path.basename(normalized);
-  let score = 0;
-  if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename !== 'smithy-build.json') score += 200;
-  if (/^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 90;
-  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename)) score += 85;
-  if (basename.startsWith('asyncapi')) score += 80;
-  if (basename === 'schema.graphql' || basename === 'schema.gql') score += 75;
-  if (basename.endsWith('.postman_collection.json')) score += 60;
-  if (basename.endsWith('.proto')) score += 50;
-  if (basename.endsWith('.smithy')) score += 70;
-  if (basename === 'smithy-build.json') score += 30;
-  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|reference|public)\//.test(normalized)) score += 20;
-  if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
-  return score;
+export async function findExistingRepoSpec(repoRoot: string): Promise<string | undefined> {
+  const match = await findExistingRepoSpecTyped(repoRoot);
+  return match?.path;
+}
+
+/**
+ * Compatibility wrapper over {@link inventoryRepoSpecs}: returns the top-ranked candidate.
+ * Prefer inventoryRepoSpecs for ambiguity-safe selection.
+ */
+export async function findExistingRepoSpecTyped(repoRoot: string): Promise<RepoSpecMatch | undefined> {
+  const inventory = await inventoryRepoSpecs(repoRoot);
+  const top = inventory.candidates[0];
+  if (!top) return undefined;
+  return {
+    path: top.path,
+    type: top.type,
+    format: top.format,
+    evidence: top.evidence,
+    content: top.content,
+    serviceRoot: top.serviceRoot,
+    artifactClass: top.artifactClass,
+    memberPaths: top.memberPaths
+  };
 }
 
 const CFN_ARTIFACT_API_TYPES: Record<string, GatewayType> = {
@@ -326,18 +789,6 @@ export interface LocalCfnArtifactSpec {
   content: string;
   format: SpecFormat;
   filename: string;
-}
-
-async function isRegularNonSymlinkFile(absolutePath: string): Promise<boolean> {
-  try {
-    const link = await lstat(absolutePath);
-    if (link.isSymbolicLink()) {
-      return false;
-    }
-    return link.isFile();
-  } catch {
-    return false;
-  }
 }
 
 /**

@@ -33,19 +33,25 @@ Captured on 2026-06-01. Generated matrix sections in this document are refreshed
 | P3 AWS-derived surfaces | AppSync Events, EventBridge rules/pipes/API destinations, Bedrock Agent action groups, ALB listener rules, Lambda event source mappings, Verified Permissions schemas, and Step Functions ASL definitions emit partial OpenAPI JSON evidence without inventing business endpoints. | The live AWS matrix passed `appsync-events`, `eventbridge-rule`, `eventbridge-pipe`, `eventbridge-api-destination`, `bedrock-action-group`, `alb-listener-rule`, `lambda-event-source`, `verified-permissions`, and `step-functions`. `validate-p3-surfaces.mjs` also passed 9 supplemental fixture cases. |
 | IaC and repo signals | CloudFormation/SAM, Terraform, CDK, Pulumi, workflow, serverless config, Helm/Kubernetes Ingress, docker-compose, ECS task definitions, `application.yml`, `appsettings.json`, README, GraphQL, Lambda URL, SNS/EventBridge bridge, and SNS contract fixtures produce provider hints, URL hints, custom domains, and contract file signals. | `validate-iac-signals.mjs` passed 8 cases. Signal-discovered `asyncapi.yaml` and `schema.graphql` fixtures both derive OpenAPI 3.x. |
 
+## Evidence freshness
+
+- **Current live proof**: The Live AWS Surface Evidence and Live Required Cases sections are sanitized receipts from the successful current run.
+- Support ledger enforcement and resolution-closure sections are offline-generated and do not claim live passes.
+
 ## Live AWS Status
 
-The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`, and `validate-live-aws-surfaces.mjs` passed 24 live AWS cases, including the modeled REST route and all AWS-derived P3 surfaces.
+The live validation stack is `spec-discovery-validation` in `us-east-1`. The latest captured stack status was `UPDATE_COMPLETE`; `validate-live-aws-surfaces.mjs` passed 31/31 cases, including built-CLI boundaries and all 11/11 required current-run cases.
 
 <!-- evidence:live-resource-summary:start -->
 ## Live Resource Summary
 
-- Captured at: 2026-07-18T02:45:12.848Z
+- Captured at: 2026-07-20T09:34:55.241Z
 - Stack: spec-discovery-validation
 - Region: us-east-1
 - Account: XXXXXXXXXXXX
+- Partition: aws
 - Status: UPDATE_COMPLETE
-- Output keys: AlbListenerRuleArn, AppSyncEventApiId, AppSyncEventApiName, AppSyncEventChannelNamespaceName, BedrockActionGroupName, BedrockAgentId, EventBridgeApiDestinationName, EventBridgePipeName, EventBridgeRuleName, GlueRegistryName, GraphqlApiId, HttpApiId, LambdaEventSourceMappingId, LambdaFunctionName, LambdaFunctionUrl, RestApiId, SchemaRegistryName, SnsSubscriptionTopicArn, SnsTestTopicArn, SnsUrlTopicArn, StepFunctionsStateMachineArn, StepFunctionsStateMachineName, VerifiedPermissionsPolicyStoreId, WebSocketApiId
+- Output keys: AlbListenerRuleArn, AppSyncAssociationDenialRoleArn, AppSyncEventApiId, AppSyncEventApiName, AppSyncEventChannelNamespaceName, BedrockActionGroupName, BedrockAgentId, EventBridgeApiDestinationName, EventBridgePipeName, EventBridgeRuleName, GlueRegistryName, GraphqlApiId, HttpApiId, LambdaEventSourceMappingId, LambdaFunctionName, LambdaFunctionUrl, MergedGraphqlApiId, ProviderDenialRoleArn, RestApiId, SchemaRegistryName, SnsSubscriptionTopicArn, SnsTestTopicArn, SnsUrlTopicArn, StepFunctionsStateMachineArn, StepFunctionsStateMachineName, VerifiedPermissionsPolicyStoreId, WebSocketApiId
 
 Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-resource-summary:end -->
@@ -53,7 +59,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-07-17T22:53:54.693Z
+- Captured at: 2026-07-20T09:56:21.875Z
 - Cases: 15
 - Passed: 15
 - Failed: 0
@@ -80,48 +86,56 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-aws-surfaces:start -->
 ## Live AWS Surface Evidence
 
-- Captured at: 2026-07-18T05:22:33.717Z
-- Elapsed ms: 12938
+- Captured at: 2026-07-20T09:54:52.118Z
+- Elapsed ms: 1196645
 - Stack: spec-discovery-validation
 - Region: us-east-1
-- Cases: 24
-- Passed: 24
+- Cases: 31
+- Passed: 31
 - Failed: 0
+- Required-boundary skipped: 0
 - Route-only REST checks: 5/5 passed (export content omission, audit, warning, live JSON response, Content-Length)
 - Contract-control wire checks: 6/6 passed (clean 204, managed-service normalization, valid/invalid schema payloads, Content-Length)
 
 | Case | Runner | Source Type | Provider | Format | Contract audit | Derived OAS | Elapsed ms | Result |
 | --- | --- | --- | --- | --- | --- | --- | ---: | --- |
-| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1717 | pass |
-| api-gateway-rest-modeled-route | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1353 | pass |
-| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml |  | 3.0.3 partial | 466 | pass |
-| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | schema-complete (0 response(s) without content) | 3.0.3 full | 1483 | pass |
-| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (1 response(s) without content) | 3.0.3 partial | 1709 | pass |
-| appsync | runtime | appsync-schema | appsync | graphql-sdl |  | 3.1.0 partial | 717 | pass |
-| appsync-events | runtime | appsync-event-api | appsync-events | openapi-json |  | 3.1.0 partial | 535 | pass |
-| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json |  | 3.0.3 full | 885 | pass |
-| eventbridge-rule | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 440 | pass |
-| eventbridge-pipe | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 529 | pass |
-| eventbridge-api-destination | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 320 | pass |
-| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json |  | 3.0.3 full | 757 | pass |
-| glue-schema | runtime | glue-schema | glue | avro |  | 3.1.0 partial | 830 | pass |
-| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml |  | 3.1.0 partial | 717 | pass |
-| ssm-url-registry | runtime | ssm-registry | ssm | json-schema |  | 3.1.0 partial | 831 | pass |
-| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json |  | 3.1.0 partial | 631 | pass |
-| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml |  | 3.0.3 partial | 753 | pass |
-| lambda-event-source | runtime | lambda-event-source | lambda-event-source | openapi-json |  | 3.1.0 partial | 799 | pass |
-| verified-permissions | runtime | verified-permissions-schema | verified-permissions | openapi-json |  | 3.1.0 partial | 413 | pass |
-| step-functions | runtime | step-functions-asl | step-functions | openapi-json |  | 3.1.0 partial | 497 | pass |
-| alb-listener-rule | runtime | alb-listener-rule | alb-listener-rule | openapi-json |  | 3.1.0 partial | 498 | pass |
-| bedrock-action-group | runtime | bedrock-action-group | bedrock-action-group | openapi-json |  | 3.0.3 partial | 969 | pass |
-| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9173 | pass |
-| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9562 | pass |
+| api-gateway-rest | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1533 | pass |
+| api-gateway-rest-modeled-route | runtime | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 1535 | pass |
+| api-gateway-rest-fallback | live-sdk | gateway-export | api-gateway | openapi-yaml |  | 3.0.3 partial | 668 | pass |
+| api-gateway-http | runtime | gateway-export | api-gateway | openapi-yaml | schema-complete (0 response(s) without content) | 3.0.3 full | 1532 | pass |
+| api-gateway-websocket | runtime | gateway-export | api-gateway | openapi-yaml |  | 3.0.3 partial | 1681 | pass |
+| appsync | runtime | appsync-schema | appsync | graphql-sdl |  | 3.1.0 partial | 544 | pass |
+| appsync-events | runtime | appsync-event-api | appsync-events | openapi-json |  | 3.1.0 partial | 337 | pass |
+| eventbridge-schemas | runtime | eventbridge-schema | eventbridge-schemas | openapi-json |  | 3.0.3 full | 800 | pass |
+| eventbridge-rule | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 513 | pass |
+| eventbridge-pipe | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 510 | pass |
+| eventbridge-api-destination | runtime | eventbridge-surface | eventbridge | openapi-json |  | 3.1.0 partial | 334 | pass |
+| cloudformation-embedded | runtime | cfn-embedded | cloudformation | openapi-json |  | 3.0.3 full | 687 | pass |
+| glue-schema | runtime | glue-schema | glue | avro |  | 3.1.0 partial | 852 | pass |
+| ssm-registry | runtime | ssm-registry | ssm | asyncapi-yaml |  | 3.1.0 partial | 774 | pass |
+| ssm-url-registry | runtime | ssm-registry | ssm | json-schema |  | 3.1.0 partial | 1130 | pass |
+| ssm-url-pointer | runtime | ssm-registry | ssm | openapi-json |  | 3.1.0 partial | 711 | pass |
+| lambda-url | runtime | lambda-url-export | lambda-url | openapi-yaml |  | 3.0.3 partial | 711 | pass |
+| lambda-event-source | runtime | lambda-event-source | lambda-event-source | openapi-json |  | 3.1.0 partial | 770 | pass |
+| verified-permissions | runtime | verified-permissions-schema | verified-permissions | openapi-json |  | 3.1.0 partial | 475 | pass |
+| step-functions | runtime | step-functions-asl | step-functions | openapi-json |  | 3.1.0 partial | 582 | pass |
+| alb-listener-rule | runtime | alb-listener-rule | alb-listener-rule | openapi-json |  | 3.1.0 partial | 404 | pass |
+| bedrock-action-group | runtime | bedrock-action-group | bedrock-action-group | openapi-json |  | 3.0.3 partial | 965 | pass |
+| sns-ssm-content | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9334 | pass |
+| sns-webhook-sidecar | runtime | sns-contract | sns | asyncapi-yaml |  | 3.1.0 partial | 9681 | pass |
+| github-org-repo-tag-zero-config | built-cli |  |  |  |  |  | 478862 | pass |
+| github-org-repo-multi-environment-ambiguity | built-cli | manual-review |  |  |  |  | 113160 | pass |
+| api-gateway-http-latest-configuration-divergence | built-cli |  |  |  |  |  | 223764 | pass |
+| built-cli-boundary-matrix | built-cli |  |  |  |  |  | 359808 | pass |
+| appsync-merged-associations | built-cli |  |  |  |  |  | 3059 | pass |
+| provider-denial-typed | built-cli | gateway-export | api-gateway | openapi-yaml | schema-incomplete (4 response(s) without content) | 3.0.3 full | 3583 | pass |
+| expected-identity-mismatch | built-cli |  |  |  |  |  | 654 | pass |
 <!-- evidence:live-aws-surfaces:end -->
 
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-07-17T22:53:54.998Z
+- Captured at: 2026-07-20T09:56:24.484Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -141,7 +155,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-07-17T22:53:55.238Z
+- Captured at: 2026-07-20T09:56:26.027Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
@@ -159,3 +173,120 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 | verified-permissions | verified-permissions | openapi-json | partial | pass |
 | step-functions | step-functions | openapi-json | partial | pass |
 <!-- evidence:p3-surfaces:end -->
+
+<!-- evidence:support-ledger:start -->
+## Support Ledger Enforcement
+
+- Captured at: 2026-07-20T09:56:17.832Z
+- Ledger rows: 58
+- Advertised labels checked: 36
+- Required live rows: 26
+- Historical preserved live receipts: 0
+- Required live not-executed (current-run still needed): 0
+- Errors: 0
+
+| ID | Live req/status | Evidence class |
+| --- | --- | --- |
+| tag-postman-repo | required/passed | current-run |
+| tag-github-org-repo-split | required/passed | current-run |
+| tag-multi-environment-ambiguity | required/passed | current-run |
+| apigw-rest-native | required/passed | current-run |
+| apigw-rest-fallback | required/passed | current-run |
+| apigw-http-deployed-stage | required/passed | current-run |
+| apigw-http-latest-configuration | required/passed | current-run |
+| apigw-websocket-partial | required/passed | current-run |
+| stage-evidence-safe-selection | required/passed | current-run |
+| appsync-graphql | required/passed | current-run |
+| appsync-merged-associations | required/passed | current-run |
+| appsync-events | required/passed | current-run |
+| eventbridge-schemas | required/passed | current-run |
+| eventbridge-surfaces | required/passed | current-run |
+| cloudformation-embedded | required/passed | current-run |
+| glue-schema | required/passed | current-run |
+| ssm-registry | required/passed | current-run |
+| sns-contracts | required/passed | current-run |
+| lambda-url | required/passed | current-run |
+| lambda-event-source | required/passed | current-run |
+| bedrock-action-groups | required/passed | current-run |
+| alb-listener-rules | required/passed | current-run |
+| verified-permissions | required/passed | current-run |
+| step-functions | required/passed | current-run |
+| expected-identity-mismatch | required/passed | current-run |
+| provider-denial-typed | required/passed | current-run |
+<!-- evidence:support-ledger:end -->
+
+<!-- evidence:live-required-matrix:start -->
+## Live Required Cases (current-run gate)
+
+- Captured at: 2026-07-20T09:56:27.048Z
+- Distinction: historical-preserved rows keep old sanitized receipts; not-executed rows still require a current live run.
+- Cases: 11
+- Current-run passed: 11
+- Not executed: 0
+- Historical preserved only: 0
+
+| Case | Status | Run class | Ledger IDs | Notes |
+| --- | --- | --- | --- | --- |
+| github-org-repo-tag-zero-config | passed | current-run | tag-postman-repo, tag-github-org-repo-split | Committed sanitized current live receipt. |
+| github-org-repo-multi-environment-ambiguity | passed | current-run | tag-multi-environment-ambiguity | Committed sanitized current live receipt. |
+| api-gateway-rest-native | passed | current-run | apigw-rest-native | Committed sanitized current live receipt. |
+| api-gateway-rest-fallback | passed | current-run | apigw-rest-fallback | Committed sanitized current live receipt. |
+| api-gateway-http-deployed-stage | passed | current-run | apigw-http-deployed-stage | Committed sanitized current live receipt. |
+| api-gateway-http-latest-configuration-divergence | passed | current-run | apigw-http-latest-configuration, stage-evidence-safe-selection | Committed sanitized current live receipt. |
+| api-gateway-websocket-partial-control-plane | passed | current-run | apigw-websocket-partial | Committed sanitized current live receipt. |
+| appsync-merged-associations | passed | current-run | appsync-merged-associations | Committed sanitized current live receipt. |
+| expected-identity-mismatch | passed | current-run | expected-identity-mismatch | Committed sanitized current live receipt. |
+| provider-denial-typed | passed | current-run | provider-denial-typed | Committed sanitized current live receipt. |
+| all-existing-live-supported-providers | passed | current-run | appsync-graphql, appsync-events, eventbridge-schemas, eventbridge-surfaces, cloudformation-embedded, glue-schema, ssm-registry, sns-contracts, lambda-url, lambda-event-source, bedrock-action-groups, alb-listener-rules, verified-permissions, step-functions | Committed sanitized current live receipt. |
+<!-- evidence:live-required-matrix:end -->
+
+<!-- evidence:resolution-closure:start -->
+## Resolution Closure Evidence
+
+- Captured at: 2026-07-20T09:56:20.464Z
+- Fixture cases: 26
+- Fixture passed: 26
+- Vitest closure suites: pass
+- Failed: 0
+- Scope: offline local/mock validation only; does not claim live AWS passes.
+
+| Case | Kind | Result |
+| --- | --- | --- |
+| github-org-repo-canonical | fixture | pass |
+| github-org-repo-split | fixture | pass |
+| github-org-repo-multi-env | fixture | pass |
+| json-schema | fixture | pass |
+| avro | fixture | pass |
+| smithy-project | fixture | pass |
+| graphql-multi | fixture | pass |
+| service-root | fixture | pass |
+| same-tier-ambiguity | fixture | pass |
+| backstage-multi | fixture | pass |
+| iac-cfn-inline | fixture | pass |
+| iac-terraform-literal | fixture | pass |
+| iac-serverless-static | fixture | pass |
+| iac-cdk-assembly | fixture | pass |
+| iac-signals | fixture | pass |
+| iac-no-exec | fixture | pass |
+| remote-denied | fixture | pass |
+| remote-allowlist | fixture | pass |
+| path-escape | fixture | pass |
+| provenance-deployed-stage | fixture | pass |
+| provenance-latest-configuration | fixture | pass |
+| stage-precedence | fixture | pass |
+| identity-mismatch | fixture | pass |
+| provider-denial | fixture | pass |
+| deterministic-order | fixture | pass |
+| explicit-spec-path | fixture | pass |
+| vitest-closure-suites | vitest | pass |
+<!-- evidence:resolution-closure:end -->
+
+<!-- evidence:built-cli-live:start -->
+## Built CLI Live Evidence
+
+- Captured at: 2026-07-20T09:54:52.117Z
+- Built CLI cases: 7
+- Passed: 7
+- Failed: 0
+- Raw CLI stdout/stderr and detailed resolution receipts are stored only in `built-cli-live.local.json`.
+<!-- evidence:built-cli-live:end -->

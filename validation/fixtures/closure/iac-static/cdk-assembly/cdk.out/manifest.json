@@ -1,0 +1,17 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "OrdersStack": {
+      "type": "aws:cloudformation:stack",
+      "properties": {
+        "templateFile": "OrdersStack.template.json"
+      }
+    },
+    "OrdersStackAssets": {
+      "type": "cdk:asset",
+      "properties": {
+        "file": "asset.deadbeef.json"
+      }
+    }
+  }
+}

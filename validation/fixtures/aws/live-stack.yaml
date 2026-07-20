@@ -150,6 +150,12 @@ Resources:
       Tags:
         - Key: postman:project-name
           Value: spec-discovery-validation
+        - Key: postman:repo
+          Value: postman-cs/spec-discovery-validation-canonical
+        - Key: GithubOrg
+          Value: postman-cs
+        - Key: GithubRepo
+          Value: spec-discovery-validation-github-org-repo-rest
 
   TestRestDeploymentContractControlsV2:
     Type: AWS::ApiGateway::Deployment
@@ -232,6 +238,8 @@ Resources:
       ProtocolType: HTTP
       Tags:
         postman:project-name: spec-discovery-validation-http
+        GithubOrg: postman-cs
+        GithubRepo: spec-discovery-validation-github-org-repo-http
 
   TestHttpIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -270,6 +278,28 @@ Resources:
       RouteSelectionExpression: $request.body.action
       Tags:
         postman:project-name: spec-discovery-validation-ws
+        GithubOrg: postman-cs
+        GithubRepo: spec-discovery-validation-github-org-repo-websocket
+
+  TestMultiEnvironmentDevHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: spec-discovery-validation-multi-env-dev
+      ProtocolType: HTTP
+      Tags:
+        GithubOrg: postman-cs
+        GithubRepo: spec-discovery-validation-multi-env
+        Environment: dev
+
+  TestMultiEnvironmentProdHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: spec-discovery-validation-multi-env-prod
+      ProtocolType: HTTP
+      Tags:
+        GithubOrg: postman-cs
+        GithubRepo: spec-discovery-validation-multi-env
+        Environment: prod
 
   TestWebSocketOrderModel:
     Type: AWS::ApiGatewayV2::Model
@@ -365,6 +395,126 @@ Resources:
           name: String!
         }
 
+  TestSecondSourceGraphqlApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: spec-discovery-validation-graphql-source-two
+      AuthenticationType: API_KEY
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-validation-graphql-source-two
+
+  TestSecondSourceGraphqlSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt TestSecondSourceGraphqlApi.ApiId
+      Definition: |
+        type Query {
+          getSecondaryItem(id: ID!): SecondaryItem
+        }
+        type SecondaryItem {
+          id: ID!
+          description: String!
+        }
+
+  TestMergedGraphqlExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appsync.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: source-graphql-only
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: appsync:SourceGraphQL
+                Resource:
+                  - !GetAtt TestGraphqlApi.Arn
+                  - !GetAtt TestSecondSourceGraphqlApi.Arn
+
+  TestMergedGraphqlApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: spec-discovery-validation-merged
+      AuthenticationType: API_KEY
+      ApiType: MERGED
+      MergedApiExecutionRoleArn: !GetAtt TestMergedGraphqlExecutionRole.Arn
+      Tags:
+        - Key: postman:project-name
+          Value: spec-discovery-validation-merged
+
+  TestMergedGraphqlExistingSourceAssociation:
+    Type: AWS::AppSync::SourceApiAssociation
+    DependsOn:
+      - TestGraphqlSchema
+      - TestMergedGraphqlApi
+    Properties:
+      MergedApiIdentifier: !GetAtt TestMergedGraphqlApi.ApiId
+      SourceApiIdentifier: !GetAtt TestGraphqlApi.ApiId
+      SourceApiAssociationConfig:
+        MergeType: AUTO_MERGE
+
+  TestMergedGraphqlSecondSourceAssociation:
+    Type: AWS::AppSync::SourceApiAssociation
+    DependsOn:
+      - TestSecondSourceGraphqlSchema
+      - TestMergedGraphqlApi
+    Properties:
+      MergedApiIdentifier: !GetAtt TestMergedGraphqlApi.ApiId
+      SourceApiIdentifier: !GetAtt TestSecondSourceGraphqlApi.ApiId
+      SourceApiAssociationConfig:
+        MergeType: AUTO_MERGE
+
+  ProviderDenialRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: api-gateway-read-and-export-only
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: apigateway:GET
+                Resource:
+                  - !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis
+                  - !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/*
+                  - !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}::/apis
+                  - !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}::/apis/*
+
+  AppSyncAssociationDenialRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: appsync-disposable-api-read-without-associations
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - appsync:ListGraphqlApis
+                  - appsync:GetIntrospectionSchema
+                  - appsync:ListTagsForResource
+                Resource: '*'
   TestSchemaRegistry:
     Type: AWS::EventSchemas::Registry
     Properties:
@@ -1104,6 +1254,12 @@ Outputs:
     Value: !Ref TestWebSocketApi
   GraphqlApiId:
     Value: !GetAtt TestGraphqlApi.ApiId
+  MergedGraphqlApiId:
+    Value: !GetAtt TestMergedGraphqlApi.ApiId
+  ProviderDenialRoleArn:
+    Value: !GetAtt ProviderDenialRole.Arn
+  AppSyncAssociationDenialRoleArn:
+    Value: !GetAtt AppSyncAssociationDenialRole.Arn
   SchemaRegistryName:
     Value: !GetAtt TestSchemaRegistry.RegistryName
   GlueRegistryName:

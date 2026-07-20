@@ -1,0 +1,1476 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-20T09:54:52.120Z",
+  "stackAlias": "spec-discovery-validation",
+  "region": "us-east-1",
+  "stackStatus": "UPDATE_COMPLETE",
+  "counts": {
+    "cases": 31,
+    "passed": 31,
+    "failed": 0,
+    "currentRunRequired": 11,
+    "historicalPreservedRequired": 0
+  },
+  "cases": [
+    {
+      "name": "api-gateway-rest",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 1533,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        },
+        {
+          "name": "check-14",
+          "passed": true
+        },
+        {
+          "name": "check-15",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-rest-modeled-route",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 1535,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-rest-fallback",
+      "runner": "live-sdk",
+      "passed": true,
+      "elapsedMs": 668,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-http",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 1532,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-websocket",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 1681,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        },
+        {
+          "name": "check-14",
+          "passed": true
+        },
+        {
+          "name": "check-15",
+          "passed": true
+        },
+        {
+          "name": "check-16",
+          "passed": true
+        },
+        {
+          "name": "check-17",
+          "passed": true
+        },
+        {
+          "name": "check-18",
+          "passed": true
+        },
+        {
+          "name": "check-19",
+          "passed": true
+        },
+        {
+          "name": "check-20",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "appsync",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 544,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "appsync-events",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 337,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "eventbridge-schemas",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 800,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "eventbridge-rule",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 513,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "eventbridge-pipe",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 510,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "eventbridge-api-destination",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 334,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "cloudformation-embedded",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 687,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "glue-schema",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 852,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "ssm-registry",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 774,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "ssm-url-registry",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 1130,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "ssm-url-pointer",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 711,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "lambda-url",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 711,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "lambda-event-source",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 770,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "verified-permissions",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 475,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "step-functions",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 582,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "alb-listener-rule",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 404,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "bedrock-action-group",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 965,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "sns-ssm-content",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 9334,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "sns-webhook-sidecar",
+      "runner": "runtime",
+      "passed": true,
+      "elapsedMs": 9681,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        },
+        {
+          "name": "check-14",
+          "passed": true
+        },
+        {
+          "name": "check-15",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "github-org-repo-tag-zero-config",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 478862,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        },
+        {
+          "name": "check-14",
+          "passed": true
+        },
+        {
+          "name": "check-15",
+          "passed": true
+        },
+        {
+          "name": "check-16",
+          "passed": true
+        },
+        {
+          "name": "check-17",
+          "passed": true
+        },
+        {
+          "name": "check-18",
+          "passed": true
+        },
+        {
+          "name": "check-19",
+          "passed": true
+        },
+        {
+          "name": "check-20",
+          "passed": true
+        },
+        {
+          "name": "check-21",
+          "passed": true
+        },
+        {
+          "name": "check-22",
+          "passed": true
+        },
+        {
+          "name": "check-23",
+          "passed": true
+        },
+        {
+          "name": "check-24",
+          "passed": true
+        },
+        {
+          "name": "check-25",
+          "passed": true
+        },
+        {
+          "name": "check-26",
+          "passed": true
+        },
+        {
+          "name": "check-27",
+          "passed": true
+        },
+        {
+          "name": "check-28",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "github-org-repo-multi-environment-ambiguity",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 113160,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-http-latest-configuration-divergence",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 223764,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "built-cli-boundary-matrix",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 359808,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        },
+        {
+          "name": "check-9",
+          "passed": true
+        },
+        {
+          "name": "check-10",
+          "passed": true
+        },
+        {
+          "name": "check-11",
+          "passed": true
+        },
+        {
+          "name": "check-12",
+          "passed": true
+        },
+        {
+          "name": "check-13",
+          "passed": true
+        },
+        {
+          "name": "check-14",
+          "passed": true
+        },
+        {
+          "name": "check-15",
+          "passed": true
+        },
+        {
+          "name": "check-16",
+          "passed": true
+        },
+        {
+          "name": "check-17",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "appsync-merged-associations",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 3059,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "provider-denial-typed",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 3583,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        },
+        {
+          "name": "check-5",
+          "passed": true
+        },
+        {
+          "name": "check-6",
+          "passed": true
+        },
+        {
+          "name": "check-7",
+          "passed": true
+        },
+        {
+          "name": "check-8",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "expected-identity-mismatch",
+      "runner": "built-cli",
+      "passed": true,
+      "elapsedMs": 654,
+      "artifactChecks": [
+        {
+          "name": "check-1",
+          "passed": true
+        },
+        {
+          "name": "check-2",
+          "passed": true
+        },
+        {
+          "name": "check-3",
+          "passed": true
+        },
+        {
+          "name": "check-4",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "requiredCases": [
+    {
+      "id": "github-org-repo-tag-zero-config",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "tag-postman-repo",
+        "tag-github-org-repo-split"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "github-org-repo-multi-environment-ambiguity",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "tag-multi-environment-ambiguity"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "api-gateway-rest-native",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "apigw-rest-native"
+      ],
+      "evidence": "current live runner runtime"
+    },
+    {
+      "id": "api-gateway-rest-fallback",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "apigw-rest-fallback"
+      ],
+      "evidence": "current live runner live-sdk"
+    },
+    {
+      "id": "api-gateway-http-deployed-stage",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "apigw-http-deployed-stage"
+      ],
+      "evidence": "current live runner runtime"
+    },
+    {
+      "id": "api-gateway-http-latest-configuration-divergence",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "apigw-http-latest-configuration",
+        "stage-evidence-safe-selection"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "api-gateway-websocket-partial-control-plane",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "apigw-websocket-partial"
+      ],
+      "evidence": "current live runner runtime"
+    },
+    {
+      "id": "appsync-merged-associations",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "appsync-merged-associations"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "expected-identity-mismatch",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "expected-identity-mismatch"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "provider-denial-typed",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "provider-denial-typed"
+      ],
+      "evidence": "current live runner built-cli"
+    },
+    {
+      "id": "all-existing-live-supported-providers",
+      "status": "passed",
+      "runClass": "current-run",
+      "ledgerIds": [
+        "appsync-graphql",
+        "appsync-events",
+        "eventbridge-schemas",
+        "eventbridge-surfaces",
+        "cloudformation-embedded",
+        "glue-schema",
+        "ssm-registry",
+        "sns-contracts",
+        "lambda-url",
+        "lambda-event-source",
+        "bedrock-action-groups",
+        "alb-listener-rules",
+        "verified-permissions",
+        "step-functions"
+      ],
+      "evidence": "current live refresh of 17 provider cases"
+    }
+  ]
+}

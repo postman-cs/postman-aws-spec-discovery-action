@@ -1,0 +1,23 @@
+{
+  "status": "resolved",
+  "sourceType": "gateway-export",
+  "serviceName": "orders-api",
+  "confidence": 100,
+  "evidence": ["Matched tag contract GithubOrg+GithubRepo"],
+  "gatewayType": "HTTP",
+  "providerType": "api-gateway",
+  "specFormat": "openapi-yaml",
+  "stage": "prod",
+  "provenance": {
+    "partition": "aws",
+    "accountIndicator": "acct-****9012",
+    "region": "us-east-1",
+    "apiId": "exampleapiid",
+    "protocol": "HTTP",
+    "configurationMode": "deployed-stage",
+    "stage": "prod",
+    "sourceTier": "exact-repo-tag",
+    "sourceTagContract": "GithubOrg+GithubRepo",
+    "queryTimestamp": "2026-07-20T00:00:00.000Z"
+  }
+}

@@ -1,4 +1,10 @@
-import type { DerivedOpenApiCompleteness, OpenApiContractAudit, ProviderType, SpecFormat } from '../../contracts.js';
+import type {
+  DeployedSourceProvenance,
+  DerivedOpenApiCompleteness,
+  OpenApiContractAudit,
+  ProviderType,
+  SpecFormat
+} from '../../contracts.js';
 
 export type { ProviderProbeReason, ProviderProbeResult } from '../../contracts.js';
 
@@ -31,6 +37,7 @@ export interface SpecExportResult {
   filename: string;
   stage?: string;
   evidence: string[];
+  provenance?: DeployedSourceProvenance;
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
   openapiContractAudit?: OpenApiContractAudit;
   sidecars?: Array<{

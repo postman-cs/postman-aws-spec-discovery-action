@@ -99,6 +99,40 @@ export interface ResolvedServiceCandidate {
   ambiguous?: boolean;
 }
 
+export type ConfigurationMode = 'deployed-stage' | 'latest-configuration' | 'partial-control-plane';
+
+export interface AppSyncSourceAssociationProvenance {
+  associationId?: string;
+  sourceApiId?: string;
+  associationStatus?: string;
+  denied?: boolean;
+}
+
+export interface DeployedSourceProvenance {
+  partition?: string;
+  /** Redacted account identity indicator (for example `***9012`); never a raw 12-digit account ID. */
+  accountIndicator?: string;
+  region?: string;
+  apiArn?: string;
+  apiId?: string;
+  protocol?: string;
+  configurationMode?: ConfigurationMode;
+  stage?: string;
+  deploymentId?: string;
+  exportOptions?: Record<string, unknown>;
+  sourceTier?: string;
+  sourceTagContract?: string;
+  queryTimestamp?: string;
+  artifactHash?: string;
+  providerProbes?: ProviderProbeResult[];
+  truncation?: {
+    truncated: boolean;
+    reason?: string;
+  };
+  appsyncSourceAssociations?: AppSyncSourceAssociationProvenance[];
+  appsyncAssociationEvidence?: 'complete' | 'partial' | 'denied';
+}
+
 export interface ResolutionResult {
   status: ResolutionStatus;
   sourceType: SourceType;
@@ -113,6 +147,7 @@ export interface ResolutionResult {
   metadataPath?: string;
   variantCount?: number;
   stage?: string;
+  provenance?: DeployedSourceProvenance;
   derivedOpenApiPath?: string;
   derivedOpenApiVersion?: DerivedOpenApiVersion;
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
@@ -159,6 +194,7 @@ export interface DiscoveredService {
   contractOrigin?: SnsContractOrigin;
   metadataPath?: string;
   variantCount?: number;
+  provenance?: DeployedSourceProvenance;
   derivedOpenApiPath?: string;
   derivedOpenApiVersion?: DerivedOpenApiVersion;
   derivedOpenApiCompleteness?: DerivedOpenApiCompleteness;
@@ -182,6 +218,36 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     stage: {
       description: 'Optional API Gateway stage override (for example prod or staging).',
+      required: false,
+      default: ''
+    },
+    'expected-account-id': {
+      description:
+        'Optional AWS account ID that must match sts:GetCallerIdentity before export. Mismatch fails closed with a sanitized error.',
+      required: false,
+      default: ''
+    },
+    'expected-partition': {
+      description:
+        'Optional AWS partition (aws, aws-us-gov, or aws-cn) that must match the caller identity ARN before export. Mismatch fails closed with a sanitized error.',
+      required: false,
+      default: ''
+    },
+    'spec-path': {
+      description:
+        'Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection.',
+      required: false,
+      default: ''
+    },
+    'service-root': {
+      description:
+        'Optional monorepo service root relative to repo-root. Scopes Backstage entities and repository contract inventory to that directory.',
+      required: false,
+      default: ''
+    },
+    'remote-fetch-allowlist-json': {
+      description:
+        'Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS).',
       required: false,
       default: ''
     },
