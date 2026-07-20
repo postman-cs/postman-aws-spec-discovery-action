@@ -1,4 +1,4 @@
-import { lstat, readdir, readFile } from 'node:fs/promises';
+import { lstat, opendir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export type SmithyProjectErrorCode =
@@ -51,6 +51,9 @@ interface ClosureState {
   visiting: Set<string>;
   visitedDirs: Set<string>;
   cumulativeBytes: number;
+  filesRead: number;
+  /** Directory entries inspected during walks; shares the maxFiles budget so junk dirs cannot bypass it. */
+  inspectedEntries: number;
 }
 
 /**
@@ -86,27 +89,30 @@ export async function resolveSmithyProject(
     };
   }
 
-  let raw: string;
-  try {
-    if (!(await isRegularNonSymlinkFile(buildAbsolute))) {
-      return {
-        ...empty,
-        errors: [{
-          code: 'unreadable',
-          path: buildRelative,
-          message: `smithy-build.json is not a regular file: ${buildRelative}`
-        }]
-      };
-    }
-    raw = await readFile(buildAbsolute, 'utf8');
-  } catch (error) {
+  const state: ClosureState = {
+    repoRoot: resolvedRoot,
+    buildDir: path.dirname(buildAbsolute),
+    buildRelative,
+    maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
+    maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
+    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_MAX_CUMULATIVE_BYTES,
+    maxDepth: options.maxDepth ?? DEFAULT_MAX_DEPTH,
+    memberPaths: [],
+    contents: new Map(),
+    projections: [],
+    errors: [],
+    visiting: new Set([path.resolve(buildAbsolute)]),
+    visitedDirs: new Set(),
+    cumulativeBytes: 0,
+    filesRead: 0,
+    inspectedEntries: 0
+  };
+
+  const raw = await readSmithyConfigFile(state, buildAbsolute, buildRelative);
+  if (raw === undefined) {
     return {
       ...empty,
-      errors: [{
-        code: 'unreadable',
-        path: buildRelative,
-        message: `Failed to read smithy-build.json: ${error instanceof Error ? error.message : String(error)}`
-      }]
+      errors: state.errors
     };
   }
 
@@ -134,23 +140,6 @@ export async function resolveSmithyProject(
       }]
     };
   }
-
-  const state: ClosureState = {
-    repoRoot: resolvedRoot,
-    buildDir: path.dirname(buildAbsolute),
-    buildRelative,
-    maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
-    maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
-    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_MAX_CUMULATIVE_BYTES,
-    maxDepth: options.maxDepth ?? DEFAULT_MAX_DEPTH,
-    memberPaths: [],
-    contents: new Map(),
-    projections: [],
-    errors: [],
-    visiting: new Set([path.resolve(buildAbsolute)]),
-    visitedDirs: new Set(),
-    cumulativeBytes: 0
-  };
 
   const sources = asStringArray(config.sources);
   const imports = asStringArray(config.imports);
@@ -211,6 +200,103 @@ export async function resolveSmithyProject(
     evidence,
     errors: state.errors
   };
+}
+
+/**
+ * Read a smithy-build.json under the same closure resource budget as model files.
+ * Rejects non-regular/symlink files; enforces maxFiles / maxFileBytes / maxCumulativeBytes
+ * before accepting bytes. Never returns rejected content.
+ */
+async function readSmithyConfigFile(
+  state: ClosureState,
+  absolute: string,
+  relative: string
+): Promise<string | undefined> {
+  if (state.errors.some((error) => error.code === 'bounds-exceeded' || error.code === 'cycle' || error.code === 'path-escape')) {
+    return undefined;
+  }
+
+  let info;
+  try {
+    info = await lstat(absolute);
+  } catch (error) {
+    state.errors.push({
+      code: 'unreadable',
+      path: relative,
+      message: `Failed to read smithy-build.json: ${error instanceof Error ? error.message : String(error)}`
+    });
+    return undefined;
+  }
+
+  if (info.isSymbolicLink() || !info.isFile()) {
+    state.errors.push({
+      code: 'unreadable',
+      path: relative,
+      message: `smithy-build.json is not a regular file: ${relative}`
+    });
+    return undefined;
+  }
+
+  if (state.filesRead >= state.maxFiles) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Smithy file count exceeded maxFiles=${state.maxFiles}`
+    });
+    return undefined;
+  }
+
+  if (info.size > state.maxFileBytes) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Smithy config exceeds maxFileBytes=${state.maxFileBytes}`
+    });
+    return undefined;
+  }
+
+  if (state.cumulativeBytes + info.size > state.maxCumulativeBytes) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Smithy closure exceeds maxCumulativeBytes=${state.maxCumulativeBytes}`
+    });
+    return undefined;
+  }
+
+  let raw: string;
+  try {
+    raw = await readFile(absolute, 'utf8');
+  } catch (error) {
+    state.errors.push({
+      code: 'unreadable',
+      path: relative,
+      message: `Failed to read smithy-build.json: ${error instanceof Error ? error.message : String(error)}`
+    });
+    return undefined;
+  }
+
+  const bytes = Buffer.byteLength(raw, 'utf8');
+  if (bytes > state.maxFileBytes) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Smithy config exceeds maxFileBytes=${state.maxFileBytes}`
+    });
+    return undefined;
+  }
+  if (state.cumulativeBytes + bytes > state.maxCumulativeBytes) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: relative,
+      message: `Smithy closure exceeds maxCumulativeBytes=${state.maxCumulativeBytes}`
+    });
+    return undefined;
+  }
+
+  state.cumulativeBytes += bytes;
+  state.filesRead += 1;
+  return raw;
 }
 
 async function collectPathEntry(state: ClosureState, entry: string, kind: string): Promise<void> {
@@ -302,6 +388,14 @@ async function walkSmithyDirectory(state: ClosureState, directory: string, depth
     });
     return;
   }
+  if (state.inspectedEntries >= state.maxFiles) {
+    state.errors.push({
+      code: 'bounds-exceeded',
+      path: toPosix(path.relative(state.repoRoot, directory)),
+      message: `Smithy directory entry inspection exceeded maxFiles=${state.maxFiles}`
+    });
+    return;
+  }
 
   const canonicalDir = path.resolve(directory);
   if (state.visitedDirs.has(canonicalDir)) {
@@ -319,9 +413,30 @@ async function walkSmithyDirectory(state: ClosureState, directory: string, depth
   state.visitedDirs.add(canonicalDir);
   state.visiting.add(canonicalDir);
   try {
-    const entries = (await readdir(directory).catch(() => [] as string[])).sort((a, b) => a.localeCompare(b));
-    for (const entry of entries) {
-      if (state.contents.size >= state.maxFiles) {
+    let dirHandle;
+    try {
+      dirHandle = await opendir(directory);
+    } catch {
+      return;
+    }
+
+    // Stream entries; do not materialize/sort the full directory listing.
+    // Final memberPaths/content remain sorted at return time.
+    for await (const dirent of dirHandle) {
+      if (state.errors.some((error) => error.code === 'bounds-exceeded' || error.code === 'cycle' || error.code === 'path-escape')) {
+        return;
+      }
+      if (state.inspectedEntries >= state.maxFiles) {
+        state.errors.push({
+          code: 'bounds-exceeded',
+          path: toPosix(path.relative(state.repoRoot, directory)),
+          message: `Smithy directory entry inspection exceeded maxFiles=${state.maxFiles}`
+        });
+        return;
+      }
+      state.inspectedEntries += 1;
+
+      if (state.filesRead >= state.maxFiles) {
         state.errors.push({
           code: 'bounds-exceeded',
           path: toPosix(path.relative(state.repoRoot, directory)),
@@ -329,6 +444,8 @@ async function walkSmithyDirectory(state: ClosureState, directory: string, depth
         });
         return;
       }
+
+      const entry = dirent.name;
       const fullPath = path.join(directory, entry);
       const info = await lstat(fullPath).catch(() => undefined);
       if (!info || info.isSymbolicLink()) continue;
@@ -359,15 +476,8 @@ async function collectNestedSmithyBuild(state: ClosureState, absolute: string, r
 
   state.visiting.add(canonical);
   try {
-    let raw: string;
-    try {
-      raw = await readFile(absolute, 'utf8');
-    } catch (error) {
-      state.errors.push({
-        code: 'unreadable',
-        path: relative,
-        message: `Failed to read nested smithy-build.json: ${error instanceof Error ? error.message : String(error)}`
-      });
+    const raw = await readSmithyConfigFile(state, absolute, relative);
+    if (raw === undefined) {
       return;
     }
 
@@ -423,7 +533,7 @@ async function readSmithyModelFile(state: ClosureState, absolute: string, relati
     // (JSON AST / maven artifacts are out of scope; never use smithy-build.json as model).
     return;
   }
-  if (state.contents.size >= state.maxFiles) {
+  if (state.filesRead >= state.maxFiles) {
     state.errors.push({
       code: 'bounds-exceeded',
       path: relative,
@@ -463,6 +573,7 @@ async function readSmithyModelFile(state: ClosureState, absolute: string, relati
   }
 
   state.cumulativeBytes += bytes;
+  state.filesRead += 1;
   state.contents.set(relative, content);
   state.memberPaths.push(relative);
 }
@@ -484,15 +595,6 @@ function asStringArray(value: unknown): string[] {
 function isPathInsideRoot(root: string, target: string): boolean {
   const relative = path.relative(path.resolve(root), path.resolve(target));
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
-async function isRegularNonSymlinkFile(absolutePath: string): Promise<boolean> {
-  try {
-    const info = await lstat(absolutePath);
-    return !info.isSymbolicLink() && info.isFile();
-  } catch {
-    return false;
-  }
 }
 
 function toPosix(value: string): string {

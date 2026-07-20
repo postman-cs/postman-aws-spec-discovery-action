@@ -84,6 +84,7 @@ import {
 } from '@aws-sdk/client-verifiedpermissions';
 import { updateEvidenceReadmeSection } from './lib/evidence-readme.mjs';
 import { buildLiveRequiredMatrix, renderLiveRequiredMatrixMarkdown } from './lib/live-required-matrix.mjs';
+import { createPaginationGuard } from './lib/pagination.mjs';
 
 const repoRoot = process.cwd();
 
@@ -244,19 +245,17 @@ class TargetedApiGatewayClient {
 
   async listRestRequestValidators(apiId) {
     const validators = [];
+    const guard = createPaginationGuard('GetRequestValidators');
     let position;
-    const seenPositions = new Set();
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.rest, new GetRequestValidatorsCommand({
         restApiId: apiId,
         position,
         limit: 500
       }));
       validators.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return validators;
   }
@@ -279,9 +278,10 @@ class TargetedApiGatewayClient {
 
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
+    const guard = createPaginationGuard('GetResources');
     let position;
-    const seenPositions = new Set();
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.rest, new GetResourcesCommand({
         restApiId: apiId,
         position,
@@ -289,29 +289,24 @@ class TargetedApiGatewayClient {
         embed: ['methods']
       }));
       resources.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return resources;
   }
 
   async listRestModels(apiId) {
     const models = [];
+    const guard = createPaginationGuard('GetModels');
     let position;
-    const seenPositions = new Set();
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.rest, new GetModelsCommand({
         restApiId: apiId,
         position,
         limit: 500
       }));
       models.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return models;
   }
@@ -371,55 +366,65 @@ class TargetedApiGatewayClient {
 
   async listWebSocketRoutes(apiId) {
     const routes = [];
+    const guard = createPaginationGuard('GetRoutes');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.v2, new GetRoutesCommand({ ApiId: apiId, NextToken: nextToken }));
       routes.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routes;
   }
 
   async listWebSocketIntegrations(apiId) {
     const integrations = [];
+    const guard = createPaginationGuard('GetIntegrations');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.v2, new GetIntegrationsCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
       integrations.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return integrations;
   }
 
   async listWebSocketAuthorizers(apiId) {
     const authorizers = [];
+    const guard = createPaginationGuard('GetAuthorizers');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.v2, new GetAuthorizersCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
       authorizers.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return authorizers;
   }
 
   async listWebSocketModels(apiId) {
     const models = [];
+    const guard = createPaginationGuard('GetModels');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.v2, new GetWebSocketModelsCommand({ ApiId: apiId, MaxResults: '500', NextToken: nextToken }));
       models.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return models;
   }
 
   async listWebSocketRouteResponses(apiId, routeId) {
     const routeResponses = [];
+    const guard = createPaginationGuard('GetRouteResponses');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(this.v2, new GetRouteResponsesCommand({ ApiId: apiId, RouteId: routeId, MaxResults: '500', NextToken: nextToken }));
       routeResponses.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routeResponses;
   }
@@ -555,8 +560,10 @@ class TargetedCloudFormationClient {
 
   async listApiResources(stackName) {
     const items = [];
+    const guard = createPaginationGuard('ListStackResources');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListStackResourcesCommand({ StackName: stackName, NextToken: nextToken }));
       for (const resource of response.StackResourceSummaries ?? []) {
         if (![
@@ -574,7 +581,7 @@ class TargetedCloudFormationClient {
           type: resource.ResourceType
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
@@ -660,8 +667,10 @@ class TargetedEventBridgeSurfaceClient {
   async listTargetsByRule(ruleName, eventBusName) {
     if (!this.ruleName || ruleName !== this.ruleName) return [];
     const targets = [];
+    const guard = createPaginationGuard('ListTargetsByRule');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(
         this.events,
         new ListTargetsByRuleCommand({
@@ -683,7 +692,7 @@ class TargetedEventBridgeSurfaceClient {
           queryStringParameters: target.HttpParameters.QueryStringParameters
         } : undefined
       })));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return targets;
   }
@@ -759,8 +768,10 @@ class TargetedBedrockActionGroupsClient {
   async listActionGroups(agentId, agentVersion) {
     if (!this.actionGroupName) return [];
     const groups = [];
+    const guard = createPaginationGuard('ListAgentActionGroups');
     let nextToken;
     do {
+      guard.beginPage();
       const response = await sendWithBackoff(
         this.client,
         new ListAgentActionGroupsCommand({
@@ -780,7 +791,7 @@ class TargetedBedrockActionGroupsClient {
           description: group.description,
           actionGroupState: group.actionGroupState
         })));
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return groups;
   }

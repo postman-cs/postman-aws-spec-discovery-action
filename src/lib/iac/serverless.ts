@@ -1,4 +1,4 @@
-import { lstat, readdir } from 'node:fs/promises';
+import { lstat, opendir } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
@@ -197,29 +197,77 @@ async function resolvePackageArtifacts(
     return [];
   }
 
-  const candidates: IacSpecCandidate[] = [];
-  const entries = (await readdir(packageDir).catch(() => [] as string[])).sort();
-  for (const entry of entries) {
+  // Finite inspected-entry bound derived from the existing IacReadBudget (maxFiles).
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  const markBoundsExceeded = (): void => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: 'bounds-exceeded',
+      path: '.serverless',
+      message: `Serverless package discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
+
+  let directoryHandle;
+  try {
+    directoryHandle = await opendir(packageDir);
+  } catch {
+    return [];
+  }
+
+  const matching: string[] = [];
+  for await (const dirent of directoryHandle) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded();
+      break;
+    }
+    inspectedEntries += 1;
+
+    const entry = dirent.name;
     if (isJsTsConfig(entry)) continue;
+    if (
+      !(entry.endsWith('.json')
+        || entry.endsWith('.yml')
+        || entry.endsWith('.yaml')
+        || entry.endsWith('.template'))
+    ) {
+      continue;
+    }
+    // cloudformation-template-update-stack.json etc.
+    if (!/cloudformation|template/i.test(entry)) continue;
+
     const relative = toPosix(path.posix.join('.serverless', entry));
-    if (entry.endsWith('.json') || entry.endsWith('.yml') || entry.endsWith('.yaml') || entry.endsWith('.template')) {
-      // cloudformation-template-update-stack.json etc.
-      if (/cloudformation|template/i.test(entry)) {
-        const stackCandidates = await resolveCloudFormationTemplate(
-          repoRoot,
-          relative,
-          budget,
-          errors,
-          { forceSource: 'serverless', sourceHints: STATIC_CONFIG_NAMES }
-        );
-        for (const candidate of stackCandidates) {
-          candidate.evidence = [
-            ...candidate.evidence,
-            `From existing Serverless package artifact ${relative}`
-          ];
-          candidates.push(candidate);
-        }
-      }
+    try {
+      const entryInfo = await lstat(path.resolve(repoRoot, relative));
+      if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
+    } catch {
+      continue;
+    }
+    matching.push(entry);
+  }
+
+  matching.sort((a, b) => a.localeCompare(b));
+
+  const candidates: IacSpecCandidate[] = [];
+  for (const entry of matching) {
+    const relative = toPosix(path.posix.join('.serverless', entry));
+    const stackCandidates = await resolveCloudFormationTemplate(
+      repoRoot,
+      relative,
+      budget,
+      errors,
+      { forceSource: 'serverless', sourceHints: STATIC_CONFIG_NAMES }
+    );
+    for (const candidate of stackCandidates) {
+      candidate.evidence = [
+        ...candidate.evidence,
+        `From existing Serverless package artifact ${relative}`
+      ];
+      candidates.push(candidate);
     }
   }
   return candidates;

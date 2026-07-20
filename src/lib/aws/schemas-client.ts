@@ -8,6 +8,8 @@ import {
 } from '@aws-sdk/client-schemas';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface RegistrySummary {
   name: string;
   arn: string;
@@ -46,8 +48,10 @@ export class EventBridgeSchemasSdkClient implements EventBridgeSchemasSpecClient
 
   public async listRegistries(): Promise<RegistrySummary[]> {
     const items: RegistrySummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge Schemas ListRegistries');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListRegistriesCommand({ NextToken: nextToken }));
       for (const registry of response.Registries ?? []) {
         if (!registry.RegistryName) continue;
@@ -56,15 +60,17 @@ export class EventBridgeSchemasSdkClient implements EventBridgeSchemasSpecClient
           arn: registry.RegistryArn ?? ''
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
 
   public async listSchemas(registryName: string): Promise<SchemaSummary[]> {
     const items: SchemaSummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge Schemas ListSchemas');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new ListSchemasCommand({ RegistryName: registryName, NextToken: nextToken })
       );
@@ -77,7 +83,7 @@ export class EventBridgeSchemasSdkClient implements EventBridgeSchemasSpecClient
           versionCount: schema.VersionCount ?? 0
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }

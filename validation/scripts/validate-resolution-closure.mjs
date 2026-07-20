@@ -12,9 +12,69 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { updateEvidenceReadmeSection } from './lib/evidence-readme.mjs';
+import { createPaginationGuard, MAX_VALIDATION_PAGES } from './lib/pagination.mjs';
 
 const repoRoot = process.cwd();
 const closureRoot = path.join(repoRoot, 'validation/fixtures/closure');
+
+/**
+ * Deterministic local self-check of the validation pagination guard.
+ * Proves normal token progression, repeated-token rejection, and page-cap rejection
+ * without AWS credentials or network I/O.
+ */
+function assertPaginationGuardSelfCheck() {
+  // Normal progression: distinct tokens accepted, empty/undefined terminates.
+  const progress = createPaginationGuard('SelfCheckProgress');
+  progress.beginPage();
+  const tokenA = progress.takeNextToken('page-1');
+  if (tokenA !== 'page-1') throw new Error('expected takeNextToken to return first token');
+  progress.beginPage();
+  const tokenB = progress.takeNextToken('page-2');
+  if (tokenB !== 'page-2') throw new Error('expected takeNextToken to return second token');
+  progress.beginPage();
+  if (progress.takeNextToken(undefined) !== undefined) {
+    throw new Error('expected undefined token to terminate pagination');
+  }
+  if (progress.takeNextToken(null) !== undefined) {
+    throw new Error('expected null token to terminate pagination');
+  }
+  if (progress.takeNextToken('') !== undefined) {
+    throw new Error('expected empty token to terminate pagination');
+  }
+
+  // Repeated-token rejection.
+  const repeat = createPaginationGuard('SelfCheckRepeat');
+  repeat.beginPage();
+  repeat.takeNextToken('same-token');
+  repeat.beginPage();
+  let repeatRejected = false;
+  try {
+    repeat.takeNextToken('same-token');
+  } catch (error) {
+    repeatRejected = /repeated token/i.test(String(error?.message ?? error));
+  }
+  if (!repeatRejected) throw new Error('expected repeated token to abort');
+
+  // Page-cap rejection (101st beginPage after MAX_VALIDATION_PAGES pages).
+  const capped = createPaginationGuard('SelfCheckCap');
+  for (let page = 0; page < MAX_VALIDATION_PAGES; page += 1) {
+    capped.beginPage();
+    if (page < MAX_VALIDATION_PAGES - 1) {
+      capped.takeNextToken(`token-${page}`);
+    }
+  }
+  let capRejected = false;
+  try {
+    capped.beginPage();
+  } catch (error) {
+    capRejected = new RegExp(`exceeded ${MAX_VALIDATION_PAGES} pages`, 'i').test(
+      String(error?.message ?? error)
+    );
+  }
+  if (!capRejected) throw new Error('expected page-cap exhaustion to abort');
+
+  return true;
+}
 
 function arg(name, fallback) {
   const prefix = `--${name}=`;
@@ -234,6 +294,10 @@ const fixtureCases = [
       const readme = await readFile(path.join(repoRoot, 'README.md'), 'utf8');
       return readme.includes('`spec-path`') && readme.includes('skips same-tier auto-selection');
     }
+  },
+  {
+    id: 'pagination-guard',
+    check: async () => assertPaginationGuardSelfCheck()
   }
 ];
 

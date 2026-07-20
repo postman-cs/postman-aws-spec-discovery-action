@@ -7,6 +7,8 @@ import {
 } from '@aws-sdk/client-glue';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface GlueRegistrySummary {
   name: string;
   arn: string;
@@ -49,8 +51,10 @@ export class GlueSchemaSdkClient implements GlueSchemaSpecClient {
 
   public async listRegistries(): Promise<GlueRegistrySummary[]> {
     const items: GlueRegistrySummary[] = [];
+    const guard = createAwsPaginationGuard('Glue ListRegistries');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListRegistriesCommand({ NextToken: nextToken, MaxResults: 100 }));
       for (const registry of response.Registries ?? []) {
         if (!registry.RegistryName) continue;
@@ -59,15 +63,17 @@ export class GlueSchemaSdkClient implements GlueSchemaSpecClient {
           arn: registry.RegistryArn ?? ''
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
 
   public async listSchemas(registryName: string): Promise<GlueSchemaSummary[]> {
     const items: GlueSchemaSummary[] = [];
+    const guard = createAwsPaginationGuard('Glue ListSchemas');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new ListSchemasCommand({
           RegistryId: { RegistryName: registryName },
@@ -83,7 +89,7 @@ export class GlueSchemaSdkClient implements GlueSchemaSpecClient {
           registryName
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }

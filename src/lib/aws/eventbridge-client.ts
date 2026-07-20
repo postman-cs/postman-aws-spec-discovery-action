@@ -16,6 +16,8 @@ import {
 } from '@aws-sdk/client-pipes';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface EventBridgeHttpParameters {
   headerParameters?: Record<string, string>;
   pathParameterValues?: string[];
@@ -112,22 +114,26 @@ export class EventBridgeSurfaceSdkClient implements EventBridgeSurfaceSpecClient
 
   public async listRules(): Promise<EventBridgeRuleSummary[]> {
     const rules: EventBridgeRuleSummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge ListRules');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.events.send(new ListRulesCommand({ NextToken: nextToken, Limit: 100 }));
       for (const rule of response.Rules ?? []) {
         const mapped = mapRule(rule);
         if (mapped) rules.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return rules;
   }
 
   public async listTargetsByRule(ruleName: string, eventBusName?: string): Promise<EventBridgeTargetSummary[]> {
     const targets: EventBridgeTargetSummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge ListTargetsByRule');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.events.send(
         new ListTargetsByRuleCommand({
           Rule: ruleName,
@@ -140,21 +146,23 @@ export class EventBridgeSurfaceSdkClient implements EventBridgeSurfaceSpecClient
         const mapped = mapTarget(target);
         if (mapped) targets.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return targets;
   }
 
   public async listPipes(): Promise<EventBridgePipeSummary[]> {
     const pipes: EventBridgePipeSummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge ListPipes');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.pipes.send(new ListPipesCommand({ NextToken: nextToken, Limit: 100 }));
       for (const pipe of response.Pipes ?? []) {
         const mapped = mapPipe(pipe);
         if (mapped) pipes.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return pipes;
   }
@@ -166,14 +174,16 @@ export class EventBridgeSurfaceSdkClient implements EventBridgeSurfaceSpecClient
 
   public async listApiDestinations(): Promise<EventBridgeApiDestinationSummary[]> {
     const destinations: EventBridgeApiDestinationSummary[] = [];
+    const guard = createAwsPaginationGuard('EventBridge ListApiDestinations');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.events.send(new ListApiDestinationsCommand({ NextToken: nextToken, Limit: 100 }));
       for (const destination of response.ApiDestinations ?? []) {
         const mapped = mapApiDestination(destination);
         if (mapped) destinations.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return destinations;
   }

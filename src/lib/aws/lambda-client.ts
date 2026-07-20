@@ -2,10 +2,11 @@ import {
   LambdaClient,
   GetFunctionUrlConfigCommand,
   ListFunctionsCommand,
-  ListTagsCommand,
-  paginateListFunctions
+  ListTagsCommand
 } from '@aws-sdk/client-lambda';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
+
+import { createAwsPaginationGuard } from './pagination.js';
 
 export interface LambdaFunctionSummary {
   name: string;
@@ -69,8 +70,12 @@ export class LambdaSdkClient implements LambdaSpecClient {
 
   public async listFunctions(): Promise<LambdaFunctionSummary[]> {
     const items: LambdaFunctionSummary[] = [];
-    for await (const page of paginateListFunctions({ client: this.client }, {})) {
-      for (const fn of page.Functions ?? []) {
+    const guard = createAwsPaginationGuard('Lambda ListFunctions');
+    let marker: string | undefined;
+    do {
+      guard.beginPage();
+      const response = await this.client.send(new ListFunctionsCommand({ Marker: marker, MaxItems: 50 }));
+      for (const fn of response.Functions ?? []) {
         if (!fn.FunctionName || !fn.FunctionArn) continue;
         items.push({
           name: fn.FunctionName,
@@ -78,7 +83,8 @@ export class LambdaSdkClient implements LambdaSpecClient {
           runtime: fn.Runtime
         });
       }
-    }
+      marker = guard.takeNextToken(response.NextMarker);
+    } while (marker);
     return items;
   }
 

@@ -21,6 +21,7 @@ import { LambdaUrlProvider } from '../src/lib/providers/lambda-url.js';
 import { SnsProvider } from '../src/lib/providers/sns.js';
 import { resolveCodeDerivedContract } from '../src/lib/providers/sns-code-derived.js';
 import { SnsSdkClient } from '../src/lib/aws/sns-client.js';
+import { MAX_AWS_LIST_PAGES } from '../src/lib/aws/pagination.js';
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
 import type { AppSyncSpecClient } from '../src/lib/aws/appsync-client.js';
 import type { EventBridgeSchemasSpecClient } from '../src/lib/aws/schemas-client.js';
@@ -3966,6 +3967,79 @@ describe('SnsSdkClient', () => {
 
     await expect(client.listSubscriptionsByTopic(topicArn)).resolves.toEqual([]);
     await expect(client.getSubscriptionAttributes(subscriptionArn)).resolves.toEqual({});
+  });
+
+  it('listTopics rejects repeated NextToken and page-cap without returning partial data', async () => {
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValue({
+      Topics: [{ TopicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic' }],
+      NextToken: 'stuck'
+    });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.listTopics()).rejects.toThrow(
+      'SNS ListTopics pagination returned a repeated token; aborting'
+    );
+    expect(snsSendMock).toHaveBeenCalledTimes(2);
+
+    snsSendMock.mockReset();
+    let pages = 0;
+    snsSendMock.mockImplementation(async () => {
+      pages += 1;
+      return {
+        Topics: [{ TopicArn: `arn:aws:sns:us-east-1:123456789012:topic-${pages}` }],
+        NextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listTopics()).rejects.toThrow(
+      `SNS ListTopics pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
+  });
+
+  it('listSubscriptionsByTopic nested pagination rejects repeated token and page-cap', async () => {
+    const topicArn = 'arn:aws:sns:us-east-1:123456789012:orders-topic';
+    snsSendMock.mockReset();
+    snsSendMock.mockResolvedValue({
+      Subscriptions: [
+        {
+          SubscriptionArn: `${topicArn}:sub-1`,
+          Protocol: 'sqs',
+          Endpoint: 'arn:aws:sqs:us-east-1:123456789012:orders-queue',
+          TopicArn: topicArn,
+          Owner: '123456789012'
+        }
+      ],
+      NextToken: 'stuck'
+    });
+    const client = new SnsSdkClient('us-east-1');
+
+    await expect(client.listSubscriptionsByTopic(topicArn)).rejects.toThrow(
+      'SNS ListSubscriptionsByTopic pagination returned a repeated token; aborting'
+    );
+    expect(snsSendMock).toHaveBeenCalledTimes(2);
+
+    snsSendMock.mockReset();
+    let pages = 0;
+    snsSendMock.mockImplementation(async () => {
+      pages += 1;
+      return {
+        Subscriptions: [
+          {
+            SubscriptionArn: `${topicArn}:sub-${pages}`,
+            Protocol: 'https',
+            Endpoint: `https://example.invalid/hook-${pages}`,
+            TopicArn: topicArn,
+            Owner: '123456789012'
+          }
+        ],
+        NextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listSubscriptionsByTopic(topicArn)).rejects.toThrow(
+      `SNS ListSubscriptionsByTopic pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
   });
 });
 

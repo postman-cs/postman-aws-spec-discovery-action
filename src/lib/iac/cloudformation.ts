@@ -388,15 +388,33 @@ export async function resolveCloudFormationTemplate(
 export async function discoverCloudFormationTemplatePaths(
   repoRoot: string,
   budget: IacReadBudget,
-  _errors: IacResolutionError[]
+  errors: IacResolutionError[]
 ): Promise<string[]> {
-  void _errors;
-  void budget;
-  const { readdir, lstat } = await import('node:fs/promises');
+  const { opendir, lstat } = await import('node:fs/promises');
   const found = new Set<string>();
   const roots = ['.', 'infrastructure', 'infra', 'deploy', 'cloudformation', 'sam', 'templates'];
+  // Finite inspected-entry bound derived from the existing IacReadBudget (maxFiles).
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+
+  const markBoundsExceeded = (scanPath: string): void => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: 'bounds-exceeded',
+      path: toPosix(scanPath),
+      message: `CloudFormation template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
 
   for (const dir of roots) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded(dir);
+      break;
+    }
+
     const absolute = path.resolve(repoRoot, dir);
     let info;
     try {
@@ -413,8 +431,24 @@ export async function discoverCloudFormationTemplatePaths(
       continue;
     }
     if (!info.isDirectory()) continue;
-    const entries = (await readdir(absolute).catch(() => [] as string[])).sort();
-    for (const entry of entries) {
+
+    let directory;
+    try {
+      directory = await opendir(absolute);
+    } catch {
+      continue;
+    }
+
+    let exhausted = false;
+    for await (const dirent of directory) {
+      if (inspectedEntries >= maxInspectedEntries) {
+        markBoundsExceeded(dir);
+        exhausted = true;
+        break;
+      }
+      inspectedEntries += 1;
+
+      const entry = dirent.name;
       const lower = entry.toLowerCase();
       if (
         lower === 'template.yaml'
@@ -434,6 +468,7 @@ export async function discoverCloudFormationTemplatePaths(
         found.add(toPosix(relative));
       }
     }
+    if (exhausted) break;
   }
 
   return [...found].sort((a, b) => a.localeCompare(b));

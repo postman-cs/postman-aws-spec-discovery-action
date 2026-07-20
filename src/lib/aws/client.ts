@@ -10,7 +10,6 @@ import {
   GetRequestValidatorsCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand,
-  paginateGetRestApis,
   type Model,
   type RequestValidator,
   type Resource
@@ -144,6 +143,44 @@ export function parseAwsError(error: unknown): AwsErrorInfo {
   };
 }
 
+/** Finite upper bound for API Gateway (REST + HTTP/WebSocket) pagination loops. */
+export const MAX_API_GATEWAY_PAGES = 100;
+
+/**
+ * Shared token/page guard for API Gateway list pagination.
+ * Counts the initial page and every subsequent page; throws on page-cap exhaustion
+ * or a repeated non-empty continuation token (never returns partial data on cycle/cap).
+ */
+function createApiGatewayPaginationGuard(operation: string): {
+  beginPage: () => void;
+  takeNextToken: (token: string | undefined | null) => string | undefined;
+} {
+  const seenTokens = new Set<string>();
+  let pageCount = 0;
+
+  return {
+    beginPage(): void {
+      pageCount += 1;
+      if (pageCount > MAX_API_GATEWAY_PAGES) {
+        throw new Error(
+          `API Gateway ${operation} pagination exceeded ${MAX_API_GATEWAY_PAGES} pages; aborting`
+        );
+      }
+    },
+    takeNextToken(token: string | undefined | null): string | undefined {
+      const next = token ? String(token) : undefined;
+      if (!next) return undefined;
+      if (seenTokens.has(next)) {
+        throw new Error(
+          `API Gateway ${operation} pagination returned a repeated token; aborting`
+        );
+      }
+      seenTokens.add(next);
+      return next;
+    }
+  };
+}
+
 async function readExportBody(body: unknown): Promise<string> {
   if (!body) {
     return '';
@@ -252,7 +289,11 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
 
   public async listRestApis(): Promise<RestApiSummary[]> {
     const items: RestApiSummary[] = [];
-    for await (const page of paginateGetRestApis({ client: this.restClient }, {})) {
+    const guard = createApiGatewayPaginationGuard('GetRestApis');
+    let position: string | undefined;
+    do {
+      guard.beginPage();
+      const page = await this.restClient.send(new GetRestApisCommand({ position }));
       for (const item of page.items ?? []) {
         if (!item.id) {
           continue;
@@ -262,14 +303,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
           name: (item.name ?? '').trim() || item.id
         });
       }
-    }
+      position = guard.takeNextToken(page.position);
+    } while (position);
     return items;
   }
 
   public async listHttpApis(): Promise<HttpApiSummary[]> {
     const items: HttpApiSummary[] = [];
+    const guard = createApiGatewayPaginationGuard('GetApis');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetApisCommand({
           NextToken: nextToken
@@ -286,21 +330,25 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
           routeSelectionExpression: item.RouteSelectionExpression
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
 
   public async listRestDomainMappings(): Promise<GatewayDomainMapping[]> {
     const mappings: GatewayDomainMapping[] = [];
+    const domainGuard = createApiGatewayPaginationGuard('GetDomainNames');
     let position: string | undefined;
     do {
+      domainGuard.beginPage();
       const domains = await this.restClient.send(new GetRestDomainNamesCommand({ position }));
       for (const domain of domains.items ?? []) {
         const domainName = domain.domainName;
         if (!domainName) continue;
+        const mappingGuard = createApiGatewayPaginationGuard('GetBasePathMappings');
         let basePathPosition: string | undefined;
         do {
+          mappingGuard.beginPage();
           const response = await this.restClient.send(
             new GetBasePathMappingsCommand({
               domainName,
@@ -317,24 +365,28 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
               gatewayType: 'REST'
             });
           }
-          basePathPosition = response.position;
+          basePathPosition = mappingGuard.takeNextToken(response.position);
         } while (basePathPosition);
       }
-      position = domains.position;
+      position = domainGuard.takeNextToken(domains.position);
     } while (position);
     return mappings;
   }
 
   public async listHttpDomainMappings(): Promise<GatewayDomainMapping[]> {
     const mappings: GatewayDomainMapping[] = [];
+    const domainGuard = createApiGatewayPaginationGuard('GetDomainNames');
     let nextToken: string | undefined;
     do {
+      domainGuard.beginPage();
       const domains = await this.httpClient.send(new GetHttpDomainNamesCommand({ NextToken: nextToken }));
       for (const domain of domains.Items ?? []) {
         const domainName = domain.DomainName;
         if (!domainName) continue;
+        const mappingGuard = createApiGatewayPaginationGuard('GetApiMappings');
         let mappingToken: string | undefined;
         do {
+          mappingGuard.beginPage();
           const response = await this.httpClient.send(
             new GetApiMappingsCommand({
               DomainName: domainName,
@@ -352,10 +404,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
               gatewayType: api?.protocolType === 'WEBSOCKET' ? 'WEBSOCKET' : 'HTTP'
             });
           }
-          mappingToken = response.NextToken;
+          mappingToken = mappingGuard.takeNextToken(response.NextToken);
         } while (mappingToken);
       }
-      nextToken = domains.NextToken;
+      nextToken = domainGuard.takeNextToken(domains.NextToken);
     } while (nextToken);
     return mappings;
   }
@@ -427,23 +479,30 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
   }
 
   public async listHttpStages(apiId: string): Promise<GatewayStageSummary[]> {
-    const response = await this.httpClient.send(
-      new GetHttpStagesCommand({
-        ApiId: apiId
-      })
-    );
-    return (response.Items ?? [])
-      .map((stage) => {
+    const stages: GatewayStageSummary[] = [];
+    const guard = createApiGatewayPaginationGuard('GetStages');
+    let nextToken: string | undefined;
+    do {
+      guard.beginPage();
+      const response = await this.httpClient.send(
+        new GetHttpStagesCommand({
+          ApiId: apiId,
+          NextToken: nextToken
+        })
+      );
+      for (const stage of response.Items ?? []) {
         const stageName = (stage.StageName ?? '').trim();
-        if (!stageName) return undefined;
+        if (!stageName) continue;
         const summary: GatewayStageSummary = { stageName };
         const deploymentId = (stage.DeploymentId ?? '').trim();
         if (deploymentId) summary.deploymentId = deploymentId;
         if (typeof stage.AutoDeploy === 'boolean') summary.autoDeploy = stage.AutoDeploy;
         if (typeof stage.ApiGatewayManaged === 'boolean') summary.apiGatewayManaged = stage.ApiGatewayManaged;
-        return summary;
-      })
-      .filter((stage): stage is GatewayStageSummary => Boolean(stage));
+        stages.push(summary);
+      }
+      nextToken = guard.takeNextToken(response.NextToken);
+    } while (nextToken);
+    return stages;
   }
 
   public async getRestTags(apiId: string): Promise<Record<string, string>> {
@@ -508,9 +567,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
 
   private async listRestRequestValidators(apiId: string): Promise<RequestValidator[]> {
     const validators: RequestValidator[] = [];
+    const guard = createApiGatewayPaginationGuard('GetRequestValidators');
     let position: string | undefined;
-    const seenPositions = new Set<string>();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new GetRequestValidatorsCommand({
           restApiId: apiId,
@@ -519,10 +579,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       validators.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return validators;
   }
@@ -545,9 +602,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
 
   private async listRestResourcesWithMethods(apiId: string): Promise<Resource[]> {
     const resources: Resource[] = [];
+    const guard = createApiGatewayPaginationGuard('GetResources');
     let position: string | undefined;
-    const seenPositions = new Set<string>();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new GetResourcesCommand({
           restApiId: apiId,
@@ -557,19 +615,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       resources.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return resources;
   }
 
   private async listRestModels(apiId: string): Promise<Model[]> {
     const models: Model[] = [];
+    const guard = createApiGatewayPaginationGuard('GetModels');
     let position: string | undefined;
-    const seenPositions = new Set<string>();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new GetModelsCommand({
           restApiId: apiId,
@@ -578,10 +634,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       models.push(...(response.items ?? []));
-      const next = response.position;
-      if (next !== undefined && seenPositions.has(next)) break;
-      if (next !== undefined) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return models;
   }
@@ -655,8 +708,10 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
 
   private async listWebSocketRoutes(apiId: string): Promise<Route[]> {
     const routes: Route[] = [];
+    const guard = createApiGatewayPaginationGuard('GetRoutes');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetRoutesCommand({
           ApiId: apiId,
@@ -664,15 +719,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       routes.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routes;
   }
 
   private async listWebSocketIntegrations(apiId: string): Promise<Integration[]> {
     const integrations: Integration[] = [];
+    const guard = createApiGatewayPaginationGuard('GetIntegrations');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetIntegrationsCommand({
           ApiId: apiId,
@@ -681,15 +738,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       integrations.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return integrations;
   }
 
   private async listWebSocketAuthorizers(apiId: string): Promise<Authorizer[]> {
     const authorizers: Authorizer[] = [];
+    const guard = createApiGatewayPaginationGuard('GetAuthorizers');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetAuthorizersCommand({
           ApiId: apiId,
@@ -698,15 +757,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       authorizers.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return authorizers;
   }
 
   private async listWebSocketModels(apiId: string): Promise<WebSocketModel[]> {
     const models: WebSocketModel[] = [];
+    const guard = createApiGatewayPaginationGuard('GetModels');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetWebSocketModelsCommand({
           ApiId: apiId,
@@ -715,15 +776,17 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       models.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return models;
   }
 
   private async listWebSocketRouteResponses(apiId: string, routeId: string): Promise<RouteResponse[]> {
     const routeResponses: RouteResponse[] = [];
+    const guard = createApiGatewayPaginationGuard('GetRouteResponses');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new GetRouteResponsesCommand({
           ApiId: apiId,
@@ -733,7 +796,7 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
         })
       );
       routeResponses.push(...(response.Items ?? []));
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routeResponses;
   }

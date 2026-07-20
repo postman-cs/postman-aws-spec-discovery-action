@@ -8,6 +8,7 @@ import {
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
 import { parseAwsError } from './client.js';
+import { createAwsPaginationGuard, isAwsPaginationAbortError } from './pagination.js';
 
 export interface GraphqlApiSummary {
   id: string;
@@ -74,8 +75,10 @@ export class AppSyncSdkClient implements AppSyncSpecClient {
 
   public async listGraphqlApis(): Promise<GraphqlApiSummary[]> {
     const items: GraphqlApiSummary[] = [];
+    const guard = createAwsPaginationGuard('AppSync ListGraphqlApis');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListGraphqlApisCommand({ nextToken, maxResults: 25 }));
       for (const api of response.graphqlApis ?? []) {
         if (!api.apiId) continue;
@@ -86,7 +89,7 @@ export class AppSyncSdkClient implements AppSyncSpecClient {
           apiType: (api.apiType ?? 'GRAPHQL').toUpperCase()
         });
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return items;
   }
@@ -109,12 +112,14 @@ export class AppSyncSdkClient implements AppSyncSpecClient {
   public async listSourceApiAssociations(mergedApiId: string): Promise<AppSyncSourceAssociationListResult> {
     const associations: AppSyncSourceAssociationSummary[] = [];
     const evidence: string[] = [];
+    const guard = createAwsPaginationGuard('AppSync ListSourceApiAssociations', {
+      maxPages: MAX_SOURCE_ASSOCIATION_PAGES
+    });
     let nextToken: string | undefined;
-    let page = 0;
     try {
       do {
-        page += 1;
-        if (page > MAX_SOURCE_ASSOCIATION_PAGES) {
+        // Explicit soft cap: typed partial contract (truncated), not a silent incomplete array.
+        if (guard.isPageCapReached()) {
           return {
             associations,
             truncated: true,
@@ -124,6 +129,7 @@ export class AppSyncSdkClient implements AppSyncSpecClient {
             ]
           };
         }
+        guard.beginPage();
         const response = await this.client.send(
           new ListSourceApiAssociationsCommand({
             apiId: mergedApiId,
@@ -141,11 +147,13 @@ export class AppSyncSdkClient implements AppSyncSpecClient {
             sourceApiId
           });
         }
-        nextToken = response.nextToken;
+        nextToken = guard.takeNextToken(response.nextToken);
       } while (nextToken);
       evidence.push(`Listed ${associations.length} AppSync source API association(s) for merged API ${mergedApiId}`);
       return { associations, evidence };
     } catch (error) {
+      // Cycle/cap aborts must not be softened into a silent partial association list.
+      if (isAwsPaginationAbortError(error)) throw error;
       const parsed = parseAwsError(error);
       const denied =
         parsed.name === 'AccessDeniedException' ||

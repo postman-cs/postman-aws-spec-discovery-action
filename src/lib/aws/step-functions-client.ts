@@ -7,6 +7,8 @@ import {
 } from '@aws-sdk/client-sfn';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface StepFunctionStateMachineSummary {
   name: string;
   arn: string;
@@ -42,14 +44,16 @@ export class StepFunctionsSdkClient implements StepFunctionsSpecClient {
 
   public async listStateMachines(): Promise<StepFunctionStateMachineSummary[]> {
     const stateMachines: StepFunctionStateMachineSummary[] = [];
+    const guard = createAwsPaginationGuard('Step Functions ListStateMachines');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListStateMachinesCommand({ nextToken, maxResults: 100 }));
       for (const stateMachine of response.stateMachines ?? []) {
         const mapped = mapStateMachine(stateMachine);
         if (mapped) stateMachines.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return stateMachines;
   }

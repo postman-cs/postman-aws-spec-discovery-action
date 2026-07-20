@@ -8,6 +8,8 @@ import {
 } from '@aws-sdk/client-bedrock-agent';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface BedrockAgentSummary {
   agentId: string;
   agentName: string;
@@ -60,22 +62,26 @@ export class BedrockActionGroupsSdkClient implements BedrockActionGroupsSpecClie
 
   public async listAgents(): Promise<BedrockAgentSummary[]> {
     const agents: BedrockAgentSummary[] = [];
+    const guard = createAwsPaginationGuard('Bedrock ListAgents');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListAgentsCommand({ nextToken, maxResults: 100 }));
       for (const agent of response.agentSummaries ?? []) {
         const mapped = mapAgent(agent);
         if (mapped) agents.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return agents;
   }
 
   public async listActionGroups(agentId: string, agentVersion: string): Promise<BedrockActionGroupSummary[]> {
     const groups: BedrockActionGroupSummary[] = [];
+    const guard = createAwsPaginationGuard('Bedrock ListAgentActionGroups');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new ListAgentActionGroupsCommand({
           agentId,
@@ -95,7 +101,7 @@ export class BedrockActionGroupsSdkClient implements BedrockActionGroupsSpecClie
           actionGroupState: group.actionGroupState
         });
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return groups;
   }

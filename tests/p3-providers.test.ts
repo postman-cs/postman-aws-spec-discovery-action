@@ -8,11 +8,16 @@ import { LambdaEventSourceProvider } from '../src/lib/providers/lambda-event-sou
 import { StepFunctionsProvider } from '../src/lib/providers/step-functions.js';
 import { VerifiedPermissionsProvider } from '../src/lib/providers/verified-permissions.js';
 import type { AlbListenerRulesSpecClient } from '../src/lib/aws/alb-client.js';
+import { AppSyncEventsSdkClient } from '../src/lib/aws/appsync-events-client.js';
 import type { AppSyncEventsSpecClient } from '../src/lib/aws/appsync-events-client.js';
+import { BedrockActionGroupsSdkClient } from '../src/lib/aws/bedrock-agent-client.js';
 import type { BedrockActionGroupsSpecClient } from '../src/lib/aws/bedrock-agent-client.js';
 import type { EventBridgeSurfaceSpecClient } from '../src/lib/aws/eventbridge-client.js';
 import type { LambdaEventSourceSpecClient } from '../src/lib/aws/lambda-event-source-client.js';
+import { MAX_AWS_LIST_PAGES } from '../src/lib/aws/pagination.js';
+import { StepFunctionsSdkClient } from '../src/lib/aws/step-functions-client.js';
 import type { StepFunctionsSpecClient } from '../src/lib/aws/step-functions-client.js';
+import { VerifiedPermissionsSdkClient } from '../src/lib/aws/verified-permissions-client.js';
 import type { VerifiedPermissionsSpecClient } from '../src/lib/aws/verified-permissions-client.js';
 import type { S3SpecClient } from '../src/lib/aws/s3-client.js';
 
@@ -304,5 +309,142 @@ describe('StepFunctionsProvider', () => {
     const doc = parsed(result.content);
     expect(doc.paths).toHaveProperty('/step-functions/orders-workflow/executions');
     expect(doc['x-aws-stepfunctions']).toMatchObject({ stateMachineArn: expect.stringContaining('orders-workflow') });
+  });
+});
+
+describe('P3 SDK client finite pagination', () => {
+  it('Bedrock listAgents aggregates pages and rejects repeated token / page-cap', async () => {
+    const client = new BedrockActionGroupsSdkClient('us-east-1');
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({
+        agentSummaries: [{ agentId: 'a-1', agentName: 'agent-one', latestAgentVersion: '1' }],
+        nextToken: 'page-2'
+      })
+      .mockResolvedValueOnce({
+        agentSummaries: [{ agentId: 'a-2', agentName: 'agent-two', latestAgentVersion: '2' }]
+      });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.listAgents()).resolves.toEqual([
+      { agentId: 'a-1', agentName: 'agent-one', latestAgentVersion: '1' },
+      { agentId: 'a-2', agentName: 'agent-two', latestAgentVersion: '2' }
+    ]);
+
+    send.mockReset();
+    send.mockResolvedValue({
+      agentSummaries: [{ agentId: 'a-x', agentName: 'loop' }],
+      nextToken: 'stuck'
+    });
+    await expect(client.listAgents()).rejects.toThrow(
+      'Bedrock ListAgents pagination returned a repeated token; aborting'
+    );
+    expect(send).toHaveBeenCalledTimes(2);
+
+    send.mockReset();
+    let pages = 0;
+    send.mockImplementation(async () => {
+      pages += 1;
+      return {
+        agentSummaries: [{ agentId: `a-${pages}`, agentName: `agent-${pages}` }],
+        nextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listAgents()).rejects.toThrow(
+      `Bedrock ListAgents pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
+  });
+
+  it('Step Functions listStateMachines rejects repeated token / page-cap', async () => {
+    const client = new StepFunctionsSdkClient('us-east-1');
+    const send = vi.fn().mockResolvedValue({
+      stateMachines: [
+        {
+          name: 'wf-1',
+          stateMachineArn: 'arn:aws:states:us-east-1:1:stateMachine:wf-1',
+          type: 'STANDARD'
+        }
+      ],
+      nextToken: 'stuck'
+    });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.listStateMachines()).rejects.toThrow(
+      'Step Functions ListStateMachines pagination returned a repeated token; aborting'
+    );
+    expect(send).toHaveBeenCalledTimes(2);
+
+    send.mockReset();
+    let pages = 0;
+    send.mockImplementation(async () => {
+      pages += 1;
+      return {
+        stateMachines: [
+          {
+            name: `wf-${pages}`,
+            stateMachineArn: `arn:aws:states:us-east-1:1:stateMachine:wf-${pages}`,
+            type: 'STANDARD'
+          }
+        ],
+        nextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listStateMachines()).rejects.toThrow(
+      `Step Functions ListStateMachines pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
+  });
+
+  it('Verified Permissions listPolicyStores aggregates and rejects page-cap', async () => {
+    const client = new VerifiedPermissionsSdkClient('us-east-1');
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({
+        policyStores: [{ policyStoreId: 'store-1', arn: 'arn:aws:verifiedpermissions:us-east-1:1:policy-store/store-1' }],
+        nextToken: 'page-2'
+      })
+      .mockResolvedValueOnce({
+        policyStores: [{ policyStoreId: 'store-2', arn: 'arn:aws:verifiedpermissions:us-east-1:1:policy-store/store-2' }]
+      });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.listPolicyStores()).resolves.toEqual([
+      { policyStoreId: 'store-1', arn: 'arn:aws:verifiedpermissions:us-east-1:1:policy-store/store-1' },
+      { policyStoreId: 'store-2', arn: 'arn:aws:verifiedpermissions:us-east-1:1:policy-store/store-2' }
+    ]);
+
+    send.mockReset();
+    let pages = 0;
+    send.mockImplementation(async () => {
+      pages += 1;
+      return {
+        policyStores: [
+          {
+            policyStoreId: `store-${pages}`,
+            arn: `arn:aws:verifiedpermissions:us-east-1:1:policy-store/store-${pages}`
+          }
+        ],
+        nextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listPolicyStores()).rejects.toThrow(
+      `Verified Permissions ListPolicyStores pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
+  });
+
+  it('AppSync Events listEventApis rejects repeated token', async () => {
+    const client = new AppSyncEventsSdkClient('us-east-1');
+    const send = vi.fn().mockResolvedValue({
+      apis: [{ apiId: 'evt-1', name: 'events', eventConfig: {}, apiArn: 'arn:evt-1' }],
+      nextToken: 'stuck'
+    });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.listEventApis()).rejects.toThrow(
+      'AppSync Events ListApis pagination returned a repeated token; aborting'
+    );
+    expect(send).toHaveBeenCalledTimes(2);
   });
 });

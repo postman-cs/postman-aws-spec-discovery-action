@@ -8,6 +8,8 @@ import {
 } from '@aws-sdk/client-appsync';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface AppSyncEventApiSummary {
   apiId: string;
   name: string;
@@ -49,28 +51,32 @@ export class AppSyncEventsSdkClient implements AppSyncEventsSpecClient {
 
   public async listEventApis(): Promise<AppSyncEventApiSummary[]> {
     const apis: AppSyncEventApiSummary[] = [];
+    const guard = createAwsPaginationGuard('AppSync Events ListApis');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListApisCommand({ nextToken, maxResults: 25 }));
       for (const api of response.apis ?? []) {
         const mapped = mapEventApi(api);
         if (mapped) apis.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return apis;
   }
 
   public async listChannelNamespaces(apiId: string): Promise<AppSyncChannelNamespaceSummary[]> {
     const namespaces: AppSyncChannelNamespaceSummary[] = [];
+    const guard = createAwsPaginationGuard('AppSync Events ListChannelNamespaces');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListChannelNamespacesCommand({ apiId, nextToken, maxResults: 25 }));
       for (const namespace of response.channelNamespaces ?? []) {
         const mapped = mapChannelNamespace(namespace, apiId);
         if (mapped) namespaces.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return namespaces;
   }
