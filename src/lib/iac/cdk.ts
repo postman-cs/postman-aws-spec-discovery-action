@@ -2,6 +2,7 @@ import { lstat, opendir } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { S3SpecClient } from '../aws/s3-client.js';
+import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 import { resolveCloudFormationTemplate } from './cloudformation.js';
 import { classifyIacArtifact } from './freshness.js';
 import { readIacFile, toPosix, type IacReadBudget } from './read.js';
@@ -34,6 +35,34 @@ function parseMajorVersion(version: string | undefined): number | undefined {
   return Number(match[1]);
 }
 
+/**
+ * Lexical containment for CDK assembly / template-glob directories.
+ * Normalizes the relative path and rejects anything outside repoRoot before any
+ * lstat/opendir. Returns the normalized posix-relative directory, or undefined
+ * after recording a single path-escape error.
+ */
+function resolveCdkDirectoryWithinRoot(
+  repoRoot: string,
+  directory: string,
+  errors: IacResolutionError[]
+): string | undefined {
+  const normalized = toPosix(path.posix.normalize((directory || '.').trim()));
+  const relativeDir = normalized === '.' ? '' : normalized.replace(/\/+$/, '');
+  const checkPath = relativeDir || '.';
+  try {
+    resolvePathWithinRoot(repoRoot, checkPath, 'cdk-directory');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push({
+      code: 'path-escape',
+      path: toPosix(checkPath),
+      message
+    });
+    return undefined;
+  }
+  return relativeDir;
+}
+
 async function resolveAssemblyDirectory(
   repoRoot: string,
   assemblyDir: string,
@@ -45,10 +74,14 @@ async function resolveAssemblyDirectory(
     sourceHints?: string[];
   }
 ): Promise<IacSpecCandidate[]> {
+  // Containment before any I/O — including the missing-manifest template-glob fallback.
+  const relativeDir = resolveCdkDirectoryWithinRoot(repoRoot, assemblyDir, errors);
+  if (relativeDir === undefined) return [];
+
   const visited = options.visitedAssemblies ?? new Set<string>();
-  const relativeDir = toPosix(assemblyDir);
-  if (visited.has(relativeDir)) return [];
-  visited.add(relativeDir);
+  const visitKey = relativeDir || '.';
+  if (visited.has(visitKey)) return [];
+  visited.add(visitKey);
 
   const manifestRelative = relativeDir === '.' || relativeDir === ''
     ? 'manifest.json'
@@ -164,9 +197,14 @@ async function resolveAssemblyDirectory(
         });
         continue;
       }
-      const nestedRelative = relativeDir
-        ? toPosix(path.posix.join(relativeDir, nestedDir))
-        : toPosix(nestedDir);
+      // Normalize + validate before recursion so escaping directoryName never reaches
+      // resolveAssemblyDirectory / resolveTemplateGlob enumeration.
+      const nestedRaw = toPosix(nestedDir.trim());
+      const nestedJoined = relativeDir
+        ? path.posix.normalize(path.posix.join(relativeDir, nestedRaw))
+        : path.posix.normalize(nestedRaw);
+      const nestedRelative = resolveCdkDirectoryWithinRoot(repoRoot, nestedJoined, errors);
+      if (nestedRelative === undefined) continue;
       const nested = await resolveAssemblyDirectory(repoRoot, nestedRelative, budget, errors, {
         ...options,
         visitedAssemblies: visited
@@ -210,7 +248,11 @@ async function resolveTemplateGlob(
   errors: IacResolutionError[],
   options: { s3Client?: S3SpecClient; sourceHints?: string[] }
 ): Promise<IacSpecCandidate[]> {
-  const absolute = path.resolve(repoRoot, directory);
+  // Containment before any lstat/opendir — never enumerate outside repoRoot.
+  const relativeDir = resolveCdkDirectoryWithinRoot(repoRoot, directory, errors);
+  if (relativeDir === undefined) return [];
+
+  const absolute = path.resolve(repoRoot, relativeDir || '.');
   try {
     const info = await lstat(absolute);
     if (info.isSymbolicLink() || !info.isDirectory()) return [];
@@ -228,7 +270,7 @@ async function resolveTemplateGlob(
     boundsExceededRecorded = true;
     errors.push({
       code: 'bounds-exceeded',
-      path: toPosix(directory),
+      path: toPosix(relativeDir || '.'),
       message: `CDK template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
     });
   };
@@ -251,7 +293,7 @@ async function resolveTemplateGlob(
     const entry = dirent.name;
     if (!entry.endsWith('.template.json')) continue;
 
-    const relative = toPosix(path.posix.join(directory, entry));
+    const relative = toPosix(path.posix.join(relativeDir || '.', entry));
     try {
       const entryInfo = await lstat(path.resolve(repoRoot, relative));
       if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
@@ -265,7 +307,7 @@ async function resolveTemplateGlob(
 
   const candidates: IacSpecCandidate[] = [];
   for (const entry of matching) {
-    const relative = toPosix(path.posix.join(directory, entry));
+    const relative = toPosix(path.posix.join(relativeDir || '.', entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,
       relative,

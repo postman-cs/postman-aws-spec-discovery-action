@@ -1,4 +1,5 @@
-import { lstat, opendir, readFile } from 'node:fs/promises';
+import { lstat, open, opendir, readFile } from 'node:fs/promises';
+import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 
 export type SmithyProjectErrorCode =
@@ -524,6 +525,13 @@ async function collectNestedSmithyBuild(state: ClosureState, absolute: string, r
   }
 }
 
+/**
+ * Read a .smithy model under the closure resource budget.
+ * Opens the path, fstats the opened handle, and rejects non-regular /
+ * oversized / cumulative-limit content before reading any bytes through
+ * that same handle. Re-checks actual UTF-8 byte length before acceptance.
+ * Never returns rejected content into the closure; always closes the handle.
+ */
 async function readSmithyModelFile(state: ClosureState, absolute: string, relative: string): Promise<void> {
   if (state.contents.has(relative)) {
     return;
@@ -542,40 +550,135 @@ async function readSmithyModelFile(state: ClosureState, absolute: string, relati
     return;
   }
 
-  let content: string;
-  try {
-    content = await readFile(absolute, 'utf8');
-  } catch (error) {
-    state.errors.push({
-      code: 'unreadable',
-      path: relative,
-      message: `Failed to read Smithy model: ${error instanceof Error ? error.message : String(error)}`
-    });
+  const bounded = await readBoundedSmithyModelBytes(absolute, relative, state);
+  if (!bounded.ok) {
+    state.errors.push(bounded.error);
     return;
   }
 
-  const bytes = Buffer.byteLength(content, 'utf8');
-  if (bytes > state.maxFileBytes) {
-    state.errors.push({
-      code: 'bounds-exceeded',
-      path: relative,
-      message: `Smithy model exceeds maxFileBytes=${state.maxFileBytes}`
-    });
-    return;
-  }
-  if (state.cumulativeBytes + bytes > state.maxCumulativeBytes) {
-    state.errors.push({
-      code: 'bounds-exceeded',
-      path: relative,
-      message: `Smithy closure exceeds maxCumulativeBytes=${state.maxCumulativeBytes}`
-    });
-    return;
-  }
-
-  state.cumulativeBytes += bytes;
+  state.cumulativeBytes += bounded.bytes;
   state.filesRead += 1;
-  state.contents.set(relative, content);
+  state.contents.set(relative, bounded.content);
   state.memberPaths.push(relative);
+}
+
+type BoundedSmithyModelRead =
+  | { ok: true; content: string; bytes: number }
+  | { ok: false; error: SmithyProjectError };
+
+/**
+ * Open → fstat → size/cumulative gates → readFile(handle) → re-check.
+ * Callers retain symlink/path-escape refusals via lstat before invocation;
+ * this helper still refuses non-regular opened targets and never accepts
+ * oversized content into the closure.
+ */
+async function readBoundedSmithyModelBytes(
+  absolute: string,
+  relative: string,
+  state: Pick<ClosureState, 'maxFileBytes' | 'maxCumulativeBytes' | 'cumulativeBytes'>
+): Promise<BoundedSmithyModelRead> {
+  let handle: FileHandle | undefined;
+  try {
+    handle = await open(absolute, 'r');
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: 'unreadable',
+        path: relative,
+        message: `Failed to read Smithy model: ${error instanceof Error ? error.message : String(error)}`
+      }
+    };
+  }
+
+  try {
+    let info;
+    try {
+      info = await handle.stat();
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'unreadable',
+          path: relative,
+          message: `Failed to read Smithy model: ${error instanceof Error ? error.message : String(error)}`
+        }
+      };
+    }
+
+    if (!info.isFile()) {
+      return {
+        ok: false,
+        error: {
+          code: 'unreadable',
+          path: relative,
+          message: `Smithy model is not a regular file: ${relative}`
+        }
+      };
+    }
+
+    // Reject on opened-file size before allocating/reading model bytes.
+    if (info.size > state.maxFileBytes) {
+      return {
+        ok: false,
+        error: {
+          code: 'bounds-exceeded',
+          path: relative,
+          message: `Smithy model exceeds maxFileBytes=${state.maxFileBytes}`
+        }
+      };
+    }
+    if (state.cumulativeBytes + info.size > state.maxCumulativeBytes) {
+      return {
+        ok: false,
+        error: {
+          code: 'bounds-exceeded',
+          path: relative,
+          message: `Smithy closure exceeds maxCumulativeBytes=${state.maxCumulativeBytes}`
+        }
+      };
+    }
+
+    let content: string;
+    try {
+      content = await handle.readFile('utf8');
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'unreadable',
+          path: relative,
+          message: `Failed to read Smithy model: ${error instanceof Error ? error.message : String(error)}`
+        }
+      };
+    }
+
+    const bytes = Buffer.byteLength(content, 'utf8');
+    if (bytes > state.maxFileBytes) {
+      return {
+        ok: false,
+        error: {
+          code: 'bounds-exceeded',
+          path: relative,
+          message: `Smithy model exceeds maxFileBytes=${state.maxFileBytes}`
+        }
+      };
+    }
+    if (state.cumulativeBytes + bytes > state.maxCumulativeBytes) {
+      return {
+        ok: false,
+        error: {
+          code: 'bounds-exceeded',
+          path: relative,
+          message: `Smithy closure exceeds maxCumulativeBytes=${state.maxCumulativeBytes}`
+        }
+      };
+    }
+
+    return { ok: true, content, bytes };
+  } finally {
+    await handle.close().catch(() => undefined);
+  }
 }
 
 function parseSmithyBuildJson(raw: string): Record<string, unknown> {

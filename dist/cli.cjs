@@ -162222,11 +162222,30 @@ function parseMajorVersion(version) {
   if (!match) return void 0;
   return Number(match[1]);
 }
+function resolveCdkDirectoryWithinRoot(repoRoot, directory, errors) {
+  const normalized = toPosix(import_node_path10.default.posix.normalize((directory || ".").trim()));
+  const relativeDir = normalized === "." ? "" : normalized.replace(/\/+$/, "");
+  const checkPath = relativeDir || ".";
+  try {
+    resolvePathWithinRoot(repoRoot, checkPath, "cdk-directory");
+  } catch (error2) {
+    const message = error2 instanceof Error ? error2.message : String(error2);
+    errors.push({
+      code: "path-escape",
+      path: toPosix(checkPath),
+      message
+    });
+    return void 0;
+  }
+  return relativeDir;
+}
 async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, options) {
+  const relativeDir = resolveCdkDirectoryWithinRoot(repoRoot, assemblyDir, errors);
+  if (relativeDir === void 0) return [];
   const visited = options.visitedAssemblies ?? /* @__PURE__ */ new Set();
-  const relativeDir = toPosix(assemblyDir);
-  if (visited.has(relativeDir)) return [];
-  visited.add(relativeDir);
+  const visitKey = relativeDir || ".";
+  if (visited.has(visitKey)) return [];
+  visited.add(visitKey);
   const manifestRelative = relativeDir === "." || relativeDir === "" ? "manifest.json" : `${relativeDir}/manifest.json`;
   const manifestFile = await readIacFile(repoRoot, manifestRelative, budget, errors, {
     fieldName: "cdk-manifest",
@@ -162328,7 +162347,10 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
         });
         continue;
       }
-      const nestedRelative = relativeDir ? toPosix(import_node_path10.default.posix.join(relativeDir, nestedDir)) : toPosix(nestedDir);
+      const nestedRaw = toPosix(nestedDir.trim());
+      const nestedJoined = relativeDir ? import_node_path10.default.posix.normalize(import_node_path10.default.posix.join(relativeDir, nestedRaw)) : import_node_path10.default.posix.normalize(nestedRaw);
+      const nestedRelative = resolveCdkDirectoryWithinRoot(repoRoot, nestedJoined, errors);
+      if (nestedRelative === void 0) continue;
       const nested = await resolveAssemblyDirectory(repoRoot, nestedRelative, budget, errors, {
         ...options,
         visitedAssemblies: visited
@@ -162362,7 +162384,9 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
   return candidates;
 }
 async function resolveTemplateGlob(repoRoot, directory, budget, errors, options) {
-  const absolute = import_node_path10.default.resolve(repoRoot, directory);
+  const relativeDir = resolveCdkDirectoryWithinRoot(repoRoot, directory, errors);
+  if (relativeDir === void 0) return [];
+  const absolute = import_node_path10.default.resolve(repoRoot, relativeDir || ".");
   try {
     const info = await (0, import_promises7.lstat)(absolute);
     if (info.isSymbolicLink() || !info.isDirectory()) return [];
@@ -162378,7 +162402,7 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
     boundsExceededRecorded = true;
     errors.push({
       code: "bounds-exceeded",
-      path: toPosix(directory),
+      path: toPosix(relativeDir || "."),
       message: `CDK template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
     });
   };
@@ -162397,7 +162421,7 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
     inspectedEntries += 1;
     const entry = dirent.name;
     if (!entry.endsWith(".template.json")) continue;
-    const relative = toPosix(import_node_path10.default.posix.join(directory, entry));
+    const relative = toPosix(import_node_path10.default.posix.join(relativeDir || ".", entry));
     try {
       const entryInfo = await (0, import_promises7.lstat)(import_node_path10.default.resolve(repoRoot, relative));
       if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
@@ -162409,7 +162433,7 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
   matching.sort((a5, b5) => a5.localeCompare(b5));
   const candidates = [];
   for (const entry of matching) {
-    const relative = toPosix(import_node_path10.default.posix.join(directory, entry));
+    const relative = toPosix(import_node_path10.default.posix.join(relativeDir || ".", entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,
       relative,
@@ -163799,38 +163823,112 @@ async function readSmithyModelFile(state2, absolute, relative) {
     });
     return;
   }
-  let content;
-  try {
-    content = await (0, import_promises11.readFile)(absolute, "utf8");
-  } catch (error2) {
-    state2.errors.push({
-      code: "unreadable",
-      path: relative,
-      message: `Failed to read Smithy model: ${error2 instanceof Error ? error2.message : String(error2)}`
-    });
+  const bounded = await readBoundedSmithyModelBytes(absolute, relative, state2);
+  if (!bounded.ok) {
+    state2.errors.push(bounded.error);
     return;
   }
-  const bytes = Buffer.byteLength(content, "utf8");
-  if (bytes > state2.maxFileBytes) {
-    state2.errors.push({
-      code: "bounds-exceeded",
-      path: relative,
-      message: `Smithy model exceeds maxFileBytes=${state2.maxFileBytes}`
-    });
-    return;
-  }
-  if (state2.cumulativeBytes + bytes > state2.maxCumulativeBytes) {
-    state2.errors.push({
-      code: "bounds-exceeded",
-      path: relative,
-      message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
-    });
-    return;
-  }
-  state2.cumulativeBytes += bytes;
+  state2.cumulativeBytes += bounded.bytes;
   state2.filesRead += 1;
-  state2.contents.set(relative, content);
+  state2.contents.set(relative, bounded.content);
   state2.memberPaths.push(relative);
+}
+async function readBoundedSmithyModelBytes(absolute, relative, state2) {
+  let handle;
+  try {
+    handle = await (0, import_promises11.open)(absolute, "r");
+  } catch (error2) {
+    return {
+      ok: false,
+      error: {
+        code: "unreadable",
+        path: relative,
+        message: `Failed to read Smithy model: ${error2 instanceof Error ? error2.message : String(error2)}`
+      }
+    };
+  }
+  try {
+    let info;
+    try {
+      info = await handle.stat();
+    } catch (error2) {
+      return {
+        ok: false,
+        error: {
+          code: "unreadable",
+          path: relative,
+          message: `Failed to read Smithy model: ${error2 instanceof Error ? error2.message : String(error2)}`
+        }
+      };
+    }
+    if (!info.isFile()) {
+      return {
+        ok: false,
+        error: {
+          code: "unreadable",
+          path: relative,
+          message: `Smithy model is not a regular file: ${relative}`
+        }
+      };
+    }
+    if (info.size > state2.maxFileBytes) {
+      return {
+        ok: false,
+        error: {
+          code: "bounds-exceeded",
+          path: relative,
+          message: `Smithy model exceeds maxFileBytes=${state2.maxFileBytes}`
+        }
+      };
+    }
+    if (state2.cumulativeBytes + info.size > state2.maxCumulativeBytes) {
+      return {
+        ok: false,
+        error: {
+          code: "bounds-exceeded",
+          path: relative,
+          message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
+        }
+      };
+    }
+    let content;
+    try {
+      content = await handle.readFile("utf8");
+    } catch (error2) {
+      return {
+        ok: false,
+        error: {
+          code: "unreadable",
+          path: relative,
+          message: `Failed to read Smithy model: ${error2 instanceof Error ? error2.message : String(error2)}`
+        }
+      };
+    }
+    const bytes = Buffer.byteLength(content, "utf8");
+    if (bytes > state2.maxFileBytes) {
+      return {
+        ok: false,
+        error: {
+          code: "bounds-exceeded",
+          path: relative,
+          message: `Smithy model exceeds maxFileBytes=${state2.maxFileBytes}`
+        }
+      };
+    }
+    if (state2.cumulativeBytes + bytes > state2.maxCumulativeBytes) {
+      return {
+        ok: false,
+        error: {
+          code: "bounds-exceeded",
+          path: relative,
+          message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
+        }
+      };
+    }
+    return { ok: true, content, bytes };
+  } finally {
+    await handle.close().catch(() => void 0);
+  }
 }
 function parseSmithyBuildJson(raw) {
   const withoutComments = raw.replace(/^\s*\/\/.*$/gm, "");
