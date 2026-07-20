@@ -640,7 +640,7 @@ describe('runDiscovery', () => {
       );
 
       expect(result.sourceType).toBe('repo-spec');
-      expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
+      expect(result.specPath).toBe('discovered-specs/orders-api/openapi.yaml');
       expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
       expect(result.derivedOpenApiFormat).toBe('openapi-json');
       expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));

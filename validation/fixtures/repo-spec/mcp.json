@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "validation": {
+      "command": "npx",
+      "args": ["-y", "@example/validation-mcp"]
+    }
+  }
+}

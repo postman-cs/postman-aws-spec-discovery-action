@@ -64,13 +64,16 @@ export type SpecFormat =
   | 'openapi-yaml'
   | 'openapi-json'
   | 'graphql-sdl'
+  | 'graphql-introspection-json'
   | 'asyncapi-yaml'
   | 'asyncapi-json'
   | 'json-schema'
   | 'postman-collection'
   | 'smithy'
   | 'avro'
-  | 'protobuf';
+  | 'protobuf'
+  | 'wsdl'
+  | 'mcp-json';
 
 export type DerivedOpenApiVersion = '3.0.3' | '3.1.0';
 
@@ -324,7 +327,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'spec-format': {
       description:
-        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
+        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, graphql-introspection-json, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, protobuf, wsdl, or mcp-json.'
     },
     'contract-origin': {
       description:

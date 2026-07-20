@@ -976,7 +976,7 @@ var require_util = __commonJS({
     var net = require("node:net");
     var { Blob: Blob2 } = require("node:buffer");
     var nodeUtil = require("node:util");
-    var { stringify: stringify4 } = require("node:querystring");
+    var { stringify: stringify5 } = require("node:querystring");
     var { EventEmitter: EE } = require("node:events");
     var { InvalidArgumentError } = require_errors();
     var { headerNameLowerCasedRecord } = require_constants();
@@ -1036,7 +1036,7 @@ var require_util = __commonJS({
       if (url.includes("?") || url.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify4(queryParams);
+      const stringified = stringify5(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -1081,14 +1081,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path23 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path24 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path23 && path23[0] !== "/") {
-          path23 = `/${path23}`;
+        if (path24 && path24[0] !== "/") {
+          path24 = `/${path24}`;
         }
-        return new URL(`${origin}${path23}`);
+        return new URL(`${origin}${path24}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1539,39 +1539,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path23, origin }
+          request: { method, path: path24, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path23);
+        debuglog("sending request to %s %s/%s", method, origin, path24);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path23, origin },
+          request: { method, path: path24, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path23,
+          path24,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path23, origin }
+          request: { method, path: path24, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path23);
+        debuglog("trailers received from %s %s/%s", method, origin, path24);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path23, origin },
+          request: { method, path: path24, origin },
           error: error3
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path23,
+          path24,
           error3.message
         );
       });
@@ -1620,9 +1620,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path23, origin }
+            request: { method, path: path24, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path23);
+          debuglog("sending request to %s %s/%s", method, origin, path24);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1685,7 +1685,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
       constructor(origin, {
-        path: path23,
+        path: path24,
         method,
         body,
         headers,
@@ -1700,11 +1700,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler) {
-        if (typeof path23 !== "string") {
+        if (typeof path24 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path23[0] !== "/" && !(path23.startsWith("http://") || path23.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path24[0] !== "/" && !(path24.startsWith("http://") || path24.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path23)) {
+        } else if (invalidPathRegex.test(path24)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -1770,7 +1770,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path23, query) : path23;
+        this.path = query ? buildURL(path24, query) : path24;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6334,7 +6334,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request) {
-      const { method, path: path23, host, upgrade, blocking, reset } = request;
+      const { method, path: path24, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util.isFormDataLike(body)) {
@@ -6400,7 +6400,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path23} HTTP/1.1\r
+      let header = `${method} ${path24} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -6926,7 +6926,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
-      const { method, path: path23, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { method, path: path24, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
         util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
@@ -6993,7 +6993,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path23;
+      headers[HTTP2_HEADER_PATH] = path24;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7346,9 +7346,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path23 = search ? `${pathname}${search}` : pathname;
+        const path24 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path23;
+        this.opts.path = path24;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8583,10 +8583,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path23 = "/",
+          path: path24 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path23;
+        opts.path = origin + path24;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -10507,20 +10507,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path23) {
-      if (typeof path23 !== "string") {
-        return path23;
+    function safeUrl(path24) {
+      if (typeof path24 !== "string") {
+        return path24;
       }
-      const pathSegments = path23.split("?");
+      const pathSegments = path24.split("?");
       if (pathSegments.length !== 2) {
-        return path23;
+        return path24;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path23, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path23);
+    function matchKey(mockDispatch2, { path: path24, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path24);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10542,7 +10542,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath2 = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path23 }) => matchValue(safeUrl(path23), resolvedPath2));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path24 }) => matchValue(safeUrl(path24), resolvedPath2));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath2}'`);
       }
@@ -10580,9 +10580,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path23, method, body, headers, query } = opts;
+      const { path: path24, method, body, headers, query } = opts;
       return {
-        path: path23,
+        path: path24,
         method,
         body,
         headers,
@@ -11045,10 +11045,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path23, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path24, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path23,
+            Path: path24,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -15929,9 +15929,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path23) {
-      for (let i5 = 0; i5 < path23.length; ++i5) {
-        const code = path23.charCodeAt(i5);
+    function validateCookiePath(path24) {
+      for (let i5 = 0; i5 < path24.length; ++i5) {
+        const code = path24.charCodeAt(i5);
         if (code < 32 || // exclude CTLs (0-31)
         code === 127 || // DEL
         code === 59) {
@@ -15979,7 +15979,7 @@ var require_util6 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify4(cookie) {
+    function stringify5(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -16033,7 +16033,7 @@ var require_util6 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify: stringify4
+      stringify: stringify5
     };
   }
 });
@@ -16183,7 +16183,7 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify: stringify4 } = require_util6();
+    var { stringify: stringify5 } = require_util6();
     var { webidl } = require_webidl();
     var { Headers: Headers2 } = require_headers();
     function getCookies(headers) {
@@ -16226,7 +16226,7 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       webidl.brandCheck(headers, Headers2, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify4(cookie);
+      const str = stringify5(cookie);
       if (str) {
         headers.append("Set-Cookie", str);
       }
@@ -18608,11 +18608,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path23 = opts.path;
+          let path24 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path23 = `/${path23}`;
+            path24 = `/${path24}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path23);
+          url = new URL(util.parseOrigin(url).origin + path24);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -22599,14 +22599,14 @@ var init_readFile = __esm({
     import_promises2 = require("node:fs/promises");
     filePromises = {};
     fileIntercept = {};
-    readFile2 = (path23, options) => {
-      if (fileIntercept[path23] !== void 0) {
-        return fileIntercept[path23];
+    readFile2 = (path24, options) => {
+      if (fileIntercept[path24] !== void 0) {
+        return fileIntercept[path24];
       }
-      if (!filePromises[path23] || options?.ignoreCache) {
-        filePromises[path23] = (0, import_promises2.readFile)(path23, "utf8");
+      if (!filePromises[path24] || options?.ignoreCache) {
+        filePromises[path24] = (0, import_promises2.readFile)(path24, "utf8");
       }
-      return filePromises[path23];
+      return filePromises[path24];
     };
   }
 });
@@ -22718,8 +22718,8 @@ var init_externalDataInterceptor = __esm({
       getFileRecord() {
         return fileIntercept;
       },
-      interceptFile(path23, contents) {
-        fileIntercept[path23] = Promise.resolve(contents);
+      interceptFile(path24, contents) {
+        fileIntercept[path24] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return tokenIntercept;
@@ -23493,8 +23493,8 @@ var init_createConfigValueProvider = __esm({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path23 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path23}`;
+              const { protocol, hostname, port, path: path24 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path24}`;
             }
           }
           return endpoint;
@@ -23867,18 +23867,18 @@ var getAttrPathList;
 var init_getAttrPathList = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js"() {
     init_types2();
-    getAttrPathList = (path23) => {
-      const parts = path23.split(".");
+    getAttrPathList = (path24) => {
+      const parts = path24.split(".");
       const pathList = [];
       for (const part of parts) {
         const squareBracketIndex = part.indexOf("[");
         if (squareBracketIndex !== -1) {
           if (part.indexOf("]") !== part.length - 1) {
-            throw new EndpointError(`Path: '${path23}' does not end with ']'`);
+            throw new EndpointError(`Path: '${path24}' does not end with ']'`);
           }
           const arrayIndex = part.slice(squareBracketIndex + 1, -1);
           if (Number.isNaN(parseInt(arrayIndex))) {
-            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path23}'`);
+            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path24}'`);
           }
           if (squareBracketIndex !== 0) {
             pathList.push(part.slice(0, squareBracketIndex));
@@ -23899,9 +23899,9 @@ var init_getAttr = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js"() {
     init_types2();
     init_getAttrPathList();
-    getAttr = (value, path23) => getAttrPathList(path23).reduce((acc, index) => {
+    getAttr = (value, path24) => getAttrPathList(path24).reduce((acc, index) => {
       if (typeof acc !== "object") {
-        throw new EndpointError(`Index '${index}' in '${path23}' not found in '${JSON.stringify(value)}'`);
+        throw new EndpointError(`Index '${index}' in '${path24}' not found in '${JSON.stringify(value)}'`);
       } else if (Array.isArray(acc)) {
         const i5 = parseInt(index);
         return acc[i5 < 0 ? acc.length + i5 : i5];
@@ -23962,8 +23962,8 @@ var init_parseURL = __esm({
             return value;
           }
           if (typeof value === "object" && "hostname" in value) {
-            const { hostname: hostname2, port, protocol: protocol2 = "", path: path23 = "", query = {} } = value;
-            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path23}`);
+            const { hostname: hostname2, port, protocol: protocol2 = "", path: path24 = "", query = {} } = value;
+            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path24}`);
             url.search = Object.entries(query).map(([k5, v]) => `${k5}=${v}`).join("&");
             return url;
           }
@@ -27566,11 +27566,11 @@ var init_HttpBindingProtocol = __esm({
           const opTraits = translateTraits(operationSchema.traits);
           if (opTraits.http) {
             request.method = opTraits.http[0];
-            const [path23, search] = opTraits.http[1].split("?");
+            const [path24, search] = opTraits.http[1].split("?");
             if (request.path == "/") {
-              request.path = path23;
+              request.path = path24;
             } else {
-              request.path += path23;
+              request.path += path24;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
             for (const [key, value] of traitSearchParams) {
@@ -27971,8 +27971,8 @@ var init_requestBuilder = __esm({
         return this;
       }
       p(memberName, labelValueProvider, uriLabel, isGreedyLabel) {
-        this.resolvePathStack.push((path23) => {
-          this.path = resolvedPath(path23, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
+        this.resolvePathStack.push((path24) => {
+          this.path = resolvedPath(path24, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
         });
         return this;
       }
@@ -30080,9 +30080,9 @@ var init_createPaginator = __esm({
       command5 = withCommand(command5) ?? command5;
       return await client.send(command5, ...args);
     };
-    get = (fromObject, path23) => {
+    get = (fromObject, path24) => {
       let cursor2 = fromObject;
-      const pathComponents = path23.split(".");
+      const pathComponents = path24.split(".");
       for (const step of pathComponents) {
         if (!cursor2 || typeof cursor2 !== "object") {
           return void 0;
@@ -31767,8 +31767,8 @@ var init_createUserAgentStringParsingProvider = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
     createUserAgentStringParsingProvider = ({ serviceId, clientVersion }) => async (config) => {
       const module2 = await Promise.resolve().then(() => __toESM(require_es5()));
-      const parse10 = module2.parse ?? module2.default.parse ?? (() => "");
-      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse10(window.navigator.userAgent) : void 0;
+      const parse11 = module2.parse ?? module2.default.parse ?? (() => "");
+      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse11(window.navigator.userAgent) : void 0;
       const sections = [
         ["aws-sdk-js", clientVersion],
         ["ua", "2.1"],
@@ -32591,10 +32591,10 @@ ${longDate}
 ${credentialScope}
 ${toHex2(hashedRequest)}`;
       }
-      getCanonicalPath({ path: path23 }) {
+      getCanonicalPath({ path: path24 }) {
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
-          for (const pathSegment of path23.split("/")) {
+          for (const pathSegment of path24.split("/")) {
             if (pathSegment?.length === 0)
               continue;
             if (pathSegment === ".")
@@ -32605,11 +32605,11 @@ ${toHex2(hashedRequest)}`;
               normalizedPathSegments.push(pathSegment);
             }
           }
-          const normalizedPath = `${path23?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path23?.endsWith("/") ? "/" : ""}`;
+          const normalizedPath = `${path24?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path24?.endsWith("/") ? "/" : ""}`;
           const doubleEncoded = escapeUri2(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
-        return path23;
+        return path24;
       }
       validateResolvedCredentials(credentials) {
         if (typeof credentials !== "object" || typeof credentials.accessKeyId !== "string" || typeof credentials.secretAccessKey !== "string") {
@@ -33745,12 +33745,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             const password = request.password ?? "";
             auth = `${username}:${password}`;
           }
-          let path23 = request.path;
+          let path24 = request.path;
           if (queryString) {
-            path23 += `?${queryString}`;
+            path24 += `?${queryString}`;
           }
           if (request.fragment) {
-            path23 += `#${request.fragment}`;
+            path24 += `#${request.fragment}`;
           }
           let hostname = request.hostname ?? "";
           if (hostname[0] === "[" && hostname.endsWith("]")) {
@@ -33762,7 +33762,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             headers: request.headers,
             host: hostname,
             method: request.method,
-            path: path23,
+            path: path24,
             port: request.port,
             agent,
             auth
@@ -34165,16 +34165,16 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(err);
           };
           const queryString = query ? buildQueryString2(query) : "";
-          let path23 = request.path;
+          let path24 = request.path;
           if (queryString) {
-            path23 += `?${queryString}`;
+            path24 += `?${queryString}`;
           }
           if (request.fragment) {
-            path23 += `#${request.fragment}`;
+            path24 += `#${request.fragment}`;
           }
           const clientHttp2Stream = session.request({
             ...request.headers,
-            [constants3.HTTP2_HEADER_PATH]: path23,
+            [constants3.HTTP2_HEADER_PATH]: path24,
             [constants3.HTTP2_HEADER_METHOD]: method
           });
           if (effectiveRequestTimeout) {
@@ -35734,11 +35734,11 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = getSmithyContext(context);
-        const path23 = `/service/${service}/operation/${operation2}`;
+        const path24 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
-          request.path += path23.slice(1);
+          request.path += path24.slice(1);
         } else {
-          request.path += path23;
+          request.path += path24;
         }
         return request;
       }
@@ -54875,17 +54875,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path23) {
-      const ctrl = callVisitor(key, node, visitor, path23);
+    function visit_(key, node, visitor, path24) {
+      const ctrl = callVisitor(key, node, visitor, path24);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path23, ctrl);
-        return visit_(key, ctrl, visitor, path23);
+        replaceNode(key, path24, ctrl);
+        return visit_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path23 = Object.freeze(path23.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = visit_(i5, node.items[i5], visitor, path23);
+            const ci = visit_(i5, node.items[i5], visitor, path24);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54896,13 +54896,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path23 = Object.freeze(path23.concat(node));
-          const ck = visit_("key", node.key, visitor, path23);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = visit_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path23);
+          const cv = visit_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54923,17 +54923,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path23) {
-      const ctrl = await callVisitor(key, node, visitor, path23);
+    async function visitAsync_(key, node, visitor, path24) {
+      const ctrl = await callVisitor(key, node, visitor, path24);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path23, ctrl);
-        return visitAsync_(key, ctrl, visitor, path23);
+        replaceNode(key, path24, ctrl);
+        return visitAsync_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path23 = Object.freeze(path23.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = await visitAsync_(i5, node.items[i5], visitor, path23);
+            const ci = await visitAsync_(i5, node.items[i5], visitor, path24);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54944,13 +54944,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path23 = Object.freeze(path23.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path23);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path23);
+          const cv = await visitAsync_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54977,23 +54977,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path23) {
+    function callVisitor(key, node, visitor, path24) {
       if (typeof visitor === "function")
-        return visitor(key, node, path23);
+        return visitor(key, node, path24);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path23);
+        return visitor.Map?.(key, node, path24);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path23);
+        return visitor.Seq?.(key, node, path24);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path23);
+        return visitor.Pair?.(key, node, path24);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path23);
+        return visitor.Scalar?.(key, node, path24);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path23);
+        return visitor.Alias?.(key, node, path24);
       return void 0;
     }
-    function replaceNode(key, path23, node) {
-      const parent = path23[path23.length - 1];
+    function replaceNode(key, path24, node) {
+      const parent = path24[path24.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -55603,10 +55603,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path23, value) {
+    function collectionFromPath(schema, path24, value) {
       let v = value;
-      for (let i5 = path23.length - 1; i5 >= 0; --i5) {
-        const k5 = path23[i5];
+      for (let i5 = path24.length - 1; i5 >= 0; --i5) {
+        const k5 = path24[i5];
         if (typeof k5 === "number" && Number.isInteger(k5) && k5 >= 0) {
           const a5 = [];
           a5[k5] = v;
@@ -55625,7 +55625,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path23) => path23 == null || typeof path23 === "object" && !!path23[Symbol.iterator]().next().done;
+    var isEmptyPath = (path24) => path24 == null || typeof path24 === "object" && !!path24[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -55655,11 +55655,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path23, value) {
-        if (isEmptyPath(path23))
+      addIn(path24, value) {
+        if (isEmptyPath(path24))
           this.add(value);
         else {
-          const [key, ...rest] = path23;
+          const [key, ...rest] = path24;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -55673,8 +55673,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path23) {
-        const [key, ...rest] = path23;
+      deleteIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -55688,8 +55688,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path23, keepScalar) {
-        const [key, ...rest] = path23;
+      getIn(path24, keepScalar) {
+        const [key, ...rest] = path24;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -55707,8 +55707,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path23) {
-        const [key, ...rest] = path23;
+      hasIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -55718,8 +55718,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path23, value) {
-        const [key, ...rest] = path23;
+      setIn(path24, value) {
+        const [key, ...rest] = path24;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -56266,7 +56266,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag2));
       return props.join(" ");
     }
-    function stringify4(item, ctx, onComment, onChompKeep) {
+    function stringify5(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -56295,7 +56295,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports2.createStringifyContext = createStringifyContext;
-    exports2.stringify = stringify4;
+    exports2.stringify = stringify5;
   }
 });
 
@@ -56305,7 +56305,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar = require_Scalar();
-    var stringify4 = require_stringify();
+    var stringify5 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -56327,7 +56327,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify4.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify5.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -56379,7 +56379,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify4.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify5.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -56520,7 +56520,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge2 = require_merge();
-    var stringify4 = require_stringify();
+    var stringify5 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map3, { key, value }) {
@@ -56556,7 +56556,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify4.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify5.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node of ctx.anchors.keys())
           strCtx.anchors.add(node.anchor);
@@ -56623,12 +56623,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify4 = require_stringify();
+    var stringify5 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify5 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify5(collection, ctx, options);
+      const stringify6 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify6(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -56653,7 +56653,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify4.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify5.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -56720,7 +56720,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify4.stringify(item, itemCtx, () => comment = null);
+        let str = stringify5.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i5 < items.length - 1) {
           str += ",";
@@ -58081,7 +58081,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify4 = require_stringify();
+    var stringify5 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -58096,7 +58096,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify4.createStringifyContext(doc, options);
+      const ctx = stringify5.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -58118,7 +58118,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify4.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify5.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -58126,7 +58126,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify4.stringify(doc.contents, ctx));
+        lines.push(stringify5.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -58234,9 +58234,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path23, value) {
+      addIn(path24, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path23, value);
+          this.contents.addIn(path24, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -58311,14 +58311,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path23) {
-        if (Collection.isEmptyPath(path23)) {
+      deleteIn(path24) {
+        if (Collection.isEmptyPath(path24)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path23) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path24) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -58333,10 +58333,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path23, keepScalar) {
-        if (Collection.isEmptyPath(path23))
+      getIn(path24, keepScalar) {
+        if (Collection.isEmptyPath(path24))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path23, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path24, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -58347,10 +58347,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path23) {
-        if (Collection.isEmptyPath(path23))
+      hasIn(path24) {
+        if (Collection.isEmptyPath(path24))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path23) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path24) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -58367,13 +58367,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path23, value) {
-        if (Collection.isEmptyPath(path23)) {
+      setIn(path24, value) {
+        if (Collection.isEmptyPath(path24)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path23), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path24), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path23, value);
+          this.contents.setIn(path24, value);
         }
       }
       /**
@@ -60261,7 +60261,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports2) {
     "use strict";
-    var stringify4 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify5 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -60314,7 +60314,7 @@ var require_cst_stringify = __commonJS({
         res += stringifyToken(value);
       return res;
     }
-    exports2.stringify = stringify4;
+    exports2.stringify = stringify5;
   }
 });
 
@@ -60333,9 +60333,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path23) => {
+    visit.itemAtPath = (cst, path24) => {
       let item = cst;
-      for (const [field, index] of path23) {
+      for (const [field, index] of path24) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -60344,23 +60344,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path23) => {
-      const parent = visit.itemAtPath(cst, path23.slice(0, -1));
-      const field = path23[path23.length - 1][0];
+    visit.parentCollection = (cst, path24) => {
+      const parent = visit.itemAtPath(cst, path24.slice(0, -1));
+      const field = path24[path24.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path23, item, visitor) {
-      let ctrl = visitor(item, path23);
+    function _visit(path24, item, visitor) {
+      let ctrl = visitor(item, path24);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i5 = 0; i5 < token.items.length; ++i5) {
-            const ci = _visit(Object.freeze(path23.concat([[field, i5]])), token.items[i5], visitor);
+            const ci = _visit(Object.freeze(path24.concat([[field, i5]])), token.items[i5], visitor);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -60371,10 +60371,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path23);
+            ctrl = ctrl(item, path24);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path23) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path24) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -62025,7 +62025,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse10(src, reviver, options) {
+    function parse11(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -62044,7 +62044,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify4(value, replacer, options) {
+    function stringify5(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -62066,10 +62066,10 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports2.parse = parse10;
+    exports2.parse = parse11;
     exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument2;
-    exports2.stringify = stringify4;
+    exports2.stringify = stringify5;
   }
 });
 
@@ -147080,11 +147080,11 @@ var init_throw_200_exceptions = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse9;
+var validate, parse10;
 var init_arn = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
     validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse9 = (arn) => {
+    parse10 = (arn) => {
       const segments = arn.split(":");
       if (segments.length < 6 || segments[0] !== "arn")
         throw new Error("Malformed ARN");
@@ -147474,7 +147474,7 @@ var init_bucketEndpointMiddleware = __esm({
         if (options.bucketEndpoint) {
           request.hostname = bucketName;
         } else if (validate(bucketName)) {
-          const bucketArn = parse9(bucketName);
+          const bucketArn = parse10(bucketName);
           const clientRegion = await options.region();
           const useDualstackEndpoint = await options.useDualstackEndpoint();
           const useFipsEndpoint = await options.useFipsEndpoint();
@@ -161262,7 +161262,7 @@ var actionContract = {
       description: "Provider that resolved the spec: api-gateway, appsync, appsync-events, eventbridge-schemas, eventbridge, cloudformation, glue, bedrock-action-group, alb-listener-rule, sns, ssm, lambda-url, lambda-event-source, verified-permissions, or step-functions."
     },
     "spec-format": {
-      description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf."
+      description: "Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, graphql-introspection-json, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, protobuf, wsdl, or mcp-json."
     },
     "contract-origin": {
       description: "SNS contract provenance when available: repo-asyncapi, repo-json-schema, generated-asyncapi, ssm-content, ssm-url, catalog-url, eventbridge-derived, code-derived, or manual-review."
@@ -161335,8 +161335,8 @@ function synthesizeWebSocketOpenApi(input) {
   }
   for (const route of routes) {
     const routeKey = route.routeKey || "$default";
-    const path23 = routePath(routeKey);
-    document.paths[path23] = {
+    const path24 = routePath(routeKey);
+    document.paths[path24] = {
       post: routeOperation(route, routeKey)
     };
   }
@@ -162882,8 +162882,8 @@ function safeNormalizeOpenApi(content, skipContractAudit = false) {
 // src/runtime.ts
 var import_node_crypto7 = require("node:crypto");
 var import_promises20 = require("node:fs/promises");
-var import_node_path22 = __toESM(require("node:path"), 1);
-var import_yaml13 = __toESM(require_dist(), 1);
+var import_node_path23 = __toESM(require("node:path"), 1);
+var import_yaml14 = __toESM(require_dist(), 1);
 
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs20(), 1);
@@ -164082,8 +164082,8 @@ function normalizeRepoUrl(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path23 = sshMatch[2];
-    return `https://${host}/${path23}`;
+    const path24 = sshMatch[2];
+    return `https://${host}/${path24}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -164136,8 +164136,8 @@ function detectRepoContext(input, env2 = process.env) {
 
 // src/lib/repo/specs.ts
 var import_promises13 = require("node:fs/promises");
-var import_node_path16 = __toESM(require("node:path"), 1);
-var import_yaml7 = __toESM(require_dist(), 1);
+var import_node_path17 = __toESM(require("node:path"), 1);
+var import_yaml8 = __toESM(require_dist(), 1);
 
 // src/lib/iac/resolve.ts
 var import_promises11 = require("node:fs/promises");
@@ -164554,7 +164554,13 @@ var CloudFormationProvider = class {
       content: spec.content,
       format: spec.format,
       filename: spec.filename,
-      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`]
+      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`],
+      provenance: {
+        exportOptions: {
+          // GetTemplate uses TemplateStage=Processed only (no Original fetch).
+          templateStage: "Processed"
+        }
+      }
     };
   }
 };
@@ -166328,8 +166334,252 @@ function contentBearingIacCandidates(resolution) {
   );
 }
 
-// src/lib/repo/graphql-compose.ts
+// src/lib/spec/classify-format.ts
 var import_node_path14 = __toESM(require("node:path"), 1);
+var import_yaml7 = __toESM(require_dist(), 1);
+function classifySpecContent(content, options = {}) {
+  const trimmed = content.trim();
+  if (!trimmed) return void 0;
+  const pathHint = options.pathHint?.replace(/\\/g, "/");
+  const basename3 = pathHint ? import_node_path14.default.posix.basename(pathHint).toLowerCase() : "";
+  if (looksLikeWsdl(trimmed)) {
+    return { format: "wsdl", filename: filenameForFormat("wsdl", pathHint) };
+  }
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const record = parsed;
+        if (looksLikeIntrospection(record)) {
+          return {
+            format: "graphql-introspection-json",
+            filename: filenameForFormat("graphql-introspection-json", pathHint)
+          };
+        }
+        if (typeof record.openapi === "string" || typeof record.swagger === "string") {
+          return { format: "openapi-json", filename: filenameForFormat("openapi-json", pathHint) };
+        }
+        if (typeof record.asyncapi === "string") {
+          return { format: "asyncapi-json", filename: filenameForFormat("asyncapi-json", pathHint) };
+        }
+        if (looksLikeMcp(record)) {
+          return { format: "mcp-json", filename: filenameForFormat("mcp-json", pathHint) };
+        }
+        if (looksLikePostmanCollection(record)) {
+          return {
+            format: "postman-collection",
+            filename: filenameForFormat("postman-collection", pathHint)
+          };
+        }
+        if (looksLikeAvro(record)) {
+          return { format: "avro", filename: filenameForFormat("avro", pathHint) };
+        }
+        if (looksLikeJsonSchema(record)) {
+          return { format: "json-schema", filename: filenameForFormat("json-schema", pathHint) };
+        }
+      }
+    } catch {
+    }
+  }
+  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) {
+    return { format: "openapi-yaml", filename: filenameForFormat("openapi-yaml", pathHint) };
+  }
+  if (/^\s*asyncapi\s*:/i.test(trimmed)) {
+    return { format: "asyncapi-yaml", filename: filenameForFormat("asyncapi-yaml", pathHint) };
+  }
+  if (!trimmed.startsWith("<") && !trimmed.startsWith("{")) {
+    try {
+      const parsed = (0, import_yaml7.parse)(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const record = parsed;
+        if (typeof record.openapi === "string" || typeof record.swagger === "string") {
+          return { format: "openapi-yaml", filename: filenameForFormat("openapi-yaml", pathHint) };
+        }
+        if (typeof record.asyncapi === "string") {
+          return { format: "asyncapi-yaml", filename: filenameForFormat("asyncapi-yaml", pathHint) };
+        }
+        if (looksLikeMcp(record)) {
+          return { format: "mcp-json", filename: filenameForFormat("mcp-json", pathHint) };
+        }
+        if (looksLikeIntrospection(record)) {
+          return {
+            format: "graphql-introspection-json",
+            filename: filenameForFormat("graphql-introspection-json", pathHint)
+          };
+        }
+      }
+    } catch {
+    }
+  }
+  if (basename3.endsWith(".proto") || looksLikeProtobuf(trimmed)) {
+    return { format: "protobuf", filename: filenameForFormat("protobuf", pathHint) };
+  }
+  if (basename3.endsWith(".graphql") || basename3.endsWith(".gql") || basename3.endsWith(".graphqls") || looksLikeGraphqlSdl(trimmed)) {
+    if (looksLikeGraphqlSdl(trimmed)) {
+      return { format: "graphql-sdl", filename: filenameForFormat("graphql-sdl", pathHint) };
+    }
+  }
+  if (basename3.endsWith(".smithy") || looksLikeSmithy(trimmed)) {
+    if (looksLikeSmithy(trimmed)) {
+      return { format: "smithy", filename: filenameForFormat("smithy", pathHint) };
+    }
+  }
+  return void 0;
+}
+function classifyWithDeclaredFormat(content, declaredFormat, options = {}) {
+  const detected = classifySpecContent(content, options);
+  if (!detected) return void 0;
+  if (!declaredFormat?.trim()) return detected;
+  if (!declaredFormatCompatible(declaredFormat, detected.format)) return void 0;
+  return detected;
+}
+function declaredFormatCompatible(declared, detected) {
+  const normalized = declared.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized === detected) return true;
+  switch (normalized) {
+    case "openapi":
+    case "openapi-yaml":
+    case "openapi-json":
+    case "swagger":
+      return detected === "openapi-yaml" || detected === "openapi-json";
+    case "asyncapi":
+    case "asyncapi-yaml":
+    case "asyncapi-json":
+      return detected === "asyncapi-yaml" || detected === "asyncapi-json";
+    case "graphql":
+    case "graphql-sdl":
+    case "graphql-introspection":
+    case "graphql-introspection-json":
+      return detected === "graphql-sdl" || detected === "graphql-introspection-json";
+    case "grpc":
+    case "protobuf":
+    case "proto":
+      return detected === "protobuf";
+    case "soap":
+    case "wsdl":
+      return detected === "wsdl";
+    case "mcp":
+    case "mcp-json":
+      return detected === "mcp-json";
+    case "json-schema":
+    case "jsonschema":
+      return detected === "json-schema";
+    case "avro":
+      return detected === "avro";
+    case "smithy":
+      return detected === "smithy";
+    case "postman":
+    case "postman-collection":
+      return detected === "postman-collection";
+    default:
+      return false;
+  }
+}
+function filenameForFormat(format2, pathHint) {
+  const basename3 = pathHint ? import_node_path14.default.posix.basename(pathHint.replace(/\\/g, "/")) : "";
+  switch (format2) {
+    case "openapi-yaml":
+      return basename3 && /\.(ya?ml)$/i.test(basename3) ? basename3 : "index.yaml";
+    case "openapi-json":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "index.json";
+    case "asyncapi-yaml":
+      return basename3 && /\.(ya?ml)$/i.test(basename3) ? basename3 : "asyncapi.yaml";
+    case "asyncapi-json":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "asyncapi.json";
+    case "graphql-sdl":
+      return basename3 && /\.(graphql|graphqls|gql)$/i.test(basename3) ? basename3 : "schema.graphql";
+    case "graphql-introspection-json":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "introspection.json";
+    case "protobuf":
+      return basename3 && /\.proto$/i.test(basename3) ? basename3 : "schema.proto";
+    case "wsdl":
+      return basename3 && /\.wsdl$/i.test(basename3) ? basename3 : "service.wsdl";
+    case "mcp-json":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "mcp.json";
+    case "json-schema":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "schema.json";
+    case "avro":
+      return basename3 && /\.(avsc|avro)$/i.test(basename3) ? basename3 : "schema.avsc";
+    case "smithy":
+      return basename3 && /\.smithy$/i.test(basename3) ? basename3 : "model.smithy";
+    case "postman-collection":
+      return basename3 && /\.json$/i.test(basename3) ? basename3 : "collection.postman_collection.json";
+  }
+}
+function looksLikeIntrospection(record) {
+  if (record.__schema && typeof record.__schema === "object" && !Array.isArray(record.__schema)) {
+    return true;
+  }
+  const data2 = record.data;
+  if (!data2 || typeof data2 !== "object" || Array.isArray(data2)) return false;
+  const nested = data2.__schema;
+  return Boolean(nested && typeof nested === "object" && !Array.isArray(nested));
+}
+function looksLikeMcp(record) {
+  if (record.mcpServers && typeof record.mcpServers === "object" && !Array.isArray(record.mcpServers)) {
+    return true;
+  }
+  if (typeof record.$schema === "string" && /modelcontextprotocol/i.test(record.$schema)) {
+    return true;
+  }
+  return typeof record.name === "string" && (Array.isArray(record.remotes) || Array.isArray(record.packages));
+}
+function looksLikeWsdl(content) {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("<")) return false;
+  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, "").trim();
+  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
+  if (!rootMatch) return false;
+  const qualified = rootMatch[1] ?? "";
+  const localName = (qualified.includes(":") ? qualified.split(":").pop() : qualified).toLowerCase();
+  if (localName !== "definitions" && localName !== "description") return false;
+  const head = `${qualified} ${rootMatch[2] ?? ""}`;
+  return /wsdl/i.test(head) || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
+}
+function looksLikePostmanCollection(record) {
+  const info2 = record.info;
+  if (!info2 || typeof info2 !== "object" || Array.isArray(info2)) return false;
+  const schema = info2.schema;
+  return typeof schema === "string" && schema.includes("schema.getpostman.com/json/collection");
+}
+function looksLikeAvro(record) {
+  if (record.type === "record" && Array.isArray(record.fields) && typeof record.name === "string") return true;
+  if (record.type === "enum" && Array.isArray(record.symbols) && typeof record.name === "string") return true;
+  if (record.type === "fixed" && typeof record.size === "number" && typeof record.name === "string") return true;
+  return false;
+}
+function looksLikeJsonSchema(record) {
+  if (record.openapi || record.swagger || record.asyncapi) return false;
+  if (looksLikeIntrospection(record) || looksLikeMcp(record) || looksLikeAvro(record)) return false;
+  if (looksLikePostmanCollection(record)) return false;
+  if (typeof record.$schema === "string" && /json-schema/i.test(record.$schema)) return true;
+  if (typeof record.$id === "string" && (record.type || record.properties || record.$defs || record.definitions)) {
+    return true;
+  }
+  if (record.type === "object" && (record.properties || record.required || record.$defs || record.definitions)) {
+    return true;
+  }
+  if (record.$defs || record.definitions) return true;
+  return false;
+}
+function looksLikeProtobuf(content) {
+  return /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content) || /\bservice\s+\w+\s*\{[\s\S]*\brpc\b/.test(content);
+}
+function looksLikeGraphqlSdl(content) {
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.startsWith("{") || trimmed.startsWith("<")) return false;
+  if (/^\s*(?:openapi|swagger|asyncapi)\s*:/m.test(trimmed)) return false;
+  return /^\s*(?:"""[\s\S]*?"""\s*)?(?:extend\s+)?(?:(?:type|interface|enum|union|scalar|input)\s+[A-Za-z_]|schema\s*\{|directive\s+@)/m.test(
+    trimmed
+  );
+}
+function looksLikeSmithy(content) {
+  return /^\s*\$version:\s*["']2(?:\.\d+)?["']/m.test(content) || /\b(namespace|service|structure)\s+[\w#.]+/.test(content);
+}
+
+// src/lib/repo/graphql-compose.ts
+var import_node_path15 = __toESM(require("node:path"), 1);
 function groupGraphqlByServiceRoot(files) {
   const byRoot = /* @__PURE__ */ new Map();
   for (const file of files) {
@@ -166344,7 +166594,7 @@ function groupGraphqlByServiceRoot(files) {
     const members = (byRoot.get(serviceRoot) ?? []).sort((a5, b5) => a5.path.localeCompare(b5.path));
     if (members.length === 0) continue;
     const preferred = members.find((member2) => {
-      const base = import_node_path14.default.posix.basename(member2.path).toLowerCase();
+      const base = import_node_path15.default.posix.basename(member2.path).toLowerCase();
       return base === "schema.graphql" || base === "schema.gql";
     }) ?? members[0];
     const memberPaths = members.map((member2) => member2.path);
@@ -166368,13 +166618,13 @@ function serviceRootFor(relativePath2) {
   if (parts.length >= 2 && (parts[0] === "packages" || parts[0] === "services" || parts[0] === "apps")) {
     return `${parts[0]}/${parts[1]}`;
   }
-  const dirname3 = import_node_path14.default.posix.dirname(normalized);
+  const dirname3 = import_node_path15.default.posix.dirname(normalized);
   if (dirname3 === "." || dirname3 === "") {
     return ".";
   }
-  const base = import_node_path14.default.posix.basename(dirname3);
+  const base = import_node_path15.default.posix.basename(dirname3);
   if (base === "graphql" || base === "schema" || base === "schemas" || base === "api" || base === "src") {
-    const parent = import_node_path14.default.posix.dirname(dirname3);
+    const parent = import_node_path15.default.posix.dirname(dirname3);
     return parent === "." ? "." : parent;
   }
   return dirname3;
@@ -166385,15 +166635,15 @@ function toPosix2(value) {
 
 // src/lib/repo/smithy-project.ts
 var import_promises12 = require("node:fs/promises");
-var import_node_path15 = __toESM(require("node:path"), 1);
+var import_node_path16 = __toESM(require("node:path"), 1);
 var DEFAULT_MAX_FILES = 200;
 var DEFAULT_MAX_FILE_BYTES = 1048576;
 var DEFAULT_MAX_CUMULATIVE_BYTES = 8388608;
 var DEFAULT_MAX_DEPTH = 8;
 async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
-  const resolvedRoot = import_node_path15.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path16.default.resolve(repoRoot);
   const buildRelative = toPosix3(buildRelativePath);
-  const buildAbsolute = import_node_path15.default.resolve(resolvedRoot, buildRelative);
+  const buildAbsolute = import_node_path16.default.resolve(resolvedRoot, buildRelative);
   const empty = {
     buildPath: buildRelative,
     memberPaths: [],
@@ -166414,7 +166664,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
   }
   const state2 = {
     repoRoot: resolvedRoot,
-    buildDir: import_node_path15.default.dirname(buildAbsolute),
+    buildDir: import_node_path16.default.dirname(buildAbsolute),
     buildRelative,
     maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
     maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
@@ -166424,7 +166674,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
     contents: /* @__PURE__ */ new Map(),
     projections: [],
     errors: [],
-    visiting: /* @__PURE__ */ new Set([import_node_path15.default.resolve(buildAbsolute)]),
+    visiting: /* @__PURE__ */ new Set([import_node_path16.default.resolve(buildAbsolute)]),
     visitedDirs: /* @__PURE__ */ new Set(),
     cumulativeBytes: 0,
     filesRead: 0,
@@ -166492,7 +166742,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
       await collectPathEntry(state2, entry, "projection-import");
     }
   }
-  state2.visiting.delete(import_node_path15.default.resolve(buildAbsolute));
+  state2.visiting.delete(import_node_path16.default.resolve(buildAbsolute));
   const memberPaths = [...state2.contents.keys()].sort((a5, b5) => a5.localeCompare(b5));
   const content = memberPaths.map((member2) => state2.contents.get(member2) ?? "").join("\n");
   const evidence = [
@@ -166600,17 +166850,17 @@ async function collectPathEntry(state2, entry, kind) {
     });
     return;
   }
-  const absolute = import_node_path15.default.resolve(state2.buildDir, entry);
+  const absolute = import_node_path16.default.resolve(state2.buildDir, entry);
   if (!isPathInsideRoot2(state2.repoRoot, absolute)) {
     state2.errors.push({
       code: "path-escape",
-      path: toPosix3(import_node_path15.default.relative(state2.repoRoot, absolute)),
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute)),
       message: `Smithy ${kind} escapes repository root: ${entry}`
     });
     return;
   }
-  const relative2 = toPosix3(import_node_path15.default.relative(state2.repoRoot, absolute));
-  const canonicalKey = import_node_path15.default.resolve(absolute);
+  const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute));
+  const canonicalKey = import_node_path16.default.resolve(absolute);
   if (state2.visiting.has(canonicalKey)) {
     state2.errors.push({
       code: "cycle",
@@ -166639,7 +166889,7 @@ async function collectPathEntry(state2, entry, kind) {
     return;
   }
   if (info2.isFile()) {
-    if (import_node_path15.default.basename(absolute).toLowerCase() === "smithy-build.json") {
+    if (import_node_path16.default.basename(absolute).toLowerCase() === "smithy-build.json") {
       await collectNestedSmithyBuild(state2, absolute, relative2);
       return;
     }
@@ -166663,7 +166913,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
   if (depth > state2.maxDepth) {
     state2.errors.push({
       code: "bounds-exceeded",
-      path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
       message: `Smithy directory depth exceeded maxDepth=${state2.maxDepth}`
     });
     return;
@@ -166671,20 +166921,20 @@ async function walkSmithyDirectory(state2, directory, depth) {
   if (state2.inspectedEntries >= state2.maxFiles) {
     state2.errors.push({
       code: "bounds-exceeded",
-      path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
       message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
     });
     return;
   }
-  const canonicalDir = import_node_path15.default.resolve(directory);
+  const canonicalDir = import_node_path16.default.resolve(directory);
   if (state2.visitedDirs.has(canonicalDir)) {
     return;
   }
   if (state2.visiting.has(canonicalDir)) {
     state2.errors.push({
       code: "cycle",
-      path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
-      message: `Cycle detected while walking Smithy directory: ${toPosix3(import_node_path15.default.relative(state2.repoRoot, directory))}`
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+      message: `Cycle detected while walking Smithy directory: ${toPosix3(import_node_path16.default.relative(state2.repoRoot, directory))}`
     });
     return;
   }
@@ -166704,7 +166954,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
       if (state2.inspectedEntries >= state2.maxFiles) {
         state2.errors.push({
           code: "bounds-exceeded",
-          path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+          path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
           message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
         });
         return;
@@ -166713,13 +166963,13 @@ async function walkSmithyDirectory(state2, directory, depth) {
       if (state2.filesRead >= state2.maxFiles) {
         state2.errors.push({
           code: "bounds-exceeded",
-          path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+          path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
           message: `Smithy model file count exceeded maxFiles=${state2.maxFiles}`
         });
         return;
       }
       const entry = dirent.name;
-      const fullPath = import_node_path15.default.join(directory, entry);
+      const fullPath = import_node_path16.default.join(directory, entry);
       const info2 = await (0, import_promises12.lstat)(fullPath).catch(() => void 0);
       if (!info2 || info2.isSymbolicLink()) continue;
       if (info2.isDirectory()) {
@@ -166727,7 +166977,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
         continue;
       }
       if (info2.isFile() && entry.toLowerCase().endsWith(".smithy")) {
-        const relative2 = toPosix3(import_node_path15.default.relative(state2.repoRoot, fullPath));
+        const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, fullPath));
         await readSmithyModelFile(state2, fullPath, relative2);
       }
     }
@@ -166736,7 +166986,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
   }
 }
 async function collectNestedSmithyBuild(state2, absolute, relative2) {
-  const canonical = import_node_path15.default.resolve(absolute);
+  const canonical = import_node_path16.default.resolve(absolute);
   if (state2.visiting.has(canonical)) {
     state2.errors.push({
       code: "cycle",
@@ -166762,7 +167012,7 @@ async function collectNestedSmithyBuild(state2, absolute, relative2) {
       });
       return;
     }
-    const nestedBuildDir = import_node_path15.default.dirname(absolute);
+    const nestedBuildDir = import_node_path16.default.dirname(absolute);
     const previousBuildDir = state2.buildDir;
     const previousBuildRelative = state2.buildRelative;
     state2.buildDir = nestedBuildDir;
@@ -166925,8 +167175,8 @@ function asStringArray(value) {
   return value.filter((entry) => typeof entry === "string");
 }
 function isPathInsideRoot2(root5, target) {
-  const relative2 = import_node_path15.default.relative(import_node_path15.default.resolve(root5), import_node_path15.default.resolve(target));
-  return relative2 === "" || !relative2.startsWith("..") && !import_node_path15.default.isAbsolute(relative2);
+  const relative2 = import_node_path16.default.relative(import_node_path16.default.resolve(root5), import_node_path16.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path16.default.isAbsolute(relative2);
 }
 function toPosix3(value) {
   return value.replace(/\\/g, "/");
@@ -166976,7 +167226,12 @@ var DIRECT_SPEC_CANDIDATES = [
   "schema.json",
   "order.schema.json",
   "schema.avsc",
-  "order.avsc"
+  "order.avsc",
+  "service.wsdl",
+  "api.wsdl",
+  "mcp.json",
+  "server.json",
+  "introspection.json"
 ];
 var COMMON_SCAN_DIRS = [
   ".",
@@ -167050,7 +167305,7 @@ function scanTimedOut(budget) {
 }
 function isLikelyOpenApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -167065,7 +167320,7 @@ function isLikelyGraphqlSchema(content) {
 }
 function isLikelyAsyncApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -167093,6 +167348,7 @@ function isLikelyJsonSchema(content) {
     const parsed = JSON.parse(content);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return false;
     if (parsed.openapi || parsed.swagger || parsed.asyncapi) return false;
+    if (looksLikeIntrospection(parsed) || isLikelyMcpDocument(parsed)) return false;
     if (typeof parsed.$schema === "string" && /json-schema/i.test(parsed.$schema)) return true;
     if (typeof parsed.$id === "string" && (parsed.type || parsed.properties || parsed.$defs || parsed.definitions)) return true;
     if (parsed.type === "object" && (parsed.properties || parsed.required || parsed.$defs || parsed.definitions)) return true;
@@ -167101,6 +167357,48 @@ function isLikelyJsonSchema(content) {
   } catch {
     return false;
   }
+}
+function isLikelyGraphqlIntrospection(content) {
+  try {
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return false;
+    return looksLikeIntrospection(parsed);
+  } catch {
+    return false;
+  }
+}
+function isLikelyWsdlDocument(content) {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("<")) return false;
+  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, "").trim();
+  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
+  if (!rootMatch) return false;
+  const qualified = rootMatch[1] ?? "";
+  const localName = (qualified.includes(":") ? qualified.split(":").pop() : qualified).toLowerCase();
+  if (localName !== "definitions" && localName !== "description") return false;
+  const head = `${qualified} ${rootMatch[2] ?? ""}`;
+  return /wsdl/i.test(head) || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
+}
+function isLikelyMcpDocument(parsed) {
+  if (parsed.mcpServers && typeof parsed.mcpServers === "object" && !Array.isArray(parsed.mcpServers)) {
+    return true;
+  }
+  if (typeof parsed.$schema === "string" && /modelcontextprotocol/i.test(parsed.$schema)) {
+    return true;
+  }
+  return typeof parsed.name === "string" && (Array.isArray(parsed.remotes) || Array.isArray(parsed.packages));
+}
+function isLikelyMcpContent(content) {
+  try {
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return false;
+    return isLikelyMcpDocument(parsed);
+  } catch {
+    return false;
+  }
+}
+function isMcpConfigBasename(basename3) {
+  return basename3 === "mcp.json" || basename3 === "server.json";
 }
 function isLikelyAvro(content) {
   try {
@@ -167120,6 +167418,8 @@ function formatFor(type, candidate) {
       return candidate.endsWith(".json") ? "openapi-json" : "openapi-yaml";
     case "graphql":
       return "graphql-sdl";
+    case "graphql-introspection":
+      return "graphql-introspection-json";
     case "asyncapi":
       return candidate.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml";
     case "postman-collection":
@@ -167132,6 +167432,10 @@ function formatFor(type, candidate) {
       return "json-schema";
     case "avro":
       return "avro";
+    case "wsdl":
+      return "wsdl";
+    case "mcp":
+      return "mcp-json";
   }
 }
 function artifactClassFor(relativePath2) {
@@ -167141,8 +167445,8 @@ function toPosix4(value) {
   return value.replace(/\\/g, "/");
 }
 function isPathInsideRoot3(root5, target) {
-  const relative2 = import_node_path16.default.relative(import_node_path16.default.resolve(root5), import_node_path16.default.resolve(target));
-  return relative2 === "" || !relative2.startsWith("..") && !import_node_path16.default.isAbsolute(relative2);
+  const relative2 = import_node_path17.default.relative(import_node_path17.default.resolve(root5), import_node_path17.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path17.default.isAbsolute(relative2);
 }
 async function isRegularNonSymlinkFile(absolutePath) {
   try {
@@ -167157,7 +167461,7 @@ async function isRegularNonSymlinkFile(absolutePath) {
 }
 function detectRepoSpec(candidate, content) {
   const normalized = toPosix4(candidate).toLowerCase();
-  const basename3 = import_node_path16.default.posix.basename(normalized);
+  const basename3 = import_node_path17.default.posix.basename(normalized);
   let type;
   if ((basename3.endsWith(".graphql") || basename3.endsWith(".gql")) && isLikelyGraphqlSchema(content)) {
     type = "graphql";
@@ -167171,8 +167475,14 @@ function detectRepoSpec(candidate, content) {
     if (isLikelySmithyModel(content)) type = "smithy";
   } else if (basename3 === "smithy-build.json") {
     return void 0;
+  } else if (basename3.endsWith(".wsdl")) {
+    if (isLikelyWsdlDocument(content)) type = "wsdl";
+  } else if (isMcpConfigBasename(basename3)) {
+    if (isLikelyMcpContent(content)) type = "mcp";
   } else if (basename3.endsWith(".avsc") || basename3.endsWith(".avro")) {
     if (isLikelyAvro(content)) type = "avro";
+  } else if (basename3 === "introspection.json" || basename3.endsWith(".json") && !basename3.endsWith(".postman_collection.json") && !isMcpConfigBasename(basename3) && isLikelyGraphqlIntrospection(content)) {
+    if (isLikelyGraphqlIntrospection(content)) type = "graphql-introspection";
   } else if (basename3 === "schema.json" || basename3.endsWith(".schema.json") || basename3.endsWith(".json") && !basename3.endsWith(".postman_collection.json") && isLikelyJsonSchema(content)) {
     if (isLikelyJsonSchema(content)) type = "json-schema";
   } else if (isLikelyOpenApiDocument(content)) {
@@ -167188,11 +167498,11 @@ function detectRepoSpec(candidate, content) {
 }
 function isSpecLikeFilename(filename) {
   const lower = filename.toLowerCase();
-  return /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".graphql") || lower.endsWith(".gql") || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json" || lower === "schema.json" || lower.endsWith(".schema.json") || lower.endsWith(".avsc") || lower.endsWith(".avro");
+  return /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".graphql") || lower.endsWith(".gql") || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json" || lower === "schema.json" || lower.endsWith(".schema.json") || lower.endsWith(".avsc") || lower.endsWith(".avro") || lower.endsWith(".wsdl") || lower === "mcp.json" || lower === "server.json" || lower === "introspection.json";
 }
 function specCandidateScore(candidate, type, artifactClass) {
   const normalized = toPosix4(candidate).toLowerCase();
-  const basename3 = import_node_path16.default.posix.basename(normalized);
+  const basename3 = import_node_path17.default.posix.basename(normalized);
   let score = 0;
   if (artifactClass === "authored") score += 500;
   if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename3 !== "smithy-build.json") score += 200;
@@ -167202,7 +167512,10 @@ function specCandidateScore(candidate, type, artifactClass) {
   if (type === "graphql" || basename3 === "schema.graphql" || basename3 === "schema.gql") score += 75;
   if (type === "smithy" && basename3 === "smithy-build.json") score += 95;
   if (type === "smithy" && basename3.endsWith(".smithy")) score += 70;
+  if (type === "wsdl" || basename3.endsWith(".wsdl")) score += 70;
+  if (type === "graphql-introspection" || basename3 === "introspection.json") score += 68;
   if (type === "json-schema" || basename3 === "schema.json" || basename3.endsWith(".schema.json")) score += 65;
+  if (type === "mcp" || basename3 === "mcp.json" || basename3 === "server.json") score += 62;
   if (type === "avro" || basename3.endsWith(".avsc") || basename3.endsWith(".avro")) score += 60;
   if (type === "postman-collection" || basename3.endsWith(".postman_collection.json")) score += 55;
   if (type === "protobuf" || basename3.endsWith(".proto")) score += 50;
@@ -167212,7 +167525,7 @@ function specCandidateScore(candidate, type, artifactClass) {
   return score;
 }
 async function inventoryRepoSpecs(repoRoot, options = {}) {
-  const resolvedRoot = import_node_path16.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
   const budget = {
     files: 0,
     cumulativeBytes: 0,
@@ -167232,7 +167545,7 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
     const posix = toPosix4(candidate);
     return posix === scopeRoot || posix.startsWith(`${scopeRoot}/`) || serviceRootFor(posix) === scopeRoot;
   }) : pathCandidates;
-  const smithyBuildPaths = scopedPaths.filter((candidate) => import_node_path16.default.posix.basename(toPosix4(candidate)).toLowerCase() === "smithy-build.json");
+  const smithyBuildPaths = scopedPaths.filter((candidate) => import_node_path17.default.posix.basename(toPosix4(candidate)).toLowerCase() === "smithy-build.json");
   const smithyMemberPaths = /* @__PURE__ */ new Set();
   const raw = [];
   for (const buildPath of smithyBuildPaths.sort((a5, b5) => a5.localeCompare(b5))) {
@@ -167269,10 +167582,10 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
   const singleFileCandidates = [];
   for (const candidate of scopedPaths.sort((a5, b5) => a5.localeCompare(b5))) {
     const relative2 = toPosix4(candidate);
-    const basename3 = import_node_path16.default.posix.basename(relative2).toLowerCase();
+    const basename3 = import_node_path17.default.posix.basename(relative2).toLowerCase();
     if (basename3 === "smithy-build.json") continue;
     if (relative2.endsWith(".smithy") && smithyMemberPaths.has(relative2)) continue;
-    const absolute = import_node_path16.default.resolve(resolvedRoot, relative2);
+    const absolute = import_node_path17.default.resolve(resolvedRoot, relative2);
     if (!isPathInsideRoot3(resolvedRoot, absolute)) {
       errors.push({
         code: "path-escape",
@@ -167431,7 +167744,7 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
       budget.truncated = true;
       break;
     }
-    const root5 = import_node_path16.default.resolve(repoRoot, dir);
+    const root5 = import_node_path17.default.resolve(repoRoot, dir);
     if (!isPathInsideRoot3(repoRoot, root5)) {
       errors.push({
         code: "path-escape",
@@ -167451,8 +167764,8 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
       continue;
     }
     if (fileStat.isFile()) {
-      const relative2 = toPosix4(import_node_path16.default.relative(repoRoot, root5));
-      if (isSpecLikeFilename(import_node_path16.default.basename(relative2))) {
+      const relative2 = toPosix4(import_node_path17.default.relative(repoRoot, root5));
+      if (isSpecLikeFilename(import_node_path17.default.basename(relative2))) {
         candidates.add(relative2);
       }
       continue;
@@ -167487,7 +167800,7 @@ async function walkSpecCandidates(repoRoot, current, budget, depth) {
     budget.inspectedEntries += 1;
     const entry = dirent.name;
     if (SKIP_DIRS.has(entry)) continue;
-    const fullPath = import_node_path16.default.join(current, entry);
+    const fullPath = import_node_path17.default.join(current, entry);
     if (!isPathInsideRoot3(repoRoot, fullPath)) {
       continue;
     }
@@ -167499,7 +167812,7 @@ async function walkSpecCandidates(repoRoot, current, budget, depth) {
     }
     if (info2.isFile() && isSpecLikeFilename(entry)) {
       budget.files += 1;
-      results.push(toPosix4(import_node_path16.default.relative(repoRoot, fullPath)));
+      results.push(toPosix4(import_node_path17.default.relative(repoRoot, fullPath)));
     }
   }
   return results;
@@ -167513,9 +167826,9 @@ var CFN_ARTIFACT_API_TYPES = {
 var MAX_LOCAL_CDK_OUT_TEMPLATES = 40;
 var MAX_LOCAL_CDK_OUT_ENTRIES = 256;
 async function findLocalCfnArtifactSpecs(repoRoot) {
-  const resolvedRoot = import_node_path16.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
   const artifactPaths = [];
-  const cdkOutDir = import_node_path16.default.join(resolvedRoot, "cdk.out");
+  const cdkOutDir = import_node_path17.default.join(resolvedRoot, "cdk.out");
   try {
     const cdkLink = await (0, import_promises13.lstat)(cdkOutDir);
     if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
@@ -167533,19 +167846,19 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
         templateNames.push(dirent.name);
       }
       for (const entry of templateNames.sort((a5, b5) => a5.localeCompare(b5)).slice(0, MAX_LOCAL_CDK_OUT_TEMPLATES)) {
-        artifactPaths.push(import_node_path16.default.posix.join("cdk.out", entry));
+        artifactPaths.push(import_node_path17.default.posix.join("cdk.out", entry));
       }
     }
   } catch {
   }
-  const samTemplate = import_node_path16.default.posix.join(".aws-sam", "build", "template.yaml");
-  if (await isRegularNonSymlinkFile(import_node_path16.default.join(resolvedRoot, samTemplate))) {
+  const samTemplate = import_node_path17.default.posix.join(".aws-sam", "build", "template.yaml");
+  if (await isRegularNonSymlinkFile(import_node_path17.default.join(resolvedRoot, samTemplate))) {
     artifactPaths.push(samTemplate);
   }
   const specs = [];
   for (const artifactPath of artifactPaths.sort((a5, b5) => a5.localeCompare(b5))) {
-    const absolutePath = import_node_path16.default.join(resolvedRoot, artifactPath);
-    if (!absolutePath.startsWith(resolvedRoot + import_node_path16.default.sep)) {
+    const absolutePath = import_node_path17.default.join(resolvedRoot, artifactPath);
+    if (!absolutePath.startsWith(resolvedRoot + import_node_path17.default.sep)) {
       continue;
     }
     if (!await isRegularNonSymlinkFile(absolutePath)) {
@@ -167595,11 +167908,11 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
 
 // src/lib/repo/signals.ts
 var import_promises15 = require("node:fs/promises");
-var import_node_path18 = __toESM(require("node:path"), 1);
+var import_node_path19 = __toESM(require("node:path"), 1);
 
 // src/lib/repo/scan.ts
 var import_promises14 = require("node:fs/promises");
-var import_node_path17 = __toESM(require("node:path"), 1);
+var import_node_path18 = __toESM(require("node:path"), 1);
 var SKIP_DIRS2 = /* @__PURE__ */ new Set([
   ".git",
   "node_modules",
@@ -167665,7 +167978,7 @@ async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value:
     scanState.inspectedEntries += 1;
     const entry = dirent.name;
     if (SKIP_DIRS2.has(entry)) continue;
-    const fullPath = import_node_path17.default.join(root5, entry);
+    const fullPath = import_node_path18.default.join(root5, entry);
     const info2 = await (0, import_promises14.stat)(fullPath).catch(() => null);
     if (!info2) continue;
     if (info2.isDirectory()) {
@@ -167860,11 +168173,11 @@ function detectProviderHints(content) {
   return [...found];
 }
 function toEvidencePath(repoRoot, filePath) {
-  const relative2 = import_node_path18.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path19.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2;
 }
 function shouldDetectProviderHintsForFile(filePath) {
-  const ext = import_node_path18.default.extname(filePath).toLowerCase();
+  const ext = import_node_path19.default.extname(filePath).toLowerCase();
   return ext !== ".md" && ext !== ".markdown";
 }
 var FIXED_INSPECT_FILES = [
@@ -167879,16 +168192,16 @@ var FIXED_INSPECT_FILES = [
 ];
 function isKnownSignalConfigFile(relativePath2) {
   const normalized = relativePath2.replace(/\\/g, "/").toLowerCase();
-  const basename3 = import_node_path18.default.basename(normalized);
+  const basename3 = import_node_path19.default.basename(normalized);
   return /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) || normalized === ".gitlab-ci.yml" || normalized === ".circleci/config.yml" || normalized === ".buildkite/pipeline.yml" || /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename3) || /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) || basename3 === "samconfig.toml" || basename3 === "redocly.yaml" || basename3 === "redocly.yml" || basename3 === "swagger-jsdoc.js" || basename3 === "swagger-jsdoc.ts" || basename3 === "tsoa.json" || basename3 === "openapi-generator.json" || basename3 === "openapi-generator.yaml" || basename3 === "openapi-generator.yml" || basename3 === "pulumi.yaml" || basename3 === "docker-compose.yml" || basename3 === "docker-compose.yaml" || basename3 === "compose.yml" || basename3 === "compose.yaml" || basename3 === "values.yaml" || basename3 === "values.yml" || basename3 === "chart.yaml" || basename3 === "chart.yml" || basename3 === "task-definition.json" || basename3 === "ecs-task-definition.json" || basename3 === "ecs-service.json" || basename3 === "service-definition.json" || basename3 === "application.yml" || basename3 === "application.yaml" || basename3 === "application.properties" || /^appsettings(?:\.[^.]+)?\.json$/.test(basename3) || /(^|\/)(?:helm|charts)\/.+\.ya?ml$/.test(normalized) || /(^|\/)(?:k8s|kubernetes|manifests)\/.+\.ya?ml$/.test(normalized) || /(^|\/)ecs\/.+\.json$/.test(normalized);
 }
 async function collectInspectFiles(repoRoot) {
   const discovered = await findIaCFiles(repoRoot, [".yml", ".yaml", ".json", ".ts", ".js", ".toml", ".properties"]);
-  const discoveredRelative = discovered.map((filePath) => import_node_path18.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
+  const discoveredRelative = discovered.map((filePath) => import_node_path19.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
   return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
 }
 function isSnsEventContractFile(filePath) {
-  const lower = import_node_path18.default.basename(filePath).toLowerCase();
+  const lower = import_node_path19.default.basename(filePath).toLowerCase();
   return lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".schema.json");
 }
 async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expectedGatewayIds = [], options = {}) {
@@ -167927,7 +168240,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === "sns") {
-            snsEvidenceRoots.add(import_node_path18.default.dirname(import_node_path18.default.resolve(repoRoot, file)));
+            snsEvidenceRoots.add(import_node_path19.default.dirname(import_node_path19.default.resolve(repoRoot, file)));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -167978,7 +168291,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
       if (hint === "sns") {
-        snsEvidenceRoots.add(import_node_path18.default.dirname(filePath));
+        snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
       }
     }
     if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168008,7 +168321,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path18.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168044,7 +168357,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path18.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168537,7 +168850,7 @@ function resolveServiceCandidate(gateways, signals, options) {
 }
 
 // src/lib/spec/oas-derivation.ts
-var import_yaml8 = __toESM(require_dist(), 1);
+var import_yaml9 = __toESM(require_dist(), 1);
 function deriveOpenApiDocument(input) {
   const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
   if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
@@ -168559,6 +168872,12 @@ function deriveOpenApiDocument(input) {
   switch (input.format) {
     case "graphql-sdl":
       return jsonResult(graphqlToOpenApi(input.content, title), "3.1.0", "Synthesized GraphQL POST endpoint as partial OpenAPI 3.1");
+    case "graphql-introspection-json":
+      return jsonResult(
+        graphqlToOpenApi("", title),
+        "3.1.0",
+        "Synthesized GraphQL POST endpoint as partial OpenAPI 3.1 from introspection JSON"
+      );
     case "asyncapi-json":
     case "asyncapi-yaml":
       return jsonResult(asyncApiToOpenApi(input.content, title), "3.1.0", "Synthesized OpenAPI 3.1 webhooks from AsyncAPI channels");
@@ -168571,6 +168890,9 @@ function deriveOpenApiDocument(input) {
     case "avro":
     case "json-schema":
       return jsonResult(schemaToOpenApi(input.content, title, input.format), "3.1.0", `Wrapped ${input.format} schema in a partial OpenAPI 3.1 request path`);
+    case "wsdl":
+    case "mcp-json":
+      return jsonResult(emptyPartial(title), "3.1.0", `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
     default:
       return jsonResult(emptyPartial(title), "3.1.0", `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
   }
@@ -168835,9 +169157,9 @@ function postmanToOpenApi(content, title) {
   const document = baseDocument(stringValue(recordValue2(parsed.info).name) || title);
   for (const request of postmanRequests(parsed.item)) {
     const method = request.method.toLowerCase();
-    const path23 = request.path;
+    const path24 = request.path;
     const operation2 = {
-      operationId: safeOperationName2(`${method} ${path23}`),
+      operationId: safeOperationName2(`${method} ${path24}`),
       summary: request.name,
       responses: postmanResponsesToOpenApi(request.responses)
     };
@@ -168859,8 +169181,8 @@ function postmanToOpenApi(content, title) {
         }
       };
     }
-    document.paths[path23] = {
-      ...recordValue2(document.paths[path23]),
+    document.paths[path24] = {
+      ...recordValue2(document.paths[path24]),
       [method]: operation2
     };
   }
@@ -169270,16 +169592,16 @@ function postmanPath(url) {
     }
   }
   const record = recordValue2(url);
-  const path23 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
-  if (!path23) return "/";
-  if (/^https?:\/\//i.test(path23)) {
+  const path24 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
+  if (!path24) return "/";
+  if (/^https?:\/\//i.test(path24)) {
     try {
-      return new URL(path23).pathname || "/";
+      return new URL(path24).pathname || "/";
     } catch {
       return "/";
     }
   }
-  return path23.startsWith("/") ? path23 : `/${path23}`;
+  return path24.startsWith("/") ? path24 : `/${path24}`;
 }
 function postmanQueryParameters(url) {
   const record = recordValue2(url);
@@ -169377,7 +169699,7 @@ function schemaFromExample(value) {
 }
 function parseStructured(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
     return recordValue2(parsed);
   } catch {
     return {};
@@ -170044,11 +170366,11 @@ function pipeDocument(candidate, detail) {
 function apiDestinationDocument(candidate) {
   const endpoint = parseUrl2(candidate.meta.invocationEndpoint);
   const method = (candidate.meta.httpMethod || "POST").toLowerCase();
-  const path23 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
+  const path24 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
   const document = baseDocument2(candidate.name);
   document.servers = endpoint ? [{ url: `${endpoint.protocol}//${endpoint.host}` }] : [];
   document.paths = {
-    [path23]: {
+    [path24]: {
       [method]: {
         operationId: `${camel(candidate.name)}ApiDestination`,
         summary: `EventBridge API destination ${candidate.name}`,
@@ -170111,7 +170433,7 @@ function camel(value) {
 }
 
 // src/lib/providers/bedrock-action-groups.ts
-var import_yaml9 = __toESM(require_dist(), 1);
+var import_yaml10 = __toESM(require_dist(), 1);
 var BedrockActionGroupProvider = class {
   constructor(client, s3) {
     this.client = client;
@@ -170183,7 +170505,7 @@ var BedrockActionGroupProvider = class {
 function normalizeOpenApi(content, detail) {
   let parsed;
   try {
-    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
+    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml10.parse)(content);
   } catch {
     parsed = {};
   }
@@ -170252,13 +170574,13 @@ var AlbListenerRulesProvider = class {
       },
       servers: candidate.meta.loadBalancerDnsName ? [{ url: `https://${candidate.meta.loadBalancerDnsName}` }] : [],
       paths: Object.fromEntries(
-        paths.map((path23) => [
-          path23,
+        paths.map((path24) => [
+          path24,
           Object.fromEntries(
             methods.map((method) => [
               method.toLowerCase(),
               {
-                operationId: `${method.toLowerCase()}${camelPath(path23)}AlbRule`,
+                operationId: `${method.toLowerCase()}${camelPath(path24)}AlbRule`,
                 summary: `ALB listener rule ${candidate.meta.priority || candidate.name}`,
                 parameters: [
                   ...queryParams.map((param) => ({
@@ -170532,7 +170854,7 @@ var StepFunctionsProvider = class {
   async exportSpec(candidate, _options) {
     void _options;
     const detail = await this.client.describeStateMachine(candidate.meta.stateMachineArn || candidate.id);
-    const path23 = `/step-functions/${safePath(detail.name)}/executions`;
+    const path24 = `/step-functions/${safePath(detail.name)}/executions`;
     const document = {
       openapi: "3.1.0",
       info: {
@@ -170541,7 +170863,7 @@ var StepFunctionsProvider = class {
         description: "Partial Step Functions surface derived from Amazon States Language workflow metadata."
       },
       paths: {
-        [path23]: {
+        [path24]: {
           post: {
             operationId: `start${pascal2(detail.name)}Execution`,
             summary: `Start ${detail.name} state machine execution`,
@@ -170976,32 +171298,6 @@ async function fetchSpecFromUrl(url, options = {}) {
 }
 
 // src/lib/providers/ssm.ts
-function detectFormat(content, key) {
-  const trimmed = content.trim();
-  if (key.endsWith(".graphql") || key.endsWith(".gql") || /\btype\s+Query\b/.test(trimmed)) {
-    return { format: "graphql-sdl", filename: "schema.graphql" };
-  }
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed.openapi || parsed.swagger) return { format: "openapi-json", filename: "index.json" };
-    if (parsed.asyncapi) return { format: "asyncapi-json", filename: "asyncapi.json" };
-    if (parsed.info?.schema?.includes?.("schema.getpostman.com/json/collection")) {
-      return { format: "postman-collection", filename: "collection.postman_collection.json" };
-    }
-    if (parsed.$schema || parsed.type === "object" || parsed.type === "record") return { format: "json-schema", filename: "schema.json" };
-  } catch {
-  }
-  if (trimmed.startsWith("openapi:") || trimmed.startsWith("swagger:")) {
-    return { format: "openapi-yaml", filename: "index.yaml" };
-  }
-  if (trimmed.startsWith("asyncapi:")) {
-    return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
-  }
-  if (key.endsWith(".proto") || /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(trimmed)) {
-    return { format: "protobuf", filename: "schema.proto" };
-  }
-  return { format: "openapi-json", filename: "index.json" };
-}
 function groupByService(entries) {
   const map3 = /* @__PURE__ */ new Map();
   for (const entry of entries) {
@@ -171019,6 +171315,21 @@ function groupByService(entries) {
     }
   }
   return [...map3.values()].filter((s2) => s2.url || s2.content);
+}
+function resolveClassifiedFormat(content, declaredFormat, pathHint) {
+  const classified = declaredFormat?.trim() ? classifyWithDeclaredFormat(content, declaredFormat, { pathHint }) : classifySpecContent(content, { pathHint });
+  if (!classified) {
+    if (declaredFormat?.trim()) {
+      throw new Error(
+        `SSM spec content does not match declared format "${declaredFormat.trim()}" (or could not be classified)`
+      );
+    }
+    throw new Error("SSM spec content could not be classified as a supported specification format");
+  }
+  return {
+    format: classified.format,
+    filename: filenameForFormat(classified.format, pathHint) || classified.filename
+  };
 }
 var SsmProvider = class {
   constructor(client, options = {}) {
@@ -171055,7 +171366,11 @@ var SsmProvider = class {
     const services = groupByService(entries);
     const svc = services.find((s2) => s2.serviceName === candidate.name);
     if (svc?.content) {
-      const { format: format2, filename } = detectFormat(svc.content, candidate.name);
+      const { format: format2, filename } = resolveClassifiedFormat(
+        svc.content,
+        svc.format ?? candidate.meta.format,
+        candidate.name
+      );
       return {
         content: svc.content,
         format: format2,
@@ -171070,7 +171385,11 @@ var SsmProvider = class {
           timeoutMs: 15e3,
           policy: this.remoteFetchPolicy
         });
-        const { format: format2, filename } = detectFormat(fetched.content, svc.url);
+        const { format: format2, filename } = resolveClassifiedFormat(
+          fetched.content,
+          svc.format ?? candidate.meta.format,
+          svc.url
+        );
         return {
           content: fetched.content,
           format: format2,
@@ -171079,18 +171398,7 @@ var SsmProvider = class {
         };
       } catch (fetchError) {
         const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-        const pointerContent = JSON.stringify({
-          specUrl: safeUrl,
-          serviceName: candidate.name,
-          registeredVia: "ssm-parameter-store",
-          fetchError: detail
-        }, null, 2);
-        return {
-          content: pointerContent,
-          format: "openapi-json",
-          filename: "spec-pointer.json",
-          evidence: [`Spec URL registered in SSM: ${safeUrl} (fetch failed: ${detail})`]
-        };
+        throw new Error(`SSM remote spec fetch failed for ${safeUrl}: ${detail}`, { cause: fetchError });
       }
     }
     throw new Error(`No spec content or URL found in SSM for service ${candidate.name}`);
@@ -171101,13 +171409,13 @@ var SsmProvider = class {
 var import_node_child_process = require("node:child_process");
 var import_node_fs3 = require("node:fs");
 var import_promises19 = require("node:fs/promises");
-var import_node_path21 = __toESM(require("node:path"), 1);
-var import_yaml12 = __toESM(require_dist(), 1);
+var import_node_path22 = __toESM(require("node:path"), 1);
+var import_yaml13 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
 var import_promises17 = require("node:fs/promises");
-var import_node_path19 = __toESM(require("node:path"), 1);
-var import_yaml10 = __toESM(require_dist(), 1);
+var import_node_path20 = __toESM(require("node:path"), 1);
+var import_yaml11 = __toESM(require_dist(), 1);
 async function detectCatalogApis(repoRoot, options = {}) {
   const candidates = await catalogCandidates(repoRoot);
   const apis = [];
@@ -171124,7 +171432,7 @@ async function detectCatalogApis(repoRoot, options = {}) {
     }
     let docs;
     try {
-      docs = (0, import_yaml10.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+      docs = (0, import_yaml11.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
     } catch {
       continue;
     }
@@ -171144,7 +171452,7 @@ function scopeCatalogApis(apis, options) {
       return true;
     }
     if (api.catalogPath) {
-      const catalogDir = import_node_path19.default.posix.dirname(api.catalogPath.replace(/\\/g, "/"));
+      const catalogDir = import_node_path20.default.posix.dirname(api.catalogPath.replace(/\\/g, "/"));
       if (catalogDir === serviceRoot || catalogDir.startsWith(`${serviceRoot}/`)) {
         return true;
       }
@@ -171155,7 +171463,7 @@ function scopeCatalogApis(apis, options) {
         return true;
       }
     }
-    if (!api.specPath && api.specUrl) {
+    if (!api.specPath && api.specUrl || api.inlineContent) {
       return Boolean(api.catalogPath && isUnderServiceRoot(api.catalogPath, serviceRoot));
     }
     return false;
@@ -171163,7 +171471,7 @@ function scopeCatalogApis(apis, options) {
 }
 function isUnderServiceRoot(relativePath2, serviceRoot) {
   const normalized = relativePath2.replace(/\\/g, "/");
-  const dir = import_node_path19.default.posix.dirname(normalized);
+  const dir = import_node_path20.default.posix.dirname(normalized);
   return dir === serviceRoot || dir.startsWith(`${serviceRoot}/`) || normalized.startsWith(`${serviceRoot}/`);
 }
 async function catalogCandidates(repoRoot) {
@@ -171171,7 +171479,7 @@ async function catalogCandidates(repoRoot) {
   return [.../* @__PURE__ */ new Set([
     "catalog-info.yaml",
     "catalog-info.yml",
-    ...discovered.map((filePath) => import_node_path19.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
+    ...discovered.map((filePath) => import_node_path20.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
   ])];
 }
 function extractCatalogApis(catalogPath, docs) {
@@ -171181,45 +171489,83 @@ function extractCatalogApis(catalogPath, docs) {
     const name = doc.metadata?.name ?? "";
     if (!name) continue;
     const type = typeof doc.spec?.type === "string" ? doc.spec.type : void 0;
-    const def = doc.spec?.definition;
-    let specPath;
-    let specUrl;
-    if (typeof def === "string") {
-      if (def.startsWith("http://") || def.startsWith("https://")) {
-        specUrl = def;
-      } else {
-        specPath = resolveCatalogPath(catalogPath, def);
-      }
-    } else if (def && typeof def === "object") {
-      const ref = typeof def.$text === "string" ? def.$text : typeof def.$json === "string" ? def.$json : void 0;
-      if (typeof ref === "string") {
-        if (ref.startsWith("http://") || ref.startsWith("https://")) {
-          specUrl = ref;
-        } else {
-          specPath = resolveCatalogPath(catalogPath, ref);
-        }
-      }
-    }
-    apis.push({ name, type, specPath, specUrl, catalogPath: catalogPath.replace(/\\/g, "/") });
+    const acquired = acquireDefinition(catalogPath, doc.spec?.definition);
+    if (!acquired) continue;
+    apis.push({
+      name,
+      type,
+      ...acquired,
+      catalogPath: catalogPath.replace(/\\/g, "/")
+    });
   }
   return apis;
 }
+function acquireDefinition(catalogPath, def) {
+  if (typeof def === "string") {
+    return classifyDefinitionString(catalogPath, def);
+  }
+  if (!def || typeof def !== "object" || Array.isArray(def)) {
+    return void 0;
+  }
+  const refKeys = ["$text", "$json", "$yaml"];
+  for (const key of refKeys) {
+    const value = def[key];
+    if (typeof value === "string" && value.trim()) {
+      return classifyDefinitionString(catalogPath, value);
+    }
+  }
+  if (looksLikeInlineDocumentObject(def)) {
+    try {
+      return { inlineContent: (0, import_yaml11.stringify)(def) };
+    } catch {
+      return void 0;
+    }
+  }
+  return void 0;
+}
+function classifyDefinitionString(catalogPath, value) {
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return { specUrl: trimmed };
+  }
+  if (isInlineDefinitionBytes(trimmed)) {
+    return { inlineContent: value };
+  }
+  return { specPath: resolveCatalogPath(catalogPath, trimmed) };
+}
+function isInlineDefinitionBytes(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed.includes("\n") || trimmed.includes("\r")) return true;
+  if (trimmed.startsWith("{") || trimmed.startsWith("<")) return true;
+  if (/^\s*(openapi|swagger|asyncapi)\s*:/i.test(trimmed)) return true;
+  if (/^\s*\$version\s*:/i.test(trimmed)) return true;
+  if (/^(\.\/|\.\.\/)?[\w.@+-]+(?:\/[\w.@+-]+)*\.[A-Za-z0-9]+$/.test(trimmed)) return false;
+  if (trimmed.startsWith("./") || trimmed.startsWith("../")) return false;
+  if (trimmed.length < 80 && !/\s{2,}/.test(trimmed)) return false;
+  return true;
+}
+function looksLikeInlineDocumentObject(def) {
+  return Boolean(
+    def.openapi || def.swagger || def.asyncapi || def.__schema || def.mcpServers || def.data && typeof def.data === "object"
+  );
+}
 function resolveCatalogPath(catalogPath, reference) {
   const normalized = reference.replace(/\\/g, "/");
-  if (import_node_path19.default.posix.isAbsolute(normalized)) {
+  if (import_node_path20.default.posix.isAbsolute(normalized)) {
     return normalized.replace(/^\/+/, "");
   }
-  const catalogDir = import_node_path19.default.posix.dirname(catalogPath);
+  const catalogDir = import_node_path20.default.posix.dirname(catalogPath);
   if (catalogDir === ".") {
     return normalized;
   }
-  return import_node_path19.default.posix.normalize(import_node_path19.default.posix.join(catalogDir, normalized));
+  return import_node_path20.default.posix.normalize(import_node_path20.default.posix.join(catalogDir, normalized));
 }
 
 // src/lib/providers/sns-code-derived.ts
 var import_promises18 = require("node:fs/promises");
-var import_node_path20 = __toESM(require("node:path"), 1);
-var import_yaml11 = __toESM(require_dist(), 1);
+var import_node_path21 = __toESM(require("node:path"), 1);
+var import_yaml12 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
 var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
@@ -171227,7 +171573,7 @@ function normalizeHint(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function relativePath(repoRoot, filePath) {
-  return import_node_path20.default.relative(repoRoot, filePath).replace(/\\/g, "/");
+  return import_node_path21.default.relative(repoRoot, filePath).replace(/\\/g, "/");
 }
 function hasTopicLinkage(content, hints) {
   const lowered = content.toLowerCase();
@@ -171265,7 +171611,7 @@ function hasPayloadLinkage(content, identifier) {
   ];
   return patterns.some((pattern) => pattern.test(content));
 }
-function looksLikeJsonSchema(value) {
+function looksLikeJsonSchema2(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -171282,7 +171628,7 @@ async function walkFiles(root5) {
     if (!current) continue;
     const entries = await (0, import_promises18.readdir)(current, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const fullPath = import_node_path20.default.join(current, entry.name);
+      const fullPath = import_node_path21.default.join(current, entry.name);
       if (entry.isDirectory()) {
         if (!IGNORED_DIRS.has(entry.name)) {
           queue.push(fullPath);
@@ -171352,14 +171698,14 @@ function parseStaticJavaSnsAnnotation(content, topicHints) {
 }
 function detectAsyncApiFormat(content, filePath) {
   try {
-    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml11.parse)(content);
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
     if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
       return void 0;
     }
     return {
       content,
       format: filePath.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml",
-      filename: import_node_path20.default.basename(filePath),
+      filename: import_node_path21.default.basename(filePath),
       evidence: []
     };
   } catch {
@@ -171382,8 +171728,8 @@ var resolveCodeDerivedContract = async ({
     ].filter(Boolean)
   );
   const springwolfPaths = [
-    import_node_path20.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
-    import_node_path20.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
+    import_node_path21.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
+    import_node_path21.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
   ];
   for (const springwolfPath of springwolfPaths) {
     if (!await fileExists(springwolfPath)) {
@@ -171405,9 +171751,9 @@ var resolveCodeDerivedContract = async ({
     });
   }
   const generatedAsyncApiPaths = [
-    import_node_path20.default.join(repoRoot, "generated", "asyncapi.json"),
-    import_node_path20.default.join(repoRoot, "generated", "asyncapi.yaml"),
-    import_node_path20.default.join(repoRoot, "generated", "asyncapi.yml")
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.json"),
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yaml"),
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yml")
   ];
   for (const generatedPath of generatedAsyncApiPaths) {
     if (!await fileExists(generatedPath)) {
@@ -171430,7 +171776,7 @@ var resolveCodeDerivedContract = async ({
   }
   const files = await walkFiles(repoRoot);
   for (const filePath of files) {
-    const extension = import_node_path20.default.extname(filePath).toLowerCase();
+    const extension = import_node_path21.default.extname(filePath).toLowerCase();
     if (!CODE_EXTENSIONS.has(extension) && !JAVA_EXTENSIONS.has(extension)) {
       continue;
     }
@@ -171450,7 +171796,7 @@ var resolveCodeDerivedContract = async ({
         try {
           resolvedRefPath = resolvePathWithinRoot(
             repoRoot,
-            import_node_path20.default.resolve(import_node_path20.default.dirname(filePath), refPath),
+            import_node_path21.default.resolve(import_node_path21.default.dirname(filePath), refPath),
             `code-derived JSON schema import in ${displayPath}`
           );
         } catch {
@@ -171465,7 +171811,7 @@ var resolveCodeDerivedContract = async ({
         }
         try {
           const parsed = JSON.parse(schemaContent);
-          if (!looksLikeJsonSchema(parsed)) {
+          if (!looksLikeJsonSchema2(parsed)) {
             continue;
           }
           candidates.push({
@@ -171475,7 +171821,7 @@ var resolveCodeDerivedContract = async ({
             result: {
               content: schemaContent,
               format: "json-schema",
-              filename: import_node_path20.default.basename(resolvedRefPath),
+              filename: import_node_path21.default.basename(resolvedRefPath),
               evidence: []
             }
           });
@@ -171722,7 +172068,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
   }
   let parsed;
   try {
-    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml12.parse)(content);
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml13.parse)(content);
   } catch {
     return content;
   }
@@ -171774,7 +172120,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
       }
     }
   }
-  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml12.stringify)(document);
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml13.stringify)(document);
 }
 var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
 var SPEC_POINTER_FILENAME = "spec-pointer.json";
@@ -171787,7 +172133,7 @@ function normalizeServiceKey(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function toEvidencePath2(repoRoot, filePath) {
-  const relative2 = import_node_path21.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path22.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2.replace(/\\/g, "/");
 }
 function groupByService2(entries) {
@@ -171808,7 +172154,7 @@ function groupByService2(entries) {
   }
   return [...grouped.values()];
 }
-function looksLikeJsonSchema2(value) {
+function looksLikeJsonSchema3(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -171926,7 +172272,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
     }
     let parsed;
     try {
-      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml13.parse)(content);
     } catch {
       continue;
     }
@@ -171964,7 +172310,7 @@ function buildSsmPointerArtifact(specUrl, serviceName, fetchError) {
     2
   );
 }
-function detectFormat2(content, filenameHint) {
+function detectFormat(content, filenameHint) {
   const configured = parseKnownFormat(filenameHint);
   if (configured) return configured;
   const trimmed = content.trim();
@@ -171974,14 +172320,14 @@ function detectFormat2(content, filenameHint) {
     if (parsed.asyncapi) {
       return { format: "asyncapi-json", filename: "asyncapi.json" };
     }
-    if (looksLikeJsonSchema2(parsed)) {
+    if (looksLikeJsonSchema3(parsed)) {
       return { format: "json-schema", filename: "schema.json" };
     }
     return void 0;
   } catch {
   }
   try {
-    const parsed = (0, import_yaml12.parse)(trimmed);
+    const parsed = (0, import_yaml13.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
@@ -171993,7 +172339,7 @@ function parseStructuredDocument(value) {
   try {
     return JSON.parse(value);
   } catch {
-    return (0, import_yaml12.parse)(value);
+    return (0, import_yaml13.parse)(value);
   }
 }
 function getSchemaByRef(document, ref) {
@@ -172219,7 +172565,7 @@ function canonicalPayloadSchema(canonical) {
   }
   if (canonical.format === "asyncapi-yaml") {
     try {
-      return extractAsyncApiPayloadSchema((0, import_yaml12.parse)(canonical.content));
+      return extractAsyncApiPayloadSchema((0, import_yaml13.parse)(canonical.content));
     } catch {
       return { payloadSchema: { type: "object" } };
     }
@@ -172377,12 +172723,12 @@ function normalizePathForMatch(value) {
   return value.replace(/\\/g, "/").replace(/^\/+/, "");
 }
 function isGeneratedSearchRootPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path21.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
   return GENERATED_ROOT_PREFIXES.some((prefix) => relative2.startsWith(prefix));
 }
 function isGeneratedAsyncApiPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path21.default.relative(repoRoot, filePath));
-  const base = import_node_path21.default.basename(relative2).toLowerCase();
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
+  const base = import_node_path22.default.basename(relative2).toLowerCase();
   const isDotAsyncApi = base.endsWith(".asyncapi.yaml") || base.endsWith(".asyncapi.yml") || base.endsWith(".asyncapi.json");
   const isNamedAsyncApi = base === "asyncapi.yaml" || base === "asyncapi.yml" || base === "asyncapi.json";
   if (relative2.startsWith("spec/") || relative2.startsWith("contracts/")) {
@@ -172427,7 +172773,7 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
         return;
       }
       visited += 1;
-      const fullPath = import_node_path21.default.join(currentPath, entry.name);
+      const fullPath = import_node_path22.default.join(currentPath, entry.name);
       if (entry.isSymbolicLink()) {
         continue;
       }
@@ -172441,7 +172787,7 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
       if (!entry.isFile()) {
         continue;
       }
-      if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path21.default.extname(entry.name).toLowerCase())) {
+      if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path22.default.extname(entry.name).toLowerCase())) {
         files.push(fullPath);
       }
     }
@@ -172457,24 +172803,24 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
   return { files, truncated: false, evidence: [] };
 }
 function isFrameworkOutputPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path21.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
   return relative2.startsWith("build/") || relative2.startsWith(".build/") || relative2.startsWith("out/");
 }
 var gitWorkTreeCache = /* @__PURE__ */ new Map();
 var gitIgnoreResultCache = /* @__PURE__ */ new Map();
 function isGitWorkTree(repoRoot) {
-  const resolvedRoot = import_node_path21.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
   const cached = gitWorkTreeCache.get(resolvedRoot);
   if (cached !== void 0) {
     return cached;
   }
-  const hasGitDir = (0, import_node_fs3.existsSync)(import_node_path21.default.join(resolvedRoot, ".git"));
+  const hasGitDir = (0, import_node_fs3.existsSync)(import_node_path22.default.join(resolvedRoot, ".git"));
   gitWorkTreeCache.set(resolvedRoot, hasGitDir);
   return hasGitDir;
 }
 async function isGitIgnoredByGit(repoRoot, filePath) {
-  const resolvedRoot = import_node_path21.default.resolve(repoRoot);
-  const relative2 = normalizePathForMatch(import_node_path21.default.relative(resolvedRoot, filePath));
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(resolvedRoot, filePath));
   if (!relative2 || relative2.startsWith("..")) {
     return true;
   }
@@ -172504,10 +172850,10 @@ async function isGitIgnoredByGit(repoRoot, filePath) {
   }
 }
 function toRepoRelativePath(repoRoot, filePath) {
-  const resolvedRoot = import_node_path21.default.resolve(repoRoot);
-  const absolute = import_node_path21.default.isAbsolute(filePath) ? import_node_path21.default.resolve(filePath) : import_node_path21.default.resolve(resolvedRoot, filePath);
-  const relative2 = import_node_path21.default.relative(resolvedRoot, absolute);
-  if (relative2.startsWith("..") || import_node_path21.default.isAbsolute(relative2)) {
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const absolute = import_node_path22.default.isAbsolute(filePath) ? import_node_path22.default.resolve(filePath) : import_node_path22.default.resolve(resolvedRoot, filePath);
+  const relative2 = import_node_path22.default.relative(resolvedRoot, absolute);
+  if (relative2.startsWith("..") || import_node_path22.default.isAbsolute(relative2)) {
     return void 0;
   }
   return relative2 || ".";
@@ -172521,12 +172867,12 @@ async function findContractFiles(repoRoot, topicName, scannedFiles) {
     if (!relativePath2 || relativePath2 === ".") {
       continue;
     }
-    const safePath2 = import_node_path21.default.resolve(repoRoot, relativePath2);
+    const safePath2 = import_node_path22.default.resolve(repoRoot, relativePath2);
     const normalizedRelativePath = normalizePathForMatch(relativePath2).toLowerCase();
     if (normalizedRelativePath === "build/springwolf/asyncapi.json" || normalizedRelativePath === "target/springwolf/asyncapi.json") {
       continue;
     }
-    const baseName = import_node_path21.default.basename(safePath2).toLowerCase();
+    const baseName = import_node_path22.default.basename(safePath2).toLowerCase();
     if (isGeneratedSearchRootPath(repoRoot, safePath2)) {
       if (baseName === "schema.json" || baseName.endsWith(".schema.json")) {
         jsonSchema.push(safePath2);
@@ -172552,7 +172898,7 @@ async function findGeneratedAsyncApiFiles(repoRoot, topicName, gitIgnoreChecker 
   const evidence = [];
   let frameworkSearchTruncated = false;
   for (const frameworkRoot of ["build", ".build", "out"]) {
-    const rootPath = import_node_path21.default.join(repoRoot, frameworkRoot);
+    const rootPath = import_node_path22.default.join(repoRoot, frameworkRoot);
     const rootStats = await (0, import_promises19.lstat)(rootPath).catch(() => null);
     if (!rootStats || rootStats.isSymbolicLink() || !rootStats.isDirectory()) {
       continue;
@@ -172606,7 +172952,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml13.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
         evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
@@ -172617,7 +172963,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
         match: {
           content,
           format: format2,
-          filename: import_node_path21.default.basename(filePath),
+          filename: import_node_path22.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from ${sourceDescription} file ${relativePath2}`]
         },
         evidence
@@ -172649,7 +172995,7 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
     }
     try {
       const parsed = JSON.parse(content);
-      if (!looksLikeJsonSchema2(parsed)) {
+      if (!looksLikeJsonSchema3(parsed)) {
         evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (missing schema markers)`);
         continue;
       }
@@ -172657,7 +173003,7 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
         match: {
           content,
           format: "json-schema",
-          filename: import_node_path21.default.basename(filePath),
+          filename: import_node_path22.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from repo-local JSON Schema file ${relativePath2}`]
         },
         evidence
@@ -172732,7 +173078,7 @@ var SnsProvider = class {
     return candidates;
   }
   async exportSpec(candidate, options = {}) {
-    const resolvedRepoRoot = import_node_path21.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
@@ -172772,7 +173118,7 @@ var SnsProvider = class {
     };
   }
   async resolveContract(candidate, resolutionContext = {}) {
-    const resolvedRepoRoot = import_node_path21.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     const affinityHints = collectHints(topicName, candidate.name);
@@ -172850,7 +173196,7 @@ var SnsProvider = class {
         return serviceKeys.has(entryName) || serviceKeys.has(entryName.toLowerCase()) || serviceKeys.has(normalizeServiceKey(entryName));
       });
       if (ssmMatch?.content) {
-        const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat2(ssmMatch.content, ssmMatch.format ?? "");
+        const resolvedFormat = parseKnownFormat(ssmMatch.format) ?? detectFormat(ssmMatch.content, ssmMatch.format ?? "");
         if (resolvedFormat) {
           const evidence = [...priorEvidence, `Resolved SNS contract from SSM path /postman/specs/${ssmMatch.serviceName}/`];
           resolvedOrigin = "ssm-content";
@@ -172871,7 +173217,7 @@ var SnsProvider = class {
             timeoutMs: 15e3,
             policy: this.remoteFetchPolicy
           });
-          const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat2(fetched.content, ssmMatch?.format ?? "");
+          const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat(fetched.content, ssmMatch?.format ?? "");
           if (resolvedFormat) {
             const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
             resolvedOrigin = "ssm-url";
@@ -172910,7 +173256,7 @@ var SnsProvider = class {
             timeoutMs: 15e3,
             policy: this.remoteFetchPolicy
           });
-          const resolvedFormat = detectFormat2(fetched.content, "");
+          const resolvedFormat = detectFormat(fetched.content, "");
           if (!resolvedFormat) {
             priorEvidence.push(
               `Fetched ${remoteCandidate.source} URL ${safeRemoteUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
@@ -173644,10 +173990,10 @@ function parseRemoteFetchAllowlistJson(raw) {
   return createRemoteFetchPolicy({ enabled: true, allowlist });
 }
 function validateRepoRelativeSelector(repoRoot, relativePath2, fieldName, kind) {
-  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
   const absolute = resolvePathWithinRoot(resolvedRoot, relativePath2, fieldName);
-  const relative2 = import_node_path22.default.relative(resolvedRoot, absolute).replace(/\\/g, "/");
-  if (relative2.startsWith("..") || import_node_path22.default.isAbsolute(relative2)) {
+  const relative2 = import_node_path23.default.relative(resolvedRoot, absolute).replace(/\\/g, "/");
+  if (relative2.startsWith("..") || import_node_path23.default.isAbsolute(relative2)) {
     throw new Error(`${fieldName} must stay within repo-root; received ${relativePath2}`);
   }
   if (kind === "directory" && (relative2 === "" || relative2 === ".")) {
@@ -173834,13 +174180,13 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path22.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path23.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 function userSafeWarning(message) {
   return sanitizeLogMessage(message);
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises20.mkdir)(import_node_path22.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises20.mkdir)(import_node_path23.default.dirname(outputPath), { recursive: true });
   await (0, import_promises20.writeFile)(outputPath, content, "utf8");
 }
 var CANONICAL_DERIVED_OPENAPI_FILENAME = "openapi.derived.json";
@@ -173850,7 +174196,7 @@ function derivedOpenApiFilename(sidecars = []) {
 }
 function normalizeDerivedOpenApiJson(derivation) {
   try {
-    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml13.parse)(derivation.content) : JSON.parse(derivation.content);
+    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml14.parse)(derivation.content) : JSON.parse(derivation.content);
     if (!parsed || typeof parsed !== "object") {
       throw new Error("derived OpenAPI document did not parse to an object");
     }
@@ -173871,7 +174217,7 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
   }
   if (!input.dryRun) {
     for (const sidecar of input.sidecars ?? []) {
-      const relativeSidecarPath = import_node_path22.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
+      const relativeSidecarPath = import_node_path23.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
       const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
       await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
     }
@@ -173891,7 +174237,7 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
     };
   }
   const filename = derivedOpenApiFilename(input.sidecars);
-  const relativeDerivedPath = import_node_path22.default.join(input.relativeDir, filename).replace(/\\/g, "/");
+  const relativeDerivedPath = import_node_path23.default.join(input.relativeDir, filename).replace(/\\/g, "/");
   if (!input.dryRun) {
     const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, "output-dir");
     await input.writeSpecFile(absoluteDerivedPath, normalized.content);
@@ -174079,61 +174425,16 @@ async function lookupCandidatesByCustomDomains(hints, awsClient, actionCore) {
 function inferFallbackServiceName(inputs) {
   return inputs.expectedServiceName ?? inputs.repoContext.repoSlug?.split("/").pop()?.trim() ?? inputs.repoContext.repoUrl?.split("/").pop()?.trim();
 }
-function catalogFormatFor(type, reference) {
-  const normalizedType = (type ?? "").toLowerCase();
-  const normalizedRef = (reference ?? "").toLowerCase();
-  if (normalizedType === "graphql" || normalizedRef.endsWith(".graphql") || normalizedRef.endsWith(".gql")) {
-    return { format: "graphql-sdl", filename: "schema.graphql" };
-  }
-  if (normalizedType === "asyncapi" || normalizedRef.includes("asyncapi")) {
-    return { format: normalizedRef.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml", filename: normalizedRef.endsWith(".json") ? "asyncapi.json" : "asyncapi.yaml" };
-  }
-  if (normalizedType === "grpc" || normalizedRef.endsWith(".proto")) {
-    return { format: "protobuf", filename: "schema.proto" };
-  }
-  if (normalizedType === "json-schema" || normalizedRef.endsWith(".schema.json") || normalizedRef === "schema.json") {
-    return { format: "json-schema", filename: import_node_path22.default.posix.basename(normalizedRef) || "schema.json" };
-  }
-  if (normalizedType === "avro" || normalizedRef.endsWith(".avsc") || normalizedRef.endsWith(".avro")) {
-    return { format: "avro", filename: import_node_path22.default.posix.basename(normalizedRef) || "schema.avsc" };
-  }
-  if (normalizedType === "smithy" || normalizedRef.endsWith(".smithy") || normalizedRef.endsWith("smithy-build.json")) {
-    return { format: "smithy", filename: import_node_path22.default.posix.basename(normalizedRef) || "model.smithy" };
-  }
-  if (normalizedRef.endsWith(".json")) {
-    return { format: "openapi-json", filename: "index.json" };
-  }
-  return { format: "openapi-yaml", filename: "index.yaml" };
-}
 function inferFormatFromContent(relativePath2, content) {
-  const fromName = catalogFormatFor(void 0, relativePath2).format;
-  const trimmed = content.trim();
-  if (fromName === "json-schema" || fromName === "avro" || fromName === "smithy" || fromName === "graphql-sdl" || fromName === "protobuf") {
-    return fromName;
-  }
-  if (trimmed.startsWith("{")) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (typeof parsed.$schema === "string" || parsed.type === "object" || parsed.type === "array") {
-        if (!parsed.openapi && !parsed.swagger && !parsed.asyncapi) {
-          return "json-schema";
-        }
-      }
-      if (parsed.type === "record" && typeof parsed.name === "string") {
-        return "avro";
-      }
-      if (typeof parsed.asyncapi === "string") {
-        return "asyncapi-json";
-      }
-      if (typeof parsed.openapi === "string" || typeof parsed.swagger === "string") {
-        return "openapi-json";
-      }
-    } catch {
-    }
-  }
-  if (/^\s*asyncapi\s*:/i.test(trimmed)) return "asyncapi-yaml";
-  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) return "openapi-yaml";
-  return fromName;
+  return classifySpecContent(content, { pathHint: relativePath2 })?.format;
+}
+function classifyCatalogBytes(content, declaredType, pathHint) {
+  const classified = declaredType?.trim() ? classifyWithDeclaredFormat(content, declaredType, { pathHint }) : classifySpecContent(content, { pathHint });
+  if (!classified) return void 0;
+  return {
+    format: classified.format,
+    filename: filenameForFormat(classified.format, pathHint)
+  };
 }
 function normalizeSnsName(value) {
   return value.trim().toLowerCase().replace(/\.fifo$/i, "");
@@ -174294,10 +174595,10 @@ function serviceNameForProviderCandidate(candidate) {
 async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile) {
   const serviceName = serviceNameForProviderCandidate(resolved.candidate);
   const result = await resolved.provider.exportSpec(resolved.candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
-  const relativeProviderDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
-  const relativeProviderPath = import_node_path22.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
+  const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
+  const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-  const relativeMetadataPath = metadataSidecar ? import_node_path22.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+  const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
   const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
     repoRoot: inputs.repoRoot,
     relativeDir: relativeProviderDir,
@@ -174696,7 +174997,7 @@ async function runDiscovery(inputs, dependencies) {
   const discovered = [];
   const summary2 = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path22.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, "output-dir");
   let callerIdentity;
   if (shouldResolveCallerIdentity(inputs)) {
@@ -174739,7 +175040,7 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(import_node_path22.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path23.default.relative(resolvedRoot, resolvedOutputDir), folderName);
         if (inputs.dryRun) {
           summary2.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
@@ -174751,7 +175052,7 @@ async function runDiscovery(inputs, dependencies) {
         const specBody = normalized.content;
         const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
           repoRoot: resolvedRoot,
-          relativeDir: import_node_path22.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+          relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
           native: { relativePath: relativeSpecPath, content: specBody },
           derivation: {
             content: specBody,
@@ -174849,13 +175150,13 @@ function gatewayTypeForRepoFormat(format2) {
 }
 function serviceNameForRepoCandidate(inputs, candidate) {
   if (candidate.serviceRoot && candidate.serviceRoot !== ".") {
-    return import_node_path22.default.posix.basename(candidate.serviceRoot);
+    return import_node_path23.default.posix.basename(candidate.serviceRoot);
   }
-  return inferFallbackServiceName(inputs) ?? (import_node_path22.default.posix.basename(candidate.path, import_node_path22.default.posix.extname(candidate.path)) || "service");
+  return inferFallbackServiceName(inputs) ?? (import_node_path23.default.posix.basename(candidate.path, import_node_path23.default.posix.extname(candidate.path)) || "service");
 }
 function materializeAggregatedRepoArtifact(inputs, candidate) {
   const members = candidate.memberPaths ?? [];
-  const isSmithyProject = candidate.type === "smithy" && (members.length > 0 || import_node_path22.default.posix.basename(candidate.path).toLowerCase() === "smithy-build.json");
+  const isSmithyProject = candidate.type === "smithy" && (members.length > 0 || import_node_path23.default.posix.basename(candidate.path).toLowerCase() === "smithy-build.json");
   const isGraphqlAggregate = candidate.type === "graphql" && members.length > 1;
   if (!isSmithyProject && !isGraphqlAggregate || !candidate.content?.trim()) {
     return {
@@ -174867,7 +175168,7 @@ function materializeAggregatedRepoArtifact(inputs, candidate) {
   }
   const serviceName = serviceNameForRepoCandidate(inputs, candidate);
   const filename = candidate.type === "smithy" ? "model.smithy" : "schema.graphql";
-  const aggregatePath = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName), filename).replace(/\\/g, "/");
+  const aggregatePath = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName), filename).replace(/\\/g, "/");
   return {
     path: aggregatePath,
     writeNative: true,
@@ -174898,6 +175199,28 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
   const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
   const viable = [];
   for (const api of catalogApis) {
+    if (api.inlineContent) {
+      const classified = classifyCatalogBytes(api.inlineContent, api.type, `${api.name}.inline`);
+      if (!classified) {
+        actionCore.warning(
+          userSafeWarning(
+            `Backstage entity ${api.name} inline definition could not be classified${api.type ? ` as declared type "${api.type}"` : ""}. Continuing discovery without this catalog contract.`
+          )
+        );
+        continue;
+      }
+      const targetPath = import_node_path23.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
+      viable.push({
+        api,
+        kind: "inline",
+        path: targetPath,
+        format: classified.format,
+        content: api.inlineContent,
+        evidence: [`Resolved from Backstage catalog inline ${api.type ?? "api"} definition (${api.name})`],
+        writeNative: true
+      });
+      continue;
+    }
     if (api.specPath) {
       try {
         const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, api.specPath, {
@@ -174905,12 +175228,21 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
           countAsReference: false
         });
         const content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
-        const relative2 = import_node_path22.default.relative(import_node_path22.default.resolve(inputs.repoRoot), resolved.canonicalPath).replace(/\\/g, "/");
+        const relative2 = resolved.relativePath.replace(/\\/g, "/");
+        const classified = classifyCatalogBytes(content, api.type, api.specPath);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} local definition at ${api.specPath} could not be classified${api.type ? ` as declared type "${api.type}"` : ""}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
         viable.push({
           api,
           kind: "local",
           path: relative2,
-          format: catalogFormatFor(api.type, api.specPath).format,
+          format: classified.format,
           content,
           evidence: [`Resolved from Backstage catalog local ${api.type ?? "api"} definition (${api.name})`],
           writeNative: false
@@ -174932,13 +175264,21 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
           timeoutMs: 15e3,
           policy: remotePolicy
         });
-        const catalogFormat = catalogFormatFor(api.type, api.specUrl);
-        const targetPath = import_node_path22.default.join(inputs.outputDir, projectFolderName(api.name), catalogFormat.filename).replace(/\\/g, "/");
+        const classified = classifyCatalogBytes(fetched.content, api.type, api.specUrl);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} remote definition at ${safeUrl} could not be classified${api.type ? ` as declared type "${api.type}"` : ""}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
+        const targetPath = import_node_path23.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
         viable.push({
           api,
           kind: "remote",
           path: targetPath,
-          format: catalogFormat.format,
+          format: classified.format,
           content: fetched.content,
           evidence: [`Resolved from Backstage catalog remote ${api.type ?? "api"} definition (${api.name})`],
           writeNative: true
@@ -174999,7 +175339,7 @@ async function selectInventoryContract(inputs, staticIac) {
         earlyResult: rankedRepoAmbiguity(
           inputs,
           rootWinners.map((candidate) => ({
-            serviceName: candidate.serviceRoot === "." ? import_node_path22.default.posix.basename(candidate.path) : import_node_path22.default.posix.basename(candidate.serviceRoot),
+            serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
             gatewayId: candidate.path,
             gatewayType: gatewayTypeForRepoFormat(candidate.format),
             confidence: Math.max(50, Math.min(95, candidate.score)),
@@ -175017,7 +175357,7 @@ async function selectInventoryContract(inputs, staticIac) {
       earlyResult: rankedRepoAmbiguity(
         inputs,
         sameTier.map((candidate) => ({
-          serviceName: candidate.serviceRoot === "." ? import_node_path22.default.posix.basename(candidate.path) : import_node_path22.default.posix.basename(candidate.serviceRoot),
+          serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
           gatewayId: candidate.path,
           gatewayType: gatewayTypeForRepoFormat(candidate.format),
           confidence: Math.max(50, Math.min(95, candidate.score)),
@@ -175155,8 +175495,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
         );
       } else {
         const serviceName = artifact.logicalId;
-        const relativeDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-        const relativeSpecPath = import_node_path22.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
+        const relativeDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+        const relativeSpecPath = import_node_path23.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
         const evidence = [
           `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId} (${artifact.artifactClass})`
         ];
@@ -175485,7 +175825,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!selectedSource.specPath || !selectedSource.specFormat) {
       return selectedSource;
     }
-    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path22.default.dirname(selectedSource.specPath) : import_node_path22.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
+    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path23.default.dirname(selectedSource.specPath) : import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
     try {
       let content = existingSpecContent;
       if (content === void 0) {
@@ -175540,7 +175880,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"));
     if (inputs.dryRun) {
       selectedSource.specPath = relativeSpecPath;
-      selectedSource.derivedOpenApiPath = import_node_path22.default.join(import_node_path22.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
+      selectedSource.derivedOpenApiPath = import_node_path23.default.join(import_node_path23.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
       selectedSource.derivedOpenApiFormat = "openapi-json";
       selectedSource.derivedOpenApiCompleteness = selectedSource.gatewayType === "WEBSOCKET" ? "partial" : void 0;
       selectedSource.derivedOpenApiEvidence = ["Dry run enabled; skipped API Gateway export and derived OpenAPI sidecar write"];
@@ -175561,7 +175901,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const body = normalized.content;
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
-        relativeDir: import_node_path22.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+        relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
         native: { relativePath: relativeSpecPath, content: body },
         derivation: {
           content: body,
@@ -175626,10 +175966,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!resolvedSnsExport) {
       return toManualReviewResult(selectedSource, ["SNS contract was selected but export payload was unavailable"]);
     }
-    const relativeProviderDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
-    const relativeProviderPath = import_node_path22.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+    const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
     const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-    const relativeMetadataPath = metadataSidecar ? import_node_path22.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+    const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
     const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
       repoRoot: inputs.repoRoot,
       relativeDir: relativeProviderDir,
@@ -175658,8 +175998,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   }
   if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
     const serviceName = selectedSource.serviceName ?? snsManualReviewMetadata?.serviceName ?? "service";
-    const relativeProviderDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-    const relativeMetadataPath = import_node_path22.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+    const relativeMetadataPath = import_node_path23.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
     const manualReviewResult = toManualReviewResult(
       { ...selectedSource, contractOrigin: "manual-review", metadataPath: relativeMetadataPath },
       snsManualReviewEvidence
@@ -175674,7 +176014,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, "output-dir");
       await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
       for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
-        const relativeSidecarPath = import_node_path22.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
+        const relativeSidecarPath = import_node_path23.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
         const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
         await writeSpecFile(absoluteSidecarPath, sidecar.content);
       }
@@ -175719,7 +176059,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
   const discovered = [];
   const summary2 = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path22.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
   for (const provider of providers) {
     await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
       let candidates;
@@ -175763,8 +176103,8 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-          const relativeSpecPath = import_node_path22.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
-          const relativeProviderDir = import_node_path22.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
+          const relativeSpecPath = import_node_path23.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
+          const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
           const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
             repoRoot: resolvedRoot,
             relativeDir: relativeProviderDir,
@@ -175815,7 +176155,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             specFormat: result.format,
             contractOrigin,
             variantCount,
-            metadataPath: metadataSidecar ? import_node_path22.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
+            metadataPath: metadataSidecar ? import_node_path23.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
             openapiContractAudit: result.openapiContractAudit,
             provenance: multiProvenance,
             ...derivedOpenApi
@@ -176545,8 +176885,8 @@ function normalizeRepoUrl2(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path23 = sshMatch[2];
-    return `https://${host}/${path23}`;
+    const path24 = sshMatch[2];
+    return `https://${host}/${path24}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -176759,10 +177099,10 @@ function createTelemetryContext(options) {
 
 // src/action-version.ts
 var import_node_fs4 = require("node:fs");
-var import_node_path23 = require("node:path");
+var import_node_path24 = require("node:path");
 function resolveActionVersion2() {
   try {
-    const raw = (0, import_node_fs4.readFileSync)((0, import_node_path23.join)(__dirname, "..", "package.json"), "utf8");
+    const raw = (0, import_node_fs4.readFileSync)((0, import_node_path24.join)(__dirname, "..", "package.json"), "utf8");
     return JSON.parse(raw).version ?? "unknown";
   } catch {
     return "unknown";

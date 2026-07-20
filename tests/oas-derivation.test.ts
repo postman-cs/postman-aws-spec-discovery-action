@@ -37,6 +37,22 @@ describe('deriveOpenApiDocument', () => {
     expect(result.content).toContain('"/graphql"');
   });
 
+  it('derives a GraphQL POST shell for graphql-introspection-json without claiming full completeness', () => {
+    const result = deriveOpenApiDocument({
+      content: JSON.stringify({
+        __schema: { queryType: { name: 'Query' }, types: [{ name: 'Query', kind: 'OBJECT' }] }
+      }),
+      format: 'graphql-introspection-json',
+      title: 'Orders Introspection'
+    });
+
+    expect(result.completeness).toBe('partial');
+    expect(result.format).toBe('openapi-json');
+    expect(result.content).toContain('"openapi": "3.1.0"');
+    expect(result.content).toContain('"/graphql"');
+    expect(result.evidence.some((line) => /introspection/i.test(line))).toBe(true);
+  });
+
   it('derives GraphQL operation names, variables, and schema components from SDL', () => {
     const result = deriveOpenApiDocument({
       content: [

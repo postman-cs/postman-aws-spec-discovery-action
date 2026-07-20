@@ -447,6 +447,43 @@ describe('CloudFormationProvider', () => {
     );
     expect(result.format).toBe('openapi-json');
     expect(JSON.parse(result.content)).toHaveProperty('openapi', '3.0.1');
+    expect(result.provenance?.exportOptions).toMatchObject({ templateStage: 'Processed' });
+  });
+
+  it('records Processed templateStage provenance without fetching Original', async () => {
+    const template = JSON.stringify({
+      Resources: {
+        MyApi: {
+          Type: 'AWS::ApiGateway::RestApi',
+          Properties: {
+            Body: { openapi: '3.0.1', info: { title: 'embedded', version: '1.0' }, paths: {} }
+          }
+        }
+      }
+    });
+    const getTemplate = vi.fn().mockResolvedValue(template);
+    const client = createCfnClientStub({ getTemplate });
+    const provider = new CloudFormationProvider(client);
+
+    await provider.exportSpec(
+      {
+        id: 'stack/MyApi',
+        name: 'MyApi',
+        providerType: 'cloudformation',
+        tags: {},
+        evidence: [],
+        meta: {
+          stackName: 'my-stack',
+          logicalId: 'MyApi',
+          physicalId: 'rest-1',
+          resourceType: 'AWS::ApiGateway::RestApi'
+        }
+      },
+      {}
+    );
+
+    expect(getTemplate).toHaveBeenCalledTimes(1);
+    expect(getTemplate).toHaveBeenCalledWith('my-stack');
   });
 
   it('extracts OpenAPI spec from local SAM DefinitionUri', async () => {
