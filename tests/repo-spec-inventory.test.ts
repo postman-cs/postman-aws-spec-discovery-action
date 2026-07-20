@@ -177,6 +177,39 @@ describe('inventoryRepoSpecs', () => {
     }
   });
 
+  it('rejects oversized .smithy model via opened-file size before content acceptance', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-model-bounds-'));
+    try {
+      const marker = 'namespace example.oversized.model';
+      await writeFile(
+        path.join(tempDir, 'smithy-build.json'),
+        JSON.stringify({ version: '1.0', sources: ['model.smithy'] }),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'model.smithy'),
+        `${marker}\n${'z'.repeat(500)}`,
+        'utf8'
+      );
+
+      const closure = await resolveSmithyProject(tempDir, 'smithy-build.json', {
+        maxFiles: 10,
+        maxFileBytes: 100,
+        maxCumulativeBytes: 10_000
+      });
+
+      expect(closure.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(closure.errors.some((error) => /maxFileBytes=/i.test(error.message))).toBe(true);
+      expect(closure.memberPaths).toEqual([]);
+      expect(closure.content).toBe('');
+      expect(closure.content).not.toContain(marker);
+      expect(closure.errors.every((error) => !error.message.includes(marker))).toBe(true);
+      expect(closure.errors.every((error) => !error.message.includes('z'.repeat(50)))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('bounds cumulative smithy config and model bytes together', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-cumulative-bounds-'));
     try {
