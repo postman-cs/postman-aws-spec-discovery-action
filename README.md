@@ -32,9 +32,9 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::123456789012:role/postman-spec-discovery
           aws-region: us-east-1
