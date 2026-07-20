@@ -97,8 +97,12 @@ describe('runPreflight STS error mappings', () => {
     ).catch((e: Error) => e);
 
     expect(err).toBeInstanceOf(Error);
-    expect((err as Error).message).toMatch(/expired/i);
-    expect((err as Error).message).toMatch(/re-assume|re-run|rotate/i);
+    const message = (err as Error).message;
+    expect(message).toMatch(/Attempted sts:GetCallerIdentity/i);
+    expect(message).toMatch(/us-east-1/);
+    expect(message).toMatch(/expired/i);
+    expect(message).toMatch(/re-assume|rotate/i);
+    expect(message).toMatch(/re-run/i);
   });
 
   it('getCallerIdentity AccessDenied on sts:GetCallerIdentity -> actionable message', async () => {
@@ -113,8 +117,11 @@ describe('runPreflight STS error mappings', () => {
     ).catch((e: Error) => e);
 
     expect(err).toBeInstanceOf(Error);
-    expect((err as Error).message).toMatch(/GetCallerIdentity/i);
-    expect((err as Error).message).toMatch(/trust policy|malformed|denied STS/i);
+    const message = (err as Error).message;
+    expect(message).toMatch(/Attempted sts:GetCallerIdentity/i);
+    expect(message).toMatch(/us-east-1/);
+    expect(message).toMatch(/not authorized to perform sts:GetCallerIdentity/i);
+    expect(message).toMatch(/trust policy|malformed|denied STS/i);
   });
 
   it('getCallerIdentity CredentialsProviderError -> actionable message', async () => {
@@ -129,8 +136,56 @@ describe('runPreflight STS error mappings', () => {
     ).catch((e: Error) => e);
 
     expect(err).toBeInstanceOf(Error);
-    expect((err as Error).message).toMatch(/credentials/i);
-    expect((err as Error).message).toMatch(/provider chain|env|profile|OIDC|instance role/i);
+    const message = (err as Error).message;
+    expect(message).toMatch(/Attempted sts:GetCallerIdentity/i);
+    expect(message).toMatch(/us-east-1/);
+    expect(message).toMatch(/Could not load credentials from any providers/i);
+    expect(message).toMatch(/provider chain|env|profile|OIDC|instance role/i);
+  });
+
+  it('getCallerIdentity unmapped STS error -> actionable generic message', async () => {
+    const { core } = createCoreStub();
+    const aws = makeAwsClient({
+      getCallerIdentity: vi.fn().mockRejectedValue(
+        makeAwsError('ThrottlingException', 'Rate exceeded for sts:GetCallerIdentity')
+      )
+    });
+
+    const err = await execute(
+      baseInputs({ mode: 'discover-many', awsRegion: 'eu-west-1' }),
+      { core, aws, writeSpecFile: async () => undefined }
+    ).catch((e: Error) => e);
+
+    expect(err).toBeInstanceOf(Error);
+    const message = (err as Error).message;
+    expect(message).toMatch(/Attempted sts:GetCallerIdentity/i);
+    expect(message).toMatch(/eu-west-1/);
+    expect(message).toMatch(/Rate exceeded for sts:GetCallerIdentity/i);
+    expect(message).toMatch(/Verify AWS credentials|region|IAM permission/i);
+    expect(message).toMatch(/re-run/i);
+  });
+
+  it('permission probe failure warns with operation, region, cause, and remediation', async () => {
+    const { core, warnings } = createCoreStub();
+    const aws = makeAwsClient({
+      probeApiGatewayReadAccess: vi.fn().mockRejectedValue(
+        makeAwsError('AccessDeniedException', 'User is not authorized to perform: apigateway:GET')
+      )
+    });
+    const providerRegistry = new ProviderRegistry();
+
+    await execute(
+      baseInputs({ mode: 'discover-many', preflightPermissionProbe: true }),
+      { core, aws, writeSpecFile: async () => undefined, providerRegistry }
+    );
+
+    const warning = warnings.find((message) => /API Gateway REST read preflight/i.test(message));
+    expect(warning).toBeDefined();
+    expect(warning).toMatch(/Attempted API Gateway REST read preflight/i);
+    expect(warning).toMatch(/us-east-1/);
+    expect(warning).toMatch(/apigateway:GET|not authorized/i);
+    expect(warning).toMatch(/REST discovery\/export may be unavailable/i);
+    expect(warning).toMatch(/Grant API Gateway read permission|correct role/i);
   });
 
   it('preflight-off still early-returns without calling getCallerIdentity', async () => {
@@ -150,41 +205,51 @@ describe('runPreflight STS error mappings', () => {
 });
 
 describe('preflight message style ban', () => {
-  const EXPIRED_TOKEN_MESSAGE =
-    'AWS credentials are expired; refresh the role/session (re-assume the role or rotate the access keys) and re-run.';
-  const ACCESS_DENIED_MESSAGE =
-    'The AWS identity cannot call sts:GetCallerIdentity; the credentials are malformed or the principal is denied STS. Check the role/keys and trust policy.';
-  const CREDENTIALS_PROVIDER_MESSAGE =
-    'No AWS credentials were resolved from the provider chain (env, profile, OIDC, instance role). Configure credentials for this runner.';
+  it('STS and permission-probe messages avoid banned shapes', async () => {
+    const cases: Array<{ name: string; message: string; probe?: boolean }> = [
+      { name: 'ExpiredTokenException', message: 'The security token included in the request is expired' },
+      { name: 'AccessDeniedException', message: 'User is not authorized to perform sts:GetCallerIdentity' },
+      { name: 'CredentialsProviderError', message: 'Could not load credentials from any providers' },
+      {
+        name: 'AccessDeniedException',
+        message: 'User is not authorized to perform: apigateway:GET',
+        probe: true
+      }
+    ];
+    const observed: string[] = [];
 
-  const ALL_MESSAGES = [EXPIRED_TOKEN_MESSAGE, ACCESS_DENIED_MESSAGE, CREDENTIALS_PROVIDER_MESSAGE];
+    for (const testCase of cases) {
+      const { core, warnings } = createCoreStub();
+      if (testCase.probe) {
+        const aws = makeAwsClient({
+          probeApiGatewayReadAccess: vi.fn().mockRejectedValue(makeAwsError(testCase.name, testCase.message))
+        });
+        await execute(
+          baseInputs({ mode: 'discover-many', preflightPermissionProbe: true }),
+          { core, aws, writeSpecFile: async () => undefined, providerRegistry: new ProviderRegistry() }
+        );
+        const warning = warnings.find((entry) => /API Gateway REST read preflight/i.test(entry));
+        expect(warning).toBeDefined();
+        observed.push(warning!);
+        continue;
+      }
 
-  it('no "Bearer " in any new message string', () => {
-    for (const msg of ALL_MESSAGES) {
+      const aws = makeAwsClient({
+        getCallerIdentity: vi.fn().mockRejectedValue(makeAwsError(testCase.name, testCase.message))
+      });
+      const err = await execute(
+        baseInputs({ mode: 'discover-many' }),
+        { core, aws, writeSpecFile: async () => undefined }
+      ).catch((e: Error) => e);
+      expect(err).toBeInstanceOf(Error);
+      observed.push((err as Error).message);
+    }
+
+    for (const msg of observed) {
       expect(msg).not.toContain('Bearer ');
-    }
-  });
-
-  it('no "x-access-token:" in any new message string', () => {
-    for (const msg of ALL_MESSAGES) {
       expect(msg).not.toContain('x-access-token:');
-    }
-  });
-
-  it('no U+2014 em dash in any new message string', () => {
-    for (const msg of ALL_MESSAGES) {
       expect(msg).not.toContain('\u2014');
-    }
-  });
-
-  it('no " , not " antithesis shape in any new message string', () => {
-    for (const msg of ALL_MESSAGES) {
       expect(msg).not.toContain(' , not ');
-    }
-  });
-
-  it('no " - not " antithesis shape in any new message string', () => {
-    for (const msg of ALL_MESSAGES) {
       expect(msg).not.toContain(' - not ');
     }
   });

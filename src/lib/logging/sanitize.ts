@@ -2,7 +2,7 @@ const ACCOUNT_ID_RE = /\b\d{12}\b/g;
 const ARN_RE = /\barn:aws[a-z-]*:[^\s'"]+/gi;
 const ACCESS_KEY_RE = /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g;
 const SECRET_KEY_RE = /\b(?:(?:aws_)?secret(?:_access)?_key)\b\s*[:=]\s*["']?([A-Za-z0-9/+_=.-]{16,})/gi;
-const ABS_PATH_RE = /(?:^|(?<=[\s'"=([{,:]))(?:[A-Za-z]:\\|\/)[^\s'"]+/g;
+const ABS_PATH_RE = /(?:^|(?<=[\s'"=([{,:]))(?:[A-Za-z]:\\|(?<!https?:)\/)[^\s'"]+/g;
 
 export function isDebugLoggingEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return String(env.ACTIONS_STEP_DEBUG || '').toLowerCase() === 'true';
@@ -40,9 +40,6 @@ export function errorMessage(error: unknown): string {
 }
 
 export function formatUserSafeError(error: unknown, env: NodeJS.ProcessEnv = process.env): string {
-  const message = errorMessage(error);
-  if (isDebugLoggingEnabled(env)) {
-    return message;
-  }
-  return sanitizeLogMessage(message);
+  void env;
+  return sanitizeLogMessage(errorMessage(error));
 }

@@ -343,8 +343,103 @@ describe('runDiscovery', () => {
     expect(
       [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/checkout-service/openapi.derived.json'))
     ).toBe(true);
-    expect(warnings.some((message) => message.includes('simulated export failure'))).toBe(true);
+    const exportFailureWarning = warnings.find((message) => message.includes('simulated export failure'));
+    expect(exportFailureWarning).toBeDefined();
+    expect(exportFailureWarning).toMatch(/Attempted export of REST API rest-2 \(legacy-name\)/i);
+    expect(exportFailureWarning).toMatch(/us-east-1/);
+    expect(exportFailureWarning).toMatch(/simulated export failure/);
+    expect(exportFailureWarning).toMatch(/Grant API Gateway export\/read permission|fix stage\/export errors|re-run/i);
     expect(result.summary.failed).toBe(1);
+  });
+
+  it('warns with operation, region, cause, and remediation when REST enumeration fails', async () => {
+    const { core, warnings } = createCoreStub();
+    const aws = createAwsClientStub({
+      listRestApis: vi.fn().mockRejectedValue(new Error('AccessDeniedException: User is not authorized to perform: apigateway:GET')),
+      listHttpApis: vi.fn().mockResolvedValue([])
+    });
+
+    const result = await runDiscovery(
+      {
+        mode: 'discover-many',
+        awsRegion: 'us-west-2',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: false
+      },
+      {
+        core,
+        aws,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    expect(result.discovered).toHaveLength(0);
+    const warning = warnings.find((message) => /REST API enumeration/i.test(message));
+    expect(warning).toBeDefined();
+    expect(warning).toMatch(/Attempted REST API enumeration/i);
+    expect(warning).toMatch(/us-west-2/);
+    expect(warning).toMatch(/AccessDeniedException|not authorized|apigateway:GET/i);
+    expect(warning).toMatch(/Continuing without REST candidates/i);
+    expect(warning).toMatch(/Grant API Gateway read permission|correct role/i);
+  });
+
+  it('warns with operation, region, cause, and remediation when HTTP enumeration fails', async () => {
+    const { core, warnings } = createCoreStub();
+    const aws = createAwsClientStub({
+      listRestApis: vi.fn().mockResolvedValue([]),
+      listHttpApis: vi.fn().mockRejectedValue(
+        new Error('AccessDeniedException: User is not authorized to perform: apigateway:GET on HTTP APIs')
+      )
+    });
+
+    const result = await runDiscovery(
+      {
+        mode: 'discover-many',
+        awsRegion: 'ap-southeast-2',
+        repoRoot: '.',
+        repoContext: { provider: 'unknown' },
+        expectedGatewayIds: [],
+        stage: undefined,
+        apiFilter: undefined,
+        serviceMapping: {},
+        outputDir: 'discovered-specs',
+        maxCandidates: 50,
+        dryRun: false,
+        preflightChecks: false,
+        preflightPermissionProbe: false,
+        requestTimeoutMs: 30000,
+        maxAttempts: 3,
+        includeV2: true
+      },
+      {
+        core,
+        aws,
+        writeSpecFile: async () => undefined
+      }
+    );
+
+    expect(result.discovered).toHaveLength(0);
+    expect(result.summary.exported).toBe(0);
+    expect(aws.listHttpApis).toHaveBeenCalled();
+    const warning = warnings.find((message) => /HTTP API enumeration/i.test(message));
+    expect(warning).toBeDefined();
+    expect(warning).toMatch(/Attempted HTTP API enumeration/i);
+    expect(warning).toMatch(/ap-southeast-2/);
+    expect(warning).toMatch(/AccessDeniedException|not authorized|HTTP APIs/i);
+    expect(warning).toMatch(/Continuing without HTTP candidates/i);
+    expect(warning).toMatch(/Grant API Gateway read permission|correct role/i);
   });
 
   it('skips HTTP discovery when include-v2=false and applies API filter', async () => {
@@ -565,6 +660,7 @@ describe('runDiscovery', () => {
   it('denies Backstage remote fetches when remote-fetch-allowlist-json is absent', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-remote-deny-'));
     const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+    const { core, warnings } = createCoreStub();
     const fetchMock = vi.fn(async (_url: string, options?: { policy?: { enabled?: boolean } }) => {
       if (!options?.policy?.enabled) {
         throw new Error('Remote spec fetch is disabled by default');
@@ -612,7 +708,7 @@ describe('runDiscovery', () => {
           includeV2: true
         },
         createAwsClientStub(),
-        createCoreStub().core,
+        core,
         writeSpecFile,
         { fetchSpecFromUrl: fetchMock }
       );
@@ -620,6 +716,72 @@ describe('runDiscovery', () => {
       expect(result.sourceType).not.toBe('repo-spec');
       expect(fetchMock).toHaveBeenCalled();
       expect(writeSpecFile).not.toHaveBeenCalled();
+      const warning = warnings.find((message) => /Backstage entity orders-api/i.test(message));
+      expect(warning).toBeDefined();
+      expect(warning).toMatch(/Attempted fetch of Backstage entity orders-api/i);
+      expect(warning).toContain('https://example.com/openapi.yaml');
+      expect(warning).toMatch(/Remote spec fetch is disabled by default/i);
+      expect(warning).toMatch(/allowlist the HTTPS host\/path|allowlist/i);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns and continues when Backstage local catalog definition cannot be read', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-local-miss-'));
+    const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+    const { core, warnings } = createCoreStub();
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: billing-api',
+          'spec:',
+          '  type: openapi',
+          '  definition:',
+          '    $text: ./specs/missing-openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/billing-api' },
+          expectedServiceName: undefined,
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true
+        },
+        createAwsClientStub(),
+        core,
+        writeSpecFile
+      );
+
+      expect(result.sourceType).not.toBe('repo-spec');
+      expect(writeSpecFile).not.toHaveBeenCalled();
+      const warning = warnings.find((message) => /Backstage entity billing-api/i.test(message));
+      expect(warning).toBeDefined();
+      expect(warning).toMatch(/Attempted read of Backstage entity billing-api/i);
+      expect(warning).toMatch(/specs\/missing-openapi\.yaml/);
+      expect(warning).toMatch(/ENOENT|no such file|not found|not usable|Unable|cannot|failed/i);
+      expect(warning).toMatch(/Continuing discovery without this catalog contract/i);
+      expect(warning).toMatch(/Correct the catalog definition or local path/i);
+      expect(warning).toMatch(/re-run/i);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -2306,7 +2468,7 @@ describe('runAction', () => {
   it('marks discover-many unresolved on export failures by default', async () => {
     const previousMode = process.env.INPUT_MODE;
     process.env.INPUT_MODE = 'discover-many';
-    const { core, outputs } = createCoreStub({
+    const { core, outputs, warnings } = createCoreStub({
       'aws-region': 'us-east-1'
     });
     const awsClient = createAwsClientStub({
@@ -2320,12 +2482,143 @@ describe('runAction', () => {
       });
       expect(outputs['resolution-status']).toBe('unresolved');
       expect(outputs['export-summary-json']).toContain('"failed":1');
+      const warning = warnings.find((message) => /discover-many partial success/i.test(message));
+      expect(warning).toBeDefined();
+      expect(warning).toMatch(/attempted=\d+/);
+      expect(warning).toMatch(/exported=\d+/);
+      expect(warning).toMatch(/failed=1/);
+      expect(warning).toMatch(/skipped=\d+/);
+      expect(warning).toMatch(/resolution-status is unresolved/i);
+      expect(warning).toMatch(/export-summary-json/i);
+      expect(warning).toMatch(/fix IAM\/stage\/source errors/i);
+      expect(warning).toMatch(/re-run/i);
     } finally {
       if (previousMode === undefined) {
         delete process.env.INPUT_MODE;
       } else {
         process.env.INPUT_MODE = previousMode;
       }
+    }
+  });
+
+  it('warns when a non-API-Gateway provider listCandidates rejects in discover-many', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-list-fail-'));
+    const { core, warnings } = createCoreStub();
+    const failingProvider: SpecProvider = {
+      type: 'appsync',
+      probe: vi.fn().mockResolvedValue(true),
+      listCandidates: vi.fn().mockRejectedValue(
+        new Error('AccessDeniedException: User is not authorized to perform: appsync:ListGraphqlApis')
+      ),
+      exportSpec: vi.fn()
+    };
+    const registry = new ProviderRegistry();
+    registry.register(failingProvider);
+
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-west-2',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
+
+      expect(result.exportSummary?.failed).toBeGreaterThanOrEqual(1);
+      expect(result.outputs['resolution-status']).toBe('unresolved');
+      expect(result.outputs['export-summary-json']).toMatch(/"failed":\s*[1-9]/);
+      const warning = warnings.find((message) => /listing candidates from appsync/i.test(message));
+      expect(warning).toBeDefined();
+      expect(warning).toMatch(/Attempted listing candidates from appsync/i);
+      expect(warning).toMatch(/us-west-2/);
+      expect(warning).toMatch(/appsync:ListGraphqlApis|AccessDeniedException|not authorized/i);
+      expect(warning).toMatch(/Continuing with other providers|export summary failed count/i);
+      expect(warning).toMatch(/Grant appsync read permission|service is available/i);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when a non-API-Gateway provider exportSpec rejects in discover-many', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-export-fail-'));
+    const { core, warnings } = createCoreStub();
+    const failingProvider: SpecProvider = {
+      type: 'appsync',
+      probe: vi.fn().mockResolvedValue(true),
+      listCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'appsync-api-1',
+          name: 'orders-gql',
+          providerType: 'appsync',
+          tags: {},
+          evidence: ['appsync candidate'],
+          meta: {}
+        }
+      ]),
+      exportSpec: vi.fn().mockRejectedValue(new Error('GetIntrospectionSchema failed: AccessDeniedException'))
+    };
+    const registry = new ProviderRegistry();
+    registry.register(failingProvider);
+
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'eu-central-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
+
+      expect(result.exportSummary?.failed).toBeGreaterThanOrEqual(1);
+      expect(result.outputs['resolution-status']).toBe('unresolved');
+      expect(result.outputs['export-summary-json']).toMatch(/"failed":\s*[1-9]/);
+      const warning = warnings.find((message) => /export of appsync candidate appsync-api-1/i.test(message));
+      expect(warning).toBeDefined();
+      expect(warning).toMatch(/Attempted export of appsync candidate appsync-api-1 \(orders-gql\)/i);
+      expect(warning).toMatch(/eu-central-1/);
+      expect(warning).toMatch(/GetIntrospectionSchema failed|AccessDeniedException/i);
+      expect(warning).toMatch(/Continuing with remaining candidates|export summary failed count/i);
+      expect(warning).toMatch(/Grant appsync export\/read permission|service is available/i);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
     }
   });
 });
