@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format follows Keep a Changelog and this project uses Semantic Versioning.
 
+## [3.0.0] - 2026-07-20
+
+### Added
+- Exact per-repository API Gateway correlation for canonical `postman:repo` and conjunctive `GithubOrg` plus `GithubRepo` tags across REST, HTTP, and WebSocket APIs.
+- Direct repository resolution for JSON Schema, Avro, Smithy projects, composed GraphQL schemas, monorepo service roots, and multi-document Backstage catalogs.
+- Safe static CloudFormation/SAM, CDK, Terraform/OpenTofu, and Serverless specification and physical-ID resolution.
+- Structured deployed-source provenance, identity pins, explicit stage evidence, AppSync merged-API associations, and current live support evidence.
+
+### Changed
+- Remote specification fetching is deny-by-default and requires an exact host/path allowlist.
+- Ambiguous repository, gateway, environment, and stage matches now fail closed instead of selecting by list or name order.
+- Local contract and IaC reads enforce canonical repository containment, including symlink boundaries.
+- Terraform state is explicit-only through `terraform-state-paths-json`; remote state is never downloaded.
+
+### Breaking
+- Resolution precedence, ambiguity behavior, stage selection, and remote-reference defaults are stricter. Consumers relying on heuristic first-match selection or implicit remote fetching must provide explicit evidence inputs.
+
 ## [2.1.0] - 2026-07-17
 
 ### Added

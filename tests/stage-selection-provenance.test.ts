@@ -377,7 +377,7 @@ describe('POS-390 evidence-safe stage selection', () => {
   });
 });
 
-describe('POS-390 expected account/partition fail-closed preflight', () => {
+describe('POS-390 expected identity fail-closed preflight', () => {
   it('fails closed before export on account mismatch with sanitized error', async () => {
     const { core } = createCoreStub();
     const aws = createAwsClientStub({
@@ -433,17 +433,28 @@ describe('POS-390 expected account/partition fail-closed preflight', () => {
     expect(aws.exportRestApi).not.toHaveBeenCalled();
   });
 
-  it('parses expected-account-id and expected-partition inputs and aligns region with aws-region', () => {
+  it('parses expected account, partition, and region pins', () => {
     const parsed = resolveInputs({
       INPUT_AWS_REGION: 'eu-west-1',
       INPUT_EXPECTED_ACCOUNT_ID: '123456789012',
-      INPUT_EXPECTED_PARTITION: 'aws'
+      INPUT_EXPECTED_PARTITION: 'aws',
+      INPUT_EXPECTED_REGION: 'eu-west-1'
     });
     expect(parsed.awsRegion).toBe('eu-west-1');
     expect(parsed.expectedAccountId).toBe('123456789012');
     expect(parsed.expectedPartition).toBe('aws');
+    expect(parsed.expectedRegion).toBe('eu-west-1');
     expect(accountIndicatorFromAccountId(parsed.expectedAccountId)).toBe('***9012');
     expect(partitionFromArn('arn:aws:iam::123456789012:role/test')).toBe('aws');
+  });
+
+  it('fails closed before AWS calls when expected-region differs from aws-region', () => {
+    expect(() =>
+      resolveInputs({
+        INPUT_AWS_REGION: 'us-east-1',
+        INPUT_EXPECTED_REGION: 'eu-west-1'
+      })
+    ).toThrow(/region mismatch/i);
   });
 
   it('rejects malformed expected-account-id', () => {
@@ -559,7 +570,7 @@ describe('POS-390 AppSync merged association provenance', () => {
 });
 
 describe('POS-390 schema/action/CLI parity for provenance inputs', () => {
-  it('keeps expected-account-id and expected-partition in contract, action.yml, CLI, and schema', () => {
+  it('keeps expected identity pins in contract, action.yml, CLI, and schema', () => {
     const repoRoot = path.resolve(import.meta.dirname, '..');
     const actionManifest = parse(readFileSync(path.join(repoRoot, 'action.yml'), 'utf8')) as {
       inputs: Record<string, unknown>;
@@ -569,7 +580,7 @@ describe('POS-390 schema/action/CLI parity for provenance inputs', () => {
       properties: { provenance?: { properties?: Record<string, unknown> } };
     };
 
-    for (const name of ['expected-account-id', 'expected-partition'] as const) {
+    for (const name of ['expected-account-id', 'expected-partition', 'expected-region'] as const) {
       expect(contractInputNames).toContain(name);
       expect(actionContract.inputs[name]?.required).toBe(false);
       expect(actionManifest.inputs[name]).toBeTruthy();

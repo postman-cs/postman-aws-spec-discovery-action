@@ -46,7 +46,7 @@ jobs:
           postman-region: us
 
       - id: resolve
-        uses: postman-cs/postman-aws-spec-discovery-action@v2
+        uses: postman-cs/postman-aws-spec-discovery-action@v3
         with:
           aws-region: us-east-1
 
@@ -76,7 +76,7 @@ Providers are probed against your IAM permissions; anything your role cannot rea
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   with:
     aws-region: us-east-1
 ```
@@ -87,7 +87,7 @@ Bypass broad account discovery when you already know the gateway.
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   with:
     aws-region: us-east-1
     gateway-id: abc123def4
@@ -99,7 +99,7 @@ Export specs from all discovered APIs across all available providers. `mode` is 
 
 ```yaml
 - id: discover
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   env:
     INPUT_MODE: discover-many
   with:
@@ -112,7 +112,7 @@ Write generated specs somewhere other than `discovered-specs/`. The path must re
 
 ```yaml
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   with:
     aws-region: us-east-1
     output-dir: postman/specs
@@ -130,7 +130,7 @@ Feed the discovered spec straight into the [onboarding composite](https://github
     postman-region: us
 
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   with:
     aws-region: us-east-1
 
@@ -158,7 +158,7 @@ Use the bootstrap action directly when you only need workspace/spec/collection c
     postman-region: us
 
 - id: resolve
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   with:
     aws-region: us-east-1
 
@@ -180,7 +180,7 @@ For event-driven repositories using SNS, keep your contract in-repo as AsyncAPI 
 
 ```yaml
 - id: resolve-events
-  uses: postman-cs/postman-aws-spec-discovery-action@v2
+  uses: postman-cs/postman-aws-spec-discovery-action@v3
   env:
     INPUT_MODE: resolve-one
     INPUT_EXPECTED_SERVICE_NAME: orders-events
@@ -212,9 +212,11 @@ CLI environment-variable outputs are documented in [docs/providers.md](docs/prov
 | `stage` | Optional API Gateway stage override (for example prod or staging). | no | n/a |
 | `expected-account-id` | Optional AWS account ID that must match sts:GetCallerIdentity before export. Mismatch fails closed with a sanitized error. | no | n/a |
 | `expected-partition` | Optional AWS partition (aws, aws-us-gov, or aws-cn) that must match the caller identity ARN before export. Mismatch fails closed with a sanitized error. | no | n/a |
+| `expected-region` | Optional AWS region that must exactly match aws-region before discovery or export. Mismatch fails closed. | no | n/a |
 | `spec-path` | Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection. | no | n/a |
 | `service-root` | Optional monorepo service root relative to repo-root. Scopes Backstage entities and repository contract inventory to that directory. | no | n/a |
 | `remote-fetch-allowlist-json` | Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS). | no | n/a |
+| `terraform-state-paths-json` | Optional JSON array of repo-relative local Terraform state/output artifact paths (for example terraform.tfstate). Default []. .tfstate is never auto-discovered; only listed paths are read. Remote Terraform state remains forbidden. | no | `[]` |
 | `output-dir` | Directory under the repository root where generated specs are written. | no | `discovered-specs` |
 | `postman-api-key` | Optional service-account PMAK used to mint or re-mint a postman-access-token for telemetry enrichment (account_type). Not used for any AWS or Postman asset operation. | no | n/a |
 | `postman-access-token` | Optional Postman service-account access token, used only to enrich anonymous telemetry with the session account_type. When omitted, postman-api-key alone can mint one for the same purpose. Not used for any AWS or Postman asset operation. | no | n/a |

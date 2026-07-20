@@ -2,8 +2,16 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ProviderType } from '../../contracts.js';
-import { resolveStaticIacCandidates } from '../iac/index.js';
+import { resolveStaticIacCandidates, type ResolveStaticIacOptions } from '../iac/index.js';
+import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 import { findIaCFiles } from './scan.js';
+
+/** Narrow static-IaC options threaded from runtime (no hidden globals). */
+export type CollectRepoSignalsStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
+
+export interface CollectRepoSignalsOptions {
+  staticIac?: CollectRepoSignalsStaticIacOptions;
+}
 
 export interface RepoSignals {
   serviceHints: string[];
@@ -14,6 +22,11 @@ export interface RepoSignals {
   evidence: string[];
   /** Providers hinted at by repo contents (IaC files, schema files, etc.). */
   providerHints?: ProviderType[];
+}
+
+async function readRepoFile(repoRoot: string, targetPath: string, fieldName: string): Promise<string> {
+  const resolved = await resolveLocalReadWithinRoot(repoRoot, targetPath, { fieldName });
+  return readFile(resolved.canonicalPath, 'utf8');
 }
 
 function unique(values: string[]): string[] {
@@ -267,7 +280,8 @@ export async function collectRepoSignals(
   repoRoot: string,
   repoSlug?: string,
   expectedServiceName?: string,
-  expectedGatewayIds: string[] = []
+  expectedGatewayIds: string[] = [],
+  options: CollectRepoSignalsOptions = {}
 ): Promise<RepoSignals> {
   const serviceHints = unique([
     expectedServiceName ?? '',
@@ -283,9 +297,8 @@ export async function collectRepoSignals(
   const inspectFiles = await collectInspectFiles(repoRoot);
 
   for (const file of inspectFiles) {
-    const fullPath = path.resolve(repoRoot, file);
     try {
-      const content = await readFile(fullPath, 'utf8');
+      const content = await readRepoFile(repoRoot, file, 'repo-signal-file');
       const extracted = extractGatewayIds(content);
       if (extracted.length > 0) {
         inferredGatewayHints.push(...extracted);
@@ -307,7 +320,7 @@ export async function collectRepoSignals(
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === 'sns') {
-            snsEvidenceRoots.add(path.dirname(fullPath));
+            snsEvidenceRoots.add(path.dirname(path.resolve(repoRoot, file)));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -329,9 +342,8 @@ export async function collectRepoSignals(
   // Check for GraphQL schema files as AppSync hint
   const graphqlFiles = ['schema.graphql', 'schema.gql', 'graphql/schema.graphql', 'src/schema.graphql'];
   for (const file of graphqlFiles) {
-    const fullPath = path.resolve(repoRoot, file);
     try {
-      await readFile(fullPath, 'utf8');
+      await readRepoFile(repoRoot, file, 'graphql-schema-file');
       providerHintSet.add('appsync');
       evidence.push(`Found GraphQL schema file: ${file}`);
       break;
@@ -342,7 +354,7 @@ export async function collectRepoSignals(
 
   const iacFiles = await findIaCFiles(repoRoot, ['.tf']);
   for (const filePath of iacFiles) {
-    const content = await readFile(filePath, 'utf8').catch(() => '');
+    const content = await readRepoFile(repoRoot, filePath, 'terraform-signal-file').catch(() => '');
     if (!content) continue;
     const extracted = extractGatewayIds(content);
     if (extracted.length > 0) {
@@ -374,12 +386,11 @@ export async function collectRepoSignals(
     }
   }
 
-  const cdkJson = path.resolve(repoRoot, 'cdk.json');
   try {
-    await readFile(cdkJson, 'utf8');
+    await readRepoFile(repoRoot, 'cdk.json', 'cdk-config-file');
     const cdkFiles = await findIaCFiles(repoRoot, ['.ts', '.js', '.py', '.java', '.cs']);
     for (const filePath of cdkFiles) {
-      const content = await readFile(filePath, 'utf8').catch(() => '');
+      const content = await readRepoFile(repoRoot, filePath, 'cdk-signal-file').catch(() => '');
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -409,16 +420,15 @@ export async function collectRepoSignals(
     // Optional: no CDK project present.
   }
 
-  const pulumiYaml = path.resolve(repoRoot, 'Pulumi.yaml');
   try {
-    const pulumiContent = await readFile(pulumiYaml, 'utf8');
+    const pulumiContent = await readRepoFile(repoRoot, 'Pulumi.yaml', 'pulumi-config-file');
     for (const hint of detectProviderHints(pulumiContent)) {
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in Pulumi.yaml`);
     }
     const pulumiFiles = await findIaCFiles(repoRoot, ['.ts', '.py', '.go', '.java', '.cs']);
     for (const filePath of pulumiFiles) {
-      const content = await readFile(filePath, 'utf8').catch(() => '');
+      const content = await readRepoFile(repoRoot, filePath, 'pulumi-signal-file').catch(() => '');
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -477,7 +487,11 @@ export async function collectRepoSignals(
         cdk: true,
         terraform: true,
         serverless: true
-      }
+      },
+      ...(options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {}),
+      ...(options.staticIac?.terraformStatePaths
+        ? { terraformStatePaths: options.staticIac.terraformStatePaths }
+        : {})
     });
     for (const apiId of iac.physicalApiIds) {
       inferredGatewayHints.push(apiId);

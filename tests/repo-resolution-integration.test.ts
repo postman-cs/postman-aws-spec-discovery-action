@@ -272,6 +272,71 @@ describe('repo resolution integration (POS-388 / POS-393)', () => {
     });
   });
 
+  it('shares one aggregate fetch byte budget across multiple remote callers in one resolution', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-shared-budget-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  type: openapi',
+          '  definition: https://specs.example.com/v1/orders.yaml',
+          '---',
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: billing-api',
+          'spec:',
+          '  type: openapi',
+          '  definition: https://specs.example.com/v1/billing.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const seenBudgets: Array<{ totalBytes: number } | undefined> = [];
+      const fetchMock = vi.fn(
+        async (_url: string, options?: { budget?: { totalBytes: number }; maxTotalBytes?: number; policy?: { enabled?: boolean } }) => {
+          seenBudgets.push(options?.budget);
+          if (options?.budget) {
+            options.budget.totalBytes += 30;
+          }
+          return {
+            content: 'openapi: 3.0.3\ninfo:\n  title: X\n  version: "1.0.0"\npaths: {}\n',
+            contentType: 'application/yaml',
+            finalUrl: _url
+          };
+        }
+      );
+
+      const result = await runResolution(
+        baseInputs(tempDir, {
+          remoteFetchPolicy: createRemoteFetchPolicy({
+            enabled: true,
+            allowlist: [{ hostname: 'specs.example.com', pathPrefix: '/v1/' }]
+          })
+        }),
+        createAwsClientStub(),
+        createCoreStub(),
+        vi.fn(),
+        { fetchSpecFromUrl: fetchMock as never }
+      );
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(seenBudgets[0]).toBeTruthy();
+      expect(seenBudgets[1]).toBe(seenBudgets[0]);
+      expect(seenBudgets[0]?.totalBytes).toBe(60);
+      // Two remote catalog APIs remain ambiguity-safe.
+      expect(result.status).toBe('unresolved');
+      expect(result.sourceType).toBe('manual-review');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('allows and denies SSM remote URL fetches according to remoteFetchPolicy', async () => {
     const client: SsmSpecClient = {
       probe: vi.fn().mockResolvedValue(true),

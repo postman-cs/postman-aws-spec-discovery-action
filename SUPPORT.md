@@ -2,7 +2,7 @@
 
 ## Before opening an issue
 
-Check the action logs for the selected provider, `resolution-status`, `source-type`, and `mapping-confidence`. The action is read-only against AWS and silently skips providers your role cannot read, so most discovery failures are caused by region mismatch, missing IAM permissions, missing repo-local specs, or ambiguous service names.
+Check the action logs for the selected provider, `resolution-status`, `source-type`, and `mapping-confidence`. The action is read-only against AWS. Unreadable providers are skipped from selection but recorded in `resolution-json` `providerProbes` with a typed reason (denial, error, or timeout), so most discovery failures are caused by region mismatch, missing IAM permissions, missing repo-local specs, or ambiguous service names.
 
 ## What to include
 

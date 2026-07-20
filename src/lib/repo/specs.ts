@@ -1,4 +1,4 @@
-import { readdir, readFile, lstat, stat } from 'node:fs/promises';
+import { readdir, readFile, lstat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
@@ -6,7 +6,8 @@ import type { GatewayType, SpecFormat } from '../../contracts.js';
 import {
   contentBearingIacCandidates,
   resolveStaticIacCandidates,
-  toRepoArtifactClass
+  toRepoArtifactClass,
+  type ResolveStaticIacOptions
 } from '../iac/index.js';
 import {
   extractInlineEmbeddedSpec,
@@ -14,6 +15,7 @@ import {
   type ParsedTemplate,
   type TemplateResource
 } from '../providers/cloudformation.js';
+import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 import { groupGraphqlByServiceRoot, serviceRootFor } from './graphql-compose.js';
 import { resolveSmithyProject } from './smithy-project.js';
 
@@ -113,7 +115,8 @@ export const DEFAULT_INVENTORY_BOUNDS = {
   maxDepth: 6,
   maxFiles: 200,
   maxFileBytes: 1_048_576,
-  maxCumulativeBytes: 8_388_608
+  maxCumulativeBytes: 8_388_608,
+  maxScanMs: 5_000
 } as const;
 
 export type RepoSpecKind =
@@ -164,13 +167,19 @@ export interface RepoSpecInventory {
   errors: RepoSpecInventoryError[];
 }
 
+/** Narrow static-IaC options threaded from runtime (no hidden globals). */
+export type InventoryStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
+
 export interface InventoryRepoSpecsOptions {
   maxDepth?: number;
   maxFiles?: number;
   maxFileBytes?: number;
   maxCumulativeBytes?: number;
+  maxScanMs?: number;
   /** Optional monorepo/service scope (relative posix path). */
   serviceRoot?: string;
+  /** Optional exact S3 client + explicit Terraform state paths for static IaC merge. */
+  staticIac?: InventoryStaticIacOptions;
 }
 
 export interface RepoSpecMatch {
@@ -191,7 +200,14 @@ interface ScanBudget {
   maxFileBytes: number;
   maxCumulativeBytes: number;
   maxDepth: number;
+  deadlineAt: number;
   truncated: boolean;
+}
+
+function scanTimedOut(budget: ScanBudget): boolean {
+  if (Date.now() <= budget.deadlineAt) return false;
+  budget.truncated = true;
+  return true;
 }
 
 interface RawCandidate {
@@ -429,6 +445,7 @@ export async function inventoryRepoSpecs(
     maxFileBytes: options.maxFileBytes ?? DEFAULT_INVENTORY_BOUNDS.maxFileBytes,
     maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_INVENTORY_BOUNDS.maxCumulativeBytes,
     maxDepth: options.maxDepth ?? DEFAULT_INVENTORY_BOUNDS.maxDepth,
+    deadlineAt: Date.now() + (options.maxScanMs ?? DEFAULT_INVENTORY_BOUNDS.maxScanMs),
     truncated: false
   };
   const errors: RepoSpecInventoryError[] = [];
@@ -501,7 +518,7 @@ export async function inventoryRepoSpecs(
       continue;
     }
 
-    const content = await readBoundedFile(absolute, relative, budget, errors);
+    const content = await readBoundedFile(resolvedRoot, relative, budget, errors);
     if (content === undefined) continue;
 
     const detected = detectRepoSpec(relative, content);
@@ -554,7 +571,11 @@ export async function inventoryRepoSpecs(
       maxDepth: budget.maxDepth,
       maxFiles: Math.max(0, budget.maxFiles - budget.files),
       maxFileBytes: budget.maxFileBytes,
-      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes)
+      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes),
+      ...(options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {}),
+      ...(options.staticIac?.terraformStatePaths
+        ? { terraformStatePaths: options.staticIac.terraformStatePaths }
+        : {})
     });
     for (const error of iacResolution.errors) {
       if (error.code === 'path-escape' || error.code === 'bounds-exceeded') {
@@ -629,14 +650,19 @@ export async function inventoryRepoSpecs(
 }
 
 async function readBoundedFile(
-  absolute: string,
+  repoRoot: string,
   relative: string,
   budget: ScanBudget,
   errors: RepoSpecInventoryError[]
 ): Promise<string | undefined> {
+  if (scanTimedOut(budget)) return undefined;
   let content: string;
   try {
-    content = await readFile(absolute, 'utf8');
+    const resolved = await resolveLocalReadWithinRoot(repoRoot, relative, {
+      fieldName: 'repo-spec-candidate',
+      limits: { maxBytesPerFile: budget.maxFileBytes }
+    });
+    content = await readFile(resolved.canonicalPath, 'utf8');
   } catch (error) {
     errors.push({
       code: 'unreadable',
@@ -678,6 +704,7 @@ async function collectSpecCandidatePaths(
   }
 
   for (const dir of COMMON_SCAN_DIRS) {
+    if (scanTimedOut(budget)) break;
     if (budget.files >= budget.maxFiles) {
       budget.truncated = true;
       break;
@@ -691,8 +718,16 @@ async function collectSpecCandidatePaths(
       });
       continue;
     }
-    const fileStat = await stat(root).catch(() => undefined);
+    const fileStat = await lstat(root).catch(() => undefined);
     if (!fileStat) continue;
+    if (fileStat.isSymbolicLink()) {
+      errors.push({
+        code: 'path-escape',
+        path: dir,
+        message: `Scan directory must not be a symbolic link: ${dir}`
+      });
+      continue;
+    }
     if (fileStat.isFile()) {
       const relative = toPosix(path.relative(repoRoot, root));
       if (isSpecLikeFilename(path.basename(relative))) {
@@ -715,7 +750,7 @@ async function walkSpecCandidates(
   budget: ScanBudget,
   depth: number
 ): Promise<string[]> {
-  if (depth > budget.maxDepth || budget.files >= budget.maxFiles) {
+  if (scanTimedOut(budget) || depth > budget.maxDepth || budget.files >= budget.maxFiles) {
     if (budget.files >= budget.maxFiles || depth > budget.maxDepth) {
       budget.truncated = true;
     }
@@ -724,6 +759,7 @@ async function walkSpecCandidates(
   const results: string[] = [];
   const entries = (await readdir(current).catch(() => [] as string[])).sort((a, b) => a.localeCompare(b));
   for (const entry of entries) {
+    if (scanTimedOut(budget)) break;
     if (budget.files >= budget.maxFiles) {
       budget.truncated = true;
       break;

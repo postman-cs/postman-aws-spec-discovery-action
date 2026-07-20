@@ -81,6 +81,11 @@ export interface ResolveStaticIacOptions {
     getObject(bucket: string, key: string, versionId?: string): Promise<string>;
   };
   /**
+   * Explicit repo-relative local Terraform state/output artifact paths.
+   * `.tfstate` is never auto-discovered; only these paths are read (via containment/budgets).
+   */
+  terraformStatePaths?: string[];
+  /**
    * Optional deployed CloudFormation stack outputs keyed by stack name.
    * Used by Serverless correlation only; never downloads remote state.
    */

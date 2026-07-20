@@ -43,9 +43,11 @@ describe('action contract', () => {
     stage: false,
     'expected-account-id': false,
     'expected-partition': false,
+    'expected-region': false,
     'spec-path': false,
     'service-root': false,
     'remote-fetch-allowlist-json': false,
+    'terraform-state-paths-json': false,
     'output-dir': false,
     'postman-api-key': false,
     'postman-access-token': false
@@ -105,6 +107,7 @@ describe('action contract', () => {
     expect(actionContract.inputs['spec-path'].default).toBe('');
     expect(actionContract.inputs['service-root'].default).toBe('');
     expect(actionContract.inputs['remote-fetch-allowlist-json'].default).toBe('');
+    expect(actionContract.inputs['terraform-state-paths-json'].default).toBe('[]');
     expect(actionContract.inputs['output-dir'].default).toBe('discovered-specs');
     expect(actionManifest.inputs['gateway-id'].default).toBe('');
     expect(actionManifest.inputs['expected-account-id'].default).toBe('');
@@ -112,7 +115,29 @@ describe('action contract', () => {
     expect(actionManifest.inputs['spec-path'].default).toBe('');
     expect(actionManifest.inputs['service-root'].default).toBe('');
     expect(actionManifest.inputs['remote-fetch-allowlist-json'].default).toBe('');
+    expect(actionManifest.inputs['terraform-state-paths-json'].default).toBe('[]');
     expect(actionManifest.inputs['output-dir'].default).toBe('discovered-specs');
+  });
+
+  it('parses terraform-state-paths-json as an explicit path array', () => {
+    const parsed = resolveInputs({
+      INPUT_AWS_REGION: 'us-east-1',
+      INPUT_REPO_ROOT: '.',
+      INPUT_TERRAFORM_STATE_PATHS_JSON: JSON.stringify(['terraform.tfstate', 'env/prod.tfstate'])
+    });
+    expect(parsed.terraformStatePaths).toEqual(['terraform.tfstate', 'env/prod.tfstate']);
+    const empty = resolveInputs({
+      INPUT_AWS_REGION: 'us-east-1',
+      INPUT_REPO_ROOT: '.'
+    });
+    expect(empty.terraformStatePaths).toEqual([]);
+    expect(() =>
+      resolveInputs({
+        INPUT_AWS_REGION: 'us-east-1',
+        INPUT_REPO_ROOT: '.',
+        INPUT_TERRAFORM_STATE_PATHS_JSON: '{"path":"terraform.tfstate"}'
+      })
+    ).toThrow(/terraform-state-paths-json must be a JSON array/);
   });
 
   it('parses explicit selectors and remote-fetch allowlist policy', () => {
@@ -201,6 +226,9 @@ describe('action contract', () => {
     expect(readmeSource).toContain('[SECURITY.md](SECURITY.md)');
     expect(readmeSource).toContain('[RELEASE_POLICY.md](RELEASE_POLICY.md)');
     expect(supportSource).toContain('What to include');
+    expect(supportSource).toContain('providerProbes');
+    expect(supportSource).toMatch(/typed reason \(denial, error, or timeout\)/);
+    expect(supportSource).not.toMatch(/silently skips providers/i);
     expect(securitySource).toContain('Credential Matrix');
     expect(releasePolicySource).toContain('Release checks');
     expect(releasePolicySource).toContain('Git tags and GitHub releases are the public release identifiers');

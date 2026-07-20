@@ -113,7 +113,11 @@ export async function resolveStaticIacCandidates(
   }
 
   if (isEnabled(options, 'terraform')) {
-    raw.push(...await resolveTerraformStatic(repoRoot, budget, errors));
+    raw.push(
+      ...await resolveTerraformStatic(repoRoot, budget, errors, {
+        statePaths: options.terraformStatePaths
+      })
+    );
   }
 
   if (isEnabled(options, 'serverless')) {
