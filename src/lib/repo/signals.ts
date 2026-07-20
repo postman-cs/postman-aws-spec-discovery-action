@@ -2,15 +2,53 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ProviderType } from '../../contracts.js';
-import { resolveStaticIacCandidates, type ResolveStaticIacOptions } from '../iac/index.js';
+import {
+  resolveStaticIacCandidates,
+  type ResolveStaticIacOptions,
+  type StaticIacResolution
+} from '../iac/index.js';
 import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 import { findIaCFiles } from './scan.js';
 
-/** Narrow static-IaC options threaded from runtime (no hidden globals). */
-export type CollectRepoSignalsStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
+/**
+ * Narrow static-IaC options threaded from runtime (no hidden globals / cross-run cache).
+ * `resolveStaticIac` is a run-scoped lazy memoized resolver shared with inventory when both run.
+ */
+export type CollectRepoSignalsStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'> & {
+  /** Creates at most one Promise on first call; subsequent callers await the same result. */
+  resolveStaticIac?: () => Promise<StaticIacResolution>;
+};
 
 export interface CollectRepoSignalsOptions {
   staticIac?: CollectRepoSignalsStaticIacOptions;
+  /**
+   * When false, skip static IaC enrichment entirely (e.g. an explicit/catalog/inventory
+   * repo contract was already selected and static IaC work is unnecessary).
+   * Defaults to true.
+   */
+  includeStaticIac?: boolean;
+}
+
+async function resolveSignalsStaticIac(
+  repoRoot: string,
+  staticIac?: CollectRepoSignalsStaticIacOptions
+): Promise<StaticIacResolution> {
+  if (staticIac?.resolveStaticIac) {
+    return staticIac.resolveStaticIac();
+  }
+  return resolveStaticIacCandidates(repoRoot, {
+    maxFiles: 60,
+    maxDepth: 6,
+    enabledSources: {
+      cloudformation: true,
+      sam: true,
+      cdk: true,
+      terraform: true,
+      serverless: true
+    },
+    ...(staticIac?.s3Client ? { s3Client: staticIac.s3Client } : {}),
+    ...(staticIac?.terraformStatePaths ? { terraformStatePaths: staticIac.terraformStatePaths } : {})
+  });
 }
 
 export interface RepoSignals {
@@ -477,35 +515,23 @@ export async function collectRepoSignals(
   }
 
   // Exact physical API ID / literal output evidence from static IaC (no builds, no remote state).
-  try {
-    const iac = await resolveStaticIacCandidates(repoRoot, {
-      maxFiles: 60,
-      maxDepth: 6,
-      enabledSources: {
-        cloudformation: true,
-        sam: true,
-        cdk: true,
-        terraform: true,
-        serverless: true
-      },
-      ...(options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {}),
-      ...(options.staticIac?.terraformStatePaths
-        ? { terraformStatePaths: options.staticIac.terraformStatePaths }
-        : {})
-    });
-    for (const apiId of iac.physicalApiIds) {
-      inferredGatewayHints.push(apiId);
-      evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
-    }
-    for (const candidate of iac.candidates) {
-      if (candidate.kind === 'physical-api-id' && candidate.physicalApiId) {
-        evidence.push(
-          `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
-        );
+  if (options.includeStaticIac !== false) {
+    try {
+      const iac = await resolveSignalsStaticIac(repoRoot, options.staticIac);
+      for (const apiId of iac.physicalApiIds) {
+        inferredGatewayHints.push(apiId);
+        evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
       }
+      for (const candidate of iac.candidates) {
+        if (candidate.kind === 'physical-api-id' && candidate.physicalApiId) {
+          evidence.push(
+            `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
+          );
+        }
+      }
+    } catch {
+      // Optional enrichment; signal collection must remain best-effort.
     }
-  } catch {
-    // Optional enrichment; signal collection must remain best-effort.
   }
 
   return {

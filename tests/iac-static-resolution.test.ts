@@ -1,13 +1,16 @@
-import { cp, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { discoverCloudFormationTemplatePaths } from '../src/lib/iac/cloudformation.js';
 import {
   contentBearingIacCandidates,
   resolveStaticIacCandidates,
-  SUPPORTED_CDK_ASSEMBLY_MAJOR_MAX
+  SUPPORTED_CDK_ASSEMBLY_MAJOR_MAX,
+  type IacResolutionError
 } from '../src/lib/iac/index.js';
+import { createIacReadBudget } from '../src/lib/iac/read.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { inventoryRepoSpecs } from '../src/lib/repo/specs.js';
 
@@ -255,10 +258,155 @@ describe('resolveStaticIacCandidates — Serverless', () => {
 });
 
 describe('resolveStaticIacCandidates — bounds and invariants', () => {
-  it('enforces scan bounds', async () => {
-    const root = await withFixture('cfn-inline');
-    const result = await resolveStaticIacCandidates(root, { maxFiles: 0 });
-    expect(result.errors.some((e) => e.code === 'bounds-exceeded') || result.candidates.length === 0).toBe(true);
+  it('stops CloudFormation directory enumeration and emits bounds-exceeded', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'iac-cfn-entry-bound-'));
+    tempDirs.push(root);
+    for (let i = 0; i < 40; i++) {
+      await writeFile(path.join(root, `noise-${String(i).padStart(2, '0')}.txt`), 'x');
+    }
+    await writeFile(
+      path.join(root, 'template.yaml'),
+      ["AWSTemplateFormatVersion: '2010-09-09'", 'Resources: {}'].join('\n')
+    );
+
+    const budget = createIacReadBudget({ maxFiles: 5 });
+    const errors: IacResolutionError[] = [];
+    const paths = await discoverCloudFormationTemplatePaths(root, budget, errors);
+
+    expect(budget.truncated).toBe(true);
+    expect(errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+    expect(errors.some((error) => /inspected-entry bound/i.test(error.message))).toBe(true);
+    expect(paths).toEqual([...paths].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('stops CDK template-glob enumeration and rejects beyond-bound artifacts', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'iac-cdk-entry-bound-'));
+    tempDirs.push(root);
+    const cdkOut = path.join(root, 'cdk.out');
+    await mkdir(cdkOut);
+    const maxFiles = 5;
+    for (let i = 0; i < 40; i++) {
+      await writeFile(path.join(cdkOut, `noise-${String(i).padStart(2, '0')}.txt`), 'x');
+    }
+    // More matching templates than the inspected-entry bound; only in-bound ones may be accepted.
+    for (let i = 0; i < 10; i++) {
+      await writeFile(
+        path.join(cdkOut, `artifact-${String(i).padStart(2, '0')}.template.json`),
+        JSON.stringify({
+          Resources: {
+            [`Api${i}`]: {
+              Type: 'AWS::ApiGateway::RestApi',
+              Properties: {
+                Body: {
+                  openapi: '3.0.3',
+                  info: { title: `Artifact${i}`, version: '1.0.0' },
+                  paths: { [`/a${i}`]: { get: { responses: { '200': { description: 'ok' } } } } }
+                }
+              }
+            }
+          }
+        })
+      );
+    }
+
+    const result = await resolveStaticIacCandidates(root, {
+      enabledSources: { cloudformation: false, sam: false, terraform: false, serverless: false, cdk: true },
+      maxFiles
+    });
+
+    expect(result.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+    expect(result.errors.some((error) => /CDK template discovery exceeded inspected-entry bound/i.test(error.message))).toBe(true);
+    const acceptedTemplates = result.candidates.filter((candidate) =>
+      Boolean(candidate.sourcePath?.includes('.template.json'))
+    );
+    expect(acceptedTemplates.length).toBeLessThanOrEqual(maxFiles);
+    expect(acceptedTemplates.length).toBeLessThan(10);
+  });
+
+  it('stops Serverless package enumeration and rejects beyond-bound artifacts', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'iac-sls-entry-bound-'));
+    tempDirs.push(root);
+    const packageDir = path.join(root, '.serverless');
+    await mkdir(packageDir);
+    const maxFiles = 5;
+    for (let i = 0; i < 40; i++) {
+      await writeFile(path.join(packageDir, `noise-${String(i).padStart(2, '0')}.txt`), 'x');
+    }
+    for (let i = 0; i < 10; i++) {
+      await writeFile(
+        path.join(packageDir, `artifact-${String(i).padStart(2, '0')}-cloudformation-template.json`),
+        JSON.stringify({
+          Resources: {
+            [`Api${i}`]: {
+              Type: 'AWS::ApiGateway::RestApi',
+              Properties: {
+                Body: {
+                  openapi: '3.0.3',
+                  info: { title: `Artifact${i}`, version: '1.0.0' },
+                  paths: { [`/a${i}`]: { get: { responses: { '200': { description: 'ok' } } } } }
+                }
+              }
+            }
+          }
+        })
+      );
+    }
+
+    const result = await resolveStaticIacCandidates(root, {
+      enabledSources: { cloudformation: false, sam: false, terraform: false, cdk: false, serverless: true },
+      maxFiles
+    });
+
+    expect(result.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+    expect(result.errors.some((error) => /Serverless package discovery exceeded inspected-entry bound/i.test(error.message))).toBe(true);
+    const acceptedArtifacts = result.candidates.filter((candidate) =>
+      Boolean(candidate.sourcePath?.includes('cloudformation-template'))
+    );
+    expect(acceptedArtifacts.length).toBeLessThanOrEqual(maxFiles);
+    expect(acceptedArtifacts.length).toBeLessThan(10);
+  });
+
+  it('stops Terraform source enumeration and rejects beyond-bound artifacts', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'iac-tf-entry-bound-'));
+    tempDirs.push(root);
+    const maxFiles = 5;
+    for (let i = 0; i < 40; i++) {
+      await writeFile(path.join(root, `noise-${String(i).padStart(2, '0')}.txt`), 'x');
+    }
+    for (let i = 0; i < 10; i++) {
+      await writeFile(
+        path.join(root, `artifact-${String(i).padStart(2, '0')}.tf`),
+        [
+          `resource "aws_api_gateway_rest_api" "api_${i}" {`,
+          '  body = <<-EOF',
+          'openapi: 3.0.3',
+          'info:',
+          `  title: Artifact${i}`,
+          '  version: "1.0.0"',
+          'paths:',
+          `  /a${i}:`,
+          '    get:',
+          '      responses:',
+          '        "200":',
+          '          description: ok',
+          'EOF',
+          '}'
+        ].join('\n')
+      );
+    }
+
+    const result = await resolveStaticIacCandidates(root, {
+      enabledSources: { cloudformation: false, sam: false, cdk: false, serverless: false, terraform: true },
+      maxFiles
+    });
+
+    expect(result.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+    expect(result.errors.some((error) => /Terraform source discovery exceeded inspected-entry bound/i.test(error.message))).toBe(true);
+    const acceptedTf = result.candidates.filter((candidate) =>
+      Boolean(candidate.sourcePath?.match(/artifact-\d+\.tf$/))
+    );
+    expect(acceptedTf.length).toBeLessThanOrEqual(maxFiles);
+    expect(acceptedTf.length).toBeLessThan(10);
   });
 
   it('never builds, fetches remote state, or invents routes for dynamic IaC', async () => {

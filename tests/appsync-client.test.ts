@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppSyncSdkClient } from '../src/lib/aws/appsync-client.js';
+import { MAX_AWS_LIST_PAGES } from '../src/lib/aws/pagination.js';
 
 const { appSyncSendMock } = vi.hoisted(() => ({
   appSyncSendMock: vi.fn()
@@ -69,11 +70,15 @@ describe('AppSyncSdkClient source association listing', () => {
     expect(result.evidence.join('\n')).toMatch(/denied/i);
   });
 
-  it('truncates association pagination after the configured page bound', async () => {
-    appSyncSendMock.mockImplementation(async () => ({
-      sourceApiAssociationSummaries: [{ associationId: 'assoc-x', sourceApiId: 'source-x' }],
-      nextToken: 'more'
-    }));
+  it('truncates association pagination after the configured page bound with unique tokens', async () => {
+    let page = 0;
+    appSyncSendMock.mockImplementation(async () => {
+      page += 1;
+      return {
+        sourceApiAssociationSummaries: [{ associationId: `assoc-${page}`, sourceApiId: `source-${page}` }],
+        nextToken: `tok-${page + 1}`
+      };
+    });
 
     const client = new AppSyncSdkClient('us-east-1');
     const result = await client.listSourceApiAssociations('merged-1');
@@ -82,6 +87,61 @@ describe('AppSyncSdkClient source association listing', () => {
     expect(result.truncated).toBe(true);
     expect(result.associations).toHaveLength(20);
     expect(result.evidence.join('\n')).toMatch(/truncated/i);
+  });
+
+  it('rejects repeated nextToken during source association pagination instead of soft-failing', async () => {
+    appSyncSendMock.mockImplementation(async () => ({
+      sourceApiAssociationSummaries: [{ associationId: 'assoc-x', sourceApiId: 'source-x' }],
+      nextToken: 'stuck'
+    }));
+
+    const client = new AppSyncSdkClient('us-east-1');
+    await expect(client.listSourceApiAssociations('merged-1')).rejects.toThrow(
+      'AppSync ListSourceApiAssociations pagination returned a repeated token; aborting'
+    );
+    expect(appSyncSendMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('aggregates ListGraphqlApis pages and rejects repeated token / page-cap', async () => {
+    appSyncSendMock
+      .mockResolvedValueOnce({
+        graphqlApis: [{ apiId: 'api-1', name: 'one', arn: 'arn:1', apiType: 'GRAPHQL' }],
+        nextToken: 'page-2'
+      })
+      .mockResolvedValueOnce({
+        graphqlApis: [{ apiId: 'api-2', name: 'two', arn: 'arn:2', apiType: 'GRAPHQL' }]
+      });
+
+    const client = new AppSyncSdkClient('us-east-1');
+    await expect(client.listGraphqlApis()).resolves.toEqual([
+      { id: 'api-1', name: 'one', arn: 'arn:1', apiType: 'GRAPHQL' },
+      { id: 'api-2', name: 'two', arn: 'arn:2', apiType: 'GRAPHQL' }
+    ]);
+    expect(appSyncSendMock).toHaveBeenCalledTimes(2);
+
+    appSyncSendMock.mockReset();
+    appSyncSendMock.mockResolvedValue({
+      graphqlApis: [{ apiId: 'api-x', name: 'loop', arn: 'arn:x', apiType: 'GRAPHQL' }],
+      nextToken: 'stuck'
+    });
+    await expect(client.listGraphqlApis()).rejects.toThrow(
+      'AppSync ListGraphqlApis pagination returned a repeated token; aborting'
+    );
+    expect(appSyncSendMock).toHaveBeenCalledTimes(2);
+
+    appSyncSendMock.mockReset();
+    let pages = 0;
+    appSyncSendMock.mockImplementation(async () => {
+      pages += 1;
+      return {
+        graphqlApis: [{ apiId: `api-${pages}`, name: `n-${pages}`, arn: `arn:${pages}`, apiType: 'GRAPHQL' }],
+        nextToken: `tok-${pages + 1}`
+      };
+    });
+    await expect(client.listGraphqlApis()).rejects.toThrow(
+      `AppSync ListGraphqlApis pagination exceeded ${MAX_AWS_LIST_PAGES} pages; aborting`
+    );
+    expect(pages).toBe(MAX_AWS_LIST_PAGES);
   });
 
   it('rethrows IAM denials from probe for ProviderRegistry classification', async () => {

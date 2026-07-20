@@ -7,6 +7,8 @@ import {
 } from '@aws-sdk/client-cloudformation';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface CfnStackSummary {
   name: string;
   id: string;
@@ -54,8 +56,10 @@ export class CloudFormationSdkClient implements CloudFormationSpecClient {
 
   public async listActiveStacks(): Promise<CfnStackSummary[]> {
     const items: CfnStackSummary[] = [];
+    const guard = createAwsPaginationGuard('CloudFormation ListStacks');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new ListStacksCommand({
           StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE'],
@@ -70,15 +74,17 @@ export class CloudFormationSdkClient implements CloudFormationSpecClient {
           status: stack.StackStatus ?? ''
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
 
   public async listApiResources(stackName: string): Promise<CfnResourceSummary[]> {
     const items: CfnResourceSummary[] = [];
+    const guard = createAwsPaginationGuard('CloudFormation ListStackResources');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new ListStackResourcesCommand({ StackName: stackName, NextToken: nextToken })
       );
@@ -90,7 +96,7 @@ export class CloudFormationSdkClient implements CloudFormationSpecClient {
           type: resource.ResourceType
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }

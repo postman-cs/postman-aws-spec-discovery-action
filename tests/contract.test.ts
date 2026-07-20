@@ -234,6 +234,15 @@ describe('action contract', () => {
     expect(releasePolicySource).toContain('Git tags and GitHub releases are the public release identifiers');
   });
 
+  it('keeps providers.md providerProbes vocabulary aligned with the wire contract', () => {
+    expect(contractsSource).toContain("status: 'available' | 'skipped'");
+    expect(contractsSource).toContain("export type ProviderProbeReason = 'iam' | 'timeout' | 'error'");
+    expect(providersSource).toMatch(/status `available` or `skipped`/);
+    expect(providersSource).toMatch(/reason is `iam`, `timeout`, or `error`/);
+    expect(providersSource).not.toMatch(/`available`\s*\/\s*`denied`\s*\/\s*`error`\s*\/\s*`timeout`/);
+    expect(providersSource).not.toMatch(/status[^.\n]*`denied`/);
+  });
+
   it('parses simple and advanced env-driven values', () => {
     const parsed = resolveInputs({
       INPUT_AWS_REGION: 'us-east-1',

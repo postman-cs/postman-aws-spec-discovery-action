@@ -1,4 +1,4 @@
-import { lstat, readdir } from 'node:fs/promises';
+import { lstat, opendir } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { S3SpecClient } from '../aws/s3-client.js';
@@ -211,17 +211,60 @@ async function resolveTemplateGlob(
   options: { s3Client?: S3SpecClient; sourceHints?: string[] }
 ): Promise<IacSpecCandidate[]> {
   const absolute = path.resolve(repoRoot, directory);
-  let entries: string[];
   try {
     const info = await lstat(absolute);
     if (info.isSymbolicLink() || !info.isDirectory()) return [];
-    entries = (await readdir(absolute)).filter((name) => name.endsWith('.template.json')).sort();
   } catch {
     return [];
   }
 
+  // Finite inspected-entry bound derived from the existing IacReadBudget (maxFiles).
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  const markBoundsExceeded = (): void => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: 'bounds-exceeded',
+      path: toPosix(directory),
+      message: `CDK template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
+
+  let directoryHandle;
+  try {
+    directoryHandle = await opendir(absolute);
+  } catch {
+    return [];
+  }
+
+  const matching: string[] = [];
+  for await (const dirent of directoryHandle) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded();
+      break;
+    }
+    inspectedEntries += 1;
+
+    const entry = dirent.name;
+    if (!entry.endsWith('.template.json')) continue;
+
+    const relative = toPosix(path.posix.join(directory, entry));
+    try {
+      const entryInfo = await lstat(path.resolve(repoRoot, relative));
+      if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
+    } catch {
+      continue;
+    }
+    matching.push(entry);
+  }
+
+  matching.sort((a, b) => a.localeCompare(b));
+
   const candidates: IacSpecCandidate[] = [];
-  for (const entry of entries) {
+  for (const entry of matching) {
     const relative = toPosix(path.posix.join(directory, entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,

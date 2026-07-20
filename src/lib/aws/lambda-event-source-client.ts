@@ -6,6 +6,8 @@ import {
 } from '@aws-sdk/client-lambda';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface LambdaEventSourceFilterCriteria {
   filters?: Array<{ pattern?: string }>;
 }
@@ -45,14 +47,16 @@ export class LambdaEventSourceSdkClient implements LambdaEventSourceSpecClient {
 
   public async listEventSourceMappings(): Promise<LambdaEventSourceMappingSummary[]> {
     const mappings: LambdaEventSourceMappingSummary[] = [];
+    const guard = createAwsPaginationGuard('Lambda ListEventSourceMappings');
     let marker: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListEventSourceMappingsCommand({ Marker: marker, MaxItems: 100 }));
       for (const mapping of response.EventSourceMappings ?? []) {
         const mapped = mapMapping(mapping);
         if (mapped) mappings.push(mapped);
       }
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return mappings;
   }

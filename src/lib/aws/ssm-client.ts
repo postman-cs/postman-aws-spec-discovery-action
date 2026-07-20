@@ -4,6 +4,8 @@ import {
 } from '@aws-sdk/client-ssm';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface SsmSpecEntry {
   serviceName: string;
   key: string;
@@ -34,8 +36,10 @@ export class SsmSdkClient implements SsmSpecClient {
 
   public async listSpecParameters(pathPrefix: string = DEFAULT_PATH_PREFIX): Promise<SsmSpecEntry[]> {
     const items: SsmSpecEntry[] = [];
+    const guard = createAwsPaginationGuard('SSM GetParametersByPath');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new GetParametersByPathCommand({
           Path: pathPrefix,
@@ -55,7 +59,7 @@ export class SsmSdkClient implements SsmSpecClient {
         const key = parts.slice(1).join('/');
         items.push({ serviceName, key, value: param.Value });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }

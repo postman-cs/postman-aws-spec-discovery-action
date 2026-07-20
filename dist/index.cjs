@@ -47297,7 +47297,7 @@ var require_dist_cjs17 = __commonJS({
     var paginateGetDomainNames = createPaginator2(APIGatewayClient2, GetDomainNamesCommand, "position", "position", "limit");
     var paginateGetModels = createPaginator2(APIGatewayClient2, GetModelsCommand2, "position", "position", "limit");
     var paginateGetResources = createPaginator2(APIGatewayClient2, GetResourcesCommand3, "position", "position", "limit");
-    var paginateGetRestApis2 = createPaginator2(APIGatewayClient2, GetRestApisCommand2, "position", "position", "limit");
+    var paginateGetRestApis = createPaginator2(APIGatewayClient2, GetRestApisCommand2, "position", "position", "limit");
     var paginateGetUsage = createPaginator2(APIGatewayClient2, GetUsageCommand, "position", "position", "limit");
     var paginateGetUsagePlanKeys = createPaginator2(APIGatewayClient2, GetUsagePlanKeysCommand, "position", "position", "limit");
     var paginateGetUsagePlans = createPaginator2(APIGatewayClient2, GetUsagePlansCommand, "position", "position", "limit");
@@ -47436,7 +47436,7 @@ var require_dist_cjs17 = __commonJS({
       paginateGetDomainNames,
       paginateGetModels,
       paginateGetResources,
-      paginateGetRestApis: paginateGetRestApis2,
+      paginateGetRestApis,
       paginateGetUsage,
       paginateGetUsagePlanKeys,
       paginateGetUsagePlans,
@@ -48107,7 +48107,7 @@ var require_dist_cjs17 = __commonJS({
     exports2.paginateGetDomainNames = paginateGetDomainNames;
     exports2.paginateGetModels = paginateGetModels;
     exports2.paginateGetResources = paginateGetResources;
-    exports2.paginateGetRestApis = paginateGetRestApis2;
+    exports2.paginateGetRestApis = paginateGetRestApis;
     exports2.paginateGetUsage = paginateGetUsage;
     exports2.paginateGetUsagePlanKeys = paginateGetUsagePlanKeys;
     exports2.paginateGetUsagePlans = paginateGetUsagePlans;
@@ -65844,7 +65844,7 @@ var require_dist_cjs20 = __commonJS({
     var paginateListChannelNamespaces = createPaginator2(AppSyncClient2, ListChannelNamespacesCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListDataSources = createPaginator2(AppSyncClient2, ListDataSourcesCommand, "nextToken", "nextToken", "maxResults");
     var paginateListDomainNames = createPaginator2(AppSyncClient2, ListDomainNamesCommand, "nextToken", "nextToken", "maxResults");
-    var paginateListFunctions2 = createPaginator2(AppSyncClient2, ListFunctionsCommand2, "nextToken", "nextToken", "maxResults");
+    var paginateListFunctions = createPaginator2(AppSyncClient2, ListFunctionsCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListGraphqlApis = createPaginator2(AppSyncClient2, ListGraphqlApisCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListResolversByFunction = createPaginator2(AppSyncClient2, ListResolversByFunctionCommand, "nextToken", "nextToken", "maxResults");
     var paginateListResolvers = createPaginator2(AppSyncClient2, ListResolversCommand, "nextToken", "nextToken", "maxResults");
@@ -65933,7 +65933,7 @@ var require_dist_cjs20 = __commonJS({
       paginateListChannelNamespaces,
       paginateListDataSources,
       paginateListDomainNames,
-      paginateListFunctions: paginateListFunctions2,
+      paginateListFunctions,
       paginateListGraphqlApis,
       paginateListResolvers,
       paginateListResolversByFunction,
@@ -66546,7 +66546,7 @@ var require_dist_cjs20 = __commonJS({
     exports2.paginateListChannelNamespaces = paginateListChannelNamespaces;
     exports2.paginateListDataSources = paginateListDataSources;
     exports2.paginateListDomainNames = paginateListDomainNames;
-    exports2.paginateListFunctions = paginateListFunctions2;
+    exports2.paginateListFunctions = paginateListFunctions;
     exports2.paginateListGraphqlApis = paginateListGraphqlApis;
     exports2.paginateListResolvers = paginateListResolvers;
     exports2.paginateListResolversByFunction = paginateListResolversByFunction;
@@ -102009,7 +102009,7 @@ var require_dist_cjs24 = __commonJS({
     var paginateListEventSourceMappings = createPaginator2(LambdaClient3, ListEventSourceMappingsCommand2, "Marker", "NextMarker", "MaxItems");
     var paginateListFunctionEventInvokeConfigs = createPaginator2(LambdaClient3, ListFunctionEventInvokeConfigsCommand, "Marker", "NextMarker", "MaxItems");
     var paginateListFunctionsByCodeSigningConfig = createPaginator2(LambdaClient3, ListFunctionsByCodeSigningConfigCommand, "Marker", "NextMarker", "MaxItems");
-    var paginateListFunctions2 = createPaginator2(LambdaClient3, ListFunctionsCommand2, "Marker", "NextMarker", "MaxItems");
+    var paginateListFunctions = createPaginator2(LambdaClient3, ListFunctionsCommand2, "Marker", "NextMarker", "MaxItems");
     var paginateListFunctionUrlConfigs = createPaginator2(LambdaClient3, ListFunctionUrlConfigsCommand, "Marker", "NextMarker", "MaxItems");
     var paginateListFunctionVersionsByCapacityProvider = createPaginator2(LambdaClient3, ListFunctionVersionsByCapacityProviderCommand, "Marker", "NextMarker", "MaxItems");
     var paginateListLayers = createPaginator2(LambdaClient3, ListLayersCommand, "Marker", "NextMarker", "MaxItems");
@@ -102365,7 +102365,7 @@ var require_dist_cjs24 = __commonJS({
       paginateListDurableExecutionsByFunction,
       paginateListEventSourceMappings,
       paginateListFunctionEventInvokeConfigs,
-      paginateListFunctions: paginateListFunctions2,
+      paginateListFunctions,
       paginateListFunctionsByCodeSigningConfig,
       paginateListFunctionUrlConfigs,
       paginateListFunctionVersionsByCapacityProvider,
@@ -103360,7 +103360,7 @@ var require_dist_cjs24 = __commonJS({
     exports2.paginateListFunctionEventInvokeConfigs = paginateListFunctionEventInvokeConfigs;
     exports2.paginateListFunctionUrlConfigs = paginateListFunctionUrlConfigs;
     exports2.paginateListFunctionVersionsByCapacityProvider = paginateListFunctionVersionsByCapacityProvider;
-    exports2.paginateListFunctions = paginateListFunctions2;
+    exports2.paginateListFunctions = paginateListFunctions;
     exports2.paginateListFunctionsByCodeSigningConfig = paginateListFunctionsByCodeSigningConfig;
     exports2.paginateListLayerVersions = paginateListLayerVersions;
     exports2.paginateListLayers = paginateListLayers;
@@ -161777,6 +161777,32 @@ function parseAwsError(error3) {
     message: toErrorMessage(error3)
   };
 }
+var MAX_API_GATEWAY_PAGES = 100;
+function createApiGatewayPaginationGuard(operation2) {
+  const seenTokens = /* @__PURE__ */ new Set();
+  let pageCount = 0;
+  return {
+    beginPage() {
+      pageCount += 1;
+      if (pageCount > MAX_API_GATEWAY_PAGES) {
+        throw new Error(
+          `API Gateway ${operation2} pagination exceeded ${MAX_API_GATEWAY_PAGES} pages; aborting`
+        );
+      }
+    },
+    takeNextToken(token) {
+      const next = token ? String(token) : void 0;
+      if (!next) return void 0;
+      if (seenTokens.has(next)) {
+        throw new Error(
+          `API Gateway ${operation2} pagination returned a repeated token; aborting`
+        );
+      }
+      seenTokens.add(next);
+      return next;
+    }
+  };
+}
 async function readExportBody(body) {
   if (!body) {
     return "";
@@ -161869,7 +161895,11 @@ var AwsApiGatewaySdkClient = class {
   stsClient;
   async listRestApis() {
     const items = [];
-    for await (const page of (0, import_client_api_gateway.paginateGetRestApis)({ client: this.restClient }, {})) {
+    const guard = createApiGatewayPaginationGuard("GetRestApis");
+    let position;
+    do {
+      guard.beginPage();
+      const page = await this.restClient.send(new import_client_api_gateway.GetRestApisCommand({ position }));
       for (const item of page.items ?? []) {
         if (!item.id) {
           continue;
@@ -161879,13 +161909,16 @@ var AwsApiGatewaySdkClient = class {
           name: (item.name ?? "").trim() || item.id
         });
       }
-    }
+      position = guard.takeNextToken(page.position);
+    } while (position);
     return items;
   }
   async listHttpApis() {
     const items = [];
+    const guard = createApiGatewayPaginationGuard("GetApis");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetApisCommand({
           NextToken: nextToken
@@ -161902,20 +161935,24 @@ var AwsApiGatewaySdkClient = class {
           routeSelectionExpression: item.RouteSelectionExpression
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
   async listRestDomainMappings() {
     const mappings = [];
+    const domainGuard = createApiGatewayPaginationGuard("GetDomainNames");
     let position;
     do {
+      domainGuard.beginPage();
       const domains = await this.restClient.send(new import_client_api_gateway.GetDomainNamesCommand({ position }));
       for (const domain of domains.items ?? []) {
         const domainName = domain.domainName;
         if (!domainName) continue;
+        const mappingGuard = createApiGatewayPaginationGuard("GetBasePathMappings");
         let basePathPosition;
         do {
+          mappingGuard.beginPage();
           const response = await this.restClient.send(
             new import_client_api_gateway.GetBasePathMappingsCommand({
               domainName,
@@ -161932,23 +161969,27 @@ var AwsApiGatewaySdkClient = class {
               gatewayType: "REST"
             });
           }
-          basePathPosition = response.position;
+          basePathPosition = mappingGuard.takeNextToken(response.position);
         } while (basePathPosition);
       }
-      position = domains.position;
+      position = domainGuard.takeNextToken(domains.position);
     } while (position);
     return mappings;
   }
   async listHttpDomainMappings() {
     const mappings = [];
+    const domainGuard = createApiGatewayPaginationGuard("GetDomainNames");
     let nextToken;
     do {
+      domainGuard.beginPage();
       const domains = await this.httpClient.send(new import_client_apigatewayv2.GetDomainNamesCommand({ NextToken: nextToken }));
       for (const domain of domains.Items ?? []) {
         const domainName = domain.DomainName;
         if (!domainName) continue;
+        const mappingGuard = createApiGatewayPaginationGuard("GetApiMappings");
         let mappingToken;
         do {
+          mappingGuard.beginPage();
           const response = await this.httpClient.send(
             new import_client_apigatewayv2.GetApiMappingsCommand({
               DomainName: domainName,
@@ -161966,10 +162007,10 @@ var AwsApiGatewaySdkClient = class {
               gatewayType: api?.protocolType === "WEBSOCKET" ? "WEBSOCKET" : "HTTP"
             });
           }
-          mappingToken = response.NextToken;
+          mappingToken = mappingGuard.takeNextToken(response.NextToken);
         } while (mappingToken);
       }
-      nextToken = domains.NextToken;
+      nextToken = domainGuard.takeNextToken(domains.NextToken);
     } while (nextToken);
     return mappings;
   }
@@ -162035,21 +162076,30 @@ var AwsApiGatewaySdkClient = class {
     }).filter((stage) => Boolean(stage));
   }
   async listHttpStages(apiId) {
-    const response = await this.httpClient.send(
-      new import_client_apigatewayv2.GetStagesCommand({
-        ApiId: apiId
-      })
-    );
-    return (response.Items ?? []).map((stage) => {
-      const stageName = (stage.StageName ?? "").trim();
-      if (!stageName) return void 0;
-      const summary2 = { stageName };
-      const deploymentId = (stage.DeploymentId ?? "").trim();
-      if (deploymentId) summary2.deploymentId = deploymentId;
-      if (typeof stage.AutoDeploy === "boolean") summary2.autoDeploy = stage.AutoDeploy;
-      if (typeof stage.ApiGatewayManaged === "boolean") summary2.apiGatewayManaged = stage.ApiGatewayManaged;
-      return summary2;
-    }).filter((stage) => Boolean(stage));
+    const stages = [];
+    const guard = createApiGatewayPaginationGuard("GetStages");
+    let nextToken;
+    do {
+      guard.beginPage();
+      const response = await this.httpClient.send(
+        new import_client_apigatewayv2.GetStagesCommand({
+          ApiId: apiId,
+          NextToken: nextToken
+        })
+      );
+      for (const stage of response.Items ?? []) {
+        const stageName = (stage.StageName ?? "").trim();
+        if (!stageName) continue;
+        const summary2 = { stageName };
+        const deploymentId = (stage.DeploymentId ?? "").trim();
+        if (deploymentId) summary2.deploymentId = deploymentId;
+        if (typeof stage.AutoDeploy === "boolean") summary2.autoDeploy = stage.AutoDeploy;
+        if (typeof stage.ApiGatewayManaged === "boolean") summary2.apiGatewayManaged = stage.ApiGatewayManaged;
+        stages.push(summary2);
+      }
+      nextToken = guard.takeNextToken(response.NextToken);
+    } while (nextToken);
+    return stages;
   }
   async getRestTags(apiId) {
     const resourceArn = `arn:aws:apigateway:${this.region}::/restapis/${apiId}`;
@@ -162108,9 +162158,10 @@ var AwsApiGatewaySdkClient = class {
   }
   async listRestRequestValidators(apiId) {
     const validators = [];
+    const guard = createApiGatewayPaginationGuard("GetRequestValidators");
     let position;
-    const seenPositions = /* @__PURE__ */ new Set();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new import_client_api_gateway.GetRequestValidatorsCommand({
           restApiId: apiId,
@@ -162119,10 +162170,7 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       validators.push(...response.items ?? []);
-      const next = response.position;
-      if (next !== void 0 && seenPositions.has(next)) break;
-      if (next !== void 0) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return validators;
   }
@@ -162143,9 +162191,10 @@ var AwsApiGatewaySdkClient = class {
   }
   async listRestResourcesWithMethods(apiId) {
     const resources = [];
+    const guard = createApiGatewayPaginationGuard("GetResources");
     let position;
-    const seenPositions = /* @__PURE__ */ new Set();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new import_client_api_gateway.GetResourcesCommand({
           restApiId: apiId,
@@ -162155,18 +162204,16 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       resources.push(...response.items ?? []);
-      const next = response.position;
-      if (next !== void 0 && seenPositions.has(next)) break;
-      if (next !== void 0) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return resources;
   }
   async listRestModels(apiId) {
     const models = [];
+    const guard = createApiGatewayPaginationGuard("GetModels");
     let position;
-    const seenPositions = /* @__PURE__ */ new Set();
     do {
+      guard.beginPage();
       const response = await this.restClient.send(
         new import_client_api_gateway.GetModelsCommand({
           restApiId: apiId,
@@ -162175,10 +162222,7 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       models.push(...response.items ?? []);
-      const next = response.position;
-      if (next !== void 0 && seenPositions.has(next)) break;
-      if (next !== void 0) seenPositions.add(next);
-      position = next;
+      position = guard.takeNextToken(response.position);
     } while (position);
     return models;
   }
@@ -162242,8 +162286,10 @@ var AwsApiGatewaySdkClient = class {
   }
   async listWebSocketRoutes(apiId) {
     const routes = [];
+    const guard = createApiGatewayPaginationGuard("GetRoutes");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetRoutesCommand({
           ApiId: apiId,
@@ -162251,14 +162297,16 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       routes.push(...response.Items ?? []);
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routes;
   }
   async listWebSocketIntegrations(apiId) {
     const integrations = [];
+    const guard = createApiGatewayPaginationGuard("GetIntegrations");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetIntegrationsCommand({
           ApiId: apiId,
@@ -162267,14 +162315,16 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       integrations.push(...response.Items ?? []);
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return integrations;
   }
   async listWebSocketAuthorizers(apiId) {
     const authorizers = [];
+    const guard = createApiGatewayPaginationGuard("GetAuthorizers");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetAuthorizersCommand({
           ApiId: apiId,
@@ -162283,14 +162333,16 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       authorizers.push(...response.Items ?? []);
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return authorizers;
   }
   async listWebSocketModels(apiId) {
     const models = [];
+    const guard = createApiGatewayPaginationGuard("GetModels");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetModelsCommand({
           ApiId: apiId,
@@ -162299,14 +162351,16 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       models.push(...response.Items ?? []);
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return models;
   }
   async listWebSocketRouteResponses(apiId, routeId) {
     const routeResponses = [];
+    const guard = createApiGatewayPaginationGuard("GetRouteResponses");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.httpClient.send(
         new import_client_apigatewayv2.GetRouteResponsesCommand({
           ApiId: apiId,
@@ -162316,7 +162370,7 @@ var AwsApiGatewaySdkClient = class {
         })
       );
       routeResponses.push(...response.Items ?? []);
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return routeResponses;
   }
@@ -162840,6 +162894,42 @@ var import_yaml13 = __toESM(require_dist(), 1);
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs20(), 1);
 var import_node_http_handler6 = __toESM(require_dist_cjs6(), 1);
+
+// src/lib/aws/pagination.ts
+var MAX_AWS_LIST_PAGES = 100;
+function createAwsPaginationGuard(operation2, options = {}) {
+  const maxPages = options.maxPages ?? MAX_AWS_LIST_PAGES;
+  const seenTokens = /* @__PURE__ */ new Set();
+  let pageCount = 0;
+  return {
+    isPageCapReached() {
+      return pageCount >= maxPages;
+    },
+    beginPage() {
+      pageCount += 1;
+      if (pageCount > maxPages) {
+        throw new Error(`${operation2} pagination exceeded ${maxPages} pages; aborting`);
+      }
+    },
+    takeNextToken(token) {
+      const next = token ? String(token) : void 0;
+      if (!next) return void 0;
+      if (seenTokens.has(next)) {
+        throw new Error(`${operation2} pagination returned a repeated token; aborting`);
+      }
+      seenTokens.add(next);
+      return next;
+    }
+  };
+}
+function isAwsPaginationAbortError(error3) {
+  if (!(error3 instanceof Error)) return false;
+  return /pagination exceeded \d+ pages; aborting|pagination returned a repeated token; aborting/.test(
+    error3.message
+  );
+}
+
+// src/lib/aws/appsync-client.ts
 var MAX_SOURCE_ASSOCIATION_PAGES = 20;
 var DEFAULT_SOURCE_ASSOCIATION_PAGE_SIZE = 25;
 function sourceAssociationPageSize(value) {
@@ -162867,8 +162957,10 @@ var AppSyncSdkClient = class {
   }
   async listGraphqlApis() {
     const items = [];
+    const guard = createAwsPaginationGuard("AppSync ListGraphqlApis");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_appsync.ListGraphqlApisCommand({ nextToken, maxResults: 25 }));
       for (const api of response.graphqlApis ?? []) {
         if (!api.apiId) continue;
@@ -162879,7 +162971,7 @@ var AppSyncSdkClient = class {
           apiType: (api.apiType ?? "GRAPHQL").toUpperCase()
         });
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return items;
   }
@@ -162899,12 +162991,13 @@ var AppSyncSdkClient = class {
   async listSourceApiAssociations(mergedApiId) {
     const associations = [];
     const evidence = [];
+    const guard = createAwsPaginationGuard("AppSync ListSourceApiAssociations", {
+      maxPages: MAX_SOURCE_ASSOCIATION_PAGES
+    });
     let nextToken;
-    let page = 0;
     try {
       do {
-        page += 1;
-        if (page > MAX_SOURCE_ASSOCIATION_PAGES) {
+        if (guard.isPageCapReached()) {
           return {
             associations,
             truncated: true,
@@ -162914,6 +163007,7 @@ var AppSyncSdkClient = class {
             ]
           };
         }
+        guard.beginPage();
         const response = await this.client.send(
           new import_client_appsync.ListSourceApiAssociationsCommand({
             apiId: mergedApiId,
@@ -162930,11 +163024,12 @@ var AppSyncSdkClient = class {
             sourceApiId
           });
         }
-        nextToken = response.nextToken;
+        nextToken = guard.takeNextToken(response.nextToken);
       } while (nextToken);
       evidence.push(`Listed ${associations.length} AppSync source API association(s) for merged API ${mergedApiId}`);
       return { associations, evidence };
     } catch (error3) {
+      if (isAwsPaginationAbortError(error3)) throw error3;
       const parsed = parseAwsError(error3);
       const denied = parsed.name === "AccessDeniedException" || parsed.name === "AccessDenied" || parsed.name === "UnauthorizedException" || /access denied|not authorized|unauthorized/i.test(parsed.message);
       return {
@@ -162976,8 +163071,10 @@ var EventBridgeSchemasSdkClient = class {
   }
   async listRegistries() {
     const items = [];
+    const guard = createAwsPaginationGuard("EventBridge Schemas ListRegistries");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_schemas.ListRegistriesCommand({ NextToken: nextToken }));
       for (const registry of response.Registries ?? []) {
         if (!registry.RegistryName) continue;
@@ -162986,14 +163083,16 @@ var EventBridgeSchemasSdkClient = class {
           arn: registry.RegistryArn ?? ""
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
   async listSchemas(registryName) {
     const items = [];
+    const guard = createAwsPaginationGuard("EventBridge Schemas ListSchemas");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_schemas.ListSchemasCommand({ RegistryName: registryName, NextToken: nextToken })
       );
@@ -163006,7 +163105,7 @@ var EventBridgeSchemasSdkClient = class {
           versionCount: schema.VersionCount ?? 0
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
@@ -163068,8 +163167,10 @@ var CloudFormationSdkClient = class {
   }
   async listActiveStacks() {
     const items = [];
+    const guard = createAwsPaginationGuard("CloudFormation ListStacks");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_cloudformation.ListStacksCommand({
           StackStatusFilter: ["CREATE_COMPLETE", "UPDATE_COMPLETE", "UPDATE_ROLLBACK_COMPLETE"],
@@ -163084,14 +163185,16 @@ var CloudFormationSdkClient = class {
           status: stack.StackStatus ?? ""
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
   async listApiResources(stackName) {
     const items = [];
+    const guard = createAwsPaginationGuard("CloudFormation ListStackResources");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_cloudformation.ListStackResourcesCommand({ StackName: stackName, NextToken: nextToken })
       );
@@ -163103,7 +163206,7 @@ var CloudFormationSdkClient = class {
           type: resource.ResourceType
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
@@ -163163,8 +163266,10 @@ var GlueSchemaSdkClient = class {
   }
   async listRegistries() {
     const items = [];
+    const guard = createAwsPaginationGuard("Glue ListRegistries");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_glue.ListRegistriesCommand({ NextToken: nextToken, MaxResults: 100 }));
       for (const registry of response.Registries ?? []) {
         if (!registry.RegistryName) continue;
@@ -163173,14 +163278,16 @@ var GlueSchemaSdkClient = class {
           arn: registry.RegistryArn ?? ""
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
   async listSchemas(registryName) {
     const items = [];
+    const guard = createAwsPaginationGuard("Glue ListSchemas");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_glue.ListSchemasCommand({
           RegistryId: { RegistryName: registryName },
@@ -163196,7 +163303,7 @@ var GlueSchemaSdkClient = class {
           registryName
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
@@ -163259,8 +163366,12 @@ var LambdaSdkClient = class {
   }
   async listFunctions() {
     const items = [];
-    for await (const page of (0, import_client_lambda.paginateListFunctions)({ client: this.client }, {})) {
-      for (const fn of page.Functions ?? []) {
+    const guard = createAwsPaginationGuard("Lambda ListFunctions");
+    let marker;
+    do {
+      guard.beginPage();
+      const response = await this.client.send(new import_client_lambda.ListFunctionsCommand({ Marker: marker, MaxItems: 50 }));
+      for (const fn of response.Functions ?? []) {
         if (!fn.FunctionName || !fn.FunctionArn) continue;
         items.push({
           name: fn.FunctionName,
@@ -163268,7 +163379,8 @@ var LambdaSdkClient = class {
           runtime: fn.Runtime
         });
       }
-    }
+      marker = guard.takeNextToken(response.NextMarker);
+    } while (marker);
     return items;
   }
   async getFunctionUrlConfig(functionName) {
@@ -163338,27 +163450,31 @@ var AppSyncEventsSdkClient = class {
   }
   async listEventApis() {
     const apis = [];
+    const guard = createAwsPaginationGuard("AppSync Events ListApis");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_appsync2.ListApisCommand({ nextToken, maxResults: 25 }));
       for (const api of response.apis ?? []) {
         const mapped = mapEventApi(api);
         if (mapped) apis.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return apis;
   }
   async listChannelNamespaces(apiId) {
     const namespaces = [];
+    const guard = createAwsPaginationGuard("AppSync Events ListChannelNamespaces");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_appsync2.ListChannelNamespacesCommand({ apiId, nextToken, maxResults: 25 }));
       for (const namespace of response.channelNamespaces ?? []) {
         const mapped = mapChannelNamespace(namespace, apiId);
         if (mapped) namespaces.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return namespaces;
   }
@@ -163420,21 +163536,25 @@ var EventBridgeSurfaceSdkClient = class {
   }
   async listRules() {
     const rules = [];
+    const guard = createAwsPaginationGuard("EventBridge ListRules");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.events.send(new import_client_eventbridge.ListRulesCommand({ NextToken: nextToken, Limit: 100 }));
       for (const rule of response.Rules ?? []) {
         const mapped = mapRule(rule);
         if (mapped) rules.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return rules;
   }
   async listTargetsByRule(ruleName, eventBusName) {
     const targets = [];
+    const guard = createAwsPaginationGuard("EventBridge ListTargetsByRule");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.events.send(
         new import_client_eventbridge.ListTargetsByRuleCommand({
           Rule: ruleName,
@@ -163447,20 +163567,22 @@ var EventBridgeSurfaceSdkClient = class {
         const mapped = mapTarget(target);
         if (mapped) targets.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return targets;
   }
   async listPipes() {
     const pipes = [];
+    const guard = createAwsPaginationGuard("EventBridge ListPipes");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.pipes.send(new import_client_pipes.ListPipesCommand({ NextToken: nextToken, Limit: 100 }));
       for (const pipe of response.Pipes ?? []) {
         const mapped = mapPipe(pipe);
         if (mapped) pipes.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return pipes;
   }
@@ -163470,14 +163592,16 @@ var EventBridgeSurfaceSdkClient = class {
   }
   async listApiDestinations() {
     const destinations = [];
+    const guard = createAwsPaginationGuard("EventBridge ListApiDestinations");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.events.send(new import_client_eventbridge.ListApiDestinationsCommand({ NextToken: nextToken, Limit: 100 }));
       for (const destination of response.ApiDestinations ?? []) {
         const mapped = mapApiDestination(destination);
         if (mapped) destinations.push(mapped);
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return destinations;
   }
@@ -163581,21 +163705,25 @@ var BedrockActionGroupsSdkClient = class {
   }
   async listAgents() {
     const agents = [];
+    const guard = createAwsPaginationGuard("Bedrock ListAgents");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_bedrock_agent.ListAgentsCommand({ nextToken, maxResults: 100 }));
       for (const agent of response.agentSummaries ?? []) {
         const mapped = mapAgent(agent);
         if (mapped) agents.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return agents;
   }
   async listActionGroups(agentId, agentVersion) {
     const groups = [];
+    const guard = createAwsPaginationGuard("Bedrock ListAgentActionGroups");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_bedrock_agent.ListAgentActionGroupsCommand({
           agentId,
@@ -163615,7 +163743,7 @@ var BedrockActionGroupsSdkClient = class {
           actionGroupState: group5.actionGroupState
         });
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return groups;
   }
@@ -163699,33 +163827,39 @@ var AlbListenerRulesSdkClient = class {
   }
   async listLoadBalancers() {
     const loadBalancers = [];
+    const guard = createAwsPaginationGuard("ALB DescribeLoadBalancers");
     let marker;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_elastic_load_balancing_v2.DescribeLoadBalancersCommand({ Marker: marker, PageSize: 400 }));
       loadBalancers.push(...response.LoadBalancers ?? []);
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return loadBalancers;
   }
   async listListeners(loadBalancerArn) {
     const listeners = [];
+    const guard = createAwsPaginationGuard("ALB DescribeListeners");
     let marker;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_elastic_load_balancing_v2.DescribeListenersCommand({ LoadBalancerArn: loadBalancerArn, Marker: marker, PageSize: 400 })
       );
       listeners.push(...response.Listeners ?? []);
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return listeners;
   }
   async listRulesForListener(listenerArn) {
     const rules = [];
+    const guard = createAwsPaginationGuard("ALB DescribeRules");
     let marker;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_elastic_load_balancing_v2.DescribeRulesCommand({ ListenerArn: listenerArn, Marker: marker, PageSize: 400 }));
       rules.push(...response.Rules ?? []);
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return rules;
   }
@@ -163777,14 +163911,16 @@ var LambdaEventSourceSdkClient = class {
   }
   async listEventSourceMappings() {
     const mappings = [];
+    const guard = createAwsPaginationGuard("Lambda ListEventSourceMappings");
     let marker;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_lambda2.ListEventSourceMappingsCommand({ Marker: marker, MaxItems: 100 }));
       for (const mapping of response.EventSourceMappings ?? []) {
         const mapped = mapMapping(mapping);
         if (mapped) mappings.push(mapped);
       }
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return mappings;
   }
@@ -163837,14 +163973,16 @@ var VerifiedPermissionsSdkClient = class {
   }
   async listPolicyStores() {
     const stores = [];
+    const guard = createAwsPaginationGuard("Verified Permissions ListPolicyStores");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_verifiedpermissions.ListPolicyStoresCommand({ nextToken, maxResults: 50 }));
       for (const store of response.policyStores ?? []) {
         const mapped = mapPolicyStore(store);
         if (mapped) stores.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return stores;
   }
@@ -163892,14 +164030,16 @@ var StepFunctionsSdkClient = class {
   }
   async listStateMachines() {
     const stateMachines = [];
+    const guard = createAwsPaginationGuard("Step Functions ListStateMachines");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_sfn.ListStateMachinesCommand({ nextToken, maxResults: 100 }));
       for (const stateMachine of response.stateMachines ?? []) {
         const mapped = mapStateMachine(stateMachine);
         if (mapped) stateMachines.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return stateMachines;
   }
@@ -164543,6 +164683,7 @@ function dirnamePosix(relativePath2) {
 
 // src/lib/iac/freshness.ts
 var GENERATED_PATH_RE = /(^|\/)(cdk\.out|\.aws-sam|\.serverless|dist|build|generated|out|target)(\/|$)/i;
+var MAX_SOURCE_DIR_ENTRIES = 64;
 var SOURCE_BASENAMES = /* @__PURE__ */ new Set([
   "template.yaml",
   "template.yml",
@@ -164591,18 +164732,41 @@ async function classifyIacArtifact(repoRoot, relativePath2, sourceHints = []) {
   return artifactMtime >= newestSource ? "generated-fresh" : "generated-stale";
 }
 async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) {
-  const results = new Set(sourceHints.map(toPosix));
+  const artifactPosix = toPosix(artifactRelative);
+  const results = new Set(sourceHints.map(toPosix).filter((hint) => hint !== artifactPosix));
   const root5 = import_node_path8.default.resolve(repoRoot);
   let current = import_node_path8.default.dirname(import_node_path8.default.resolve(root5, artifactRelative));
   for (let depth = 0; depth < 6; depth += 1) {
     if (!current.startsWith(root5)) break;
     const relativeDir = toPosix(import_node_path8.default.relative(root5, current)) || ".";
+    const joinRelative = (entry) => relativeDir === "." ? entry : `${relativeDir}/${entry}`;
+    for (const basename3 of [...SOURCE_BASENAMES].sort((a5, b5) => a5.localeCompare(b5))) {
+      const relative2 = joinRelative(basename3);
+      if (relative2 === artifactPosix) {
+        continue;
+      }
+      try {
+        const info2 = await (0, import_promises7.stat)(import_node_path8.default.join(current, basename3));
+        if (info2.isFile()) {
+          results.add(relative2);
+        }
+      } catch {
+      }
+    }
     try {
-      const entries = await (0, import_promises7.readdir)(current);
-      for (const entry of entries) {
-        const lower = entry.toLowerCase();
-        if (SOURCE_BASENAMES.has(lower) || lower.endsWith(".tf") || lower.endsWith(".tf.json") || lower === "cdk.json") {
-          results.add(relativeDir === "." ? entry : `${relativeDir}/${entry}`);
+      let inspected = 0;
+      const directory = await (0, import_promises7.opendir)(current);
+      for await (const dirent of directory) {
+        if (inspected >= MAX_SOURCE_DIR_ENTRIES) {
+          break;
+        }
+        inspected += 1;
+        const lower = dirent.name.toLowerCase();
+        if (lower.endsWith(".tf") || lower.endsWith(".tf.json")) {
+          const relative2 = joinRelative(dirent.name);
+          if (relative2 !== artifactPosix) {
+            results.add(relative2);
+          }
         }
       }
     } catch {
@@ -164967,13 +165131,28 @@ async function resolveCloudFormationTemplate(repoRoot, templateRelative, budget,
   }
   return candidates;
 }
-async function discoverCloudFormationTemplatePaths(repoRoot, budget, _errors) {
-  void _errors;
-  void budget;
-  const { readdir: readdir11, lstat: lstat11 } = await import("node:fs/promises");
+async function discoverCloudFormationTemplatePaths(repoRoot, budget, errors) {
+  const { opendir: opendir8, lstat: lstat11 } = await import("node:fs/promises");
   const found = /* @__PURE__ */ new Set();
   const roots = [".", "infrastructure", "infra", "deploy", "cloudformation", "sam", "templates"];
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  const markBoundsExceeded = (scanPath) => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: toPosix(scanPath),
+      message: `CloudFormation template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
   for (const dir of roots) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded(dir);
+      break;
+    }
     const absolute = import_node_path9.default.resolve(repoRoot, dir);
     let info2;
     try {
@@ -164990,8 +165169,21 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, _errors) {
       continue;
     }
     if (!info2.isDirectory()) continue;
-    const entries = (await readdir11(absolute).catch(() => [])).sort();
-    for (const entry of entries) {
+    let directory;
+    try {
+      directory = await opendir8(absolute);
+    } catch {
+      continue;
+    }
+    let exhausted = false;
+    for await (const dirent of directory) {
+      if (inspectedEntries >= maxInspectedEntries) {
+        markBoundsExceeded(dir);
+        exhausted = true;
+        break;
+      }
+      inspectedEntries += 1;
+      const entry = dirent.name;
       const lower = entry.toLowerCase();
       if (lower === "template.yaml" || lower === "template.yml" || lower === "template.json" || lower.endsWith(".yaml") && lower.includes("template") || lower.endsWith(".yml") && lower.includes("template")) {
         const relative2 = dir === "." ? entry : `${dir}/${entry}`;
@@ -165004,6 +165196,7 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, _errors) {
         found.add(toPosix(relative2));
       }
     }
+    if (exhausted) break;
   }
   return [...found].sort((a5, b5) => a5.localeCompare(b5));
 }
@@ -165158,16 +165351,52 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
 }
 async function resolveTemplateGlob(repoRoot, directory, budget, errors, options) {
   const absolute = import_node_path10.default.resolve(repoRoot, directory);
-  let entries;
   try {
     const info2 = await (0, import_promises8.lstat)(absolute);
     if (info2.isSymbolicLink() || !info2.isDirectory()) return [];
-    entries = (await (0, import_promises8.readdir)(absolute)).filter((name) => name.endsWith(".template.json")).sort();
   } catch {
     return [];
   }
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  const markBoundsExceeded = () => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: toPosix(directory),
+      message: `CDK template discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
+  let directoryHandle;
+  try {
+    directoryHandle = await (0, import_promises8.opendir)(absolute);
+  } catch {
+    return [];
+  }
+  const matching = [];
+  for await (const dirent of directoryHandle) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded();
+      break;
+    }
+    inspectedEntries += 1;
+    const entry = dirent.name;
+    if (!entry.endsWith(".template.json")) continue;
+    const relative2 = toPosix(import_node_path10.default.posix.join(directory, entry));
+    try {
+      const entryInfo = await (0, import_promises8.lstat)(import_node_path10.default.resolve(repoRoot, relative2));
+      if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
+    } catch {
+      continue;
+    }
+    matching.push(entry);
+  }
+  matching.sort((a5, b5) => a5.localeCompare(b5));
   const candidates = [];
-  for (const entry of entries) {
+  for (const entry of matching) {
     const relative2 = toPosix(import_node_path10.default.posix.join(directory, entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,
@@ -165353,28 +165582,64 @@ async function resolvePackageArtifacts(repoRoot, budget, errors) {
   } catch {
     return [];
   }
-  const candidates = [];
-  const entries = (await (0, import_promises9.readdir)(packageDir).catch(() => [])).sort();
-  for (const entry of entries) {
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  const markBoundsExceeded = () => {
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: ".serverless",
+      message: `Serverless package discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}`
+    });
+  };
+  let directoryHandle;
+  try {
+    directoryHandle = await (0, import_promises9.opendir)(packageDir);
+  } catch {
+    return [];
+  }
+  const matching = [];
+  for await (const dirent of directoryHandle) {
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded();
+      break;
+    }
+    inspectedEntries += 1;
+    const entry = dirent.name;
     if (isJsTsConfig(entry)) continue;
+    if (!(entry.endsWith(".json") || entry.endsWith(".yml") || entry.endsWith(".yaml") || entry.endsWith(".template"))) {
+      continue;
+    }
+    if (!/cloudformation|template/i.test(entry)) continue;
     const relative2 = toPosix(import_node_path11.default.posix.join(".serverless", entry));
-    if (entry.endsWith(".json") || entry.endsWith(".yml") || entry.endsWith(".yaml") || entry.endsWith(".template")) {
-      if (/cloudformation|template/i.test(entry)) {
-        const stackCandidates = await resolveCloudFormationTemplate(
-          repoRoot,
-          relative2,
-          budget,
-          errors,
-          { forceSource: "serverless", sourceHints: STATIC_CONFIG_NAMES }
-        );
-        for (const candidate of stackCandidates) {
-          candidate.evidence = [
-            ...candidate.evidence,
-            `From existing Serverless package artifact ${relative2}`
-          ];
-          candidates.push(candidate);
-        }
-      }
+    try {
+      const entryInfo = await (0, import_promises9.lstat)(import_node_path11.default.resolve(repoRoot, relative2));
+      if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
+    } catch {
+      continue;
+    }
+    matching.push(entry);
+  }
+  matching.sort((a5, b5) => a5.localeCompare(b5));
+  const candidates = [];
+  for (const entry of matching) {
+    const relative2 = toPosix(import_node_path11.default.posix.join(".serverless", entry));
+    const stackCandidates = await resolveCloudFormationTemplate(
+      repoRoot,
+      relative2,
+      budget,
+      errors,
+      { forceSource: "serverless", sourceHints: STATIC_CONFIG_NAMES }
+    );
+    for (const candidate of stackCandidates) {
+      candidate.evidence = [
+        ...candidate.evidence,
+        `From existing Serverless package artifact ${relative2}`
+      ];
+      candidates.push(candidate);
     }
   }
   return candidates;
@@ -165836,20 +166101,54 @@ async function resolveLocalStateArtifact(repoRoot, relative2, budget, errors) {
   }
   return candidates;
 }
-async function collectTfPaths(repoRoot) {
+async function collectTfPaths(repoRoot, budget, errors) {
   const found = [];
   const root5 = import_node_path12.default.resolve(repoRoot);
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  let exhausted = false;
+  const markBoundsExceeded = (scanPath) => {
+    exhausted = true;
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: toPosix(scanPath),
+      message: `Terraform source discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}`
+    });
+  };
   async function walk(current, depth) {
-    if (depth > 4 || found.length >= 40) return;
-    let entries;
+    if (exhausted) return;
+    if (depth > budget.maxDepth) {
+      markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+      return;
+    }
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+      return;
+    }
     try {
       const info2 = await (0, import_promises10.lstat)(current);
       if (info2.isSymbolicLink() || !info2.isDirectory()) return;
-      entries = (await (0, import_promises10.readdir)(current)).sort();
     } catch {
       return;
     }
-    for (const entry of entries) {
+    let directoryHandle;
+    try {
+      directoryHandle = await (0, import_promises10.opendir)(current);
+    } catch {
+      return;
+    }
+    const entries = [];
+    for await (const dirent of directoryHandle) {
+      if (inspectedEntries >= maxInspectedEntries) {
+        markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+        break;
+      }
+      inspectedEntries += 1;
+      const entry = dirent.name;
       if (entry === ".git" || entry === "node_modules" || entry === ".terraform" || entry === "cdk.out") {
         continue;
       }
@@ -165862,11 +166161,22 @@ async function collectTfPaths(repoRoot) {
       }
       if (info2.isSymbolicLink()) continue;
       if (info2.isDirectory()) {
-        await walk(full, depth + 1);
+        entries.push({ name: entry, full, isDirectory: true, isTfFile: false });
         continue;
       }
       if (info2.isFile() && (entry.endsWith(".tf") || entry.endsWith(".tf.json"))) {
-        found.push(toPosix(import_node_path12.default.relative(root5, full)));
+        entries.push({ name: entry, full, isDirectory: false, isTfFile: true });
+      }
+    }
+    entries.sort((a5, b5) => a5.name.localeCompare(b5.name));
+    for (const entry of entries) {
+      if (exhausted) return;
+      if (entry.isDirectory) {
+        await walk(entry.full, depth + 1);
+        continue;
+      }
+      if (entry.isTfFile) {
+        found.push(toPosix(import_node_path12.default.relative(root5, entry.full)));
       }
     }
   }
@@ -165874,7 +166184,7 @@ async function collectTfPaths(repoRoot) {
   return found.sort((a5, b5) => a5.localeCompare(b5));
 }
 async function resolveTerraformStatic(repoRoot, budget, errors, options = {}) {
-  const paths = await collectTfPaths(repoRoot);
+  const paths = await collectTfPaths(repoRoot, budget, errors);
   const candidates = [];
   for (const relative2 of paths) {
     candidates.push(...await resolveTfFile(repoRoot, relative2, budget, errors));
@@ -166084,27 +166394,29 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
       }]
     };
   }
-  let raw;
-  try {
-    if (!await isRegularNonSymlinkFile(buildAbsolute)) {
-      return {
-        ...empty,
-        errors: [{
-          code: "unreadable",
-          path: buildRelative,
-          message: `smithy-build.json is not a regular file: ${buildRelative}`
-        }]
-      };
-    }
-    raw = await (0, import_promises12.readFile)(buildAbsolute, "utf8");
-  } catch (error3) {
+  const state2 = {
+    repoRoot: resolvedRoot,
+    buildDir: import_node_path15.default.dirname(buildAbsolute),
+    buildRelative,
+    maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
+    maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
+    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_MAX_CUMULATIVE_BYTES,
+    maxDepth: options.maxDepth ?? DEFAULT_MAX_DEPTH,
+    memberPaths: [],
+    contents: /* @__PURE__ */ new Map(),
+    projections: [],
+    errors: [],
+    visiting: /* @__PURE__ */ new Set([import_node_path15.default.resolve(buildAbsolute)]),
+    visitedDirs: /* @__PURE__ */ new Set(),
+    cumulativeBytes: 0,
+    filesRead: 0,
+    inspectedEntries: 0
+  };
+  const raw = await readSmithyConfigFile(state2, buildAbsolute, buildRelative);
+  if (raw === void 0) {
     return {
       ...empty,
-      errors: [{
-        code: "unreadable",
-        path: buildRelative,
-        message: `Failed to read smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
-      }]
+      errors: state2.errors
     };
   }
   let config;
@@ -166130,22 +166442,6 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
       }]
     };
   }
-  const state2 = {
-    repoRoot: resolvedRoot,
-    buildDir: import_node_path15.default.dirname(buildAbsolute),
-    buildRelative,
-    maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
-    maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
-    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_MAX_CUMULATIVE_BYTES,
-    maxDepth: options.maxDepth ?? DEFAULT_MAX_DEPTH,
-    memberPaths: [],
-    contents: /* @__PURE__ */ new Map(),
-    projections: [],
-    errors: [],
-    visiting: /* @__PURE__ */ new Set([import_node_path15.default.resolve(buildAbsolute)]),
-    visitedDirs: /* @__PURE__ */ new Set(),
-    cumulativeBytes: 0
-  };
   const sources = asStringArray(config.sources);
   const imports = asStringArray(config.imports);
   const projections = config.projections && typeof config.projections === "object" && !Array.isArray(config.projections) ? config.projections : {};
@@ -166194,6 +166490,85 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
     evidence,
     errors: state2.errors
   };
+}
+async function readSmithyConfigFile(state2, absolute, relative2) {
+  if (state2.errors.some((error3) => error3.code === "bounds-exceeded" || error3.code === "cycle" || error3.code === "path-escape")) {
+    return void 0;
+  }
+  let info2;
+  try {
+    info2 = await (0, import_promises12.lstat)(absolute);
+  } catch (error3) {
+    state2.errors.push({
+      code: "unreadable",
+      path: relative2,
+      message: `Failed to read smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return void 0;
+  }
+  if (info2.isSymbolicLink() || !info2.isFile()) {
+    state2.errors.push({
+      code: "unreadable",
+      path: relative2,
+      message: `smithy-build.json is not a regular file: ${relative2}`
+    });
+    return void 0;
+  }
+  if (state2.filesRead >= state2.maxFiles) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy file count exceeded maxFiles=${state2.maxFiles}`
+    });
+    return void 0;
+  }
+  if (info2.size > state2.maxFileBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy config exceeds maxFileBytes=${state2.maxFileBytes}`
+    });
+    return void 0;
+  }
+  if (state2.cumulativeBytes + info2.size > state2.maxCumulativeBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
+    });
+    return void 0;
+  }
+  let raw;
+  try {
+    raw = await (0, import_promises12.readFile)(absolute, "utf8");
+  } catch (error3) {
+    state2.errors.push({
+      code: "unreadable",
+      path: relative2,
+      message: `Failed to read smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return void 0;
+  }
+  const bytes = Buffer.byteLength(raw, "utf8");
+  if (bytes > state2.maxFileBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy config exceeds maxFileBytes=${state2.maxFileBytes}`
+    });
+    return void 0;
+  }
+  if (state2.cumulativeBytes + bytes > state2.maxCumulativeBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
+    });
+    return void 0;
+  }
+  state2.cumulativeBytes += bytes;
+  state2.filesRead += 1;
+  return raw;
 }
 async function collectPathEntry(state2, entry, kind) {
   if (state2.errors.some((error3) => error3.code === "bounds-exceeded" || error3.code === "cycle" || error3.code === "path-escape")) {
@@ -166275,6 +166650,14 @@ async function walkSmithyDirectory(state2, directory, depth) {
     });
     return;
   }
+  if (state2.inspectedEntries >= state2.maxFiles) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+      message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
+    });
+    return;
+  }
   const canonicalDir = import_node_path15.default.resolve(directory);
   if (state2.visitedDirs.has(canonicalDir)) {
     return;
@@ -166290,9 +166673,26 @@ async function walkSmithyDirectory(state2, directory, depth) {
   state2.visitedDirs.add(canonicalDir);
   state2.visiting.add(canonicalDir);
   try {
-    const entries = (await (0, import_promises12.readdir)(directory).catch(() => [])).sort((a5, b5) => a5.localeCompare(b5));
-    for (const entry of entries) {
-      if (state2.contents.size >= state2.maxFiles) {
+    let dirHandle;
+    try {
+      dirHandle = await (0, import_promises12.opendir)(directory);
+    } catch {
+      return;
+    }
+    for await (const dirent of dirHandle) {
+      if (state2.errors.some((error3) => error3.code === "bounds-exceeded" || error3.code === "cycle" || error3.code === "path-escape")) {
+        return;
+      }
+      if (state2.inspectedEntries >= state2.maxFiles) {
+        state2.errors.push({
+          code: "bounds-exceeded",
+          path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
+          message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
+        });
+        return;
+      }
+      state2.inspectedEntries += 1;
+      if (state2.filesRead >= state2.maxFiles) {
         state2.errors.push({
           code: "bounds-exceeded",
           path: toPosix3(import_node_path15.default.relative(state2.repoRoot, directory)),
@@ -166300,6 +166700,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
         });
         return;
       }
+      const entry = dirent.name;
       const fullPath = import_node_path15.default.join(directory, entry);
       const info2 = await (0, import_promises12.lstat)(fullPath).catch(() => void 0);
       if (!info2 || info2.isSymbolicLink()) continue;
@@ -166328,15 +166729,8 @@ async function collectNestedSmithyBuild(state2, absolute, relative2) {
   }
   state2.visiting.add(canonical);
   try {
-    let raw;
-    try {
-      raw = await (0, import_promises12.readFile)(absolute, "utf8");
-    } catch (error3) {
-      state2.errors.push({
-        code: "unreadable",
-        path: relative2,
-        message: `Failed to read nested smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
-      });
+    const raw = await readSmithyConfigFile(state2, absolute, relative2);
+    if (raw === void 0) {
       return;
     }
     let config;
@@ -166385,7 +166779,7 @@ async function readSmithyModelFile(state2, absolute, relative2) {
   if (!relative2.toLowerCase().endsWith(".smithy")) {
     return;
   }
-  if (state2.contents.size >= state2.maxFiles) {
+  if (state2.filesRead >= state2.maxFiles) {
     state2.errors.push({
       code: "bounds-exceeded",
       path: relative2,
@@ -166422,6 +166816,7 @@ async function readSmithyModelFile(state2, absolute, relative2) {
     return;
   }
   state2.cumulativeBytes += bytes;
+  state2.filesRead += 1;
   state2.contents.set(relative2, content);
   state2.memberPaths.push(relative2);
 }
@@ -166440,14 +166835,6 @@ function asStringArray(value) {
 function isPathInsideRoot2(root5, target) {
   const relative2 = import_node_path15.default.relative(import_node_path15.default.resolve(root5), import_node_path15.default.resolve(target));
   return relative2 === "" || !relative2.startsWith("..") && !import_node_path15.default.isAbsolute(relative2);
-}
-async function isRegularNonSymlinkFile(absolutePath) {
-  try {
-    const info2 = await (0, import_promises12.lstat)(absolutePath);
-    return !info2.isSymbolicLink() && info2.isFile();
-  } catch {
-    return false;
-  }
 }
 function toPosix3(value) {
   return value.replace(/\\/g, "/");
@@ -166547,8 +166934,23 @@ var DEFAULT_INVENTORY_BOUNDS = {
   maxFiles: 200,
   maxFileBytes: 1048576,
   maxCumulativeBytes: 8388608,
-  maxScanMs: 5e3
+  maxScanMs: 5e3,
+  /** Finite directory-entry inspection bound for streaming walks. */
+  maxInspectedEntries: 5e3
 };
+async function resolveInventoryStaticIac(repoRoot, budget, staticIac) {
+  if (staticIac?.resolveStaticIac) {
+    return staticIac.resolveStaticIac();
+  }
+  return resolveStaticIacCandidates(repoRoot, {
+    maxDepth: budget.maxDepth,
+    maxFiles: Math.max(0, budget.maxFiles - budget.files),
+    maxFileBytes: budget.maxFileBytes,
+    maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes),
+    ...staticIac?.s3Client ? { s3Client: staticIac.s3Client } : {},
+    ...staticIac?.terraformStatePaths ? { terraformStatePaths: staticIac.terraformStatePaths } : {}
+  });
+}
 function scanTimedOut(budget) {
   if (Date.now() <= budget.deadlineAt) return false;
   budget.truncated = true;
@@ -166650,7 +167052,7 @@ function isPathInsideRoot3(root5, target) {
   const relative2 = import_node_path16.default.relative(import_node_path16.default.resolve(root5), import_node_path16.default.resolve(target));
   return relative2 === "" || !relative2.startsWith("..") && !import_node_path16.default.isAbsolute(relative2);
 }
-async function isRegularNonSymlinkFile2(absolutePath) {
+async function isRegularNonSymlinkFile(absolutePath) {
   try {
     const link = await (0, import_promises13.lstat)(absolutePath);
     if (link.isSymbolicLink()) {
@@ -166722,10 +167124,12 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
   const budget = {
     files: 0,
     cumulativeBytes: 0,
+    inspectedEntries: 0,
     maxFiles: options.maxFiles ?? DEFAULT_INVENTORY_BOUNDS.maxFiles,
     maxFileBytes: options.maxFileBytes ?? DEFAULT_INVENTORY_BOUNDS.maxFileBytes,
     maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_INVENTORY_BOUNDS.maxCumulativeBytes,
     maxDepth: options.maxDepth ?? DEFAULT_INVENTORY_BOUNDS.maxDepth,
+    maxInspectedEntries: options.maxInspectedEntries ?? DEFAULT_INVENTORY_BOUNDS.maxInspectedEntries,
     deadlineAt: Date.now() + (options.maxScanMs ?? DEFAULT_INVENTORY_BOUNDS.maxScanMs),
     truncated: false
   };
@@ -166785,7 +167189,7 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
       });
       continue;
     }
-    if (!await isRegularNonSymlinkFile2(absolute)) {
+    if (!await isRegularNonSymlinkFile(absolute)) {
       continue;
     }
     const content = await readBoundedFile(resolvedRoot, relative2, budget, errors);
@@ -166826,14 +167230,7 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
   }
   raw.push(...singleFileCandidates);
   try {
-    const iacResolution = await resolveStaticIacCandidates(resolvedRoot, {
-      maxDepth: budget.maxDepth,
-      maxFiles: Math.max(0, budget.maxFiles - budget.files),
-      maxFileBytes: budget.maxFileBytes,
-      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes),
-      ...options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {},
-      ...options.staticIac?.terraformStatePaths ? { terraformStatePaths: options.staticIac.terraformStatePaths } : {}
-    });
+    const iacResolution = await resolveInventoryStaticIac(resolvedRoot, budget, options.staticIac);
     for (const error3 of iacResolution.errors) {
       if (error3.code === "path-escape" || error3.code === "bounds-exceeded") {
         errors.push({
@@ -166888,7 +167285,7 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
     errors.push({
       code: "bounds-exceeded",
       path: scopeRoot ?? ".",
-      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
+      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxInspectedEntries=${budget.maxInspectedEntries}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
     });
   }
   return { candidates, errors };
@@ -166938,7 +167335,7 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
   }
   for (const dir of COMMON_SCAN_DIRS) {
     if (scanTimedOut(budget)) break;
-    if (budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || budget.inspectedEntries >= budget.maxInspectedEntries) {
       budget.truncated = true;
       break;
     }
@@ -166976,20 +167373,27 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
   return [...candidates].map(toPosix4).sort((a5, b5) => a5.localeCompare(b5));
 }
 async function walkSpecCandidates(repoRoot, current, budget, depth) {
-  if (scanTimedOut(budget) || depth > budget.maxDepth || budget.files >= budget.maxFiles) {
-    if (budget.files >= budget.maxFiles || depth > budget.maxDepth) {
+  if (scanTimedOut(budget) || depth > budget.maxDepth || budget.files >= budget.maxFiles || budget.inspectedEntries >= budget.maxInspectedEntries) {
+    if (budget.files >= budget.maxFiles || depth > budget.maxDepth || budget.inspectedEntries >= budget.maxInspectedEntries) {
       budget.truncated = true;
     }
     return [];
   }
   const results = [];
-  const entries = (await (0, import_promises13.readdir)(current).catch(() => [])).sort((a5, b5) => a5.localeCompare(b5));
-  for (const entry of entries) {
+  let directory;
+  try {
+    directory = await (0, import_promises13.opendir)(current);
+  } catch {
+    return [];
+  }
+  for await (const dirent of directory) {
     if (scanTimedOut(budget)) break;
-    if (budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || budget.inspectedEntries >= budget.maxInspectedEntries) {
       budget.truncated = true;
       break;
     }
+    budget.inspectedEntries += 1;
+    const entry = dirent.name;
     if (SKIP_DIRS.has(entry)) continue;
     const fullPath = import_node_path16.default.join(current, entry);
     if (!isPathInsideRoot3(repoRoot, fullPath)) {
@@ -167014,6 +167418,8 @@ var CFN_ARTIFACT_API_TYPES = {
   "AWS::ApiGatewayV2::Api": "HTTP",
   "AWS::Serverless::HttpApi": "HTTP"
 };
+var MAX_LOCAL_CDK_OUT_TEMPLATES = 40;
+var MAX_LOCAL_CDK_OUT_ENTRIES = 256;
 async function findLocalCfnArtifactSpecs(repoRoot) {
   const resolvedRoot = import_node_path16.default.resolve(repoRoot);
   const artifactPaths = [];
@@ -167021,24 +167427,36 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
   try {
     const cdkLink = await (0, import_promises13.lstat)(cdkOutDir);
     if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
-      const entries = await (0, import_promises13.readdir)(cdkOutDir);
-      for (const entry of entries.filter((name) => name.endsWith(".template.json")).sort()) {
+      const templateNames = [];
+      let inspected = 0;
+      const directory = await (0, import_promises13.opendir)(cdkOutDir);
+      for await (const dirent of directory) {
+        if (inspected >= MAX_LOCAL_CDK_OUT_ENTRIES) {
+          break;
+        }
+        inspected += 1;
+        if (!dirent.name.endsWith(".template.json")) {
+          continue;
+        }
+        templateNames.push(dirent.name);
+      }
+      for (const entry of templateNames.sort((a5, b5) => a5.localeCompare(b5)).slice(0, MAX_LOCAL_CDK_OUT_TEMPLATES)) {
         artifactPaths.push(import_node_path16.default.posix.join("cdk.out", entry));
       }
     }
   } catch {
   }
   const samTemplate = import_node_path16.default.posix.join(".aws-sam", "build", "template.yaml");
-  if (await isRegularNonSymlinkFile2(import_node_path16.default.join(resolvedRoot, samTemplate))) {
+  if (await isRegularNonSymlinkFile(import_node_path16.default.join(resolvedRoot, samTemplate))) {
     artifactPaths.push(samTemplate);
   }
   const specs = [];
-  for (const artifactPath of artifactPaths.sort()) {
+  for (const artifactPath of artifactPaths.sort((a5, b5) => a5.localeCompare(b5))) {
     const absolutePath = import_node_path16.default.join(resolvedRoot, artifactPath);
     if (!absolutePath.startsWith(resolvedRoot + import_node_path16.default.sep)) {
       continue;
     }
-    if (!await isRegularNonSymlinkFile2(absolutePath)) {
+    if (!await isRegularNonSymlinkFile(absolutePath)) {
       continue;
     }
     let template;
@@ -167051,7 +167469,8 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
     if (!resources || typeof resources !== "object") {
       continue;
     }
-    for (const logicalId of Object.keys(resources).sort()) {
+    const artifactClass = await classifyIacArtifact(resolvedRoot, artifactPath);
+    for (const logicalId of Object.keys(resources).sort((a5, b5) => a5.localeCompare(b5))) {
       const resource = resources[logicalId];
       const gatewayType = resource?.Type ? CFN_ARTIFACT_API_TYPES[resource.Type] : void 0;
       if (!resource || !gatewayType) {
@@ -167068,11 +167487,18 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
         gatewayType,
         content: extracted.content,
         format: extracted.format,
-        filename: extracted.filename
+        filename: extracted.filename,
+        artifactClass
       });
     }
   }
-  return specs;
+  return specs.sort((left, right) => {
+    const classDelta = artifactClassRank(right.artifactClass) - artifactClassRank(left.artifactClass);
+    if (classDelta !== 0) return classDelta;
+    const pathDelta = left.artifactPath.localeCompare(right.artifactPath);
+    if (pathDelta !== 0) return pathDelta;
+    return left.logicalId.localeCompare(right.logicalId);
+  });
 }
 
 // src/lib/repo/signals.ts
@@ -167094,30 +167520,99 @@ var SKIP_DIRS2 = /* @__PURE__ */ new Set([
   "venv",
   ".pulumi"
 ]);
-var MAX_FILES = 50;
-var MAX_DEPTH = 4;
-async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value: 0 }) {
-  if (depth > MAX_DEPTH || globalCount.value >= MAX_FILES) return [];
+var DEFAULT_MAX_FILES2 = 50;
+var DEFAULT_MAX_DEPTH2 = 4;
+var DEFAULT_MAX_ELAPSED_MS = 5e3;
+var DEFAULT_MAX_INSPECTED_ENTRIES = 5e3;
+function resolvedLimits(limits = {}) {
+  return {
+    maxDepth: limits.maxDepth ?? DEFAULT_MAX_DEPTH2,
+    maxFiles: limits.maxFiles ?? DEFAULT_MAX_FILES2,
+    maxElapsedMs: limits.maxElapsedMs ?? DEFAULT_MAX_ELAPSED_MS,
+    maxInspectedEntries: limits.maxInspectedEntries ?? DEFAULT_MAX_INSPECTED_ENTRIES
+  };
+}
+function shouldStop(state2, limits, depth) {
+  if (state2.stopped) return true;
+  if (depth > limits.maxDepth) {
+    state2.stopped = true;
+    return true;
+  }
+  if (state2.files.value >= limits.maxFiles) {
+    state2.stopped = true;
+    return true;
+  }
+  if (state2.inspectedEntries >= limits.maxInspectedEntries) {
+    state2.stopped = true;
+    return true;
+  }
+  if (Date.now() >= state2.deadlineAt) {
+    state2.stopped = true;
+    return true;
+  }
+  return false;
+}
+async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value: 0 }, limits = {}, state2) {
+  const resolved = resolvedLimits(limits);
+  const scanState = state2 ?? {
+    files: globalCount,
+    inspectedEntries: 0,
+    deadlineAt: Date.now() + Math.max(0, resolved.maxElapsedMs),
+    stopped: false
+  };
+  if (shouldStop(scanState, resolved, depth)) return [];
   const results = [];
-  const entries = await (0, import_promises14.readdir)(root5).catch(() => []);
-  for (const entry of entries) {
-    if (globalCount.value >= MAX_FILES) break;
+  let directory;
+  try {
+    directory = await (0, import_promises14.opendir)(root5);
+  } catch {
+    return depth === 0 ? [] : results;
+  }
+  for await (const dirent of directory) {
+    if (shouldStop(scanState, resolved, depth)) break;
+    scanState.inspectedEntries += 1;
+    const entry = dirent.name;
     if (SKIP_DIRS2.has(entry)) continue;
     const fullPath = import_node_path17.default.join(root5, entry);
     const info2 = await (0, import_promises14.stat)(fullPath).catch(() => null);
     if (!info2) continue;
     if (info2.isDirectory()) {
-      const sub = await findIaCFiles(fullPath, extensions, depth + 1, globalCount);
+      const sub = await findIaCFiles(fullPath, extensions, depth + 1, scanState.files, limits, scanState);
       results.push(...sub);
     } else if (extensions.some((ext) => entry.endsWith(ext))) {
+      if (scanState.files.value >= resolved.maxFiles) {
+        scanState.stopped = true;
+        break;
+      }
       results.push(fullPath);
-      globalCount.value++;
+      scanState.files.value += 1;
     }
+  }
+  if (depth === 0) {
+    results.sort((a5, b5) => a5.localeCompare(b5));
   }
   return results;
 }
 
 // src/lib/repo/signals.ts
+async function resolveSignalsStaticIac(repoRoot, staticIac) {
+  if (staticIac?.resolveStaticIac) {
+    return staticIac.resolveStaticIac();
+  }
+  return resolveStaticIacCandidates(repoRoot, {
+    maxFiles: 60,
+    maxDepth: 6,
+    enabledSources: {
+      cloudformation: true,
+      sam: true,
+      cdk: true,
+      terraform: true,
+      serverless: true
+    },
+    ...staticIac?.s3Client ? { s3Client: staticIac.s3Client } : {},
+    ...staticIac?.terraformStatePaths ? { terraformStatePaths: staticIac.terraformStatePaths } : {}
+  });
+}
 async function readRepoFile(repoRoot, targetPath, fieldName) {
   const resolved = await resolveLocalReadWithinRoot(repoRoot, targetPath, { fieldName });
   return (0, import_promises15.readFile)(resolved.canonicalPath, "utf8");
@@ -167483,32 +167978,22 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       evidence.push(`Found SNS event contract file: ${toEvidencePath(repoRoot, contractPath)}`);
     }
   }
-  try {
-    const iac = await resolveStaticIacCandidates(repoRoot, {
-      maxFiles: 60,
-      maxDepth: 6,
-      enabledSources: {
-        cloudformation: true,
-        sam: true,
-        cdk: true,
-        terraform: true,
-        serverless: true
-      },
-      ...options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {},
-      ...options.staticIac?.terraformStatePaths ? { terraformStatePaths: options.staticIac.terraformStatePaths } : {}
-    });
-    for (const apiId of iac.physicalApiIds) {
-      inferredGatewayHints.push(apiId);
-      evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
-    }
-    for (const candidate of iac.candidates) {
-      if (candidate.kind === "physical-api-id" && candidate.physicalApiId) {
-        evidence.push(
-          `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
-        );
+  if (options.includeStaticIac !== false) {
+    try {
+      const iac = await resolveSignalsStaticIac(repoRoot, options.staticIac);
+      for (const apiId of iac.physicalApiIds) {
+        inferredGatewayHints.push(apiId);
+        evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
       }
+      for (const candidate of iac.candidates) {
+        if (candidate.kind === "physical-api-id" && candidate.physicalApiId) {
+          evidence.push(
+            `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
+          );
+        }
+      }
+    } catch {
     }
-  } catch {
   }
   return {
     serviceHints: unique(serviceHints),
@@ -172571,8 +173056,10 @@ var SsmSdkClient = class {
   }
   async listSpecParameters(pathPrefix = DEFAULT_PATH_PREFIX) {
     const items = [];
+    const guard = createAwsPaginationGuard("SSM GetParametersByPath");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new import_client_ssm.GetParametersByPathCommand({
           Path: pathPrefix,
@@ -172589,7 +173076,7 @@ var SsmSdkClient = class {
         const key = parts.slice(1).join("/");
         items.push({ serviceName, key, value: param.Value });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return items;
   }
@@ -172651,8 +173138,10 @@ var SnsSdkClient = class {
   }
   async listTopics() {
     const topics = [];
+    const guard = createAwsPaginationGuard("SNS ListTopics");
     let nextToken;
     do {
+      guard.beginPage();
       const response = await this.client.send(new import_client_sns.ListTopicsCommand({ NextToken: nextToken }));
       for (const topic of response.Topics ?? []) {
         const topicArn = topic.TopicArn;
@@ -172662,7 +173151,7 @@ var SnsSdkClient = class {
           name: topicNameFromArn2(topicArn)
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return topics;
   }
@@ -172681,9 +173170,11 @@ var SnsSdkClient = class {
   }
   async listSubscriptionsByTopic(topicArn) {
     const subscriptions = [];
+    const guard = createAwsPaginationGuard("SNS ListSubscriptionsByTopic");
     let nextToken;
     try {
       do {
+        guard.beginPage();
         const response = await this.client.send(new import_client_sns.ListSubscriptionsByTopicCommand({ TopicArn: topicArn, NextToken: nextToken }));
         for (const subscription of response.Subscriptions ?? []) {
           const subscriptionArn = subscription.SubscriptionArn;
@@ -172696,7 +173187,7 @@ var SnsSdkClient = class {
             owner: subscription.Owner
           });
         }
-        nextToken = response.NextToken;
+        nextToken = guard.takeNextToken(response.NextToken);
       } while (nextToken);
       return subscriptions;
     } catch (error3) {
@@ -173200,14 +173691,21 @@ function readActionInputs(inputReader) {
     INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput("output-dir")) ?? actionContract.inputs["output-dir"].default
   });
 }
-function buildStaticIacOptions(inputs) {
-  return {
-    s3Client: new S3SdkClient(inputs.awsRegion, {
-      requestTimeoutMs: inputs.requestTimeoutMs,
-      maxAttempts: inputs.maxAttempts
-    }),
-    terraformStatePaths: inputs.terraformStatePaths ?? []
+function buildStaticIacOptions(inputs, overrides = {}) {
+  const s3Client = overrides.s3Client ?? new S3SdkClient(inputs.awsRegion, {
+    requestTimeoutMs: inputs.requestTimeoutMs,
+    maxAttempts: inputs.maxAttempts
+  });
+  const terraformStatePaths = overrides.terraformStatePaths ?? inputs.terraformStatePaths ?? [];
+  let cached;
+  const resolveStaticIac = () => {
+    cached ??= resolveStaticIacCandidates(inputs.repoRoot, {
+      s3Client,
+      terraformStatePaths
+    });
+    return cached;
   };
+  return { s3Client, terraformStatePaths, resolveStaticIac };
 }
 function withSharedFetchBudget(fetchImpl, budget) {
   return (url, options = {}) => fetchImpl(url, { ...options, budget });
@@ -174370,10 +174868,10 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
     existingSpecShouldWriteNative: selected.writeNative
   };
 }
-async function selectInventoryContract(inputs) {
+async function selectInventoryContract(inputs, staticIac) {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
     ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {},
-    staticIac: buildStaticIacOptions(inputs)
+    staticIac
   });
   const candidates = inventory.candidates;
   if (candidates.length === 0) {
@@ -174427,7 +174925,7 @@ async function selectInventoryContract(inputs) {
     existingSpecShouldWriteNative: materialized.writeNative
   };
 }
-async function resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec = fetchSpecFromUrl) {
+async function resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec = fetchSpecFromUrl, staticIac) {
   const catalogApis = await detectCatalogApis(inputs.repoRoot, {
     ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {},
     ...inputs.expectedServiceName ? { serviceName: inputs.expectedServiceName } : {}
@@ -174442,16 +174940,19 @@ async function resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec 
       return { catalogApis, ...catalogSelection, existingSpecShouldWriteNative: catalogSelection.existingSpecShouldWriteNative };
     }
   }
-  const inventorySelection = await selectInventoryContract(inputs);
+  const inventorySelection = await selectInventoryContract(
+    inputs,
+    staticIac ?? buildStaticIacOptions(inputs)
+  );
   if (inventorySelection) {
     return { catalogApis, ...inventorySelection };
   }
   return { catalogApis, existingSpecShouldWriteNative: false };
 }
-async function discoverRepoServiceGroups(inputs, dependencies) {
+async function discoverRepoServiceGroups(inputs, dependencies, staticIac) {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
     ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {},
-    staticIac: buildStaticIacOptions(inputs)
+    staticIac
   });
   const byRoot = /* @__PURE__ */ new Map();
   for (const candidate of inventory.candidates) {
@@ -174520,8 +175021,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl,
     fetchByteBudget
   );
-  const staticIac = buildStaticIacOptions(inputs);
-  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec);
+  const staticIac = buildStaticIacOptions(inputs, resolutionDependencies.staticIac);
+  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec, staticIac);
   const catalogApis = repoSelection.catalogApis;
   if (repoSelection.earlyResult) {
     return repoSelection.earlyResult;
@@ -174535,38 +175036,44 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
     if (localArtifactSpecs.length === 1) {
       const artifact = localArtifactSpecs[0];
-      const serviceName = artifact.logicalId;
-      const relativeDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-      const relativeSpecPath = import_node_path22.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
-      const evidence = [
-        `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
-      ];
-      const base = {
-        status: "resolved",
-        sourceType: "cfn-embedded",
-        serviceName,
-        confidence: 75,
-        gatewayType: artifact.gatewayType,
-        providerType: "cloudformation",
-        specFormat: artifact.format,
-        specPath: relativeSpecPath,
-        evidence
-      };
-      if (inputs.dryRun) {
-        return { ...base, evidence: [...evidence, "Dry run enabled; skipped local build artifact write"] };
-      }
-      try {
-        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
-          repoRoot: inputs.repoRoot,
-          relativeDir,
-          native: { relativePath: relativeSpecPath, content: artifact.content },
-          derivation: { content: artifact.content, format: artifact.format, title: serviceName },
-          dryRun: inputs.dryRun,
-          writeSpecFile
-        });
-        return { ...base, ...derivedOpenApi };
-      } catch (error3) {
-        actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error3)}`));
+      if (artifact.artifactClass === "generated-stale") {
+        actionCore.info(
+          `Skipping stale local build artifact ${artifact.artifactRef} (${artifact.artifactClass}); continuing resolution`
+        );
+      } else {
+        const serviceName = artifact.logicalId;
+        const relativeDir = import_node_path22.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+        const relativeSpecPath = import_node_path22.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
+        const evidence = [
+          `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId} (${artifact.artifactClass})`
+        ];
+        const base = {
+          status: "resolved",
+          sourceType: "cfn-embedded",
+          serviceName,
+          confidence: 75,
+          gatewayType: artifact.gatewayType,
+          providerType: "cloudformation",
+          specFormat: artifact.format,
+          specPath: relativeSpecPath,
+          evidence
+        };
+        if (inputs.dryRun) {
+          return { ...base, evidence: [...evidence, "Dry run enabled; skipped local build artifact write"] };
+        }
+        try {
+          const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: inputs.repoRoot,
+            relativeDir,
+            native: { relativePath: relativeSpecPath, content: artifact.content },
+            derivation: { content: artifact.content, format: artifact.format, title: serviceName },
+            dryRun: inputs.dryRun,
+            writeSpecFile
+          });
+          return { ...base, ...derivedOpenApi };
+        } catch (error3) {
+          actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error3)}`));
+        }
       }
     } else if (localArtifactSpecs.length > 1) {
       const rankedCandidates = sanitizeJsonValue(
@@ -174576,7 +175083,9 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
           gatewayId: artifact.artifactRef,
           gatewayType: artifact.gatewayType,
           confidence: 50,
-          evidence: [`Embedded OpenAPI document in local build artifact ${artifact.artifactPath}`]
+          evidence: [
+            `Embedded OpenAPI document in local build artifact ${artifact.artifactPath} (${artifact.artifactClass})`
+          ]
         }))
       );
       return {
@@ -174597,7 +175106,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     inputs.repoContext.repoSlug,
     inputs.expectedServiceName,
     inputs.expectedGatewayIds,
-    { staticIac }
+    { staticIac, includeStaticIac: !existingSpecPath }
   );
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
@@ -175301,9 +175810,10 @@ async function execute(inputs, dependencies) {
     if (availableProviders.length === 0 && apiGwProvider) {
       availableProviders.push(apiGwProvider);
     }
+    const staticIac = buildStaticIacOptions(inputs, dependencies.staticIac);
     const repoGroups = await dependencies.core.group(
       "Discover repository service groups",
-      async () => discoverRepoServiceGroups(inputs, dependencies)
+      async () => discoverRepoServiceGroups(inputs, dependencies, staticIac)
     );
     const { discovered: legacyDiscovered, summary: legacySummary } = await runDiscovery(inputs, dependencies);
     const extraProviders = availableProviders.filter((p3) => p3.type !== "api-gateway");
@@ -175314,7 +175824,7 @@ async function execute(inputs, dependencies) {
       inputs.repoContext.repoSlug,
       inputs.expectedServiceName,
       inputs.expectedGatewayIds,
-      { staticIac: buildStaticIacOptions(inputs) }
+      { staticIac }
     );
     const snsResolutionContext = {
       serviceHints: signals.serviceHints,

@@ -1,13 +1,17 @@
-import { readdir, readFile, lstat } from 'node:fs/promises';
+import { lstat, opendir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
 import type { GatewayType, SpecFormat } from '../../contracts.js';
 import {
+  artifactClassRank,
+  classifyIacArtifact,
   contentBearingIacCandidates,
   resolveStaticIacCandidates,
   toRepoArtifactClass,
-  type ResolveStaticIacOptions
+  type IacArtifactClass,
+  type ResolveStaticIacOptions,
+  type StaticIacResolution
 } from '../iac/index.js';
 import {
   extractInlineEmbeddedSpec,
@@ -116,7 +120,9 @@ export const DEFAULT_INVENTORY_BOUNDS = {
   maxFiles: 200,
   maxFileBytes: 1_048_576,
   maxCumulativeBytes: 8_388_608,
-  maxScanMs: 5_000
+  maxScanMs: 5_000,
+  /** Finite directory-entry inspection bound for streaming walks. */
+  maxInspectedEntries: 5_000
 } as const;
 
 export type RepoSpecKind =
@@ -167,8 +173,14 @@ export interface RepoSpecInventory {
   errors: RepoSpecInventoryError[];
 }
 
-/** Narrow static-IaC options threaded from runtime (no hidden globals). */
-export type InventoryStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
+/**
+ * Narrow static-IaC options threaded from runtime (no hidden globals / cross-run cache).
+ * `resolveStaticIac` is a run-scoped lazy memoized resolver shared by inventory + signals.
+ */
+export type InventoryStaticIacOptions = Pick<ResolveStaticIacOptions, 's3Client' | 'terraformStatePaths'> & {
+  /** Creates at most one Promise on first call; subsequent callers await the same result. */
+  resolveStaticIac?: () => Promise<StaticIacResolution>;
+};
 
 export interface InventoryRepoSpecsOptions {
   maxDepth?: number;
@@ -176,10 +188,31 @@ export interface InventoryRepoSpecsOptions {
   maxFileBytes?: number;
   maxCumulativeBytes?: number;
   maxScanMs?: number;
+  /** Finite directory-entry inspection bound for streaming walks. */
+  maxInspectedEntries?: number;
   /** Optional monorepo/service scope (relative posix path). */
   serviceRoot?: string;
   /** Optional exact S3 client + explicit Terraform state paths for static IaC merge. */
   staticIac?: InventoryStaticIacOptions;
+}
+
+/** Resolve static IaC via lazy shared resolver when present; otherwise compute with caller options. */
+async function resolveInventoryStaticIac(
+  repoRoot: string,
+  budget: ScanBudget,
+  staticIac?: InventoryStaticIacOptions
+): Promise<StaticIacResolution> {
+  if (staticIac?.resolveStaticIac) {
+    return staticIac.resolveStaticIac();
+  }
+  return resolveStaticIacCandidates(repoRoot, {
+    maxDepth: budget.maxDepth,
+    maxFiles: Math.max(0, budget.maxFiles - budget.files),
+    maxFileBytes: budget.maxFileBytes,
+    maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes),
+    ...(staticIac?.s3Client ? { s3Client: staticIac.s3Client } : {}),
+    ...(staticIac?.terraformStatePaths ? { terraformStatePaths: staticIac.terraformStatePaths } : {})
+  });
 }
 
 export interface RepoSpecMatch {
@@ -196,10 +229,12 @@ export interface RepoSpecMatch {
 interface ScanBudget {
   files: number;
   cumulativeBytes: number;
+  inspectedEntries: number;
   maxFiles: number;
   maxFileBytes: number;
   maxCumulativeBytes: number;
   maxDepth: number;
+  maxInspectedEntries: number;
   deadlineAt: number;
   truncated: boolean;
 }
@@ -441,10 +476,12 @@ export async function inventoryRepoSpecs(
   const budget: ScanBudget = {
     files: 0,
     cumulativeBytes: 0,
+    inspectedEntries: 0,
     maxFiles: options.maxFiles ?? DEFAULT_INVENTORY_BOUNDS.maxFiles,
     maxFileBytes: options.maxFileBytes ?? DEFAULT_INVENTORY_BOUNDS.maxFileBytes,
     maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_INVENTORY_BOUNDS.maxCumulativeBytes,
     maxDepth: options.maxDepth ?? DEFAULT_INVENTORY_BOUNDS.maxDepth,
+    maxInspectedEntries: options.maxInspectedEntries ?? DEFAULT_INVENTORY_BOUNDS.maxInspectedEntries,
     deadlineAt: Date.now() + (options.maxScanMs ?? DEFAULT_INVENTORY_BOUNDS.maxScanMs),
     truncated: false
   };
@@ -567,16 +604,7 @@ export async function inventoryRepoSpecs(
   // Integrate static IaC OpenAPI candidates (generated/local) without changing public inventory shape.
   // Generated classes stay below authored via scoring; content is never invented from route hints.
   try {
-    const iacResolution = await resolveStaticIacCandidates(resolvedRoot, {
-      maxDepth: budget.maxDepth,
-      maxFiles: Math.max(0, budget.maxFiles - budget.files),
-      maxFileBytes: budget.maxFileBytes,
-      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes),
-      ...(options.staticIac?.s3Client ? { s3Client: options.staticIac.s3Client } : {}),
-      ...(options.staticIac?.terraformStatePaths
-        ? { terraformStatePaths: options.staticIac.terraformStatePaths }
-        : {})
-    });
+    const iacResolution = await resolveInventoryStaticIac(resolvedRoot, budget, options.staticIac);
     for (const error of iacResolution.errors) {
       if (error.code === 'path-escape' || error.code === 'bounds-exceeded') {
         errors.push({
@@ -642,7 +670,7 @@ export async function inventoryRepoSpecs(
     errors.push({
       code: 'bounds-exceeded',
       path: scopeRoot ?? '.',
-      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
+      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxInspectedEntries=${budget.maxInspectedEntries}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
     });
   }
 
@@ -705,7 +733,7 @@ async function collectSpecCandidatePaths(
 
   for (const dir of COMMON_SCAN_DIRS) {
     if (scanTimedOut(budget)) break;
-    if (budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || budget.inspectedEntries >= budget.maxInspectedEntries) {
       budget.truncated = true;
       break;
     }
@@ -750,20 +778,39 @@ async function walkSpecCandidates(
   budget: ScanBudget,
   depth: number
 ): Promise<string[]> {
-  if (scanTimedOut(budget) || depth > budget.maxDepth || budget.files >= budget.maxFiles) {
-    if (budget.files >= budget.maxFiles || depth > budget.maxDepth) {
+  if (
+    scanTimedOut(budget)
+    || depth > budget.maxDepth
+    || budget.files >= budget.maxFiles
+    || budget.inspectedEntries >= budget.maxInspectedEntries
+  ) {
+    if (
+      budget.files >= budget.maxFiles
+      || depth > budget.maxDepth
+      || budget.inspectedEntries >= budget.maxInspectedEntries
+    ) {
       budget.truncated = true;
     }
     return [];
   }
   const results: string[] = [];
-  const entries = (await readdir(current).catch(() => [] as string[])).sort((a, b) => a.localeCompare(b));
-  for (const entry of entries) {
+  let directory;
+  try {
+    directory = await opendir(current);
+  } catch {
+    return [];
+  }
+  // Stream entries; do not materialize/sort the full directory listing.
+  // Final candidates remain sorted at collectSpecCandidatePaths return time.
+  for await (const dirent of directory) {
     if (scanTimedOut(budget)) break;
-    if (budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || budget.inspectedEntries >= budget.maxInspectedEntries) {
       budget.truncated = true;
       break;
     }
+    // Count every directory entry, including irrelevant files and skipped dirs.
+    budget.inspectedEntries += 1;
+    const entry = dirent.name;
     if (SKIP_DIRS.has(entry)) continue;
     const fullPath = path.join(current, entry);
     if (!isPathInsideRoot(repoRoot, fullPath)) {
@@ -815,6 +862,11 @@ const CFN_ARTIFACT_API_TYPES: Record<string, GatewayType> = {
   'AWS::Serverless::HttpApi': 'HTTP'
 };
 
+/** Finite CDK assembly template enumeration for local build-artifact fallback. */
+const MAX_LOCAL_CDK_OUT_TEMPLATES = 40;
+/** Cap how many cdk.out directory entries are inspected via streaming opendir. */
+const MAX_LOCAL_CDK_OUT_ENTRIES = 256;
+
 export interface LocalCfnArtifactSpec {
   /** Relative artifact path plus `#` plus logical ID. */
   artifactRef: string;
@@ -825,13 +877,15 @@ export interface LocalCfnArtifactSpec {
   content: string;
   format: SpecFormat;
   filename: string;
+  /** Freshness / authorship class from {@link classifyIacArtifact}. */
+  artifactClass: IacArtifactClass;
 }
 
 /**
  * Inspect only synthesized CDK templates (`cdk.out/*.template.json`) and the SAM build
  * template (`.aws-sam/build/template.yaml`) for inline OpenAPI documents embedded in API
- * resources. Local-only: no AWS calls, no S3/HTTP fetches, no recursive scanning. Paths
- * are sorted lexically and logical IDs are sorted lexically within each template.
+ * resources. Local-only: no AWS calls, no S3/HTTP fetches, no recursive scanning.
+ * Results are ranked by artifactClassRank (fresh before unknown/stale) then lexical path/id.
  */
 export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<LocalCfnArtifactSpec[]> {
   const resolvedRoot = path.resolve(repoRoot);
@@ -841,8 +895,20 @@ export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<Local
   try {
     const cdkLink = await lstat(cdkOutDir);
     if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
-      const entries = await readdir(cdkOutDir);
-      for (const entry of entries.filter((name) => name.endsWith('.template.json')).sort()) {
+      const templateNames: string[] = [];
+      let inspected = 0;
+      const directory = await opendir(cdkOutDir);
+      for await (const dirent of directory) {
+        if (inspected >= MAX_LOCAL_CDK_OUT_ENTRIES) {
+          break;
+        }
+        inspected += 1;
+        if (!dirent.name.endsWith('.template.json')) {
+          continue;
+        }
+        templateNames.push(dirent.name);
+      }
+      for (const entry of templateNames.sort((a, b) => a.localeCompare(b)).slice(0, MAX_LOCAL_CDK_OUT_TEMPLATES)) {
         artifactPaths.push(path.posix.join('cdk.out', entry));
       }
     }
@@ -856,7 +922,7 @@ export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<Local
   }
 
   const specs: LocalCfnArtifactSpec[] = [];
-  for (const artifactPath of artifactPaths.sort()) {
+  for (const artifactPath of artifactPaths.sort((a, b) => a.localeCompare(b))) {
     const absolutePath = path.join(resolvedRoot, artifactPath);
     if (!absolutePath.startsWith(resolvedRoot + path.sep)) {
       continue;
@@ -874,7 +940,8 @@ export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<Local
     if (!resources || typeof resources !== 'object') {
       continue;
     }
-    for (const logicalId of Object.keys(resources).sort()) {
+    const artifactClass = await classifyIacArtifact(resolvedRoot, artifactPath);
+    for (const logicalId of Object.keys(resources).sort((a, b) => a.localeCompare(b))) {
       const resource = resources[logicalId] as TemplateResource | undefined;
       const gatewayType = resource?.Type ? CFN_ARTIFACT_API_TYPES[resource.Type] : undefined;
       if (!resource || !gatewayType) {
@@ -891,9 +958,17 @@ export async function findLocalCfnArtifactSpecs(repoRoot: string): Promise<Local
         gatewayType,
         content: extracted.content,
         format: extracted.format,
-        filename: extracted.filename
+        filename: extracted.filename,
+        artifactClass
       });
     }
   }
-  return specs;
+
+  return specs.sort((left, right) => {
+    const classDelta = artifactClassRank(right.artifactClass) - artifactClassRank(left.artifactClass);
+    if (classDelta !== 0) return classDelta;
+    const pathDelta = left.artifactPath.localeCompare(right.artifactPath);
+    if (pathDelta !== 0) return pathDelta;
+    return left.logicalId.localeCompare(right.logicalId);
+  });
 }

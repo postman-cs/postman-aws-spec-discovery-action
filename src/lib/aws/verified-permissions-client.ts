@@ -6,6 +6,8 @@ import {
 } from '@aws-sdk/client-verifiedpermissions';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface VerifiedPermissionsPolicyStoreSummary {
   policyStoreId: string;
   arn: string;
@@ -41,14 +43,16 @@ export class VerifiedPermissionsSdkClient implements VerifiedPermissionsSpecClie
 
   public async listPolicyStores(): Promise<VerifiedPermissionsPolicyStoreSummary[]> {
     const stores: VerifiedPermissionsPolicyStoreSummary[] = [];
+    const guard = createAwsPaginationGuard('Verified Permissions ListPolicyStores');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListPolicyStoresCommand({ nextToken, maxResults: 50 }));
       for (const store of response.policyStores ?? []) {
         const mapped = mapPolicyStore(store);
         if (mapped) stores.push(mapped);
       }
-      nextToken = response.nextToken;
+      nextToken = guard.takeNextToken(response.nextToken);
     } while (nextToken);
     return stores;
   }

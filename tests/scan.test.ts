@@ -142,6 +142,29 @@ describe('findIaCFiles', () => {
     const files = await findIaCFiles('/nonexistent/path/that/does/not/exist', ['.tf']);
     expect(files).toHaveLength(0);
   });
+
+  it('stops when maxInspectedEntries is reached and returns sorted paths', async () => {
+    const root = await makeTempDir();
+    for (let i = 0; i < 20; i++) {
+      await writeFile(path.join(root, `file${String(i).padStart(2, '0')}.tf`), '');
+    }
+
+    const files = await findIaCFiles(root, ['.tf'], 0, { value: 0 }, { maxInspectedEntries: 5 });
+    expect(files.length).toBeGreaterThan(0);
+    expect(files.length).toBeLessThanOrEqual(5);
+    expect(files).toEqual([...files].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('stops when maxElapsedMs is exhausted and returns sorted paths', async () => {
+    const root = await makeTempDir();
+    for (let i = 0; i < 20; i++) {
+      await writeFile(path.join(root, `file${String(i).padStart(2, '0')}.tf`), '');
+    }
+
+    const files = await findIaCFiles(root, ['.tf'], 0, { value: 0 }, { maxElapsedMs: 0 });
+    expect(files.length).toBeLessThan(20);
+    expect(files).toEqual([...files].sort((a, b) => a.localeCompare(b)));
+  });
 });
 
 describe('Terraform provider patterns via collectRepoSignals', () => {

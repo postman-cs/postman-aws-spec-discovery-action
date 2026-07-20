@@ -121,6 +121,131 @@ describe('inventoryRepoSpecs', () => {
     });
   });
 
+  it('rejects oversized root smithy-build.json via closure bounds without model content', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-root-bounds-'));
+    try {
+      const marker = 'namespace example.oversized.root';
+      await writeFile(
+        path.join(tempDir, 'smithy-build.json'),
+        `${'x'.repeat(500)}`,
+        'utf8'
+      );
+      await writeFile(path.join(tempDir, 'model.smithy'), `${marker}\n`, 'utf8');
+
+      const closure = await resolveSmithyProject(tempDir, 'smithy-build.json', {
+        maxFiles: 10,
+        maxFileBytes: 100,
+        maxCumulativeBytes: 10_000
+      });
+
+      expect(closure.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(closure.memberPaths).toEqual([]);
+      expect(closure.content).toBe('');
+      expect(closure.content).not.toContain(marker);
+      expect(closure.errors.every((error) => !error.message.includes('x'.repeat(50)))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects oversized nested smithy-build.json via closure bounds without model content', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-nested-bounds-'));
+    try {
+      const marker = 'namespace example.oversized.nested';
+      await mkdir(path.join(tempDir, 'nested'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'smithy-build.json'),
+        JSON.stringify({ version: '1.0', imports: ['nested/smithy-build.json'] }),
+        'utf8'
+      );
+      await writeFile(path.join(tempDir, 'nested', 'smithy-build.json'), 'y'.repeat(500), 'utf8');
+      await writeFile(path.join(tempDir, 'nested', 'model.smithy'), `${marker}\n`, 'utf8');
+
+      const closure = await resolveSmithyProject(tempDir, 'smithy-build.json', {
+        maxFiles: 10,
+        maxFileBytes: 100,
+        maxCumulativeBytes: 10_000
+      });
+
+      expect(closure.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(closure.memberPaths).toEqual([]);
+      expect(closure.content).toBe('');
+      expect(closure.content).not.toContain(marker);
+      expect(closure.errors.every((error) => !error.message.includes('y'.repeat(50)))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('bounds cumulative smithy config and model bytes together', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-cumulative-bounds-'));
+    try {
+      const marker = 'namespace example.cumulative.bound';
+      const config = JSON.stringify({ version: '1.0', sources: ['model.smithy'] });
+      const model = `${marker}\n${'a'.repeat(200)}`;
+      await writeFile(path.join(tempDir, 'smithy-build.json'), config, 'utf8');
+      await writeFile(path.join(tempDir, 'model.smithy'), model, 'utf8');
+
+      const configBytes = Buffer.byteLength(config, 'utf8');
+      const modelBytes = Buffer.byteLength(model, 'utf8');
+      expect(configBytes + modelBytes).toBeGreaterThan(configBytes + 50);
+
+      const closure = await resolveSmithyProject(tempDir, 'smithy-build.json', {
+        maxFiles: 10,
+        maxFileBytes: 10_000,
+        maxCumulativeBytes: configBytes + 50
+      });
+
+      expect(closure.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(closure.memberPaths).toEqual([]);
+      expect(closure.content).toBe('');
+      expect(closure.content).not.toContain(marker);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('bounds smithy directory entry inspection so junk entries cannot bypass maxFiles', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-entry-bounds-'));
+    try {
+      const modelsDir = path.join(tempDir, 'models');
+      await mkdir(modelsDir, { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'smithy-build.json'),
+        JSON.stringify({ version: '1.0', sources: ['models'] }),
+        'utf8'
+      );
+
+      const maxFiles = 5;
+      const junkCount = 40;
+      for (let index = 0; index < junkCount; index += 1) {
+        await writeFile(
+          path.join(modelsDir, `noise-${String(index).padStart(2, '0')}.txt`),
+          `irrelevant-${index}`,
+          'utf8'
+        );
+      }
+      const marker = 'namespace example.entry.bound';
+      await writeFile(path.join(modelsDir, 'service.smithy'), `${marker}\n`, 'utf8');
+
+      const closure = await resolveSmithyProject(tempDir, 'smithy-build.json', {
+        maxFiles,
+        maxFileBytes: 10_000,
+        maxCumulativeBytes: 100_000
+      });
+
+      expect(closure.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(closure.errors.some((error) => /entry inspection exceeded maxFiles=/i.test(error.message))).toBe(true);
+      // Observable aggregate stays sorted; do not claim lexical subset from filesystem walk order.
+      expect(closure.memberPaths).toEqual([...closure.memberPaths].sort((a, b) => a.localeCompare(b)));
+      // At most one model can be accepted under this cap (config already consumed one filesRead slot).
+      expect(closure.memberPaths.length).toBeLessThanOrEqual(maxFiles - 1);
+      expect(closure.memberPaths.length).toBeLessThan(junkCount);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('groups multi-file GraphQL SDL by service root with deterministic concatenation', async () => {
     await withFixtureCopy('graphql-multi', async (repoRoot) => {
       const inventory = await inventoryRepoSpecs(repoRoot);
@@ -209,6 +334,57 @@ describe('inventoryRepoSpecs', () => {
       });
       expect(inventory.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
       expect(inventory.candidates.length).toBeLessThanOrEqual(2);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('bounds directory entry inspection so junk entries cannot bypass maxInspectedEntries', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-repo-spec-entry-bounds-'));
+    try {
+      const schemasDir = path.join(tempDir, 'schemas');
+      await mkdir(schemasDir, { recursive: true });
+
+      const maxInspectedEntries = 5;
+      const junkCount = 40;
+      const schemaCount = 10;
+      for (let index = 0; index < junkCount; index += 1) {
+        await writeFile(
+          path.join(schemasDir, `noise-${String(index).padStart(2, '0')}.txt`),
+          `irrelevant-${index}`,
+          'utf8'
+        );
+      }
+      for (let index = 0; index < schemaCount; index += 1) {
+        await writeFile(
+          path.join(schemasDir, `extra-${String(index).padStart(2, '0')}.schema.json`),
+          JSON.stringify({
+            $id: `https://example.test/extra-${index}`,
+            type: 'object',
+            properties: { id: { type: 'string' } }
+          }),
+          'utf8'
+        );
+      }
+
+      const inventory = await inventoryRepoSpecs(tempDir, {
+        maxInspectedEntries,
+        maxFiles: 200,
+        maxDepth: 6,
+        maxFileBytes: 10_000,
+        maxCumulativeBytes: 100_000
+      });
+
+      expect(inventory.errors.some((error) => error.code === 'bounds-exceeded')).toBe(true);
+      expect(inventory.errors.some((error) => /maxInspectedEntries=/i.test(error.message))).toBe(true);
+
+      const schemasCandidates = inventory.candidates.filter((candidate) => candidate.path.startsWith('schemas/'));
+      expect(schemasCandidates.map((candidate) => candidate.path)).toEqual(
+        [...schemasCandidates.map((candidate) => candidate.path)].sort((a, b) => a.localeCompare(b))
+      );
+      // Only in-bound walk discoveries may be accepted; junk entries count toward the cap.
+      expect(schemasCandidates.length).toBeLessThanOrEqual(maxInspectedEntries);
+      expect(schemasCandidates.length).toBeLessThan(schemaCount);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

@@ -28,7 +28,7 @@ The action resolves the best available contract artifact first, then records whe
 | Verified Permissions schemas | Cedar schema metadata | OpenAPI 3.1 metadata document with no invented HTTP paths, live-validated against a policy store schema. | IAM probe |
 | Step Functions ASL | State machine definitions | Partial OpenAPI 3.1 execution-start surface with ASL metadata, live-validated against a Standard state machine. | IAM probe |
 
-Each provider is probed at startup. Providers your role cannot read are skipped for resolution but recorded as typed probe results (`available` / `denied` / `error` / `timeout`) in `resolution-json` provenance (`providerProbes`). No extra provider configuration is required.
+Each provider is probed at startup. Providers your role cannot read are skipped for resolution but recorded in `resolution-json` provenance (`providerProbes`) with status `available` or `skipped`; when status is `skipped`, reason is `iam`, `timeout`, or `error`. No extra provider configuration is required.
 
 The action also detects Backstage `catalog-info.yaml` files in the repo root or bounded nested service directories and resolves API spec path or URL references automatically.
 

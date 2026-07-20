@@ -4,9 +4,12 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createRemoteFetchPolicy, DEFAULT_REMOTE_FETCH_POLICY } from '../src/lib/fetch/spec-fetcher.js';
+import { resolveStaticIacCandidates } from '../src/lib/iac/index.js';
 import { ProviderRegistry } from '../src/lib/providers/registry.js';
 import { SsmProvider } from '../src/lib/providers/ssm.js';
 import type { SsmSpecClient } from '../src/lib/aws/ssm-client.js';
+import { collectRepoSignals } from '../src/lib/repo/signals.js';
+import { inventoryRepoSpecs } from '../src/lib/repo/specs.js';
 import {
   execute,
   resolveInputs,
@@ -377,5 +380,98 @@ describe('repo resolution integration (POS-388 / POS-393)', () => {
     const allowedExport = await allowed.exportSpec(allowedCandidates[0]!);
     expect(allowedExport.filename).toBe('index.yaml');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares one lazy memoized static IaC resolution (and S3 reads) across inventory and signals', async () => {
+    const iacFixtures = path.join(__dirname, 'fixtures', 'iac-static');
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-static-iac-shared-'));
+    try {
+      await cp(path.join(iacFixtures, 'cfn-s3'), tempDir, { recursive: true });
+      const openapi = JSON.stringify({
+        openapi: '3.0.3',
+        info: { title: 'S3', version: '1.0.0' },
+        paths: { '/s3': { get: { responses: { '200': { description: 'ok' } } } } }
+      });
+      const s3Client = { getObject: vi.fn().mockResolvedValue(openapi) };
+      let cached: ReturnType<typeof resolveStaticIacCandidates> | undefined;
+      const resolveStaticIac = () => {
+        cached ??= resolveStaticIacCandidates(tempDir, { s3Client });
+        return cached;
+      };
+
+      const inventory = await inventoryRepoSpecs(tempDir, { staticIac: { s3Client, resolveStaticIac } });
+      const signals = await collectRepoSignals(tempDir, 'postman/orders', undefined, [], {
+        staticIac: { s3Client, resolveStaticIac }
+      });
+
+      // BodyS3Location + DefinitionUri => 2 reads for one resolution; double compute would be 4.
+      expect(s3Client.getObject).toHaveBeenCalledTimes(2);
+      expect(inventory.candidates.some((c) => c.evidence.some((e) => /Static IaC|S3/i.test(e)))).toBe(true);
+      expect(signals.evidence.length).toBeGreaterThan(0);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('performs static IaC / S3 object reads only once per resolve-one execution that needs inventory+signals', async () => {
+    const iacFixtures = path.join(__dirname, 'fixtures', 'iac-static');
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-static-iac-once-'));
+    try {
+      await cp(path.join(iacFixtures, 'cfn-s3'), tempDir, { recursive: true });
+      const openapi = JSON.stringify({
+        openapi: '3.0.3',
+        info: { title: 'S3', version: '1.0.0' },
+        paths: { '/s3': { get: { responses: { '200': { description: 'ok' } } } } }
+      });
+      const s3Client = { getObject: vi.fn().mockResolvedValue(openapi) };
+
+      await runResolution(
+        baseInputs(tempDir, { dryRun: true }),
+        createAwsClientStub(),
+        createCoreStub(),
+        vi.fn(),
+        { staticIac: { s3Client } }
+      );
+
+      // BodyS3Location + DefinitionUri both resolve via the injected client during the
+      // single lazy run-scoped static IaC computation (not duplicated across consumers).
+      expect(s3Client.getObject).toHaveBeenCalledTimes(2);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not start static IaC / S3 work for explicit spec-path (lazy resolver unconsumed)', async () => {
+    const iacFixtures = path.join(__dirname, 'fixtures', 'iac-static');
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-static-iac-explicit-'));
+    try {
+      await cp(path.join(iacFixtures, 'cfn-s3'), tempDir, { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'openapi.yaml'),
+        ['openapi: 3.0.3', 'info:', '  title: Explicit', '  version: 1.0.0', 'paths: {}'].join('\n'),
+        'utf8'
+      );
+      const openapi = JSON.stringify({
+        openapi: '3.0.3',
+        info: { title: 'S3', version: '1.0.0' },
+        paths: { '/s3': { get: { responses: { '200': { description: 'ok' } } } } }
+      });
+      const s3Client = { getObject: vi.fn().mockResolvedValue(openapi) };
+
+      const result = await runResolution(
+        baseInputs(tempDir, { dryRun: true, specPath: 'openapi.yaml' }),
+        createAwsClientStub(),
+        createCoreStub(),
+        vi.fn(),
+        { staticIac: { s3Client } }
+      );
+
+      expect(result.status).toBe('resolved');
+      expect(result.sourceType).toBe('repo-spec');
+      expect(result.specPath).toBe('openapi.yaml');
+      expect(s3Client.getObject).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });

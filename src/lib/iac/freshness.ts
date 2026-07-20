@@ -1,10 +1,13 @@
-import { lstat, readdir, stat } from 'node:fs/promises';
+import { lstat, opendir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { IacArtifactClass } from './types.js';
 import { toPosix } from './read.js';
 
 const GENERATED_PATH_RE = /(^|\/)(cdk\.out|\.aws-sam|\.serverless|dist|build|generated|out|target)(\/|$)/i;
+
+/** Finite per-directory entry scan when probing for nearby `.tf` / `.tf.json` sources. */
+const MAX_SOURCE_DIR_ENTRIES = 64;
 
 const SOURCE_BASENAMES = new Set([
   'template.yaml',
@@ -73,7 +76,8 @@ async function collectSourceCandidates(
   artifactRelative: string,
   sourceHints: string[]
 ): Promise<string[]> {
-  const results = new Set<string>(sourceHints.map(toPosix));
+  const artifactPosix = toPosix(artifactRelative);
+  const results = new Set<string>(sourceHints.map(toPosix).filter((hint) => hint !== artifactPosix));
   const root = path.resolve(repoRoot);
 
   // Walk up from the artifact directory looking for conventional source files.
@@ -81,17 +85,40 @@ async function collectSourceCandidates(
   for (let depth = 0; depth < 6; depth += 1) {
     if (!current.startsWith(root)) break;
     const relativeDir = toPosix(path.relative(root, current)) || '.';
+    const joinRelative = (entry: string): string => (relativeDir === '.' ? entry : `${relativeDir}/${entry}`);
+
+    // Probe the finite conventional basename set directly so large directories cannot
+    // hide known sources behind an entry-scan bound.
+    for (const basename of [...SOURCE_BASENAMES].sort((a, b) => a.localeCompare(b))) {
+      const relative = joinRelative(basename);
+      if (relative === artifactPosix) {
+        continue;
+      }
+      try {
+        const info = await stat(path.join(current, basename));
+        if (info.isFile()) {
+          results.add(relative);
+        }
+      } catch {
+        // optional
+      }
+    }
+
+    // Bounded streaming directory iteration for Terraform sources only (no full readdir).
     try {
-      const entries = await readdir(current);
-      for (const entry of entries) {
-        const lower = entry.toLowerCase();
-        if (
-          SOURCE_BASENAMES.has(lower)
-          || lower.endsWith('.tf')
-          || lower.endsWith('.tf.json')
-          || lower === 'cdk.json'
-        ) {
-          results.add(relativeDir === '.' ? entry : `${relativeDir}/${entry}`);
+      let inspected = 0;
+      const directory = await opendir(current);
+      for await (const dirent of directory) {
+        if (inspected >= MAX_SOURCE_DIR_ENTRIES) {
+          break;
+        }
+        inspected += 1;
+        const lower = dirent.name.toLowerCase();
+        if (lower.endsWith('.tf') || lower.endsWith('.tf.json')) {
+          const relative = joinRelative(dirent.name);
+          if (relative !== artifactPosix) {
+            results.add(relative);
+          }
         }
       }
     } catch {

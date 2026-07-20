@@ -1,4 +1,4 @@
-import { lstat, readdir } from 'node:fs/promises';
+import { lstat, opendir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { classifyIacArtifact } from './freshness.js';
@@ -451,21 +451,65 @@ async function resolveLocalStateArtifact(
   return candidates;
 }
 
-async function collectTfPaths(repoRoot: string): Promise<string[]> {
+async function collectTfPaths(
+  repoRoot: string,
+  budget: IacReadBudget,
+  errors: IacResolutionError[]
+): Promise<string[]> {
   const found: string[] = [];
   const root = path.resolve(repoRoot);
+  // Finite inspected-entry bound derived from the existing IacReadBudget (maxFiles).
+  const maxInspectedEntries = Math.max(0, budget.maxFiles);
+  let inspectedEntries = 0;
+  let boundsExceededRecorded = false;
+  let exhausted = false;
+
+  const markBoundsExceeded = (scanPath: string): void => {
+    exhausted = true;
+    budget.truncated = true;
+    if (boundsExceededRecorded) return;
+    boundsExceededRecorded = true;
+    errors.push({
+      code: 'bounds-exceeded',
+      path: toPosix(scanPath),
+      message: `Terraform source discovery exceeded inspected-entry bound derived from maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}`
+    });
+  };
 
   async function walk(current: string, depth: number): Promise<void> {
-    if (depth > 4 || found.length >= 40) return;
-    let entries: string[];
+    if (exhausted) return;
+    if (depth > budget.maxDepth) {
+      markBoundsExceeded(path.relative(root, current) || '.');
+      return;
+    }
+    if (inspectedEntries >= maxInspectedEntries) {
+      markBoundsExceeded(path.relative(root, current) || '.');
+      return;
+    }
+
     try {
       const info = await lstat(current);
       if (info.isSymbolicLink() || !info.isDirectory()) return;
-      entries = (await readdir(current)).sort();
     } catch {
       return;
     }
-    for (const entry of entries) {
+
+    let directoryHandle;
+    try {
+      directoryHandle = await opendir(current);
+    } catch {
+      return;
+    }
+
+    const entries: Array<{ name: string; full: string; isDirectory: boolean; isTfFile: boolean }> = [];
+    for await (const dirent of directoryHandle) {
+      if (inspectedEntries >= maxInspectedEntries) {
+        markBoundsExceeded(path.relative(root, current) || '.');
+        break;
+      }
+      inspectedEntries += 1;
+
+      const entry = dirent.name;
       if (entry === '.git' || entry === 'node_modules' || entry === '.terraform' || entry === 'cdk.out') {
         continue;
       }
@@ -478,12 +522,25 @@ async function collectTfPaths(repoRoot: string): Promise<string[]> {
       }
       if (info.isSymbolicLink()) continue;
       if (info.isDirectory()) {
-        await walk(full, depth + 1);
+        entries.push({ name: entry, full, isDirectory: true, isTfFile: false });
         continue;
       }
       // Automatic scanning includes only authored Terraform sources; .tfstate is explicit-only.
       if (info.isFile() && (entry.endsWith('.tf') || entry.endsWith('.tf.json'))) {
-        found.push(toPosix(path.relative(root, full)));
+        entries.push({ name: entry, full, isDirectory: false, isTfFile: true });
+      }
+    }
+
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+
+    for (const entry of entries) {
+      if (exhausted) return;
+      if (entry.isDirectory) {
+        await walk(entry.full, depth + 1);
+        continue;
+      }
+      if (entry.isTfFile) {
+        found.push(toPosix(path.relative(root, entry.full)));
       }
     }
   }
@@ -503,7 +560,7 @@ export async function resolveTerraformStatic(
   errors: IacResolutionError[],
   options: { statePaths?: string[] } = {}
 ): Promise<IacSpecCandidate[]> {
-  const paths = await collectTfPaths(repoRoot);
+  const paths = await collectTfPaths(repoRoot, budget, errors);
   const candidates: IacSpecCandidate[] = [];
   for (const relative of paths) {
     candidates.push(...await resolveTfFile(repoRoot, relative, budget, errors));

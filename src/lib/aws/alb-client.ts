@@ -11,6 +11,8 @@ import {
 } from '@aws-sdk/client-elastic-load-balancing-v2';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface AlbRuleCondition {
   field?: string;
   values?: string[];
@@ -81,35 +83,41 @@ export class AlbListenerRulesSdkClient implements AlbListenerRulesSpecClient {
 
   private async listLoadBalancers(): Promise<LoadBalancer[]> {
     const loadBalancers: LoadBalancer[] = [];
+    const guard = createAwsPaginationGuard('ALB DescribeLoadBalancers');
     let marker: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new DescribeLoadBalancersCommand({ Marker: marker, PageSize: 400 }));
       loadBalancers.push(...(response.LoadBalancers ?? []));
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return loadBalancers;
   }
 
   private async listListeners(loadBalancerArn: string): Promise<Listener[]> {
     const listeners: Listener[] = [];
+    const guard = createAwsPaginationGuard('ALB DescribeListeners');
     let marker: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(
         new DescribeListenersCommand({ LoadBalancerArn: loadBalancerArn, Marker: marker, PageSize: 400 })
       );
       listeners.push(...(response.Listeners ?? []));
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return listeners;
   }
 
   private async listRulesForListener(listenerArn: string): Promise<Rule[]> {
     const rules: Rule[] = [];
+    const guard = createAwsPaginationGuard('ALB DescribeRules');
     let marker: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new DescribeRulesCommand({ ListenerArn: listenerArn, Marker: marker, PageSize: 400 }));
       rules.push(...(response.Rules ?? []));
-      marker = response.NextMarker;
+      marker = guard.takeNextToken(response.NextMarker);
     } while (marker);
     return rules;
   }

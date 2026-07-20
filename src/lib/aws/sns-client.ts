@@ -8,6 +8,8 @@ import {
 } from '@aws-sdk/client-sns';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
+import { createAwsPaginationGuard } from './pagination.js';
+
 export interface SnsTopicSummary {
   topicArn: string;
   name: string;
@@ -79,8 +81,10 @@ export class SnsSdkClient implements SnsSpecClient {
 
   public async listTopics(): Promise<SnsTopicSummary[]> {
     const topics: SnsTopicSummary[] = [];
+    const guard = createAwsPaginationGuard('SNS ListTopics');
     let nextToken: string | undefined;
     do {
+      guard.beginPage();
       const response = await this.client.send(new ListTopicsCommand({ NextToken: nextToken }));
       for (const topic of response.Topics ?? []) {
         const topicArn = topic.TopicArn;
@@ -90,7 +94,7 @@ export class SnsSdkClient implements SnsSpecClient {
           name: topicNameFromArn(topicArn)
         });
       }
-      nextToken = response.NextToken;
+      nextToken = guard.takeNextToken(response.NextToken);
     } while (nextToken);
     return topics;
   }
@@ -112,9 +116,11 @@ export class SnsSdkClient implements SnsSpecClient {
 
   public async listSubscriptionsByTopic(topicArn: string): Promise<SnsSubscriptionSummary[]> {
     const subscriptions: SnsSubscriptionSummary[] = [];
+    const guard = createAwsPaginationGuard('SNS ListSubscriptionsByTopic');
     let nextToken: string | undefined;
     try {
       do {
+        guard.beginPage();
         const response = await this.client.send(new ListSubscriptionsByTopicCommand({ TopicArn: topicArn, NextToken: nextToken }));
         for (const subscription of response.Subscriptions ?? []) {
           const subscriptionArn = subscription.SubscriptionArn;
@@ -127,7 +133,7 @@ export class SnsSdkClient implements SnsSpecClient {
             owner: subscription.Owner
           });
         }
-        nextToken = response.NextToken;
+        nextToken = guard.takeNextToken(response.NextToken);
       } while (nextToken);
       return subscriptions;
     } catch (error) {

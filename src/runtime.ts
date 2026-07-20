@@ -87,6 +87,7 @@ import {
 } from './lib/fetch/spec-fetcher.js';
 import type { ExactRepoTagContract } from './lib/resolve/narrowing-pipeline.js';
 import type { InventoryStaticIacOptions } from './lib/repo/specs.js';
+import { resolveStaticIacCandidates, type StaticIacResolution } from './lib/iac/index.js';
 import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
@@ -169,6 +170,8 @@ export interface DiscoveryDependencies {
   writeSpecFile(outputPath: string, content: string): Promise<void>;
   /** Optional override for the provider registry. When omitted, providers are auto-detected via IAM probing. */
   providerRegistry?: ProviderRegistry;
+  /** Test seam: inject S3 client / terraform state paths into run-scoped static IaC options. */
+  staticIac?: Pick<InventoryStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
 }
 
 export interface DiscoverySummary {
@@ -207,6 +210,8 @@ export interface ResolutionDependencies {
   fetchByteBudget?: FetchByteBudget;
   /** Test seam: override the CloudFormation/Tagging clients used by progressive narrowing. */
   narrowingClients?: { cfnClient?: CloudFormationSpecClient; taggingClient?: TaggingSpecClient };
+  /** Test seam: inject S3 client / terraform state paths into run-scoped static IaC options. */
+  staticIac?: Pick<InventoryStaticIacOptions, 's3Client' | 'terraformStatePaths'>;
 }
 
 interface SnsResolutionProvider {
@@ -550,14 +555,31 @@ export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
   });
 }
 
-function buildStaticIacOptions(inputs: ResolvedInputs): InventoryStaticIacOptions {
-  return {
-    s3Client: new S3SdkClient(inputs.awsRegion, {
+/**
+ * Build run-scoped static IaC options with a lazy memoized resolver.
+ * The Promise is created only on first consumption; inventory and signals share it.
+ * Standalone callers without `resolveStaticIac` still compute directly.
+ */
+function buildStaticIacOptions(
+  inputs: ResolvedInputs,
+  overrides: Pick<InventoryStaticIacOptions, 's3Client' | 'terraformStatePaths'> = {}
+): InventoryStaticIacOptions {
+  const s3Client =
+    overrides.s3Client
+    ?? new S3SdkClient(inputs.awsRegion, {
       requestTimeoutMs: inputs.requestTimeoutMs,
       maxAttempts: inputs.maxAttempts
-    }),
-    terraformStatePaths: inputs.terraformStatePaths ?? []
+    });
+  const terraformStatePaths = overrides.terraformStatePaths ?? inputs.terraformStatePaths ?? [];
+  let cached: Promise<StaticIacResolution> | undefined;
+  const resolveStaticIac = (): Promise<StaticIacResolution> => {
+    cached ??= resolveStaticIacCandidates(inputs.repoRoot, {
+      s3Client,
+      terraformStatePaths
+    });
+    return cached;
   };
+  return { s3Client, terraformStatePaths, resolveStaticIac };
 }
 
 /** One shared aggregate byte budget per resolution; preserves caller options aside from budget. */
@@ -2027,11 +2049,12 @@ async function selectCatalogContract(
 }
 
 async function selectInventoryContract(
-  inputs: ResolvedInputs
+  inputs: ResolvedInputs,
+  staticIac: InventoryStaticIacOptions
 ): Promise<Omit<RepoContractSelection, 'catalogApis'> | undefined> {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
     ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
-    staticIac: buildStaticIacOptions(inputs)
+    staticIac
   });
   const candidates = inventory.candidates;
   if (candidates.length === 0) {
@@ -2098,7 +2121,8 @@ async function selectInventoryContract(
 async function resolveRepoContractSelection(
   inputs: ResolvedInputs,
   actionCore: Pick<ReporterLike, 'info' | 'warning'>,
-  fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl
+  fetchRemoteSpec: typeof fetchSpecFromUrl = fetchSpecFromUrl,
+  staticIac?: InventoryStaticIacOptions
 ): Promise<RepoContractSelection> {
   const catalogApis = await detectCatalogApis(inputs.repoRoot, {
     ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
@@ -2117,7 +2141,10 @@ async function resolveRepoContractSelection(
     }
   }
 
-  const inventorySelection = await selectInventoryContract(inputs);
+  const inventorySelection = await selectInventoryContract(
+    inputs,
+    staticIac ?? buildStaticIacOptions(inputs)
+  );
   if (inventorySelection) {
     return { catalogApis, ...inventorySelection };
   }
@@ -2127,11 +2154,12 @@ async function resolveRepoContractSelection(
 
 async function discoverRepoServiceGroups(
   inputs: ResolvedInputs,
-  dependencies: DiscoveryDependencies
+  dependencies: DiscoveryDependencies,
+  staticIac: InventoryStaticIacOptions
 ): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary; nativePaths: Set<string> }> {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
     ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
-    staticIac: buildStaticIacOptions(inputs)
+    staticIac
   });
   const byRoot = new Map<string, RepoSpecCandidate[]>();
   for (const candidate of inventory.candidates) {
@@ -2210,8 +2238,8 @@ export async function runResolution(
     resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl,
     fetchByteBudget
   );
-  const staticIac = buildStaticIacOptions(inputs);
-  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec);
+  const staticIac = buildStaticIacOptions(inputs, resolutionDependencies.staticIac);
+  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec, staticIac);
   const catalogApis = repoSelection.catalogApis;
   if (repoSelection.earlyResult) {
     return repoSelection.earlyResult;
@@ -2224,43 +2252,50 @@ export async function runResolution(
   const existingSpecShouldWriteNative = repoSelection.existingSpecShouldWriteNative;
 
   // Local CDK/SAM build-artifact probe (W5): runs only when no direct repo spec was found.
-  // Local files only -- no AWS calls, no S3/HTTP fetches.
+  // Local files only -- no AWS calls, no S3/HTTP fetches. Stale generated artifacts never resolve as current.
   if (!existingSpecPath) {
     const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
     if (localArtifactSpecs.length === 1) {
-      const artifact = localArtifactSpecs[0];
-      const serviceName = artifact.logicalId;
-      const relativeDir = path.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, '/');
-      const relativeSpecPath = path.join(relativeDir, artifact.filename).replace(/\\/g, '/');
-      const evidence = [
-        `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
-      ];
-      const base: ResolutionResult = {
-        status: 'resolved',
-        sourceType: 'cfn-embedded',
-        serviceName,
-        confidence: 75,
-        gatewayType: artifact.gatewayType,
-        providerType: 'cloudformation',
-        specFormat: artifact.format,
-        specPath: relativeSpecPath,
-        evidence
-      };
-      if (inputs.dryRun) {
-        return { ...base, evidence: [...evidence, 'Dry run enabled; skipped local build artifact write'] };
-      }
-      try {
-        const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
-          repoRoot: inputs.repoRoot,
-          relativeDir,
-          native: { relativePath: relativeSpecPath, content: artifact.content },
-          derivation: { content: artifact.content, format: artifact.format, title: serviceName },
-          dryRun: inputs.dryRun,
-          writeSpecFile
-        });
-        return { ...base, ...derivedOpenApi };
-      } catch (error) {
-        actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error)}`));
+      const artifact = localArtifactSpecs[0]!;
+      if (artifact.artifactClass === 'generated-stale') {
+        // Continue to stronger evidence (signals / AWS) rather than treating stale output as current.
+        actionCore.info(
+          `Skipping stale local build artifact ${artifact.artifactRef} (${artifact.artifactClass}); continuing resolution`
+        );
+      } else {
+        const serviceName = artifact.logicalId;
+        const relativeDir = path.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, '/');
+        const relativeSpecPath = path.join(relativeDir, artifact.filename).replace(/\\/g, '/');
+        const evidence = [
+          `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId} (${artifact.artifactClass})`
+        ];
+        const base: ResolutionResult = {
+          status: 'resolved',
+          sourceType: 'cfn-embedded',
+          serviceName,
+          confidence: 75,
+          gatewayType: artifact.gatewayType,
+          providerType: 'cloudformation',
+          specFormat: artifact.format,
+          specPath: relativeSpecPath,
+          evidence
+        };
+        if (inputs.dryRun) {
+          return { ...base, evidence: [...evidence, 'Dry run enabled; skipped local build artifact write'] };
+        }
+        try {
+          const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: inputs.repoRoot,
+            relativeDir,
+            native: { relativePath: relativeSpecPath, content: artifact.content },
+            derivation: { content: artifact.content, format: artifact.format, title: serviceName },
+            dryRun: inputs.dryRun,
+            writeSpecFile
+          });
+          return { ...base, ...derivedOpenApi };
+        } catch (error) {
+          actionCore.warning(userSafeWarning(`Failed writing local build artifact spec: ${formatUserSafeError(error)}`));
+        }
       }
     } else if (localArtifactSpecs.length > 1) {
       const rankedCandidates = sanitizeJsonValue(
@@ -2270,7 +2305,9 @@ export async function runResolution(
           gatewayId: artifact.artifactRef,
           gatewayType: artifact.gatewayType,
           confidence: 50,
-          evidence: [`Embedded OpenAPI document in local build artifact ${artifact.artifactPath}`]
+          evidence: [
+            `Embedded OpenAPI document in local build artifact ${artifact.artifactPath} (${artifact.artifactClass})`
+          ]
         }))
       );
       return {
@@ -2287,12 +2324,14 @@ export async function runResolution(
     }
   }
 
+  // Skip static IaC in signals when a repo contract was already selected (explicit/catalog/inventory);
+  // lazy resolver stays unconsumed for explicit/catalog paths that never called inventory.
   const signals = await collectRepoSignals(
     inputs.repoRoot,
     inputs.repoContext.repoSlug,
     inputs.expectedServiceName,
     inputs.expectedGatewayIds,
-    { staticIac }
+    { staticIac, includeStaticIac: !existingSpecPath }
   );
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
@@ -3099,9 +3138,12 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       availableProviders.push(apiGwProvider);
     }
 
+    // One run-scoped static IaC resolution shared by inventory and signal collection.
+    const staticIac = buildStaticIacOptions(inputs, dependencies.staticIac);
+
     // Deterministic repository service groups first (repo-first precedence).
     const repoGroups = await dependencies.core.group('Discover repository service groups', async () =>
-      discoverRepoServiceGroups(inputs, dependencies)
+      discoverRepoServiceGroups(inputs, dependencies, staticIac)
     );
 
     // Run legacy API Gateway discovery next (preserves existing behavior and tests)
@@ -3116,7 +3158,7 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
       inputs.repoContext.repoSlug,
       inputs.expectedServiceName,
       inputs.expectedGatewayIds,
-      { staticIac: buildStaticIacOptions(inputs) }
+      { staticIac }
     );
     const snsResolutionContext: SnsContractResolutionContext = {
       serviceHints: signals.serviceHints,
