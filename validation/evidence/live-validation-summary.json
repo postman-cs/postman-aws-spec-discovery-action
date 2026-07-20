@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-20T11:24:58.971Z",
-  "testedSourceSha": "c8c4a08b36e2c8dab72c5039e0eca97bd018f10b",
+  "capturedAt": "2026-07-20T12:20:22.824Z",
+  "testedSourceSha": "3a57180fa1222d501c2334d1e5d78aaab386eb19",
   "distSha256": {
-    "dist/index.cjs": "babc8f983290fe7ba4fc228ab224bc2b5e6ec79ab47f83e362445803ca7602eb",
-    "dist/cli.cjs": "ee5716df5f02ef36cd8b27dbaee0f3b9c363b374fd7fe8a32056ac3986c43d77"
+    "dist/index.cjs": "f99a57a76986c8e208c17b1751af9d3e9e6263087686f36f712695dcd1b826c1",
+    "dist/cli.cjs": "c03478159beb1d694fb1f4ee8941553fd0fa167db89819517e8f568710f567e9"
   },
   "stackAlias": "spec-discovery-validation",
   "region": "us-east-1",
@@ -21,7 +21,7 @@
       "name": "api-gateway-rest",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1665,
+      "elapsedMs": 2343,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -89,7 +89,7 @@
       "name": "api-gateway-rest-modeled-route",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1213,
+      "elapsedMs": 1351,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -149,7 +149,7 @@
       "name": "api-gateway-rest-fallback",
       "runner": "live-sdk",
       "passed": true,
-      "elapsedMs": 392,
+      "elapsedMs": 658,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -173,7 +173,7 @@
       "name": "api-gateway-http",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1317,
+      "elapsedMs": 1612,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -197,7 +197,7 @@
       "name": "api-gateway-websocket",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1591,
+      "elapsedMs": 2169,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -285,7 +285,7 @@
       "name": "appsync",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 545,
+      "elapsedMs": 822,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -309,7 +309,7 @@
       "name": "appsync-events",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 361,
+      "elapsedMs": 464,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -353,7 +353,7 @@
       "name": "eventbridge-schemas",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 876,
+      "elapsedMs": 864,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -377,7 +377,7 @@
       "name": "eventbridge-rule",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 507,
+      "elapsedMs": 490,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -417,7 +417,7 @@
       "name": "eventbridge-pipe",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 633,
+      "elapsedMs": 578,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -453,7 +453,7 @@
       "name": "eventbridge-api-destination",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 359,
+      "elapsedMs": 431,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -489,7 +489,7 @@
       "name": "cloudformation-embedded",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 679,
+      "elapsedMs": 894,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -513,7 +513,7 @@
       "name": "glue-schema",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 954,
+      "elapsedMs": 1046,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -537,7 +537,7 @@
       "name": "ssm-registry",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 641,
+      "elapsedMs": 803,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -561,7 +561,7 @@
       "name": "ssm-url-registry",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1110,
+      "elapsedMs": 1256,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -585,7 +585,7 @@
       "name": "ssm-url-pointer",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 708,
+      "elapsedMs": 721,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -621,7 +621,7 @@
       "name": "lambda-url",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 756,
+      "elapsedMs": 698,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -669,7 +669,7 @@
       "name": "lambda-event-source",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 793,
+      "elapsedMs": 796,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -709,7 +709,7 @@
       "name": "verified-permissions",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 582,
+      "elapsedMs": 654,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -793,7 +793,7 @@
       "name": "alb-listener-rule",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1272,
+      "elapsedMs": 552,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -837,7 +837,7 @@
       "name": "bedrock-action-group",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 1301,
+      "elapsedMs": 872,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -877,7 +877,7 @@
       "name": "sns-ssm-content",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 9402,
+      "elapsedMs": 11537,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -905,7 +905,7 @@
       "name": "sns-webhook-sidecar",
       "runner": "runtime",
       "passed": true,
-      "elapsedMs": 9864,
+      "elapsedMs": 12472,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -973,7 +973,7 @@
       "name": "github-org-repo-tag-zero-config",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 465078,
+      "elapsedMs": 490057,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1093,7 +1093,7 @@
       "name": "github-org-repo-multi-environment-ambiguity",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 110109,
+      "elapsedMs": 113202,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1129,7 +1129,7 @@
       "name": "api-gateway-http-latest-configuration-divergence",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 233966,
+      "elapsedMs": 219653,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1189,7 +1189,7 @@
       "name": "built-cli-boundary-matrix",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 364903,
+      "elapsedMs": 360904,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1265,7 +1265,7 @@
       "name": "appsync-merged-associations",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 3461,
+      "elapsedMs": 3816,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1301,7 +1301,7 @@
       "name": "provider-denial-typed",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 3470,
+      "elapsedMs": 3774,
       "artifactChecks": [
         {
           "name": "check-1",
@@ -1341,7 +1341,7 @@
       "name": "expected-identity-mismatch",
       "runner": "built-cli",
       "passed": true,
-      "elapsedMs": 685,
+      "elapsedMs": 686,
       "artifactChecks": [
         {
           "name": "check-1",
