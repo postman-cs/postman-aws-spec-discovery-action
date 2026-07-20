@@ -59,7 +59,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-07-20T11:59:35.716Z
+- Captured at: 2026-07-20T12:56:54.998Z
 - Cases: 15
 - Passed: 15
 - Failed: 0
@@ -135,7 +135,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-07-20T11:59:36.297Z
+- Captured at: 2026-07-20T12:56:55.551Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -155,7 +155,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-07-20T11:59:36.793Z
+- Captured at: 2026-07-20T12:56:56.044Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
@@ -177,7 +177,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:support-ledger:start -->
 ## Support Ledger Enforcement
 
-- Captured at: 2026-07-20T11:59:33.747Z
+- Captured at: 2026-07-20T12:56:53.262Z
 - Ledger rows: 58
 - Advertised labels checked: 36
 - Required live rows: 26
@@ -218,7 +218,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-required-matrix:start -->
 ## Live Required Cases (current-run gate)
 
-- Captured at: 2026-07-20T12:53:03.668Z
+- Captured at: 2026-07-20T12:56:56.380Z
 - Distinction: historical-preserved rows keep old sanitized receipts; not-executed rows still require a current live run.
 - Cases: 11
 - Current-run passed: 11
@@ -227,23 +227,23 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 
 | Case | Status | Run class | Ledger IDs | Notes |
 | --- | --- | --- | --- | --- |
-| fox-tag-zero-config | passed | current-run | tag-postman-repo, tag-fox-split | current live runner built-cli |
-| fox-multi-environment-ambiguity | passed | current-run | tag-multi-environment-ambiguity | current live runner built-cli |
-| api-gateway-rest-native | passed | current-run | apigw-rest-native | current live runner runtime |
-| api-gateway-rest-fallback | passed | current-run | apigw-rest-fallback | current live runner live-sdk |
-| api-gateway-http-deployed-stage | passed | current-run | apigw-http-deployed-stage | current live runner runtime |
-| api-gateway-http-latest-configuration-divergence | passed | current-run | apigw-http-latest-configuration, stage-evidence-safe-selection | current live runner built-cli |
-| api-gateway-websocket-partial-control-plane | passed | current-run | apigw-websocket-partial | current live runner runtime |
-| appsync-merged-associations | passed | current-run | appsync-merged-associations | current live runner built-cli |
-| expected-identity-mismatch | passed | current-run | expected-identity-mismatch | current live runner built-cli |
-| provider-denial-typed | passed | current-run | provider-denial-typed | current live runner built-cli |
-| all-existing-live-supported-providers | passed | current-run | appsync-graphql, appsync-events, eventbridge-schemas, eventbridge-surfaces, cloudformation-embedded, glue-schema, ssm-registry, sns-contracts, lambda-url, lambda-event-source, bedrock-action-groups, alb-listener-rules, verified-permissions, step-functions | current live refresh of 17 provider cases |
+| fox-tag-zero-config | passed | current-run | tag-postman-repo, tag-fox-split | Committed sanitized current live receipt. |
+| fox-multi-environment-ambiguity | passed | current-run | tag-multi-environment-ambiguity | Committed sanitized current live receipt. |
+| api-gateway-rest-native | passed | current-run | apigw-rest-native | Committed sanitized current live receipt. |
+| api-gateway-rest-fallback | passed | current-run | apigw-rest-fallback | Committed sanitized current live receipt. |
+| api-gateway-http-deployed-stage | passed | current-run | apigw-http-deployed-stage | Committed sanitized current live receipt. |
+| api-gateway-http-latest-configuration-divergence | passed | current-run | apigw-http-latest-configuration, stage-evidence-safe-selection | Committed sanitized current live receipt. |
+| api-gateway-websocket-partial-control-plane | passed | current-run | apigw-websocket-partial | Committed sanitized current live receipt. |
+| appsync-merged-associations | passed | current-run | appsync-merged-associations | Committed sanitized current live receipt. |
+| expected-identity-mismatch | passed | current-run | expected-identity-mismatch | Committed sanitized current live receipt. |
+| provider-denial-typed | passed | current-run | provider-denial-typed | Committed sanitized current live receipt. |
+| all-existing-live-supported-providers | passed | current-run | appsync-graphql, appsync-events, eventbridge-schemas, eventbridge-surfaces, cloudformation-embedded, glue-schema, ssm-registry, sns-contracts, lambda-url, lambda-event-source, bedrock-action-groups, alb-listener-rules, verified-permissions, step-functions | Committed sanitized current live receipt. |
 <!-- evidence:live-required-matrix:end -->
 
 <!-- evidence:resolution-closure:start -->
 ## Resolution Closure Evidence
 
-- Captured at: 2026-07-20T11:59:34.802Z
+- Captured at: 2026-07-20T12:56:54.305Z
 - Fixture cases: 27
 - Fixture passed: 27
 - Vitest closure suites: pass
