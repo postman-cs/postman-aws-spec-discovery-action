@@ -28,6 +28,9 @@ function sortByArn(items: TaggedResource[]): TaggedResource[] {
   return [...items].sort((left, right) => (left.arn < right.arn ? -1 : left.arn > right.arn ? 1 : 0));
 }
 
+/** Finite upper bound for Resource Groups Tagging API pagination. */
+export const MAX_TAGGING_PAGES = 100;
+
 export class TaggingSdkClient implements TaggingSpecClient {
   private readonly client: ResourceGroupsTaggingAPIClient;
 
@@ -49,8 +52,9 @@ export class TaggingSdkClient implements TaggingSpecClient {
 
   public async getResourcesByTags(filters: TagFilterSpec[], resourceTypes?: string[]): Promise<TaggedResource[]> {
     const items: TaggedResource[] = [];
+    const seenTokens = new Set<string>();
     let paginationToken: string | undefined;
-    do {
+    for (let page = 1; page <= MAX_TAGGING_PAGES; page += 1) {
       const response = await this.client.send(
         new GetResourcesCommand({
           TagFilters: filters.map((filter) => ({
@@ -69,9 +73,19 @@ export class TaggingSdkClient implements TaggingSpecClient {
         }
         items.push({ arn: mapping.ResourceARN, tags });
       }
-      paginationToken = response.PaginationToken;
-    } while (paginationToken);
-    return sortByArn(items);
+      const next = response.PaginationToken || undefined;
+      if (!next) return sortByArn(items);
+      if (next === paginationToken || seenTokens.has(next)) {
+        throw new Error(
+          'Resource Groups Tagging API pagination returned a repeated PaginationToken; aborting'
+        );
+      }
+      seenTokens.add(next);
+      paginationToken = next;
+    }
+    throw new Error(
+      `Resource Groups Tagging API pagination exceeded ${MAX_TAGGING_PAGES} pages; aborting`
+    );
   }
 
   public async probe(): Promise<boolean> {

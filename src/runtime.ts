@@ -82,8 +82,11 @@ import {
   DEFAULT_REMOTE_FETCH_POLICY,
   fetchSpecFromUrl,
   sanitizeUrlEvidence,
+  type FetchByteBudget,
   type RemoteFetchPolicy
 } from './lib/fetch/spec-fetcher.js';
+import type { ExactRepoTagContract } from './lib/resolve/narrowing-pipeline.js';
+import type { InventoryStaticIacOptions } from './lib/repo/specs.js';
 import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
@@ -113,12 +116,19 @@ export interface ResolvedInputs {
   expectedAccountId?: string;
   /** Optional partition that must match the caller identity ARN before export. */
   expectedPartition?: string;
+  /** Optional region pin that must match aws-region before discovery or export. */
+  expectedRegion?: string;
   /** Explicit repo-relative specification path (validated inside repo root). */
   specPath?: string;
   /** Optional monorepo service root (validated inside repo root). */
   serviceRoot?: string;
   /** Deny-by-default remote fetch policy derived from remote-fetch-allowlist-json. */
   remoteFetchPolicy?: RemoteFetchPolicy;
+  /**
+   * Explicit repo-relative local Terraform state/output artifact paths.
+   * Parsed from terraform-state-paths-json; default []. Never auto-discovers .tfstate.
+   */
+  terraformStatePaths?: string[];
   apiFilter?: RegExp;
   serviceMapping: Record<string, string>;
   outputDir: string;
@@ -190,6 +200,11 @@ export interface ResolutionDependencies {
   codeDerivedResolver?: ResolveCodeDerivedContract;
   /** Test seam: override remote catalog/SSM/SNS URL fetches. */
   fetchSpecFromUrl?: typeof fetchSpecFromUrl;
+  /**
+   * Optional shared aggregate byte budget for this resolution.
+   * When provided (for example by execute() for default providers), all remote fetches reuse it.
+   */
+  fetchByteBudget?: FetchByteBudget;
   /** Test seam: override the CloudFormation/Tagging clients used by progressive narrowing. */
   narrowingClients?: { cfnClient?: CloudFormationSpecClient; taggingClient?: TaggingSpecClient };
 }
@@ -404,9 +419,11 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
   const stage = getInput('stage', env);
   const expectedAccountIdRaw = getInput('expected-account-id', env);
   const expectedPartitionRaw = getInput('expected-partition', env);
+  const expectedRegionRaw = getInput('expected-region', env);
   const specPathRaw = getInput('spec-path', env);
   const serviceRootRaw = getInput('service-root', env);
   const remoteFetchAllowlistRaw = getInput('remote-fetch-allowlist-json', env);
+  const terraformStatePathsRaw = getInput('terraform-state-paths-json', env) ?? '[]';
   const apiFilterRaw = getInput('api-filter', env);
   const serviceMappingRaw = getInput('service-mapping-json', env) ?? DEFAULT_SERVICE_MAPPING_JSON;
   const outputDir = getInput('output-dir', env) ?? DEFAULT_OUTPUT_DIR;
@@ -453,6 +470,10 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
 
   const expectedAccountId = normalizeExpectedAccountId(expectedAccountIdRaw);
   const expectedPartition = normalizeExpectedPartition(expectedPartitionRaw);
+  const expectedRegion = normalizeExpectedRegion(expectedRegionRaw);
+  if (expectedRegion && expectedRegion !== awsRegion.toLowerCase()) {
+    throw new Error(`AWS region mismatch: expected region ${expectedRegion} does not match aws-region ${awsRegion}. Export aborted.`);
+  }
 
   return {
     mode,
@@ -464,9 +485,11 @@ export function resolveInputs(env: NodeJS.ProcessEnv = process.env): ResolvedInp
     stage,
     expectedAccountId,
     expectedPartition,
+    expectedRegion,
     specPath,
     serviceRoot,
     remoteFetchPolicy: parseRemoteFetchAllowlistJson(remoteFetchAllowlistRaw),
+    terraformStatePaths: parseStringArrayJson(terraformStatePathsRaw, 'terraform-state-paths-json'),
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
@@ -498,6 +521,15 @@ function normalizeExpectedPartition(raw: string | undefined): string | undefined
   return value;
 }
 
+function normalizeExpectedRegion(raw: string | undefined): string | undefined {
+  const value = (raw ?? '').trim().toLowerCase();
+  if (!value) return undefined;
+  if (!/^[a-z0-9-]+$/.test(value)) {
+    throw new Error('expected-region must be a valid AWS region identifier when provided');
+  }
+  return value;
+}
+
 export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
   const requiredRegion = inputReader.getInput('aws-region').trim();
   return resolveInputs({
@@ -507,11 +539,56 @@ export function readActionInputs(inputReader: InputReaderLike): ResolvedInputs {
     INPUT_STAGE: normalizeInputValue(inputReader.getInput('stage')),
     INPUT_EXPECTED_ACCOUNT_ID: normalizeInputValue(inputReader.getInput('expected-account-id')),
     INPUT_EXPECTED_PARTITION: normalizeInputValue(inputReader.getInput('expected-partition')),
+    INPUT_EXPECTED_REGION: normalizeInputValue(inputReader.getInput('expected-region')),
     INPUT_SPEC_PATH: normalizeInputValue(inputReader.getInput('spec-path')),
     INPUT_SERVICE_ROOT: normalizeInputValue(inputReader.getInput('service-root')),
     INPUT_REMOTE_FETCH_ALLOWLIST_JSON: normalizeInputValue(inputReader.getInput('remote-fetch-allowlist-json')),
+    INPUT_TERRAFORM_STATE_PATHS_JSON:
+      normalizeInputValue(inputReader.getInput('terraform-state-paths-json'))
+      ?? actionContract.inputs['terraform-state-paths-json'].default,
     INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput('output-dir')) ?? actionContract.inputs['output-dir'].default
   });
+}
+
+function buildStaticIacOptions(inputs: ResolvedInputs): InventoryStaticIacOptions {
+  return {
+    s3Client: new S3SdkClient(inputs.awsRegion, {
+      requestTimeoutMs: inputs.requestTimeoutMs,
+      maxAttempts: inputs.maxAttempts
+    }),
+    terraformStatePaths: inputs.terraformStatePaths ?? []
+  };
+}
+
+/** One shared aggregate byte budget per resolution; preserves caller options aside from budget. */
+function withSharedFetchBudget(
+  fetchImpl: typeof fetchSpecFromUrl,
+  budget: FetchByteBudget
+): typeof fetchSpecFromUrl {
+  return (url, options = {}) => fetchImpl(url, { ...options, budget });
+}
+
+/**
+ * After the unconditional exact-tag attempt, prevent broad narrowing from re-issuing
+ * exact-contract Resource Groups Tagging queries while still allowing generic tag keys.
+ */
+function taggingClientWithoutExactRetry(client: TaggingSpecClient): TaggingSpecClient {
+  return {
+    getResourcesByTag: async (tagKey, tagValues, resourceTypes) => {
+      if (tagKey === 'postman:repo') {
+        return [];
+      }
+      return client.getResourcesByTag(tagKey, tagValues, resourceTypes);
+    },
+    getResourcesByTags: async (filters, resourceTypes) => {
+      const keys = new Set(filters.map((filter) => filter.key));
+      if (keys.has('GithubOrg') && keys.has('GithubRepo') && filters.length === 2) {
+        return [];
+      }
+      return client.getResourcesByTags(filters, resourceTypes);
+    },
+    probe: () => client.probe()
+  };
 }
 
 function resolveLegacyServiceName(gatewayId: string, gatewayName: string, tags: Record<string, string>, serviceMapping: Record<string, string>): string {
@@ -1953,7 +2030,8 @@ async function selectInventoryContract(
   inputs: ResolvedInputs
 ): Promise<Omit<RepoContractSelection, 'catalogApis'> | undefined> {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
-    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {})
+    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
+    staticIac: buildStaticIacOptions(inputs)
   });
   const candidates = inventory.candidates;
   if (candidates.length === 0) {
@@ -2052,7 +2130,8 @@ async function discoverRepoServiceGroups(
   dependencies: DiscoveryDependencies
 ): Promise<{ discovered: DiscoveredService[]; summary: DiscoverySummary; nativePaths: Set<string> }> {
   const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
-    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {})
+    ...(inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}),
+    staticIac: buildStaticIacOptions(inputs)
   });
   const byRoot = new Map<string, RepoSpecCandidate[]>();
   for (const candidate of inventory.candidates) {
@@ -2126,7 +2205,12 @@ export async function runResolution(
   writeSpecFile: (outputPath: string, content: string) => Promise<void>,
   resolutionDependencies: ResolutionDependencies = {}
 ): Promise<ResolutionResult> {
-  const fetchRemoteSpec = resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+  const fetchByteBudget = resolutionDependencies.fetchByteBudget ?? { totalBytes: 0 };
+  const fetchRemoteSpec = withSharedFetchBudget(
+    resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl,
+    fetchByteBudget
+  );
+  const staticIac = buildStaticIacOptions(inputs);
   const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec);
   const catalogApis = repoSelection.catalogApis;
   if (repoSelection.earlyResult) {
@@ -2203,7 +2287,13 @@ export async function runResolution(
     }
   }
 
-  const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
+  const signals = await collectRepoSignals(
+    inputs.repoRoot,
+    inputs.repoContext.repoSlug,
+    inputs.expectedServiceName,
+    inputs.expectedGatewayIds,
+    { staticIac }
+  );
   const domainResolution = await lookupCandidatesByCustomDomains(signals.customDomainHints ?? [], awsClient, actionCore);
   const enrichedSignals = {
     ...signals,
@@ -2227,23 +2317,25 @@ export async function runResolution(
   let resolutionNarrowing: { tier: string; mode: 'select' | 'narrow'; droppedCount: number } | undefined;
   let exactTagEvidence: string[] = [];
   let exactTagRestricted = false;
+  let exactSourceTagContract: ExactRepoTagContract | undefined;
   const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
 
-  const resolveTaggingClient = (): TaggingSpecClient | undefined => {
-    if (resolutionDependencies.narrowingClients) {
-      return resolutionDependencies.narrowingClients.taggingClient;
-    }
+  // One TaggingSpecClient instance for the entire resolution (exact + optional broad narrowing).
+  let sharedTaggingClient: TaggingSpecClient | undefined;
+  if (resolutionDependencies.narrowingClients) {
+    sharedTaggingClient = resolutionDependencies.narrowingClients.taggingClient;
+  } else {
     try {
-      return new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+      sharedTaggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts);
     } catch {
-      return undefined;
+      sharedTaggingClient = undefined;
     }
-  };
+  }
 
   const exactCorrelation = await actionCore.group('Exact repository tag correlation', async () =>
     correlateExactRepoTags({
       repoSlug: inputs.repoContext.repoSlug,
-      taggingClient: resolveTaggingClient()
+      taggingClient: sharedTaggingClient
     })
   );
 
@@ -2258,6 +2350,7 @@ export async function runResolution(
       finalCandidates = matched;
       exactTagRestricted = true;
       exactTagEvidence = exactCorrelation.evidence;
+      exactSourceTagContract = exactCorrelation.tagContract;
       const mode: 'select' | 'narrow' =
         exactCorrelation.mode === 'select' && matched.length === 1 ? 'select' : 'narrow';
       resolutionNarrowing = {
@@ -2280,13 +2373,15 @@ export async function runResolution(
     const candidateCountBeforeNarrowing = finalCandidates.length;
     const narrowingResult = await actionCore.group('Progressive narrowing', async () => {
       let cfnClient: CloudFormationSpecClient | undefined;
-      let taggingClient: TaggingSpecClient | undefined;
       if (resolutionDependencies.narrowingClients) {
-        ({ cfnClient, taggingClient } = resolutionDependencies.narrowingClients);
+        cfnClient = resolutionDependencies.narrowingClients.cfnClient;
       } else {
         try { cfnClient = new CloudFormationSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
-        try { taggingClient = new TaggingSdkClient(inputs.awsRegion, sdkOpts); } catch { /* unavailable */ }
       }
+      // Reuse the same TaggingSpecClient; suppress exact-contract re-queries after the unconditional attempt.
+      const taggingClient = sharedTaggingClient
+        ? taggingClientWithoutExactRetry(sharedTaggingClient)
+        : undefined;
 
       return runNarrowingPipeline(
         { repoSlug: inputs.repoContext.repoSlug, serviceHints: enrichedSignals.serviceHints, signals: enrichedSignals, cfnClient, taggingClient },
@@ -2511,7 +2606,13 @@ export async function runResolution(
         : path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'))
     ).replace(/\\/g, '/');
     try {
-      const content = existingSpecContent ?? await readFile(resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, 'repo-spec-path'), 'utf8');
+      let content = existingSpecContent;
+      if (content === undefined) {
+        const resolvedSpec = await resolveLocalReadWithinRoot(inputs.repoRoot, selectedSource.specPath, {
+          fieldName: 'repo-spec-path'
+        });
+        content = await readFile(resolvedSpec.canonicalPath, 'utf8');
+      }
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: relativeProviderDir,
@@ -2614,6 +2715,7 @@ export async function runResolution(
           stageSelection,
           content: body,
           sourceTier: selectedSource.narrowing?.tier,
+          sourceTagContract: exactSourceTagContract,
           providerProbes: selectedSource.providerProbes
         })
       );
@@ -2706,9 +2808,14 @@ export async function runResolution(
   return selectedSource;
 }
 
-export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGatewayClient): ProviderRegistry {
+export function buildProviderRegistry(
+  inputs: ResolvedInputs,
+  awsClient: AwsGatewayClient,
+  options: { fetchSpecFromUrl?: typeof fetchSpecFromUrl } = {}
+): ProviderRegistry {
   const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
   const registry = new ProviderRegistry();
+  const fetchRemote = options.fetchSpecFromUrl ?? fetchSpecFromUrl;
 
   registry.register(new ApiGatewayProvider(awsClient, { includeV2: inputs.includeV2, apiFilter: inputs.apiFilter }));
   registry.register(new AppSyncProvider(new AppSyncSdkClient(inputs.awsRegion, sdkOpts)));
@@ -2720,10 +2827,16 @@ export function buildProviderRegistry(inputs: ResolvedInputs, awsClient: AwsGate
   registry.register(new BedrockActionGroupProvider(new BedrockActionGroupsSdkClient(inputs.awsRegion, sdkOpts), new S3SdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new AlbListenerRulesProvider(new AlbListenerRulesSdkClient(inputs.awsRegion, sdkOpts)));
   const remoteFetchPolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
-  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts), { remoteFetchPolicy }));
+  registry.register(
+    new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts), {
+      remoteFetchPolicy,
+      fetchSpecFromUrl: fetchRemote
+    })
+  );
   registry.register(
     new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), {
-      remoteFetchPolicy
+      remoteFetchPolicy,
+      fetchSpecFromUrl: fetchRemote
     })
   );
   registry.register(new LambdaUrlProvider(new LambdaSdkClient(inputs.awsRegion, sdkOpts)));
@@ -2890,6 +3003,12 @@ export function buildExecutionOutputs(result: {
         sanitizeJsonValue({
           status: unresolved ? 'unresolved' : 'resolved',
           sourceType: 'discover-many',
+          serviceName: 'multiple-services',
+          confidence: unresolved ? 0 : discovered.length > 0 ? 100 : 0,
+          evidence: [
+            `discover-many exported ${summary.exported} service(s)`,
+            ...(summary.failed > 0 ? [`${summary.failed} export(s) failed`] : [])
+          ],
           count: discovered.length,
           summary,
           providerProbes: result.providerProbes ?? [],
@@ -2958,8 +3077,12 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
   await runPreflight(inputs, dependencies);
 
   if (inputs.mode === 'discover-many') {
+    // One aggregate remote-fetch byte budget for this execution's default providers.
+    const fetchByteBudget: FetchByteBudget = { totalBytes: 0 };
+    const fetchRemoteSpec = withSharedFetchBudget(fetchSpecFromUrl, fetchByteBudget);
     // Use injected registry or build one and auto-detect via IAM probing
-    const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+    const registry =
+      dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws, { fetchSpecFromUrl: fetchRemoteSpec });
     let discoverManyProbes: import('./contracts.js').ProviderProbeResult[] = [];
     const availableProviders = dependencies.providerRegistry
       ? registry.all()
@@ -2988,7 +3111,13 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
     const extraProviders = availableProviders.filter((p) => p.type !== 'api-gateway');
     let extraDiscovered: DiscoveredService[] = [];
     let extraSummary: DiscoverySummary = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
-    const signals = await collectRepoSignals(inputs.repoRoot, inputs.repoContext.repoSlug, inputs.expectedServiceName, inputs.expectedGatewayIds);
+    const signals = await collectRepoSignals(
+      inputs.repoRoot,
+      inputs.repoContext.repoSlug,
+      inputs.expectedServiceName,
+      inputs.expectedGatewayIds,
+      { staticIac: buildStaticIacOptions(inputs) }
+    );
     const snsResolutionContext: SnsContractResolutionContext = {
       serviceHints: signals.serviceHints,
       bridgeEvidence: collectSnsEventBridgeBridgeEvidence(signals)
@@ -3024,7 +3153,11 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
     };
   }
 
-  const registry = dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws);
+  // One aggregate byte budget shared by default SSM/SNS providers and runResolution remote fetches.
+  const fetchByteBudget: FetchByteBudget = { totalBytes: 0 };
+  const fetchRemoteSpec = withSharedFetchBudget(fetchSpecFromUrl, fetchByteBudget);
+  const registry =
+    dependencies.providerRegistry ?? buildProviderRegistry(inputs, dependencies.aws, { fetchSpecFromUrl: fetchRemoteSpec });
   let resolveOneProbes: import('./contracts.js').ProviderProbeResult[] = [];
   const providers = dependencies.providerRegistry
     ? registry.all()
@@ -3034,7 +3167,11 @@ export async function execute(inputs: ResolvedInputs, dependencies: DiscoveryDep
         dependencies.core.info(`Available providers: ${probed.map((p) => p.type).join(', ') || 'api-gateway only'}`);
         return probed;
       });
-  const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, { providers });
+  const resolution = await runResolution(inputs, dependencies.aws, dependencies.core, dependencies.writeSpecFile, {
+    providers,
+    // Pass the unwrapped default plus the shared budget so runResolution does not create a second budget.
+    fetchByteBudget
+  });
   if (!dependencies.providerRegistry) {
     resolution.providerProbes = resolveOneProbes;
   }

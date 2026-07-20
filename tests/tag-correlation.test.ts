@@ -6,7 +6,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { GetResourcesCommand } from '@aws-sdk/client-resource-groups-tagging-api';
 
 import type { AwsGatewayClient } from '../src/lib/aws/client.js';
-import { TaggingSdkClient, type TaggingSpecClient } from '../src/lib/aws/tagging-client.js';
+import {
+  MAX_TAGGING_PAGES,
+  TaggingSdkClient,
+  type TaggingSpecClient
+} from '../src/lib/aws/tagging-client.js';
 import { runResolution } from '../src/runtime.js';
 
 function createCoreStub() {
@@ -122,6 +126,61 @@ describe('POS-392 tag correlation runtime + tagging client', () => {
     ]);
   });
 
+  it('TaggingSdkClient rejects a repeated PaginationToken instead of looping', async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ResourceTagMappingList: [
+          {
+            ResourceARN: 'arn:aws:apigateway:us-east-1::/restapis/first',
+            Tags: [{ Key: 'GithubOrg', Value: 'org' }]
+          }
+        ],
+        PaginationToken: 'stuck-token'
+      })
+      .mockResolvedValue({
+        ResourceTagMappingList: [
+          {
+            ResourceARN: 'arn:aws:apigateway:us-east-1::/restapis/again',
+            Tags: [{ Key: 'GithubOrg', Value: 'org' }]
+          }
+        ],
+        PaginationToken: 'stuck-token'
+      });
+
+    const client = new TaggingSdkClient('us-east-1');
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.getResourcesByTags([{ key: 'GithubOrg' }])).rejects.toThrow(
+      'Resource Groups Tagging API pagination returned a repeated PaginationToken; aborting'
+    );
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it('TaggingSdkClient rejects pagination that exceeds the finite page cap', async () => {
+    let page = 0;
+    const send = vi.fn().mockImplementation(async () => {
+      page += 1;
+      return {
+        ResourceTagMappingList: [
+          {
+            ResourceARN: `arn:aws:apigateway:us-east-1::/restapis/page-${page}`,
+            Tags: [{ Key: 'GithubOrg', Value: 'org' }]
+          }
+        ],
+        PaginationToken: `token-${page + 1}`
+      };
+    });
+
+    const client = new TaggingSdkClient('us-east-1');
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.getResourcesByTags([{ key: 'GithubOrg' }])).rejects.toThrow(
+      `Resource Groups Tagging API pagination exceeded ${MAX_TAGGING_PAGES} pages; aborting`
+    );
+    expect(send).toHaveBeenCalledTimes(MAX_TAGGING_PAGES);
+  });
+
   it('exact Fox match selects below max-candidates threshold', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-tag-below-'));
     try {
@@ -174,15 +233,14 @@ describe('POS-392 tag correlation runtime + tagging client', () => {
         )
       });
       const { core, infos, warnings } = createCoreStub();
-      const resolution = await runResolution(baseInputs(tempDir, 5), aws, core, vi.fn().mockResolvedValue(undefined), {
-        narrowingClients: {
-          taggingClient: foxTaggingClient([
-            {
-              arn: 'arn:aws:apigateway:us-east-1::/restapis/rest-pay',
-              tags: { GithubOrg: 'org', GithubRepo: 'payments', Environment: 'prod' }
-            }
-          ])
+      const taggingClient = foxTaggingClient([
+        {
+          arn: 'arn:aws:apigateway:us-east-1::/restapis/rest-pay',
+          tags: { GithubOrg: 'org', GithubRepo: 'payments', Environment: 'prod' }
         }
+      ]);
+      const resolution = await runResolution(baseInputs(tempDir, 5), aws, core, vi.fn().mockResolvedValue(undefined), {
+        narrowingClients: { taggingClient }
       });
 
       expect(infos.join(' ')).toMatch(/Exact tag correlation \(GithubOrg\+GithubRepo\) selected candidate rest-pay/);
@@ -191,6 +249,78 @@ describe('POS-392 tag correlation runtime + tagging client', () => {
       expect(resolution.gatewayId).toBe('rest-pay');
       expect(resolution.status).toBe('resolved');
       expect(resolution.sourceType).toBe('gateway-export');
+      // Exact correlation runs once above cap; broad narrowing must not re-query Fox tags.
+      expect(taggingClient.getResourcesByTags).toHaveBeenCalledTimes(1);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('emits sourceTagContract for Fox exact-tag gateway export', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-tag-fox-prov-'));
+    try {
+      const aws = createAwsClientStub({
+        listRestApis: vi.fn().mockResolvedValue([
+          { id: 'rest-pay', name: 'payments-api' },
+          { id: 'rest-other', name: 'other-api' }
+        ]),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod', deploymentId: 'dep-1' }]),
+        getRestTags: vi.fn().mockResolvedValue({ GithubOrg: 'org', GithubRepo: 'payments' }),
+        exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: payments\npaths: {}')
+      });
+      const { core } = createCoreStub();
+      const resolution = await runResolution(
+        { ...baseInputs(tempDir, 50), dryRun: false },
+        aws,
+        core,
+        vi.fn().mockResolvedValue(undefined),
+        {
+          narrowingClients: {
+            taggingClient: foxTaggingClient([
+              {
+                arn: 'arn:aws:apigateway:us-east-1::/restapis/rest-pay',
+                tags: { GithubOrg: 'org', GithubRepo: 'payments' }
+              }
+            ])
+          }
+        }
+      );
+      expect(resolution.status).toBe('resolved');
+      expect(resolution.provenance?.sourceTagContract).toBe('GithubOrg+GithubRepo');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('emits sourceTagContract for canonical postman:repo exact-tag gateway export', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-tag-canonical-prov-'));
+    try {
+      const aws = createAwsClientStub({
+        listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-pay', name: 'payments-api' }]),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod', deploymentId: 'dep-1' }]),
+        getRestTags: vi.fn().mockResolvedValue({ 'postman:repo': 'org/payments' }),
+        exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1\ninfo:\n  title: payments\npaths: {}')
+      });
+      const taggingClient: TaggingSpecClient = {
+        getResourcesByTag: vi.fn().mockResolvedValue([
+          {
+            arn: 'arn:aws:apigateway:us-east-1::/restapis/rest-pay',
+            tags: { 'postman:repo': 'org/payments' }
+          }
+        ]),
+        getResourcesByTags: vi.fn().mockResolvedValue([]),
+        probe: vi.fn().mockResolvedValue(true)
+      };
+      const { core } = createCoreStub();
+      const resolution = await runResolution(
+        { ...baseInputs(tempDir, 50), dryRun: false },
+        aws,
+        core,
+        vi.fn().mockResolvedValue(undefined),
+        { narrowingClients: { taggingClient } }
+      );
+      expect(resolution.status).toBe('resolved');
+      expect(resolution.provenance?.sourceTagContract).toBe('postman:repo');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

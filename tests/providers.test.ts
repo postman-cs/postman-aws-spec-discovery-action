@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import * as childProcess from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -477,6 +477,38 @@ describe('CloudFormationProvider', () => {
       expect(result.filename).toBe('index.yaml');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects an escaping symlink in local SAM DefinitionUri', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'cfn-provider-symlink-test-'));
+    const outsideDir = await mkdtemp(path.join(os.tmpdir(), 'cfn-provider-outside-'));
+    try {
+      await writeFile(
+        path.join(outsideDir, 'openapi.yaml'),
+        'openapi: 3.0.1\ninfo:\n  title: escaped\n  version: "1.0"\npaths: {}',
+        'utf8'
+      );
+      await symlink(path.join(outsideDir, 'openapi.yaml'), path.join(tempDir, 'openapi.yaml'));
+      const client = createCfnClientStub({
+        getTemplate: vi.fn().mockResolvedValue(JSON.stringify({
+          Resources: {
+            MyApi: {
+              Type: 'AWS::Serverless::Api',
+              Properties: { DefinitionUri: './openapi.yaml' }
+            }
+          }
+        }))
+      });
+      const provider = new CloudFormationProvider(client, tempDir);
+
+      await expect(provider.exportSpec(
+        { id: 'stack/MyApi', name: 'MyApi', providerType: 'cloudformation', tags: {}, evidence: [], meta: { stackName: 'my-stack', logicalId: 'MyApi', physicalId: 'rest-1', resourceType: 'AWS::Serverless::Api' } },
+        {}
+      )).rejects.toThrow(/escaping symbolic links/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+      await rm(outsideDir, { recursive: true, force: true });
     }
   });
 

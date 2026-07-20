@@ -233,6 +233,12 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
       required: false,
       default: ''
     },
+    'expected-region': {
+      description:
+        'Optional AWS region that must exactly match aws-region before discovery or export. Mismatch fails closed.',
+      required: false,
+      default: ''
+    },
     'spec-path': {
       description:
         'Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection.',
@@ -250,6 +256,12 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
         'Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS).',
       required: false,
       default: ''
+    },
+    'terraform-state-paths-json': {
+      description:
+        'Optional JSON array of repo-relative local Terraform state/output artifact paths (for example terraform.tfstate). Default []. .tfstate is never auto-discovered; only listed paths are read. Remote Terraform state remains forbidden.',
+      required: false,
+      default: '[]'
     },
     'output-dir': {
       description: 'Directory under the repository root where generated specs are written.',

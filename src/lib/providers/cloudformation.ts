@@ -1,11 +1,10 @@
 import { parse } from 'yaml';
 import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 
 import type { CloudFormationSpecClient } from '../aws/cloudformation-client.js';
 import type { S3SpecClient } from '../aws/s3-client.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
-import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
+import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 
 export interface TemplateResource {
   Type: string;
@@ -135,8 +134,8 @@ async function readReferencedSpec(repoRoot: string, s3Client: S3SpecClient | und
     if (/^https?:\/\//i.test(value)) {
       return undefined;
     }
-    const localPath = resolvePathWithinRoot(path.resolve(repoRoot), value, 'definition-uri');
-    return readFile(localPath, 'utf8');
+    const localPath = await resolveLocalReadWithinRoot(repoRoot, value, { fieldName: 'definition-uri' });
+    return readFile(localPath.canonicalPath, 'utf8');
   }
 
   const s3 = parseS3Location(value);

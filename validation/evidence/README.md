@@ -45,7 +45,7 @@ The live validation stack is `spec-discovery-validation` in `us-east-1`. The lat
 <!-- evidence:live-resource-summary:start -->
 ## Live Resource Summary
 
-- Captured at: 2026-07-20T09:34:55.241Z
+- Captured at: 2026-07-20T10:20:34.899Z
 - Stack: spec-discovery-validation
 - Region: us-east-1
 - Account: XXXXXXXXXXXX
@@ -59,7 +59,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-07-20T09:56:21.875Z
+- Captured at: 2026-07-20T11:03:23.398Z
 - Cases: 15
 - Passed: 15
 - Failed: 0
@@ -73,8 +73,8 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 | graphql-sdl | repo-spec | graphql-sdl | 3.1.0 partial openapi-json | pass |
 | asyncapi-yaml | repo-spec | asyncapi-yaml | 3.1.0 partial openapi-json | pass |
 | postman-collection | repo-spec | postman-collection | 3.1.0 partial openapi-json | pass |
-| json-schema-derivation | derivation-only | json-schema | 3.1.0 partial openapi-json | pass |
-| avro-derivation | derivation-only | avro | 3.1.0 partial openapi-json | pass |
+| json-schema-repo-resolution | repo-spec | json-schema | 3.1.0 partial openapi-json | pass |
+| avro-repo-resolution | repo-spec | avro | 3.1.0 partial openapi-json | pass |
 | protobuf | repo-spec | protobuf | 3.1.0 partial openapi-json | pass |
 | smithy | repo-spec | smithy | 3.1.0 partial openapi-json | pass |
 | smithy-build | repo-spec | smithy | 3.1.0 partial openapi-json | pass |
@@ -135,7 +135,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-07-20T09:56:24.484Z
+- Captured at: 2026-07-20T11:03:25.402Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -155,7 +155,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-07-20T09:56:26.027Z
+- Captured at: 2026-07-20T11:03:26.483Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
@@ -177,7 +177,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:support-ledger:start -->
 ## Support Ledger Enforcement
 
-- Captured at: 2026-07-20T09:56:17.832Z
+- Captured at: 2026-07-20T11:03:15.304Z
 - Ledger rows: 58
 - Advertised labels checked: 36
 - Required live rows: 26
@@ -218,7 +218,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-required-matrix:start -->
 ## Live Required Cases (current-run gate)
 
-- Captured at: 2026-07-20T09:56:27.048Z
+- Captured at: 2026-07-20T11:03:27.177Z
 - Distinction: historical-preserved rows keep old sanitized receipts; not-executed rows still require a current live run.
 - Cases: 11
 - Current-run passed: 11
@@ -243,7 +243,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:resolution-closure:start -->
 ## Resolution Closure Evidence
 
-- Captured at: 2026-07-20T09:56:20.464Z
+- Captured at: 2026-07-20T11:03:21.244Z
 - Fixture cases: 26
 - Fixture passed: 26
 - Vitest closure suites: pass

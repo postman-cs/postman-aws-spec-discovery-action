@@ -185,10 +185,20 @@ describe('resolveStaticIacCandidates — Terraform/OpenTofu', () => {
     expect(result.physicalApiIds).toHaveLength(0);
   });
 
-  it('reads local state artifacts and redacts sensitive outputs', async () => {
+  it('does not auto-discover .tfstate without explicit terraformStatePaths', async () => {
     const root = await withFixture('terraform-state');
     const result = await resolveStaticIacCandidates(root, {
       enabledSources: { cloudformation: false, sam: false, cdk: false, serverless: false, terraform: true }
+    });
+    expect(result.physicalApiIds).not.toContain('stateapi01');
+    expect(result.candidates.every((c) => !c.sourcePath.endsWith('.tfstate'))).toBe(true);
+  });
+
+  it('reads local state artifacts only from explicit terraformStatePaths and redacts sensitive outputs', async () => {
+    const root = await withFixture('terraform-state');
+    const result = await resolveStaticIacCandidates(root, {
+      enabledSources: { cloudformation: false, sam: false, cdk: false, serverless: false, terraform: true },
+      terraformStatePaths: ['terraform.tfstate']
     });
     expect(result.physicalApiIds).toContain('stateapi01');
     const redacted = result.candidates.find((c) => c.logicalId === 'api_secret_token');
@@ -315,5 +325,23 @@ describe('repo inventory + signals integration', () => {
     const signals = await collectRepoSignals(root);
     expect(signals.inferredGatewayIdHints).toContain('abcdef1234');
     expect(signals.evidence.some((e) => /Exact physical API ID|Physical API ID handoff/i.test(e))).toBe(true);
+  });
+
+  it('threads production-path S3 client options into inventory and signals static IaC', async () => {
+    const root = await withFixture('cfn-s3');
+    const openapi = JSON.stringify({
+      openapi: '3.0.3',
+      info: { title: 'S3', version: '1.0.0' },
+      paths: { '/s3': { get: { responses: { '200': { description: 'ok' } } } } }
+    });
+    const s3Client = { getObject: vi.fn().mockResolvedValue(openapi) };
+    const inventory = await inventoryRepoSpecs(root, { staticIac: { s3Client } });
+    expect(s3Client.getObject).toHaveBeenCalled();
+    expect(inventory.candidates.some((c) => c.evidence.some((e) => /Static IaC|openapi-s3-ref|S3/i.test(e)))).toBe(true);
+
+    s3Client.getObject.mockClear();
+    const signals = await collectRepoSignals(root, undefined, undefined, [], { staticIac: { s3Client } });
+    expect(s3Client.getObject).toHaveBeenCalled();
+    expect(signals.evidence.length).toBeGreaterThan(0);
   });
 });

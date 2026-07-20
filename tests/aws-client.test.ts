@@ -2,6 +2,7 @@ import { parse } from 'yaml';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AwsApiGatewaySdkClient } from '../src/lib/aws/client.js';
+import { MAX_S3_OBJECT_BYTES, S3SdkClient } from '../src/lib/aws/s3-client.js';
 
 const { apiGatewayV2SendMock, apiGatewayRestSendMock } = vi.hoisted(() => ({
   apiGatewayV2SendMock: vi.fn(),
@@ -315,4 +316,59 @@ describe('AwsApiGatewaySdkClient', () => {
     ]);
   });
 
+});
+
+describe('S3SdkClient bounded exact-object reads', () => {
+  it('rejects oversized ContentLength before buffering the body', async () => {
+    const client = new S3SdkClient('us-east-1', { maxObjectBytes: 16 });
+    const send = vi.fn().mockResolvedValue({
+      ContentLength: 64,
+      Body: {
+        transformToByteArray: vi.fn().mockResolvedValue(new Uint8Array(64))
+      }
+    });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.getObject('bucket', 'key')).rejects.toThrow(/S3 object too large \(64 bytes\); limit is 16/);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams async bodies and cancels once the deterministic byte limit is exceeded', async () => {
+    const client = new S3SdkClient('us-east-1', { maxObjectBytes: 8 });
+    const cancel = vi.fn().mockResolvedValue(undefined);
+    let reads = 0;
+    const send = vi.fn().mockResolvedValue({
+      ContentLength: 4,
+      Body: {
+        getReader: () => ({
+          read: async () => {
+            reads += 1;
+            if (reads === 1) return { done: false, value: new Uint8Array([1, 2, 3, 4]) };
+            if (reads === 2) return { done: false, value: new Uint8Array([5, 6, 7, 8, 9]) };
+            return { done: true, value: undefined };
+          },
+          cancel
+        })
+      }
+    });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.getObject('bucket', 'openapi.json')).rejects.toThrow(
+      /S3 object body too large \(over 8 bytes\); limit is 8/
+    );
+    expect(cancel).toHaveBeenCalled();
+  });
+
+  it('accepts bounded exact-object bodies under the default limit', async () => {
+    const client = new S3SdkClient('us-east-1');
+    const payload = '{"openapi":"3.0.3","paths":{}}';
+    const send = vi.fn().mockResolvedValue({
+      ContentLength: Buffer.byteLength(payload),
+      Body: payload
+    });
+    (client as unknown as { client: { send: typeof send } }).client = { send };
+
+    await expect(client.getObject('specs', 'orders.json', 'v1')).resolves.toBe(payload);
+    expect(MAX_S3_OBJECT_BYTES).toBe(10 * 1024 * 1024);
+  });
 });

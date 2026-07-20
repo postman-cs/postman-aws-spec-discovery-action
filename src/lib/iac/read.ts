@@ -91,7 +91,9 @@ export async function readIacFile(
           countAsReference: false
         });
 
-    const content = await readFile(resolved.absolutePath, 'utf8');
+    // Read the canonical target from resolveLocalReadWithinRoot — never reopen the
+    // lexical absolutePath after validation (TOCTOU / replacement via symlink).
+    const content = await readFile(resolved.canonicalPath, 'utf8');
     const bytes = Buffer.byteLength(content, 'utf8');
     if (bytes > budget.maxFileBytes) {
       errors.push({

@@ -2,11 +2,11 @@
 /* global console, process */
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { Buffer } from 'node:buffer';
 import os from 'node:os';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { TextDecoder } from 'node:util';
 import { parse as parseYaml } from 'yaml';
@@ -2284,9 +2284,23 @@ const safeCaseRecords = results.map((result) => ({
   elapsedMs: result.elapsedMs,
   artifactChecks: result.artifactChecks.map((check, index) => ({ name: `check-${index + 1}`, passed: check.passed }))
 }));
+const testedSourceSha = execFileSync('git', ['rev-parse', 'HEAD'], {
+  cwd: repoRoot,
+  encoding: 'utf8'
+}).trim();
+const distSha256 = Object.fromEntries(
+  await Promise.all(
+    ['dist/index.cjs', 'dist/cli.cjs'].map(async (relativePath) => [
+      relativePath,
+      createHash('sha256').update(await readFile(path.join(repoRoot, relativePath))).digest('hex')
+    ])
+  )
+);
 const liveValidationSummary = {
   schemaVersion: 1,
   capturedAt: new Date().toISOString(),
+  testedSourceSha,
+  distSha256,
   stackAlias: 'spec-discovery-validation',
   region,
   stackStatus: /^[A-Z_]+$/.test(manifest.status ?? '') ? manifest.status : undefined,

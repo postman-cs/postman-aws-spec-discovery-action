@@ -2,8 +2,15 @@ import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createIacReadBudget, readIacFile } from '../src/lib/iac/read.js';
+import type { IacResolutionError } from '../src/lib/iac/types.js';
+import { SnsProvider } from '../src/lib/providers/sns.js';
+import type { SpecCandidate } from '../src/lib/providers/types.js';
+import type { SnsSpecClient } from '../src/lib/aws/sns-client.js';
+import { collectRepoSignals } from '../src/lib/repo/signals.js';
+import { inventoryRepoSpecs } from '../src/lib/repo/specs.js';
 import {
   createLocalReferenceTraversalState,
   resolveLocalReadWithinRoot,
@@ -183,5 +190,157 @@ describe('resolveLocalReadWithinRoot (canonical)', () => {
       countAsReference: false
     });
     expect(resolved.relativePath).toBe(path.join('specs', 'components', 'schemas.yaml'));
+  });
+});
+
+describe('readIacFile canonical open (Q2/C4)', () => {
+  it('reads the canonical symlink target and preserves lexical relative evidence; replacement escape fails closed', async () => {
+    const { root, outside } = await makeSandbox('iac-canon-read-');
+    await writeFile(path.join(root, 'canonical.yaml'), 'from-canonical-target', 'utf8');
+    await symlink(path.join(root, 'canonical.yaml'), path.join(root, 'alias.yaml'));
+
+    const budget = createIacReadBudget();
+    const errors: IacResolutionError[] = [];
+    const loaded = await readIacFile(root, 'alias.yaml', budget, errors, { countAsReference: false });
+
+    expect(loaded).toEqual({
+      content: 'from-canonical-target',
+      relativePath: 'alias.yaml'
+    });
+    expect(errors).toEqual([]);
+    expect(budget.files).toBe(1);
+
+    // Replacement: swap the lexical alias to an escaping symlink. Resolve must
+    // reject; content must never come from outside the root.
+    await writeFile(path.join(outside, 'secret.yaml'), 'leaked-outside', 'utf8');
+    await rm(path.join(root, 'alias.yaml'));
+    await symlink(path.join(outside, 'secret.yaml'), path.join(root, 'alias.yaml'));
+
+    const escapeErrors: IacResolutionError[] = [];
+    const escaped = await readIacFile(root, 'alias.yaml', createIacReadBudget(), escapeErrors, {
+      countAsReference: false
+    });
+    expect(escaped).toBeUndefined();
+    expect(escapeErrors.some((entry) => entry.code === 'path-escape')).toBe(true);
+    expect(escapeErrors.some((entry) => entry.message.includes('leaked-outside'))).toBe(false);
+  });
+});
+
+describe('repository scan caller containment', () => {
+  it('does not follow a symlinked common scan directory outside repo-root', async () => {
+    const { root, outside } = await makeSandbox('repo-scan-root-sym-');
+    await writeFile(path.join(outside, 'openapi.yaml'), 'openapi: 3.0.3\ninfo:\n  title: escaped\n', 'utf8');
+    await symlink(outside, path.join(root, 'specs'));
+
+    const inventory = await inventoryRepoSpecs(root);
+
+    expect(inventory.candidates).toEqual([]);
+    expect(inventory.errors.some((error) => error.code === 'path-escape' && error.path === 'specs')).toBe(true);
+  });
+
+  it('does not read an escaping fixed repo-signal symlink', async () => {
+    const { root, outside } = await makeSandbox('repo-signal-sym-');
+    await writeFile(
+      path.join(outside, 'template.yaml'),
+      'Type: AWS::ApiGateway::RestApi\nApiId: abcdef1234\n',
+      'utf8'
+    );
+    await symlink(path.join(outside, 'template.yaml'), path.join(root, 'template.yaml'));
+
+    const signals = await collectRepoSignals(root);
+
+    expect(signals.inferredGatewayIdHints).not.toContain('abcdef1234');
+    expect(signals.providerHints).not.toContain('api-gateway');
+  });
+});
+
+function createSnsClientStub(): SnsSpecClient {
+  return {
+    probe: vi.fn().mockResolvedValue(true),
+    listTopics: vi.fn().mockResolvedValue([]),
+    getTopicAttributes: vi.fn().mockResolvedValue({}),
+    listTagsForResource: vi.fn().mockResolvedValue({}),
+    listSubscriptionsByTopic: vi.fn().mockResolvedValue([]),
+    getSubscriptionAttributes: vi.fn().mockResolvedValue({})
+  };
+}
+
+function createSnsCandidate(): SpecCandidate {
+  return {
+    id: 'arn:aws:sns:us-east-1:123456789012:orders-topic',
+    name: 'orders-topic',
+    providerType: 'sns',
+    tags: {},
+    evidence: [],
+    meta: {
+      topicArn: 'arn:aws:sns:us-east-1:123456789012:orders-topic'
+    }
+  };
+}
+
+describe('SNS generated-artifact bounded traversal (Q3/C4)', () => {
+  it('terminates on deep framework trees and fails closed without selecting a partial contract', async () => {
+    const { root } = await makeSandbox('sns-gen-deep-');
+    // Shallow candidate would be visible in a partial walk; deep nest exceeds maxDepth=8.
+    await mkdir(path.join(root, 'build'), { recursive: true });
+    await writeFile(
+      path.join(root, 'build', 'asyncapi.yaml'),
+      'asyncapi: 2.6.0\ninfo:\n  title: Shallow Partial\nchannels: {}\n',
+      'utf8'
+    );
+
+    let deepDir = path.join(root, 'build');
+    for (let level = 1; level <= 9; level += 1) {
+      deepDir = path.join(deepDir, `d${level}`);
+    }
+    await mkdir(deepDir, { recursive: true });
+    await writeFile(
+      path.join(deepDir, 'orders-topic.asyncapi.yaml'),
+      'asyncapi: 2.6.0\ninfo:\n  title: Deep Beyond Bound\nchannels: {}\n',
+      'utf8'
+    );
+
+    const provider = new SnsProvider(createSnsClientStub(), root, undefined, {
+      gitIgnoreChecker: () => false
+    });
+    const result = await provider.resolveContract(createSnsCandidate());
+
+    expect(result.resolved).toBe(false);
+    expect(result.evidence.some((line) => /generated-artifact search truncated at maxDepth=8/.test(line))).toBe(
+      true
+    );
+    expect(result.evidence.some((line) => /Shallow Partial|Deep Beyond Bound|Resolved SNS contract from generated/.test(line))).toBe(
+      false
+    );
+  });
+
+  it('terminates on wide framework trees and fails closed without selecting a partial contract', async () => {
+    const { root } = await makeSandbox('sns-gen-wide-');
+    await mkdir(path.join(root, 'build', 'wide'), { recursive: true });
+
+    // Sorted names: filler_000.json … then z-orders.asyncapi.yaml last.
+    // maxVisited=200 guarantees truncation before the late contract is reliably selected.
+    for (let index = 0; index < 220; index += 1) {
+      const name = `filler_${String(index).padStart(3, '0')}.json`;
+      await writeFile(path.join(root, 'build', 'wide', name), '{"type":"object"}', 'utf8');
+    }
+    await writeFile(
+      path.join(root, 'build', 'wide', 'z-orders.asyncapi.yaml'),
+      'asyncapi: 2.6.0\ninfo:\n  title: Late Partial\nchannels: {}\n',
+      'utf8'
+    );
+
+    const provider = new SnsProvider(createSnsClientStub(), root, undefined, {
+      gitIgnoreChecker: () => false
+    });
+    const result = await provider.resolveContract(createSnsCandidate());
+
+    expect(result.resolved).toBe(false);
+    expect(result.evidence.some((line) => /generated-artifact search truncated at maxVisited=200/.test(line))).toBe(
+      true
+    );
+    expect(result.evidence.some((line) => /Late Partial|Resolved SNS contract from generated/.test(line))).toBe(
+      false
+    );
   });
 });

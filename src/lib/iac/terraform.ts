@@ -481,9 +481,8 @@ async function collectTfPaths(repoRoot: string): Promise<string[]> {
         await walk(full, depth + 1);
         continue;
       }
-      if (info.isFile() && (entry.endsWith('.tf') || entry.endsWith('.tf.json') || entry === 'terraform.tfstate' || entry.endsWith('.tfstate'))) {
-        // Skip remote-looking state names that are not local artifacts we own.
-        if (entry.includes('remote')) continue;
+      // Automatic scanning includes only authored Terraform sources; .tfstate is explicit-only.
+      if (info.isFile() && (entry.endsWith('.tf') || entry.endsWith('.tf.json'))) {
         found.push(toPosix(path.relative(root, full)));
       }
     }
@@ -495,21 +494,30 @@ async function collectTfPaths(repoRoot: string): Promise<string[]> {
 
 /**
  * Parse safe literal Terraform/OpenTofu bodies, file() references, API IDs,
- * and explicitly local output/state artifacts. Never evaluates HCL or downloads remote state.
+ * and explicitly listed local state artifacts. Never evaluates HCL or downloads remote state.
+ * `.tfstate` is read only from `options.statePaths` (never auto-discovered).
  */
 export async function resolveTerraformStatic(
   repoRoot: string,
   budget: IacReadBudget,
-  errors: IacResolutionError[]
+  errors: IacResolutionError[],
+  options: { statePaths?: string[] } = {}
 ): Promise<IacSpecCandidate[]> {
   const paths = await collectTfPaths(repoRoot);
   const candidates: IacSpecCandidate[] = [];
   for (const relative of paths) {
-    if (relative.endsWith('.tfstate') || relative.endsWith('terraform.tfstate')) {
-      candidates.push(...await resolveLocalStateArtifact(repoRoot, relative, budget, errors));
-    } else {
-      candidates.push(...await resolveTfFile(repoRoot, relative, budget, errors));
-    }
+    candidates.push(...await resolveTfFile(repoRoot, relative, budget, errors));
+  }
+
+  const explicitStatePaths = [
+    ...new Set(
+      (options.statePaths ?? [])
+        .map((entry) => toPosix(entry.trim()))
+        .filter((entry) => entry.length > 0 && (entry.endsWith('.tfstate') || entry.endsWith('terraform.tfstate')))
+    )
+  ].sort((a, b) => a.localeCompare(b));
+  for (const relative of explicitStatePaths) {
+    candidates.push(...await resolveLocalStateArtifact(repoRoot, relative, budget, errors));
   }
   return candidates;
 }

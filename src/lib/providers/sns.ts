@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { lstat, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { parse, stringify } from 'yaml';
 
@@ -27,6 +27,10 @@ const ASYNCAPI_FILE_NAMES = new Set(['asyncapi.yaml', 'asyncapi.yml', 'asyncapi.
 const GENERATED_ASYNCAPI_EXTENSIONS = new Set(['.yaml', '.yml', '.json']);
 const GENERATED_ROOT_PREFIXES = ['spec/', 'contracts/', 'events/', 'build/', '.build/', 'out/'] as const;
 const DEFAULT_IGNORED_DIRS = new Set(['.git', 'node_modules', 'dist']);
+/** Max directory depth below each framework root (build/.build/out). */
+const GENERATED_ARTIFACT_MAX_DEPTH = 8;
+/** Max visited entries (files + dirs) across a single framework-root walk. */
+const GENERATED_ARTIFACT_MAX_VISITED = 200;
 const CONTRACT_REGISTRY_FILES = [
   '.postman/contracts.yaml',
   '.postman/contracts.yml',
@@ -1083,29 +1087,89 @@ function isGeneratedAsyncApiPath(repoRoot: string, filePath: string): boolean {
   return false;
 }
 
-async function collectFilesByExtensionUnfiltered(currentPath: string): Promise<string[]> {
-  const entries = await readdir(currentPath, { withFileTypes: true }).catch(() => []);
-  const files: string[] = [];
+interface GeneratedArtifactWalkResult {
+  files: string[];
+  truncated: boolean;
+  evidence: string[];
+}
 
-  for (const entry of entries) {
-    const fullPath = path.join(currentPath, entry.name);
-    if (entry.isDirectory()) {
-      if (DEFAULT_IGNORED_DIRS.has(entry.name)) {
+/**
+ * Deterministic bounded walk of a framework output root for generated AsyncAPI
+ * candidates. Sorted entries, depth/visited caps, ignored dirs retained,
+ * symlinks and non-files refused. On a bound hit, truncated=true and files are
+ * discarded by the caller (fail closed — no partial candidate set).
+ */
+async function collectGeneratedArtifactFilesBounded(rootPath: string): Promise<GeneratedArtifactWalkResult> {
+  const files: string[] = [];
+  let visited = 0;
+  let truncated = false;
+  let truncationEvidence: string | undefined;
+
+  async function walk(currentPath: string, depth: number): Promise<void> {
+    if (truncated) {
+      return;
+    }
+    if (depth > GENERATED_ARTIFACT_MAX_DEPTH) {
+      truncated = true;
+      truncationEvidence = `SNS generated-artifact search truncated at maxDepth=${GENERATED_ARTIFACT_MAX_DEPTH}`;
+      return;
+    }
+    if (visited >= GENERATED_ARTIFACT_MAX_VISITED) {
+      truncated = true;
+      truncationEvidence = `SNS generated-artifact search truncated at maxVisited=${GENERATED_ARTIFACT_MAX_VISITED}`;
+      return;
+    }
+
+    const entries = await readdir(currentPath, { withFileTypes: true }).catch(() => []);
+    const sorted = [...entries].sort((left, right) => left.name.localeCompare(right.name));
+
+    for (const entry of sorted) {
+      if (truncated) {
+        return;
+      }
+      if (visited >= GENERATED_ARTIFACT_MAX_VISITED) {
+        truncated = true;
+        truncationEvidence = `SNS generated-artifact search truncated at maxVisited=${GENERATED_ARTIFACT_MAX_VISITED}`;
+        return;
+      }
+
+      visited += 1;
+      const fullPath = path.join(currentPath, entry.name);
+
+      // Refuse symlinks and non-files/non-directories (Dirent: symlink is neither file nor dir).
+      if (entry.isSymbolicLink()) {
         continue;
       }
-      files.push(...(await collectFilesByExtensionUnfiltered(fullPath)));
-      continue;
-    }
 
-    if (!entry.isFile()) {
-      continue;
-    }
-    if (GENERATED_ASYNCAPI_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
-      files.push(fullPath);
+      if (entry.isDirectory()) {
+        if (DEFAULT_IGNORED_DIRS.has(entry.name)) {
+          continue;
+        }
+        await walk(fullPath, depth + 1);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      if (GENERATED_ASYNCAPI_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+        files.push(fullPath);
+      }
     }
   }
 
-  return files;
+  await walk(rootPath, 0);
+
+  if (truncated) {
+    return {
+      files: [],
+      truncated: true,
+      evidence: truncationEvidence ? [truncationEvidence] : ['SNS generated-artifact search truncated']
+    };
+  }
+
+  return { files, truncated: false, evidence: [] };
 }
 
 function isFrameworkOutputPath(repoRoot: string, filePath: string): boolean {
@@ -1228,39 +1292,54 @@ async function findGeneratedAsyncApiFiles(
   topicName: string,
   gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean = isGitIgnoredByGit,
   scannedFiles?: string[]
-): Promise<string[]> {
+): Promise<{ files: string[]; evidence: string[] }> {
   const scanned = scannedFiles ?? (await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']));
   const discovered = new Set<string>(scanned);
+  const evidence: string[] = [];
+  let frameworkSearchTruncated = false;
 
   for (const frameworkRoot of ['build', '.build', 'out']) {
     const rootPath = path.join(repoRoot, frameworkRoot);
-    const rootStats = await stat(rootPath).catch(() => null);
-    if (!rootStats || !rootStats.isDirectory()) {
+    const rootStats = await lstat(rootPath).catch(() => null);
+    // Refuse missing paths, symlinks, and non-directories at the framework root.
+    if (!rootStats || rootStats.isSymbolicLink() || !rootStats.isDirectory()) {
       continue;
     }
-    for (const filePath of await collectFilesByExtensionUnfiltered(rootPath)) {
+    const walkResult = await collectGeneratedArtifactFilesBounded(rootPath);
+    if (walkResult.truncated) {
+      frameworkSearchTruncated = true;
+      evidence.push(...walkResult.evidence);
+      break;
+    }
+    for (const filePath of walkResult.files) {
       discovered.add(filePath);
     }
   }
 
+  // Fail closed on truncation: discard every framework-output candidate so a
+  // partial walk cannot select a contract. Non-framework generated paths from
+  // the bounded IaC inventory (spec/, contracts/, events/) remain eligible.
   const accepted: string[] = [];
   for (const filePath of discovered) {
     if (!isGeneratedAsyncApiPath(repoRoot, filePath)) {
       continue;
     }
 
-    if (!isFrameworkOutputPath(repoRoot, filePath)) {
-      accepted.push(filePath);
+    if (isFrameworkOutputPath(repoRoot, filePath)) {
+      if (frameworkSearchTruncated) {
+        continue;
+      }
+      const ignored = await gitIgnoreChecker(repoRoot, filePath);
+      if (!ignored) {
+        accepted.push(filePath);
+      }
       continue;
     }
 
-    const ignored = await gitIgnoreChecker(repoRoot, filePath);
-    if (!ignored) {
-      accepted.push(filePath);
-    }
+    accepted.push(filePath);
   }
 
-  return sortByTopicAffinity(accepted, topicName);
+  return { files: sortByTopicAffinity(accepted, topicName), evidence };
 }
 
 async function resolveAsyncApiContract(
@@ -1524,11 +1603,28 @@ export class SnsProvider implements SpecProvider {
 
     const generatedAsyncApiResolution = resolvedExport
       ? { evidence: priorEvidence }
-      : await resolveAsyncApiContract(
-          resolvedRepoRoot,
-          await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker, scannedFiles),
-          'generated'
-        );
+      : await (async () => {
+          const generatedDiscovery = await findGeneratedAsyncApiFiles(
+            resolvedRepoRoot,
+            topicName,
+            this.gitIgnoreChecker,
+            scannedFiles
+          );
+          const resolution = await resolveAsyncApiContract(
+            resolvedRepoRoot,
+            generatedDiscovery.files,
+            'generated'
+          );
+          return {
+            match: resolution.match
+              ? {
+                  ...resolution.match,
+                  evidence: [...generatedDiscovery.evidence, ...resolution.match.evidence]
+                }
+              : undefined,
+            evidence: [...generatedDiscovery.evidence, ...resolution.evidence]
+          };
+        })();
     if (!resolvedExport && 'match' in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
       resolvedOrigin = 'generated-asyncapi';
       resolvedExport = generatedAsyncApiResolution.match;

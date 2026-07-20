@@ -73,10 +73,10 @@ const cases = [
     }
   },
   {
-    name: 'json-schema-derivation',
+    name: 'json-schema-repo-resolution',
     source: 'validation/fixtures/repo-spec/order.schema.json',
+    target: 'order.schema.json',
     expectedFormat: 'json-schema',
-    derivationOnly: true,
     expectedDerivedSchema: {
       path: '/order-created',
       component: 'OrderCreated',
@@ -84,10 +84,10 @@ const cases = [
     }
   },
   {
-    name: 'avro-derivation',
+    name: 'avro-repo-resolution',
     source: 'validation/fixtures/repo-spec/order.avsc',
+    target: 'order.avsc',
     expectedFormat: 'avro',
-    derivationOnly: true,
     expectedDerivedSchema: {
       path: '/order-event',
       component: 'OrderEvent',
