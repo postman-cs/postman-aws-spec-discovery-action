@@ -131,6 +131,122 @@ describe('resolveStaticIacCandidates — CDK', () => {
     expect(child?.evidence.some((e) => /nested CDK assembly/i.test(e))).toBe(true);
   });
 
+  it('rejects nested directoryName that escapes repoRoot before template-glob enumeration', async () => {
+    const parent = await mkdtemp(path.join(os.tmpdir(), 'iac-cdk-escape-parent-'));
+    tempDirs.push(parent);
+    const root = path.join(parent, 'repo');
+    const outside = path.join(parent, 'outside');
+    await mkdir(root);
+    await mkdir(outside);
+    await mkdir(path.join(root, 'cdk.out', 'assembly-Valid'), { recursive: true });
+
+    // Tempting outside artifact: no manifest, so a buggy fallback would opendir here.
+    const outsideMarker = '/escape-outside-must-not-appear';
+    await writeFile(
+      path.join(outside, 'Escape.template.json'),
+      JSON.stringify({
+        Resources: {
+          EscapeApi: {
+            Type: 'AWS::ApiGateway::RestApi',
+            Properties: {
+              Body: {
+                openapi: '3.0.3',
+                info: { title: 'Escape', version: '1.0.0' },
+                paths: {
+                  [outsideMarker]: { get: { responses: { '200': { description: 'ok' } } } }
+                }
+              }
+            }
+          }
+        }
+      }),
+      'utf8'
+    );
+
+    await writeFile(path.join(root, 'cdk.json'), JSON.stringify({ app: 'npx ts-node bin/app.ts' }), 'utf8');
+
+    const escapeDirectoryName = path.posix.relative(
+      path.posix.join(root.replace(/\\/g, '/'), 'cdk.out'),
+      outside.replace(/\\/g, '/')
+    );
+    await writeFile(
+      path.join(root, 'cdk.out', 'manifest.json'),
+      JSON.stringify({
+        version: '36.0.0',
+        artifacts: {
+          EscapeAssembly: {
+            type: 'cdk:cloud-assembly',
+            properties: { directoryName: escapeDirectoryName }
+          },
+          ValidAssembly: {
+            type: 'cdk:cloud-assembly',
+            properties: { directoryName: 'assembly-Valid' }
+          }
+        }
+      }),
+      'utf8'
+    );
+
+    await writeFile(
+      path.join(root, 'cdk.out', 'assembly-Valid', 'manifest.json'),
+      JSON.stringify({
+        version: '36.0.0',
+        artifacts: {
+          ValidStack: {
+            type: 'aws:cloudformation:stack',
+            properties: { templateFile: 'ValidStack.template.json' }
+          }
+        }
+      }),
+      'utf8'
+    );
+    await writeFile(
+      path.join(root, 'cdk.out', 'assembly-Valid', 'ValidStack.template.json'),
+      JSON.stringify({
+        Resources: {
+          ValidApi: {
+            Type: 'AWS::ApiGatewayV2::Api',
+            Properties: {
+              Name: 'valid',
+              ProtocolType: 'HTTP',
+              Body: {
+                openapi: '3.0.3',
+                info: { title: 'Valid', version: '1.0.0' },
+                paths: {
+                  '/valid-nested': { get: { responses: { '200': { description: 'ok' } } } }
+                }
+              }
+            }
+          }
+        }
+      }),
+      'utf8'
+    );
+
+    const result = await resolveStaticIacCandidates(root, {
+      enabledSources: { cloudformation: false, sam: false, terraform: false, serverless: false, cdk: true }
+    });
+
+    const pathEscapeErrors = result.errors.filter((error) => error.code === 'path-escape');
+    expect(pathEscapeErrors.length).toBeGreaterThanOrEqual(1);
+    expect(pathEscapeErrors.some((error) => /escap|repo-root|cdk-directory/i.test(error.message))).toBe(true);
+
+    // No outside-derived candidates/content and no legacy template-glob fallback acceptance.
+    expect(JSON.stringify(result)).not.toContain(outsideMarker);
+    expect(JSON.stringify(result)).not.toContain('Escape.template.json');
+    expect(
+      result.candidates.every((candidate) => {
+        const source = candidate.sourcePath ?? '';
+        return !source.includes('outside') && !source.includes('Escape.template.json');
+      })
+    ).toBe(true);
+
+    // Neighboring valid nested assembly still resolves (supported behavior preserved).
+    const valid = result.candidates.find((c) => c.logicalId === 'ValidApi' && c.kind === 'openapi-inline');
+    expect(valid?.content).toContain('/valid-nested');
+    expect(valid?.sourcePath).toContain('assembly-Valid');
+  });
+
   it('rejects unsupported manifest schema versions', async () => {
     const root = await withFixture('cdk-unsupported-version');
     const result = await resolveStaticIacCandidates(root, {
