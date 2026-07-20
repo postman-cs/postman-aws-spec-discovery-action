@@ -46,6 +46,13 @@ export function deriveOpenApiDocument(input: OpenApiDerivationInput): OpenApiDer
   switch (input.format) {
     case 'graphql-sdl':
       return jsonResult(graphqlToOpenApi(input.content, title), '3.1.0', 'Synthesized GraphQL POST endpoint as partial OpenAPI 3.1');
+    case 'graphql-introspection-json':
+      // Introspection JSON is preserved natively; derivation emits a GraphQL POST shell only.
+      return jsonResult(
+        graphqlToOpenApi('', title),
+        '3.1.0',
+        'Synthesized GraphQL POST endpoint as partial OpenAPI 3.1 from introspection JSON'
+      );
     case 'asyncapi-json':
     case 'asyncapi-yaml':
       return jsonResult(asyncApiToOpenApi(input.content, title), '3.1.0', 'Synthesized OpenAPI 3.1 webhooks from AsyncAPI channels');
@@ -58,10 +65,15 @@ export function deriveOpenApiDocument(input: OpenApiDerivationInput): OpenApiDer
     case 'avro':
     case 'json-schema':
       return jsonResult(schemaToOpenApi(input.content, title, input.format), '3.1.0', `Wrapped ${input.format} schema in a partial OpenAPI 3.1 request path`);
+    case 'wsdl':
+    case 'mcp-json':
+      // Preserve native bytes elsewhere; derivation only emits a partial placeholder shell.
+      return jsonResult(emptyPartial(title), '3.1.0', `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
     default:
       return jsonResult(emptyPartial(title), '3.1.0', `Created partial OpenAPI 3.1 placeholder for ${input.format}`);
   }
 }
+
 
 function jsonResult(document: OpenApiDocument, version: '3.0.3' | '3.1.0', evidence: string): OpenApiDerivationResult {
   return {

@@ -1,0 +1,38 @@
+{
+  "__schema": {
+    "queryType": { "name": "Query" },
+    "mutationType": null,
+    "subscriptionType": null,
+    "types": [
+      {
+        "kind": "OBJECT",
+        "name": "Query",
+        "fields": [
+          {
+            "name": "order",
+            "args": [],
+            "type": { "kind": "OBJECT", "name": "Order", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Order",
+        "fields": [
+          {
+            "name": "id",
+            "args": [],
+            "type": { "kind": "NON_NULL", "name": null, "ofType": { "kind": "SCALAR", "name": "ID", "ofType": null } },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": []
+      }
+    ],
+    "directives": []
+  }
+}

@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -52,6 +52,194 @@ describe('inventoryRepoSpecs', () => {
       });
       expect(inventory.candidates[0]?.content).toContain('OrderEvent');
     });
+  });
+
+  it('detects GraphQL introspection JSON before generic JSON Schema and preserves bytes', async () => {
+    await withFixtureCopy('graphql-introspection', async (repoRoot) => {
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates).toHaveLength(1);
+      expect(inventory.candidates[0]).toMatchObject({
+        path: 'introspection.json',
+        type: 'graphql-introspection',
+        format: 'graphql-introspection-json',
+        artifactClass: 'authored',
+        rank: 1
+      });
+      const source = await readFile(path.join(repoRoot, 'introspection.json'), 'utf8');
+      expect(inventory.candidates[0]?.content).toBe(source);
+      expect(inventory.candidates[0]?.content).toContain('"__schema"');
+    });
+  });
+
+  it('rejects arbitrary JSON false positives for GraphQL introspection', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-gql-intro-neg-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'introspection.json'),
+        JSON.stringify({ schema: { queryType: { name: 'Query' } }, data: { hello: true } }),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'wrapped.json'),
+        JSON.stringify({ data: { __typename: 'Query' } }),
+        'utf8'
+      );
+      const inventory = await inventoryRepoSpecs(tempDir);
+      expect(inventory.candidates.filter((c) => c.type === 'graphql-introspection')).toHaveLength(0);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects validated WSDL 1.1 candidates and preserves exact bytes', async () => {
+    await withFixtureCopy('wsdl', async (repoRoot) => {
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates).toHaveLength(1);
+      expect(inventory.candidates[0]).toMatchObject({
+        path: 'service.wsdl',
+        type: 'wsdl',
+        format: 'wsdl',
+        artifactClass: 'authored',
+        rank: 1
+      });
+      expect(inventory.candidates[0]?.content).toContain('schemas.xmlsoap.org/wsdl');
+      expect(inventory.candidates[0]?.content).toContain('OrdersService');
+      const source = await readFile(path.join(repoRoot, 'service.wsdl'), 'utf8');
+      expect(inventory.candidates[0]?.content).toBe(source);
+    });
+  });
+
+  it('detects validated WSDL 2.0 description documents', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-wsdl20-'));
+    try {
+      const wsdl20 = [
+        '<?xml version="1.0"?>',
+        '<description xmlns="http://www.w3.org/ns/wsdl"',
+        '             targetNamespace="http://example.test/v2">',
+        '  <interface name="Orders"/>',
+        '</description>'
+      ].join('\n');
+      await writeFile(path.join(tempDir, 'api.wsdl'), wsdl20, 'utf8');
+      const inventory = await inventoryRepoSpecs(tempDir);
+      expect(inventory.candidates).toHaveLength(1);
+      expect(inventory.candidates[0]).toMatchObject({
+        path: 'api.wsdl',
+        type: 'wsdl',
+        format: 'wsdl'
+      });
+      expect(inventory.candidates[0]?.content).toBe(wsdl20);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects validated MCP client-config and registry server.json candidates without mutation', async () => {
+    await withFixtureCopy('mcp', async (repoRoot) => {
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates).toHaveLength(1);
+      expect(inventory.candidates[0]).toMatchObject({
+        path: 'mcp.json',
+        type: 'mcp',
+        format: 'mcp-json',
+        artifactClass: 'authored',
+        rank: 1
+      });
+      expect(inventory.candidates[0]?.content).toContain('mcpServers');
+      const source = await readFile(path.join(repoRoot, 'mcp.json'), 'utf8');
+      expect(inventory.candidates[0]?.content).toBe(source);
+    });
+
+    await withFixtureCopy('mcp-registry', async (repoRoot) => {
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates).toHaveLength(1);
+      expect(inventory.candidates[0]).toMatchObject({
+        path: 'server.json',
+        type: 'mcp',
+        format: 'mcp-json',
+        artifactClass: 'authored',
+        rank: 1
+      });
+      expect(inventory.candidates[0]?.content).toContain('modelcontextprotocol');
+      expect(inventory.candidates[0]?.content).toContain('remotes');
+    });
+  });
+
+  it('rejects arbitrary XML/JSON false positives for WSDL and MCP', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-wsdl-mcp-neg-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'service.wsdl'),
+        '<?xml version="1.0"?><root><child>not-wsdl</child></root>\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'noise.xml'),
+        '<?xml version="1.0"?><definitions><message name="X"/></definitions>\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'mcp.json'),
+        JSON.stringify({ servers: { local: { command: 'echo' } } }),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'server.json'),
+        JSON.stringify({ name: 'io.example/orders', version: '1.0.0' }),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'config.json'),
+        JSON.stringify({
+          mcpServers: { local: { command: 'run' } }
+        }),
+        'utf8'
+      );
+
+      const inventory = await inventoryRepoSpecs(tempDir);
+      expect(inventory.candidates.filter((candidate) => candidate.type === 'wsdl')).toHaveLength(0);
+      expect(inventory.candidates.filter((candidate) => candidate.type === 'mcp')).toHaveLength(0);
+      expect(inventory.candidates.every((candidate) => candidate.path !== 'noise.xml')).toBe(true);
+      expect(inventory.candidates.every((candidate) => candidate.path !== 'config.json')).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('ranks WSDL and MCP among other families without collapsing ambiguity', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-wsdl-mcp-rank-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'openapi.yaml'),
+        'openapi: 3.0.3\ninfo:\n  title: Orders\n  version: "1.0.0"\npaths: {}\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'service.wsdl'),
+        [
+          '<?xml version="1.0"?>',
+          '<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" name="Demo">',
+          '  <portType name="DemoPort"/>',
+          '</definitions>'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'mcp.json'),
+        JSON.stringify({ mcpServers: { demo: { command: 'run-demo' } } }),
+        'utf8'
+      );
+
+      const inventory = await inventoryRepoSpecs(tempDir);
+      expect(inventory.candidates.length).toBeGreaterThanOrEqual(3);
+      expect(inventory.candidates.map((candidate) => candidate.rank)).toEqual(
+        inventory.candidates.map((_, index) => index + 1)
+      );
+      expect(inventory.candidates.some((candidate) => candidate.format === 'wsdl')).toBe(true);
+      expect(inventory.candidates.some((candidate) => candidate.format === 'mcp-json')).toBe(true);
+      expect(inventory.candidates.some((candidate) => candidate.type === 'openapi')).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('resolves smithy-build sources into aggregated .smithy model content', async () => {

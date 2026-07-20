@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "orders": {
+      "command": "npx",
+      "args": ["-y", "@example/orders-mcp-server"]
+    }
+  }
+}

@@ -272,7 +272,13 @@ export class CloudFormationProvider implements SpecProvider {
       content: spec.content,
       format: spec.format,
       filename: spec.filename,
-      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`]
+      evidence: [`Extracted embedded spec from ${candidate.meta.resourceType} in CloudFormation stack ${stackName}`],
+      provenance: {
+        exportOptions: {
+          // GetTemplate uses TemplateStage=Processed only (no Original fetch).
+          templateStage: 'Processed'
+        }
+      }
     };
   }
 }

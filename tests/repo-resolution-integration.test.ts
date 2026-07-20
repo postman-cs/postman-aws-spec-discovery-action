@@ -1,4 +1,4 @@
-import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -132,6 +132,104 @@ describe('repo resolution integration (POS-388 / POS-393)', () => {
         specFormat: 'avro'
       });
     });
+  });
+
+  it('resolves WSDL and MCP inventory candidates as repo-spec without byte mutation', async () => {
+    await withFixtureCopy('wsdl', async (repoRoot) => {
+      const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+      const source = await readFile(path.join(repoRoot, 'service.wsdl'), 'utf8');
+      const result = await runResolution(
+        baseInputs(repoRoot, { dryRun: false }),
+        createAwsClientStub(),
+        createCoreStub(),
+        writeSpecFile
+      );
+      expect(result).toMatchObject({
+        status: 'resolved',
+        sourceType: 'repo-spec',
+        specPath: 'service.wsdl',
+        specFormat: 'wsdl'
+      });
+      // Native WSDL stays at the source path; only optional derived OpenAPI sidecars may be written.
+      const nativeWrites = writeSpecFile.mock.calls.filter(
+        (call) => String(call[0]).replace(/\\/g, '/').endsWith('.wsdl')
+      );
+      expect(nativeWrites).toHaveLength(0);
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates[0]?.content).toBe(source);
+    });
+
+    await withFixtureCopy('mcp', async (repoRoot) => {
+      const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+      const source = await readFile(path.join(repoRoot, 'mcp.json'), 'utf8');
+      const result = await runResolution(
+        baseInputs(repoRoot, { dryRun: false }),
+        createAwsClientStub(),
+        createCoreStub(),
+        writeSpecFile
+      );
+      expect(result).toMatchObject({
+        status: 'resolved',
+        sourceType: 'repo-spec',
+        specPath: 'mcp.json',
+        specFormat: 'mcp-json'
+      });
+      const nativeWrites = writeSpecFile.mock.calls.filter(
+        (call) => String(call[0]).replace(/\\/g, '/').endsWith('mcp.json')
+          && !String(call[0]).includes('derived')
+      );
+      expect(nativeWrites).toHaveLength(0);
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates[0]?.content).toBe(source);
+    });
+  });
+
+  it('preserves exact WSDL and MCP bytes through the SSM content-bearing seam', async () => {
+    const wsdl = [
+      '<?xml version="1.0"?>',
+      '<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" name="SsmOrders">',
+      '  <portType name="Orders"/>',
+      '</definitions>'
+    ].join('\n');
+    const mcp = JSON.stringify({
+      mcpServers: { orders: { command: 'npx', args: ['orders-mcp'] } }
+    });
+
+    const wsdlClient: SsmSpecClient = {
+      probe: vi.fn().mockResolvedValue(true),
+      listSpecParameters: vi.fn().mockResolvedValue([
+        { serviceName: 'orders-soap', key: 'content', value: wsdl }
+      ])
+    };
+    const wsdlExport = await new SsmProvider(wsdlClient).exportSpec({
+      id: 'ssm/orders-soap',
+      name: 'orders-soap',
+      providerType: 'ssm',
+      tags: {},
+      evidence: [],
+      meta: {}
+    });
+    expect(wsdlExport.format).toBe('wsdl');
+    expect(wsdlExport.filename).toBe('service.wsdl');
+    expect(wsdlExport.content).toBe(wsdl);
+
+    const mcpClient: SsmSpecClient = {
+      probe: vi.fn().mockResolvedValue(true),
+      listSpecParameters: vi.fn().mockResolvedValue([
+        { serviceName: 'orders-mcp', key: 'content', value: mcp }
+      ])
+    };
+    const mcpExport = await new SsmProvider(mcpClient).exportSpec({
+      id: 'ssm/orders-mcp',
+      name: 'orders-mcp',
+      providerType: 'ssm',
+      tags: {},
+      evidence: [],
+      meta: {}
+    });
+    expect(mcpExport.format).toBe('mcp-json');
+    expect(mcpExport.filename).toBe('mcp.json');
+    expect(mcpExport.content).toBe(mcp);
   });
 
   it('uses aggregated Smithy and GraphQL content for composed contracts', async () => {
@@ -363,9 +461,8 @@ describe('repo resolution integration (POS-388 / POS-393)', () => {
       fetchSpecFromUrl: fetchMock
     });
     const deniedCandidates = await denied.listCandidates();
-    const deniedExport = await denied.exportSpec(deniedCandidates[0]!);
-    expect(deniedExport.filename).toBe('spec-pointer.json');
-    expect(deniedExport.evidence.join('\n')).toMatch(/disabled by default|fetch failed/i);
+    // Fetch failure must fail closed — never become a resolved OpenAPI pointer artifact.
+    await expect(denied.exportSpec(deniedCandidates[0]!)).rejects.toThrow(/SSM remote spec fetch failed|disabled by default/i);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const allowed = new SsmProvider(client, {
@@ -378,8 +475,256 @@ describe('repo resolution integration (POS-388 / POS-393)', () => {
     const allowedCandidates = await allowed.listCandidates();
     expect(allowedCandidates[0]?.meta.url).toBe('https://specs.example.com/v1/orders.yaml');
     const allowedExport = await allowed.exportSpec(allowedCandidates[0]!);
-    expect(allowedExport.filename).toBe('index.yaml');
+    expect(allowedExport.filename).toBe('orders.yaml');
+    expect(allowedExport.format).toBe('openapi-yaml');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('resolves GraphQL introspection JSON as repo-spec without mutating source bytes', async () => {
+    await withFixtureCopy('graphql-introspection', async (repoRoot) => {
+      const source = await readFile(path.join(repoRoot, 'introspection.json'), 'utf8');
+      const result = await runResolution(baseInputs(repoRoot), createAwsClientStub(), createCoreStub(), vi.fn());
+      expect(result).toMatchObject({
+        status: 'resolved',
+        sourceType: 'repo-spec',
+        specPath: 'introspection.json',
+        specFormat: 'graphql-introspection-json'
+      });
+      const inventory = await inventoryRepoSpecs(repoRoot);
+      expect(inventory.candidates[0]?.content).toBe(source);
+    });
+  });
+
+  it('classifies SSM content strictly: Avro, introspection, declared mismatch, and unknown fail closed', async () => {
+    const avro = JSON.stringify({
+      type: 'record',
+      name: 'OrderEvent',
+      fields: [{ name: 'id', type: 'string' }]
+    });
+    const introspection = JSON.stringify({
+      data: { __schema: { queryType: { name: 'Query' }, types: [] } }
+    });
+    const unknown = JSON.stringify({ hello: 'world', count: 1 });
+
+    const avroExport = await new SsmProvider({
+      probe: vi.fn().mockResolvedValue(true),
+      listSpecParameters: vi.fn().mockResolvedValue([
+        { serviceName: 'orders-avro', key: 'content', value: avro },
+        { serviceName: 'orders-avro', key: 'format', value: 'avro' }
+      ])
+    }).exportSpec({
+      id: 'ssm/orders-avro',
+      name: 'orders-avro',
+      providerType: 'ssm',
+      tags: {},
+      evidence: [],
+      meta: { format: 'avro' }
+    });
+    expect(avroExport.format).toBe('avro');
+    expect(avroExport.content).toBe(avro);
+
+    const introExport = await new SsmProvider({
+      probe: vi.fn().mockResolvedValue(true),
+      listSpecParameters: vi.fn().mockResolvedValue([
+        { serviceName: 'orders-gql', key: 'content', value: introspection }
+      ])
+    }).exportSpec({
+      id: 'ssm/orders-gql',
+      name: 'orders-gql',
+      providerType: 'ssm',
+      tags: {},
+      evidence: [],
+      meta: {}
+    });
+    expect(introExport.format).toBe('graphql-introspection-json');
+    expect(introExport.filename).toBe('introspection.json');
+    expect(introExport.content).toBe(introspection);
+
+    await expect(
+      new SsmProvider({
+        probe: vi.fn().mockResolvedValue(true),
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'mismatch', key: 'content', value: avro },
+          { serviceName: 'mismatch', key: 'format', value: 'openapi-yaml' }
+        ])
+      }).exportSpec({
+        id: 'ssm/mismatch',
+        name: 'mismatch',
+        providerType: 'ssm',
+        tags: {},
+        evidence: [],
+        meta: { format: 'openapi-yaml' }
+      })
+    ).rejects.toThrow(/does not match declared format/i);
+
+    await expect(
+      new SsmProvider({
+        probe: vi.fn().mockResolvedValue(true),
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'unknown', key: 'content', value: unknown }
+        ])
+      }).exportSpec({
+        id: 'ssm/unknown',
+        name: 'unknown',
+        providerType: 'ssm',
+        tags: {},
+        evidence: [],
+        meta: {}
+      })
+    ).rejects.toThrow(/could not be classified/i);
+  });
+
+  it('resolves Backstage inline OpenAPI/WSDL/MCP/introspection and $yaml local refs', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-catalog-resolve-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'openapi.yaml'),
+        'openapi: 3.0.3\ninfo:\n  title: Yaml Ref\n  version: "1.0.0"\npaths: {}\n',
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: yaml-ref-api',
+          'spec:',
+          '  type: openapi',
+          '  definition:',
+          '    $yaml: ./openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      const yamlRef = await runResolution(baseInputs(tempDir), createAwsClientStub(), createCoreStub(), vi.fn());
+      expect(yamlRef).toMatchObject({
+        status: 'resolved',
+        sourceType: 'repo-spec',
+        specPath: 'openapi.yaml',
+        specFormat: 'openapi-yaml'
+      });
+
+      const inlineDir = await mkdtemp(path.join(os.tmpdir(), 'pm-catalog-inline-resolve-'));
+      try {
+        const writes = new Map<string, string>();
+        await writeFile(
+          path.join(inlineDir, 'catalog-info.yaml'),
+          [
+            'apiVersion: backstage.io/v1alpha1',
+            'kind: API',
+            'metadata:',
+            '  name: intro-inline',
+            'spec:',
+            '  type: graphql',
+            '  definition:',
+            '    __schema:',
+            '      queryType:',
+            '        name: Query',
+            '      types: []'
+          ].join('\n'),
+          'utf8'
+        );
+        const inline = await runResolution(
+          baseInputs(inlineDir, { dryRun: false }),
+          createAwsClientStub(),
+          createCoreStub(),
+          async (outputPath, content) => {
+            writes.set(outputPath.replace(/\\/g, '/'), content);
+          }
+        );
+        expect(inline).toMatchObject({
+          status: 'resolved',
+          sourceType: 'repo-spec',
+          specFormat: 'graphql-introspection-json'
+        });
+        expect([...writes.keys()].some((file) => file.endsWith('/introspection.json'))).toBe(true);
+      } finally {
+        await rm(inlineDir, { recursive: true, force: true });
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not resolve Backstage entities when declared type mismatches invalid native bytes', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-catalog-mismatch-'));
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: fake-wsdl',
+          'spec:',
+          '  type: wsdl',
+          '  definition: |',
+          '    openapi: 3.0.3',
+          '    info:',
+          '      title: Fake',
+          '      version: "1.0.0"',
+          '    paths: {}'
+        ].join('\n'),
+        'utf8'
+      );
+      const core = createCoreStub();
+      const result = await runResolution(baseInputs(tempDir), createAwsClientStub(), core, vi.fn());
+      // Declared wsdl must not rescue OpenAPI bytes as WSDL (or invent a resolved WSDL contract).
+      expect(result.status).toBe('unresolved');
+      expect(result.specFormat).not.toBe('wsdl');
+      expect(result.specFormat).not.toBe('openapi-yaml');
+      expect(core.warning.mock.calls.some((call) => /could not be classified/i.test(String(call[0])))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps SSM fetch failures unresolved through provider failure in resolve-one and discover-many', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-ssm-fetch-fail-'));
+    try {
+      const ssmClient: SsmSpecClient = {
+        probe: vi.fn().mockResolvedValue(true),
+        listSpecParameters: vi.fn().mockResolvedValue([
+          { serviceName: 'orders', key: 'url', value: 'https://specs.example.com/v1/orders.yaml' }
+        ])
+      };
+      const fetchFail = vi.fn(async () => {
+        throw new Error('Remote spec fetch is disabled by default');
+      });
+      const ssmProvider = new SsmProvider(ssmClient, {
+        remoteFetchPolicy: DEFAULT_REMOTE_FETCH_POLICY,
+        fetchSpecFromUrl: fetchFail
+      });
+      const registry = new ProviderRegistry();
+      registry.register(ssmProvider);
+
+      const resolveOne = await runResolution(
+        baseInputs(tempDir),
+        createAwsClientStub(),
+        createCoreStub(),
+        vi.fn(),
+        { providers: [ssmProvider] }
+      );
+      // No repo spec; SSM export failure must not resolve as OpenAPI.
+      expect(resolveOne.status).toBe('unresolved');
+      expect(resolveOne.specFormat).not.toBe('openapi-json');
+      expect(resolveOne.specPath ?? '').not.toMatch(/spec-pointer|index\.json$/);
+
+      const discoverMany = await execute(baseInputs(tempDir, { mode: 'discover-many' }), {
+        core: createCoreStub(),
+        aws: createAwsClientStub(),
+        writeSpecFile: vi.fn(),
+        providerRegistry: registry
+      });
+      expect(discoverMany.discovered.every((svc) => !String(svc.specPath ?? '').endsWith('spec-pointer.json'))).toBe(true);
+      expect(
+        discoverMany.discovered.every(
+          (svc) => !(svc.specFormat === 'openapi-json' && String(svc.specPath ?? '').includes('pointer'))
+        )
+      ).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('shares one lazy memoized static IaC resolution (and S3 reads) across inventory and signals', async () => {

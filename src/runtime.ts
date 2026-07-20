@@ -54,6 +54,11 @@ import {
   normalizeOpenApiYaml,
   type OperationIdRename
 } from './lib/spec/normalize-openapi.js';
+import {
+  classifySpecContent,
+  classifyWithDeclaredFormat,
+  filenameForFormat
+} from './lib/spec/classify-format.js';
 import { deriveOpenApiDocument, type OpenApiDerivationResult } from './lib/spec/oas-derivation.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
@@ -988,67 +993,23 @@ function inferFallbackServiceName(inputs: ResolvedInputs): string | undefined {
   return inputs.expectedServiceName ?? inputs.repoContext.repoSlug?.split('/').pop()?.trim() ?? inputs.repoContext.repoUrl?.split('/').pop()?.trim();
 }
 
-function catalogFormatFor(type: string | undefined, reference: string | undefined): { format?: SpecFormat; filename: string } {
-  const normalizedType = (type ?? '').toLowerCase();
-  const normalizedRef = (reference ?? '').toLowerCase();
-  if (normalizedType === 'graphql' || normalizedRef.endsWith('.graphql') || normalizedRef.endsWith('.gql')) {
-    return { format: 'graphql-sdl', filename: 'schema.graphql' };
-  }
-  if (normalizedType === 'asyncapi' || normalizedRef.includes('asyncapi')) {
-    return { format: normalizedRef.endsWith('.json') ? 'asyncapi-json' : 'asyncapi-yaml', filename: normalizedRef.endsWith('.json') ? 'asyncapi.json' : 'asyncapi.yaml' };
-  }
-  if (normalizedType === 'grpc' || normalizedRef.endsWith('.proto')) {
-    return { format: 'protobuf', filename: 'schema.proto' };
-  }
-  if (
-    normalizedType === 'json-schema'
-    || normalizedRef.endsWith('.schema.json')
-    || normalizedRef === 'schema.json'
-  ) {
-    return { format: 'json-schema', filename: path.posix.basename(normalizedRef) || 'schema.json' };
-  }
-  if (normalizedType === 'avro' || normalizedRef.endsWith('.avsc') || normalizedRef.endsWith('.avro')) {
-    return { format: 'avro', filename: path.posix.basename(normalizedRef) || 'schema.avsc' };
-  }
-  if (normalizedType === 'smithy' || normalizedRef.endsWith('.smithy') || normalizedRef.endsWith('smithy-build.json')) {
-    return { format: 'smithy', filename: path.posix.basename(normalizedRef) || 'model.smithy' };
-  }
-  if (normalizedRef.endsWith('.json')) {
-    return { format: 'openapi-json', filename: 'index.json' };
-  }
-  return { format: 'openapi-yaml', filename: 'index.yaml' };
+function inferFormatFromContent(relativePath: string, content: string): SpecFormat | undefined {
+  return classifySpecContent(content, { pathHint: relativePath })?.format;
 }
 
-function inferFormatFromContent(relativePath: string, content: string): SpecFormat | undefined {
-  const fromName = catalogFormatFor(undefined, relativePath).format;
-  const trimmed = content.trim();
-  if (fromName === 'json-schema' || fromName === 'avro' || fromName === 'smithy' || fromName === 'graphql-sdl' || fromName === 'protobuf') {
-    return fromName;
-  }
-  if (trimmed.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(trimmed) as Record<string, unknown>;
-      if (typeof parsed.$schema === 'string' || parsed.type === 'object' || parsed.type === 'array') {
-        if (!parsed.openapi && !parsed.swagger && !parsed.asyncapi) {
-          return 'json-schema';
-        }
-      }
-      if (parsed.type === 'record' && typeof parsed.name === 'string') {
-        return 'avro';
-      }
-      if (typeof parsed.asyncapi === 'string') {
-        return 'asyncapi-json';
-      }
-      if (typeof parsed.openapi === 'string' || typeof parsed.swagger === 'string') {
-        return 'openapi-json';
-      }
-    } catch {
-      // fall through
-    }
-  }
-  if (/^\s*asyncapi\s*:/i.test(trimmed)) return 'asyncapi-yaml';
-  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) return 'openapi-yaml';
-  return fromName;
+function classifyCatalogBytes(
+  content: string,
+  declaredType: string | undefined,
+  pathHint?: string
+): { format: SpecFormat; filename: string } | undefined {
+  const classified = declaredType?.trim()
+    ? classifyWithDeclaredFormat(content, declaredType, { pathHint })
+    : classifySpecContent(content, { pathHint });
+  if (!classified) return undefined;
+  return {
+    format: classified.format,
+    filename: filenameForFormat(classified.format, pathHint)
+  };
 }
 
 function normalizeSnsName(value: string): string {
@@ -1976,7 +1937,7 @@ async function selectCatalogContract(
   const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
   const viable: Array<{
     api: CatalogApiRef;
-    kind: 'local' | 'remote';
+    kind: 'local' | 'remote' | 'inline';
     path?: string;
     format?: SpecFormat;
     content?: string;
@@ -1985,6 +1946,31 @@ async function selectCatalogContract(
   }> = [];
 
   for (const api of catalogApis) {
+    if (api.inlineContent) {
+      const classified = classifyCatalogBytes(api.inlineContent, api.type, `${api.name}.inline`);
+      if (!classified) {
+        actionCore.warning(
+          userSafeWarning(
+            `Backstage entity ${api.name} inline definition could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+          )
+        );
+        continue;
+      }
+      const targetPath = path
+        .join(inputs.outputDir, projectFolderName(api.name), classified.filename)
+        .replace(/\\/g, '/');
+      viable.push({
+        api,
+        kind: 'inline',
+        path: targetPath,
+        format: classified.format,
+        content: api.inlineContent,
+        evidence: [`Resolved from Backstage catalog inline ${api.type ?? 'api'} definition (${api.name})`],
+        writeNative: true
+      });
+      continue;
+    }
+
     if (api.specPath) {
       try {
         const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, api.specPath, {
@@ -1992,12 +1978,23 @@ async function selectCatalogContract(
           countAsReference: false
         });
         const content = await readFile(resolved.canonicalPath, 'utf8');
-        const relative = path.relative(path.resolve(inputs.repoRoot), resolved.canonicalPath).replace(/\\/g, '/');
+        // Prefer the containment helper's relative path (canonical-root aware) over
+        // path.relative(repoRoot, canonicalPath), which breaks on macOS /var vs /private/var.
+        const relative = resolved.relativePath.replace(/\\/g, '/');
+        const classified = classifyCatalogBytes(content, api.type, api.specPath);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} local definition at ${api.specPath} could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
         viable.push({
           api,
           kind: 'local',
           path: relative,
-          format: catalogFormatFor(api.type, api.specPath).format,
+          format: classified.format,
           content,
           evidence: [`Resolved from Backstage catalog local ${api.type ?? 'api'} definition (${api.name})`],
           writeNative: false
@@ -2020,13 +2017,23 @@ async function selectCatalogContract(
           timeoutMs: 15000,
           policy: remotePolicy
         });
-        const catalogFormat = catalogFormatFor(api.type, api.specUrl);
-        const targetPath = path.join(inputs.outputDir, projectFolderName(api.name), catalogFormat.filename).replace(/\\/g, '/');
+        const classified = classifyCatalogBytes(fetched.content, api.type, api.specUrl);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} remote definition at ${safeUrl} could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
+        const targetPath = path
+          .join(inputs.outputDir, projectFolderName(api.name), classified.filename)
+          .replace(/\\/g, '/');
         viable.push({
           api,
           kind: 'remote',
           path: targetPath,
-          format: catalogFormat.format,
+          format: classified.format,
           content: fetched.content,
           evidence: [`Resolved from Backstage catalog remote ${api.type ?? 'api'} definition (${api.name})`],
           writeNative: true
