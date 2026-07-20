@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "id": "canonical-postman-repo",
+      "tagContract": "postman:repo",
+      "tags": { "postman:repo": "acme/orders-api" },
+      "repoSlug": "acme/orders-api",
+      "expect": "resolve-one"
+    },
+    {
+      "id": "fox-split-tags",
+      "tagContract": "GithubOrg+GithubRepo",
+      "tags": { "GithubOrg": "acme", "GithubRepo": "orders-api" },
+      "repoSlug": "acme/orders-api",
+      "expect": "resolve-one"
+    },
+    {
+      "id": "multi-environment",
+      "tagContract": "GithubOrg+GithubRepo",
+      "matches": [
+        { "tags": { "GithubOrg": "acme", "GithubRepo": "orders-api", "Environment": "qa" } },
+        { "tags": { "GithubOrg": "acme", "GithubRepo": "orders-api", "Environment": "prod" } }
+      ],
+      "repoSlug": "acme/orders-api",
+      "expect": "manual-review-ambiguity"
+    }
+  ]
+}

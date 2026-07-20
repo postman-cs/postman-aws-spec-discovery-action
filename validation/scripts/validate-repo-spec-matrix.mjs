@@ -122,6 +122,7 @@ const cases = [
     name: 'smithy-build',
     source: 'validation/fixtures/repo-spec/smithy-build.json',
     target: 'smithy-build.json',
+    companionSources: [{ source: 'validation/fixtures/repo-spec/model.smithy', target: 'model.smithy' }],
     expectedFormat: 'smithy'
   },
   {
@@ -173,7 +174,10 @@ const cases = [
       '    $text: https://raw.githubusercontent.com/swagger-api/swagger-petstore/master/src/main/resources/openapi.yaml'
     ].join('\n'),
     expectedFormat: 'openapi-yaml',
-    expectedEvidence: 'Backstage catalog remote openapi definition'
+    expectedEvidence: 'Backstage catalog remote openapi definition',
+    remoteFetchAllowlist: [
+      { hostname: 'raw.githubusercontent.com', pathPrefix: '/swagger-api/swagger-petstore/' }
+    ]
   }
 ];
 
@@ -227,6 +231,9 @@ async function runCase(testCase) {
     if (testCase.source) {
       await cp(path.join(repoRoot, testCase.source), path.join(workspace, testCase.target ?? path.basename(testCase.source)));
     }
+    for (const companion of testCase.companionSources ?? []) {
+      await cp(path.join(repoRoot, companion.source), path.join(workspace, companion.target));
+    }
     if (testCase.derivationOnly) {
       const content = await readFile(path.join(repoRoot, testCase.source), 'utf8');
       const oas = deriveOpenApiDocument({ content, format: testCase.expectedFormat, title: testCase.name });
@@ -258,7 +265,10 @@ async function runCase(testCase) {
       INPUT_REPO_ROOT: workspace,
       INPUT_OUTPUT_DIR: 'discovered-specs',
       INPUT_PREFLIGHT_CHECKS: 'false',
-      INPUT_INCLUDE_V2: 'false'
+      INPUT_INCLUDE_V2: 'false',
+      INPUT_REMOTE_FETCH_ALLOWLIST_JSON: testCase.remoteFetchAllowlist
+        ? JSON.stringify(testCase.remoteFetchAllowlist)
+        : undefined
     });
 
     const result = await execute(inputs, {

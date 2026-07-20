@@ -1,0 +1,1325 @@
+{
+  "schemaVersion": 1,
+  "title": "AWS Spec Discovery Support Ledger",
+  "description": "Machine-and-human-readable coverage of every realistic source method and intentional exclusion for postman-aws-spec-discovery-action.",
+  "updatedAt": "2026-07-20",
+  "evidencePolicy": {
+    "historicalPreserved": "Reserved for prior sanitized receipts that are not current-run proof.",
+    "notExecuted": "Reserved for required rows that have not been executed in a current sanitized run.",
+    "noSecrets": "Never embed credentials, raw account IDs, request IDs, or signed URLs in this ledger or evidence README."
+  },
+  "rows": [
+    {
+      "id": "repo-openapi-3x",
+      "method": "Authored OpenAPI 3.x repository contract",
+      "category": "repo-spec",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts",
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts",
+        "tests/repo-resolution-integration.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#openapi-3.0-yaml",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Direct repo-local OpenAPI 3.x is a primary authored contract."
+    },
+    {
+      "id": "repo-swagger-2",
+      "method": "Authored Swagger 2.0 repository contract",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts",
+        "src/lib/spec/oas-derivation.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/oas-derivation.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#swagger-2.0-yaml",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Swagger 2.0 resolves natively then derives partial OpenAPI 3.x."
+    },
+    {
+      "id": "repo-graphql-single",
+      "method": "Single-file GraphQL SDL repository contract",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#graphql-sdl",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Single GraphQL SDL is selected as repo-spec with partial OpenAPI derivation."
+    },
+    {
+      "id": "repo-graphql-multi-compose",
+      "method": "Multi-file GraphQL grouping by service root",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/graphql-compose.ts",
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#graphql-multi",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "GraphQL files are grouped by service root and composed deterministically."
+    },
+    {
+      "id": "repo-asyncapi",
+      "method": "Authored AsyncAPI repository contract",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/oas-derivation.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#asyncapi-yaml",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "AsyncAPI resolves as repo-spec with partial OpenAPI derivation."
+    },
+    {
+      "id": "repo-postman-collection",
+      "method": "Postman collection repository contract",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/oas-derivation.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#postman-collection",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Postman collections resolve as repo-spec with partial OpenAPI derivation."
+    },
+    {
+      "id": "repo-json-schema",
+      "method": "Direct JSON Schema repository selection",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#json-schema",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Validated JSON Schema files are first-class repo-spec candidates, not derivation-only."
+    },
+    {
+      "id": "repo-avro",
+      "method": "Direct Avro repository selection",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#avro",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Validated Avro schemas are first-class repo-spec candidates."
+    },
+    {
+      "id": "repo-protobuf",
+      "method": "Protobuf repository contract",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/oas-derivation.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#protobuf",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Protobuf service definitions resolve as repo-spec with partial OpenAPI derivation."
+    },
+    {
+      "id": "repo-smithy-single",
+      "method": "Single Smithy model file",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#smithy",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Single .smithy files resolve as repo-spec."
+    },
+    {
+      "id": "repo-smithy-project-closure",
+      "method": "Smithy project closure from smithy-build.json",
+      "category": "repo-spec",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/smithy-project.ts",
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#smithy-project",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "smithy-build.json resolves bounded local sources/imports; JSON config is never model source."
+    },
+    {
+      "id": "repo-explicit-spec-path",
+      "method": "Explicit spec-path selection",
+      "category": "repo-spec",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/contracts.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-resolution-integration.test.ts",
+        "tests/discovery.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#explicit-spec-path",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Inputs",
+        "docs/providers.md"
+      ],
+      "rationale": "Explicit spec-path skips same-tier auto-selection."
+    },
+    {
+      "id": "repo-service-root",
+      "method": "Explicit service-root monorepo scoping",
+      "category": "repo-spec",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/lib/repo/catalog.ts",
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/catalog.test.ts",
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#service-root",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Inputs",
+        "docs/providers.md"
+      ],
+      "rationale": "service-root scopes inventory and Backstage entities to one service directory."
+    },
+    {
+      "id": "repo-same-tier-ambiguity",
+      "method": "Same-tier repository contract ambiguity",
+      "category": "repo-spec",
+      "supportLevel": "manual-review",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts",
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts",
+        "tests/repo-resolution-integration.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#same-tier-ambiguity",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Multiple same-tier contracts return ranked manual-review; never silent first-wins."
+    },
+    {
+      "id": "backstage-local",
+      "method": "Backstage local catalog API definition",
+      "category": "repo-spec",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/repo/catalog.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/catalog.test.ts"
+      ],
+      "localValidationCase": "validate-repo-spec-matrix.mjs#backstage-yaml-local-openapi",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#repo-spec-matrix",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Local Backstage API definitions resolve before AWS discovery."
+    },
+    {
+      "id": "backstage-remote-allowlisted",
+      "method": "Backstage remote definition with exact allowlist",
+      "category": "repo-spec",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/repo/catalog.ts",
+        "src/lib/fetch/spec-fetcher.ts",
+        "src/lib/fetch/remote-fetch-policy.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/discovery.test.ts",
+        "tests/spec-fetcher-security.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#remote-allowlist",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Inputs",
+        "docs/providers.md"
+      ],
+      "rationale": "Remote Backstage refs fetch only when remote-fetch-allowlist-json exactly allows host/path."
+    },
+    {
+      "id": "backstage-multi-entity-ambiguity",
+      "method": "Multi-document Backstage API ambiguity",
+      "category": "repo-spec",
+      "supportLevel": "manual-review",
+      "implementationSeam": [
+        "src/lib/repo/catalog.ts",
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/catalog.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#backstage-multi",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Every kind:API entity is a candidate; resolve-one does not pick first YAML document by file order."
+    },
+    {
+      "id": "tag-postman-repo",
+      "method": "Exact postman:repo tag correlation",
+      "category": "aws-tag-correlation",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/resolve/narrowing-pipeline.ts",
+        "src/lib/aws/tagging-client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/narrowing.test.ts",
+        "tests/tag-correlation.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#fox-canonical",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Canonical postman:repo exact match runs before heuristic narrowing.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "tag-fox-split",
+      "method": "Exact Fox GithubOrg+GithubRepo tag correlation",
+      "category": "aws-tag-correlation",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/resolve/narrowing-pipeline.ts",
+        "src/lib/aws/tagging-client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/narrowing.test.ts",
+        "tests/tag-correlation.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#fox-split",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Fox split tags are an exact conjunction after postman:repo.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "tag-multi-environment-ambiguity",
+      "method": "Multi-environment exact tag ambiguity",
+      "category": "aws-tag-correlation",
+      "supportLevel": "manual-review",
+      "implementationSeam": [
+        "src/lib/resolve/narrowing-pipeline.ts",
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/narrowing.test.ts",
+        "tests/tag-correlation.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#fox-multi-env",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Exact per-environment duplicates remain ranked ambiguity unless explicit evidence selects one.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "apigw-rest-native",
+      "method": "API Gateway REST native OpenAPI export",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/aws/client.ts",
+        "src/lib/providers/api-gateway.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/aws-client.test.ts",
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Native REST export is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "apigw-rest-fallback",
+      "method": "API Gateway REST recognized export fallback",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/spec/rest-api-fallback-openapi.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/rest-api-model-merge.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Fallback applies only to recognized export limitations and is labeled partial.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "apigw-http-deployed-stage",
+      "method": "API Gateway HTTP deployed-stage export",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/lib/aws/client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/stage-selection-provenance.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#provenance-deployed-stage",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "HTTP with an evidenced stage exports deployed-stage truth.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "apigw-http-latest-configuration",
+      "method": "API Gateway HTTP latest-configuration mode",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/contracts.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/stage-selection-provenance.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#provenance-latest-configuration",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "No-stage HTTP export is latest-configuration, distinct from deployed-stage as proved by live divergence after an undeployed change.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "apigw-websocket-partial",
+      "method": "API Gateway WebSocket partial control-plane reconstruction",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/spec/websocket-openapi.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/websocket-openapi.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "WebSocket remains partial-control-plane unless native fidelity is proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "stage-evidence-safe-selection",
+      "method": "Evidence-safe stage precedence",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/stage-selection-provenance.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#stage-precedence",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Stages auto-resolve only for explicit, IaC-linked, singleton, or uniquely evidenced cases; HTTP divergence proves no prod-name heuristic collapse.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "appsync-graphql",
+      "method": "AppSync GraphQL SDL export",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/appsync.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/appsync-client.test.ts",
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "AppSync SDL export is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "appsync-merged-associations",
+      "method": "AppSync merged API source associations",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/appsync.ts",
+        "src/lib/aws/appsync-client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/appsync-client.test.ts",
+        "tests/stage-selection-provenance.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Merged SDL exports once; source associations are retained as provenance without recursive source export.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "appsync-events",
+      "method": "AppSync Events channel namespaces",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/appsync-events.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#appsync-events",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Current-run live-proven partial event channel representation.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "eventbridge-schemas",
+      "method": "EventBridge Schema Registry",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/providers/eventbridge-schemas.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "OpenApi3 schemas export full OpenAPI JSON.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "eventbridge-surfaces",
+      "method": "EventBridge rules/pipes/API destinations",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/eventbridge-surfaces.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#eventbridge-rule",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Partial control-plane surfaces are current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "cloudformation-embedded",
+      "method": "CloudFormation embedded/referenced OpenAPI (live stack)",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/providers/cloudformation.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Current-run live CFN embedded extraction proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "glue-schema",
+      "method": "Glue Schema Registry",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/glue.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Glue Avro/JSON/Proto export is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "ssm-registry",
+      "method": "SSM /postman/specs registry",
+      "category": "aws-provider",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/providers/ssm.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts",
+        "tests/discovery.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Inline content, allowlisted URL fetch, and pointer artifacts are current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "sns-contracts",
+      "method": "SNS contract resolution + sidecars",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/sns.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "SNS contract chain and webhook sidecar are current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "lambda-url",
+      "method": "Lambda Function URL synthesized contract",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/lambda-url.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts"
+      ],
+      "localValidationCase": "n/a",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Synthesized catch-all URL surface is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "lambda-event-source",
+      "method": "Lambda event source mappings",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/lambda-event-source.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#lambda-event-source",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Partial webhook surface is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "bedrock-action-groups",
+      "method": "Bedrock Agent action groups",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/bedrock-action-groups.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#bedrock-action-group",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Bedrock OpenAPI subset is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "alb-listener-rules",
+      "method": "ALB listener rules",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/alb-listener-rules.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#alb-listener-rule",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Partial HTTP path surface is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "verified-permissions",
+      "method": "Verified Permissions schemas",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/verified-permissions.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#verified-permissions",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Metadata-only OpenAPI is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "step-functions",
+      "method": "Step Functions ASL definitions",
+      "category": "aws-provider",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/providers/step-functions.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-p3-surfaces.mjs#step-functions",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-aws-surfaces",
+      "artifactCompleteness": "partial",
+      "advertisedIn": [
+        "README.md#Supported providers",
+        "docs/providers.md"
+      ],
+      "rationale": "Partial execution-start surface is current-run live-proven.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "iac-cfn-sam-static",
+      "method": "Static CloudFormation/SAM OpenAPI extraction",
+      "category": "iac-static",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/iac/cloudformation.ts",
+        "src/lib/iac/resolve.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#iac-cfn-inline",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Inline Body/DefinitionBody and local DefinitionUri without executing builds."
+    },
+    {
+      "id": "iac-cdk-assembly",
+      "method": "Static CDK cloud assembly extraction",
+      "category": "iac-static",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/iac/cdk.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts",
+        "tests/repo-build-artifacts.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#iac-cdk-assembly",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Follows existing cloud assembly; does not run cdk synth."
+    },
+    {
+      "id": "iac-terraform-literal",
+      "method": "Static Terraform literal/local OpenAPI references",
+      "category": "iac-static",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/iac/terraform.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#iac-terraform-literal",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Literal bodies and local file refs only; no HCL evaluation or remote state fetch."
+    },
+    {
+      "id": "iac-serverless-static",
+      "method": "Static Serverless Framework config extraction",
+      "category": "iac-static",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/iac/serverless.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#iac-serverless-static",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "full",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Static YAML/config and package artifacts only; JS/TS config and plugins refused."
+    },
+    {
+      "id": "iac-repo-signals",
+      "method": "IaC/repo signal fingerprinting",
+      "category": "iac-static",
+      "supportLevel": "partial",
+      "implementationSeam": [
+        "src/lib/repo/signals.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/scan.test.ts"
+      ],
+      "localValidationCase": "validate-iac-signals.mjs#cloudformation-sam",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#iac-repo-signals-matrix",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Signals provide provider/ID hints; authored contracts and static extraction outrank hints."
+    },
+    {
+      "id": "remote-deny-by-default",
+      "method": "Deny-by-default remote fetch",
+      "category": "security",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/fetch/remote-fetch-policy.ts",
+        "src/lib/fetch/spec-fetcher.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/spec-fetcher-security.test.ts",
+        "tests/discovery.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#remote-denied",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "README.md#Inputs",
+        "docs/providers.md"
+      ],
+      "rationale": "Absent/empty remote-fetch-allowlist-json denies all remote spec fetches."
+    },
+    {
+      "id": "local-path-containment",
+      "method": "Local path/symlink containment",
+      "category": "security",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/utils/resolve-path-within-root.ts",
+        "src/lib/repo/smithy-project.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/path-security.test.ts",
+        "tests/repo-spec-inventory.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#path-escape",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Canonical containment before every local read; escaping symlinks refused."
+    },
+    {
+      "id": "expected-identity-mismatch",
+      "method": "Expected account/partition mismatch fail-closed",
+      "category": "security",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/lib/aws/client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/stage-selection-provenance.test.ts",
+        "tests/preflight.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#identity-mismatch",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "README.md#Inputs",
+        "docs/providers.md"
+      ],
+      "rationale": "expected-account-id / expected-partition mismatches fail closed with sanitized errors.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "provider-denial-typed",
+      "method": "Typed provider probe denials in resolution-json",
+      "category": "security",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/providers/registry.ts",
+        "src/runtime.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/providers.test.ts",
+        "tests/stage-selection-provenance.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#provider-denial",
+      "liveRequirement": "required",
+      "liveStatus": "passed",
+      "liveEvidenceRef": "validation/evidence/README.md#live-required-matrix",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Denials, errors, and timeouts are recorded in provenance rather than silently omitted from evidence.",
+      "evidenceRunClass": "current-run"
+    },
+    {
+      "id": "deterministic-ordering-limits",
+      "method": "Deterministic ordering and scan/resource limits",
+      "category": "security",
+      "supportLevel": "full",
+      "implementationSeam": [
+        "src/lib/repo/specs.ts",
+        "src/lib/repo/scan.ts",
+        "src/lib/iac/resolve.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts",
+        "tests/scan.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#deterministic-order",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/evidence/README.md#resolution-closure",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Candidate/file order is deterministic; depth/file/byte/time bounds terminate scans."
+    },
+    {
+      "id": "exclude-org-wide-sweep",
+      "method": "Organization-wide account/role/region sweeps",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [],
+      "unitFixtureTests": [],
+      "localValidationCase": "validate-support-ledger.mjs#exclusion",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "One authenticated account and region per run; org sweeps belong to hub/distribution systems."
+    },
+    {
+      "id": "exclude-build-tool-execution",
+      "method": "Automatic cdk synth / sam build / terraform / smithy builds",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [
+        "src/lib/iac/resolve.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#iac-no-exec",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Static extraction and existing artifacts only; never execute untrusted repo build tools."
+    },
+    {
+      "id": "exclude-remote-state",
+      "method": "Automatic remote Terraform/Pulumi state download",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [
+        "src/lib/iac/terraform.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-support-ledger.mjs#exclusion",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Only explicitly supplied local state/output artifacts are eligible."
+    },
+    {
+      "id": "exclude-s3-enumeration",
+      "method": "S3 bucket enumeration",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [
+        "src/lib/aws/s3-client.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/iac-static-resolution.test.ts"
+      ],
+      "localValidationCase": "validate-support-ledger.mjs#exclusion",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Only exact trusted bucket/key/version references are eligible."
+    },
+    {
+      "id": "exclude-unauth-graphql-introspection",
+      "method": "Unauthenticated GraphQL endpoint introspection",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [
+        "src/lib/providers/appsync.ts"
+      ],
+      "unitFixtureTests": [],
+      "localValidationCase": "validate-support-ledger.mjs#exclusion",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "AppSync management-plane SDL is preferred; endpoint introspection is not automatic."
+    },
+    {
+      "id": "exclude-fabricated-openapi",
+      "method": "Fabricated OpenAPI for non-contract AWS resources",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [],
+      "unitFixtureTests": [
+        "tests/p3-providers.test.ts"
+      ],
+      "localValidationCase": "validate-support-ledger.mjs#exclusion",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Event/control-plane representations remain native or explicitly partial; no invented business endpoints."
+    },
+    {
+      "id": "exclude-silent-first-wins",
+      "method": "Silent first-API/first-document selection",
+      "category": "intentional-exclusion",
+      "supportLevel": "intentionally-excluded",
+      "implementationSeam": [
+        "src/runtime.ts",
+        "src/lib/repo/specs.ts"
+      ],
+      "unitFixtureTests": [
+        "tests/repo-spec-inventory.test.ts",
+        "tests/catalog.test.ts"
+      ],
+      "localValidationCase": "validate-resolution-closure.mjs#same-tier-ambiguity",
+      "liveRequirement": "not-required",
+      "liveStatus": "n/a",
+      "liveEvidenceRef": "validation/SUPPORT_LEDGER.md",
+      "artifactCompleteness": "n/a",
+      "advertisedIn": [
+        "docs/providers.md"
+      ],
+      "rationale": "Ambiguity returns ranked manual-review or discover-many groups."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "$id": "https://schemas.example.test/OrderCreated",
+  "title": "OrderCreated",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "string" }
+  }
+}

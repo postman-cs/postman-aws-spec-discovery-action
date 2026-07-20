@@ -1,16 +1,22 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse, stringify } from 'yaml';
 
 import type { SpecFormat } from '../../contracts.js';
-import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
+import {
+  DEFAULT_REMOTE_FETCH_POLICY,
+  fetchSpecFromUrl,
+  sanitizeUrlEvidence,
+  type RemoteFetchPolicy
+} from '../fetch/spec-fetcher.js';
 import type { SnsSpecClient } from '../aws/sns-client.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
 import type { EventBridgeSchemasSpecClient } from '../aws/schemas-client.js';
 import { detectCatalogApis, type CatalogApiRef } from '../repo/catalog.js';
 import { findIaCFiles } from '../repo/scan.js';
-import { resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
+import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 import {
   resolveCodeDerivedContract as defaultResolveCodeDerivedContract,
@@ -306,6 +312,7 @@ function deriveAsyncApiHeaders(
 
 interface SnsProviderDependencies {
   fetchSpecFromUrl?: typeof fetchSpecFromUrl;
+  remoteFetchPolicy?: RemoteFetchPolicy;
   catalogApis?: CatalogApiRef[];
   eventBridgeClient?: EventBridgeSchemasSpecClient;
   codeDerivedResolver?: ResolveCodeDerivedContract;
@@ -530,9 +537,16 @@ async function collectRegistryUrlCandidates(repoRoot: string, hints: Set<string>
   const candidates: RemoteUrlCandidate[] = [];
 
   for (const relativePath of CONTRACT_REGISTRY_FILES) {
-    const filePath = path.join(repoRoot, relativePath);
-    const content = await readFile(filePath, 'utf8').catch(() => undefined);
-    if (!content) continue;
+    let content: string | undefined;
+    try {
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relativePath, {
+        fieldName: 'contract-registry-path',
+        countAsReference: false
+      });
+      content = await readFile(resolved.canonicalPath, 'utf8');
+    } catch {
+      continue;
+    }
 
     let parsed: unknown;
     try {
@@ -568,7 +582,7 @@ async function collectRegistryUrlCandidates(repoRoot: string, hints: Set<string>
 function buildSsmPointerArtifact(specUrl: string, serviceName: string, fetchError: string): string {
   return JSON.stringify(
     {
-      specUrl,
+      specUrl: sanitizeUrlEvidence(specUrl),
       serviceName,
       registeredVia: 'ssm-parameter-store',
       fetchError
@@ -1099,28 +1113,91 @@ function isFrameworkOutputPath(repoRoot: string, filePath: string): boolean {
   return relative.startsWith('build/') || relative.startsWith('.build/') || relative.startsWith('out/');
 }
 
+/** Per-repoRoot caches so resolveContract does not spawn git for every candidate. */
+const gitWorkTreeCache = new Map<string, boolean>();
+const gitIgnoreResultCache = new Map<string, Map<string, boolean>>();
+
+function isGitWorkTree(repoRoot: string): boolean {
+  const resolvedRoot = path.resolve(repoRoot);
+  const cached = gitWorkTreeCache.get(resolvedRoot);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const hasGitDir = existsSync(path.join(resolvedRoot, '.git'));
+  gitWorkTreeCache.set(resolvedRoot, hasGitDir);
+  return hasGitDir;
+}
+
 async function isGitIgnoredByGit(repoRoot: string, filePath: string): Promise<boolean> {
-  const relative = normalizePathForMatch(path.relative(repoRoot, filePath));
+  const resolvedRoot = path.resolve(repoRoot);
+  const relative = normalizePathForMatch(path.relative(resolvedRoot, filePath));
   if (!relative || relative.startsWith('..')) {
     return true;
   }
+
+  let pathCache = gitIgnoreResultCache.get(resolvedRoot);
+  if (!pathCache) {
+    pathCache = new Map();
+    gitIgnoreResultCache.set(resolvedRoot, pathCache);
+  }
+  const cached = pathCache.get(relative);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  // Non-git trees: treat as not ignored so framework output remains discoverable
+  // (matches prior execSync check-ignore failure → false behavior).
+  if (!isGitWorkTree(resolvedRoot)) {
+    pathCache.set(relative, false);
+    return false;
+  }
+
   try {
-    const escapedRelative = relative.replace(/(["`$\\])/g, '\\$1');
-    execSync(`git check-ignore -q -- "${escapedRelative}"`, { cwd: repoRoot, stdio: 'ignore' });
+    execFileSync('git', ['check-ignore', '-q', '--', relative], {
+      cwd: resolvedRoot,
+      stdio: 'ignore'
+    });
+    pathCache.set(relative, true);
     return true;
   } catch {
+    pathCache.set(relative, false);
     return false;
   }
 }
 
-async function findContractFiles(repoRoot: string, topicName: string): Promise<{ asyncapi: string[]; jsonSchema: string[] }> {
-  const files = await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']);
+/**
+ * Convert a path under repoRoot to a repo-relative path without crossing macOS
+ * `/var` vs `/private/var` realpath boundaries. Returns undefined when the file
+ * is outside the lexical repo root.
+ */
+function toRepoRelativePath(repoRoot: string, filePath: string): string | undefined {
+  const resolvedRoot = path.resolve(repoRoot);
+  const absolute = path.isAbsolute(filePath) ? path.resolve(filePath) : path.resolve(resolvedRoot, filePath);
+  const relative = path.relative(resolvedRoot, absolute);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return undefined;
+  }
+  return relative || '.';
+}
+
+async function findContractFiles(
+  repoRoot: string,
+  topicName: string,
+  scannedFiles?: string[]
+): Promise<{ asyncapi: string[]; jsonSchema: string[] }> {
+  const files = scannedFiles ?? (await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']));
   const asyncapi: string[] = [];
   const jsonSchema: string[] = [];
 
   for (const filePath of files) {
-    const safePath = resolvePathWithinRoot(repoRoot, filePath, 'repo contract path');
-    const normalizedRelativePath = normalizePathForMatch(path.relative(repoRoot, safePath)).toLowerCase();
+    const relativePath = toRepoRelativePath(repoRoot, filePath);
+    if (!relativePath || relativePath === '.') {
+      continue;
+    }
+    // Lexical containment only during inventory. Symlink-safe reads happen in
+    // resolveAsyncApiContract / resolveJsonSchemaContract to avoid O(n) security walks.
+    const safePath = path.resolve(repoRoot, relativePath);
+    const normalizedRelativePath = normalizePathForMatch(relativePath).toLowerCase();
     if (normalizedRelativePath === 'build/springwolf/asyncapi.json' || normalizedRelativePath === 'target/springwolf/asyncapi.json') {
       continue;
     }
@@ -1149,9 +1226,10 @@ async function findContractFiles(repoRoot: string, topicName: string): Promise<{
 async function findGeneratedAsyncApiFiles(
   repoRoot: string,
   topicName: string,
-  gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean = isGitIgnoredByGit
+  gitIgnoreChecker: (repoRoot: string, filePath: string) => Promise<boolean> | boolean = isGitIgnoredByGit,
+  scannedFiles?: string[]
 ): Promise<string[]> {
-  const scanned = await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']);
+  const scanned = scannedFiles ?? (await findIaCFiles(repoRoot, ['.yaml', '.yml', '.json']));
   const discovered = new Set<string>(scanned);
 
   for (const frameworkRoot of ['build', '.build', 'out']) {
@@ -1194,9 +1272,17 @@ async function resolveAsyncApiContract(
 
   for (const filePath of files) {
     const relativePath = toEvidencePath(repoRoot, filePath);
+    const relative = toRepoRelativePath(repoRoot, filePath);
     let content: string;
     try {
-      content = await readFile(filePath, 'utf8');
+      if (!relative || relative === '.') {
+        throw new Error('path outside repo root');
+      }
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relative, {
+        fieldName: 'asyncapi-contract-path',
+        countAsReference: false
+      });
+      content = await readFile(resolved.canonicalPath, 'utf8');
     } catch {
       evidence.push(`Skipped malformed AsyncAPI file ${relativePath} (unreadable)`);
       continue;
@@ -1237,9 +1323,17 @@ async function resolveJsonSchemaContract(
 
   for (const filePath of files) {
     const relativePath = toEvidencePath(repoRoot, filePath);
+    const relative = toRepoRelativePath(repoRoot, filePath);
     let content: string;
     try {
-      content = await readFile(filePath, 'utf8');
+      if (!relative || relative === '.') {
+        throw new Error('path outside repo root');
+      }
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relative, {
+        fieldName: 'json-schema-contract-path',
+        countAsReference: false
+      });
+      content = await readFile(resolved.canonicalPath, 'utf8');
     } catch {
       evidence.push(`Skipped malformed JSON Schema file ${relativePath} (unreadable)`);
       continue;
@@ -1271,6 +1365,7 @@ async function resolveJsonSchemaContract(
 export class SnsProvider implements SpecProvider {
   public readonly type = 'sns' as const;
   private readonly fetchRemoteSpec: typeof fetchSpecFromUrl;
+  private readonly remoteFetchPolicy: RemoteFetchPolicy;
   private readonly preloadedCatalogApis?: CatalogApiRef[];
   private readonly eventBridgeClient?: EventBridgeSchemasSpecClient;
   private readonly codeDerivedResolver: ResolveCodeDerivedContract;
@@ -1288,6 +1383,7 @@ export class SnsProvider implements SpecProvider {
   ) {
     if (typeof dependencies === 'function') {
       this.fetchRemoteSpec = dependencies;
+      this.remoteFetchPolicy = DEFAULT_REMOTE_FETCH_POLICY;
       this.gitIgnoreChecker = isGitIgnoredByGit;
       this.webhookSidecarBuilder = buildWebhookSidecar;
       this.codeDerivedResolver = defaultResolveCodeDerivedContract;
@@ -1295,6 +1391,7 @@ export class SnsProvider implements SpecProvider {
     }
 
     this.fetchRemoteSpec = dependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+    this.remoteFetchPolicy = dependencies.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
     this.preloadedCatalogApis = dependencies.catalogApis;
     this.eventBridgeClient = dependencies.eventBridgeClient;
     this.codeDerivedResolver = dependencies.codeDerivedResolver ?? defaultResolveCodeDerivedContract;
@@ -1403,7 +1500,9 @@ export class SnsProvider implements SpecProvider {
     resolvePathWithinRoot(resolvedRepoRoot, topicName, 'topic-name');
     let pointerSidecar: { filename: string; content: string } | undefined;
 
-    const files = await findContractFiles(resolvedRepoRoot, topicName);
+    // Single inventory walk shared by repo-local and generated contract discovery.
+    const scannedFiles = await findIaCFiles(resolvedRepoRoot, ['.yaml', '.yml', '.json']);
+    const files = await findContractFiles(resolvedRepoRoot, topicName, scannedFiles);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, 'repo-local');
     let resolvedOrigin: SnsContractOrigin | undefined;
     let resolvedExport: SpecExportResult | undefined;
@@ -1427,7 +1526,7 @@ export class SnsProvider implements SpecProvider {
       ? { evidence: priorEvidence }
       : await resolveAsyncApiContract(
           resolvedRepoRoot,
-          await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker),
+          await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker, scannedFiles),
           'generated'
         );
     if (!resolvedExport && 'match' in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
@@ -1481,8 +1580,12 @@ export class SnsProvider implements SpecProvider {
 
       const ssmUrl = ssmMatch?.url;
       if (!resolvedExport && ssmUrl) {
+        const safeSsmUrl = sanitizeUrlEvidence(ssmUrl);
         try {
-          const fetched = await this.fetchRemoteSpec(ssmUrl, { timeoutMs: 15000 });
+          const fetched = await this.fetchRemoteSpec(ssmUrl, {
+            timeoutMs: 15000,
+            policy: this.remoteFetchPolicy
+          });
           const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat(fetched.content, ssmMatch?.format ?? '');
           if (resolvedFormat) {
             const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
@@ -1498,7 +1601,7 @@ export class SnsProvider implements SpecProvider {
 
           if (!resolvedExport) {
             priorEvidence.push(
-              `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+              `Fetched SSM URL ${safeSsmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
             );
           }
         } catch (fetchError) {
@@ -1506,7 +1609,7 @@ export class SnsProvider implements SpecProvider {
           const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
           pointerSidecar = { filename: SPEC_POINTER_FILENAME, content: pointerArtifact };
           priorEvidence.push(
-            `Failed to fetch SNS contract from SSM URL ${ssmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
+            `Failed to fetch SNS contract from SSM URL ${safeSsmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
           );
         }
       }
@@ -1519,16 +1622,20 @@ export class SnsProvider implements SpecProvider {
       ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
 
       for (const remoteCandidate of remoteUrlCandidates) {
+        const safeRemoteUrl = sanitizeUrlEvidence(remoteCandidate.url);
         try {
-          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15000 });
+          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, {
+            timeoutMs: 15000,
+            policy: this.remoteFetchPolicy
+          });
           const resolvedFormat = detectFormat(fetched.content, '');
           if (!resolvedFormat) {
             priorEvidence.push(
-              `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+              `Fetched ${remoteCandidate.source} URL ${safeRemoteUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
             );
             continue;
           }
-          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
+          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${safeRemoteUrl}`];
           resolvedOrigin = 'catalog-url';
           resolvedExport = {
             content: fetched.content,
@@ -1540,7 +1647,7 @@ export class SnsProvider implements SpecProvider {
           break;
         } catch (fetchError) {
           const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${safeRemoteUrl}: ${detail}`);
         }
       }
     }

@@ -1,0 +1,13 @@
+service: orders
+provider:
+  name: aws
+  runtime: nodejs20.x
+custom:
+  openapi: openapi/orders.json
+resources:
+  Resources:
+    OrdersApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: orders
+        DefinitionUri: openapi/orders.json

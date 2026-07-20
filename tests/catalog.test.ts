@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -167,9 +167,63 @@ spec:
 
       const result = await detectCatalogApis(tempDir);
       expect(result).toEqual([
-        { name: 'orders-api', type: undefined, specUrl: 'https://example.com/orders.asyncapi.yaml', specPath: undefined },
-        { name: 'billing-api', type: undefined, specPath: './billing/openapi.yaml', specUrl: undefined }
+        {
+          name: 'orders-api',
+          type: undefined,
+          specUrl: 'https://example.com/orders.asyncapi.yaml',
+          specPath: undefined,
+          catalogPath: 'catalog-info.yaml'
+        },
+        {
+          name: 'billing-api',
+          type: undefined,
+          specPath: './billing/openapi.yaml',
+          specUrl: undefined,
+          catalogPath: 'catalog-info.yaml'
+        }
       ]);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('scopes catalog APIs by service-root and service name', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-scope-'));
+    try {
+      await mkdir(path.join(tempDir, 'services', 'orders'), { recursive: true });
+      await mkdir(path.join(tempDir, 'services', 'billing'), { recursive: true });
+      await writeFile(
+        path.join(tempDir, 'services', 'orders', 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  type: openapi',
+          '  definition: ./openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(
+        path.join(tempDir, 'services', 'billing', 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: billing-api',
+          'spec:',
+          '  type: openapi',
+          '  definition: ./openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const scopedRoot = await detectCatalogApis(tempDir, { serviceRoot: 'services/orders' });
+      expect(scopedRoot?.map((api) => api.name)).toEqual(['orders-api']);
+
+      const scopedName = await detectCatalogApis(tempDir, { serviceName: 'billing-api' });
+      expect(scopedName?.map((api) => api.name)).toEqual(['billing-api']);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

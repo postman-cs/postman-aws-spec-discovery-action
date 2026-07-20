@@ -63,12 +63,13 @@ export function synthesizeRestApiFallbackOpenApi(input: RestApiFallbackInput): s
   }
 
   const paths = document.paths as Record<string, unknown>;
+  const schemaNames = new Set(Object.keys(components));
   for (const resource of input.resources) {
     if (!resource.path || resource.path === '/') continue;
     const pathItem = recordValue(paths[resource.path]);
     for (const [methodName, method] of Object.entries(resource.resourceMethods ?? {})) {
       const lowerMethod = methodName.toLowerCase();
-      pathItem[lowerMethod] = restApiOperation(resource.path, lowerMethod, method);
+      pathItem[lowerMethod] = restApiOperation(resource.path, lowerMethod, method, schemaNames);
     }
     if (Object.keys(pathItem).length > 0) {
       paths[resource.path] = pathItem;
@@ -95,15 +96,20 @@ function restApiComponents(models: RestApiFallbackModel[]): Record<string, unkno
   return schemas;
 }
 
-function restApiOperation(pathName: string, methodName: string, method: RestApiFallbackMethod): Record<string, unknown> {
+function restApiOperation(
+  pathName: string,
+  methodName: string,
+  method: RestApiFallbackMethod,
+  schemaNames: ReadonlySet<string>
+): Record<string, unknown> {
   return {
     operationId: method.operationName || safeOperationName(`${methodName} ${pathName}`),
     ...(method.authorizationType && method.authorizationType !== 'NONE' ? { security: [{ [method.authorizationType]: [] }] } : {}),
     ...(method.authorizationType ? { 'x-amazon-apigateway-authorization-type': method.authorizationType } : {}),
     ...(method.apiKeyRequired ? { 'x-api-key-required': true } : {}),
     parameters: restApiParameters(method.requestParameters),
-    ...(Object.keys(method.requestModels ?? {}).length > 0 ? { requestBody: restApiRequestBody(method.requestModels ?? {}) } : {}),
-    responses: restApiResponses(method.methodResponses ?? {}),
+    ...(Object.keys(method.requestModels ?? {}).length > 0 ? { requestBody: restApiRequestBody(method.requestModels ?? {}, schemaNames) } : {}),
+    responses: restApiResponses(method.methodResponses ?? {}, schemaNames),
     ...(method.methodIntegration ? { 'x-amazon-apigateway-integration': restApiIntegration(method.methodIntegration) } : {})
   };
 }
@@ -121,15 +127,19 @@ function restApiParameters(parameters: Record<string, boolean> | undefined): Rec
   });
 }
 
-function restApiRequestBody(requestModels: Record<string, string>): Record<string, unknown> {
+function restApiRequestBody(requestModels: Record<string, string>, schemaNames: ReadonlySet<string>): Record<string, unknown> {
   const content: Record<string, unknown> = {};
   for (const [mediaType, modelName] of Object.entries(requestModels)) {
+    if (!schemaNames.has(modelName)) continue;
     content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
   }
-  return { required: false, content };
+  return Object.keys(content).length > 0 ? { required: false, content } : {};
 }
 
-function restApiResponses(methodResponses: Record<string, { statusCode?: string; responseModels?: Record<string, string> }>): Record<string, unknown> {
+function restApiResponses(
+  methodResponses: Record<string, { statusCode?: string; responseModels?: Record<string, string> }>,
+  schemaNames: ReadonlySet<string>
+): Record<string, unknown> {
   if (Object.keys(methodResponses).length === 0) {
     return { '200': { description: 'Response' } };
   }
@@ -138,6 +148,7 @@ function restApiResponses(methodResponses: Record<string, { statusCode?: string;
     const models = response.responseModels ?? {};
     const content: Record<string, unknown> = {};
     for (const [mediaType, modelName] of Object.entries(models)) {
+      if (!schemaNames.has(modelName)) continue;
       content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
     }
     responses[response.statusCode || statusCode] = {
@@ -315,6 +326,56 @@ export function mergeRestApiModelsAndValidators(input: MergeRestApiModelsInput):
             content[mediaType] = media;
             requestBody.content = content;
             operation.requestBody = requestBody;
+          }
+        }
+
+        // Fill absent responseModels[*] -> responses[status].content[media].schema $refs only.
+        // Mirror restApiResponses mapping; never overwrite native content/schema.
+        const methodResponses = method.methodResponses ?? {};
+        for (const [statusKey, methodResponse] of Object.entries(methodResponses)) {
+          const responseModels = methodResponse.responseModels ?? {};
+          if (Object.keys(responseModels).length === 0) continue;
+          const statusCode = methodResponse.statusCode || statusKey;
+          const responsesValue = operation.responses;
+          if (responsesValue !== undefined && (typeof responsesValue !== 'object' || responsesValue === null || Array.isArray(responsesValue))) {
+            continue; // native non-object responses wins untouched
+          }
+          const responses = (responsesValue as Record<string, unknown> | undefined) ?? {};
+          const responseValue = responses[statusCode];
+          if (responseValue !== undefined && (typeof responseValue !== 'object' || responseValue === null || Array.isArray(responseValue))) {
+            continue; // native non-object response wins untouched
+          }
+          // Native Response Reference Object ($ref) is native-owned: leave byte-for-byte;
+          // do not append siblings, dereference, or overwrite.
+          if (
+            responseValue !== undefined &&
+            Object.prototype.hasOwnProperty.call(responseValue as object, '$ref')
+          ) {
+            continue;
+          }
+          const response = (responseValue as Record<string, unknown> | undefined) ?? {};
+          for (const [mediaType, modelName] of Object.entries(responseModels)) {
+            if (!modelName || !Object.prototype.hasOwnProperty.call(schemas, modelName)) continue;
+            const contentValue = response.content;
+            if (contentValue !== undefined && (typeof contentValue !== 'object' || contentValue === null || Array.isArray(contentValue))) {
+              continue; // native non-object content wins untouched
+            }
+            const content = (contentValue as Record<string, unknown> | undefined) ?? {};
+            const mediaValue = content[mediaType];
+            if (mediaValue !== undefined && (typeof mediaValue !== 'object' || mediaValue === null || Array.isArray(mediaValue))) {
+              continue; // native non-object media wins untouched
+            }
+            const media = (mediaValue as Record<string, unknown> | undefined) ?? {};
+            if (!Object.prototype.hasOwnProperty.call(media, 'schema')) {
+              media.schema = { $ref: `#/components/schemas/${modelName}` };
+              content[mediaType] = media;
+              response.content = content;
+              if (!Object.prototype.hasOwnProperty.call(response, 'description')) {
+                response.description = 'Response';
+              }
+              responses[statusCode] = response;
+              operation.responses = responses;
+            }
           }
         }
 

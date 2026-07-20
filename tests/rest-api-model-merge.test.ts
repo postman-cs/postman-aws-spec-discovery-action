@@ -3,9 +3,14 @@ import { parse, stringify } from 'yaml';
 
 import {
   mergeRestApiModelsAndValidators,
+  synthesizeRestApiFallbackOpenApi,
   type MergeRestApiModelsInput,
   type RestApiFallbackResource
 } from '../src/lib/spec/rest-api-fallback-openapi.js';
+import {
+  auditOpenApiContractCoverage,
+  formatOpenApiContractAuditWarning
+} from '../src/lib/spec/normalize-openapi.js';
 
 const createOrderSchema = JSON.stringify({
   type: 'object',
@@ -34,6 +39,20 @@ function baseNative(): Record<string, unknown> {
   };
 }
 
+const orderAckSchema = JSON.stringify({
+  type: 'object',
+  properties: { orderId: { type: 'string' }, accepted: { type: 'boolean' } }
+});
+
+interface ParsedPostOperation {
+  requestBody?: unknown;
+  responses: Record<string, { content: Record<string, { schema: unknown }> }>;
+}
+
+interface ParsedOpenApiDocument {
+  paths: Record<string, { post: ParsedPostOperation }>;
+}
+
 const modeledResources: RestApiFallbackResource[] = [
   {
     path: '/orders',
@@ -41,6 +60,12 @@ const modeledResources: RestApiFallbackResource[] = [
       POST: {
         httpMethod: 'POST',
         requestModels: { 'application/json': 'CreateOrder' },
+        methodResponses: {
+          '200': {
+            statusCode: '200',
+            responseModels: { 'application/json': 'OrderAck' }
+          }
+        },
         ...( { requestValidatorId: 'val1' } as object)
       }
     }
@@ -52,7 +77,10 @@ function mergeInput(overrides: Partial<MergeRestApiModelsInput> = {}): MergeRest
   return {
     nativeExport: stringify(baseNative()),
     resources: modeledResources,
-    models: [{ name: 'CreateOrder', schema: createOrderSchema, contentType: 'application/json' }],
+    models: [
+      { name: 'CreateOrder', schema: createOrderSchema, contentType: 'application/json' },
+      { name: 'OrderAck', schema: orderAckSchema, contentType: 'application/json' }
+    ],
     validators: [{ id: 'val1', name: 'body-and-params', validateRequestBody: true, validateRequestParameters: true }],
     ...overrides
   };
@@ -77,9 +105,13 @@ describe('mergeRestApiModelsAndValidators', () => {
     const output = mergeRestApiModelsAndValidators(mergeInput());
     const parsed = parse(output) as Record<string, never>;
     expect(parsed.components?.['schemas']?.['CreateOrder']).toEqual(JSON.parse(createOrderSchema));
+    expect(parsed.components?.['schemas']?.['OrderAck']).toEqual(JSON.parse(orderAckSchema));
     const post = parsed.paths?.['/orders']?.['post'] as Record<string, never>;
     expect(post?.requestBody?.['content']?.['application/json']?.['schema']).toEqual({
       $ref: '#/components/schemas/CreateOrder'
+    });
+    expect(post?.responses?.['200']?.['content']?.['application/json']?.['schema']).toEqual({
+      $ref: '#/components/schemas/OrderAck'
     });
     expect(post?.['x-amazon-apigateway-request-validator']).toBe('body-and-params');
     expect(parsed['x-amazon-apigateway-request-validators']).toEqual({
@@ -87,6 +119,139 @@ describe('mergeRestApiModelsAndValidators', () => {
     });
     // requestBody.required must not be invented
     expect(Object.prototype.hasOwnProperty.call(post?.requestBody ?? {}, 'required')).toBe(false);
+  });
+
+  it('U6.1b maps methodResponses responseModels into response content schema $refs', () => {
+    const native = baseNative();
+    (native.paths as Record<string, never>)['/orders']['post'] = {
+      operationId: 'createOrder',
+      responses: {
+        '200': { description: 'OK' },
+        '400': { description: 'Bad Request' }
+      }
+    } as never;
+    const output = mergeRestApiModelsAndValidators(
+      mergeInput({
+        nativeExport: stringify(native),
+        resources: [
+          {
+            path: '/orders',
+            resourceMethods: {
+              POST: {
+                httpMethod: 'POST',
+                methodResponses: {
+                  '200': {
+                    statusCode: '200',
+                    responseModels: { 'application/json': 'OrderAck' }
+                  },
+                  '400': {
+                    statusCode: '400',
+                    responseModels: { 'application/json': 'MissingModel' }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      })
+    );
+    const parsed = parse(output) as Record<string, never>;
+    const post = parsed.paths?.['/orders']?.['post'] as Record<string, never>;
+    expect(post?.responses?.['200']).toEqual({
+      description: 'OK',
+      content: {
+        'application/json': { schema: { $ref: '#/components/schemas/OrderAck' } }
+      }
+    });
+    // MissingModel was never collected into components.schemas — leave status untouched
+    expect(post?.responses?.['400']).toEqual({ description: 'Bad Request' });
+  });
+
+  it('leaves a native response $ref byte-for-byte without sibling content', () => {
+    const nativeResponseRef = { $ref: '#/components/responses/OrderAckResponse' };
+    const native = baseNative();
+    (native.paths as Record<string, never>)['/orders']['post'] = {
+      operationId: 'createOrder',
+      responses: {
+        '200': nativeResponseRef
+      }
+    } as never;
+    const output = mergeRestApiModelsAndValidators(
+      mergeInput({
+        nativeExport: stringify(native),
+        resources: [
+          {
+            path: '/orders',
+            resourceMethods: {
+              POST: {
+                httpMethod: 'POST',
+                methodResponses: {
+                  '200': {
+                    statusCode: '200',
+                    responseModels: { 'application/json': 'OrderAck' }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      })
+    );
+    const parsed = parse(output) as Record<string, never>;
+    const response200 = parsed.paths?.['/orders']?.['post']?.['responses']?.['200'];
+    expect(response200).toEqual(nativeResponseRef);
+    expect(Object.keys(response200 as object)).toEqual(['$ref']);
+    expect(Object.prototype.hasOwnProperty.call(response200 as object, 'content')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(response200 as object, 'description')).toBe(false);
+  });
+
+  it('maps default response keys and non-JSON response media types without overwriting native media', () => {
+    const native = baseNative();
+    (native.paths as Record<string, never>)['/orders']['post'] = {
+      operationId: 'createOrder',
+      responses: {
+        default: { description: 'Fallback response' },
+        '200': { description: 'OK', content: { 'application/json': { schema: { type: 'string' } } } }
+      }
+    } as never;
+    const output = mergeRestApiModelsAndValidators(mergeInput({
+      nativeExport: stringify(native),
+      resources: [{
+        path: '/orders',
+        resourceMethods: {
+          POST: {
+            methodResponses: {
+              default: { responseModels: { 'application/problem+json': 'OrderAck' } },
+              '200': { responseModels: { 'application/json': 'OrderAck' } }
+            }
+          }
+        }
+      }]
+    }));
+    const post = (parse(output) as ParsedOpenApiDocument).paths['/orders'].post;
+    expect(post.responses.default.content['application/problem+json'].schema).toEqual({ $ref: '#/components/schemas/OrderAck' });
+    expect(post.responses['200'].content['application/json'].schema).toEqual({ type: 'string' });
+  });
+
+  it('does not synthesize dangling model refs when fallback model JSON is unavailable', () => {
+    const output = synthesizeRestApiFallbackOpenApi({
+      apiId: 'rest-1',
+      apiName: 'orders',
+      region: 'us-east-1',
+      models: [{ name: 'Known', schema: '{"type":"object"}' }, { name: 'Broken', schema: '{invalid' }],
+      resources: [{
+        path: '/orders',
+        resourceMethods: {
+          POST: {
+            requestModels: { 'application/json': 'Broken' },
+            methodResponses: { '200': { responseModels: { 'application/problem+json': 'Broken', 'application/json': 'Known' } } }
+          }
+        }
+      }]
+    });
+    const post = (parse(output) as ParsedOpenApiDocument).paths['/orders'].post;
+    expect(post.requestBody).toEqual({});
+    expect(post.responses['200'].content).toEqual({ 'application/json': { schema: { $ref: '#/components/schemas/Known' } } });
   });
 
   it('U6.2 preserves conflicting native values at every merge target', () => {
@@ -101,19 +266,44 @@ describe('mergeRestApiModelsAndValidators', () => {
         required: true,
         content: { 'application/json': { schema: { type: 'string', description: 'native wins' }, example: 'kept' } }
       },
-      responses: { '200': { description: 'OK' } }
+      responses: {
+        '200': {
+          description: 'native response',
+          content: {
+            'application/json': {
+              schema: { type: 'object', description: 'native response schema' },
+              example: { kept: true }
+            }
+          }
+        }
+      }
     } as never;
     const nativeWithComponents = {
       ...native,
-      components: { schemas: { CreateOrder: { type: 'array', items: { type: 'string' } } } }
+      components: {
+        schemas: {
+          CreateOrder: { type: 'array', items: { type: 'string' } },
+          OrderAck: { type: 'string', description: 'native OrderAck' }
+        }
+      }
     };
     const output = mergeRestApiModelsAndValidators(mergeInput({ nativeExport: stringify(nativeWithComponents) }));
     const parsed = parse(output) as Record<string, never>;
     expect(parsed.components?.['schemas']?.['CreateOrder']).toEqual({ type: 'array', items: { type: 'string' } });
+    expect(parsed.components?.['schemas']?.['OrderAck']).toEqual({ type: 'string', description: 'native OrderAck' });
     const post = parsed.paths?.['/orders']?.['post'] as Record<string, never>;
     expect(post?.requestBody).toEqual({
       required: true,
       content: { 'application/json': { schema: { type: 'string', description: 'native wins' }, example: 'kept' } }
+    });
+    expect(post?.responses?.['200']).toEqual({
+      description: 'native response',
+      content: {
+        'application/json': {
+          schema: { type: 'object', description: 'native response schema' },
+          example: { kept: true }
+        }
+      }
     });
     expect(post?.['x-amazon-apigateway-request-validator']).toBe('native-validator');
     expect(parsed['x-amazon-apigateway-request-validators']).toEqual({
@@ -207,5 +397,44 @@ describe('mergeRestApiModelsAndValidators', () => {
     for (const nativeExport of ['not: openapi', '{"no": "paths"}', '::: garbage :::']) {
       expect(mergeRestApiModelsAndValidators(mergeInput({ nativeExport }))).toBe(nativeExport);
     }
+  });
+
+  it('enriched responseModels make the contract audit schema-complete without incomplete warnings', () => {
+    const native = baseNative();
+    (native.paths as Record<string, never>)['/orders']['post'] = {
+      operationId: 'createOrder',
+      responses: { '200': { description: 'OK' } }
+    } as never;
+    delete (native.paths as Record<string, unknown>)['/health'];
+    const merged = mergeRestApiModelsAndValidators(
+      mergeInput({
+        nativeExport: stringify(native),
+        resources: [
+          {
+            path: '/orders',
+            resourceMethods: {
+              POST: {
+                httpMethod: 'POST',
+                requestModels: { 'application/json': 'CreateOrder' },
+                methodResponses: {
+                  '200': {
+                    statusCode: '200',
+                    responseModels: { 'application/json': 'OrderAck' }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      })
+    );
+    const audit = auditOpenApiContractCoverage(parse(merged));
+    expect(audit).toMatchObject({
+      status: 'schema-complete',
+      responsesWithoutContent: 0,
+      responseMediaTypesWithoutSchema: 0,
+      requestMediaTypesWithoutSchema: 0
+    });
+    expect(formatOpenApiContractAuditWarning(audit!, 'REST')).toBeUndefined();
   });
 });

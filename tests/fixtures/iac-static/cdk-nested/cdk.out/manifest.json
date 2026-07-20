@@ -1,0 +1,11 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "NestedAssembly": {
+      "type": "cdk:cloud-assembly",
+      "properties": {
+        "directoryName": "assembly-Nested"
+      }
+    }
+  }
+}

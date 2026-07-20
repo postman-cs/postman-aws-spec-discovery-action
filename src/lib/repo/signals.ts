@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { ProviderType } from '../../contracts.js';
+import { resolveStaticIacCandidates } from '../iac/index.js';
 import { findIaCFiles } from './scan.js';
 
 export interface RepoSignals {
@@ -463,6 +464,34 @@ export async function collectRepoSignals(
     for (const contractPath of contractCandidates) {
       evidence.push(`Found SNS event contract file: ${toEvidencePath(repoRoot, contractPath)}`);
     }
+  }
+
+  // Exact physical API ID / literal output evidence from static IaC (no builds, no remote state).
+  try {
+    const iac = await resolveStaticIacCandidates(repoRoot, {
+      maxFiles: 60,
+      maxDepth: 6,
+      enabledSources: {
+        cloudformation: true,
+        sam: true,
+        cdk: true,
+        terraform: true,
+        serverless: true
+      }
+    });
+    for (const apiId of iac.physicalApiIds) {
+      inferredGatewayHints.push(apiId);
+      evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
+    }
+    for (const candidate of iac.candidates) {
+      if (candidate.kind === 'physical-api-id' && candidate.physicalApiId) {
+        evidence.push(
+          `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
+        );
+      }
+    }
+  } catch {
+    // Optional enrichment; signal collection must remain best-effort.
   }
 
   return {

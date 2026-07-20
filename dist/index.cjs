@@ -1081,14 +1081,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path15 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path24 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path15 && path15[0] !== "/") {
-          path15 = `/${path15}`;
+        if (path24 && path24[0] !== "/") {
+          path24 = `/${path24}`;
         }
-        return new URL(`${origin}${path15}`);
+        return new URL(`${origin}${path24}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1539,39 +1539,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path15, origin }
+          request: { method, path: path24, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path15);
+        debuglog("sending request to %s %s/%s", method, origin, path24);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path15, origin },
+          request: { method, path: path24, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path15,
+          path24,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path15, origin }
+          request: { method, path: path24, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path15);
+        debuglog("trailers received from %s %s/%s", method, origin, path24);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path15, origin },
+          request: { method, path: path24, origin },
           error: error3
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path15,
+          path24,
           error3.message
         );
       });
@@ -1620,9 +1620,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path15, origin }
+            request: { method, path: path24, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path15);
+          debuglog("sending request to %s %s/%s", method, origin, path24);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1685,7 +1685,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
       constructor(origin, {
-        path: path15,
+        path: path24,
         method,
         body,
         headers,
@@ -1700,11 +1700,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler) {
-        if (typeof path15 !== "string") {
+        if (typeof path24 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path15[0] !== "/" && !(path15.startsWith("http://") || path15.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path24[0] !== "/" && !(path24.startsWith("http://") || path24.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path15)) {
+        } else if (invalidPathRegex.test(path24)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -1770,7 +1770,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path15, query) : path15;
+        this.path = query ? buildURL(path24, query) : path24;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -4142,7 +4142,7 @@ var require_util2 = __commonJS({
             }
             break;
           case "same-origin":
-            if (!sameOrigin(request, requestCurrentURL(request))) {
+            if (!sameOrigin2(request, requestCurrentURL(request))) {
               serializedOrigin = null;
             }
             break;
@@ -4220,7 +4220,7 @@ var require_util2 = __commonJS({
       if (referrerURL.toString().length > 4096) {
         referrerURL = referrerOrigin;
       }
-      const areSameOrigin = sameOrigin(request, referrerURL);
+      const areSameOrigin = sameOrigin2(request, referrerURL);
       const isNonPotentiallyTrustWorthy = isURLPotentiallyTrustworthy(referrerURL) && !isURLPotentiallyTrustworthy(request.url);
       switch (policy) {
         case "origin":
@@ -4233,7 +4233,7 @@ var require_util2 = __commonJS({
           return areSameOrigin ? referrerURL : referrerOrigin;
         case "strict-origin-when-cross-origin": {
           const currentURL = requestCurrentURL(request);
-          if (sameOrigin(referrerURL, currentURL)) {
+          if (sameOrigin2(referrerURL, currentURL)) {
             return referrerURL;
           }
           if (isURLPotentiallyTrustworthy(referrerURL) && !isURLPotentiallyTrustworthy(currentURL)) {
@@ -4395,7 +4395,7 @@ var require_util2 = __commonJS({
     }
     function tryUpgradeRequestToAPotentiallyTrustworthyURL(request) {
     }
-    function sameOrigin(A, B) {
+    function sameOrigin2(A, B) {
       if (A.origin === B.origin && A.origin === "null") {
         return true;
       }
@@ -4848,7 +4848,7 @@ var require_util2 = __commonJS({
       isBlobLike,
       isURLPotentiallyTrustworthy,
       isValidReasonPhrase,
-      sameOrigin,
+      sameOrigin: sameOrigin2,
       normalizeMethod,
       serializeJavascriptValueToJSONString,
       iteratorMixin,
@@ -6334,7 +6334,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request) {
-      const { method, path: path15, host, upgrade, blocking, reset } = request;
+      const { method, path: path24, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util.isFormDataLike(body)) {
@@ -6400,7 +6400,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path15} HTTP/1.1\r
+      let header = `${method} ${path24} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -6926,7 +6926,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
-      const { method, path: path15, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { method, path: path24, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
         util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
@@ -6993,7 +6993,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path15;
+      headers[HTTP2_HEADER_PATH] = path24;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7346,9 +7346,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path15 = search ? `${pathname}${search}` : pathname;
+        const path24 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path15;
+        this.opts.path = path24;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8215,7 +8215,7 @@ var require_pool = __commonJS({
     function defaultFactory(origin, opts) {
       return new Client2(origin, opts);
     }
-    var Pool = class extends PoolBase {
+    var Pool2 = class extends PoolBase {
       constructor(origin, {
         connections,
         factory = defaultFactory,
@@ -8278,7 +8278,7 @@ var require_pool = __commonJS({
         }
       }
     };
-    module2.exports = Pool;
+    module2.exports = Pool2;
   }
 });
 
@@ -8298,7 +8298,7 @@ var require_balanced_pool = __commonJS({
       kRemoveClient,
       kGetDispatcher
     } = require_pool_base();
-    var Pool = require_pool();
+    var Pool2 = require_pool();
     var { kUrl, kInterceptors } = require_symbols();
     var { parseOrigin } = require_util();
     var kFactory = /* @__PURE__ */ Symbol("factory");
@@ -8319,7 +8319,7 @@ var require_balanced_pool = __commonJS({
       return a5;
     }
     function defaultFactory(origin, opts) {
-      return new Pool(origin, opts);
+      return new Pool2(origin, opts);
     }
     var BalancedPool = class extends PoolBase {
       constructor(upstreams = [], { factory = defaultFactory, ...opts } = {}) {
@@ -8433,7 +8433,7 @@ var require_agent = __commonJS({
     var { InvalidArgumentError } = require_errors();
     var { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = require_symbols();
     var DispatcherBase = require_dispatcher_base();
-    var Pool = require_pool();
+    var Pool2 = require_pool();
     var Client2 = require_client();
     var util = require_util();
     var createRedirectInterceptor = require_redirect_interceptor();
@@ -8445,9 +8445,9 @@ var require_agent = __commonJS({
     var kFactory = /* @__PURE__ */ Symbol("factory");
     var kOptions = /* @__PURE__ */ Symbol("options");
     function defaultFactory(origin, opts) {
-      return opts && opts.connections === 1 ? new Client2(origin, opts) : new Pool(origin, opts);
+      return opts && opts.connections === 1 ? new Client2(origin, opts) : new Pool2(origin, opts);
     }
-    var Agent3 = class extends DispatcherBase {
+    var Agent4 = class extends DispatcherBase {
       constructor({ factory = defaultFactory, maxRedirections = 0, connect, ...options } = {}) {
         if (typeof factory !== "function") {
           throw new InvalidArgumentError("factory must be a function.");
@@ -8519,7 +8519,7 @@ var require_agent = __commonJS({
         await Promise.all(destroyPromises);
       }
     };
-    module2.exports = Agent3;
+    module2.exports = Agent4;
   }
 });
 
@@ -8529,8 +8529,8 @@ var require_proxy_agent = __commonJS({
     "use strict";
     var { kProxy, kClose, kDestroy, kDispatch, kInterceptors } = require_symbols();
     var { URL: URL2 } = require("node:url");
-    var Agent3 = require_agent();
-    var Pool = require_pool();
+    var Agent4 = require_agent();
+    var Pool2 = require_pool();
     var DispatcherBase = require_dispatcher_base();
     var { InvalidArgumentError, RequestAbortedError, SecureProxyConnectionError } = require_errors();
     var buildConnector = require_connect();
@@ -8546,7 +8546,7 @@ var require_proxy_agent = __commonJS({
       return protocol === "https:" ? 443 : 80;
     }
     function defaultFactory(origin, opts) {
-      return new Pool(origin, opts);
+      return new Pool2(origin, opts);
     }
     var noop = () => {
     };
@@ -8554,7 +8554,7 @@ var require_proxy_agent = __commonJS({
       if (opts.connections === 1) {
         return new Client2(origin, opts);
       }
-      return new Pool(origin, opts);
+      return new Pool2(origin, opts);
     }
     var Http1ProxyWrapper = class extends DispatcherBase {
       #client;
@@ -8583,10 +8583,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path15 = "/",
+          path: path24 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path15;
+        opts.path = origin + path24;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -8601,7 +8601,7 @@ var require_proxy_agent = __commonJS({
         return this.#client.destroy(err);
       }
     };
-    var ProxyAgent2 = class extends DispatcherBase {
+    var ProxyAgent3 = class extends DispatcherBase {
       constructor(opts) {
         super();
         if (!opts || typeof opts === "object" && !(opts instanceof URL2) && !opts.uri) {
@@ -8644,7 +8644,7 @@ var require_proxy_agent = __commonJS({
           return agentFactory(origin2, options);
         };
         this[kClient] = clientFactory(url, { connect });
-        this[kAgent] = new Agent3({
+        this[kAgent] = new Agent4({
           ...opts,
           factory,
           connect: async (opts2, callback) => {
@@ -8742,7 +8742,7 @@ var require_proxy_agent = __commonJS({
         throw new InvalidArgumentError("Proxy-Authorization should be sent in ProxyAgent constructor");
       }
     }
-    module2.exports = ProxyAgent2;
+    module2.exports = ProxyAgent3;
   }
 });
 
@@ -8752,8 +8752,8 @@ var require_env_http_proxy_agent = __commonJS({
     "use strict";
     var DispatcherBase = require_dispatcher_base();
     var { kClose, kDestroy, kClosed, kDestroyed, kDispatch, kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent } = require_symbols();
-    var ProxyAgent2 = require_proxy_agent();
-    var Agent3 = require_agent();
+    var ProxyAgent3 = require_proxy_agent();
+    var Agent4 = require_agent();
     var DEFAULT_PORTS2 = {
       "http:": 80,
       "https:": 443
@@ -8773,16 +8773,16 @@ var require_env_http_proxy_agent = __commonJS({
           });
         }
         const { httpProxy, httpsProxy, noProxy, ...agentOpts } = opts;
-        this[kNoProxyAgent] = new Agent3(agentOpts);
+        this[kNoProxyAgent] = new Agent4(agentOpts);
         const HTTP_PROXY = httpProxy ?? process.env.http_proxy ?? process.env.HTTP_PROXY;
         if (HTTP_PROXY) {
-          this[kHttpProxyAgent] = new ProxyAgent2({ ...agentOpts, uri: HTTP_PROXY });
+          this[kHttpProxyAgent] = new ProxyAgent3({ ...agentOpts, uri: HTTP_PROXY });
         } else {
           this[kHttpProxyAgent] = this[kNoProxyAgent];
         }
         const HTTPS_PROXY = httpsProxy ?? process.env.https_proxy ?? process.env.HTTPS_PROXY;
         if (HTTPS_PROXY) {
-          this[kHttpsProxyAgent] = new ProxyAgent2({ ...agentOpts, uri: HTTPS_PROXY });
+          this[kHttpsProxyAgent] = new ProxyAgent3({ ...agentOpts, uri: HTTPS_PROXY });
         } else {
           this[kHttpsProxyAgent] = this[kHttpProxyAgent];
         }
@@ -10507,20 +10507,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path15) {
-      if (typeof path15 !== "string") {
-        return path15;
+    function safeUrl(path24) {
+      if (typeof path24 !== "string") {
+        return path24;
       }
-      const pathSegments = path15.split("?");
+      const pathSegments = path24.split("?");
       if (pathSegments.length !== 2) {
-        return path15;
+        return path24;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path15, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path15);
+    function matchKey(mockDispatch2, { path: path24, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path24);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10542,7 +10542,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath2 = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path15 }) => matchValue(safeUrl(path15), resolvedPath2));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path24 }) => matchValue(safeUrl(path24), resolvedPath2));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath2}'`);
       }
@@ -10580,9 +10580,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path15, method, body, headers, query } = opts;
+      const { path: path24, method, body, headers, query } = opts;
       return {
-        path: path15,
+        path: path24,
         method,
         body,
         headers,
@@ -10942,7 +10942,7 @@ var require_mock_pool = __commonJS({
   "node_modules/undici/lib/mock/mock-pool.js"(exports2, module2) {
     "use strict";
     var { promisify } = require("node:util");
-    var Pool = require_pool();
+    var Pool2 = require_pool();
     var { buildMockDispatch } = require_mock_utils();
     var {
       kDispatches,
@@ -10956,7 +10956,7 @@ var require_mock_pool = __commonJS({
     var { MockInterceptor } = require_mock_interceptor();
     var Symbols = require_symbols();
     var { InvalidArgumentError } = require_errors();
-    var MockPool = class extends Pool {
+    var MockPool = class extends Pool2 {
       constructor(origin, opts) {
         super(origin, opts);
         if (!opts || !opts.agent || typeof opts.agent.dispatch !== "function") {
@@ -11045,10 +11045,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path15, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path24, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path15,
+            Path: path24,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -11067,7 +11067,7 @@ var require_mock_agent = __commonJS({
   "node_modules/undici/lib/mock/mock-agent.js"(exports2, module2) {
     "use strict";
     var { kClients } = require_symbols();
-    var Agent3 = require_agent();
+    var Agent4 = require_agent();
     var {
       kAgent,
       kMockAgentSet,
@@ -11094,7 +11094,7 @@ var require_mock_agent = __commonJS({
         if (opts?.agent && typeof opts.agent.dispatch !== "function") {
           throw new InvalidArgumentError("Argument opts.agent must implement Agent");
         }
-        const agent = opts?.agent ? opts.agent : new Agent3(opts);
+        const agent = opts?.agent ? opts.agent : new Agent4(opts);
         this[kAgent] = agent;
         this[kClients] = agent[kClients];
         this[kOptions] = buildMockOptions(opts);
@@ -11198,9 +11198,9 @@ var require_global2 = __commonJS({
     "use strict";
     var globalDispatcher = /* @__PURE__ */ Symbol.for("undici.globalDispatcher.1");
     var { InvalidArgumentError } = require_errors();
-    var Agent3 = require_agent();
+    var Agent4 = require_agent();
     if (getGlobalDispatcher() === void 0) {
-      setGlobalDispatcher(new Agent3());
+      setGlobalDispatcher(new Agent4());
     }
     function setGlobalDispatcher(agent) {
       if (!agent || typeof agent.dispatch !== "function") {
@@ -11415,7 +11415,7 @@ var require_dump = __commonJS({
 var require_dns = __commonJS({
   "node_modules/undici/lib/interceptor/dns.js"(exports2, module2) {
     "use strict";
-    var { isIP } = require("node:net");
+    var { isIP: isIP3 } = require("node:net");
     var { lookup } = require("node:dns");
     var DecoratorHandler = require_decorator_handler();
     var { InvalidArgumentError, InformationalError } = require_errors();
@@ -11670,7 +11670,7 @@ var require_dns = __commonJS({
       return (dispatch) => {
         return function dnsInterceptor(origDispatchOpts, handler) {
           const origin = origDispatchOpts.origin.constructor === URL ? origDispatchOpts.origin : new URL(origDispatchOpts.origin);
-          if (isIP(origin.hostname) !== 0) {
+          if (isIP3(origin.hostname) !== 0) {
             return dispatch(origDispatchOpts, handler);
           }
           instance.runLookup(origin, origDispatchOpts, (err, newOrigin) => {
@@ -12596,7 +12596,7 @@ var require_request2 = __commonJS({
     var nodeUtil = require("node:util");
     var {
       isValidHTTPToken,
-      sameOrigin,
+      sameOrigin: sameOrigin2,
       environmentSettingsObject
     } = require_util2();
     var {
@@ -12684,7 +12684,7 @@ var require_request2 = __commonJS({
         }
         const origin = environmentSettingsObject.settingsObject.origin;
         let window2 = "client";
-        if (request.window?.constructor?.name === "EnvironmentSettingsObject" && sameOrigin(request.window, origin)) {
+        if (request.window?.constructor?.name === "EnvironmentSettingsObject" && sameOrigin2(request.window, origin)) {
           window2 = request.window;
         }
         if (init.window != null) {
@@ -12760,7 +12760,7 @@ var require_request2 = __commonJS({
             } catch (err) {
               throw new TypeError(`Referrer "${referrer}" is not a valid URL.`, { cause: err });
             }
-            if (parsedReferrer.protocol === "about:" && parsedReferrer.hostname === "client" || origin && !sameOrigin(parsedReferrer, environmentSettingsObject.settingsObject.baseUrl)) {
+            if (parsedReferrer.protocol === "about:" && parsedReferrer.hostname === "client" || origin && !sameOrigin2(parsedReferrer, environmentSettingsObject.settingsObject.baseUrl)) {
               request.referrer = "client";
             } else {
               request.referrer = parsedReferrer;
@@ -13313,7 +13313,7 @@ var require_fetch = __commonJS({
       coarsenedSharedCurrentTime,
       createDeferredPromise,
       isBlobLike,
-      sameOrigin,
+      sameOrigin: sameOrigin2,
       isCancelled,
       isAborted,
       isErrorLike,
@@ -13585,7 +13585,7 @@ var require_fetch = __commonJS({
           if (
             // - request’s current URL’s origin is same origin with request’s origin,
             //   and request’s response tainting is "basic"
-            sameOrigin(currentURL, request.url) && request.responseTainting === "basic" || // request’s current URL’s scheme is "data"
+            sameOrigin2(currentURL, request.url) && request.responseTainting === "basic" || // request’s current URL’s scheme is "data"
             currentURL.protocol === "data:" || // - request’s mode is "navigate" or "websocket"
             (request.mode === "navigate" || request.mode === "websocket")
           ) {
@@ -13879,7 +13879,7 @@ var require_fetch = __commonJS({
         return Promise.resolve(makeNetworkError("redirect count exceeded"));
       }
       request.redirectCount += 1;
-      if (request.mode === "cors" && (locationURL.username || locationURL.password) && !sameOrigin(request, locationURL)) {
+      if (request.mode === "cors" && (locationURL.username || locationURL.password) && !sameOrigin2(request, locationURL)) {
         return Promise.resolve(makeNetworkError('cross origin not allowed for request mode "cors"'));
       }
       if (request.responseTainting === "cors" && (locationURL.username || locationURL.password)) {
@@ -13897,7 +13897,7 @@ var require_fetch = __commonJS({
           request.headersList.delete(headerName);
         }
       }
-      if (!sameOrigin(requestCurrentURL(request), locationURL)) {
+      if (!sameOrigin2(requestCurrentURL(request), locationURL)) {
         request.headersList.delete("authorization", true);
         request.headersList.delete("proxy-authorization", true);
         request.headersList.delete("cookie", true);
@@ -15929,9 +15929,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path15) {
-      for (let i5 = 0; i5 < path15.length; ++i5) {
-        const code = path15.charCodeAt(i5);
+    function validateCookiePath(path24) {
+      for (let i5 = 0; i5 < path24.length; ++i5) {
+        const code = path24.charCodeAt(i5);
         if (code < 32 || // exclude CTLs (0-31)
         code === 127 || // DEL
         code === 59) {
@@ -18547,10 +18547,10 @@ var require_undici = __commonJS({
     "use strict";
     var Client2 = require_client();
     var Dispatcher = require_dispatcher();
-    var Pool = require_pool();
+    var Pool2 = require_pool();
     var BalancedPool = require_balanced_pool();
-    var Agent3 = require_agent();
-    var ProxyAgent2 = require_proxy_agent();
+    var Agent4 = require_agent();
+    var ProxyAgent3 = require_proxy_agent();
     var EnvHttpProxyAgent2 = require_env_http_proxy_agent();
     var RetryAgent = require_retry_agent();
     var errors = require_errors();
@@ -18570,10 +18570,10 @@ var require_undici = __commonJS({
     Object.assign(Dispatcher.prototype, api);
     module2.exports.Dispatcher = Dispatcher;
     module2.exports.Client = Client2;
-    module2.exports.Pool = Pool;
+    module2.exports.Pool = Pool2;
     module2.exports.BalancedPool = BalancedPool;
-    module2.exports.Agent = Agent3;
-    module2.exports.ProxyAgent = ProxyAgent2;
+    module2.exports.Agent = Agent4;
+    module2.exports.ProxyAgent = ProxyAgent3;
     module2.exports.EnvHttpProxyAgent = EnvHttpProxyAgent2;
     module2.exports.RetryAgent = RetryAgent;
     module2.exports.RetryHandler = RetryHandler;
@@ -18608,11 +18608,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path15 = opts.path;
+          let path24 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path15 = `/${path15}`;
+            path24 = `/${path24}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path15);
+          url = new URL(util.parseOrigin(url).origin + path24);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -22599,14 +22599,14 @@ var init_readFile = __esm({
     import_promises2 = require("node:fs/promises");
     filePromises = {};
     fileIntercept = {};
-    readFile2 = (path15, options) => {
-      if (fileIntercept[path15] !== void 0) {
-        return fileIntercept[path15];
+    readFile2 = (path24, options) => {
+      if (fileIntercept[path24] !== void 0) {
+        return fileIntercept[path24];
       }
-      if (!filePromises[path15] || options?.ignoreCache) {
-        filePromises[path15] = (0, import_promises2.readFile)(path15, "utf8");
+      if (!filePromises[path24] || options?.ignoreCache) {
+        filePromises[path24] = (0, import_promises2.readFile)(path24, "utf8");
       }
-      return filePromises[path15];
+      return filePromises[path24];
     };
   }
 });
@@ -22718,8 +22718,8 @@ var init_externalDataInterceptor = __esm({
       getFileRecord() {
         return fileIntercept;
       },
-      interceptFile(path15, contents) {
-        fileIntercept[path15] = Promise.resolve(contents);
+      interceptFile(path24, contents) {
+        fileIntercept[path24] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return tokenIntercept;
@@ -23493,8 +23493,8 @@ var init_createConfigValueProvider = __esm({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path15 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path15}`;
+              const { protocol, hostname, port, path: path24 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path24}`;
             }
           }
           return endpoint;
@@ -23867,18 +23867,18 @@ var getAttrPathList;
 var init_getAttrPathList = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js"() {
     init_types2();
-    getAttrPathList = (path15) => {
-      const parts = path15.split(".");
+    getAttrPathList = (path24) => {
+      const parts = path24.split(".");
       const pathList = [];
       for (const part of parts) {
         const squareBracketIndex = part.indexOf("[");
         if (squareBracketIndex !== -1) {
           if (part.indexOf("]") !== part.length - 1) {
-            throw new EndpointError(`Path: '${path15}' does not end with ']'`);
+            throw new EndpointError(`Path: '${path24}' does not end with ']'`);
           }
           const arrayIndex = part.slice(squareBracketIndex + 1, -1);
           if (Number.isNaN(parseInt(arrayIndex))) {
-            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path15}'`);
+            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path24}'`);
           }
           if (squareBracketIndex !== 0) {
             pathList.push(part.slice(0, squareBracketIndex));
@@ -23899,9 +23899,9 @@ var init_getAttr = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js"() {
     init_types2();
     init_getAttrPathList();
-    getAttr = (value, path15) => getAttrPathList(path15).reduce((acc, index) => {
+    getAttr = (value, path24) => getAttrPathList(path24).reduce((acc, index) => {
       if (typeof acc !== "object") {
-        throw new EndpointError(`Index '${index}' in '${path15}' not found in '${JSON.stringify(value)}'`);
+        throw new EndpointError(`Index '${index}' in '${path24}' not found in '${JSON.stringify(value)}'`);
       } else if (Array.isArray(acc)) {
         const i5 = parseInt(index);
         return acc[i5 < 0 ? acc.length + i5 : i5];
@@ -23962,8 +23962,8 @@ var init_parseURL = __esm({
             return value;
           }
           if (typeof value === "object" && "hostname" in value) {
-            const { hostname: hostname2, port, protocol: protocol2 = "", path: path15 = "", query = {} } = value;
-            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path15}`);
+            const { hostname: hostname2, port, protocol: protocol2 = "", path: path24 = "", query = {} } = value;
+            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path24}`);
             url.search = Object.entries(query).map(([k5, v]) => `${k5}=${v}`).join("&");
             return url;
           }
@@ -27566,11 +27566,11 @@ var init_HttpBindingProtocol = __esm({
           const opTraits = translateTraits(operationSchema.traits);
           if (opTraits.http) {
             request.method = opTraits.http[0];
-            const [path15, search] = opTraits.http[1].split("?");
+            const [path24, search] = opTraits.http[1].split("?");
             if (request.path == "/") {
-              request.path = path15;
+              request.path = path24;
             } else {
-              request.path += path15;
+              request.path += path24;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
             for (const [key, value] of traitSearchParams) {
@@ -27971,8 +27971,8 @@ var init_requestBuilder = __esm({
         return this;
       }
       p(memberName, labelValueProvider, uriLabel, isGreedyLabel) {
-        this.resolvePathStack.push((path15) => {
-          this.path = resolvedPath(path15, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
+        this.resolvePathStack.push((path24) => {
+          this.path = resolvedPath(path24, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
         });
         return this;
       }
@@ -30080,9 +30080,9 @@ var init_createPaginator = __esm({
       command5 = withCommand(command5) ?? command5;
       return await client.send(command5, ...args);
     };
-    get = (fromObject, path15) => {
+    get = (fromObject, path24) => {
       let cursor2 = fromObject;
-      const pathComponents = path15.split(".");
+      const pathComponents = path24.split(".");
       for (const step of pathComponents) {
         if (!cursor2 || typeof cursor2 !== "object") {
           return void 0;
@@ -31767,8 +31767,8 @@ var init_createUserAgentStringParsingProvider = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
     createUserAgentStringParsingProvider = ({ serviceId, clientVersion }) => async (config) => {
       const module2 = await Promise.resolve().then(() => __toESM(require_es5()));
-      const parse8 = module2.parse ?? module2.default.parse ?? (() => "");
-      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse8(window.navigator.userAgent) : void 0;
+      const parse10 = module2.parse ?? module2.default.parse ?? (() => "");
+      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse10(window.navigator.userAgent) : void 0;
       const sections = [
         ["aws-sdk-js", clientVersion],
         ["ua", "2.1"],
@@ -32591,10 +32591,10 @@ ${longDate}
 ${credentialScope}
 ${toHex2(hashedRequest)}`;
       }
-      getCanonicalPath({ path: path15 }) {
+      getCanonicalPath({ path: path24 }) {
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
-          for (const pathSegment of path15.split("/")) {
+          for (const pathSegment of path24.split("/")) {
             if (pathSegment?.length === 0)
               continue;
             if (pathSegment === ".")
@@ -32605,11 +32605,11 @@ ${toHex2(hashedRequest)}`;
               normalizedPathSegments.push(pathSegment);
             }
           }
-          const normalizedPath = `${path15?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path15?.endsWith("/") ? "/" : ""}`;
+          const normalizedPath = `${path24?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path24?.endsWith("/") ? "/" : ""}`;
           const doubleEncoded = escapeUri2(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
-        return path15;
+        return path24;
       }
       validateResolvedCredentials(credentials) {
         if (typeof credentials !== "object" || typeof credentials.accessKeyId !== "string" || typeof credentials.secretAccessKey !== "string") {
@@ -33745,12 +33745,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             const password = request.password ?? "";
             auth = `${username}:${password}`;
           }
-          let path15 = request.path;
+          let path24 = request.path;
           if (queryString) {
-            path15 += `?${queryString}`;
+            path24 += `?${queryString}`;
           }
           if (request.fragment) {
-            path15 += `#${request.fragment}`;
+            path24 += `#${request.fragment}`;
           }
           let hostname = request.hostname ?? "";
           if (hostname[0] === "[" && hostname.endsWith("]")) {
@@ -33762,7 +33762,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             headers: request.headers,
             host: hostname,
             method: request.method,
-            path: path15,
+            path: path24,
             port: request.port,
             agent,
             auth
@@ -33839,9 +33839,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
           throwOnRequestTimeout,
           httpAgentProvider: async () => {
             const node_http = require("node:http");
-            const { Agent: Agent3, request } = node_http.default ?? node_http;
+            const { Agent: Agent4, request } = node_http.default ?? node_http;
             hRequest = request;
-            hAgent = Agent3;
+            hAgent = Agent4;
             if (httpAgent instanceof hAgent || typeof httpAgent?.destroy === "function") {
               this.externalAgent = true;
               return httpAgent;
@@ -34165,16 +34165,16 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(err);
           };
           const queryString = query ? buildQueryString2(query) : "";
-          let path15 = request.path;
+          let path24 = request.path;
           if (queryString) {
-            path15 += `?${queryString}`;
+            path24 += `?${queryString}`;
           }
           if (request.fragment) {
-            path15 += `#${request.fragment}`;
+            path24 += `#${request.fragment}`;
           }
           const clientHttp2Stream = session.request({
             ...request.headers,
-            [constants3.HTTP2_HEADER_PATH]: path15,
+            [constants3.HTTP2_HEADER_PATH]: path24,
             [constants3.HTTP2_HEADER_METHOD]: method
           });
           if (effectiveRequestTimeout) {
@@ -35734,11 +35734,11 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = getSmithyContext(context);
-        const path15 = `/service/${service}/operation/${operation2}`;
+        const path24 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
-          request.path += path15.slice(1);
+          request.path += path24.slice(1);
         } else {
-          request.path += path15;
+          request.path += path24;
         }
         return request;
       }
@@ -42362,9 +42362,9 @@ var init_signin = __esm({
 var require_dist_cjs12 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile10, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
+    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile12, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { createHash: createHash7, createPrivateKey, createPublicKey, sign: sign3 } = require("node:crypto");
+    var { createHash: createHash8, createPrivateKey, createPublicKey, sign: sign3 } = require("node:crypto");
     var { promises: promises3 } = require("node:fs");
     var { homedir: homedir2 } = require("node:os");
     var { dirname: dirname3, join: join8 } = require("node:path");
@@ -42490,7 +42490,7 @@ var require_dist_cjs12 = __commonJS({
         try {
           let tokenData;
           try {
-            tokenData = await readFile10(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
+            tokenData = await readFile12(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
           } catch {
             tokenData = await promises3.readFile(tokenFilePath, "utf8");
           }
@@ -42525,7 +42525,7 @@ var require_dist_cjs12 = __commonJS({
       getTokenFilePath() {
         const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join8(homedir2(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
-        const loginSessionSha256 = createHash7("sha256").update(loginSessionBytes).digest("hex");
+        const loginSessionSha256 = createHash8("sha256").update(loginSessionBytes).digest("hex");
         return join8(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
@@ -54875,17 +54875,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path15) {
-      const ctrl = callVisitor(key, node, visitor, path15);
+    function visit_(key, node, visitor, path24) {
+      const ctrl = callVisitor(key, node, visitor, path24);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path15, ctrl);
-        return visit_(key, ctrl, visitor, path15);
+        replaceNode(key, path24, ctrl);
+        return visit_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path15 = Object.freeze(path15.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = visit_(i5, node.items[i5], visitor, path15);
+            const ci = visit_(i5, node.items[i5], visitor, path24);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54896,13 +54896,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path15 = Object.freeze(path15.concat(node));
-          const ck = visit_("key", node.key, visitor, path15);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = visit_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path15);
+          const cv = visit_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54923,17 +54923,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path15) {
-      const ctrl = await callVisitor(key, node, visitor, path15);
+    async function visitAsync_(key, node, visitor, path24) {
+      const ctrl = await callVisitor(key, node, visitor, path24);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path15, ctrl);
-        return visitAsync_(key, ctrl, visitor, path15);
+        replaceNode(key, path24, ctrl);
+        return visitAsync_(key, ctrl, visitor, path24);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path15 = Object.freeze(path15.concat(node));
+          path24 = Object.freeze(path24.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = await visitAsync_(i5, node.items[i5], visitor, path15);
+            const ci = await visitAsync_(i5, node.items[i5], visitor, path24);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54944,13 +54944,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path15 = Object.freeze(path15.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path15);
+          path24 = Object.freeze(path24.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path24);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path15);
+          const cv = await visitAsync_("value", node.value, visitor, path24);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54977,23 +54977,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path15) {
+    function callVisitor(key, node, visitor, path24) {
       if (typeof visitor === "function")
-        return visitor(key, node, path15);
+        return visitor(key, node, path24);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path15);
+        return visitor.Map?.(key, node, path24);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path15);
+        return visitor.Seq?.(key, node, path24);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path15);
+        return visitor.Pair?.(key, node, path24);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path15);
+        return visitor.Scalar?.(key, node, path24);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path15);
+        return visitor.Alias?.(key, node, path24);
       return void 0;
     }
-    function replaceNode(key, path15, node) {
-      const parent = path15[path15.length - 1];
+    function replaceNode(key, path24, node) {
+      const parent = path24[path24.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -55603,10 +55603,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path15, value) {
+    function collectionFromPath(schema, path24, value) {
       let v = value;
-      for (let i5 = path15.length - 1; i5 >= 0; --i5) {
-        const k5 = path15[i5];
+      for (let i5 = path24.length - 1; i5 >= 0; --i5) {
+        const k5 = path24[i5];
         if (typeof k5 === "number" && Number.isInteger(k5) && k5 >= 0) {
           const a5 = [];
           a5[k5] = v;
@@ -55625,7 +55625,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path15) => path15 == null || typeof path15 === "object" && !!path15[Symbol.iterator]().next().done;
+    var isEmptyPath = (path24) => path24 == null || typeof path24 === "object" && !!path24[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -55655,11 +55655,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path15, value) {
-        if (isEmptyPath(path15))
+      addIn(path24, value) {
+        if (isEmptyPath(path24))
           this.add(value);
         else {
-          const [key, ...rest] = path15;
+          const [key, ...rest] = path24;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -55673,8 +55673,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path15) {
-        const [key, ...rest] = path15;
+      deleteIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -55688,8 +55688,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path15, keepScalar) {
-        const [key, ...rest] = path15;
+      getIn(path24, keepScalar) {
+        const [key, ...rest] = path24;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -55707,8 +55707,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path15) {
-        const [key, ...rest] = path15;
+      hasIn(path24) {
+        const [key, ...rest] = path24;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -55718,8 +55718,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path15, value) {
-        const [key, ...rest] = path15;
+      setIn(path24, value) {
+        const [key, ...rest] = path24;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -58234,9 +58234,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path15, value) {
+      addIn(path24, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path15, value);
+          this.contents.addIn(path24, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -58311,14 +58311,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path15) {
-        if (Collection.isEmptyPath(path15)) {
+      deleteIn(path24) {
+        if (Collection.isEmptyPath(path24)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path15) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path24) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -58333,10 +58333,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path15, keepScalar) {
-        if (Collection.isEmptyPath(path15))
+      getIn(path24, keepScalar) {
+        if (Collection.isEmptyPath(path24))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path15, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path24, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -58347,10 +58347,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path15) {
-        if (Collection.isEmptyPath(path15))
+      hasIn(path24) {
+        if (Collection.isEmptyPath(path24))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path15) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path24) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -58367,13 +58367,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path15, value) {
-        if (Collection.isEmptyPath(path15)) {
+      setIn(path24, value) {
+        if (Collection.isEmptyPath(path24)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path15), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path24), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path15, value);
+          this.contents.setIn(path24, value);
         }
       }
       /**
@@ -60333,9 +60333,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path15) => {
+    visit.itemAtPath = (cst, path24) => {
       let item = cst;
-      for (const [field, index] of path15) {
+      for (const [field, index] of path24) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -60344,23 +60344,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path15) => {
-      const parent = visit.itemAtPath(cst, path15.slice(0, -1));
-      const field = path15[path15.length - 1][0];
+    visit.parentCollection = (cst, path24) => {
+      const parent = visit.itemAtPath(cst, path24.slice(0, -1));
+      const field = path24[path24.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path15, item, visitor) {
-      let ctrl = visitor(item, path15);
+    function _visit(path24, item, visitor) {
+      let ctrl = visitor(item, path24);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i5 = 0; i5 < token.items.length; ++i5) {
-            const ci = _visit(Object.freeze(path15.concat([[field, i5]])), token.items[i5], visitor);
+            const ci = _visit(Object.freeze(path24.concat([[field, i5]])), token.items[i5], visitor);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -60371,10 +60371,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path15);
+            ctrl = ctrl(item, path24);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path15) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path24) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -62025,7 +62025,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse8(src, reviver, options) {
+    function parse10(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -62066,7 +62066,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports2.parse = parse8;
+    exports2.parse = parse10;
     exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument2;
     exports2.stringify = stringify4;
@@ -65797,7 +65797,7 @@ var require_dist_cjs20 = __commonJS({
     };
     var ListResolversCommand = class extends command5(_ep05, _mw05, "ListResolvers", ListResolvers$) {
     };
-    var ListSourceApiAssociationsCommand = class extends command5(_ep05, _mw05, "ListSourceApiAssociations", ListSourceApiAssociations$) {
+    var ListSourceApiAssociationsCommand2 = class extends command5(_ep05, _mw05, "ListSourceApiAssociations", ListSourceApiAssociations$) {
     };
     var ListTagsForResourceCommand4 = class extends command5(_ep05, _mw05, "ListTagsForResource", ListTagsForResource$) {
     };
@@ -65848,7 +65848,7 @@ var require_dist_cjs20 = __commonJS({
     var paginateListGraphqlApis = createPaginator2(AppSyncClient2, ListGraphqlApisCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListResolversByFunction = createPaginator2(AppSyncClient2, ListResolversByFunctionCommand, "nextToken", "nextToken", "maxResults");
     var paginateListResolvers = createPaginator2(AppSyncClient2, ListResolversCommand, "nextToken", "nextToken", "maxResults");
-    var paginateListSourceApiAssociations = createPaginator2(AppSyncClient2, ListSourceApiAssociationsCommand, "nextToken", "nextToken", "maxResults");
+    var paginateListSourceApiAssociations = createPaginator2(AppSyncClient2, ListSourceApiAssociationsCommand2, "nextToken", "nextToken", "maxResults");
     var paginateListTypesByAssociation = createPaginator2(AppSyncClient2, ListTypesByAssociationCommand, "nextToken", "nextToken", "maxResults");
     var paginateListTypes = createPaginator2(AppSyncClient2, ListTypesCommand, "nextToken", "nextToken", "maxResults");
     var commands5 = {
@@ -65905,7 +65905,7 @@ var require_dist_cjs20 = __commonJS({
       ListGraphqlApisCommand: ListGraphqlApisCommand2,
       ListResolversCommand,
       ListResolversByFunctionCommand,
-      ListSourceApiAssociationsCommand,
+      ListSourceApiAssociationsCommand: ListSourceApiAssociationsCommand2,
       ListTagsForResourceCommand: ListTagsForResourceCommand4,
       ListTypesCommand,
       ListTypesByAssociationCommand,
@@ -66425,7 +66425,7 @@ var require_dist_cjs20 = __commonJS({
     exports2.ListResolversRequest$ = ListResolversRequest$;
     exports2.ListResolversResponse$ = ListResolversResponse$;
     exports2.ListSourceApiAssociations$ = ListSourceApiAssociations$;
-    exports2.ListSourceApiAssociationsCommand = ListSourceApiAssociationsCommand;
+    exports2.ListSourceApiAssociationsCommand = ListSourceApiAssociationsCommand2;
     exports2.ListSourceApiAssociationsRequest$ = ListSourceApiAssociationsRequest$;
     exports2.ListSourceApiAssociationsResponse$ = ListSourceApiAssociationsResponse$;
     exports2.ListTagsForResource$ = ListTagsForResource$;
@@ -145388,7 +145388,7 @@ var require_dist_cjs32 = __commonJS({
     };
     var ListSMSSandboxPhoneNumbersCommand = class extends command5(_ep05, _mw05, "ListSMSSandboxPhoneNumbers", ListSMSSandboxPhoneNumbers$) {
     };
-    var ListSubscriptionsByTopicCommand2 = class extends command5(_ep05, _mw05, "ListSubscriptionsByTopic", ListSubscriptionsByTopic$) {
+    var SnsListSubsCmd = class extends command5(_ep05, _mw05, "ListSubscriptionsByTopic", ListSubscriptionsByTopic$) {
     };
     var ListSubscriptionsCommand = class extends command5(_ep05, _mw05, "ListSubscriptions", ListSubscriptions$) {
     };
@@ -145431,7 +145431,7 @@ var require_dist_cjs32 = __commonJS({
     var paginateListPhoneNumbersOptedOut = createPaginator2(SNSClient2, ListPhoneNumbersOptedOutCommand, "nextToken", "nextToken", "");
     var paginateListPlatformApplications = createPaginator2(SNSClient2, ListPlatformApplicationsCommand, "NextToken", "NextToken", "");
     var paginateListSMSSandboxPhoneNumbers = createPaginator2(SNSClient2, ListSMSSandboxPhoneNumbersCommand, "NextToken", "NextToken", "MaxResults");
-    var paginateListSubscriptionsByTopic = createPaginator2(SNSClient2, ListSubscriptionsByTopicCommand2, "NextToken", "NextToken", "");
+    var paginateListSubscriptionsByTopic = createPaginator2(SNSClient2, SnsListSubsCmd, "NextToken", "NextToken", "");
     var paginateListSubscriptions = createPaginator2(SNSClient2, ListSubscriptionsCommand, "NextToken", "NextToken", "");
     var paginateListTopics = createPaginator2(SNSClient2, ListTopicsCommand2, "NextToken", "NextToken", "");
     var commands5 = {
@@ -145459,7 +145459,7 @@ var require_dist_cjs32 = __commonJS({
       ListPlatformApplicationsCommand,
       ListSMSSandboxPhoneNumbersCommand,
       ListSubscriptionsCommand,
-      ListSubscriptionsByTopicCommand: ListSubscriptionsByTopicCommand2,
+      ListSubscriptionsByTopicCommand: SnsListSubsCmd,
       ListTagsForResourceCommand: ListTagsForResourceCommand4,
       ListTopicsCommand: ListTopicsCommand2,
       OptInPhoneNumberCommand,
@@ -145651,7 +145651,7 @@ var require_dist_cjs32 = __commonJS({
     exports2.ListSMSSandboxPhoneNumbersResult$ = ListSMSSandboxPhoneNumbersResult$;
     exports2.ListSubscriptions$ = ListSubscriptions$;
     exports2.ListSubscriptionsByTopic$ = ListSubscriptionsByTopic$;
-    exports2.ListSubscriptionsByTopicCommand = ListSubscriptionsByTopicCommand2;
+    exports2.ListSubscriptionsByTopicCommand = SnsListSubsCmd;
     exports2.ListSubscriptionsByTopicInput$ = ListSubscriptionsByTopicInput$;
     exports2.ListSubscriptionsByTopicResponse$ = ListSubscriptionsByTopicResponse$;
     exports2.ListSubscriptionsCommand = ListSubscriptionsCommand;
@@ -147080,11 +147080,11 @@ var init_throw_200_exceptions = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse7;
+var validate, parse9;
 var init_arn = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
     validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse7 = (arn) => {
+    parse9 = (arn) => {
       const segments = arn.split(":");
       if (segments.length < 6 || segments[0] !== "arn")
         throw new Error("Malformed ARN");
@@ -147474,7 +147474,7 @@ var init_bucketEndpointMiddleware = __esm({
         if (options.bucketEndpoint) {
           request.hostname = bucketName;
         } else if (validate(bucketName)) {
-          const bucketArn = parse7(bucketName);
+          const bucketArn = parse9(bucketName);
           const clientRegion = await options.region();
           const useDualstackEndpoint = await options.useDualstackEndpoint();
           const useFipsEndpoint = await options.useFipsEndpoint();
@@ -158849,6 +158849,8 @@ var index_exports = {};
 __export(index_exports, {
   AlbListenerRulesProvider: () => AlbListenerRulesProvider,
   AppSyncEventsProvider: () => AppSyncEventsProvider,
+  AppSyncProvider: () => AppSyncProvider,
+  AppSyncSdkClient: () => AppSyncSdkClient,
   BedrockActionGroupProvider: () => BedrockActionGroupProvider,
   CloudFormationProvider: () => CloudFormationProvider,
   EventBridgeSurfaceProvider: () => EventBridgeSurfaceProvider,
@@ -161171,6 +161173,31 @@ var actionContract = {
       required: false,
       default: ""
     },
+    "expected-account-id": {
+      description: "Optional AWS account ID that must match sts:GetCallerIdentity before export. Mismatch fails closed with a sanitized error.",
+      required: false,
+      default: ""
+    },
+    "expected-partition": {
+      description: "Optional AWS partition (aws, aws-us-gov, or aws-cn) that must match the caller identity ARN before export. Mismatch fails closed with a sanitized error.",
+      required: false,
+      default: ""
+    },
+    "spec-path": {
+      description: "Optional explicit path to a repository specification relative to repo-root. When set, resolution uses this contract and skips same-tier auto-selection.",
+      required: false,
+      default: ""
+    },
+    "service-root": {
+      description: "Optional monorepo service root relative to repo-root. Scopes Backstage entities and repository contract inventory to that directory.",
+      required: false,
+      default: ""
+    },
+    "remote-fetch-allowlist-json": {
+      description: 'Optional JSON array of exact remote-fetch allowlist entries ({"hostname","pathPrefix"} or {"host","path"}). Absent or empty denies all remote spec fetches (Backstage, SSM, SNS).',
+      required: false,
+      default: ""
+    },
     "output-dir": {
       description: "Directory under the repository root where generated specs are written.",
       required: false,
@@ -161298,8 +161325,8 @@ function synthesizeWebSocketOpenApi(input) {
   }
   for (const route of routes) {
     const routeKey = route.routeKey || "$default";
-    const path15 = routePath(routeKey);
-    document.paths[path15] = {
+    const path24 = routePath(routeKey);
+    document.paths[path24] = {
       post: routeOperation(route, routeKey)
     };
   }
@@ -161451,12 +161478,13 @@ function synthesizeRestApiFallbackOpenApi(input) {
     document.components = { schemas: components };
   }
   const paths = document.paths;
+  const schemaNames = new Set(Object.keys(components));
   for (const resource of input.resources) {
     if (!resource.path || resource.path === "/") continue;
     const pathItem = recordValue(paths[resource.path]);
     for (const [methodName, method] of Object.entries(resource.resourceMethods ?? {})) {
       const lowerMethod = methodName.toLowerCase();
-      pathItem[lowerMethod] = restApiOperation(resource.path, lowerMethod, method);
+      pathItem[lowerMethod] = restApiOperation(resource.path, lowerMethod, method, schemaNames);
     }
     if (Object.keys(pathItem).length > 0) {
       paths[resource.path] = pathItem;
@@ -161480,15 +161508,15 @@ function restApiComponents(models) {
   }
   return schemas;
 }
-function restApiOperation(pathName, methodName, method) {
+function restApiOperation(pathName, methodName, method, schemaNames) {
   return {
     operationId: method.operationName || safeOperationName(`${methodName} ${pathName}`),
     ...method.authorizationType && method.authorizationType !== "NONE" ? { security: [{ [method.authorizationType]: [] }] } : {},
     ...method.authorizationType ? { "x-amazon-apigateway-authorization-type": method.authorizationType } : {},
     ...method.apiKeyRequired ? { "x-api-key-required": true } : {},
     parameters: restApiParameters(method.requestParameters),
-    ...Object.keys(method.requestModels ?? {}).length > 0 ? { requestBody: restApiRequestBody(method.requestModels ?? {}) } : {},
-    responses: restApiResponses(method.methodResponses ?? {}),
+    ...Object.keys(method.requestModels ?? {}).length > 0 ? { requestBody: restApiRequestBody(method.requestModels ?? {}, schemaNames) } : {},
+    responses: restApiResponses(method.methodResponses ?? {}, schemaNames),
     ...method.methodIntegration ? { "x-amazon-apigateway-integration": restApiIntegration(method.methodIntegration) } : {}
   };
 }
@@ -161504,14 +161532,15 @@ function restApiParameters(parameters) {
     };
   });
 }
-function restApiRequestBody(requestModels) {
+function restApiRequestBody(requestModels, schemaNames) {
   const content = {};
   for (const [mediaType, modelName] of Object.entries(requestModels)) {
+    if (!schemaNames.has(modelName)) continue;
     content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
   }
-  return { required: false, content };
+  return Object.keys(content).length > 0 ? { required: false, content } : {};
 }
-function restApiResponses(methodResponses) {
+function restApiResponses(methodResponses, schemaNames) {
   if (Object.keys(methodResponses).length === 0) {
     return { "200": { description: "Response" } };
   }
@@ -161520,6 +161549,7 @@ function restApiResponses(methodResponses) {
     const models = response.responseModels ?? {};
     const content = {};
     for (const [mediaType, modelName] of Object.entries(models)) {
+      if (!schemaNames.has(modelName)) continue;
       content[mediaType] = { schema: { $ref: `#/components/schemas/${modelName}` } };
     }
     responses[response.statusCode || statusCode] = {
@@ -161655,6 +161685,48 @@ function mergeRestApiModelsAndValidators(input) {
             operation2.requestBody = requestBody;
           }
         }
+        const methodResponses = method.methodResponses ?? {};
+        for (const [statusKey, methodResponse] of Object.entries(methodResponses)) {
+          const responseModels = methodResponse.responseModels ?? {};
+          if (Object.keys(responseModels).length === 0) continue;
+          const statusCode = methodResponse.statusCode || statusKey;
+          const responsesValue = operation2.responses;
+          if (responsesValue !== void 0 && (typeof responsesValue !== "object" || responsesValue === null || Array.isArray(responsesValue))) {
+            continue;
+          }
+          const responses = responsesValue ?? {};
+          const responseValue = responses[statusCode];
+          if (responseValue !== void 0 && (typeof responseValue !== "object" || responseValue === null || Array.isArray(responseValue))) {
+            continue;
+          }
+          if (responseValue !== void 0 && Object.prototype.hasOwnProperty.call(responseValue, "$ref")) {
+            continue;
+          }
+          const response = responseValue ?? {};
+          for (const [mediaType, modelName] of Object.entries(responseModels)) {
+            if (!modelName || !Object.prototype.hasOwnProperty.call(schemas, modelName)) continue;
+            const contentValue = response.content;
+            if (contentValue !== void 0 && (typeof contentValue !== "object" || contentValue === null || Array.isArray(contentValue))) {
+              continue;
+            }
+            const content = contentValue ?? {};
+            const mediaValue = content[mediaType];
+            if (mediaValue !== void 0 && (typeof mediaValue !== "object" || mediaValue === null || Array.isArray(mediaValue))) {
+              continue;
+            }
+            const media = mediaValue ?? {};
+            if (!Object.prototype.hasOwnProperty.call(media, "schema")) {
+              media.schema = { $ref: `#/components/schemas/${modelName}` };
+              content[mediaType] = media;
+              response.content = content;
+              if (!Object.prototype.hasOwnProperty.call(response, "description")) {
+                response.description = "Response";
+              }
+              responses[statusCode] = response;
+              operation2.responses = responses;
+            }
+          }
+        }
         const validatorId = method.requestValidatorId;
         if (validatorId) {
           const validator = validatorById.get(validatorId);
@@ -161669,6 +161741,16 @@ function mergeRestApiModelsAndValidators(input) {
 }
 
 // src/lib/aws/client.ts
+function partitionFromArn(arn) {
+  if (!arn) return void 0;
+  const match = /^arn:([^:]+):/.exec(arn.trim());
+  return match?.[1] || void 0;
+}
+function accountIndicatorFromAccountId(accountId) {
+  const trimmed = (accountId ?? "").trim();
+  if (!/^\d{12}$/.test(trimmed)) return void 0;
+  return `***${trimmed.slice(-4)}`;
+}
 function toErrorMessage(error3) {
   return error3 instanceof Error ? error3.message : String(error3);
 }
@@ -161933,7 +162015,14 @@ var AwsApiGatewaySdkClient = class {
         restApiId: apiId
       })
     );
-    return (response.item ?? []).map((stage) => (stage.stageName ?? "").trim()).filter((stage) => stage.length > 0);
+    return (response.item ?? []).map((stage) => {
+      const stageName = (stage.stageName ?? "").trim();
+      if (!stageName) return void 0;
+      const summary2 = { stageName };
+      const deploymentId = (stage.deploymentId ?? "").trim();
+      if (deploymentId) summary2.deploymentId = deploymentId;
+      return summary2;
+    }).filter((stage) => Boolean(stage));
   }
   async listHttpStages(apiId) {
     const response = await this.httpClient.send(
@@ -161941,7 +162030,16 @@ var AwsApiGatewaySdkClient = class {
         ApiId: apiId
       })
     );
-    return (response.Items ?? []).map((stage) => (stage.StageName ?? "").trim()).filter((stage) => stage.length > 0);
+    return (response.Items ?? []).map((stage) => {
+      const stageName = (stage.StageName ?? "").trim();
+      if (!stageName) return void 0;
+      const summary2 = { stageName };
+      const deploymentId = (stage.DeploymentId ?? "").trim();
+      if (deploymentId) summary2.deploymentId = deploymentId;
+      if (typeof stage.AutoDeploy === "boolean") summary2.autoDeploy = stage.AutoDeploy;
+      if (typeof stage.ApiGatewayManaged === "boolean") summary2.apiGatewayManaged = stage.ApiGatewayManaged;
+      return summary2;
+    }).filter((stage) => Boolean(stage));
   }
   async getRestTags(apiId) {
     const resourceArn = `arn:aws:apigateway:${this.region}::/restapis/${apiId}`;
@@ -162216,7 +162314,8 @@ var AwsApiGatewaySdkClient = class {
     const response = await this.stsClient.send(new import_client_sts.GetCallerIdentityCommand({}));
     return {
       accountId: response.Account,
-      arn: response.Arn
+      arn: response.Arn,
+      partition: partitionFromArn(response.Arn)
     };
   }
   async probeApiGatewayReadAccess() {
@@ -162489,11 +162588,17 @@ function auditOpenApiContractCoverage(value) {
   }
   return audit;
 }
-function formatOpenApiContractAuditWarning(audit) {
+var AWS_WEBSOCKET_CONTRACT_PARTIAL = "AWS_WEBSOCKET_CONTRACT_PARTIAL: Route and response metadata is preserved in x-amazon-apigateway-* extensions; no HTTP response schema was invented.";
+function formatOpenApiContractAuditWarning(audit, protocol = "REST") {
   if (audit.status !== "schema-incomplete") return void 0;
-  return `AWS_OPENAPI_CONTRACT_INCOMPLETE: API Gateway export has ${audit.responsesWithoutContent} response declaration(s) without content, ${audit.responseMediaTypesWithoutSchema} response media declaration(s) without schema, and ${audit.requestMediaTypesWithoutSchema} request media declaration(s) without schema. Bootstrap keeps route and status checks but skips undocumented body assertions; define API Gateway models or enrich the OpenAPI before treating body-schema tests as strict CI gates.`;
+  if (protocol === "WEBSOCKET") {
+    return AWS_WEBSOCKET_CONTRACT_PARTIAL;
+  }
+  const label = protocol === "HTTP" ? "HTTP" : "REST";
+  const remediation = protocol === "HTTP" ? "Author schemas in the source OpenAPI or enrich the export." : "Bind API Gateway Models to method request/response models.";
+  return `AWS_OPENAPI_CONTRACT_INCOMPLETE: ${label} export remains schema-incomplete after deterministic enrichment: ${audit.responsesWithoutContent} responses without content, ${audit.responseMediaTypesWithoutSchema} response media without schema, ${audit.requestMediaTypesWithoutSchema} request media without schema. Route/status checks remain enabled; body assertions are skipped only for undocumented media. ` + remediation;
 }
-function normalizeOpenApiYaml(content) {
+function normalizeOpenApiYaml(content, options = {}) {
   const passthrough = { content, renamed: [], normalized: false };
   let doc;
   try {
@@ -162540,7 +162645,7 @@ function normalizeOpenApiYaml(content) {
       }
     }
   }
-  const openapiContractAudit = auditOpenApiContractCoverage(doc.toJS());
+  const openapiContractAudit = options.skipContractAudit ? void 0 : auditOpenApiContractCoverage(doc.toJS());
   if (renamed.length === 0) {
     return { content, renamed: [], normalized: true, openapiContractAudit };
   }
@@ -162648,7 +162753,7 @@ var ApiGatewayProvider = class {
     const gatewayType = candidate.meta.gatewayType;
     const stage = options.stage ?? candidate.meta.stage;
     const exported = await this.exportApiGatewayContent(candidate, gatewayType, stage);
-    const normalized = safeNormalizeOpenApi(exported.content);
+    const normalized = safeNormalizeOpenApi(exported.content, gatewayType === "WEBSOCKET");
     const evidence = [
       exported.fallback ? `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed` : gatewayType === "WEBSOCKET" ? `Synthesized partial OpenAPI 3.0 spec for WebSocket API ${candidate.id}` : `Exported ${gatewayType} API ${candidate.id} via API Gateway`
     ];
@@ -162660,7 +162765,8 @@ var ApiGatewayProvider = class {
         }
       }
     }
-    const contractWarning = normalized.openapiContractAudit ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit) : void 0;
+    const contractProtocol = gatewayType === "HTTP" || gatewayType === "WEBSOCKET" ? gatewayType : "REST";
+    const contractWarning = gatewayType === "WEBSOCKET" ? AWS_WEBSOCKET_CONTRACT_PARTIAL : normalized.openapiContractAudit ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit, contractProtocol) : void 0;
     if (contractWarning) evidence.push(contractWarning);
     return {
       content: normalized.content,
@@ -162702,9 +162808,9 @@ function isKnownRestExportLimitation(message) {
   const lowered = message.toLowerCase();
   return lowered.includes("non-json body models") || lowered.includes("json body models are not found");
 }
-function safeNormalizeOpenApi(content) {
+function safeNormalizeOpenApi(content, skipContractAudit = false) {
   try {
-    const result = normalizeOpenApiYaml(content);
+    const result = normalizeOpenApiYaml(content, { skipContractAudit });
     return {
       content: result.content,
       renamed: result.renamed,
@@ -162716,17 +162822,30 @@ function safeNormalizeOpenApi(content) {
 }
 
 // src/runtime.ts
-var import_promises11 = require("node:fs/promises");
-var import_node_path14 = __toESM(require("node:path"), 1);
-var import_yaml11 = __toESM(require_dist(), 1);
+var import_node_crypto7 = require("node:crypto");
+var import_promises20 = require("node:fs/promises");
+var import_node_path23 = __toESM(require("node:path"), 1);
+var import_yaml13 = __toESM(require_dist(), 1);
 
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs20(), 1);
 var import_node_http_handler6 = __toESM(require_dist_cjs6(), 1);
+var MAX_SOURCE_ASSOCIATION_PAGES = 20;
+var DEFAULT_SOURCE_ASSOCIATION_PAGE_SIZE = 25;
+function sourceAssociationPageSize(value) {
+  if (value === void 0 || !Number.isFinite(value)) return DEFAULT_SOURCE_ASSOCIATION_PAGE_SIZE;
+  return Math.min(DEFAULT_SOURCE_ASSOCIATION_PAGE_SIZE, Math.max(1, Math.trunc(value)));
+}
+function isIamProbeError(error3) {
+  const parsed = parseAwsError(error3);
+  return parsed.httpStatusCode === 403 || parsed.name === "AccessDenied" || parsed.name === "AccessDeniedException" || parsed.name === "UnauthorizedOperation";
+}
 var AppSyncSdkClient = class {
   client;
+  sourceAssociationPageSize;
   constructor(region, options = {}) {
     const requestTimeoutMs = options.requestTimeoutMs ?? 3e4;
+    this.sourceAssociationPageSize = sourceAssociationPageSize(options.sourceAssociationPageSize);
     this.client = new import_client_appsync.AppSyncClient({
       region,
       maxAttempts: options.maxAttempts ?? 3,
@@ -162767,11 +162886,63 @@ var AppSyncSdkClient = class {
     const response = await this.client.send(new import_client_appsync.ListTagsForResourceCommand({ resourceArn: arn }));
     return response.tags ?? {};
   }
+  async listSourceApiAssociations(mergedApiId) {
+    const associations = [];
+    const evidence = [];
+    let nextToken;
+    let page = 0;
+    try {
+      do {
+        page += 1;
+        if (page > MAX_SOURCE_ASSOCIATION_PAGES) {
+          return {
+            associations,
+            truncated: true,
+            evidence: [
+              ...evidence,
+              `AppSync source API association listing truncated after ${MAX_SOURCE_ASSOCIATION_PAGES} pages`
+            ]
+          };
+        }
+        const response = await this.client.send(
+          new import_client_appsync.ListSourceApiAssociationsCommand({
+            apiId: mergedApiId,
+            nextToken,
+            maxResults: this.sourceAssociationPageSize
+          })
+        );
+        for (const item of response.sourceApiAssociationSummaries ?? []) {
+          const associationId = (item.associationId ?? "").trim() || void 0;
+          const sourceApiId = (item.sourceApiId ?? "").trim() || void 0;
+          if (!associationId && !sourceApiId) continue;
+          associations.push({
+            associationId,
+            sourceApiId
+          });
+        }
+        nextToken = response.nextToken;
+      } while (nextToken);
+      evidence.push(`Listed ${associations.length} AppSync source API association(s) for merged API ${mergedApiId}`);
+      return { associations, evidence };
+    } catch (error3) {
+      const parsed = parseAwsError(error3);
+      const denied = parsed.name === "AccessDeniedException" || parsed.name === "AccessDenied" || parsed.name === "UnauthorizedException" || /access denied|not authorized|unauthorized/i.test(parsed.message);
+      return {
+        associations,
+        denied,
+        evidence: [
+          ...evidence,
+          denied ? `AppSync source API association listing denied for merged API ${mergedApiId}; merged SDL export continues` : `AppSync source API association listing failed for merged API ${mergedApiId}; merged SDL export continues`
+        ]
+      };
+    }
+  }
   async probe() {
     try {
       await this.client.send(new import_client_appsync.ListGraphqlApisCommand({ maxResults: 1 }));
       return true;
-    } catch {
+    } catch (error3) {
+      if (isIamProbeError(error3)) throw error3;
       return false;
     }
   }
@@ -162941,6 +163112,18 @@ var CloudFormationSdkClient = class {
       if (tag2.Key) tags[tag2.Key] = tag2.Value ?? "";
     }
     return tags;
+  }
+  async getStackOutputs(stackName) {
+    const response = await this.client.send(new import_client_cloudformation.DescribeStacksCommand({ StackName: stackName }));
+    const stack = response.Stacks?.[0];
+    if (!stack) return {};
+    const outputs = {};
+    for (const output of stack.Outputs ?? []) {
+      if (!output.OutputKey || output.OutputValue == null) continue;
+      if (output.NoEcho) continue;
+      outputs[output.OutputKey] = output.OutputValue;
+    }
+    return outputs;
   }
   async probe() {
     try {
@@ -163755,8 +163938,8 @@ function normalizeRepoUrl(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path15 = sshMatch[2];
-    return `https://${host}/${path15}`;
+    const path24 = sshMatch[2];
+    return `https://${host}/${path24}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -163808,16 +163991,24 @@ function detectRepoContext(input, env2 = process.env) {
 }
 
 // src/lib/repo/specs.ts
-var import_promises5 = require("node:fs/promises");
-var import_node_path8 = __toESM(require("node:path"), 1);
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_promises13 = require("node:fs/promises");
+var import_node_path17 = __toESM(require("node:path"), 1);
+var import_yaml7 = __toESM(require_dist(), 1);
+
+// src/lib/iac/resolve.ts
+var import_promises11 = require("node:fs/promises");
+var import_node_path14 = __toESM(require("node:path"), 1);
+
+// src/lib/iac/cloudformation.ts
+var import_node_path10 = __toESM(require("node:path"), 1);
 
 // src/lib/providers/cloudformation.ts
 var import_yaml4 = __toESM(require_dist(), 1);
-var import_promises4 = require("node:fs/promises");
+var import_promises5 = require("node:fs/promises");
 var import_node_path7 = __toESM(require("node:path"), 1);
 
 // src/lib/utils/resolve-path-within-root.ts
+var import_promises4 = require("node:fs/promises");
 var import_node_path6 = __toESM(require("node:path"), 1);
 function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
   const base = import_node_path6.default.resolve(rootPath);
@@ -163827,6 +164018,207 @@ function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
     throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
   }
   return resolved;
+}
+var DEFAULT_LOCAL_REFERENCE_LIMITS = {
+  maxDepth: 20,
+  maxRefs: 100,
+  maxBytesPerFile: 10 * 1024 * 1024,
+  maxTotalBytes: 25 * 1024 * 1024
+};
+function createLocalReferenceTraversalState() {
+  return {
+    depth: 0,
+    refs: 0,
+    totalBytes: 0,
+    visitedCanonicalPaths: /* @__PURE__ */ new Set()
+  };
+}
+function isPathInsideRoot(root5, candidate) {
+  const relative2 = import_node_path6.default.relative(root5, candidate);
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path6.default.isAbsolute(relative2);
+}
+function resolveBaseWithinRoot(lexicalRoot, basePath) {
+  if (!basePath) return lexicalRoot;
+  const resolvedBase = import_node_path6.default.isAbsolute(basePath) ? import_node_path6.default.resolve(basePath) : import_node_path6.default.resolve(lexicalRoot, basePath);
+  if (!isPathInsideRoot(lexicalRoot, resolvedBase)) {
+    throw new Error(`basePath must stay within repo-root/workspace; received ${basePath}`);
+  }
+  return resolvedBase;
+}
+async function resolveCanonicalRoot(rootPath) {
+  const resolvedRoot = import_node_path6.default.resolve(rootPath);
+  try {
+    return await (0, import_promises4.realpath)(resolvedRoot);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(`Allowed root does not exist: ${resolvedRoot}`, { cause: error3 });
+    }
+    throw error3;
+  }
+}
+async function walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, originalTarget) {
+  const relativeTarget = import_node_path6.default.relative(lexicalRoot, absoluteLexical);
+  if (relativeTarget.startsWith("..") || import_node_path6.default.isAbsolute(relativeTarget)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${originalTarget}`);
+  }
+  let current = lexicalRoot;
+  const seenLinkTargets = /* @__PURE__ */ new Set();
+  const components = relativeTarget.split(import_node_path6.default.sep).filter(Boolean);
+  for (const component of components) {
+    current = import_node_path6.default.join(current, component);
+    let linkStat;
+    try {
+      linkStat = await (0, import_promises4.lstat)(current);
+    } catch (error3) {
+      const code = error3.code;
+      if (code === "ENOENT") {
+        throw new Error(
+          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
+          { cause: error3 }
+        );
+      }
+      throw error3;
+    }
+    if (!linkStat.isSymbolicLink()) {
+      continue;
+    }
+    let linkTarget;
+    try {
+      linkTarget = await (0, import_promises4.readlink)(current);
+    } catch (error3) {
+      const code = error3.code;
+      if (code === "ENOENT") {
+        throw new Error(
+          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
+          { cause: error3 }
+        );
+      }
+      throw error3;
+    }
+    const resolvedLink = import_node_path6.default.resolve(import_node_path6.default.dirname(current), linkTarget);
+    if (seenLinkTargets.has(resolvedLink)) {
+      throw new Error(`${fieldName} contains a symbolic link loop; received ${originalTarget}`);
+    }
+    seenLinkTargets.add(resolvedLink);
+    if (!isPathInsideRoot(lexicalRoot, resolvedLink)) {
+      throw new Error(
+        `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${originalTarget}`
+      );
+    }
+    current = resolvedLink;
+  }
+}
+async function resolveLocalReadWithinRoot(rootPath, targetPath, options = {}) {
+  const fieldName = options.fieldName ?? "path";
+  const limits = {
+    ...DEFAULT_LOCAL_REFERENCE_LIMITS,
+    ...options.limits
+  };
+  const countAsReference = options.countAsReference !== false;
+  const traversal = options.traversal;
+  if (traversal) {
+    if (traversal.depth > limits.maxDepth) {
+      throw new Error(
+        `${fieldName} local reference depth exceeded ${limits.maxDepth}; received ${targetPath}`
+      );
+    }
+    if (countAsReference && traversal.refs >= limits.maxRefs) {
+      throw new Error(
+        `${fieldName} local reference count exceeded ${limits.maxRefs}; received ${targetPath}`
+      );
+    }
+  }
+  const lexicalRoot = import_node_path6.default.resolve(rootPath);
+  const canonicalRoot = await resolveCanonicalRoot(lexicalRoot);
+  const lexicalBase = resolveBaseWithinRoot(lexicalRoot, options.basePath);
+  const absoluteLexical = resolvePathWithinRoot(lexicalBase, targetPath, fieldName);
+  if (!isPathInsideRoot(lexicalRoot, absoluteLexical)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
+  }
+  await walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, targetPath);
+  let canonicalPath;
+  try {
+    canonicalPath = await (0, import_promises4.realpath)(absoluteLexical);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(
+        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
+        { cause: error3 }
+      );
+    }
+    if (code === "ELOOP") {
+      throw new Error(`${fieldName} contains a symbolic link loop; received ${targetPath}`, {
+        cause: error3
+      });
+    }
+    throw error3;
+  }
+  if (!isPathInsideRoot(canonicalRoot, canonicalPath)) {
+    throw new Error(
+      `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${targetPath}`
+    );
+  }
+  let fileStat;
+  try {
+    fileStat = await (0, import_promises4.stat)(canonicalPath);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(
+        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
+        { cause: error3 }
+      );
+    }
+    throw error3;
+  }
+  if (!fileStat.isFile()) {
+    throw new Error(`${fieldName} must resolve to a regular file; received ${targetPath}`);
+  }
+  const byteLength = options.fileByteLength ?? fileStat.size;
+  if (byteLength > limits.maxBytesPerFile) {
+    throw new Error(
+      `${fieldName} exceeds per-file byte limit (${byteLength} > ${limits.maxBytesPerFile}); received ${targetPath}`
+    );
+  }
+  if (traversal) {
+    if (countAsReference) {
+      traversal.refs += 1;
+    }
+    if (traversal.visitedCanonicalPaths.has(canonicalPath)) {
+      throw new Error(
+        `${fieldName} local reference cycle detected at ${import_node_path6.default.relative(canonicalRoot, canonicalPath)}`
+      );
+    }
+    traversal.visitedCanonicalPaths.add(canonicalPath);
+    traversal.totalBytes += byteLength;
+    if (traversal.totalBytes > limits.maxTotalBytes) {
+      throw new Error(
+        `${fieldName} local reference cumulative bytes exceeded ${limits.maxTotalBytes}`
+      );
+    }
+  }
+  return {
+    absolutePath: absoluteLexical,
+    relativePath: import_node_path6.default.relative(lexicalRoot, absoluteLexical),
+    canonicalPath,
+    canonicalRoot
+  };
+}
+function enterLocalReferenceDepth(traversal) {
+  traversal.depth += 1;
+}
+function leaveLocalReferenceDepth(traversal) {
+  traversal.depth = Math.max(0, traversal.depth - 1);
+}
+async function withLocalReferenceDepth(traversal, fn) {
+  enterLocalReferenceDepth(traversal);
+  try {
+    return await fn();
+  } finally {
+    leaveLocalReferenceDepth(traversal);
+  }
 }
 
 // src/lib/providers/cloudformation.ts
@@ -163852,6 +164244,16 @@ var CFN_CUSTOM_TAGS = [
 ].map((tag2) => ({ tag: tag2, identify: () => false, resolve: (_v) => _v }));
 function isOpenApiDocument(value) {
   return Boolean(value && typeof value === "object" && (value.openapi || value.swagger));
+}
+function isCfnUnresolvedIntrinsic(value) {
+  if (value == null) return false;
+  if (typeof value === "string") {
+    return /\$\{/.test(value) || /^!/.test(value.trim());
+  }
+  if (typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  if (keys.length === 0) return false;
+  return keys.every((key) => /^(Ref|Fn::|Condition)$/.test(key) || key.startsWith("Fn::"));
 }
 function detectOpenApiContent(content) {
   try {
@@ -163881,6 +164283,9 @@ function parseS3Location(value) {
   return bucket && key ? { bucket, key, version } : void 0;
 }
 async function readReferencedSpec(repoRoot, s3Client, value) {
+  if (isCfnUnresolvedIntrinsic(value)) {
+    return void 0;
+  }
   if (typeof value === "string") {
     const s32 = parseS3Uri(value);
     if (s32) {
@@ -163891,7 +164296,7 @@ async function readReferencedSpec(repoRoot, s3Client, value) {
       return void 0;
     }
     const localPath = resolvePathWithinRoot(import_node_path7.default.resolve(repoRoot), value, "definition-uri");
-    return (0, import_promises4.readFile)(localPath, "utf8");
+    return (0, import_promises5.readFile)(localPath, "utf8");
   }
   const s3 = parseS3Location(value);
   if (s3 && s3Client) {
@@ -164011,6 +164416,2027 @@ var CloudFormationProvider = class {
   }
 };
 
+// src/lib/iac/freshness.ts
+var import_promises7 = require("node:fs/promises");
+var import_node_path9 = __toESM(require("node:path"), 1);
+
+// src/lib/iac/read.ts
+var import_promises6 = require("node:fs/promises");
+var import_node_path8 = __toESM(require("node:path"), 1);
+
+// src/lib/iac/types.ts
+var DEFAULT_IAC_BOUNDS = {
+  maxDepth: 8,
+  maxFiles: 100,
+  maxFileBytes: 1048576,
+  maxCumulativeBytes: 8388608
+};
+var SUPPORTED_CDK_ASSEMBLY_MAJOR_MAX = 48;
+var API_RESOURCE_TYPES2 = {
+  "AWS::ApiGateway::RestApi": "REST",
+  "AWS::Serverless::Api": "REST",
+  "AWS::ApiGatewayV2::Api": "HTTP",
+  "AWS::Serverless::HttpApi": "HTTP"
+};
+
+// src/lib/iac/read.ts
+function createIacReadBudget(overrides = {}) {
+  return {
+    files: 0,
+    cumulativeBytes: 0,
+    maxFiles: overrides.maxFiles ?? DEFAULT_IAC_BOUNDS.maxFiles,
+    maxFileBytes: overrides.maxFileBytes ?? DEFAULT_IAC_BOUNDS.maxFileBytes,
+    maxCumulativeBytes: overrides.maxCumulativeBytes ?? DEFAULT_IAC_BOUNDS.maxCumulativeBytes,
+    maxDepth: overrides.maxDepth ?? DEFAULT_IAC_BOUNDS.maxDepth,
+    truncated: false
+  };
+}
+function toPosix(value) {
+  return value.replace(/\\/g, "/");
+}
+function createIacTraversal() {
+  return createLocalReferenceTraversalState();
+}
+async function readIacFile(repoRoot, targetPath, budget, errors, options = {}) {
+  if (budget.files >= budget.maxFiles) {
+    budget.truncated = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: toPosix(targetPath),
+      message: `IaC scan exceeded maxFiles=${budget.maxFiles}`
+    });
+    return void 0;
+  }
+  const traversal = options.traversal;
+  const limits = {
+    maxDepth: budget.maxDepth,
+    maxRefs: budget.maxFiles,
+    maxBytesPerFile: budget.maxFileBytes,
+    maxTotalBytes: budget.maxCumulativeBytes
+  };
+  try {
+    const resolved = traversal ? await withLocalReferenceDepth(
+      traversal,
+      () => resolveLocalReadWithinRoot(repoRoot, targetPath, {
+        fieldName: options.fieldName ?? "iac-path",
+        basePath: options.basePath,
+        traversal,
+        limits,
+        countAsReference: options.countAsReference
+      })
+    ) : await resolveLocalReadWithinRoot(repoRoot, targetPath, {
+      fieldName: options.fieldName ?? "iac-path",
+      basePath: options.basePath,
+      limits,
+      countAsReference: false
+    });
+    const content = await (0, import_promises6.readFile)(resolved.absolutePath, "utf8");
+    const bytes = Buffer.byteLength(content, "utf8");
+    if (bytes > budget.maxFileBytes) {
+      errors.push({
+        code: "bounds-exceeded",
+        path: toPosix(resolved.relativePath),
+        message: `File exceeds maxFileBytes=${budget.maxFileBytes}`
+      });
+      return void 0;
+    }
+    if (budget.cumulativeBytes + bytes > budget.maxCumulativeBytes) {
+      budget.truncated = true;
+      errors.push({
+        code: "bounds-exceeded",
+        path: toPosix(resolved.relativePath),
+        message: `IaC scan exceeds maxCumulativeBytes=${budget.maxCumulativeBytes}`
+      });
+      return void 0;
+    }
+    budget.files += 1;
+    budget.cumulativeBytes += bytes;
+    return { content, relativePath: toPosix(resolved.relativePath) };
+  } catch (error3) {
+    const message = error3 instanceof Error ? error3.message : String(error3);
+    const relative2 = toPosix(targetPath);
+    if (/does not exist|dangling/i.test(message)) {
+      errors.push({ code: "missing-file", path: relative2, message });
+    } else if (/escap|symbolic link/i.test(message)) {
+      errors.push({ code: "path-escape", path: relative2, message });
+    } else if (/exceeded|limit/i.test(message)) {
+      errors.push({ code: "bounds-exceeded", path: relative2, message });
+    } else {
+      errors.push({ code: "unreadable", path: relative2, message });
+    }
+    return void 0;
+  }
+}
+function dirnamePosix(relativePath2) {
+  const dir = import_node_path8.default.posix.dirname(toPosix(relativePath2));
+  return dir === "." ? "" : dir;
+}
+
+// src/lib/iac/freshness.ts
+var GENERATED_PATH_RE = /(^|\/)(cdk\.out|\.aws-sam|\.serverless|dist|build|generated|out|target)(\/|$)/i;
+var SOURCE_BASENAMES = /* @__PURE__ */ new Set([
+  "template.yaml",
+  "template.yml",
+  "template.json",
+  "cdk.json",
+  "serverless.yml",
+  "serverless.yaml",
+  "serverless.json",
+  "samconfig.toml"
+]);
+async function classifyIacArtifact(repoRoot, relativePath2, sourceHints = []) {
+  const posix = toPosix(relativePath2);
+  if (!GENERATED_PATH_RE.test(posix)) {
+    return "authored";
+  }
+  const absolute = import_node_path9.default.resolve(repoRoot, posix);
+  let artifactMtime;
+  try {
+    const info2 = await (0, import_promises7.lstat)(absolute);
+    if (info2.isSymbolicLink()) {
+      return "freshness-unknown";
+    }
+    artifactMtime = info2.mtimeMs;
+  } catch {
+    return "freshness-unknown";
+  }
+  const candidates = await collectSourceCandidates(repoRoot, posix, sourceHints);
+  if (candidates.length === 0) {
+    return "freshness-unknown";
+  }
+  let newestSource = 0;
+  let sawSource = false;
+  for (const candidate of candidates) {
+    try {
+      const info2 = await (0, import_promises7.stat)(import_node_path9.default.resolve(repoRoot, candidate));
+      if (info2.isFile()) {
+        sawSource = true;
+        newestSource = Math.max(newestSource, info2.mtimeMs);
+      }
+    } catch {
+    }
+  }
+  if (!sawSource) {
+    return "freshness-unknown";
+  }
+  return artifactMtime >= newestSource ? "generated-fresh" : "generated-stale";
+}
+async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) {
+  const results = new Set(sourceHints.map(toPosix));
+  const root5 = import_node_path9.default.resolve(repoRoot);
+  let current = import_node_path9.default.dirname(import_node_path9.default.resolve(root5, artifactRelative));
+  for (let depth = 0; depth < 6; depth += 1) {
+    if (!current.startsWith(root5)) break;
+    const relativeDir = toPosix(import_node_path9.default.relative(root5, current)) || ".";
+    try {
+      const entries = await (0, import_promises7.readdir)(current);
+      for (const entry of entries) {
+        const lower = entry.toLowerCase();
+        if (SOURCE_BASENAMES.has(lower) || lower.endsWith(".tf") || lower.endsWith(".tf.json") || lower === "cdk.json") {
+          results.add(relativeDir === "." ? entry : `${relativeDir}/${entry}`);
+        }
+      }
+    } catch {
+    }
+    if (current === root5) break;
+    current = import_node_path9.default.dirname(current);
+  }
+  return [...results].sort((a5, b5) => a5.localeCompare(b5));
+}
+function toRepoArtifactClass(artifactClass) {
+  return artifactClass === "authored" ? "authored" : "generated";
+}
+function artifactClassRank(artifactClass) {
+  switch (artifactClass) {
+    case "authored":
+      return 4;
+    case "generated-fresh":
+      return 3;
+    case "freshness-unknown":
+      return 2;
+    case "generated-stale":
+      return 1;
+  }
+}
+
+// src/lib/iac/openapi.ts
+var import_yaml5 = __toESM(require_dist(), 1);
+function detectOpenApiContent2(content) {
+  try {
+    const trimmed = content.trim();
+    const parsed = trimmed.startsWith("{") ? JSON.parse(trimmed) : (0, import_yaml5.parse)(trimmed, { customTags: CFN_CUSTOM_TAGS });
+    return isOpenApiDocument(parsed);
+  } catch {
+    return false;
+  }
+}
+function openApiFormatForContent2(content) {
+  return content.trim().startsWith("{") ? { format: "openapi-json", filename: "index.json" } : { format: "openapi-yaml", filename: "index.yaml" };
+}
+function isUnresolvedIntrinsic(value) {
+  if (value == null) return false;
+  if (typeof value === "string") {
+    return /\$\{/.test(value) || /^!/.test(value.trim());
+  }
+  if (typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  if (keys.length === 0) return false;
+  return keys.every(
+    (key) => /^(Ref|Fn::|Condition)$/.test(key) || key.startsWith("Fn::")
+  );
+}
+function describeUnresolved(value) {
+  try {
+    return typeof value === "string" ? value : JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+function isExactApiGatewayId(value) {
+  return /^[a-z0-9]{10}$/.test(value);
+}
+
+// src/lib/iac/cloudformation.ts
+function parseS3Uri2(uri) {
+  if (!uri.startsWith("s3://")) return void 0;
+  const withoutScheme = uri.slice("s3://".length);
+  const [bucket, ...rest] = withoutScheme.split("/");
+  const key = rest.join("/");
+  if (!bucket || !key) return void 0;
+  return { bucket, key };
+}
+function parseS3Location2(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const record = value;
+  if (isUnresolvedIntrinsic(record)) return void 0;
+  const bucket = typeof record.Bucket === "string" ? record.Bucket : typeof record.bucket === "string" ? record.bucket : void 0;
+  const key = typeof record.Key === "string" ? record.Key : typeof record.key === "string" ? record.key : void 0;
+  const version = typeof record.Version === "string" ? record.Version : typeof record.VersionId === "string" ? record.VersionId : typeof record.version === "string" ? record.version : void 0;
+  if (!bucket || !key || isUnresolvedIntrinsic(bucket) || isUnresolvedIntrinsic(key)) {
+    return void 0;
+  }
+  return { bucket, key, version };
+}
+function gatewayTypeFor(resourceType) {
+  if (!resourceType) return void 0;
+  return API_RESOURCE_TYPES2[resourceType];
+}
+function sourceKindFor(templatePath, resourceType) {
+  if (resourceType?.startsWith("AWS::Serverless::") || /(^|\/)template\.ya?ml$/i.test(templatePath) && templatePath.includes(".aws-sam")) {
+    return "sam";
+  }
+  if (templatePath.includes("cdk.out") || templatePath.endsWith(".template.json")) {
+    return "cdk";
+  }
+  if (resourceType?.startsWith("AWS::Serverless::")) {
+    return "sam";
+  }
+  return "cloudformation";
+}
+async function resolveReferencedSpec(repoRoot, templateRelative, value, budget, errors, s3Client) {
+  if (isUnresolvedIntrinsic(value)) {
+    return { unresolved: describeUnresolved(value) };
+  }
+  if (typeof value === "string") {
+    if (isUnresolvedIntrinsic(value)) {
+      return { unresolved: value };
+    }
+    const s32 = parseS3Uri2(value);
+    if (s32) {
+      if (!s3Client) {
+        return { unresolved: `s3://${s32.bucket}/${s32.key} (no S3 client)` };
+      }
+      try {
+        const content = await s3Client.getObject(s32.bucket, s32.key, s32.version);
+        if (detectOpenApiContent2(content)) {
+          return {
+            content,
+            kind: "openapi-s3-ref",
+            evidence: `Resolved exact S3 DefinitionUri s3://${s32.bucket}/${s32.key}`
+          };
+        }
+      } catch (error3) {
+        errors.push({
+          code: "unreadable",
+          path: templateRelative,
+          message: `Failed S3 getObject s3://${s32.bucket}/${s32.key}: ${error3 instanceof Error ? error3.message : String(error3)}`
+        });
+      }
+      return void 0;
+    }
+    if (/^https?:\/\//i.test(value)) {
+      return { unresolved: value };
+    }
+    const baseDir = dirnamePosix(templateRelative);
+    const traversal = createIacTraversal();
+    const local = await readIacFile(repoRoot, value, budget, errors, {
+      fieldName: "definition-uri",
+      basePath: baseDir || void 0,
+      traversal
+    });
+    if (!local) return void 0;
+    if (detectOpenApiContent2(local.content)) {
+      return {
+        content: local.content,
+        kind: "openapi-local-ref",
+        evidence: `Resolved local DefinitionUri ${local.relativePath}`
+      };
+    }
+    return void 0;
+  }
+  const s3 = parseS3Location2(value);
+  if (s3) {
+    if (!s3Client) {
+      return { unresolved: `BodyS3Location ${s3.bucket}/${s3.key} (no S3 client)` };
+    }
+    try {
+      const content = await s3Client.getObject(s3.bucket, s3.key, s3.version);
+      if (detectOpenApiContent2(content)) {
+        return {
+          content,
+          kind: "openapi-s3-ref",
+          evidence: `Resolved exact BodyS3Location s3://${s3.bucket}/${s3.key}`
+        };
+      }
+    } catch (error3) {
+      errors.push({
+        code: "unreadable",
+        path: templateRelative,
+        message: `Failed S3 getObject ${s3.bucket}/${s3.key}: ${error3 instanceof Error ? error3.message : String(error3)}`
+      });
+    }
+    return void 0;
+  }
+  if (value && typeof value === "object") {
+    return { unresolved: describeUnresolved(value) };
+  }
+  return void 0;
+}
+function extractLiteralOutputs(template) {
+  const outputs = template.Outputs;
+  if (!outputs || typeof outputs !== "object") return [];
+  const results = [];
+  for (const name of Object.keys(outputs).sort()) {
+    const entry = outputs[name];
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry;
+    const value = record.Value;
+    const sensitive = Boolean(record.NoEcho) || /secret|password|token|key/i.test(name);
+    if (typeof value === "string" && !isUnresolvedIntrinsic(value)) {
+      results.push({ name, value, sensitive });
+    } else if (isUnresolvedIntrinsic(value)) {
+      results.push({ name, value: describeUnresolved(value), sensitive: true });
+    }
+  }
+  return results;
+}
+function extractNestedTemplateRefs(resources, templateRelative) {
+  const refs = [];
+  for (const logicalId of Object.keys(resources).sort()) {
+    const resource = resources[logicalId];
+    if (!resource) continue;
+    if (resource.Type !== "AWS::CloudFormation::Stack" && resource.Type !== "AWS::Serverless::Application") {
+      continue;
+    }
+    const props = resource.Properties ?? {};
+    const templateUrl = props.TemplateURL ?? props.Location;
+    if (typeof templateUrl === "string" && !isUnresolvedIntrinsic(templateUrl) && !/^https?:\/\//i.test(templateUrl) && !templateUrl.startsWith("s3://")) {
+      const base = dirnamePosix(templateRelative);
+      const joined = base ? import_node_path10.default.posix.join(base, templateUrl) : templateUrl;
+      refs.push({ logicalId, ref: toPosix(joined) });
+    } else if (isUnresolvedIntrinsic(templateUrl) || typeof templateUrl === "string" && (/^https?:\/\//i.test(templateUrl) || templateUrl.startsWith("s3://"))) {
+      refs.push({ logicalId, ref: `__unresolved__:${describeUnresolved(templateUrl)}` });
+    }
+  }
+  return refs;
+}
+async function resolveCloudFormationTemplate(repoRoot, templateRelative, budget, errors, options = {}) {
+  const visited = options.visited ?? /* @__PURE__ */ new Set();
+  const relative2 = toPosix(templateRelative);
+  if (visited.has(relative2)) return [];
+  visited.add(relative2);
+  const loaded = await readIacFile(repoRoot, relative2, budget, errors, {
+    fieldName: "cfn-template",
+    countAsReference: false
+  });
+  if (!loaded) return [];
+  let template;
+  try {
+    template = parseCfnTemplateBody(loaded.content);
+  } catch (error3) {
+    errors.push({
+      code: "malformed",
+      path: relative2,
+      message: `Failed to parse template: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return [];
+  }
+  const artifactClass = await classifyIacArtifact(repoRoot, relative2, options.sourceHints);
+  const candidates = [];
+  const resources = template.Resources ?? {};
+  for (const logicalId of Object.keys(resources).sort()) {
+    const resource = resources[logicalId];
+    if (!resource) continue;
+    const gatewayType = gatewayTypeFor(resource.Type);
+    const source = options.forceSource ?? sourceKindFor(relative2, resource.Type);
+    if (gatewayType) {
+      const inline = extractInlineEmbeddedSpec(resource);
+      if (inline) {
+        candidates.push({
+          id: `${relative2}#${logicalId}`,
+          source,
+          kind: "openapi-inline",
+          artifactClass,
+          sourcePath: relative2,
+          logicalId,
+          gatewayType,
+          content: inline.content,
+          format: inline.format,
+          filename: inline.filename,
+          evidence: [`Inline Body/DefinitionBody OpenAPI in ${relative2}#${logicalId}`]
+        });
+        continue;
+      }
+      const props = resource.Properties ?? {};
+      const ref = props.DefinitionUri ?? props.BodyS3Location;
+      if (ref !== void 0) {
+        const resolved = await resolveReferencedSpec(
+          repoRoot,
+          relative2,
+          ref,
+          budget,
+          errors,
+          options.s3Client
+        );
+        if (resolved && "unresolved" in resolved) {
+          candidates.push({
+            id: `${relative2}#${logicalId}:unresolved`,
+            source,
+            kind: "unresolved-evidence",
+            artifactClass,
+            sourcePath: relative2,
+            logicalId,
+            gatewayType,
+            evidence: [`Unresolved DefinitionUri/BodyS3Location in ${relative2}#${logicalId}`],
+            unresolvedExpression: resolved.unresolved
+          });
+        } else if (resolved) {
+          const fmt = openApiFormatForContent2(resolved.content);
+          candidates.push({
+            id: `${relative2}#${logicalId}`,
+            source,
+            kind: resolved.kind,
+            artifactClass,
+            sourcePath: relative2,
+            logicalId,
+            gatewayType,
+            content: resolved.content,
+            format: fmt.format,
+            filename: fmt.filename,
+            evidence: [resolved.evidence]
+          });
+        }
+      }
+    }
+  }
+  for (const output of extractLiteralOutputs(template)) {
+    if (output.sensitive && !isExactApiGatewayId(output.value)) {
+      candidates.push({
+        id: `${relative2}#Output:${output.name}:redacted`,
+        source: options.forceSource ?? sourceKindFor(relative2),
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: relative2,
+        logicalId: output.name,
+        evidence: [`Sensitive or non-literal output ${output.name} redacted from ${relative2}`],
+        unresolvedExpression: "[redacted]"
+      });
+      continue;
+    }
+    if (isExactApiGatewayId(output.value)) {
+      candidates.push({
+        id: `${relative2}#Output:${output.name}`,
+        source: options.forceSource ?? sourceKindFor(relative2),
+        kind: "physical-api-id",
+        artifactClass,
+        sourcePath: relative2,
+        logicalId: output.name,
+        physicalApiId: output.value,
+        gatewayType: "REST",
+        evidence: [`Literal output ${output.name}=${output.value} in ${relative2}`]
+      });
+    }
+  }
+  for (const nested of extractNestedTemplateRefs(resources, relative2)) {
+    if (nested.ref.startsWith("__unresolved__:")) {
+      candidates.push({
+        id: `${relative2}#${nested.logicalId}:nested-unresolved`,
+        source: options.forceSource ?? sourceKindFor(relative2),
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: relative2,
+        logicalId: nested.logicalId,
+        evidence: [`Nested template reference unresolved in ${relative2}#${nested.logicalId}`],
+        unresolvedExpression: nested.ref.slice("__unresolved__:".length)
+      });
+      continue;
+    }
+    const nestedCandidates = await resolveCloudFormationTemplate(
+      repoRoot,
+      nested.ref,
+      budget,
+      errors,
+      { ...options, visited }
+    );
+    for (const candidate of nestedCandidates) {
+      candidate.evidence = [
+        ...candidate.evidence,
+        `Via nested template ${nested.logicalId} from ${relative2}`
+      ];
+      candidates.push(candidate);
+    }
+  }
+  return candidates;
+}
+async function discoverCloudFormationTemplatePaths(repoRoot, budget, _errors) {
+  void _errors;
+  void budget;
+  const { readdir: readdir11, lstat: lstat10 } = await import("node:fs/promises");
+  const found = /* @__PURE__ */ new Set();
+  const roots = [".", "infrastructure", "infra", "deploy", "cloudformation", "sam", "templates"];
+  for (const dir of roots) {
+    const absolute = import_node_path10.default.resolve(repoRoot, dir);
+    let info2;
+    try {
+      info2 = await lstat10(absolute);
+    } catch {
+      continue;
+    }
+    if (info2.isSymbolicLink()) continue;
+    if (info2.isFile()) {
+      const base = import_node_path10.default.basename(dir).toLowerCase();
+      if (base === "template.yaml" || base === "template.yml" || base === "template.json") {
+        found.add(toPosix(dir));
+      }
+      continue;
+    }
+    if (!info2.isDirectory()) continue;
+    const entries = (await readdir11(absolute).catch(() => [])).sort();
+    for (const entry of entries) {
+      const lower = entry.toLowerCase();
+      if (lower === "template.yaml" || lower === "template.yml" || lower === "template.json" || lower.endsWith(".yaml") && lower.includes("template") || lower.endsWith(".yml") && lower.includes("template")) {
+        const relative2 = dir === "." ? entry : `${dir}/${entry}`;
+        try {
+          const entryInfo = await lstat10(import_node_path10.default.resolve(repoRoot, relative2));
+          if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
+        } catch {
+          continue;
+        }
+        found.add(toPosix(relative2));
+      }
+    }
+  }
+  return [...found].sort((a5, b5) => a5.localeCompare(b5));
+}
+
+// src/lib/iac/cdk.ts
+var import_promises8 = require("node:fs/promises");
+var import_node_path11 = __toESM(require("node:path"), 1);
+function parseMajorVersion(version) {
+  if (!version) return void 0;
+  const match = /^(\d+)\./.exec(version.trim());
+  if (!match) return void 0;
+  return Number(match[1]);
+}
+async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, options) {
+  const visited = options.visitedAssemblies ?? /* @__PURE__ */ new Set();
+  const relativeDir = toPosix(assemblyDir);
+  if (visited.has(relativeDir)) return [];
+  visited.add(relativeDir);
+  const manifestRelative = relativeDir === "." || relativeDir === "" ? "manifest.json" : `${relativeDir}/manifest.json`;
+  const manifestFile = await readIacFile(repoRoot, manifestRelative, budget, errors, {
+    fieldName: "cdk-manifest",
+    countAsReference: false
+  });
+  const candidates = [];
+  if (!manifestFile) {
+    return resolveTemplateGlob(repoRoot, relativeDir || "cdk.out", budget, errors, options);
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(manifestFile.content);
+  } catch (error3) {
+    errors.push({
+      code: "malformed",
+      path: manifestFile.relativePath,
+      message: `Failed to parse CDK manifest: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return [];
+  }
+  const major = parseMajorVersion(manifest.version);
+  if (major === void 0 || major > SUPPORTED_CDK_ASSEMBLY_MAJOR_MAX) {
+    const artifactClass = await classifyIacArtifact(repoRoot, manifestFile.relativePath, options.sourceHints);
+    candidates.push({
+      id: `${manifestFile.relativePath}:unsupported-version`,
+      source: "cdk",
+      kind: "unresolved-evidence",
+      artifactClass,
+      sourcePath: manifestFile.relativePath,
+      schemaVersion: manifest.version,
+      evidence: [
+        `Unsupported CDK cloud assembly schema version ${manifest.version ?? "unknown"} (max major ${SUPPORTED_CDK_ASSEMBLY_MAJOR_MAX})`
+      ],
+      unresolvedExpression: manifest.version ?? "missing-version"
+    });
+    errors.push({
+      code: "unsupported-manifest",
+      path: manifestFile.relativePath,
+      message: `Unsupported CDK assembly schema version ${manifest.version ?? "unknown"}`
+    });
+    return candidates;
+  }
+  const artifacts = manifest.artifacts ?? {};
+  for (const artifactId of Object.keys(artifacts).sort()) {
+    const artifact = artifacts[artifactId];
+    if (!artifact) continue;
+    const type = artifact.type ?? "";
+    if (type === "aws:cloudformation:stack") {
+      const templateFile = artifact.properties?.templateFile;
+      if (typeof templateFile !== "string" || !templateFile.trim()) {
+        candidates.push({
+          id: `${manifestFile.relativePath}#${artifactId}:missing-template`,
+          source: "cdk",
+          kind: "unresolved-evidence",
+          artifactClass: await classifyIacArtifact(repoRoot, manifestFile.relativePath, options.sourceHints),
+          sourcePath: manifestFile.relativePath,
+          logicalId: artifactId,
+          schemaVersion: manifest.version,
+          evidence: [`CDK stack artifact ${artifactId} missing templateFile`],
+          unresolvedExpression: "missing-templateFile"
+        });
+        continue;
+      }
+      const templateRelative = relativeDir ? toPosix(import_node_path11.default.posix.join(relativeDir, templateFile)) : toPosix(templateFile);
+      const stackCandidates = await resolveCloudFormationTemplate(
+        repoRoot,
+        templateRelative,
+        budget,
+        errors,
+        {
+          s3Client: options.s3Client,
+          sourceHints: options.sourceHints ?? ["cdk.json"],
+          forceSource: "cdk"
+        }
+      );
+      for (const candidate of stackCandidates) {
+        candidate.schemaVersion = manifest.version;
+        candidate.evidence = [
+          ...candidate.evidence,
+          `CDK assembly ${manifestFile.relativePath} artifact ${artifactId} (schema ${manifest.version})`
+        ];
+        candidates.push(candidate);
+      }
+      continue;
+    }
+    if (type === "cdk:cloud-assembly" || type === "aws:cdk:cloud-assembly") {
+      const nestedDir = artifact.properties?.directoryName;
+      if (typeof nestedDir !== "string" || !nestedDir.trim()) {
+        candidates.push({
+          id: `${manifestFile.relativePath}#${artifactId}:nested-missing`,
+          source: "cdk",
+          kind: "unresolved-evidence",
+          artifactClass: await classifyIacArtifact(repoRoot, manifestFile.relativePath, options.sourceHints),
+          sourcePath: manifestFile.relativePath,
+          logicalId: artifactId,
+          schemaVersion: manifest.version,
+          evidence: [`Nested cloud assembly ${artifactId} missing directoryName`],
+          unresolvedExpression: "missing-directoryName"
+        });
+        continue;
+      }
+      const nestedRelative = relativeDir ? toPosix(import_node_path11.default.posix.join(relativeDir, nestedDir)) : toPosix(nestedDir);
+      const nested = await resolveAssemblyDirectory(repoRoot, nestedRelative, budget, errors, {
+        ...options,
+        visitedAssemblies: visited
+      });
+      for (const candidate of nested) {
+        candidate.evidence = [
+          ...candidate.evidence,
+          `Via nested CDK assembly ${artifactId}`
+        ];
+        candidates.push(candidate);
+      }
+      continue;
+    }
+    if (type === "cdk:asset" || type === "aws:cdk:asset") {
+      const file = artifact.properties?.file ?? artifact.properties?.path;
+      if (typeof file === "string") {
+        const assetPath = relativeDir ? `${relativeDir}/${file}` : file;
+        candidates.push({
+          id: `${manifestFile.relativePath}#${artifactId}:asset`,
+          source: "cdk",
+          kind: "unresolved-evidence",
+          artifactClass: await classifyIacArtifact(repoRoot, toPosix(assetPath), options.sourceHints),
+          sourcePath: toPosix(assetPath),
+          logicalId: artifactId,
+          schemaVersion: manifest.version,
+          evidence: [`CDK asset metadata recorded for ${artifactId} at ${assetPath}; not treated as OpenAPI`]
+        });
+      }
+    }
+  }
+  return candidates;
+}
+async function resolveTemplateGlob(repoRoot, directory, budget, errors, options) {
+  const absolute = import_node_path11.default.resolve(repoRoot, directory);
+  let entries;
+  try {
+    const info2 = await (0, import_promises8.lstat)(absolute);
+    if (info2.isSymbolicLink() || !info2.isDirectory()) return [];
+    entries = (await (0, import_promises8.readdir)(absolute)).filter((name) => name.endsWith(".template.json")).sort();
+  } catch {
+    return [];
+  }
+  const candidates = [];
+  for (const entry of entries) {
+    const relative2 = toPosix(import_node_path11.default.posix.join(directory, entry));
+    const stackCandidates = await resolveCloudFormationTemplate(
+      repoRoot,
+      relative2,
+      budget,
+      errors,
+      {
+        s3Client: options.s3Client,
+        sourceHints: options.sourceHints ?? ["cdk.json"],
+        forceSource: "cdk"
+      }
+    );
+    candidates.push(...stackCandidates);
+  }
+  return candidates;
+}
+async function resolveCdkAssembly(repoRoot, budget, errors, options = {}) {
+  const cdkOut = import_node_path11.default.resolve(repoRoot, "cdk.out");
+  try {
+    const info2 = await (0, import_promises8.lstat)(cdkOut);
+    if (info2.isSymbolicLink() || !info2.isDirectory()) {
+      return [];
+    }
+  } catch {
+    return [];
+  }
+  return resolveAssemblyDirectory(repoRoot, "cdk.out", budget, errors, {
+    s3Client: options.s3Client,
+    sourceHints: ["cdk.json"]
+  });
+}
+
+// src/lib/iac/serverless.ts
+var import_promises9 = require("node:fs/promises");
+var import_node_path12 = __toESM(require("node:path"), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
+var STATIC_CONFIG_NAMES = ["serverless.yml", "serverless.yaml", "serverless.json"];
+function isJsTsConfig(filename) {
+  return /\.serverless\.(ts|js|mjs|cjs)$/i.test(filename) || /^serverless\.(ts|js|mjs|cjs)$/i.test(filename);
+}
+async function loadStaticServerlessConfig(repoRoot, budget, errors) {
+  const results = [];
+  for (const name of STATIC_CONFIG_NAMES) {
+    try {
+      const info2 = await (0, import_promises9.lstat)(import_node_path12.default.resolve(repoRoot, name));
+      if (info2.isSymbolicLink() || !info2.isFile()) continue;
+    } catch {
+      continue;
+    }
+    const loaded = await readIacFile(repoRoot, name, budget, errors, {
+      fieldName: "serverless-config",
+      countAsReference: false
+    });
+    if (!loaded) continue;
+    try {
+      const parsed = loaded.content.trim().startsWith("{") ? JSON.parse(loaded.content) : (0, import_yaml6.parse)(loaded.content);
+      if (parsed && typeof parsed === "object") {
+        results.push({ relativePath: loaded.relativePath, content: loaded.content, parsed });
+      }
+    } catch (error3) {
+      errors.push({
+        code: "malformed",
+        path: loaded.relativePath,
+        message: `Failed to parse Serverless config: ${error3 instanceof Error ? error3.message : String(error3)}`
+      });
+    }
+  }
+  return results;
+}
+async function extractFromServerlessResources(repoRoot, configRelative, parsed, budget, errors) {
+  const candidates = [];
+  const artifactClass = await classifyIacArtifact(repoRoot, configRelative);
+  const resources = parsed.resources?.Resources;
+  if (!resources || typeof resources !== "object") {
+    const custom = parsed.custom;
+    const documentation = custom?.documentation ?? custom?.openapi ?? custom?.apiSpec;
+    if (typeof documentation === "string" && !isUnresolvedIntrinsic(documentation) && !documentation.includes("${")) {
+      const base = dirnamePosix(configRelative);
+      const traversal = createIacTraversal();
+      const local = await readIacFile(repoRoot, documentation, budget, errors, {
+        fieldName: "serverless-openapi-ref",
+        basePath: base || void 0,
+        traversal
+      });
+      if (local && detectOpenApiContent2(local.content)) {
+        const fmt = openApiFormatForContent2(local.content);
+        candidates.push({
+          id: `${configRelative}#custom-openapi`,
+          source: "serverless",
+          kind: "openapi-local-ref",
+          artifactClass,
+          sourcePath: configRelative,
+          content: local.content,
+          format: fmt.format,
+          filename: fmt.filename,
+          evidence: [`Serverless custom OpenAPI reference ${local.relativePath}`]
+        });
+      }
+    } else if (documentation !== void 0 && (typeof documentation !== "string" || documentation.includes("${"))) {
+      candidates.push({
+        id: `${configRelative}#custom-openapi:unresolved`,
+        source: "serverless",
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: configRelative,
+        evidence: ["Dynamic Serverless custom OpenAPI reference left unresolved"],
+        unresolvedExpression: describeUnresolved(documentation)
+      });
+    }
+    return candidates;
+  }
+  const synthetic = JSON.stringify({ Resources: resources });
+  let template;
+  try {
+    template = parseCfnTemplateBody(synthetic);
+  } catch {
+    return candidates;
+  }
+  for (const logicalId of Object.keys(template.Resources ?? {}).sort()) {
+    const resource = template.Resources?.[logicalId];
+    if (!resource) continue;
+    const inline = extractInlineEmbeddedSpec(resource);
+    if (inline) {
+      candidates.push({
+        id: `${configRelative}#${logicalId}`,
+        source: "serverless",
+        kind: "openapi-inline",
+        artifactClass,
+        sourcePath: configRelative,
+        logicalId,
+        content: inline.content,
+        format: inline.format,
+        filename: inline.filename,
+        evidence: [`Inline OpenAPI in Serverless resources ${configRelative}#${logicalId}`]
+      });
+      continue;
+    }
+    const props = resource.Properties ?? {};
+    const ref = props.DefinitionUri ?? props.BodyS3Location;
+    if (typeof ref === "string" && !ref.startsWith("s3://") && !/^https?:/i.test(ref) && !isUnresolvedIntrinsic(ref)) {
+      const base = dirnamePosix(configRelative);
+      const traversal = createIacTraversal();
+      const local = await readIacFile(repoRoot, ref, budget, errors, {
+        fieldName: "serverless-definition-uri",
+        basePath: base || void 0,
+        traversal
+      });
+      if (local && detectOpenApiContent2(local.content)) {
+        const fmt = openApiFormatForContent2(local.content);
+        candidates.push({
+          id: `${configRelative}#${logicalId}`,
+          source: "serverless",
+          kind: "openapi-local-ref",
+          artifactClass,
+          sourcePath: configRelative,
+          logicalId,
+          content: local.content,
+          format: fmt.format,
+          filename: fmt.filename,
+          evidence: [`Serverless DefinitionUri ${local.relativePath}`]
+        });
+      }
+    } else if (ref !== void 0 && isUnresolvedIntrinsic(ref)) {
+      candidates.push({
+        id: `${configRelative}#${logicalId}:unresolved`,
+        source: "serverless",
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: configRelative,
+        logicalId,
+        evidence: [`Unresolved Serverless DefinitionUri in ${configRelative}#${logicalId}`],
+        unresolvedExpression: describeUnresolved(ref)
+      });
+    }
+  }
+  return candidates;
+}
+async function resolvePackageArtifacts(repoRoot, budget, errors) {
+  const packageDir = import_node_path12.default.resolve(repoRoot, ".serverless");
+  try {
+    const info2 = await (0, import_promises9.lstat)(packageDir);
+    if (info2.isSymbolicLink() || !info2.isDirectory()) return [];
+  } catch {
+    return [];
+  }
+  const candidates = [];
+  const entries = (await (0, import_promises9.readdir)(packageDir).catch(() => [])).sort();
+  for (const entry of entries) {
+    if (isJsTsConfig(entry)) continue;
+    const relative2 = toPosix(import_node_path12.default.posix.join(".serverless", entry));
+    if (entry.endsWith(".json") || entry.endsWith(".yml") || entry.endsWith(".yaml") || entry.endsWith(".template")) {
+      if (/cloudformation|template/i.test(entry)) {
+        const stackCandidates = await resolveCloudFormationTemplate(
+          repoRoot,
+          relative2,
+          budget,
+          errors,
+          { forceSource: "serverless", sourceHints: STATIC_CONFIG_NAMES }
+        );
+        for (const candidate of stackCandidates) {
+          candidate.evidence = [
+            ...candidate.evidence,
+            `From existing Serverless package artifact ${relative2}`
+          ];
+          candidates.push(candidate);
+        }
+      }
+    }
+  }
+  return candidates;
+}
+function extractDeployedOutputIds(deployedStackOutputs, configRelative) {
+  if (!deployedStackOutputs) return [];
+  const candidates = [];
+  for (const [stackName, outputs] of Object.entries(deployedStackOutputs).sort(([a5], [b5]) => a5.localeCompare(b5))) {
+    for (const [name, value] of Object.entries(outputs).sort(([a5], [b5]) => a5.localeCompare(b5))) {
+      if (/secret|password|token|key/i.test(name)) {
+        candidates.push({
+          id: `deployed:${stackName}:${name}:redacted`,
+          source: "serverless",
+          kind: "unresolved-evidence",
+          artifactClass: "freshness-unknown",
+          sourcePath: configRelative,
+          logicalId: name,
+          evidence: [`Sensitive deployed CFN output ${stackName}.${name} redacted`],
+          unresolvedExpression: "[redacted]"
+        });
+        continue;
+      }
+      if (isExactApiGatewayId(value)) {
+        candidates.push({
+          id: `deployed:${stackName}:${name}`,
+          source: "serverless",
+          kind: "physical-api-id",
+          artifactClass: "freshness-unknown",
+          sourcePath: configRelative,
+          logicalId: name,
+          physicalApiId: value,
+          gatewayType: "REST",
+          evidence: [`Deployed CloudFormation output ${stackName}.${name}=${value} correlated with Serverless`]
+        });
+      }
+    }
+  }
+  return candidates;
+}
+async function resolveServerlessStatic(repoRoot, budget, errors, options = {}) {
+  for (const name of ["serverless.ts", "serverless.js", "serverless.mjs", "serverless.cjs"]) {
+    try {
+      const info2 = await (0, import_promises9.lstat)(import_node_path12.default.resolve(repoRoot, name));
+      if (info2.isFile() && !info2.isSymbolicLink()) {
+        errors.push({
+          code: "unresolved-expression",
+          path: name,
+          message: "Refusing to load or execute Serverless JavaScript/TypeScript configuration"
+        });
+      }
+    } catch {
+    }
+  }
+  const configs = await loadStaticServerlessConfig(repoRoot, budget, errors);
+  const candidates = [];
+  for (const config of configs) {
+    candidates.push(
+      ...await extractFromServerlessResources(
+        repoRoot,
+        config.relativePath,
+        config.parsed,
+        budget,
+        errors
+      )
+    );
+    candidates.push(
+      ...extractDeployedOutputIds(options.deployedStackOutputs, config.relativePath)
+    );
+  }
+  candidates.push(...await resolvePackageArtifacts(repoRoot, budget, errors));
+  if (configs.length === 0 && options.deployedStackOutputs) {
+    candidates.push(...extractDeployedOutputIds(options.deployedStackOutputs, "serverless.yml"));
+  }
+  return candidates;
+}
+
+// src/lib/iac/terraform.ts
+var import_promises10 = require("node:fs/promises");
+var import_node_path13 = __toESM(require("node:path"), 1);
+var DYNAMIC_EXPR_RE = /\$\{|var\.|local\.|module\.|data\.|terraform\.|path\.|file\s*\(|templatefile\s*\(|jsonencode\s*\(/i;
+var FILE_CALL_RE = /(?:body|filename|definition|openapi_spec|content)\s*=\s*file\(\s*["']([^"']+)["']\s*\)/gi;
+var HEREDOC_BODY_RE = /(?:body|definition|content)\s*=\s*<<-?([A-Za-z_][A-Za-z0-9_]*)\n([\s\S]*?)\n\s*\1/gi;
+var LITERAL_BODY_RE = /(?:body|definition|content)\s*=\s*["'](\{[\s\S]*?["']|openapi:[\s\S]*?["'])/i;
+var LITERAL_API_ID_ATTR_RE = /\b(?:id|rest_api_id|api_id)\s*=\s*["']([a-z0-9]{10})["']/gi;
+var OUTPUT_SENSITIVE_RE = /sensitive\s*=\s*true/i;
+var RESOURCE_HEADER_RE = /resource\s+"(aws_api_gateway_rest_api|aws_apigatewayv2_api)"\s+"([^"]+)"\s*\{/gi;
+var OUTPUT_HEADER_RE = /output\s+"([^"]+)"\s*\{/gi;
+function stripComments(content) {
+  return content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/#.*/g, "");
+}
+function isDynamicExpression(value) {
+  return DYNAMIC_EXPR_RE.test(value);
+}
+function extractBalancedBlock(content, openBraceIndex) {
+  if (content[openBraceIndex] !== "{") return void 0;
+  let depth = 0;
+  let i5 = openBraceIndex;
+  let heredocMarker;
+  while (i5 < content.length) {
+    const ch = content[i5];
+    if (heredocMarker) {
+      if (ch === "\n") {
+        const lineStart = i5 + 1;
+        const lineEnd = content.indexOf("\n", lineStart);
+        const line = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd).trim();
+        if (line === heredocMarker) {
+          heredocMarker = void 0;
+          i5 = lineEnd === -1 ? content.length : lineEnd;
+          continue;
+        }
+      }
+      i5 += 1;
+      continue;
+    }
+    if (ch === "<" && content.startsWith("<<", i5)) {
+      const markerMatch = /^<<-?([A-Za-z_][A-Za-z0-9_]*)/.exec(content.slice(i5));
+      if (markerMatch) {
+        heredocMarker = markerMatch[1];
+        i5 += markerMatch[0].length;
+        continue;
+      }
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      i5 += 1;
+      while (i5 < content.length) {
+        if (content[i5] === "\\") {
+          i5 += 2;
+          continue;
+        }
+        if (content[i5] === quote) {
+          i5 += 1;
+          break;
+        }
+        i5 += 1;
+      }
+      continue;
+    }
+    if (ch === "{") {
+      depth += 1;
+    } else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return content.slice(openBraceIndex + 1, i5);
+      }
+    }
+    i5 += 1;
+  }
+  return void 0;
+}
+function* iterNamedBlocks(content, headerRe) {
+  headerRe.lastIndex = 0;
+  let match;
+  while ((match = headerRe.exec(content)) !== null) {
+    const openBrace = content.indexOf("{", match.index + match[0].length - 1);
+    if (openBrace < 0) continue;
+    const block = extractBalancedBlock(content, openBrace);
+    if (block === void 0) continue;
+    yield { match, block };
+    headerRe.lastIndex = openBrace + block.length + 2;
+  }
+}
+async function resolveLocalFileRef(repoRoot, tfRelative, fileRef, budget, errors) {
+  if (isDynamicExpression(fileRef) || fileRef.includes("${")) {
+    return void 0;
+  }
+  const base = dirnamePosix(tfRelative);
+  const traversal = createIacTraversal();
+  return readIacFile(repoRoot, fileRef, budget, errors, {
+    fieldName: "terraform-file-ref",
+    basePath: base || void 0,
+    traversal
+  });
+}
+function redactSensitiveValue(name, value, sensitive) {
+  if (sensitive || /secret|password|token|private_key|api_key/i.test(name)) {
+    return void 0;
+  }
+  return value;
+}
+async function resolveTfFile(repoRoot, relative2, budget, errors) {
+  const loaded = await readIacFile(repoRoot, relative2, budget, errors, {
+    fieldName: "terraform-source",
+    countAsReference: false
+  });
+  if (!loaded) return [];
+  const artifactClass = await classifyIacArtifact(repoRoot, loaded.relativePath);
+  const content = stripComments(loaded.content);
+  const candidates = [];
+  for (const { match, block } of iterNamedBlocks(content, RESOURCE_HEADER_RE)) {
+    const resourceType = match[1] ?? "";
+    const logicalId = match[2] ?? "";
+    const gatewayType = resourceType === "aws_apigatewayv2_api" ? "HTTP" : "REST";
+    for (const fileMatch of block.matchAll(FILE_CALL_RE)) {
+      const fileRef = fileMatch[1] ?? "";
+      if (!fileRef || isDynamicExpression(fileRef)) {
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:dynamic-file`,
+          source: "terraform",
+          kind: "unresolved-evidence",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          evidence: [`Dynamic Terraform file() expression in ${loaded.relativePath}#${logicalId}`],
+          unresolvedExpression: fileMatch[0]
+        });
+        continue;
+      }
+      const local = await resolveLocalFileRef(repoRoot, loaded.relativePath, fileRef, budget, errors);
+      if (!local) {
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:missing-file`,
+          source: "terraform",
+          kind: "unresolved-evidence",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          evidence: [`Missing Terraform file() target ${fileRef}`],
+          unresolvedExpression: fileRef
+        });
+        continue;
+      }
+      if (detectOpenApiContent2(local.content)) {
+        const fmt = openApiFormatForContent2(local.content);
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}`,
+          source: "terraform",
+          kind: "openapi-local-ref",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          content: local.content,
+          format: fmt.format,
+          filename: fmt.filename,
+          evidence: [`Terraform file() OpenAPI ${local.relativePath} from ${loaded.relativePath}#${logicalId}`]
+        });
+      }
+    }
+    for (const heredoc of block.matchAll(HEREDOC_BODY_RE)) {
+      const body = heredoc[2] ?? "";
+      if (isDynamicExpression(body)) {
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:dynamic-heredoc`,
+          source: "terraform",
+          kind: "unresolved-evidence",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          evidence: [`Dynamic expression inside Terraform heredoc body in ${loaded.relativePath}#${logicalId}`],
+          unresolvedExpression: describeUnresolved(body.slice(0, 200))
+        });
+        continue;
+      }
+      if (detectOpenApiContent2(body)) {
+        const fmt = openApiFormatForContent2(body);
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:heredoc`,
+          source: "terraform",
+          kind: "openapi-inline",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          content: body,
+          format: fmt.format,
+          filename: fmt.filename,
+          evidence: [`Literal Terraform heredoc OpenAPI in ${loaded.relativePath}#${logicalId}`]
+        });
+      }
+    }
+    for (const idMatch of block.matchAll(LITERAL_API_ID_ATTR_RE)) {
+      const apiId = idMatch[1] ?? "";
+      if (isExactApiGatewayId(apiId)) {
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:id:${apiId}`,
+          source: "terraform",
+          kind: "physical-api-id",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          physicalApiId: apiId,
+          evidence: [`Literal Terraform API ID ${apiId} in ${loaded.relativePath}#${logicalId}`]
+        });
+      }
+    }
+    const hasFileCall = [...block.matchAll(new RegExp(FILE_CALL_RE.source, "gi"))].length > 0;
+    const hasHeredoc = [...block.matchAll(new RegExp(HEREDOC_BODY_RE.source, "gi"))].length > 0;
+    if (/\bbody\s*=/.test(block) && !hasFileCall && !hasHeredoc) {
+      const bodyLine = block.match(/\bbody\s*=\s*([^\n]+)/);
+      const expr = bodyLine?.[1]?.trim() ?? "";
+      if (expr && isDynamicExpression(expr) && !LITERAL_BODY_RE.test(block)) {
+        candidates.push({
+          id: `${loaded.relativePath}#${logicalId}:dynamic-body`,
+          source: "terraform",
+          kind: "unresolved-evidence",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId,
+          gatewayType,
+          evidence: [`Unresolved dynamic Terraform body expression in ${loaded.relativePath}#${logicalId}`],
+          unresolvedExpression: expr
+        });
+      }
+    }
+  }
+  for (const { match, block } of iterNamedBlocks(content, OUTPUT_HEADER_RE)) {
+    const name = match[1] ?? "";
+    const sensitive = OUTPUT_SENSITIVE_RE.test(block);
+    const valueMatch = /value\s*=\s*"([^"]+)"/.exec(block);
+    if (!valueMatch) {
+      if (/value\s*=/.test(block)) {
+        const expr = block.match(/value\s*=\s*([^\n]+)/)?.[1]?.trim() ?? "";
+        candidates.push({
+          id: `${loaded.relativePath}#output:${name}:unresolved`,
+          source: "terraform",
+          kind: "unresolved-evidence",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId: name,
+          evidence: [`Non-literal Terraform output ${name} preserved as evidence`],
+          unresolvedExpression: sensitive ? "[redacted]" : expr
+        });
+      }
+      continue;
+    }
+    const rawValue = valueMatch[1] ?? "";
+    const value = redactSensitiveValue(name, rawValue, sensitive);
+    if (value === void 0) {
+      candidates.push({
+        id: `${loaded.relativePath}#output:${name}:redacted`,
+        source: "terraform",
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: loaded.relativePath,
+        logicalId: name,
+        evidence: [`Sensitive Terraform output ${name} redacted`],
+        unresolvedExpression: "[redacted]"
+      });
+      continue;
+    }
+    if (isExactApiGatewayId(value)) {
+      candidates.push({
+        id: `${loaded.relativePath}#output:${name}`,
+        source: "terraform",
+        kind: "physical-api-id",
+        artifactClass,
+        sourcePath: loaded.relativePath,
+        logicalId: name,
+        physicalApiId: value,
+        gatewayType: "REST",
+        evidence: [`Literal Terraform output ${name}=${value}`]
+      });
+    }
+  }
+  return candidates;
+}
+async function resolveLocalStateArtifact(repoRoot, relative2, budget, errors) {
+  const loaded = await readIacFile(repoRoot, relative2, budget, errors, {
+    fieldName: "terraform-state",
+    countAsReference: false
+  });
+  if (!loaded) return [];
+  if (/"backend"\s*:\s*\{[^}]*"type"\s*:\s*"(s3|remote|http|azurerm|gcs)"/i.test(loaded.content)) {
+    errors.push({
+      code: "unresolved-expression",
+      path: loaded.relativePath,
+      message: "Remote Terraform backend detected; state download is not performed"
+    });
+    return [{
+      id: `${loaded.relativePath}:remote-backend`,
+      source: "terraform",
+      kind: "unresolved-evidence",
+      artifactClass: "freshness-unknown",
+      sourcePath: loaded.relativePath,
+      evidence: ["Remote Terraform backend present; refusing automatic state download"],
+      unresolvedExpression: "remote-backend"
+    }];
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(loaded.content);
+  } catch (error3) {
+    errors.push({
+      code: "malformed",
+      path: loaded.relativePath,
+      message: `Failed to parse local Terraform state: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return [];
+  }
+  const artifactClass = await classifyIacArtifact(repoRoot, loaded.relativePath);
+  const candidates = [];
+  for (const [name, output] of Object.entries(parsed.outputs ?? {}).sort(([a5], [b5]) => a5.localeCompare(b5))) {
+    const sensitive = Boolean(output.sensitive) || /secret|password|token|key/i.test(name);
+    const value = output.value;
+    if (sensitive) {
+      candidates.push({
+        id: `${loaded.relativePath}#state-output:${name}:redacted`,
+        source: "terraform",
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: loaded.relativePath,
+        logicalId: name,
+        evidence: [`Sensitive local state output ${name} redacted`],
+        unresolvedExpression: "[redacted]"
+      });
+      continue;
+    }
+    if (typeof value === "string" && isExactApiGatewayId(value)) {
+      candidates.push({
+        id: `${loaded.relativePath}#state-output:${name}`,
+        source: "terraform",
+        kind: "physical-api-id",
+        artifactClass,
+        sourcePath: loaded.relativePath,
+        logicalId: name,
+        physicalApiId: value,
+        gatewayType: "REST",
+        evidence: [`Literal local Terraform state output ${name}=${value}`]
+      });
+    } else if (typeof value !== "string" || isDynamicExpression(value)) {
+      candidates.push({
+        id: `${loaded.relativePath}#state-output:${name}:unresolved`,
+        source: "terraform",
+        kind: "unresolved-evidence",
+        artifactClass,
+        sourcePath: loaded.relativePath,
+        logicalId: name,
+        evidence: [`Non-literal local state output ${name}`],
+        unresolvedExpression: typeof value === "string" ? value : describeUnresolved(value)
+      });
+    }
+  }
+  for (const resource of parsed.resources ?? []) {
+    if (resource.type !== "aws_api_gateway_rest_api" && resource.type !== "aws_apigatewayv2_api") {
+      continue;
+    }
+    const gatewayType = resource.type === "aws_apigatewayv2_api" ? "HTTP" : "REST";
+    for (const instance of resource.instances ?? []) {
+      const id = instance.attributes?.id;
+      if (typeof id === "string" && isExactApiGatewayId(id)) {
+        candidates.push({
+          id: `${loaded.relativePath}#state:${resource.name}:${id}`,
+          source: "terraform",
+          kind: "physical-api-id",
+          artifactClass,
+          sourcePath: loaded.relativePath,
+          logicalId: resource.name,
+          gatewayType,
+          physicalApiId: id,
+          evidence: [`Exact physical API ID ${id} from local Terraform state resource ${resource.name}`]
+        });
+      }
+    }
+  }
+  return candidates;
+}
+async function collectTfPaths(repoRoot) {
+  const found = [];
+  const root5 = import_node_path13.default.resolve(repoRoot);
+  async function walk(current, depth) {
+    if (depth > 4 || found.length >= 40) return;
+    let entries;
+    try {
+      const info2 = await (0, import_promises10.lstat)(current);
+      if (info2.isSymbolicLink() || !info2.isDirectory()) return;
+      entries = (await (0, import_promises10.readdir)(current)).sort();
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry === ".git" || entry === "node_modules" || entry === ".terraform" || entry === "cdk.out") {
+        continue;
+      }
+      const full = import_node_path13.default.join(current, entry);
+      let info2;
+      try {
+        info2 = await (0, import_promises10.lstat)(full);
+      } catch {
+        continue;
+      }
+      if (info2.isSymbolicLink()) continue;
+      if (info2.isDirectory()) {
+        await walk(full, depth + 1);
+        continue;
+      }
+      if (info2.isFile() && (entry.endsWith(".tf") || entry.endsWith(".tf.json") || entry === "terraform.tfstate" || entry.endsWith(".tfstate"))) {
+        if (entry.includes("remote")) continue;
+        found.push(toPosix(import_node_path13.default.relative(root5, full)));
+      }
+    }
+  }
+  await walk(root5, 0);
+  return found.sort((a5, b5) => a5.localeCompare(b5));
+}
+async function resolveTerraformStatic(repoRoot, budget, errors) {
+  const paths = await collectTfPaths(repoRoot);
+  const candidates = [];
+  for (const relative2 of paths) {
+    if (relative2.endsWith(".tfstate") || relative2.endsWith("terraform.tfstate")) {
+      candidates.push(...await resolveLocalStateArtifact(repoRoot, relative2, budget, errors));
+    } else {
+      candidates.push(...await resolveTfFile(repoRoot, relative2, budget, errors));
+    }
+  }
+  return candidates;
+}
+
+// src/lib/iac/resolve.ts
+async function optionalRegularFile(repoRoot, relativePath2) {
+  try {
+    const info2 = await (0, import_promises11.lstat)(import_node_path14.default.resolve(repoRoot, relativePath2));
+    return !info2.isSymbolicLink() && info2.isFile();
+  } catch {
+    return false;
+  }
+}
+function isEnabled(options, source) {
+  return options.enabledSources?.[source] !== false;
+}
+function dedupeCandidates(candidates) {
+  const seen = /* @__PURE__ */ new Set();
+  const result = [];
+  for (const candidate of candidates) {
+    if (seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    result.push(candidate);
+  }
+  return result;
+}
+function sortCandidates(candidates) {
+  return [...candidates].sort((left, right) => {
+    const classDelta = artifactClassRank(right.artifactClass) - artifactClassRank(left.artifactClass);
+    if (classDelta !== 0) return classDelta;
+    const leftContent = left.content ? 1 : 0;
+    const rightContent = right.content ? 1 : 0;
+    if (rightContent !== leftContent) return rightContent - leftContent;
+    return left.id.localeCompare(right.id);
+  });
+}
+async function resolveStaticIacCandidates(repoRoot, options = {}) {
+  const budget = createIacReadBudget({
+    maxDepth: options.maxDepth,
+    maxFiles: options.maxFiles,
+    maxFileBytes: options.maxFileBytes,
+    maxCumulativeBytes: options.maxCumulativeBytes
+  });
+  const errors = [];
+  const raw = [];
+  if (isEnabled(options, "cloudformation") || isEnabled(options, "sam")) {
+    const templates = await discoverCloudFormationTemplatePaths(repoRoot, budget, errors);
+    const uniqueTemplates = [...new Set(templates)];
+    for (const templatePath of uniqueTemplates) {
+      if (templatePath.includes("cdk.out") || templatePath.includes(".aws-sam") || templatePath.includes(".serverless")) {
+        continue;
+      }
+      raw.push(
+        ...await resolveCloudFormationTemplate(repoRoot, templatePath, budget, errors, {
+          s3Client: options.s3Client
+        })
+      );
+    }
+    if (await optionalRegularFile(repoRoot, ".aws-sam/build/template.yaml")) {
+      raw.push(
+        ...await resolveCloudFormationTemplate(
+          repoRoot,
+          ".aws-sam/build/template.yaml",
+          budget,
+          errors,
+          {
+            s3Client: options.s3Client,
+            forceSource: "sam",
+            sourceHints: ["template.yaml", "template.yml", "samconfig.toml"]
+          }
+        )
+      );
+    }
+  }
+  if (isEnabled(options, "cdk")) {
+    raw.push(
+      ...await resolveCdkAssembly(repoRoot, budget, errors, { s3Client: options.s3Client })
+    );
+  }
+  if (isEnabled(options, "terraform")) {
+    raw.push(...await resolveTerraformStatic(repoRoot, budget, errors));
+  }
+  if (isEnabled(options, "serverless")) {
+    raw.push(
+      ...await resolveServerlessStatic(repoRoot, budget, errors, {
+        deployedStackOutputs: options.deployedStackOutputs
+      })
+    );
+  }
+  if (budget.truncated) {
+    errors.push({
+      code: "bounds-exceeded",
+      path: ".",
+      message: `Static IaC resolution truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
+    });
+  }
+  const candidates = sortCandidates(dedupeCandidates(raw));
+  const physicalApiIds = [
+    ...new Set(
+      candidates.filter((candidate) => candidate.kind === "physical-api-id" && candidate.physicalApiId).map((candidate) => candidate.physicalApiId)
+    )
+  ].sort((a5, b5) => a5.localeCompare(b5));
+  return { candidates, physicalApiIds, errors };
+}
+function contentBearingIacCandidates(resolution) {
+  return resolution.candidates.filter(
+    (candidate) => Boolean(candidate.content) && (candidate.kind === "openapi-inline" || candidate.kind === "openapi-local-ref" || candidate.kind === "openapi-s3-ref")
+  );
+}
+
+// src/lib/repo/graphql-compose.ts
+var import_node_path15 = __toESM(require("node:path"), 1);
+function groupGraphqlByServiceRoot(files) {
+  const byRoot = /* @__PURE__ */ new Map();
+  for (const file of files) {
+    const normalized = toPosix2(file.path);
+    const serviceRoot = serviceRootFor(normalized);
+    const bucket = byRoot.get(serviceRoot) ?? [];
+    bucket.push({ path: normalized, content: file.content });
+    byRoot.set(serviceRoot, bucket);
+  }
+  const groups = [];
+  for (const serviceRoot of [...byRoot.keys()].sort((a5, b5) => a5.localeCompare(b5))) {
+    const members = (byRoot.get(serviceRoot) ?? []).sort((a5, b5) => a5.path.localeCompare(b5.path));
+    if (members.length === 0) continue;
+    const preferred = members.find((member2) => {
+      const base = import_node_path15.default.posix.basename(member2.path).toLowerCase();
+      return base === "schema.graphql" || base === "schema.gql";
+    }) ?? members[0];
+    const memberPaths = members.map((member2) => member2.path);
+    const content = members.map((member2) => member2.content.trimEnd()).join("\n\n") + "\n";
+    groups.push({
+      serviceRoot,
+      path: preferred.path,
+      memberPaths,
+      content,
+      evidence: [
+        members.length > 1 ? `Grouped ${members.length} GraphQL SDL files under service root ${serviceRoot}` : `Resolved GraphQL SDL from ${preferred.path}`,
+        ...memberPaths.map((memberPath) => `Included GraphQL SDL ${memberPath}`)
+      ]
+    });
+  }
+  return groups;
+}
+function serviceRootFor(relativePath2) {
+  const normalized = toPosix2(relativePath2);
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.length >= 2 && (parts[0] === "packages" || parts[0] === "services" || parts[0] === "apps")) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+  const dirname3 = import_node_path15.default.posix.dirname(normalized);
+  if (dirname3 === "." || dirname3 === "") {
+    return ".";
+  }
+  const base = import_node_path15.default.posix.basename(dirname3);
+  if (base === "graphql" || base === "schema" || base === "schemas" || base === "api" || base === "src") {
+    const parent = import_node_path15.default.posix.dirname(dirname3);
+    return parent === "." ? "." : parent;
+  }
+  return dirname3;
+}
+function toPosix2(value) {
+  return value.replace(/\\/g, "/");
+}
+
+// src/lib/repo/smithy-project.ts
+var import_promises12 = require("node:fs/promises");
+var import_node_path16 = __toESM(require("node:path"), 1);
+var DEFAULT_MAX_FILES = 200;
+var DEFAULT_MAX_FILE_BYTES = 1048576;
+var DEFAULT_MAX_CUMULATIVE_BYTES = 8388608;
+var DEFAULT_MAX_DEPTH = 8;
+async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
+  const resolvedRoot = import_node_path16.default.resolve(repoRoot);
+  const buildRelative = toPosix3(buildRelativePath);
+  const buildAbsolute = import_node_path16.default.resolve(resolvedRoot, buildRelative);
+  const empty = {
+    buildPath: buildRelative,
+    memberPaths: [],
+    content: "",
+    projections: [],
+    evidence: [],
+    errors: []
+  };
+  if (!isPathInsideRoot2(resolvedRoot, buildAbsolute)) {
+    return {
+      ...empty,
+      errors: [{
+        code: "path-escape",
+        path: buildRelative,
+        message: `smithy-build.json path escapes repository root: ${buildRelative}`
+      }]
+    };
+  }
+  let raw;
+  try {
+    if (!await isRegularNonSymlinkFile(buildAbsolute)) {
+      return {
+        ...empty,
+        errors: [{
+          code: "unreadable",
+          path: buildRelative,
+          message: `smithy-build.json is not a regular file: ${buildRelative}`
+        }]
+      };
+    }
+    raw = await (0, import_promises12.readFile)(buildAbsolute, "utf8");
+  } catch (error3) {
+    return {
+      ...empty,
+      errors: [{
+        code: "unreadable",
+        path: buildRelative,
+        message: `Failed to read smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+      }]
+    };
+  }
+  let config;
+  try {
+    config = parseSmithyBuildJson(raw);
+  } catch (error3) {
+    return {
+      ...empty,
+      errors: [{
+        code: "malformed-config",
+        path: buildRelative,
+        message: `Malformed smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+      }]
+    };
+  }
+  if (typeof config.version !== "string" || !config.version.trim()) {
+    return {
+      ...empty,
+      errors: [{
+        code: "malformed-config",
+        path: buildRelative,
+        message: 'smithy-build.json requires a non-empty string "version"'
+      }]
+    };
+  }
+  const state2 = {
+    repoRoot: resolvedRoot,
+    buildDir: import_node_path16.default.dirname(buildAbsolute),
+    buildRelative,
+    maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
+    maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
+    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_MAX_CUMULATIVE_BYTES,
+    maxDepth: options.maxDepth ?? DEFAULT_MAX_DEPTH,
+    memberPaths: [],
+    contents: /* @__PURE__ */ new Map(),
+    projections: [],
+    errors: [],
+    visiting: /* @__PURE__ */ new Set([import_node_path16.default.resolve(buildAbsolute)]),
+    visitedDirs: /* @__PURE__ */ new Set(),
+    cumulativeBytes: 0
+  };
+  const sources = asStringArray(config.sources);
+  const imports = asStringArray(config.imports);
+  const projections = config.projections && typeof config.projections === "object" && !Array.isArray(config.projections) ? config.projections : {};
+  state2.projections = Object.keys(projections).sort((a5, b5) => a5.localeCompare(b5));
+  if (sources.length === 0 && imports.length === 0 && state2.projections.length === 0) {
+    state2.errors.push({
+      code: "malformed-config",
+      path: buildRelative,
+      message: "smithy-build.json must declare sources, imports, or projections"
+    });
+  }
+  for (const entry of sources) {
+    await collectPathEntry(state2, entry, "source");
+  }
+  for (const entry of imports) {
+    await collectPathEntry(state2, entry, "import");
+  }
+  for (const projectionName of state2.projections) {
+    const projection = projections[projectionName];
+    if (!projection || typeof projection !== "object" || Array.isArray(projection)) {
+      state2.errors.push({
+        code: "malformed-config",
+        path: buildRelative,
+        message: `Projection "${projectionName}" must be an object`
+      });
+      continue;
+    }
+    const projectionImports = asStringArray(projection.imports);
+    for (const entry of projectionImports) {
+      await collectPathEntry(state2, entry, "projection-import");
+    }
+  }
+  state2.visiting.delete(import_node_path16.default.resolve(buildAbsolute));
+  const memberPaths = [...state2.contents.keys()].sort((a5, b5) => a5.localeCompare(b5));
+  const content = memberPaths.map((member2) => state2.contents.get(member2) ?? "").join("\n");
+  const evidence = [
+    `Resolved Smithy project closure from ${buildRelative}`,
+    ...memberPaths.map((member2) => `Included Smithy model ${member2}`),
+    ...state2.projections.length > 0 ? [`Recorded projections: ${state2.projections.join(", ")}`] : []
+  ];
+  return {
+    buildPath: buildRelative,
+    memberPaths,
+    content,
+    projections: state2.projections,
+    evidence,
+    errors: state2.errors
+  };
+}
+async function collectPathEntry(state2, entry, kind) {
+  if (state2.errors.some((error3) => error3.code === "bounds-exceeded" || error3.code === "cycle" || error3.code === "path-escape")) {
+    return;
+  }
+  if (typeof entry !== "string" || !entry.trim()) {
+    state2.errors.push({
+      code: "malformed-config",
+      path: state2.buildRelative,
+      message: `Invalid ${kind} entry in smithy-build.json`
+    });
+    return;
+  }
+  const absolute = import_node_path16.default.resolve(state2.buildDir, entry);
+  if (!isPathInsideRoot2(state2.repoRoot, absolute)) {
+    state2.errors.push({
+      code: "path-escape",
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute)),
+      message: `Smithy ${kind} escapes repository root: ${entry}`
+    });
+    return;
+  }
+  const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute));
+  const canonicalKey = import_node_path16.default.resolve(absolute);
+  if (state2.visiting.has(canonicalKey)) {
+    state2.errors.push({
+      code: "cycle",
+      path: relative2,
+      message: `Cycle detected while resolving Smithy ${kind}: ${entry}`
+    });
+    return;
+  }
+  let info2;
+  try {
+    info2 = await (0, import_promises12.lstat)(absolute);
+  } catch {
+    state2.errors.push({
+      code: "missing-import",
+      path: relative2,
+      message: `Missing Smithy ${kind}: ${entry}`
+    });
+    return;
+  }
+  if (info2.isSymbolicLink()) {
+    state2.errors.push({
+      code: "path-escape",
+      path: relative2,
+      message: `Refusing to follow symlink Smithy ${kind}: ${entry}`
+    });
+    return;
+  }
+  if (info2.isFile()) {
+    if (import_node_path16.default.basename(absolute).toLowerCase() === "smithy-build.json") {
+      await collectNestedSmithyBuild(state2, absolute, relative2);
+      return;
+    }
+    await readSmithyModelFile(state2, absolute, relative2);
+    return;
+  }
+  if (info2.isDirectory()) {
+    await walkSmithyDirectory(state2, absolute, 0);
+    return;
+  }
+  state2.errors.push({
+    code: "unreadable",
+    path: relative2,
+    message: `Smithy ${kind} is neither a file nor directory: ${entry}`
+  });
+}
+async function walkSmithyDirectory(state2, directory, depth) {
+  if (state2.errors.some((error3) => error3.code === "bounds-exceeded" || error3.code === "cycle" || error3.code === "path-escape")) {
+    return;
+  }
+  if (depth > state2.maxDepth) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+      message: `Smithy directory depth exceeded maxDepth=${state2.maxDepth}`
+    });
+    return;
+  }
+  const canonicalDir = import_node_path16.default.resolve(directory);
+  if (state2.visitedDirs.has(canonicalDir)) {
+    return;
+  }
+  if (state2.visiting.has(canonicalDir)) {
+    state2.errors.push({
+      code: "cycle",
+      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+      message: `Cycle detected while walking Smithy directory: ${toPosix3(import_node_path16.default.relative(state2.repoRoot, directory))}`
+    });
+    return;
+  }
+  state2.visitedDirs.add(canonicalDir);
+  state2.visiting.add(canonicalDir);
+  try {
+    const entries = (await (0, import_promises12.readdir)(directory).catch(() => [])).sort((a5, b5) => a5.localeCompare(b5));
+    for (const entry of entries) {
+      if (state2.contents.size >= state2.maxFiles) {
+        state2.errors.push({
+          code: "bounds-exceeded",
+          path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+          message: `Smithy model file count exceeded maxFiles=${state2.maxFiles}`
+        });
+        return;
+      }
+      const fullPath = import_node_path16.default.join(directory, entry);
+      const info2 = await (0, import_promises12.lstat)(fullPath).catch(() => void 0);
+      if (!info2 || info2.isSymbolicLink()) continue;
+      if (info2.isDirectory()) {
+        await walkSmithyDirectory(state2, fullPath, depth + 1);
+        continue;
+      }
+      if (info2.isFile() && entry.toLowerCase().endsWith(".smithy")) {
+        const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, fullPath));
+        await readSmithyModelFile(state2, fullPath, relative2);
+      }
+    }
+  } finally {
+    state2.visiting.delete(canonicalDir);
+  }
+}
+async function collectNestedSmithyBuild(state2, absolute, relative2) {
+  const canonical = import_node_path16.default.resolve(absolute);
+  if (state2.visiting.has(canonical)) {
+    state2.errors.push({
+      code: "cycle",
+      path: relative2,
+      message: `Cycle detected while resolving nested smithy-build.json: ${relative2}`
+    });
+    return;
+  }
+  state2.visiting.add(canonical);
+  try {
+    let raw;
+    try {
+      raw = await (0, import_promises12.readFile)(absolute, "utf8");
+    } catch (error3) {
+      state2.errors.push({
+        code: "unreadable",
+        path: relative2,
+        message: `Failed to read nested smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+      });
+      return;
+    }
+    let config;
+    try {
+      config = parseSmithyBuildJson(raw);
+    } catch (error3) {
+      state2.errors.push({
+        code: "malformed-config",
+        path: relative2,
+        message: `Malformed nested smithy-build.json: ${error3 instanceof Error ? error3.message : String(error3)}`
+      });
+      return;
+    }
+    const nestedBuildDir = import_node_path16.default.dirname(absolute);
+    const previousBuildDir = state2.buildDir;
+    const previousBuildRelative = state2.buildRelative;
+    state2.buildDir = nestedBuildDir;
+    state2.buildRelative = relative2;
+    try {
+      for (const entry of asStringArray(config.sources)) {
+        await collectPathEntry(state2, entry, "source");
+      }
+      for (const entry of asStringArray(config.imports)) {
+        await collectPathEntry(state2, entry, "import");
+      }
+      const projections = config.projections && typeof config.projections === "object" && !Array.isArray(config.projections) ? config.projections : {};
+      for (const projectionName of Object.keys(projections).sort((a5, b5) => a5.localeCompare(b5))) {
+        const projection = projections[projectionName];
+        if (!projection || typeof projection !== "object" || Array.isArray(projection)) continue;
+        for (const entry of asStringArray(projection.imports)) {
+          await collectPathEntry(state2, entry, "projection-import");
+        }
+      }
+    } finally {
+      state2.buildDir = previousBuildDir;
+      state2.buildRelative = previousBuildRelative;
+    }
+  } finally {
+    state2.visiting.delete(canonical);
+  }
+}
+async function readSmithyModelFile(state2, absolute, relative2) {
+  if (state2.contents.has(relative2)) {
+    return;
+  }
+  if (!relative2.toLowerCase().endsWith(".smithy")) {
+    return;
+  }
+  if (state2.contents.size >= state2.maxFiles) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy model file count exceeded maxFiles=${state2.maxFiles}`
+    });
+    return;
+  }
+  let content;
+  try {
+    content = await (0, import_promises12.readFile)(absolute, "utf8");
+  } catch (error3) {
+    state2.errors.push({
+      code: "unreadable",
+      path: relative2,
+      message: `Failed to read Smithy model: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return;
+  }
+  const bytes = Buffer.byteLength(content, "utf8");
+  if (bytes > state2.maxFileBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy model exceeds maxFileBytes=${state2.maxFileBytes}`
+    });
+    return;
+  }
+  if (state2.cumulativeBytes + bytes > state2.maxCumulativeBytes) {
+    state2.errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Smithy closure exceeds maxCumulativeBytes=${state2.maxCumulativeBytes}`
+    });
+    return;
+  }
+  state2.cumulativeBytes += bytes;
+  state2.contents.set(relative2, content);
+  state2.memberPaths.push(relative2);
+}
+function parseSmithyBuildJson(raw) {
+  const withoutComments = raw.replace(/^\s*\/\/.*$/gm, "");
+  const parsed = JSON.parse(withoutComments);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("root value must be a JSON object");
+  }
+  return parsed;
+}
+function asStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry) => typeof entry === "string");
+}
+function isPathInsideRoot2(root5, target) {
+  const relative2 = import_node_path16.default.relative(import_node_path16.default.resolve(root5), import_node_path16.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path16.default.isAbsolute(relative2);
+}
+async function isRegularNonSymlinkFile(absolutePath) {
+  try {
+    const info2 = await (0, import_promises12.lstat)(absolutePath);
+    return !info2.isSymbolicLink() && info2.isFile();
+  } catch {
+    return false;
+  }
+}
+function toPosix3(value) {
+  return value.replace(/\\/g, "/");
+}
+
 // src/lib/repo/specs.ts
 var DIRECT_SPEC_CANDIDATES = [
   "openapi.yaml",
@@ -164051,7 +166477,11 @@ var DIRECT_SPEC_CANDIDATES = [
   "api/asyncapi.json",
   "proto/service.proto",
   "schema.proto",
-  "smithy-build.json"
+  "smithy-build.json",
+  "schema.json",
+  "order.schema.json",
+  "schema.avsc",
+  "order.avsc"
 ];
 var COMMON_SCAN_DIRS = [
   ".",
@@ -164069,16 +166499,23 @@ var COMMON_SCAN_DIRS = [
   "proto",
   "protobuf",
   "smithy",
+  "model",
+  "models",
+  "schemas",
+  "schema",
   "services",
   "packages",
-  "apps"
+  "apps",
+  "dist",
+  "build",
+  "generated",
+  "cdk.out",
+  ".aws-sam"
 ];
 var SKIP_DIRS = /* @__PURE__ */ new Set([
   ".git",
   "node_modules",
   ".terraform",
-  "dist",
-  "build",
   "discovered-specs",
   "vendor",
   "test",
@@ -164088,11 +166525,16 @@ var SKIP_DIRS = /* @__PURE__ */ new Set([
   "venv",
   ".pulumi"
 ]);
-var MAX_SPEC_SCAN_FILES = 200;
-var MAX_SPEC_SCAN_DEPTH = 6;
+var GENERATED_PATH_RE2 = /(^|\/)(dist|build|cdk\.out|\.aws-sam|generated|out|target)(\/|$)/i;
+var DEFAULT_INVENTORY_BOUNDS = {
+  maxDepth: 6,
+  maxFiles: 200,
+  maxFileBytes: 1048576,
+  maxCumulativeBytes: 8388608
+};
 function isLikelyOpenApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -164103,11 +166545,11 @@ function isLikelyOpenApiDocument(content) {
 }
 function isLikelyGraphqlSchema(content) {
   const trimmed = content.trim();
-  return /\btype\s+Query\b/.test(trimmed) || /\bschema\s*\{/.test(trimmed);
+  return /\btype\s+Query\b/.test(trimmed) || /\btype\s+Mutation\b/.test(trimmed) || /\btype\s+Subscription\b/.test(trimmed) || /\bschema\s*\{/.test(trimmed) || /\b(type|input|interface|enum|union|scalar)\s+[A-Za-z_]/.test(trimmed);
 }
 function isLikelyAsyncApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml5.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -164127,16 +166569,34 @@ function isLikelyPostmanCollection(content) {
 function isLikelyProtobuf(content) {
   return /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content) || /\b(service|message)\s+\w+\s*\{/.test(content);
 }
-function isLikelySmithy(content, filename) {
-  if (filename.endsWith("smithy-build.json")) {
-    try {
-      const parsed = JSON.parse(content);
-      return Boolean(parsed && typeof parsed === "object");
-    } catch {
-      return false;
-    }
-  }
+function isLikelySmithyModel(content) {
   return /^\s*\$version:\s*["']2(?:\.\d+)?["']/m.test(content) || /\b(namespace|service|structure)\s+[\w#.]+/.test(content);
+}
+function isLikelyJsonSchema(content) {
+  try {
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return false;
+    if (parsed.openapi || parsed.swagger || parsed.asyncapi) return false;
+    if (typeof parsed.$schema === "string" && /json-schema/i.test(parsed.$schema)) return true;
+    if (typeof parsed.$id === "string" && (parsed.type || parsed.properties || parsed.$defs || parsed.definitions)) return true;
+    if (parsed.type === "object" && (parsed.properties || parsed.required || parsed.$defs || parsed.definitions)) return true;
+    if (parsed.$defs || parsed.definitions) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+function isLikelyAvro(content) {
+  try {
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return false;
+    if (parsed.type === "record" && Array.isArray(parsed.fields) && typeof parsed.name === "string") return true;
+    if (parsed.type === "enum" && Array.isArray(parsed.symbols) && typeof parsed.name === "string") return true;
+    if (parsed.type === "fixed" && typeof parsed.size === "number" && typeof parsed.name === "string") return true;
+    return false;
+  } catch {
+    return false;
+  }
 }
 function formatFor(type, candidate) {
   switch (type) {
@@ -164152,34 +166612,36 @@ function formatFor(type, candidate) {
       return "protobuf";
     case "smithy":
       return "smithy";
+    case "json-schema":
+      return "json-schema";
+    case "avro":
+      return "avro";
   }
 }
-async function findExistingRepoSpecTyped(repoRoot) {
-  const candidates = await collectSpecCandidates(repoRoot);
-  for (const candidate of candidates) {
-    const fullPath = import_node_path8.default.resolve(repoRoot, candidate);
-    try {
-      const fileStat = await (0, import_promises5.stat)(fullPath);
-      if (!fileStat.isFile()) {
-        continue;
-      }
-      const content = await (0, import_promises5.readFile)(fullPath, "utf8");
-      const match = detectRepoSpec(candidate, content);
-      if (match) {
-        return {
-          ...match,
-          path: candidate.replace(/\\/g, "/"),
-          evidence: [`Resolved from repository specification ${candidate.replace(/\\/g, "/")}`]
-        };
-      }
-    } catch {
+function artifactClassFor(relativePath2) {
+  return GENERATED_PATH_RE2.test(toPosix4(relativePath2)) ? "generated" : "authored";
+}
+function toPosix4(value) {
+  return value.replace(/\\/g, "/");
+}
+function isPathInsideRoot3(root5, target) {
+  const relative2 = import_node_path17.default.relative(import_node_path17.default.resolve(root5), import_node_path17.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path17.default.isAbsolute(relative2);
+}
+async function isRegularNonSymlinkFile2(absolutePath) {
+  try {
+    const link = await (0, import_promises13.lstat)(absolutePath);
+    if (link.isSymbolicLink()) {
+      return false;
     }
+    return link.isFile();
+  } catch {
+    return false;
   }
-  return void 0;
 }
 function detectRepoSpec(candidate, content) {
-  const normalized = candidate.replace(/\\/g, "/").toLowerCase();
-  const basename3 = import_node_path8.default.basename(normalized);
+  const normalized = toPosix4(candidate).toLowerCase();
+  const basename3 = import_node_path17.default.posix.basename(normalized);
   let type;
   if ((basename3.endsWith(".graphql") || basename3.endsWith(".gql")) && isLikelyGraphqlSchema(content)) {
     type = "graphql";
@@ -164189,81 +166651,322 @@ function detectRepoSpec(candidate, content) {
     if (isLikelyPostmanCollection(content)) type = "postman-collection";
   } else if (basename3.endsWith(".proto")) {
     if (isLikelyProtobuf(content)) type = "protobuf";
-  } else if (basename3.endsWith(".smithy") || basename3 === "smithy-build.json") {
-    if (isLikelySmithy(content, basename3)) type = "smithy";
+  } else if (basename3.endsWith(".smithy")) {
+    if (isLikelySmithyModel(content)) type = "smithy";
+  } else if (basename3 === "smithy-build.json") {
+    return void 0;
+  } else if (basename3.endsWith(".avsc") || basename3.endsWith(".avro")) {
+    if (isLikelyAvro(content)) type = "avro";
+  } else if (basename3 === "schema.json" || basename3.endsWith(".schema.json") || basename3.endsWith(".json") && !basename3.endsWith(".postman_collection.json") && isLikelyJsonSchema(content)) {
+    if (isLikelyJsonSchema(content)) type = "json-schema";
   } else if (isLikelyOpenApiDocument(content)) {
     type = "openapi";
   } else if (isLikelyAsyncApiDocument(content)) {
     type = "asyncapi";
+  } else if (isLikelyAvro(content)) {
+    type = "avro";
+  } else if (isLikelyJsonSchema(content)) {
+    type = "json-schema";
   }
   return type ? { type, format: formatFor(type, normalized) } : void 0;
 }
 function isSpecLikeFilename(filename) {
   const lower = filename.toLowerCase();
-  return /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower === "schema.graphql" || lower === "schema.gql" || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json";
+  return /^(openapi|swagger|api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(lower) || lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".graphql") || lower.endsWith(".gql") || lower.endsWith(".postman_collection.json") || lower.endsWith(".proto") || lower.endsWith(".smithy") || lower === "smithy-build.json" || lower === "schema.json" || lower.endsWith(".schema.json") || lower.endsWith(".avsc") || lower.endsWith(".avro");
 }
-async function collectSpecCandidates(repoRoot) {
+function specCandidateScore(candidate, type, artifactClass) {
+  const normalized = toPosix4(candidate).toLowerCase();
+  const basename3 = import_node_path17.default.posix.basename(normalized);
+  let score = 0;
+  if (artifactClass === "authored") score += 500;
+  if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename3 !== "smithy-build.json") score += 200;
+  if (type === "openapi" || /^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 90;
+  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 85;
+  if (type === "asyncapi" || basename3.startsWith("asyncapi")) score += 80;
+  if (type === "graphql" || basename3 === "schema.graphql" || basename3 === "schema.gql") score += 75;
+  if (type === "smithy" && basename3 === "smithy-build.json") score += 95;
+  if (type === "smithy" && basename3.endsWith(".smithy")) score += 70;
+  if (type === "json-schema" || basename3 === "schema.json" || basename3.endsWith(".schema.json")) score += 65;
+  if (type === "avro" || basename3.endsWith(".avsc") || basename3.endsWith(".avro")) score += 60;
+  if (type === "postman-collection" || basename3.endsWith(".postman_collection.json")) score += 55;
+  if (type === "protobuf" || basename3.endsWith(".proto")) score += 50;
+  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|model|models|schemas|schema|reference|public)\//.test(normalized)) score += 20;
+  if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
+  if (artifactClass === "generated") score -= 400;
+  return score;
+}
+async function inventoryRepoSpecs(repoRoot, options = {}) {
+  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
+  const budget = {
+    files: 0,
+    cumulativeBytes: 0,
+    maxFiles: options.maxFiles ?? DEFAULT_INVENTORY_BOUNDS.maxFiles,
+    maxFileBytes: options.maxFileBytes ?? DEFAULT_INVENTORY_BOUNDS.maxFileBytes,
+    maxCumulativeBytes: options.maxCumulativeBytes ?? DEFAULT_INVENTORY_BOUNDS.maxCumulativeBytes,
+    maxDepth: options.maxDepth ?? DEFAULT_INVENTORY_BOUNDS.maxDepth,
+    truncated: false
+  };
+  const errors = [];
+  const scopeRoot = options.serviceRoot ? toPosix4(options.serviceRoot) : void 0;
+  const pathCandidates = await collectSpecCandidatePaths(resolvedRoot, budget, errors);
+  const scopedPaths = scopeRoot ? pathCandidates.filter((candidate) => {
+    const posix = toPosix4(candidate);
+    return posix === scopeRoot || posix.startsWith(`${scopeRoot}/`) || serviceRootFor(posix) === scopeRoot;
+  }) : pathCandidates;
+  const smithyBuildPaths = scopedPaths.filter((candidate) => import_node_path17.default.posix.basename(toPosix4(candidate)).toLowerCase() === "smithy-build.json");
+  const smithyMemberPaths = /* @__PURE__ */ new Set();
+  const raw = [];
+  for (const buildPath of smithyBuildPaths.sort((a5, b5) => a5.localeCompare(b5))) {
+    const closure = await resolveSmithyProject(resolvedRoot, buildPath, {
+      maxFiles: budget.maxFiles,
+      maxFileBytes: budget.maxFileBytes,
+      maxCumulativeBytes: budget.maxCumulativeBytes,
+      maxDepth: budget.maxDepth
+    });
+    for (const error3 of closure.errors) {
+      errors.push(error3);
+    }
+    for (const member2 of closure.memberPaths) {
+      smithyMemberPaths.add(member2);
+    }
+    if (closure.errors.length > 0 || closure.memberPaths.length === 0 || !closure.content.trim()) {
+      continue;
+    }
+    const artifactClass = artifactClassFor(buildPath);
+    raw.push({
+      path: toPosix4(buildPath),
+      type: "smithy",
+      format: "smithy",
+      serviceRoot: serviceRootFor(buildPath),
+      artifactClass,
+      evidence: closure.evidence,
+      score: specCandidateScore(buildPath, "smithy", artifactClass),
+      content: closure.content,
+      memberPaths: closure.memberPaths,
+      projections: closure.projections
+    });
+  }
+  const graphqlFiles = [];
+  const singleFileCandidates = [];
+  for (const candidate of scopedPaths.sort((a5, b5) => a5.localeCompare(b5))) {
+    const relative2 = toPosix4(candidate);
+    const basename3 = import_node_path17.default.posix.basename(relative2).toLowerCase();
+    if (basename3 === "smithy-build.json") continue;
+    if (relative2.endsWith(".smithy") && smithyMemberPaths.has(relative2)) continue;
+    const absolute = import_node_path17.default.resolve(resolvedRoot, relative2);
+    if (!isPathInsideRoot3(resolvedRoot, absolute)) {
+      errors.push({
+        code: "path-escape",
+        path: relative2,
+        message: `Candidate path escapes repository root: ${relative2}`
+      });
+      continue;
+    }
+    if (!await isRegularNonSymlinkFile2(absolute)) {
+      continue;
+    }
+    const content = await readBoundedFile(absolute, relative2, budget, errors);
+    if (content === void 0) continue;
+    const detected = detectRepoSpec(relative2, content);
+    if (!detected) continue;
+    if (detected.type === "graphql") {
+      graphqlFiles.push({ path: relative2, content });
+      continue;
+    }
+    const artifactClass = artifactClassFor(relative2);
+    singleFileCandidates.push({
+      path: relative2,
+      type: detected.type,
+      format: detected.format,
+      serviceRoot: serviceRootFor(relative2),
+      artifactClass,
+      evidence: [`Resolved from repository specification ${relative2}`],
+      score: specCandidateScore(relative2, detected.type, artifactClass),
+      content
+    });
+  }
+  for (const group5 of groupGraphqlByServiceRoot(graphqlFiles)) {
+    if (scopeRoot && group5.serviceRoot !== scopeRoot && group5.serviceRoot !== ".") {
+    }
+    const artifactClass = group5.memberPaths.every((member2) => artifactClassFor(member2) === "generated") ? "generated" : "authored";
+    raw.push({
+      path: group5.path,
+      type: "graphql",
+      format: "graphql-sdl",
+      serviceRoot: group5.serviceRoot,
+      artifactClass,
+      evidence: group5.evidence,
+      score: specCandidateScore(group5.path, "graphql", artifactClass) + (group5.memberPaths.length > 1 ? 10 : 0),
+      content: group5.content,
+      memberPaths: group5.memberPaths
+    });
+  }
+  raw.push(...singleFileCandidates);
+  try {
+    const iacResolution = await resolveStaticIacCandidates(resolvedRoot, {
+      maxDepth: budget.maxDepth,
+      maxFiles: Math.max(0, budget.maxFiles - budget.files),
+      maxFileBytes: budget.maxFileBytes,
+      maxCumulativeBytes: Math.max(0, budget.maxCumulativeBytes - budget.cumulativeBytes)
+    });
+    for (const error3 of iacResolution.errors) {
+      if (error3.code === "path-escape" || error3.code === "bounds-exceeded") {
+        errors.push({
+          code: error3.code === "path-escape" ? "path-escape" : "bounds-exceeded",
+          path: error3.path,
+          message: error3.message
+        });
+      }
+    }
+    const existingPaths = new Set(raw.map((candidate) => candidate.path));
+    for (const iac of contentBearingIacCandidates(iacResolution)) {
+      if (!iac.content || !iac.sourcePath) continue;
+      if (iac.artifactClass !== "authored") continue;
+      if (scopeRoot) {
+        const posix = toPosix4(iac.sourcePath);
+        if (posix !== scopeRoot && !posix.startsWith(`${scopeRoot}/`) && serviceRootFor(posix) !== scopeRoot) {
+          continue;
+        }
+      }
+      const inventoryPath = toPosix4(iac.sourcePath);
+      if (existingPaths.has(inventoryPath)) continue;
+      const artifactClass = toRepoArtifactClass(iac.artifactClass);
+      raw.push({
+        path: inventoryPath,
+        type: "openapi",
+        format: iac.format ?? "openapi-json",
+        serviceRoot: serviceRootFor(inventoryPath),
+        artifactClass,
+        evidence: [
+          ...iac.evidence,
+          `Static IaC ${iac.source}/${iac.kind} (${iac.artifactClass})`
+        ],
+        score: specCandidateScore(inventoryPath, "openapi", artifactClass),
+        content: iac.content
+      });
+      existingPaths.add(inventoryPath);
+    }
+  } catch {
+  }
+  const sorted = raw.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    if (left.artifactClass !== right.artifactClass) {
+      return left.artifactClass === "authored" ? -1 : 1;
+    }
+    return left.path.localeCompare(right.path);
+  });
+  const candidates = sorted.map((candidate, index) => ({
+    ...candidate,
+    rank: index + 1
+  }));
+  if (budget.truncated) {
+    errors.push({
+      code: "bounds-exceeded",
+      path: scopeRoot ?? ".",
+      message: `Repository spec scan truncated at maxFiles=${budget.maxFiles}, maxDepth=${budget.maxDepth}, maxCumulativeBytes=${budget.maxCumulativeBytes}`
+    });
+  }
+  return { candidates, errors };
+}
+async function readBoundedFile(absolute, relative2, budget, errors) {
+  let content;
+  try {
+    content = await (0, import_promises13.readFile)(absolute, "utf8");
+  } catch (error3) {
+    errors.push({
+      code: "unreadable",
+      path: relative2,
+      message: `Failed to read candidate: ${error3 instanceof Error ? error3.message : String(error3)}`
+    });
+    return void 0;
+  }
+  const bytes = Buffer.byteLength(content, "utf8");
+  if (bytes > budget.maxFileBytes) {
+    errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Candidate exceeds maxFileBytes=${budget.maxFileBytes}`
+    });
+    return void 0;
+  }
+  if (budget.cumulativeBytes + bytes > budget.maxCumulativeBytes) {
+    budget.truncated = true;
+    errors.push({
+      code: "bounds-exceeded",
+      path: relative2,
+      message: `Scan exceeds maxCumulativeBytes=${budget.maxCumulativeBytes}`
+    });
+    return void 0;
+  }
+  budget.cumulativeBytes += bytes;
+  return content;
+}
+async function collectSpecCandidatePaths(repoRoot, budget, errors) {
   const candidates = /* @__PURE__ */ new Set();
   for (const candidate of DIRECT_SPEC_CANDIDATES) {
     candidates.add(candidate);
   }
-  const count = { value: 0 };
   for (const dir of COMMON_SCAN_DIRS) {
-    const root5 = import_node_path8.default.resolve(repoRoot, dir);
-    const fileStat = await (0, import_promises5.stat)(root5).catch(() => void 0);
+    if (budget.files >= budget.maxFiles) {
+      budget.truncated = true;
+      break;
+    }
+    const root5 = import_node_path17.default.resolve(repoRoot, dir);
+    if (!isPathInsideRoot3(repoRoot, root5)) {
+      errors.push({
+        code: "path-escape",
+        path: dir,
+        message: `Scan directory escapes repository root: ${dir}`
+      });
+      continue;
+    }
+    const fileStat = await (0, import_promises13.stat)(root5).catch(() => void 0);
     if (!fileStat) continue;
     if (fileStat.isFile()) {
-      const relative2 = import_node_path8.default.relative(repoRoot, root5);
-      if (isSpecLikeFilename(import_node_path8.default.basename(relative2))) {
+      const relative2 = toPosix4(import_node_path17.default.relative(repoRoot, root5));
+      if (isSpecLikeFilename(import_node_path17.default.basename(relative2))) {
         candidates.add(relative2);
       }
       continue;
     }
     if (!fileStat.isDirectory()) continue;
-    for (const file of await walkSpecCandidates(repoRoot, root5, count)) {
+    for (const file of await walkSpecCandidates(repoRoot, root5, budget, 0)) {
       candidates.add(file);
     }
-    if (count.value >= MAX_SPEC_SCAN_FILES) break;
   }
-  return [...candidates].sort((left, right) => specCandidateScore(right) - specCandidateScore(left) || left.localeCompare(right));
+  return [...candidates].map(toPosix4).sort((a5, b5) => a5.localeCompare(b5));
 }
-async function walkSpecCandidates(repoRoot, current, count, depth = 0) {
-  if (depth > MAX_SPEC_SCAN_DEPTH || count.value >= MAX_SPEC_SCAN_FILES) return [];
+async function walkSpecCandidates(repoRoot, current, budget, depth) {
+  if (depth > budget.maxDepth || budget.files >= budget.maxFiles) {
+    if (budget.files >= budget.maxFiles || depth > budget.maxDepth) {
+      budget.truncated = true;
+    }
+    return [];
+  }
   const results = [];
-  const entries = await (0, import_promises5.readdir)(current).catch(() => []);
+  const entries = (await (0, import_promises13.readdir)(current).catch(() => [])).sort((a5, b5) => a5.localeCompare(b5));
   for (const entry of entries) {
-    if (count.value >= MAX_SPEC_SCAN_FILES) break;
+    if (budget.files >= budget.maxFiles) {
+      budget.truncated = true;
+      break;
+    }
     if (SKIP_DIRS.has(entry)) continue;
-    const fullPath = import_node_path8.default.join(current, entry);
-    const info2 = await (0, import_promises5.stat)(fullPath).catch(() => void 0);
-    if (!info2) continue;
+    const fullPath = import_node_path17.default.join(current, entry);
+    if (!isPathInsideRoot3(repoRoot, fullPath)) {
+      continue;
+    }
+    const info2 = await (0, import_promises13.lstat)(fullPath).catch(() => void 0);
+    if (!info2 || info2.isSymbolicLink()) continue;
     if (info2.isDirectory()) {
-      results.push(...await walkSpecCandidates(repoRoot, fullPath, count, depth + 1));
+      results.push(...await walkSpecCandidates(repoRoot, fullPath, budget, depth + 1));
       continue;
     }
     if (info2.isFile() && isSpecLikeFilename(entry)) {
-      count.value += 1;
-      results.push(import_node_path8.default.relative(repoRoot, fullPath));
+      budget.files += 1;
+      results.push(toPosix4(import_node_path17.default.relative(repoRoot, fullPath)));
     }
   }
   return results;
-}
-function specCandidateScore(candidate) {
-  const normalized = candidate.replace(/\\/g, "/").toLowerCase();
-  const basename3 = import_node_path8.default.basename(normalized);
-  let score = 0;
-  if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename3 !== "smithy-build.json") score += 200;
-  if (/^(openapi|swagger)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 90;
-  if (/^(api|oas)(?:[.-]v?\d+(?:\.\d+)*)?\.(?:ya?ml|json)$/.test(basename3)) score += 85;
-  if (basename3.startsWith("asyncapi")) score += 80;
-  if (basename3 === "schema.graphql" || basename3 === "schema.gql") score += 75;
-  if (basename3.endsWith(".postman_collection.json")) score += 60;
-  if (basename3.endsWith(".proto")) score += 50;
-  if (basename3.endsWith(".smithy")) score += 70;
-  if (basename3 === "smithy-build.json") score += 30;
-  if (/^(api|apis|spec|specs|contracts|events|graphql|proto|smithy|reference|public)\//.test(normalized)) score += 20;
-  if (/^(services|packages|apps)\/[^/]+\//.test(normalized)) score += 15;
-  return score;
 }
 var CFN_ARTIFACT_API_TYPES = {
   "AWS::ApiGateway::RestApi": "REST",
@@ -164271,47 +166974,36 @@ var CFN_ARTIFACT_API_TYPES = {
   "AWS::ApiGatewayV2::Api": "HTTP",
   "AWS::Serverless::HttpApi": "HTTP"
 };
-async function isRegularNonSymlinkFile(absolutePath) {
-  try {
-    const link = await (0, import_promises5.lstat)(absolutePath);
-    if (link.isSymbolicLink()) {
-      return false;
-    }
-    return link.isFile();
-  } catch {
-    return false;
-  }
-}
 async function findLocalCfnArtifactSpecs(repoRoot) {
-  const resolvedRoot = import_node_path8.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
   const artifactPaths = [];
-  const cdkOutDir = import_node_path8.default.join(resolvedRoot, "cdk.out");
+  const cdkOutDir = import_node_path17.default.join(resolvedRoot, "cdk.out");
   try {
-    const cdkLink = await (0, import_promises5.lstat)(cdkOutDir);
+    const cdkLink = await (0, import_promises13.lstat)(cdkOutDir);
     if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
-      const entries = await (0, import_promises5.readdir)(cdkOutDir);
+      const entries = await (0, import_promises13.readdir)(cdkOutDir);
       for (const entry of entries.filter((name) => name.endsWith(".template.json")).sort()) {
-        artifactPaths.push(import_node_path8.default.posix.join("cdk.out", entry));
+        artifactPaths.push(import_node_path17.default.posix.join("cdk.out", entry));
       }
     }
   } catch {
   }
-  const samTemplate = import_node_path8.default.posix.join(".aws-sam", "build", "template.yaml");
-  if (await isRegularNonSymlinkFile(import_node_path8.default.join(resolvedRoot, samTemplate))) {
+  const samTemplate = import_node_path17.default.posix.join(".aws-sam", "build", "template.yaml");
+  if (await isRegularNonSymlinkFile2(import_node_path17.default.join(resolvedRoot, samTemplate))) {
     artifactPaths.push(samTemplate);
   }
   const specs = [];
   for (const artifactPath of artifactPaths.sort()) {
-    const absolutePath = import_node_path8.default.join(resolvedRoot, artifactPath);
-    if (!absolutePath.startsWith(resolvedRoot + import_node_path8.default.sep)) {
+    const absolutePath = import_node_path17.default.join(resolvedRoot, artifactPath);
+    if (!absolutePath.startsWith(resolvedRoot + import_node_path17.default.sep)) {
       continue;
     }
-    if (!await isRegularNonSymlinkFile(absolutePath)) {
+    if (!await isRegularNonSymlinkFile2(absolutePath)) {
       continue;
     }
     let template;
     try {
-      template = parseCfnTemplateBody(await (0, import_promises5.readFile)(absolutePath, "utf8"));
+      template = parseCfnTemplateBody(await (0, import_promises13.readFile)(absolutePath, "utf8"));
     } catch {
       continue;
     }
@@ -164344,12 +167036,12 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
 }
 
 // src/lib/repo/signals.ts
-var import_promises7 = require("node:fs/promises");
-var import_node_path10 = __toESM(require("node:path"), 1);
+var import_promises15 = require("node:fs/promises");
+var import_node_path19 = __toESM(require("node:path"), 1);
 
 // src/lib/repo/scan.ts
-var import_promises6 = require("node:fs/promises");
-var import_node_path9 = __toESM(require("node:path"), 1);
+var import_promises14 = require("node:fs/promises");
+var import_node_path18 = __toESM(require("node:path"), 1);
 var SKIP_DIRS2 = /* @__PURE__ */ new Set([
   ".git",
   "node_modules",
@@ -164367,12 +167059,12 @@ var MAX_DEPTH = 4;
 async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value: 0 }) {
   if (depth > MAX_DEPTH || globalCount.value >= MAX_FILES) return [];
   const results = [];
-  const entries = await (0, import_promises6.readdir)(root5).catch(() => []);
+  const entries = await (0, import_promises14.readdir)(root5).catch(() => []);
   for (const entry of entries) {
     if (globalCount.value >= MAX_FILES) break;
     if (SKIP_DIRS2.has(entry)) continue;
-    const fullPath = import_node_path9.default.join(root5, entry);
-    const info2 = await (0, import_promises6.stat)(fullPath).catch(() => null);
+    const fullPath = import_node_path18.default.join(root5, entry);
+    const info2 = await (0, import_promises14.stat)(fullPath).catch(() => null);
     if (!info2) continue;
     if (info2.isDirectory()) {
       const sub = await findIaCFiles(fullPath, extensions, depth + 1, globalCount);
@@ -164537,11 +167229,11 @@ function detectProviderHints(content) {
   return [...found];
 }
 function toEvidencePath(repoRoot, filePath) {
-  const relative2 = import_node_path10.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path19.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2;
 }
 function shouldDetectProviderHintsForFile(filePath) {
-  const ext = import_node_path10.default.extname(filePath).toLowerCase();
+  const ext = import_node_path19.default.extname(filePath).toLowerCase();
   return ext !== ".md" && ext !== ".markdown";
 }
 var FIXED_INSPECT_FILES = [
@@ -164556,16 +167248,16 @@ var FIXED_INSPECT_FILES = [
 ];
 function isKnownSignalConfigFile(relativePath2) {
   const normalized = relativePath2.replace(/\\/g, "/").toLowerCase();
-  const basename3 = import_node_path10.default.basename(normalized);
+  const basename3 = import_node_path19.default.basename(normalized);
   return /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) || normalized === ".gitlab-ci.yml" || normalized === ".circleci/config.yml" || normalized === ".buildkite/pipeline.yml" || /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename3) || /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) || basename3 === "samconfig.toml" || basename3 === "redocly.yaml" || basename3 === "redocly.yml" || basename3 === "swagger-jsdoc.js" || basename3 === "swagger-jsdoc.ts" || basename3 === "tsoa.json" || basename3 === "openapi-generator.json" || basename3 === "openapi-generator.yaml" || basename3 === "openapi-generator.yml" || basename3 === "pulumi.yaml" || basename3 === "docker-compose.yml" || basename3 === "docker-compose.yaml" || basename3 === "compose.yml" || basename3 === "compose.yaml" || basename3 === "values.yaml" || basename3 === "values.yml" || basename3 === "chart.yaml" || basename3 === "chart.yml" || basename3 === "task-definition.json" || basename3 === "ecs-task-definition.json" || basename3 === "ecs-service.json" || basename3 === "service-definition.json" || basename3 === "application.yml" || basename3 === "application.yaml" || basename3 === "application.properties" || /^appsettings(?:\.[^.]+)?\.json$/.test(basename3) || /(^|\/)(?:helm|charts)\/.+\.ya?ml$/.test(normalized) || /(^|\/)(?:k8s|kubernetes|manifests)\/.+\.ya?ml$/.test(normalized) || /(^|\/)ecs\/.+\.json$/.test(normalized);
 }
 async function collectInspectFiles(repoRoot) {
   const discovered = await findIaCFiles(repoRoot, [".yml", ".yaml", ".json", ".ts", ".js", ".toml", ".properties"]);
-  const discoveredRelative = discovered.map((filePath) => import_node_path10.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
+  const discoveredRelative = discovered.map((filePath) => import_node_path19.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
   return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
 }
 function isSnsEventContractFile(filePath) {
-  const lower = import_node_path10.default.basename(filePath).toLowerCase();
+  const lower = import_node_path19.default.basename(filePath).toLowerCase();
   return lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".schema.json");
 }
 async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expectedGatewayIds = []) {
@@ -164581,9 +167273,9 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   const snsEvidenceRoots = /* @__PURE__ */ new Set();
   const inspectFiles = await collectInspectFiles(repoRoot);
   for (const file of inspectFiles) {
-    const fullPath = import_node_path10.default.resolve(repoRoot, file);
+    const fullPath = import_node_path19.default.resolve(repoRoot, file);
     try {
-      const content = await (0, import_promises7.readFile)(fullPath, "utf8");
+      const content = await (0, import_promises15.readFile)(fullPath, "utf8");
       const extracted = extractGatewayIds(content);
       if (extracted.length > 0) {
         inferredGatewayHints.push(...extracted);
@@ -164605,7 +167297,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === "sns") {
-            snsEvidenceRoots.add(import_node_path10.default.dirname(fullPath));
+            snsEvidenceRoots.add(import_node_path19.default.dirname(fullPath));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -164624,9 +167316,9 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   }
   const graphqlFiles = ["schema.graphql", "schema.gql", "graphql/schema.graphql", "src/schema.graphql"];
   for (const file of graphqlFiles) {
-    const fullPath = import_node_path10.default.resolve(repoRoot, file);
+    const fullPath = import_node_path19.default.resolve(repoRoot, file);
     try {
-      await (0, import_promises7.readFile)(fullPath, "utf8");
+      await (0, import_promises15.readFile)(fullPath, "utf8");
       providerHintSet.add("appsync");
       evidence.push(`Found GraphQL schema file: ${file}`);
       break;
@@ -164635,7 +167327,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
   }
   const iacFiles = await findIaCFiles(repoRoot, [".tf"]);
   for (const filePath of iacFiles) {
-    const content = await (0, import_promises7.readFile)(filePath, "utf8").catch(() => "");
+    const content = await (0, import_promises15.readFile)(filePath, "utf8").catch(() => "");
     if (!content) continue;
     const extracted = extractGatewayIds(content);
     if (extracted.length > 0) {
@@ -164657,7 +167349,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
       if (hint === "sns") {
-        snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
+        snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
       }
     }
     if (detectSnsEventBridgeBridgePattern(content)) {
@@ -164666,12 +167358,12 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add("eventbridge-schemas");
     }
   }
-  const cdkJson = import_node_path10.default.resolve(repoRoot, "cdk.json");
+  const cdkJson = import_node_path19.default.resolve(repoRoot, "cdk.json");
   try {
-    await (0, import_promises7.readFile)(cdkJson, "utf8");
+    await (0, import_promises15.readFile)(cdkJson, "utf8");
     const cdkFiles = await findIaCFiles(repoRoot, [".ts", ".js", ".py", ".java", ".cs"]);
     for (const filePath of cdkFiles) {
-      const content = await (0, import_promises7.readFile)(filePath, "utf8").catch(() => "");
+      const content = await (0, import_promises15.readFile)(filePath, "utf8").catch(() => "");
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -164688,7 +167380,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -164699,16 +167391,16 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
     }
   } catch {
   }
-  const pulumiYaml = import_node_path10.default.resolve(repoRoot, "Pulumi.yaml");
+  const pulumiYaml = import_node_path19.default.resolve(repoRoot, "Pulumi.yaml");
   try {
-    const pulumiContent = await (0, import_promises7.readFile)(pulumiYaml, "utf8");
+    const pulumiContent = await (0, import_promises15.readFile)(pulumiYaml, "utf8");
     for (const hint of detectProviderHints(pulumiContent)) {
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in Pulumi.yaml`);
     }
     const pulumiFiles = await findIaCFiles(repoRoot, [".ts", ".py", ".go", ".java", ".cs"]);
     for (const filePath of pulumiFiles) {
-      const content = await (0, import_promises7.readFile)(filePath, "utf8").catch(() => "");
+      const content = await (0, import_promises15.readFile)(filePath, "utf8").catch(() => "");
       if (!content) continue;
       const domains = extractCustomDomainHints(content);
       if (domains.length > 0) {
@@ -164725,7 +167417,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path10.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -164750,6 +167442,31 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
     for (const contractPath of contractCandidates) {
       evidence.push(`Found SNS event contract file: ${toEvidencePath(repoRoot, contractPath)}`);
     }
+  }
+  try {
+    const iac = await resolveStaticIacCandidates(repoRoot, {
+      maxFiles: 60,
+      maxDepth: 6,
+      enabledSources: {
+        cloudformation: true,
+        sam: true,
+        cdk: true,
+        terraform: true,
+        serverless: true
+      }
+    });
+    for (const apiId of iac.physicalApiIds) {
+      inferredGatewayHints.push(apiId);
+      evidence.push(`Exact physical API ID ${apiId} from static IaC resolution`);
+    }
+    for (const candidate of iac.candidates) {
+      if (candidate.kind === "physical-api-id" && candidate.physicalApiId) {
+        evidence.push(
+          `Physical API ID handoff ${candidate.physicalApiId} via ${candidate.source} (${candidate.sourcePath})`
+        );
+      }
+    }
+  } catch {
   }
   return {
     serviceHints: unique(serviceHints),
@@ -164884,12 +167601,262 @@ function chooseSource(input) {
   };
 }
 
+// src/lib/resolve/narrowing-pipeline.ts
+var CANONICAL_REPO_TAG = "postman:repo";
+var FOX_ORG_TAG = "GithubOrg";
+var FOX_REPO_TAG = "GithubRepo";
+var GENERIC_TAG_KEYS = ["repo", "repository", "service", "github:repository"];
+var API_GATEWAY_RESOURCE_TYPES = ["apigateway:restapis", "apigateway:apis"];
+function slugifyRepoName(repoSlug) {
+  if (!repoSlug) return [];
+  const repoName = repoSlug.split("/").pop()?.trim() ?? "";
+  if (!repoName) return [];
+  const slugs = [repoName];
+  for (const suffix of ["-service", "-api", "-backend", "-server", "-app"]) {
+    if (repoName.endsWith(suffix)) {
+      slugs.push(repoName.slice(0, -suffix.length));
+    }
+  }
+  return slugs.filter((s2) => s2.length > 2);
+}
+function normalizeRepoIdentity(value) {
+  return value.trim().replace(/\.git$/i, "").toLowerCase();
+}
+function repoIdentityEquals(left, right) {
+  if (left === void 0 || right === void 0) return false;
+  const a5 = normalizeRepoIdentity(left);
+  const b5 = normalizeRepoIdentity(right);
+  return a5.length > 0 && a5 === b5;
+}
+function parseRepoSlug(repoSlug) {
+  const parts = repoSlug.split("/").map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) return void 0;
+  const owner = parts[0];
+  const repo = parts.slice(1).join("/");
+  if (!owner || !repo) return void 0;
+  return { owner, repo };
+}
+function extractGatewayIdFromArn(arn) {
+  return arn.match(/\/(?:restapis|apis)\/([a-z0-9_-]+)/i)?.[1];
+}
+function matchExactRepoTagContract(tags, repoSlug) {
+  if (!tags) return void 0;
+  if (repoIdentityEquals(tags[CANONICAL_REPO_TAG], repoSlug)) {
+    return "postman:repo";
+  }
+  const parsed = parseRepoSlug(repoSlug);
+  if (!parsed) return void 0;
+  if (repoIdentityEquals(tags[FOX_ORG_TAG], parsed.owner) && repoIdentityEquals(tags[FOX_REPO_TAG], parsed.repo)) {
+    return "GithubOrg+GithubRepo";
+  }
+  return void 0;
+}
+function uniqueSortedIds(ids) {
+  return [...new Set(ids.filter((id) => Boolean(id)))].sort((a5, b5) => a5 < b5 ? -1 : a5 > b5 ? 1 : 0);
+}
+function toExactResult(ids, tagContract, evidence) {
+  if (ids.length === 1) {
+    return {
+      gatewayIds: ids,
+      mode: "select",
+      selectId: ids[0],
+      tagContract,
+      evidence
+    };
+  }
+  return {
+    gatewayIds: ids,
+    mode: "narrow",
+    tagContract,
+    evidence
+  };
+}
+async function correlateExactRepoTags(ctx) {
+  if (!ctx.taggingClient || !ctx.repoSlug) return void 0;
+  const repoSlug = ctx.repoSlug;
+  const parsed = parseRepoSlug(repoSlug);
+  if (!parsed) return void 0;
+  try {
+    let canonical = await ctx.taggingClient.getResourcesByTag(CANONICAL_REPO_TAG, [repoSlug], API_GATEWAY_RESOURCE_TYPES);
+    let exactIds = uniqueSortedIds(
+      canonical.filter((resource) => repoIdentityEquals(resource.tags?.[CANONICAL_REPO_TAG], repoSlug)).map((resource) => extractGatewayIdFromArn(resource.arn))
+    );
+    if (exactIds.length === 0) {
+      canonical = await ctx.taggingClient.getResourcesByTag(CANONICAL_REPO_TAG, [], API_GATEWAY_RESOURCE_TYPES);
+      exactIds = uniqueSortedIds(
+        canonical.filter((resource) => repoIdentityEquals(resource.tags?.[CANONICAL_REPO_TAG], repoSlug)).map((resource) => extractGatewayIdFromArn(resource.arn))
+      );
+    }
+    if (exactIds.length === 1) {
+      return toExactResult(exactIds, "postman:repo", [
+        `Matched tag contract postman:repo`,
+        `Exactly one API tagged ${CANONICAL_REPO_TAG} for repository identity`
+      ]);
+    }
+    if (exactIds.length > 1) {
+      return toExactResult(exactIds, "postman:repo", [
+        `Matched tag contract postman:repo`,
+        `Found ${exactIds.length} APIs tagged ${CANONICAL_REPO_TAG} for repository identity (per-environment ambiguity retained)`
+      ]);
+    }
+  } catch {
+  }
+  try {
+    const foxResources = await ctx.taggingClient.getResourcesByTags(
+      [{ key: FOX_ORG_TAG }, { key: FOX_REPO_TAG }],
+      API_GATEWAY_RESOURCE_TYPES
+    );
+    const exactIds = uniqueSortedIds(
+      foxResources.filter(
+        (resource) => repoIdentityEquals(resource.tags?.[FOX_ORG_TAG], parsed.owner) && repoIdentityEquals(resource.tags?.[FOX_REPO_TAG], parsed.repo)
+      ).map((resource) => extractGatewayIdFromArn(resource.arn))
+    );
+    if (exactIds.length === 1) {
+      return toExactResult(exactIds, "GithubOrg+GithubRepo", [
+        `Matched tag contract GithubOrg+GithubRepo`,
+        `Exactly one API tagged ${FOX_ORG_TAG}+${FOX_REPO_TAG} for repository identity`
+      ]);
+    }
+    if (exactIds.length > 1) {
+      return toExactResult(exactIds, "GithubOrg+GithubRepo", [
+        `Matched tag contract GithubOrg+GithubRepo`,
+        `Found ${exactIds.length} APIs tagged ${FOX_ORG_TAG}+${FOX_REPO_TAG} for repository identity (per-environment ambiguity retained)`
+      ]);
+    }
+  } catch {
+  }
+  return void 0;
+}
+function tierIacFingerprint(signals) {
+  const ids = [...signals.explicitGatewayIdHints, ...signals.inferredGatewayIdHints];
+  if (ids.length === 0) return void 0;
+  return {
+    ids,
+    evidence: [`IaC fingerprinting found ${ids.length} gateway ID(s) from repo files`]
+  };
+}
+async function tierCloudFormationCorrelation(ctx) {
+  if (!ctx.cfnClient) return void 0;
+  const slugs = slugifyRepoName(ctx.repoSlug);
+  if (slugs.length === 0) return void 0;
+  let stacks;
+  try {
+    stacks = await ctx.cfnClient.listActiveStacks();
+  } catch {
+    return void 0;
+  }
+  const matchingIds = [];
+  const evidence = [];
+  for (const stack of stacks) {
+    const stackLower = stack.name.toLowerCase();
+    const matches = slugs.some((slug) => stackLower.includes(slug.toLowerCase()));
+    if (!matches) continue;
+    try {
+      const resources = await ctx.cfnClient.listApiResources(stack.name);
+      for (const resource of resources) {
+        if (resource.physicalId) {
+          matchingIds.push(resource.physicalId);
+          evidence.push(`Stack ${stack.name} contains ${resource.type} -> ${resource.physicalId}`);
+        }
+      }
+    } catch {
+    }
+  }
+  if (matchingIds.length === 0) return void 0;
+  return { ids: matchingIds, evidence };
+}
+async function tierTagPreFilter(ctx) {
+  if (!ctx.taggingClient) return void 0;
+  if (!ctx.repoSlug) return void 0;
+  const exact = await correlateExactRepoTags(ctx);
+  if (exact) {
+    return {
+      ids: exact.gatewayIds,
+      selectId: exact.selectId,
+      evidence: exact.evidence,
+      tagContract: exact.tagContract
+    };
+  }
+  const repoName = ctx.repoSlug.split("/").pop()?.trim();
+  const tagValues = [ctx.repoSlug];
+  if (repoName) tagValues.push(repoName);
+  for (const tagKey of [CANONICAL_REPO_TAG, ...GENERIC_TAG_KEYS]) {
+    try {
+      const resources = await ctx.taggingClient.getResourcesByTag(
+        tagKey,
+        tagValues,
+        API_GATEWAY_RESOURCE_TYPES
+      );
+      if (resources.length === 0) continue;
+      const ids = uniqueSortedIds(resources.map((r5) => extractGatewayIdFromArn(r5.arn)));
+      if (ids.length > 0) {
+        return {
+          ids,
+          evidence: [`Found ${ids.length} API(s) tagged with ${tagKey}=${tagValues.join("|")}`]
+        };
+      }
+    } catch {
+    }
+  }
+  return void 0;
+}
+function tierNamingHeuristic(candidateNames, ctx) {
+  const slugs = slugifyRepoName(ctx.repoSlug);
+  if (slugs.length === 0) return void 0;
+  const matches = candidateNames.filter((c5) => {
+    const nameLower = c5.name.toLowerCase();
+    return slugs.some((slug) => nameLower.includes(slug.toLowerCase()));
+  });
+  if (matches.length === 0) return void 0;
+  return {
+    ids: matches.map((m3) => m3.id),
+    evidence: [`Name matching narrowed ${candidateNames.length} candidates to ${matches.length} using repo slug`]
+  };
+}
+async function runNarrowingPipeline(ctx, allCandidates) {
+  const enumeratedIds = allCandidates.map((c5) => c5.id);
+  const enumeratedSet = new Set(enumeratedIds);
+  const tiers = [
+    { tier: "iac-fingerprint", run: () => tierIacFingerprint(ctx.signals) },
+    { tier: "cfn-correlation", run: () => tierCloudFormationCorrelation(ctx) },
+    { tier: "tag-prefilter", run: () => tierTagPreFilter(ctx) },
+    { tier: "naming-heuristic", run: () => tierNamingHeuristic(allCandidates, ctx) }
+  ];
+  for (const { tier, run } of tiers) {
+    const hit = await run();
+    if (!hit) continue;
+    const intersecting = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const id of hit.ids) {
+      if (enumeratedSet.has(id) && !seen.has(id)) {
+        seen.add(id);
+        intersecting.push(id);
+      }
+    }
+    if (intersecting.length === 0) continue;
+    const demoted = allCandidates.length - intersecting.length;
+    const isSelect = hit.selectId !== void 0 && intersecting.length === 1 && intersecting[0] === hit.selectId;
+    return {
+      gatewayIds: intersecting,
+      tier,
+      mode: isSelect ? "select" : "narrow",
+      droppedCount: demoted,
+      tagContract: hit.tagContract,
+      evidence: [
+        ...hit.evidence,
+        `Narrowing (${tier}) ranked ${intersecting.length} candidate(s) first and demoted ${demoted} (not deleted)`
+      ]
+    };
+  }
+  return void 0;
+}
+
 // src/lib/resolve/service-resolver.ts
 function includesIgnoreCase(value, candidates) {
   const v = value.toLowerCase();
   return candidates.some((candidate) => candidate.toLowerCase() === v);
 }
-function scoreCandidate(candidate, signals) {
+function scoreCandidate(candidate, signals, options) {
   let score = 0;
   const evidence = [];
   if (includesIgnoreCase(candidate.id, signals.explicitGatewayIdHints)) {
@@ -164898,6 +167865,11 @@ function scoreCandidate(candidate, signals) {
   } else if (includesIgnoreCase(candidate.id, signals.inferredGatewayIdHints)) {
     score += 25;
     evidence.push(`Matched inferred gateway ID ${candidate.id}`);
+  }
+  const tagContract = options?.repoSlug ? matchExactRepoTagContract(candidate.tags, options.repoSlug) : void 0;
+  if (tagContract) {
+    score += 100;
+    evidence.push(`Matched tag contract ${tagContract}`);
   }
   const serviceHints = signals.serviceHints.map((hint) => hint.toLowerCase());
   if (serviceHints.some((hint) => hint && candidate.name.toLowerCase().includes(hint))) {
@@ -164922,16 +167894,16 @@ function toResolved(candidate, signals, score, evidence) {
     evidence: mergedEvidence.length > 0 ? mergedEvidence : ["No strong resolver evidence found"]
   };
 }
-function rankServiceCandidates(gateways, signals) {
+function rankServiceCandidates(gateways, signals, options) {
   const ranked = gateways.map((candidate) => {
-    const scored = scoreCandidate(candidate, signals);
+    const scored = scoreCandidate(candidate, signals, options);
     return toResolved(candidate, signals, scored.score, scored.evidence);
   });
   ranked.sort((left, right) => right.confidence - left.confidence || (left.gatewayId < right.gatewayId ? -1 : left.gatewayId > right.gatewayId ? 1 : 0));
   return ranked;
 }
-function resolveServiceCandidate(gateways, signals) {
-  const ranked = rankServiceCandidates(gateways, signals);
+function resolveServiceCandidate(gateways, signals, options) {
+  const ranked = rankServiceCandidates(gateways, signals, options);
   if (ranked.length === 0) return void 0;
   const best = ranked[0];
   const tied = ranked.filter((candidate) => candidate.confidence === best.confidence);
@@ -164946,7 +167918,7 @@ function resolveServiceCandidate(gateways, signals) {
 }
 
 // src/lib/spec/oas-derivation.ts
-var import_yaml6 = __toESM(require_dist(), 1);
+var import_yaml8 = __toESM(require_dist(), 1);
 function deriveOpenApiDocument(input) {
   const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
   if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
@@ -165244,9 +168216,9 @@ function postmanToOpenApi(content, title) {
   const document = baseDocument(stringValue(recordValue2(parsed.info).name) || title);
   for (const request of postmanRequests(parsed.item)) {
     const method = request.method.toLowerCase();
-    const path15 = request.path;
+    const path24 = request.path;
     const operation2 = {
-      operationId: safeOperationName2(`${method} ${path15}`),
+      operationId: safeOperationName2(`${method} ${path24}`),
       summary: request.name,
       responses: postmanResponsesToOpenApi(request.responses)
     };
@@ -165268,8 +168240,8 @@ function postmanToOpenApi(content, title) {
         }
       };
     }
-    document.paths[path15] = {
-      ...recordValue2(document.paths[path15]),
+    document.paths[path24] = {
+      ...recordValue2(document.paths[path24]),
       [method]: operation2
     };
   }
@@ -165679,16 +168651,16 @@ function postmanPath(url) {
     }
   }
   const record = recordValue2(url);
-  const path15 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
-  if (!path15) return "/";
-  if (/^https?:\/\//i.test(path15)) {
+  const path24 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
+  if (!path24) return "/";
+  if (/^https?:\/\//i.test(path24)) {
     try {
-      return new URL(path15).pathname || "/";
+      return new URL(path24).pathname || "/";
     } catch {
       return "/";
     }
   }
-  return path15.startsWith("/") ? path15 : `/${path15}`;
+  return path24.startsWith("/") ? path24 : `/${path24}`;
 }
 function postmanQueryParameters(url) {
   const record = recordValue2(url);
@@ -165786,7 +168758,7 @@ function schemaFromExample(value) {
 }
 function parseStructured(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml6.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     return recordValue2(parsed);
   } catch {
     return {};
@@ -165862,11 +168834,44 @@ var AppSyncProvider = class {
     const content = await this.client.getSchema(candidate.id);
     const tags = await this.client.getTags(candidate.meta.arn ?? "");
     const serviceName = (tags["postman:project-name"] ?? "").trim() || (tags.Name ?? "").trim() || candidate.name;
+    const evidence = [`Exported GraphQL SDL schema for AppSync API ${candidate.id} (${serviceName})`];
+    const provenance = {
+      apiId: candidate.id,
+      protocol: "GRAPHQL",
+      queryTimestamp: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    const apiType = (candidate.meta.apiType ?? "").toUpperCase();
+    if (apiType === "MERGED" && this.client.listSourceApiAssociations) {
+      const associationResult = await this.client.listSourceApiAssociations(candidate.id);
+      evidence.push(...associationResult.evidence);
+      const associations = associationResult.associations.map((item) => ({
+        associationId: item.associationId,
+        sourceApiId: item.sourceApiId,
+        associationStatus: item.associationStatus,
+        denied: associationResult.denied || void 0
+      }));
+      provenance.appsyncSourceAssociations = associations;
+      if (associationResult.denied) {
+        provenance.appsyncAssociationEvidence = "denied";
+      } else if (associationResult.truncated) {
+        provenance.appsyncAssociationEvidence = "partial";
+        provenance.truncation = {
+          truncated: true,
+          reason: "AppSync source API association pagination limit reached"
+        };
+      } else {
+        provenance.appsyncAssociationEvidence = "complete";
+      }
+      evidence.push(
+        `Retained ${associations.length} sanitized AppSync source association identifier(s) as provenance; exported merged SDL once`
+      );
+    }
     return {
       content,
       format: "graphql-sdl",
       filename: "schema.graphql",
-      evidence: [`Exported GraphQL SDL schema for AppSync API ${candidate.id} (${serviceName})`]
+      evidence,
+      provenance
     };
   }
 };
@@ -166420,11 +169425,11 @@ function pipeDocument(candidate, detail) {
 function apiDestinationDocument(candidate) {
   const endpoint = parseUrl2(candidate.meta.invocationEndpoint);
   const method = (candidate.meta.httpMethod || "POST").toLowerCase();
-  const path15 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
+  const path24 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
   const document = baseDocument2(candidate.name);
   document.servers = endpoint ? [{ url: `${endpoint.protocol}//${endpoint.host}` }] : [];
   document.paths = {
-    [path15]: {
+    [path24]: {
       [method]: {
         operationId: `${camel(candidate.name)}ApiDestination`,
         summary: `EventBridge API destination ${candidate.name}`,
@@ -166487,7 +169492,7 @@ function camel(value) {
 }
 
 // src/lib/providers/bedrock-action-groups.ts
-var import_yaml7 = __toESM(require_dist(), 1);
+var import_yaml9 = __toESM(require_dist(), 1);
 var BedrockActionGroupProvider = class {
   constructor(client, s3) {
     this.client = client;
@@ -166559,7 +169564,7 @@ var BedrockActionGroupProvider = class {
 function normalizeOpenApi(content, detail) {
   let parsed;
   try {
-    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
+    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
   } catch {
     parsed = {};
   }
@@ -166628,13 +169633,13 @@ var AlbListenerRulesProvider = class {
       },
       servers: candidate.meta.loadBalancerDnsName ? [{ url: `https://${candidate.meta.loadBalancerDnsName}` }] : [],
       paths: Object.fromEntries(
-        paths.map((path15) => [
-          path15,
+        paths.map((path24) => [
+          path24,
           Object.fromEntries(
             methods.map((method) => [
               method.toLowerCase(),
               {
-                operationId: `${method.toLowerCase()}${camelPath(path15)}AlbRule`,
+                operationId: `${method.toLowerCase()}${camelPath(path24)}AlbRule`,
                 summary: `ALB listener rule ${candidate.meta.priority || candidate.name}`,
                 parameters: [
                   ...queryParams.map((param) => ({
@@ -166908,7 +169913,7 @@ var StepFunctionsProvider = class {
   async exportSpec(candidate, _options) {
     void _options;
     const detail = await this.client.describeStateMachine(candidate.meta.stateMachineArn || candidate.id);
-    const path15 = `/step-functions/${safePath(detail.name)}/executions`;
+    const path24 = `/step-functions/${safePath(detail.name)}/executions`;
     const document = {
       openapi: "3.1.0",
       info: {
@@ -166917,7 +169922,7 @@ var StepFunctionsProvider = class {
         description: "Partial Step Functions surface derived from Amazon States Language workflow metadata."
       },
       paths: {
-        [path15]: {
+        [path24]: {
           post: {
             operationId: `start${pascal2(detail.name)}Execution`,
             summary: `Start ${detail.name} state machine execution`,
@@ -166968,37 +169973,384 @@ function pascal2(value) {
 }
 
 // src/lib/fetch/spec-fetcher.ts
+var import_promises16 = require("node:dns/promises");
+var import_node_net2 = require("node:net");
+var import_undici2 = __toESM(require_undici(), 1);
+
+// src/lib/fetch/blocked-addresses.ts
+var import_node_net = require("node:net");
+var NON_GLOBAL_ADDRESSES = new import_node_net.BlockList();
+for (const [address, prefix] of [
+  ["0.0.0.0", 8],
+  ["10.0.0.0", 8],
+  ["100.64.0.0", 10],
+  ["127.0.0.0", 8],
+  ["169.254.0.0", 16],
+  ["172.16.0.0", 12],
+  ["192.0.0.0", 24],
+  ["192.0.2.0", 24],
+  ["192.168.0.0", 16],
+  ["198.18.0.0", 15],
+  ["198.51.100.0", 24],
+  ["203.0.113.0", 24],
+  ["224.0.0.0", 4],
+  ["240.0.0.0", 4]
+]) {
+  NON_GLOBAL_ADDRESSES.addSubnet(address, prefix, "ipv4");
+}
+for (const [address, prefix] of [
+  ["::", 128],
+  ["::1", 128],
+  ["100::", 64],
+  ["2001:2::", 48],
+  ["2001:db8::", 32],
+  ["fc00::", 7],
+  ["fe80::", 10],
+  ["ff00::", 8]
+]) {
+  NON_GLOBAL_ADDRESSES.addSubnet(address, prefix, "ipv6");
+}
+var BLOCKED_HOSTNAMES = /* @__PURE__ */ new Set([
+  "localhost",
+  "metadata",
+  "metadata.google.internal",
+  "metadata.goog"
+]);
+function normalizedHostname(parsed) {
+  return parsed.hostname.toLowerCase().replace(/^\[([^\]]+)\]$/, "$1");
+}
+function isBlockedHostname(hostname) {
+  const host = hostname.toLowerCase().replace(/^\[([^\]]+)\]$/, "$1");
+  if (BLOCKED_HOSTNAMES.has(host)) return true;
+  if (host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) {
+    return true;
+  }
+  if (host === "169.254.169.254" || host.endsWith(".metadata.google.internal")) {
+    return true;
+  }
+  return false;
+}
+function isNonGlobalAddress(address) {
+  const normalized = address.toLowerCase().split("%")[0] ?? "";
+  const family = (0, import_node_net.isIP)(normalized);
+  if (family === 4) return NON_GLOBAL_ADDRESSES.check(normalized, "ipv4");
+  if (family !== 6) return true;
+  const mapped = normalized.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)?.[1];
+  if (mapped) return isNonGlobalAddress(mapped);
+  return NON_GLOBAL_ADDRESSES.check(normalized, "ipv6");
+}
+function isBlockedAddress(address) {
+  return isNonGlobalAddress(address);
+}
+
+// src/lib/fetch/url-evidence.ts
+function sanitizeUrlEvidence(input) {
+  try {
+    const url = typeof input === "string" ? new URL(input) : new URL(input.toString());
+    url.username = "";
+    url.password = "";
+    url.search = "";
+    url.hash = "";
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return "[invalid URL]";
+  }
+}
+function redactUrlsInMessage(message) {
+  return message.replace(/https?:\/\/[^\s'"<>]+/gi, (match) => sanitizeUrlEvidence(match));
+}
+
+// src/lib/fetch/remote-fetch-policy.ts
+var DEFAULT_REMOTE_FETCH_POLICY = {
+  enabled: false,
+  allowlist: []
+};
+function createRemoteFetchPolicy(input = {}) {
+  const allowlist = (input.allowlist ?? []).map((entry) => ({
+    hostname: entry.hostname.trim().toLowerCase(),
+    ...entry.pathPrefix !== void 0 ? { pathPrefix: normalizePathPrefix(entry.pathPrefix) } : {}
+  }));
+  return {
+    enabled: input.enabled === true,
+    allowlist
+  };
+}
+function normalizePathPrefix(prefix) {
+  if (!prefix || prefix === "/") return "/";
+  const withLeading = prefix.startsWith("/") ? prefix : `/${prefix}`;
+  return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
+}
+function pathnameMatchesPrefix(pathname, prefix) {
+  if (prefix === void 0 || prefix === "") return true;
+  const normalizedPrefix = normalizePathPrefix(prefix);
+  if (normalizedPrefix === "/") return true;
+  const pathWithSlash = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  return pathname === normalizedPrefix.slice(0, -1) || pathWithSlash.startsWith(normalizedPrefix);
+}
+function isUrlAllowedByPolicy(url, policy) {
+  if (!policy.enabled || policy.allowlist.length === 0) {
+    return false;
+  }
+  const hostname = url.hostname.toLowerCase().replace(/^\[([^\]]+)\]$/, "$1");
+  return policy.allowlist.some(
+    (entry) => entry.hostname === hostname && pathnameMatchesPrefix(url.pathname, entry.pathPrefix)
+  );
+}
+function assertUrlAllowedByPolicy(url, policy) {
+  if (!policy.enabled) {
+    throw new Error(
+      `Remote spec fetch is disabled by default; pass an enabled RemoteFetchPolicy with an allowlist to fetch ${sanitizeUrlEvidence(url)}`
+    );
+  }
+  if (policy.allowlist.length === 0) {
+    throw new Error(
+      `Remote spec fetch policy has an empty allowlist; refusing ${sanitizeUrlEvidence(url)}`
+    );
+  }
+  if (!isUrlAllowedByPolicy(url, policy)) {
+    throw new Error(
+      `Remote spec fetch host/path is not allowlisted: ${sanitizeUrlEvidence(url)}`
+    );
+  }
+}
+
+// src/lib/fetch/spec-fetcher.ts
 var MAX_SPEC_BYTES = 10 * 1024 * 1024;
+var DEFAULT_MAX_TOTAL_BYTES = 25 * 1024 * 1024;
 var DEFAULT_TIMEOUT_MS = 15e3;
+var MAX_REDIRECTS = 5;
+function stripUrlCredentials(url) {
+  const cleaned = new URL(url.toString());
+  cleaned.username = "";
+  cleaned.password = "";
+  return cleaned;
+}
+function sameOrigin(a5, b5) {
+  return a5.protocol === b5.protocol && a5.hostname === b5.hostname && a5.port === b5.port;
+}
+async function defaultLookup(hostname) {
+  const results = await (0, import_promises16.lookup)(hostname, { all: true, verbatim: true });
+  return results.map((entry) => ({ address: entry.address, family: entry.family }));
+}
+async function resolvePublicAddress(parsed, lookupFn) {
+  const hostname = normalizedHostname(parsed);
+  if (isBlockedHostname(hostname)) {
+    throw new Error(
+      `Private or local addresses are not allowed for remote spec fetch: ${sanitizeUrlEvidence(parsed)}`
+    );
+  }
+  const addresses = (0, import_node_net2.isIP)(hostname) ? [{ address: hostname, family: (0, import_node_net2.isIP)(hostname) }] : await lookupFn(hostname);
+  if (addresses.length === 0) {
+    throw new Error(`No DNS records for ${hostname}`);
+  }
+  for (const entry of addresses) {
+    if (isBlockedAddress(entry.address)) {
+      throw new Error(
+        `Private or local addresses are not allowed for remote spec fetch: ${sanitizeUrlEvidence(parsed)}`
+      );
+    }
+  }
+  const pinned = addresses.find(({ family }) => family === 4) ?? addresses[0];
+  return { address: pinned.address, family: pinned.family, all: addresses };
+}
+function shouldBypassProxy(parsed) {
+  const noProxy = process.env.NO_PROXY ?? process.env.no_proxy ?? "";
+  const hostname = normalizedHostname(parsed);
+  const port = parsed.port || "443";
+  return noProxy.split(",").some((entry) => {
+    const value = entry.trim().toLowerCase();
+    if (!value) return false;
+    if (value === "*") return true;
+    const separator = value.lastIndexOf(":");
+    const hasPort = separator > -1 && /^\d+$/.test(value.slice(separator + 1));
+    const rulePort = hasPort ? value.slice(separator + 1) : void 0;
+    const ruleHost = hasPort ? value.slice(0, separator) : value;
+    if (rulePort && rulePort !== port) return false;
+    if (ruleHost.startsWith("*.")) return hostname.endsWith(ruleHost.slice(1));
+    if (ruleHost.startsWith(".")) return hostname.endsWith(ruleHost);
+    return hostname === ruleHost;
+  });
+}
+function createDispatcher(parsed, address) {
+  const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy ?? process.env.HTTP_PROXY ?? process.env.http_proxy;
+  const family = (0, import_node_net2.isIP)(address);
+  const hostname = normalizedHostname(parsed);
+  if (!proxy || shouldBypassProxy(parsed)) {
+    return new import_undici2.Agent({
+      connect: {
+        ...(0, import_node_net2.isIP)(hostname) ? {} : { servername: hostname },
+        lookup(_hostname, options, callback) {
+          if (options.all) callback(null, [{ address, family }]);
+          else callback(null, address, family);
+        }
+      }
+    });
+  }
+  return new import_undici2.ProxyAgent({
+    uri: proxy,
+    requestTls: (0, import_node_net2.isIP)(hostname) ? {} : { servername: hostname },
+    factory(origin, options) {
+      const { connect } = options;
+      return new import_undici2.Pool(origin, {
+        ...options,
+        connect(connectOptions, callback) {
+          connect({ ...connectOptions, host: address, hostname: address }, callback);
+        }
+      });
+    }
+  });
+}
+function parseHttpsUrl(input) {
+  let parsed;
+  try {
+    parsed = new URL(input);
+  } catch {
+    throw new Error(`Malformed URL for remote spec fetch: ${sanitizeUrlEvidence(input)}`);
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(
+      `Only HTTPS URLs are supported for remote spec fetch; got ${parsed.protocol} (${sanitizeUrlEvidence(parsed)})`
+    );
+  }
+  return parsed;
+}
+async function readBodyWithLimit(response, maxBytes) {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength) {
+    const declared = Number.parseInt(contentLength, 10);
+    if (Number.isFinite(declared) && declared > maxBytes) {
+      throw new Error(`Response too large (${declared} bytes); limit is ${maxBytes}`);
+    }
+  }
+  const chunks = [];
+  let received = 0;
+  if (response.body) {
+    const reader = response.body.getReader();
+    for (; ; ) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > maxBytes) {
+        await reader.cancel();
+        throw new Error(`Response body too large (over ${maxBytes} bytes); limit is ${maxBytes}`);
+      }
+      chunks.push(value);
+    }
+  }
+  const buffer = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return buffer;
+}
 async function fetchSpecFromUrl(url, options = {}) {
   const maxBytes = options.maxBytes ?? MAX_SPEC_BYTES;
+  const maxTotalBytes = options.maxTotalBytes ?? DEFAULT_MAX_TOTAL_BYTES;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const parsed = new URL(url);
-  if (parsed.protocol !== "https:") {
-    throw new Error(`Only HTTPS URLs are supported for remote spec fetch; got ${parsed.protocol}`);
-  }
+  const maxRedirects = options.maxRedirects ?? MAX_REDIRECTS;
+  const policy = options.policy ?? DEFAULT_REMOTE_FETCH_POLICY;
+  const budget = options.budget ?? { totalBytes: 0 };
+  const lookupFn = options.lookup ?? defaultLookup;
+  const fetchImpl = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { Accept: "application/json, application/yaml, text/yaml, text/plain, */*" },
-      redirect: "follow"
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} fetching ${url}`);
+    let currentUrl = parseHttpsUrl(url);
+    currentUrl = stripUrlCredentials(currentUrl);
+    let previousOrigin;
+    let authorizationHeader;
+    for (let hop = 0; ; hop += 1) {
+      assertUrlAllowedByPolicy(currentUrl, policy);
+      const hostname = normalizedHostname(currentUrl);
+      if (isBlockedHostname(hostname) || (0, import_node_net2.isIP)(hostname) && isBlockedAddress(hostname)) {
+        throw new Error(
+          `Private or local addresses are not allowed for remote spec fetch: ${sanitizeUrlEvidence(currentUrl)}`
+        );
+      }
+      const pinned = await resolvePublicAddress(currentUrl, lookupFn);
+      const dispatcher = createDispatcher(currentUrl, pinned.address);
+      try {
+        const headers = {
+          Accept: "application/json, application/yaml, text/yaml, text/plain, */*"
+        };
+        if (authorizationHeader && previousOrigin && sameOrigin(previousOrigin, currentUrl)) {
+          headers.Authorization = authorizationHeader;
+        } else {
+          authorizationHeader = void 0;
+        }
+        const init = {
+          signal: controller.signal,
+          headers,
+          redirect: "manual",
+          dispatcher
+        };
+        let response;
+        try {
+          response = await fetchImpl(currentUrl.toString(), init);
+        } catch (error3) {
+          if (error3 instanceof Error && error3.name === "AbortError") {
+            throw new Error(`Timed out fetching ${sanitizeUrlEvidence(currentUrl)} after ${timeoutMs}ms`, {
+              cause: error3
+            });
+          }
+          throw new Error(
+            redactUrlsInMessage(
+              `OpenAPI fetch failed for ${sanitizeUrlEvidence(currentUrl)}: ${error3 instanceof Error ? error3.message : String(error3)}`
+            ),
+            { cause: error3 }
+          );
+        }
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get("location");
+          if (!location) {
+            throw new Error(
+              `Redirect response ${response.status} without a Location header for ${sanitizeUrlEvidence(currentUrl)}`
+            );
+          }
+          if (hop >= maxRedirects) {
+            throw new Error(
+              `Too many redirects (limit ${maxRedirects}) fetching ${sanitizeUrlEvidence(url)}`
+            );
+          }
+          previousOrigin = currentUrl;
+          if (!sameOrigin(currentUrl, new URL(location, currentUrl))) {
+            authorizationHeader = void 0;
+          }
+          const next = stripUrlCredentials(new URL(location, currentUrl));
+          if (next.protocol !== "https:") {
+            throw new Error(
+              `Only HTTPS URLs are supported for remote spec fetch; got ${next.protocol} (${sanitizeUrlEvidence(next)})`
+            );
+          }
+          currentUrl = next;
+          continue;
+        }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} fetching ${sanitizeUrlEvidence(currentUrl)}`);
+        }
+        const remainingBudget = maxTotalBytes - budget.totalBytes;
+        if (remainingBudget <= 0) {
+          throw new Error(`Cumulative response bytes exceeded ${maxTotalBytes}`);
+        }
+        const perResponseLimit = Math.min(maxBytes, remainingBudget);
+        const buffer = await readBodyWithLimit(response, perResponseLimit);
+        budget.totalBytes += buffer.byteLength;
+        if (budget.totalBytes > maxTotalBytes) {
+          throw new Error(`Cumulative response bytes exceeded ${maxTotalBytes}`);
+        }
+        const content = new TextDecoder().decode(buffer);
+        const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+        return {
+          content,
+          contentType,
+          finalUrl: sanitizeUrlEvidence(currentUrl)
+        };
+      } finally {
+        await dispatcher.close();
+      }
     }
-    const contentLength = response.headers.get("content-length");
-    if (contentLength && Number.parseInt(contentLength, 10) > maxBytes) {
-      throw new Error(`Response too large (${contentLength} bytes) for ${url}; limit is ${maxBytes}`);
-    }
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > maxBytes) {
-      throw new Error(`Response body too large (${buffer.byteLength} bytes) for ${url}; limit is ${maxBytes}`);
-    }
-    const content = new TextDecoder().decode(buffer);
-    const contentType = response.headers.get("content-type") ?? "application/octet-stream";
-    return { content, contentType };
   } finally {
     clearTimeout(timer);
   }
@@ -167050,11 +170402,15 @@ function groupByService(entries) {
   return [...map3.values()].filter((s2) => s2.url || s2.content);
 }
 var SsmProvider = class {
-  constructor(client) {
+  constructor(client, options = {}) {
     this.client = client;
+    this.remoteFetchPolicy = options.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+    this.fetchRemoteSpec = options.fetchSpecFromUrl ?? fetchSpecFromUrl;
   }
   client;
   type = "ssm";
+  remoteFetchPolicy;
+  fetchRemoteSpec;
   async probe() {
     return this.client.probe();
   }
@@ -167068,7 +170424,7 @@ var SsmProvider = class {
       tags: {},
       evidence: [`Found spec registration in SSM at /postman/specs/${svc.serviceName}/`],
       meta: {
-        url: svc.url ?? "",
+        url: svc.url ? sanitizeUrlEvidence(svc.url) : "",
         hasContent: svc.content ? "true" : "false",
         format: svc.format ?? ""
       }
@@ -167089,19 +170445,23 @@ var SsmProvider = class {
       };
     }
     if (svc?.url) {
+      const safeUrl = sanitizeUrlEvidence(svc.url);
       try {
-        const fetched = await fetchSpecFromUrl(svc.url, { timeoutMs: 15e3 });
+        const fetched = await this.fetchRemoteSpec(svc.url, {
+          timeoutMs: 15e3,
+          policy: this.remoteFetchPolicy
+        });
         const { format: format2, filename } = detectFormat(fetched.content, svc.url);
         return {
           content: fetched.content,
           format: format2,
           filename,
-          evidence: [`Spec fetched from URL registered in SSM: ${svc.url}`]
+          evidence: [`Spec fetched from URL registered in SSM: ${safeUrl}`]
         };
       } catch (fetchError) {
         const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
         const pointerContent = JSON.stringify({
-          specUrl: svc.url,
+          specUrl: safeUrl,
           serviceName: candidate.name,
           registeredVia: "ssm-parameter-store",
           fetchError: detail
@@ -167110,7 +170470,7 @@ var SsmProvider = class {
           content: pointerContent,
           format: "openapi-json",
           filename: "spec-pointer.json",
-          evidence: [`Spec URL registered in SSM: ${svc.url} (fetch failed: ${detail})`]
+          evidence: [`Spec URL registered in SSM: ${safeUrl} (fetch failed: ${detail})`]
         };
       }
     }
@@ -167120,36 +170480,79 @@ var SsmProvider = class {
 
 // src/lib/providers/sns.ts
 var import_node_child_process = require("node:child_process");
-var import_promises10 = require("node:fs/promises");
-var import_node_path13 = __toESM(require("node:path"), 1);
-var import_yaml10 = __toESM(require_dist(), 1);
+var import_node_fs3 = require("node:fs");
+var import_promises19 = require("node:fs/promises");
+var import_node_path22 = __toESM(require("node:path"), 1);
+var import_yaml12 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
-var import_promises8 = require("node:fs/promises");
-var import_node_path11 = __toESM(require("node:path"), 1);
-var import_yaml8 = __toESM(require_dist(), 1);
-async function detectCatalogApis(repoRoot) {
+var import_promises17 = require("node:fs/promises");
+var import_node_path20 = __toESM(require("node:path"), 1);
+var import_yaml10 = __toESM(require_dist(), 1);
+async function detectCatalogApis(repoRoot, options = {}) {
   const candidates = await catalogCandidates(repoRoot);
   const apis = [];
   for (const catalogPath of candidates) {
-    const content = await (0, import_promises8.readFile)(import_node_path11.default.resolve(repoRoot, catalogPath), "utf8").catch(() => void 0);
-    if (!content) continue;
+    let content;
+    try {
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, catalogPath, {
+        fieldName: "catalog-info",
+        countAsReference: false
+      });
+      content = await (0, import_promises17.readFile)(resolved.canonicalPath, "utf8");
+    } catch {
+      continue;
+    }
     let docs;
     try {
-      docs = (0, import_yaml8.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+      docs = (0, import_yaml10.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
     } catch {
       continue;
     }
     apis.push(...extractCatalogApis(catalogPath, docs));
   }
-  return apis.length > 0 ? apis : void 0;
+  const scoped = scopeCatalogApis(apis, options);
+  return scoped.length > 0 ? scoped : void 0;
+}
+function scopeCatalogApis(apis, options) {
+  const serviceRoot = options.serviceRoot?.replace(/\\/g, "/").replace(/\/+$/, "");
+  const serviceName = options.serviceName?.trim().toLowerCase();
+  return apis.filter((api) => {
+    if (serviceName && api.name.trim().toLowerCase() !== serviceName) {
+      return false;
+    }
+    if (!serviceRoot || serviceRoot === "." || serviceRoot === "") {
+      return true;
+    }
+    if (api.catalogPath) {
+      const catalogDir = import_node_path20.default.posix.dirname(api.catalogPath.replace(/\\/g, "/"));
+      if (catalogDir === serviceRoot || catalogDir.startsWith(`${serviceRoot}/`)) {
+        return true;
+      }
+    }
+    if (api.specPath) {
+      const normalized = api.specPath.replace(/\\/g, "/").replace(/^\.\//, "");
+      if (normalized === serviceRoot || normalized.startsWith(`${serviceRoot}/`)) {
+        return true;
+      }
+    }
+    if (!api.specPath && api.specUrl) {
+      return Boolean(api.catalogPath && isUnderServiceRoot(api.catalogPath, serviceRoot));
+    }
+    return false;
+  });
+}
+function isUnderServiceRoot(relativePath2, serviceRoot) {
+  const normalized = relativePath2.replace(/\\/g, "/");
+  const dir = import_node_path20.default.posix.dirname(normalized);
+  return dir === serviceRoot || dir.startsWith(`${serviceRoot}/`) || normalized.startsWith(`${serviceRoot}/`);
 }
 async function catalogCandidates(repoRoot) {
   const discovered = await findIaCFiles(repoRoot, [".yaml", ".yml"]);
   return [.../* @__PURE__ */ new Set([
     "catalog-info.yaml",
     "catalog-info.yml",
-    ...discovered.map((filePath) => import_node_path11.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
+    ...discovered.map((filePath) => import_node_path20.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
   ])];
 }
 function extractCatalogApis(catalogPath, docs) {
@@ -167178,26 +170581,26 @@ function extractCatalogApis(catalogPath, docs) {
         }
       }
     }
-    apis.push({ name, type, specPath, specUrl });
+    apis.push({ name, type, specPath, specUrl, catalogPath: catalogPath.replace(/\\/g, "/") });
   }
   return apis;
 }
 function resolveCatalogPath(catalogPath, reference) {
   const normalized = reference.replace(/\\/g, "/");
-  if (import_node_path11.default.posix.isAbsolute(normalized)) {
+  if (import_node_path20.default.posix.isAbsolute(normalized)) {
     return normalized.replace(/^\/+/, "");
   }
-  const catalogDir = import_node_path11.default.posix.dirname(catalogPath);
+  const catalogDir = import_node_path20.default.posix.dirname(catalogPath);
   if (catalogDir === ".") {
     return normalized;
   }
-  return import_node_path11.default.posix.normalize(import_node_path11.default.posix.join(catalogDir, normalized));
+  return import_node_path20.default.posix.normalize(import_node_path20.default.posix.join(catalogDir, normalized));
 }
 
 // src/lib/providers/sns-code-derived.ts
-var import_promises9 = require("node:fs/promises");
-var import_node_path12 = __toESM(require("node:path"), 1);
-var import_yaml9 = __toESM(require_dist(), 1);
+var import_promises18 = require("node:fs/promises");
+var import_node_path21 = __toESM(require("node:path"), 1);
+var import_yaml11 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
 var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
@@ -167205,7 +170608,7 @@ function normalizeHint(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function relativePath(repoRoot, filePath) {
-  return import_node_path12.default.relative(repoRoot, filePath).replace(/\\/g, "/");
+  return import_node_path21.default.relative(repoRoot, filePath).replace(/\\/g, "/");
 }
 function hasTopicLinkage(content, hints) {
   const lowered = content.toLowerCase();
@@ -167258,9 +170661,9 @@ async function walkFiles(root5) {
   while (queue.length > 0) {
     const current = queue.pop();
     if (!current) continue;
-    const entries = await (0, import_promises9.readdir)(current, { withFileTypes: true }).catch(() => []);
+    const entries = await (0, import_promises18.readdir)(current, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const fullPath = import_node_path12.default.join(current, entry.name);
+      const fullPath = import_node_path21.default.join(current, entry.name);
       if (entry.isDirectory()) {
         if (!IGNORED_DIRS.has(entry.name)) {
           queue.push(fullPath);
@@ -167276,7 +170679,7 @@ async function walkFiles(root5) {
 }
 async function fileExists(filePath) {
   try {
-    await (0, import_promises9.access)(filePath);
+    await (0, import_promises18.access)(filePath);
     return true;
   } catch {
     return false;
@@ -167330,14 +170733,14 @@ function parseStaticJavaSnsAnnotation(content, topicHints) {
 }
 function detectAsyncApiFormat(content, filePath) {
   try {
-    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml11.parse)(content);
     if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
       return void 0;
     }
     return {
       content,
       format: filePath.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml",
-      filename: import_node_path12.default.basename(filePath),
+      filename: import_node_path21.default.basename(filePath),
       evidence: []
     };
   } catch {
@@ -167360,14 +170763,14 @@ var resolveCodeDerivedContract = async ({
     ].filter(Boolean)
   );
   const springwolfPaths = [
-    import_node_path12.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
-    import_node_path12.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
+    import_node_path21.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
+    import_node_path21.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
   ];
   for (const springwolfPath of springwolfPaths) {
     if (!await fileExists(springwolfPath)) {
       continue;
     }
-    const content = await (0, import_promises9.readFile)(springwolfPath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises18.readFile)(springwolfPath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -167383,15 +170786,15 @@ var resolveCodeDerivedContract = async ({
     });
   }
   const generatedAsyncApiPaths = [
-    import_node_path12.default.join(repoRoot, "generated", "asyncapi.json"),
-    import_node_path12.default.join(repoRoot, "generated", "asyncapi.yaml"),
-    import_node_path12.default.join(repoRoot, "generated", "asyncapi.yml")
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.json"),
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yaml"),
+    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yml")
   ];
   for (const generatedPath of generatedAsyncApiPaths) {
     if (!await fileExists(generatedPath)) {
       continue;
     }
-    const content = await (0, import_promises9.readFile)(generatedPath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises18.readFile)(generatedPath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -167408,11 +170811,11 @@ var resolveCodeDerivedContract = async ({
   }
   const files = await walkFiles(repoRoot);
   for (const filePath of files) {
-    const extension = import_node_path12.default.extname(filePath).toLowerCase();
+    const extension = import_node_path21.default.extname(filePath).toLowerCase();
     if (!CODE_EXTENSIONS.has(extension) && !JAVA_EXTENSIONS.has(extension)) {
       continue;
     }
-    const content = await (0, import_promises9.readFile)(filePath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises18.readFile)(filePath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -167428,7 +170831,7 @@ var resolveCodeDerivedContract = async ({
         try {
           resolvedRefPath = resolvePathWithinRoot(
             repoRoot,
-            import_node_path12.default.resolve(import_node_path12.default.dirname(filePath), refPath),
+            import_node_path21.default.resolve(import_node_path21.default.dirname(filePath), refPath),
             `code-derived JSON schema import in ${displayPath}`
           );
         } catch {
@@ -167437,7 +170840,7 @@ var resolveCodeDerivedContract = async ({
           );
           continue;
         }
-        const schemaContent = await (0, import_promises9.readFile)(resolvedRefPath, "utf8").catch(() => void 0);
+        const schemaContent = await (0, import_promises18.readFile)(resolvedRefPath, "utf8").catch(() => void 0);
         if (!schemaContent) {
           continue;
         }
@@ -167453,7 +170856,7 @@ var resolveCodeDerivedContract = async ({
             result: {
               content: schemaContent,
               format: "json-schema",
-              filename: import_node_path12.default.basename(resolvedRefPath),
+              filename: import_node_path21.default.basename(resolvedRefPath),
               evidence: []
             }
           });
@@ -167698,7 +171101,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
   }
   let parsed;
   try {
-    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml10.parse)(content);
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml12.parse)(content);
   } catch {
     return content;
   }
@@ -167750,7 +171153,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
       }
     }
   }
-  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml10.stringify)(document);
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml12.stringify)(document);
 }
 var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
 var SPEC_POINTER_FILENAME = "spec-pointer.json";
@@ -167763,7 +171166,7 @@ function normalizeServiceKey(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function toEvidencePath2(repoRoot, filePath) {
-  const relative2 = import_node_path13.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path22.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2.replace(/\\/g, "/");
 }
 function groupByService2(entries) {
@@ -167890,12 +171293,19 @@ async function collectCatalogUrlCandidates(repoRoot, hints, catalogApis) {
 async function collectRegistryUrlCandidates(repoRoot, hints) {
   const candidates = [];
   for (const relativePath2 of CONTRACT_REGISTRY_FILES) {
-    const filePath = import_node_path13.default.join(repoRoot, relativePath2);
-    const content = await (0, import_promises10.readFile)(filePath, "utf8").catch(() => void 0);
-    if (!content) continue;
+    let content;
+    try {
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relativePath2, {
+        fieldName: "contract-registry-path",
+        countAsReference: false
+      });
+      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
+    } catch {
+      continue;
+    }
     let parsed;
     try {
-      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml10.parse)(content);
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
     } catch {
       continue;
     }
@@ -167924,7 +171334,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
 function buildSsmPointerArtifact(specUrl, serviceName, fetchError) {
   return JSON.stringify(
     {
-      specUrl,
+      specUrl: sanitizeUrlEvidence(specUrl),
       serviceName,
       registeredVia: "ssm-parameter-store",
       fetchError
@@ -167950,7 +171360,7 @@ function detectFormat2(content, filenameHint) {
   } catch {
   }
   try {
-    const parsed = (0, import_yaml10.parse)(trimmed);
+    const parsed = (0, import_yaml12.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
@@ -167962,7 +171372,7 @@ function parseStructuredDocument(value) {
   try {
     return JSON.parse(value);
   } catch {
-    return (0, import_yaml10.parse)(value);
+    return (0, import_yaml12.parse)(value);
   }
 }
 function getSchemaByRef(document, ref) {
@@ -168188,7 +171598,7 @@ function canonicalPayloadSchema(canonical) {
   }
   if (canonical.format === "asyncapi-yaml") {
     try {
-      return extractAsyncApiPayloadSchema((0, import_yaml10.parse)(canonical.content));
+      return extractAsyncApiPayloadSchema((0, import_yaml12.parse)(canonical.content));
     } catch {
       return { payloadSchema: { type: "object" } };
     }
@@ -168346,12 +171756,12 @@ function normalizePathForMatch(value) {
   return value.replace(/\\/g, "/").replace(/^\/+/, "");
 }
 function isGeneratedSearchRootPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path13.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
   return GENERATED_ROOT_PREFIXES.some((prefix) => relative2.startsWith(prefix));
 }
 function isGeneratedAsyncApiPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path13.default.relative(repoRoot, filePath));
-  const base = import_node_path13.default.basename(relative2).toLowerCase();
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
+  const base = import_node_path22.default.basename(relative2).toLowerCase();
   const isDotAsyncApi = base.endsWith(".asyncapi.yaml") || base.endsWith(".asyncapi.yml") || base.endsWith(".asyncapi.json");
   const isNamedAsyncApi = base === "asyncapi.yaml" || base === "asyncapi.yml" || base === "asyncapi.json";
   if (relative2.startsWith("spec/") || relative2.startsWith("contracts/")) {
@@ -168366,10 +171776,10 @@ function isGeneratedAsyncApiPath(repoRoot, filePath) {
   return false;
 }
 async function collectFilesByExtensionUnfiltered(currentPath) {
-  const entries = await (0, import_promises10.readdir)(currentPath, { withFileTypes: true }).catch(() => []);
+  const entries = await (0, import_promises19.readdir)(currentPath, { withFileTypes: true }).catch(() => []);
   const files = [];
   for (const entry of entries) {
-    const fullPath = import_node_path13.default.join(currentPath, entry.name);
+    const fullPath = import_node_path22.default.join(currentPath, entry.name);
     if (entry.isDirectory()) {
       if (DEFAULT_IGNORED_DIRS.has(entry.name)) {
         continue;
@@ -168380,40 +171790,83 @@ async function collectFilesByExtensionUnfiltered(currentPath) {
     if (!entry.isFile()) {
       continue;
     }
-    if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path13.default.extname(entry.name).toLowerCase())) {
+    if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path22.default.extname(entry.name).toLowerCase())) {
       files.push(fullPath);
     }
   }
   return files;
 }
 function isFrameworkOutputPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path13.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
   return relative2.startsWith("build/") || relative2.startsWith(".build/") || relative2.startsWith("out/");
 }
+var gitWorkTreeCache = /* @__PURE__ */ new Map();
+var gitIgnoreResultCache = /* @__PURE__ */ new Map();
+function isGitWorkTree(repoRoot) {
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const cached = gitWorkTreeCache.get(resolvedRoot);
+  if (cached !== void 0) {
+    return cached;
+  }
+  const hasGitDir = (0, import_node_fs3.existsSync)(import_node_path22.default.join(resolvedRoot, ".git"));
+  gitWorkTreeCache.set(resolvedRoot, hasGitDir);
+  return hasGitDir;
+}
 async function isGitIgnoredByGit(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path13.default.relative(repoRoot, filePath));
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const relative2 = normalizePathForMatch(import_node_path22.default.relative(resolvedRoot, filePath));
   if (!relative2 || relative2.startsWith("..")) {
     return true;
   }
+  let pathCache = gitIgnoreResultCache.get(resolvedRoot);
+  if (!pathCache) {
+    pathCache = /* @__PURE__ */ new Map();
+    gitIgnoreResultCache.set(resolvedRoot, pathCache);
+  }
+  const cached = pathCache.get(relative2);
+  if (cached !== void 0) {
+    return cached;
+  }
+  if (!isGitWorkTree(resolvedRoot)) {
+    pathCache.set(relative2, false);
+    return false;
+  }
   try {
-    const escapedRelative = relative2.replace(/(["`$\\])/g, "\\$1");
-    (0, import_node_child_process.execSync)(`git check-ignore -q -- "${escapedRelative}"`, { cwd: repoRoot, stdio: "ignore" });
+    (0, import_node_child_process.execFileSync)("git", ["check-ignore", "-q", "--", relative2], {
+      cwd: resolvedRoot,
+      stdio: "ignore"
+    });
+    pathCache.set(relative2, true);
     return true;
   } catch {
+    pathCache.set(relative2, false);
     return false;
   }
 }
-async function findContractFiles(repoRoot, topicName) {
-  const files = await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
+function toRepoRelativePath(repoRoot, filePath) {
+  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const absolute = import_node_path22.default.isAbsolute(filePath) ? import_node_path22.default.resolve(filePath) : import_node_path22.default.resolve(resolvedRoot, filePath);
+  const relative2 = import_node_path22.default.relative(resolvedRoot, absolute);
+  if (relative2.startsWith("..") || import_node_path22.default.isAbsolute(relative2)) {
+    return void 0;
+  }
+  return relative2 || ".";
+}
+async function findContractFiles(repoRoot, topicName, scannedFiles) {
+  const files = scannedFiles ?? await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
   const asyncapi = [];
   const jsonSchema = [];
   for (const filePath of files) {
-    const safePath2 = resolvePathWithinRoot(repoRoot, filePath, "repo contract path");
-    const normalizedRelativePath = normalizePathForMatch(import_node_path13.default.relative(repoRoot, safePath2)).toLowerCase();
+    const relativePath2 = toRepoRelativePath(repoRoot, filePath);
+    if (!relativePath2 || relativePath2 === ".") {
+      continue;
+    }
+    const safePath2 = import_node_path22.default.resolve(repoRoot, relativePath2);
+    const normalizedRelativePath = normalizePathForMatch(relativePath2).toLowerCase();
     if (normalizedRelativePath === "build/springwolf/asyncapi.json" || normalizedRelativePath === "target/springwolf/asyncapi.json") {
       continue;
     }
-    const baseName = import_node_path13.default.basename(safePath2).toLowerCase();
+    const baseName = import_node_path22.default.basename(safePath2).toLowerCase();
     if (isGeneratedSearchRootPath(repoRoot, safePath2)) {
       if (baseName === "schema.json" || baseName.endsWith(".schema.json")) {
         jsonSchema.push(safePath2);
@@ -168433,12 +171886,12 @@ async function findContractFiles(repoRoot, topicName) {
     jsonSchema: sortByTopicAffinity(jsonSchema, topicName)
   };
 }
-async function findGeneratedAsyncApiFiles(repoRoot, topicName, gitIgnoreChecker = isGitIgnoredByGit) {
-  const scanned = await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
+async function findGeneratedAsyncApiFiles(repoRoot, topicName, gitIgnoreChecker = isGitIgnoredByGit, scannedFiles) {
+  const scanned = scannedFiles ?? await findIaCFiles(repoRoot, [".yaml", ".yml", ".json"]);
   const discovered = new Set(scanned);
   for (const frameworkRoot of ["build", ".build", "out"]) {
-    const rootPath = import_node_path13.default.join(repoRoot, frameworkRoot);
-    const rootStats = await (0, import_promises10.stat)(rootPath).catch(() => null);
+    const rootPath = import_node_path22.default.join(repoRoot, frameworkRoot);
+    const rootStats = await (0, import_promises19.stat)(rootPath).catch(() => null);
     if (!rootStats || !rootStats.isDirectory()) {
       continue;
     }
@@ -168466,15 +171919,23 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
   const evidence = [];
   for (const filePath of files) {
     const relativePath2 = toEvidencePath2(repoRoot, filePath);
+    const relative2 = toRepoRelativePath(repoRoot, filePath);
     let content;
     try {
-      content = await (0, import_promises10.readFile)(filePath, "utf8");
+      if (!relative2 || relative2 === ".") {
+        throw new Error("path outside repo root");
+      }
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relative2, {
+        fieldName: "asyncapi-contract-path",
+        countAsReference: false
+      });
+      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (unreadable)`);
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml10.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
         evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
@@ -168485,7 +171946,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
         match: {
           content,
           format: format2,
-          filename: import_node_path13.default.basename(filePath),
+          filename: import_node_path22.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from ${sourceDescription} file ${relativePath2}`]
         },
         evidence
@@ -168500,9 +171961,17 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
   const evidence = [...inheritedEvidence];
   for (const filePath of files) {
     const relativePath2 = toEvidencePath2(repoRoot, filePath);
+    const relative2 = toRepoRelativePath(repoRoot, filePath);
     let content;
     try {
-      content = await (0, import_promises10.readFile)(filePath, "utf8");
+      if (!relative2 || relative2 === ".") {
+        throw new Error("path outside repo root");
+      }
+      const resolved = await resolveLocalReadWithinRoot(repoRoot, relative2, {
+        fieldName: "json-schema-contract-path",
+        countAsReference: false
+      });
+      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (unreadable)`);
       continue;
@@ -168517,7 +171986,7 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
         match: {
           content,
           format: "json-schema",
-          filename: import_node_path13.default.basename(filePath),
+          filename: import_node_path22.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from repo-local JSON Schema file ${relativePath2}`]
         },
         evidence
@@ -168535,12 +172004,14 @@ var SnsProvider = class {
     this.ssmClient = ssmClient;
     if (typeof dependencies === "function") {
       this.fetchRemoteSpec = dependencies;
+      this.remoteFetchPolicy = DEFAULT_REMOTE_FETCH_POLICY;
       this.gitIgnoreChecker = isGitIgnoredByGit;
       this.webhookSidecarBuilder = buildWebhookSidecar;
       this.codeDerivedResolver = resolveCodeDerivedContract;
       return;
     }
     this.fetchRemoteSpec = dependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+    this.remoteFetchPolicy = dependencies.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
     this.preloadedCatalogApis = dependencies.catalogApis;
     this.eventBridgeClient = dependencies.eventBridgeClient;
     this.codeDerivedResolver = dependencies.codeDerivedResolver ?? resolveCodeDerivedContract;
@@ -168552,6 +172023,7 @@ var SnsProvider = class {
   ssmClient;
   type = "sns";
   fetchRemoteSpec;
+  remoteFetchPolicy;
   preloadedCatalogApis;
   eventBridgeClient;
   codeDerivedResolver;
@@ -168589,7 +172061,7 @@ var SnsProvider = class {
     return candidates;
   }
   async exportSpec(candidate, options = {}) {
-    const resolvedRepoRoot = import_node_path13.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
@@ -168629,7 +172101,7 @@ var SnsProvider = class {
     };
   }
   async resolveContract(candidate, resolutionContext = {}) {
-    const resolvedRepoRoot = import_node_path13.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     const affinityHints = collectHints(topicName, candidate.name);
@@ -168641,7 +172113,8 @@ var SnsProvider = class {
     }
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
     let pointerSidecar;
-    const files = await findContractFiles(resolvedRepoRoot, topicName);
+    const scannedFiles = await findIaCFiles(resolvedRepoRoot, [".yaml", ".yml", ".json"]);
+    const files = await findContractFiles(resolvedRepoRoot, topicName, scannedFiles);
     const asyncApiResolution = await resolveAsyncApiContract(resolvedRepoRoot, files.asyncapi, "repo-local");
     let resolvedOrigin;
     let resolvedExport;
@@ -168659,7 +172132,7 @@ var SnsProvider = class {
     }
     const generatedAsyncApiResolution = resolvedExport ? { evidence: priorEvidence } : await resolveAsyncApiContract(
       resolvedRepoRoot,
-      await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker),
+      await findGeneratedAsyncApiFiles(resolvedRepoRoot, topicName, this.gitIgnoreChecker, scannedFiles),
       "generated"
     );
     if (!resolvedExport && "match" in generatedAsyncApiResolution && generatedAsyncApiResolution.match) {
@@ -168706,8 +172179,12 @@ var SnsProvider = class {
       }
       const ssmUrl = ssmMatch?.url;
       if (!resolvedExport && ssmUrl) {
+        const safeSsmUrl = sanitizeUrlEvidence(ssmUrl);
         try {
-          const fetched = await this.fetchRemoteSpec(ssmUrl, { timeoutMs: 15e3 });
+          const fetched = await this.fetchRemoteSpec(ssmUrl, {
+            timeoutMs: 15e3,
+            policy: this.remoteFetchPolicy
+          });
           const resolvedFormat = parseKnownFormat(ssmMatch?.format) ?? detectFormat2(fetched.content, ssmMatch?.format ?? "");
           if (resolvedFormat) {
             const evidence = [...priorEvidence, `Resolved SNS contract from SSM URL /postman/specs/${ssmMatch.serviceName}/`];
@@ -168722,7 +172199,7 @@ var SnsProvider = class {
           }
           if (!resolvedExport) {
             priorEvidence.push(
-              `Fetched SSM URL ${ssmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+              `Fetched SSM URL ${safeSsmUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
             );
           }
         } catch (fetchError) {
@@ -168730,7 +172207,7 @@ var SnsProvider = class {
           const pointerArtifact = buildSsmPointerArtifact(ssmUrl, ssmMatch.serviceName, detail);
           pointerSidecar = { filename: SPEC_POINTER_FILENAME, content: pointerArtifact };
           priorEvidence.push(
-            `Failed to fetch SNS contract from SSM URL ${ssmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
+            `Failed to fetch SNS contract from SSM URL ${safeSsmUrl}; pointer artifact spec-pointer.json: ${pointerArtifact}`
           );
         }
       }
@@ -168741,16 +172218,20 @@ var SnsProvider = class {
         ...await collectRegistryUrlCandidates(resolvedRepoRoot, affinityHints)
       ].sort((left, right) => right.affinity - left.affinity || left.source.localeCompare(right.source));
       for (const remoteCandidate of remoteUrlCandidates) {
+        const safeRemoteUrl = sanitizeUrlEvidence(remoteCandidate.url);
         try {
-          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, { timeoutMs: 15e3 });
+          const fetched = await this.fetchRemoteSpec(remoteCandidate.url, {
+            timeoutMs: 15e3,
+            policy: this.remoteFetchPolicy
+          });
           const resolvedFormat = detectFormat2(fetched.content, "");
           if (!resolvedFormat) {
             priorEvidence.push(
-              `Fetched ${remoteCandidate.source} URL ${remoteCandidate.url} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
+              `Fetched ${remoteCandidate.source} URL ${safeRemoteUrl} but unsupported format for SNS contract resolution; expected AsyncAPI or JSON Schema`
             );
             continue;
           }
-          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}`];
+          const evidence = [...priorEvidence, `Resolved SNS contract from ${remoteCandidate.source} URL ${safeRemoteUrl}`];
           resolvedOrigin = "catalog-url";
           resolvedExport = {
             content: fetched.content,
@@ -168762,7 +172243,7 @@ var SnsProvider = class {
           break;
         } catch (fetchError) {
           const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${remoteCandidate.url}: ${detail}`);
+          priorEvidence.push(`Failed to fetch SNS contract from ${remoteCandidate.source} URL ${safeRemoteUrl}: ${detail}`);
         }
       }
     }
@@ -169175,6 +172656,9 @@ var S3SdkClient = class {
 // src/lib/aws/tagging-client.ts
 var import_client_resource_groups_tagging_api = __toESM(require_dist_cjs34(), 1);
 var import_node_http_handler21 = __toESM(require_dist_cjs6(), 1);
+function sortByArn(items) {
+  return [...items].sort((left, right) => left.arn < right.arn ? -1 : left.arn > right.arn ? 1 : 0);
+}
 var TaggingSdkClient = class {
   client;
   constructor(region, options = {}) {
@@ -169189,12 +172673,18 @@ var TaggingSdkClient = class {
     });
   }
   async getResourcesByTag(tagKey, tagValues, resourceTypes) {
+    return this.getResourcesByTags([{ key: tagKey, values: tagValues }], resourceTypes);
+  }
+  async getResourcesByTags(filters, resourceTypes) {
     const items = [];
     let paginationToken;
     do {
       const response = await this.client.send(
         new import_client_resource_groups_tagging_api.GetResourcesCommand({
-          TagFilters: [{ Key: tagKey, Values: tagValues.length > 0 ? tagValues : void 0 }],
+          TagFilters: filters.map((filter) => ({
+            Key: filter.key,
+            Values: filter.values && filter.values.length > 0 ? filter.values : void 0
+          })),
           ResourceTypeFilters: resourceTypes,
           PaginationToken: paginationToken
         })
@@ -169209,7 +172699,7 @@ var TaggingSdkClient = class {
       }
       paginationToken = response.PaginationToken;
     } while (paginationToken);
-    return items;
+    return sortByArn(items);
   }
   async probe() {
     try {
@@ -169220,152 +172710,6 @@ var TaggingSdkClient = class {
     }
   }
 };
-
-// src/lib/resolve/narrowing-pipeline.ts
-function slugifyRepoName(repoSlug) {
-  if (!repoSlug) return [];
-  const repoName = repoSlug.split("/").pop()?.trim() ?? "";
-  if (!repoName) return [];
-  const slugs = [repoName];
-  for (const suffix of ["-service", "-api", "-backend", "-server", "-app"]) {
-    if (repoName.endsWith(suffix)) {
-      slugs.push(repoName.slice(0, -suffix.length));
-    }
-  }
-  return slugs.filter((s2) => s2.length > 2);
-}
-function tierIacFingerprint(signals) {
-  const ids = [...signals.explicitGatewayIdHints, ...signals.inferredGatewayIdHints];
-  if (ids.length === 0) return void 0;
-  return {
-    ids,
-    evidence: [`IaC fingerprinting found ${ids.length} gateway ID(s) from repo files`]
-  };
-}
-async function tierCloudFormationCorrelation(ctx) {
-  if (!ctx.cfnClient) return void 0;
-  const slugs = slugifyRepoName(ctx.repoSlug);
-  if (slugs.length === 0) return void 0;
-  let stacks;
-  try {
-    stacks = await ctx.cfnClient.listActiveStacks();
-  } catch {
-    return void 0;
-  }
-  const matchingIds = [];
-  const evidence = [];
-  for (const stack of stacks) {
-    const stackLower = stack.name.toLowerCase();
-    const matches = slugs.some((slug) => stackLower.includes(slug.toLowerCase()));
-    if (!matches) continue;
-    try {
-      const resources = await ctx.cfnClient.listApiResources(stack.name);
-      for (const resource of resources) {
-        if (resource.physicalId) {
-          matchingIds.push(resource.physicalId);
-          evidence.push(`Stack ${stack.name} contains ${resource.type} -> ${resource.physicalId}`);
-        }
-      }
-    } catch {
-    }
-  }
-  if (matchingIds.length === 0) return void 0;
-  return { ids: matchingIds, evidence };
-}
-var CANONICAL_REPO_TAG = "postman:repo";
-var GENERIC_TAG_KEYS = ["repo", "repository", "service", "github:repository"];
-async function tierTagPreFilter(ctx) {
-  if (!ctx.taggingClient) return void 0;
-  if (!ctx.repoSlug) return void 0;
-  const repoName = ctx.repoSlug.split("/").pop()?.trim();
-  const apiGatewayTypes = ["apigateway:restapis", "apigateway:apis"];
-  const extractId = (arn) => arn.match(/\/(?:restapis|apis)\/([a-z0-9_-]+)/)?.[1];
-  try {
-    const canonical = await ctx.taggingClient.getResourcesByTag(CANONICAL_REPO_TAG, [ctx.repoSlug], apiGatewayTypes);
-    const exactIds = canonical.filter((r5) => (r5.tags?.[CANONICAL_REPO_TAG] ?? "") === ctx.repoSlug).map((r5) => extractId(r5.arn)).filter((id) => Boolean(id));
-    const uniqueExact = [...new Set(exactIds)];
-    if (uniqueExact.length === 1) {
-      return {
-        ids: uniqueExact,
-        selectId: uniqueExact[0],
-        evidence: [`Exactly one API tagged ${CANONICAL_REPO_TAG}=${ctx.repoSlug}`]
-      };
-    }
-    if (uniqueExact.length > 1) {
-      return {
-        ids: uniqueExact,
-        evidence: [`Found ${uniqueExact.length} APIs tagged ${CANONICAL_REPO_TAG}=${ctx.repoSlug}`]
-      };
-    }
-  } catch {
-  }
-  const tagValues = [ctx.repoSlug];
-  if (repoName) tagValues.push(repoName);
-  for (const tagKey of [CANONICAL_REPO_TAG, ...GENERIC_TAG_KEYS]) {
-    try {
-      const resources = await ctx.taggingClient.getResourcesByTag(tagKey, tagValues, apiGatewayTypes);
-      if (resources.length === 0) continue;
-      const ids = resources.map((r5) => extractId(r5.arn)).filter((id) => Boolean(id));
-      if (ids.length > 0) {
-        return {
-          ids,
-          evidence: [`Found ${ids.length} API(s) tagged with ${tagKey}=${tagValues.join("|")}`]
-        };
-      }
-    } catch {
-    }
-  }
-  return void 0;
-}
-function tierNamingHeuristic(candidateNames, ctx) {
-  const slugs = slugifyRepoName(ctx.repoSlug);
-  if (slugs.length === 0) return void 0;
-  const matches = candidateNames.filter((c5) => {
-    const nameLower = c5.name.toLowerCase();
-    return slugs.some((slug) => nameLower.includes(slug.toLowerCase()));
-  });
-  if (matches.length === 0) return void 0;
-  return {
-    ids: matches.map((m3) => m3.id),
-    evidence: [`Name matching narrowed ${candidateNames.length} candidates to ${matches.length} using repo slug`]
-  };
-}
-async function runNarrowingPipeline(ctx, allCandidates) {
-  const enumeratedIds = allCandidates.map((c5) => c5.id);
-  const enumeratedSet = new Set(enumeratedIds);
-  const tiers = [
-    { tier: "iac-fingerprint", run: () => tierIacFingerprint(ctx.signals) },
-    { tier: "cfn-correlation", run: () => tierCloudFormationCorrelation(ctx) },
-    { tier: "tag-prefilter", run: () => tierTagPreFilter(ctx) },
-    { tier: "naming-heuristic", run: () => tierNamingHeuristic(allCandidates, ctx) }
-  ];
-  for (const { tier, run } of tiers) {
-    const hit = await run();
-    if (!hit) continue;
-    const intersecting = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const id of hit.ids) {
-      if (enumeratedSet.has(id) && !seen.has(id)) {
-        seen.add(id);
-        intersecting.push(id);
-      }
-    }
-    if (intersecting.length === 0) continue;
-    const demoted = allCandidates.length - intersecting.length;
-    const isSelect = hit.selectId !== void 0 && intersecting.length === 1 && intersecting[0] === hit.selectId;
-    return {
-      gatewayIds: intersecting,
-      tier,
-      mode: isSelect ? "select" : "narrow",
-      droppedCount: demoted,
-      evidence: [
-        ...hit.evidence,
-        `Narrowing (${tier}) ranked ${intersecting.length} candidate(s) first and demoted ${demoted} (not deleted)`
-      ]
-    };
-  }
-  return void 0;
-}
 
 // src/runtime.ts
 var DEFAULT_MODE = "resolve-one";
@@ -169471,6 +172815,53 @@ function parseStringArrayJson(raw, inputName) {
   }
   return parsed.map((value) => String(value).trim()).filter((value) => value.length > 0);
 }
+function parseRemoteFetchAllowlistJson(raw) {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
+    return DEFAULT_REMOTE_FETCH_POLICY;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (error3) {
+    const detail = error3 instanceof Error ? error3.message : String(error3);
+    throw new Error(`Invalid JSON for remote-fetch-allowlist-json: ${detail}`, { cause: error3 });
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("remote-fetch-allowlist-json must be a JSON array of exact host/path entries");
+  }
+  if (parsed.length === 0) {
+    return DEFAULT_REMOTE_FETCH_POLICY;
+  }
+  const allowlist = parsed.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`remote-fetch-allowlist-json[${index}] must be an object with hostname/host and optional pathPrefix/path`);
+    }
+    const record = entry;
+    const hostname = typeof record.hostname === "string" ? record.hostname : typeof record.host === "string" ? record.host : void 0;
+    if (!hostname?.trim()) {
+      throw new Error(`remote-fetch-allowlist-json[${index}] requires a non-empty hostname or host`);
+    }
+    const pathPrefix = typeof record.pathPrefix === "string" ? record.pathPrefix : typeof record.path === "string" ? record.path : void 0;
+    return {
+      hostname: hostname.trim(),
+      ...pathPrefix !== void 0 ? { pathPrefix } : {}
+    };
+  });
+  return createRemoteFetchPolicy({ enabled: true, allowlist });
+}
+function validateRepoRelativeSelector(repoRoot, relativePath2, fieldName, kind) {
+  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
+  const absolute = resolvePathWithinRoot(resolvedRoot, relativePath2, fieldName);
+  const relative2 = import_node_path23.default.relative(resolvedRoot, absolute).replace(/\\/g, "/");
+  if (relative2.startsWith("..") || import_node_path23.default.isAbsolute(relative2)) {
+    throw new Error(`${fieldName} must stay within repo-root; received ${relativePath2}`);
+  }
+  if (kind === "directory" && (relative2 === "" || relative2 === ".")) {
+    return ".";
+  }
+  return relative2 || ".";
+}
 function resolveInputs(env2 = process.env) {
   const mode = parseMode(getInput2("mode", env2) ?? DEFAULT_MODE);
   const awsRegion = getInput2("aws-region", env2) ?? normalizeInputValue(env2.AWS_REGION) ?? normalizeInputValue(env2.AWS_DEFAULT_REGION) ?? "";
@@ -169482,6 +172873,11 @@ function resolveInputs(env2 = process.env) {
   const expectedServiceName = getInput2("expected-service-name", env2);
   const expectedGatewayIdsRaw = getInput2("expected-gateway-ids-json", env2) ?? DEFAULT_EXPECTED_GATEWAY_IDS_JSON;
   const stage = getInput2("stage", env2);
+  const expectedAccountIdRaw = getInput2("expected-account-id", env2);
+  const expectedPartitionRaw = getInput2("expected-partition", env2);
+  const specPathRaw = getInput2("spec-path", env2);
+  const serviceRootRaw = getInput2("service-root", env2);
+  const remoteFetchAllowlistRaw = getInput2("remote-fetch-allowlist-json", env2);
   const apiFilterRaw = getInput2("api-filter", env2);
   const serviceMappingRaw = getInput2("service-mapping-json", env2) ?? DEFAULT_SERVICE_MAPPING_JSON;
   const outputDir = getInput2("output-dir", env2) ?? DEFAULT_OUTPUT_DIR;
@@ -169516,6 +172912,10 @@ function resolveInputs(env2 = process.env) {
   const expectedGatewayIds = [gatewayId, ...parseStringArrayJson(expectedGatewayIdsRaw, "expected-gateway-ids-json")].filter(
     (value) => Boolean(value)
   );
+  const specPath = specPathRaw ? validateRepoRelativeSelector(repoRoot, specPathRaw, "spec-path", "file") : void 0;
+  const serviceRoot = serviceRootRaw ? validateRepoRelativeSelector(repoRoot, serviceRootRaw, "service-root", "directory") : void 0;
+  const expectedAccountId = normalizeExpectedAccountId(expectedAccountIdRaw);
+  const expectedPartition = normalizeExpectedPartition(expectedPartitionRaw);
   return {
     mode,
     awsRegion,
@@ -169524,6 +172924,11 @@ function resolveInputs(env2 = process.env) {
     expectedServiceName,
     expectedGatewayIds: [...new Set(expectedGatewayIds)],
     stage,
+    expectedAccountId,
+    expectedPartition,
+    specPath,
+    serviceRoot,
+    remoteFetchPolicy: parseRemoteFetchAllowlistJson(remoteFetchAllowlistRaw),
     apiFilter,
     serviceMapping: parseServiceMapping(serviceMappingRaw),
     outputDir,
@@ -169536,6 +172941,22 @@ function resolveInputs(env2 = process.env) {
     includeV2: parseBoolean2(includeV2Raw, "include-v2", true)
   };
 }
+function normalizeExpectedAccountId(raw) {
+  const value = (raw ?? "").trim();
+  if (!value) return void 0;
+  if (!/^\d{12}$/.test(value)) {
+    throw new Error("expected-account-id must be a 12-digit AWS account ID when provided");
+  }
+  return value;
+}
+function normalizeExpectedPartition(raw) {
+  const value = (raw ?? "").trim().toLowerCase();
+  if (!value) return void 0;
+  if (!/^[a-z0-9-]+$/.test(value)) {
+    throw new Error("expected-partition must be a valid AWS partition identifier when provided");
+  }
+  return value;
+}
 function readActionInputs(inputReader) {
   const requiredRegion = inputReader.getInput("aws-region").trim();
   return resolveInputs({
@@ -169543,6 +172964,11 @@ function readActionInputs(inputReader) {
     INPUT_AWS_REGION: requiredRegion || void 0,
     INPUT_GATEWAY_ID: normalizeInputValue(inputReader.getInput("gateway-id")),
     INPUT_STAGE: normalizeInputValue(inputReader.getInput("stage")),
+    INPUT_EXPECTED_ACCOUNT_ID: normalizeInputValue(inputReader.getInput("expected-account-id")),
+    INPUT_EXPECTED_PARTITION: normalizeInputValue(inputReader.getInput("expected-partition")),
+    INPUT_SPEC_PATH: normalizeInputValue(inputReader.getInput("spec-path")),
+    INPUT_SERVICE_ROOT: normalizeInputValue(inputReader.getInput("service-root")),
+    INPUT_REMOTE_FETCH_ALLOWLIST_JSON: normalizeInputValue(inputReader.getInput("remote-fetch-allowlist-json")),
     INPUT_OUTPUT_DIR: normalizeInputValue(inputReader.getInput("output-dir")) ?? actionContract.inputs["output-dir"].default
   });
 }
@@ -169560,14 +172986,14 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path14.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path23.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 function userSafeWarning(message) {
   return sanitizeLogMessage(message);
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises11.mkdir)(import_node_path14.default.dirname(outputPath), { recursive: true });
-  await (0, import_promises11.writeFile)(outputPath, content, "utf8");
+  await (0, import_promises20.mkdir)(import_node_path23.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises20.writeFile)(outputPath, content, "utf8");
 }
 var CANONICAL_DERIVED_OPENAPI_FILENAME = "openapi.derived.json";
 var CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME = "openapi.derived-2.json";
@@ -169576,7 +173002,7 @@ function derivedOpenApiFilename(sidecars = []) {
 }
 function normalizeDerivedOpenApiJson(derivation) {
   try {
-    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml11.parse)(derivation.content) : JSON.parse(derivation.content);
+    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml13.parse)(derivation.content) : JSON.parse(derivation.content);
     if (!parsed || typeof parsed !== "object") {
       throw new Error("derived OpenAPI document did not parse to an object");
     }
@@ -169597,7 +173023,7 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
   }
   if (!input.dryRun) {
     for (const sidecar of input.sidecars ?? []) {
-      const relativeSidecarPath = import_node_path14.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
+      const relativeSidecarPath = import_node_path23.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
       const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
       await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
     }
@@ -169617,7 +173043,7 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
     };
   }
   const filename = derivedOpenApiFilename(input.sidecars);
-  const relativeDerivedPath = import_node_path14.default.join(input.relativeDir, filename).replace(/\\/g, "/");
+  const relativeDerivedPath = import_node_path23.default.join(input.relativeDir, filename).replace(/\\/g, "/");
   if (!input.dryRun) {
     const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, "output-dir");
     await input.writeSpecFile(absoluteDerivedPath, normalized.content);
@@ -169633,7 +173059,7 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
 function normalizeApiGatewaySpec(body, candidate, reporter) {
   let result;
   try {
-    result = normalizeOpenApiYaml(body);
+    result = normalizeOpenApiYaml(body, { skipContractAudit: candidate.gatewayType === "WEBSOCKET" });
   } catch (error3) {
     reporter.warning(
       userSafeWarning(`Skipped operationId normalization for ${candidate.id}: ${formatUserSafeError(error3)}`)
@@ -169646,7 +173072,8 @@ function normalizeApiGatewaySpec(body, candidate, reporter) {
       reporter.info(`operationId normalized: ${candidate.id} ${rename2.method.toUpperCase()} ${rename2.path} \`${from}\` -> \`${rename2.renamed}\``);
     }
   }
-  const contractWarning = result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit) : void 0;
+  const protocol = candidate.gatewayType === "HTTP" || candidate.gatewayType === "WEBSOCKET" ? candidate.gatewayType : "REST";
+  const contractWarning = candidate.gatewayType === "WEBSOCKET" ? AWS_WEBSOCKET_CONTRACT_PARTIAL : result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit, protocol) : void 0;
   if (contractWarning) reporter.warning(userSafeWarning(contractWarning));
   return {
     content: result.normalized ? result.content : body,
@@ -169674,16 +173101,8 @@ async function exportApiGatewaySpecBody(aws, candidate, stage) {
     throw error3;
   }
 }
-async function selectStage(aws, candidate, preferredStage) {
-  if (preferredStage) {
-    return preferredStage;
-  }
-  if (candidate.gatewayType === "REST") {
-    const stages2 = await aws.listRestStages(candidate.id);
-    return stages2[0];
-  }
-  const stages = await aws.listHttpStages(candidate.id);
-  return stages[0];
+async function selectStage(aws, candidate, preferredStage, preferLatestConfiguration = false, trustedEvidence) {
+  return resolveStageSelection(aws, candidate, preferredStage, preferLatestConfiguration, trustedEvidence);
 }
 function filterCandidates(restApis, httpApis, includeV2, apiFilter) {
   const rest = restApis.map((api) => ({ id: api.id, name: api.name, gatewayType: "REST" }));
@@ -169816,10 +173235,49 @@ function catalogFormatFor(type, reference) {
   if (normalizedType === "grpc" || normalizedRef.endsWith(".proto")) {
     return { format: "protobuf", filename: "schema.proto" };
   }
+  if (normalizedType === "json-schema" || normalizedRef.endsWith(".schema.json") || normalizedRef === "schema.json") {
+    return { format: "json-schema", filename: import_node_path23.default.posix.basename(normalizedRef) || "schema.json" };
+  }
+  if (normalizedType === "avro" || normalizedRef.endsWith(".avsc") || normalizedRef.endsWith(".avro")) {
+    return { format: "avro", filename: import_node_path23.default.posix.basename(normalizedRef) || "schema.avsc" };
+  }
+  if (normalizedType === "smithy" || normalizedRef.endsWith(".smithy") || normalizedRef.endsWith("smithy-build.json")) {
+    return { format: "smithy", filename: import_node_path23.default.posix.basename(normalizedRef) || "model.smithy" };
+  }
   if (normalizedRef.endsWith(".json")) {
     return { format: "openapi-json", filename: "index.json" };
   }
   return { format: "openapi-yaml", filename: "index.yaml" };
+}
+function inferFormatFromContent(relativePath2, content) {
+  const fromName = catalogFormatFor(void 0, relativePath2).format;
+  const trimmed = content.trim();
+  if (fromName === "json-schema" || fromName === "avro" || fromName === "smithy" || fromName === "graphql-sdl" || fromName === "protobuf") {
+    return fromName;
+  }
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed.$schema === "string" || parsed.type === "object" || parsed.type === "array") {
+        if (!parsed.openapi && !parsed.swagger && !parsed.asyncapi) {
+          return "json-schema";
+        }
+      }
+      if (parsed.type === "record" && typeof parsed.name === "string") {
+        return "avro";
+      }
+      if (typeof parsed.asyncapi === "string") {
+        return "asyncapi-json";
+      }
+      if (typeof parsed.openapi === "string" || typeof parsed.swagger === "string") {
+        return "openapi-json";
+      }
+    } catch {
+    }
+  }
+  if (/^\s*asyncapi\s*:/i.test(trimmed)) return "asyncapi-yaml";
+  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) return "openapi-yaml";
+  return fromName;
 }
 function normalizeSnsName(value) {
   return value.trim().toLowerCase().replace(/\.fifo$/i, "");
@@ -169980,10 +173438,10 @@ function serviceNameForProviderCandidate(candidate) {
 async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile) {
   const serviceName = serviceNameForProviderCandidate(resolved.candidate);
   const result = await resolved.provider.exportSpec(resolved.candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
-  const relativeProviderDir = import_node_path14.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
-  const relativeProviderPath = import_node_path14.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
+  const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
+  const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-  const relativeMetadataPath = metadataSidecar ? import_node_path14.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+  const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
   const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
     repoRoot: inputs.repoRoot,
     relativeDir: relativeProviderDir,
@@ -169998,6 +173456,15 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
     dryRun: inputs.dryRun,
     writeSpecFile
   });
+  const gatewayType = resolved.candidate.meta.gatewayType ?? "REST";
+  const providerProvenance = result.provenance ? buildDeployedSourceProvenance({
+    inputs,
+    apiId: resolved.candidate.id,
+    gatewayType: resolved.provider.type === "api-gateway" ? gatewayType : void 0,
+    content: result.content,
+    sourceTier: resolved.provider.type,
+    base: result.provenance
+  }) : result.provenance;
   return {
     status: "resolved",
     sourceType: resolved.sourceType,
@@ -170005,11 +173472,12 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
     confidence: resolved.confidence,
     specPath: relativeProviderPath,
     gatewayId: resolved.candidate.id,
-    gatewayType: resolved.candidate.meta.gatewayType ?? "REST",
+    gatewayType,
     providerType: resolved.provider.type,
     specFormat: result.format,
     metadataPath: relativeMetadataPath,
     stage: result.stage,
+    provenance: providerProvenance ? sanitizeJsonValue(providerProvenance) : void 0,
     openapiContractAudit: inputs.dryRun ? void 0 : result.openapiContractAudit,
     ...derivedOpenApi,
     evidence: [...resolved.evidence, ...result.evidence, ...inputs.dryRun ? ["Dry run enabled; skipped provider spec file write"] : []]
@@ -170024,42 +173492,230 @@ function collectSnsEventBridgeBridgeEvidence(signals) {
   }
   return signals.evidence.filter((entry) => /sns.*eventbridge|eventbridge.*sns|bridge pattern/i.test(entry));
 }
-function pickPreferredStage(stages) {
-  const priority = ["prod", "production", "$default", "main", "staging", "stage", "dev", "development"];
-  const lowered = new Map(stages.map((stage) => [stage.toLowerCase(), stage]));
-  for (const preferred of priority) {
-    const match = lowered.get(preferred);
-    if (match) {
-      return match;
+function configurationModeForGateway(gatewayType, mode) {
+  if (gatewayType === "WEBSOCKET") return "partial-control-plane";
+  return mode;
+}
+async function collectTrustedStageEvidence(aws, candidate) {
+  const mappings = [];
+  try {
+    if (candidate.gatewayType === "REST" && aws.listRestDomainMappings) {
+      mappings.push(...await aws.listRestDomainMappings());
     }
+    if ((candidate.gatewayType === "HTTP" || candidate.gatewayType === "WEBSOCKET") && aws.listHttpDomainMappings) {
+      mappings.push(...await aws.listHttpDomainMappings());
+    }
+  } catch {
+    return void 0;
+  }
+  const linkedStages = mappings.filter((mapping) => mapping.apiId === candidate.id).map((mapping) => (mapping.stage ?? "").trim()).filter((stage) => stage.length > 0);
+  const unique2 = [...new Set(linkedStages)];
+  if (unique2.length === 1) {
+    return { stageName: unique2[0], source: "custom-domain-mapping" };
   }
   return void 0;
 }
-async function resolveStageSelection(aws, candidate, preferredStage) {
-  const stages = candidate.gatewayType === "REST" ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id);
-  if (preferredStage) {
-    if (stages.includes(preferredStage)) {
-      return { stage: preferredStage, evidence: [`Using explicitly requested stage ${preferredStage}`] };
+function stageNames(stages) {
+  return stages.map((stage) => stage.stageName);
+}
+function normalizeStageList(raw) {
+  if (!Array.isArray(raw)) return [];
+  const normalized = [];
+  for (const item of raw) {
+    if (typeof item === "string") {
+      const stageName2 = item.trim();
+      if (stageName2) normalized.push({ stageName: stageName2 });
+      continue;
     }
-    return { evidence: [], error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}` };
+    if (!item || typeof item !== "object") continue;
+    const record = item;
+    const stageName = String(record.stageName ?? record.StageName ?? "").trim();
+    if (!stageName) continue;
+    const summary2 = { stageName };
+    const deploymentId = String(record.deploymentId ?? record.DeploymentId ?? "").trim();
+    if (deploymentId) summary2.deploymentId = deploymentId;
+    if (typeof record.autoDeploy === "boolean") summary2.autoDeploy = record.autoDeploy;
+    else if (typeof record.AutoDeploy === "boolean") summary2.autoDeploy = record.AutoDeploy;
+    if (typeof record.apiGatewayManaged === "boolean") summary2.apiGatewayManaged = record.apiGatewayManaged;
+    else if (typeof record.ApiGatewayManaged === "boolean") summary2.apiGatewayManaged = record.ApiGatewayManaged;
+    normalized.push(summary2);
+  }
+  return normalized;
+}
+async function resolveStageSelection(aws, candidate, preferredStage, preferLatestConfiguration = false, trustedEvidence) {
+  const stages = normalizeStageList(
+    candidate.gatewayType === "REST" ? await aws.listRestStages(candidate.id) : await aws.listHttpStages(candidate.id)
+  );
+  if (preferredStage) {
+    const match = stages.find((stage) => stage.stageName === preferredStage);
+    if (match) {
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, "deployed-stage"),
+        evidence: [`Using explicitly requested stage ${preferredStage}`]
+      };
+    }
+    return {
+      evidence: [],
+      error: `Requested stage ${preferredStage} was not found for ${candidate.gatewayType} API ${candidate.id}`
+    };
+  }
+  if (preferLatestConfiguration && candidate.gatewayType === "HTTP") {
+    return {
+      useLatestConfig: true,
+      configurationMode: "latest-configuration",
+      evidence: ["Explicit HTTP gateway without stage; exporting latest HTTP API configuration (latest-configuration mode)"]
+    };
+  }
+  const evidence = trustedEvidence ?? await collectTrustedStageEvidence(aws, candidate);
+  if (evidence?.stageName) {
+    const matches = stages.filter((stage) => stage.stageName === evidence.stageName);
+    if (matches.length === 1) {
+      const match = matches[0];
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, "deployed-stage"),
+        evidence: [
+          `Using trusted stage evidence ${match.stageName}${evidence.source ? ` from ${evidence.source}` : ""}`
+        ]
+      };
+    }
+  }
+  if (evidence?.deploymentId) {
+    const matches = stages.filter((stage) => stage.deploymentId === evidence.deploymentId);
+    if (matches.length === 1) {
+      const match = matches[0];
+      return {
+        stage: match.stageName,
+        deploymentId: match.deploymentId,
+        configurationMode: configurationModeForGateway(candidate.gatewayType, "deployed-stage"),
+        evidence: [
+          `Using trusted deployment evidence ${evidence.deploymentId}${evidence.source ? ` from ${evidence.source}` : ""}`
+        ]
+      };
+    }
   }
   if (stages.length === 0) {
-    if (candidate.gatewayType === "HTTP" || candidate.gatewayType === "WEBSOCKET") {
+    if (candidate.gatewayType === "HTTP") {
       return {
         useLatestConfig: true,
-        evidence: [`No deployed stage found; exporting latest ${candidate.gatewayType} API configuration without stage`]
+        configurationMode: "latest-configuration",
+        evidence: [
+          "No deployed stage found; exporting latest HTTP API configuration (latest-configuration mode, distinct from deployed-stage truth)"
+        ]
+      };
+    }
+    if (candidate.gatewayType === "WEBSOCKET") {
+      return {
+        useLatestConfig: true,
+        configurationMode: "partial-control-plane",
+        evidence: [
+          "No deployed stage found; synthesizing partial WebSocket control-plane reconstruction"
+        ]
       };
     }
     return { evidence: [], error: `No stages were found for REST API ${candidate.id}` };
   }
   if (stages.length === 1) {
-    return { stage: stages[0], evidence: [`Auto-selected only available stage ${stages[0]}`] };
+    const only = stages[0];
+    return {
+      stage: only.stageName,
+      deploymentId: only.deploymentId,
+      configurationMode: configurationModeForGateway(candidate.gatewayType, "deployed-stage"),
+      evidence: [`Auto-selected only available stage ${only.stageName}`]
+    };
   }
-  const preferred = pickPreferredStage(stages);
-  if (preferred) {
-    return { stage: preferred, evidence: [`Auto-selected preferred stage ${preferred}`] };
+  if (candidate.gatewayType === "HTTP") {
+    const defaultAutoDeploy = stages.filter(
+      (stage) => stage.stageName === "$default" && stage.autoDeploy === true
+    );
+    const otherAutoDeploy = stages.filter(
+      (stage) => stage.stageName !== "$default" && stage.autoDeploy === true
+    );
+    if (defaultAutoDeploy.length === 1 && otherAutoDeploy.length === 0) {
+      const only = defaultAutoDeploy[0];
+      return {
+        stage: only.stageName,
+        deploymentId: only.deploymentId,
+        configurationMode: "deployed-stage",
+        evidence: ["Auto-selected uniquely evidenced HTTP $default auto-deploy stage"]
+      };
+    }
   }
-  return { evidence: [], error: `Multiple stages found with no deterministic match: ${stages.join(", ")}` };
+  const ranked = [...stageNames(stages)].sort((left, right) => left.localeCompare(right));
+  return {
+    rankedStages: ranked,
+    evidence: [],
+    error: `Multiple stages found without uniquely evidenced selection; manual review required: ${ranked.join(", ")}`
+  };
+}
+function sha256Hex(content) {
+  return (0, import_node_crypto7.createHash)("sha256").update(content, "utf8").digest("hex");
+}
+function gatewayApiArn(partition2, region, gatewayType, apiId) {
+  const resolvedPartition = partition2 || "aws";
+  if (gatewayType === "REST") {
+    return `arn:${resolvedPartition}:apigateway:${region}::/restapis/${apiId}`;
+  }
+  return `arn:${resolvedPartition}:apigateway:${region}::/apis/${apiId}`;
+}
+function buildGatewayExportOptions(gatewayType, stage, useLatestConfig) {
+  if (gatewayType === "REST") {
+    return { exportType: "oas30", stageName: stage, extensions: "apigateway" };
+  }
+  if (gatewayType === "WEBSOCKET") {
+    return {
+      reconstruction: "partial-control-plane",
+      stageName: stage,
+      useLatestConfig: Boolean(useLatestConfig || !stage)
+    };
+  }
+  return {
+    includeExtensions: Boolean(stage),
+    stageName: stage,
+    configurationMode: stage ? "deployed-stage" : "latest-configuration"
+  };
+}
+function buildDeployedSourceProvenance(input) {
+  const partition2 = input.identity?.partition ?? partitionFromArn(input.identity?.arn) ?? input.base?.partition;
+  const provenance = {
+    ...input.base,
+    partition: partition2,
+    accountIndicator: accountIndicatorFromAccountId(input.identity?.accountId) ?? input.base?.accountIndicator,
+    region: input.inputs.awsRegion,
+    queryTimestamp: input.base?.queryTimestamp ?? (/* @__PURE__ */ new Date()).toISOString()
+  };
+  if (input.apiId) {
+    provenance.apiId = input.apiId;
+    if (input.gatewayType) {
+      provenance.apiArn = gatewayApiArn(partition2, input.inputs.awsRegion, input.gatewayType, input.apiId);
+      provenance.protocol = input.gatewayType;
+    }
+  }
+  if (input.stageSelection?.configurationMode) {
+    provenance.configurationMode = input.stageSelection.configurationMode;
+  }
+  if (input.stageSelection?.stage) {
+    provenance.stage = input.stageSelection.stage;
+  }
+  if (input.stageSelection?.deploymentId) {
+    provenance.deploymentId = input.stageSelection.deploymentId;
+  }
+  if (input.gatewayType) {
+    provenance.exportOptions = buildGatewayExportOptions(
+      input.gatewayType,
+      input.stageSelection?.stage,
+      input.stageSelection?.useLatestConfig
+    );
+  }
+  if (input.sourceTier) provenance.sourceTier = input.sourceTier;
+  if (input.sourceTagContract) provenance.sourceTagContract = input.sourceTagContract;
+  if (input.content) provenance.artifactHash = sha256Hex(input.content);
+  if (input.providerProbes) provenance.providerProbes = input.providerProbes;
+  if (input.truncation) provenance.truncation = input.truncation;
+  return provenance;
 }
 function toManualReviewResult(base, extraEvidence) {
   return { ...base, status: "unresolved", sourceType: "manual-review", evidence: [...base.evidence, ...extraEvidence] };
@@ -170074,8 +173730,11 @@ function isManualReviewExportError(error3) {
 function isRestExportFallbackError2(error3) {
   return error3.name === "BadRequestException" || isKnownRestExportLimitation2(error3.message);
 }
+function shouldResolveCallerIdentity(inputs) {
+  return inputs.preflightChecks || Boolean(inputs.expectedAccountId) || Boolean(inputs.expectedPartition);
+}
 async function runPreflight(inputs, dependencies) {
-  if (!inputs.preflightChecks) {
+  if (!shouldResolveCallerIdentity(inputs)) {
     dependencies.core.info("Preflight checks skipped by configuration");
     return;
   }
@@ -170111,6 +173770,26 @@ async function runPreflight(inputs, dependencies) {
     }
     throw error3;
   }
+  const partition2 = identity.partition ?? partitionFromArn(identity.arn);
+  if (inputs.expectedAccountId) {
+    const actual = (identity.accountId ?? "").trim();
+    if (actual !== inputs.expectedAccountId) {
+      throw new Error(
+        userSafeWarning(
+          `AWS account mismatch: expected account ${accountIndicatorFromAccountId(inputs.expectedAccountId) ?? "[redacted-account-id]"} does not match caller identity ${accountIndicatorFromAccountId(actual) ?? "[redacted-account-id]"}. Export aborted.`
+        )
+      );
+    }
+  }
+  if (inputs.expectedPartition) {
+    if (!partition2 || partition2 !== inputs.expectedPartition) {
+      throw new Error(
+        userSafeWarning(
+          `AWS partition mismatch: expected partition ${inputs.expectedPartition} does not match caller identity partition ${partition2 ?? "unknown"}. Export aborted.`
+        )
+      );
+    }
+  }
   if (inputs.preflightPermissionProbe) {
     try {
       await dependencies.aws.probeApiGatewayReadAccess();
@@ -170120,9 +173799,9 @@ async function runPreflight(inputs, dependencies) {
       );
     }
   }
-  const accountSuffix = identity.accountId ? identity.accountId.slice(-4) : "unknown";
+  const accountIndicator = accountIndicatorFromAccountId(identity.accountId) ?? "***unknown";
   dependencies.core.info(
-    `Preflight OK: region=${inputs.awsRegion}, account=***${accountSuffix}, identity=${identity.arn ? "available" : "unknown"}`
+    `Preflight OK: region=${inputs.awsRegion}, partition=${partition2 ?? "unknown"}, account=${accountIndicator}, identity=${identity.arn ? "available" : "unknown"}`
   );
 }
 async function runDiscovery(inputs, dependencies) {
@@ -170153,15 +173832,41 @@ async function runDiscovery(inputs, dependencies) {
   const discovered = [];
   const summary2 = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path14.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, "output-dir");
+  let callerIdentity;
+  if (shouldResolveCallerIdentity(inputs)) {
+    try {
+      callerIdentity = await dependencies.aws.getCallerIdentity();
+    } catch {
+      callerIdentity = void 0;
+    }
+  }
   await dependencies.core.group("Export OpenAPI specs", async () => {
     for (const candidate of selectedCandidates) {
       try {
-        const stage = await selectStage(dependencies.aws, candidate, inputs.stage);
-        if (!stage && candidate.gatewayType !== "WEBSOCKET") {
+        const stageSelection = await selectStage(
+          dependencies.aws,
+          candidate,
+          inputs.stage,
+          inputs.expectedGatewayIds.includes(candidate.id)
+        );
+        if (stageSelection.error) {
           summary2.skipped += 1;
-          dependencies.core.warning(userSafeWarning(`Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`));
+          dependencies.core.warning(
+            userSafeWarning(
+              `Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}): ${stageSelection.error}`
+            )
+          );
+          continue;
+        }
+        if (!stageSelection.stage && !stageSelection.useLatestConfig && candidate.gatewayType !== "WEBSOCKET") {
+          summary2.skipped += 1;
+          dependencies.core.warning(
+            userSafeWarning(
+              `Skipping ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) because no stage is available`
+            )
+          );
           continue;
         }
         const tags = candidate.gatewayType === "REST" ? await dependencies.aws.getRestTags(candidate.id) : await dependencies.aws.getHttpTags(candidate.id);
@@ -170170,19 +173875,19 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(import_node_path14.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path23.default.relative(resolvedRoot, resolvedOutputDir), folderName);
         if (inputs.dryRun) {
           summary2.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
           continue;
         }
-        const exportedStage = stage ?? "";
+        const exportedStage = stageSelection.useLatestConfig ? void 0 : stageSelection.stage;
         const exported = await exportApiGatewaySpecBody(dependencies.aws, candidate, exportedStage);
         const normalized = normalizeApiGatewaySpec(exported.content, candidate, dependencies.core);
         const specBody = normalized.content;
         const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
           repoRoot: resolvedRoot,
-          relativeDir: import_node_path14.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+          relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
           native: { relativePath: relativeSpecPath, content: specBody },
           derivation: {
             content: specBody,
@@ -170194,18 +173899,27 @@ async function runDiscovery(inputs, dependencies) {
           writeSpecFile: dependencies.writeSpecFile
         });
         summary2.exported += 1;
+        const provenance = buildDeployedSourceProvenance({
+          inputs,
+          identity: callerIdentity,
+          gatewayType: candidate.gatewayType,
+          apiId: candidate.id,
+          stageSelection,
+          content: specBody
+        });
         discovered.push({
           serviceName,
           specPath: relativeSpecPath,
           gatewayId: candidate.id,
           gatewayType: candidate.gatewayType,
-          stage: exportedStage,
+          stage: stageSelection.stage ?? "",
           providerType: "api-gateway",
           specFormat: "openapi-yaml",
           openapiContractAudit: normalized.openapiContractAudit,
+          provenance: sanitizeJsonValue(provenance),
           ...derivedOpenApi
         });
-        for (const evidence of exported.evidence) {
+        for (const evidence of [...stageSelection.evidence, ...exported.evidence]) {
           dependencies.core.info(evidence);
         }
         dependencies.core.info(`Exported ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
@@ -170219,58 +173933,346 @@ async function runDiscovery(inputs, dependencies) {
   });
   return { discovered, summary: summary2 };
 }
+function rankedRepoAmbiguity(inputs, candidates, evidencePrefix) {
+  const rankedCandidates = sanitizeJsonValue(
+    candidates.map((candidate, index) => ({
+      rank: index + 1,
+      serviceName: candidate.serviceName,
+      gatewayId: candidate.gatewayId,
+      gatewayType: candidate.gatewayType,
+      confidence: candidate.confidence,
+      evidence: candidate.evidence
+    }))
+  );
+  return {
+    status: "unresolved",
+    sourceType: "manual-review",
+    serviceName: inferFallbackServiceName(inputs) ?? "unknown-service",
+    confidence: 0,
+    rankedCandidates,
+    evidence: [
+      evidencePrefix,
+      ...rankedCandidates.map((candidate) => `Candidate ${candidate.rank}: ${candidate.gatewayId}`)
+    ]
+  };
+}
+function sameTierRepoCandidates(candidates) {
+  const top = candidates[0];
+  if (!top) return [];
+  return candidates.filter(
+    (candidate) => candidate.artifactClass === top.artifactClass && candidate.type === top.type
+  );
+}
+function topCandidatePerServiceRoot(candidates) {
+  const byRoot = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const existing = byRoot.get(candidate.serviceRoot);
+    if (!existing) {
+      byRoot.set(candidate.serviceRoot, candidate);
+      continue;
+    }
+    if (candidate.score > existing.score || candidate.score === existing.score && candidate.path.localeCompare(existing.path) < 0) {
+      byRoot.set(candidate.serviceRoot, candidate);
+    }
+  }
+  return [...byRoot.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([, candidate]) => candidate);
+}
+function gatewayTypeForRepoFormat(format2) {
+  if (format2 === "asyncapi-yaml" || format2 === "asyncapi-json") return "SNS";
+  return "REST";
+}
+function serviceNameForRepoCandidate(inputs, candidate) {
+  if (candidate.serviceRoot && candidate.serviceRoot !== ".") {
+    return import_node_path23.default.posix.basename(candidate.serviceRoot);
+  }
+  return inferFallbackServiceName(inputs) ?? (import_node_path23.default.posix.basename(candidate.path, import_node_path23.default.posix.extname(candidate.path)) || "service");
+}
+function materializeAggregatedRepoArtifact(inputs, candidate) {
+  const members = candidate.memberPaths ?? [];
+  const isSmithyProject = candidate.type === "smithy" && (members.length > 0 || import_node_path23.default.posix.basename(candidate.path).toLowerCase() === "smithy-build.json");
+  const isGraphqlAggregate = candidate.type === "graphql" && members.length > 1;
+  if (!isSmithyProject && !isGraphqlAggregate || !candidate.content?.trim()) {
+    return {
+      path: candidate.path,
+      writeNative: false,
+      content: candidate.content,
+      evidence: candidate.evidence
+    };
+  }
+  const serviceName = serviceNameForRepoCandidate(inputs, candidate);
+  const filename = candidate.type === "smithy" ? "model.smithy" : "schema.graphql";
+  const aggregatePath = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName), filename).replace(/\\/g, "/");
+  return {
+    path: aggregatePath,
+    writeNative: true,
+    content: candidate.content,
+    evidence: [
+      ...candidate.evidence,
+      `Materialized aggregated ${candidate.type === "smithy" ? "Smithy" : "GraphQL"} model at ${aggregatePath}`
+    ]
+  };
+}
+async function selectExplicitRepoSpec(inputs) {
+  const relative2 = inputs.specPath;
+  const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative2, {
+    fieldName: "spec-path",
+    countAsReference: false
+  });
+  const content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
+  const format2 = inferFormatFromContent(relative2, content);
+  return {
+    existingSpecPath: relative2.replace(/\\/g, "/"),
+    existingSpecFormat: format2,
+    existingSpecEvidence: [`Resolved from explicit spec-path ${relative2}`],
+    existingSpecContent: content,
+    existingSpecShouldWriteNative: false
+  };
+}
+async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemoteSpec = fetchSpecFromUrl) {
+  const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+  const viable = [];
+  for (const api of catalogApis) {
+    if (api.specPath) {
+      try {
+        const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, api.specPath, {
+          fieldName: "catalog-spec-path",
+          countAsReference: false
+        });
+        const content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
+        const relative2 = import_node_path23.default.relative(import_node_path23.default.resolve(inputs.repoRoot), resolved.canonicalPath).replace(/\\/g, "/");
+        viable.push({
+          api,
+          kind: "local",
+          path: relative2,
+          format: catalogFormatFor(api.type, api.specPath).format,
+          content,
+          evidence: [`Resolved from Backstage catalog local ${api.type ?? "api"} definition (${api.name})`],
+          writeNative: false
+        });
+      } catch (error3) {
+        actionCore.warning(
+          userSafeWarning(
+            `Backstage catalog spec path ${api.specPath} for ${api.name} was not usable (${formatUserSafeError(error3)}); continuing discovery`
+          )
+        );
+      }
+      continue;
+    }
+    if (api.specUrl) {
+      const safeUrl = sanitizeUrlEvidence(api.specUrl);
+      try {
+        actionCore.info(`Fetching spec from Backstage catalog URL: ${safeUrl}`);
+        const fetched = await fetchRemoteSpec(api.specUrl, {
+          timeoutMs: 15e3,
+          policy: remotePolicy
+        });
+        const catalogFormat = catalogFormatFor(api.type, api.specUrl);
+        const targetPath = import_node_path23.default.join(inputs.outputDir, projectFolderName(api.name), catalogFormat.filename).replace(/\\/g, "/");
+        viable.push({
+          api,
+          kind: "remote",
+          path: targetPath,
+          format: catalogFormat.format,
+          content: fetched.content,
+          evidence: [`Resolved from Backstage catalog remote ${api.type ?? "api"} definition (${api.name})`],
+          writeNative: true
+        });
+        actionCore.info(`Fetched remote spec from catalog URL for ${targetPath}`);
+      } catch (error3) {
+        const detail = error3 instanceof Error ? error3.message : String(error3);
+        actionCore.warning(userSafeWarning(`Failed to fetch spec from catalog URL ${safeUrl}: ${detail}`));
+      }
+    }
+  }
+  if (viable.length === 0) {
+    return void 0;
+  }
+  if (viable.length > 1) {
+    return {
+      earlyResult: rankedRepoAmbiguity(
+        inputs,
+        viable.map((entry) => ({
+          serviceName: entry.api.name,
+          gatewayId: entry.path ?? entry.api.specUrl ?? entry.api.name,
+          gatewayType: gatewayTypeForRepoFormat(entry.format),
+          confidence: 70,
+          evidence: entry.evidence
+        })),
+        `Found ${viable.length} Backstage API entities with usable definitions; manual review required`
+      ),
+      existingSpecShouldWriteNative: false
+    };
+  }
+  const selected = viable[0];
+  return {
+    existingSpecPath: selected.path,
+    existingSpecFormat: selected.format,
+    existingSpecEvidence: selected.evidence,
+    existingSpecContent: selected.content,
+    existingSpecShouldWriteNative: selected.writeNative
+  };
+}
+async function selectInventoryContract(inputs) {
+  const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
+    ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}
+  });
+  const candidates = inventory.candidates;
+  if (candidates.length === 0) {
+    return void 0;
+  }
+  if (!inputs.serviceRoot) {
+    const rootWinners = topCandidatePerServiceRoot(
+      candidates.filter((candidate) => candidate.artifactClass === "authored")
+    );
+    if (rootWinners.length > 1) {
+      return {
+        earlyResult: rankedRepoAmbiguity(
+          inputs,
+          rootWinners.map((candidate) => ({
+            serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
+            gatewayId: candidate.path,
+            gatewayType: gatewayTypeForRepoFormat(candidate.format),
+            confidence: Math.max(50, Math.min(95, candidate.score)),
+            evidence: candidate.evidence
+          })),
+          `Found ${rootWinners.length} repository service groups; set service-root or spec-path for resolve-one`
+        ),
+        existingSpecShouldWriteNative: false
+      };
+    }
+  }
+  const sameTier = sameTierRepoCandidates(candidates);
+  if (sameTier.length > 1) {
+    return {
+      earlyResult: rankedRepoAmbiguity(
+        inputs,
+        sameTier.map((candidate) => ({
+          serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
+          gatewayId: candidate.path,
+          gatewayType: gatewayTypeForRepoFormat(candidate.format),
+          confidence: Math.max(50, Math.min(95, candidate.score)),
+          evidence: candidate.evidence
+        })),
+        `Found ${sameTier.length} same-tier repository contracts; manual review required`
+      ),
+      existingSpecShouldWriteNative: false
+    };
+  }
+  const selected = candidates[0];
+  const materialized = materializeAggregatedRepoArtifact(inputs, selected);
+  return {
+    existingSpecPath: materialized.path,
+    existingSpecFormat: selected.format,
+    existingSpecEvidence: materialized.evidence,
+    existingSpecContent: materialized.content,
+    existingSpecShouldWriteNative: materialized.writeNative
+  };
+}
+async function resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec = fetchSpecFromUrl) {
+  const catalogApis = await detectCatalogApis(inputs.repoRoot, {
+    ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {},
+    ...inputs.expectedServiceName ? { serviceName: inputs.expectedServiceName } : {}
+  });
+  if (inputs.specPath) {
+    const explicit = await selectExplicitRepoSpec(inputs);
+    return { catalogApis, ...explicit };
+  }
+  if (catalogApis && catalogApis.length > 0) {
+    const catalogSelection = await selectCatalogContract(inputs, catalogApis, actionCore, fetchRemoteSpec);
+    if (catalogSelection?.earlyResult || catalogSelection?.existingSpecPath) {
+      return { catalogApis, ...catalogSelection, existingSpecShouldWriteNative: catalogSelection.existingSpecShouldWriteNative };
+    }
+  }
+  const inventorySelection = await selectInventoryContract(inputs);
+  if (inventorySelection) {
+    return { catalogApis, ...inventorySelection };
+  }
+  return { catalogApis, existingSpecShouldWriteNative: false };
+}
+async function discoverRepoServiceGroups(inputs, dependencies) {
+  const inventory = await inventoryRepoSpecs(inputs.repoRoot, {
+    ...inputs.serviceRoot ? { serviceRoot: inputs.serviceRoot } : {}
+  });
+  const byRoot = /* @__PURE__ */ new Map();
+  for (const candidate of inventory.candidates) {
+    const bucket = byRoot.get(candidate.serviceRoot) ?? [];
+    bucket.push(candidate);
+    byRoot.set(candidate.serviceRoot, bucket);
+  }
+  const discovered = [];
+  const nativePaths = /* @__PURE__ */ new Set();
+  const summary2 = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
+  const roots = [...byRoot.keys()].sort((left, right) => left.localeCompare(right));
+  for (const serviceRoot of roots) {
+    const group5 = (byRoot.get(serviceRoot) ?? []).sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (left.artifactClass !== right.artifactClass) {
+        return left.artifactClass === "authored" ? -1 : 1;
+      }
+      return left.path.localeCompare(right.path);
+    });
+    const sameTier = sameTierRepoCandidates(group5);
+    summary2.attempted += 1;
+    if (sameTier.length !== 1) {
+      summary2.skipped += 1;
+      dependencies.core.info(
+        `Skipping ambiguous repository service group ${serviceRoot} (${sameTier.length} same-tier candidates)`
+      );
+      continue;
+    }
+    const selected = sameTier[0];
+    const materialized = materializeAggregatedRepoArtifact(inputs, selected);
+    if (nativePaths.has(materialized.path) || nativePaths.has(selected.path)) {
+      summary2.skipped += 1;
+      continue;
+    }
+    nativePaths.add(materialized.path);
+    nativePaths.add(selected.path);
+    const serviceName = serviceNameForRepoCandidate(inputs, selected);
+    if (!inputs.dryRun && materialized.writeNative && materialized.content) {
+      try {
+        const absolute = resolvePathWithinRoot(inputs.repoRoot, materialized.path, "output-dir");
+        await dependencies.writeSpecFile(absolute, materialized.content);
+      } catch (error3) {
+        summary2.failed += 1;
+        dependencies.core.warning(
+          userSafeWarning(`Failed writing aggregated repo contract ${materialized.path}: ${formatUserSafeError(error3)}`)
+        );
+        continue;
+      }
+    }
+    discovered.push({
+      serviceName,
+      specPath: materialized.path,
+      gatewayId: `repo-spec:${materialized.path}`,
+      gatewayType: gatewayTypeForRepoFormat(selected.format),
+      stage: "",
+      specFormat: selected.format
+    });
+    summary2.exported += 1;
+    dependencies.core.info(`Discovered repository service group ${serviceRoot} -> ${materialized.path}`);
+  }
+  return { discovered, summary: summary2, nativePaths };
+}
 async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resolutionDependencies = {}) {
-  const catalogApis = await detectCatalogApis(inputs.repoRoot);
-  const catalogApi = catalogApis?.[0];
-  const catalogSpecPath = catalogApi?.specPath;
-  const catalogSpecUrl = catalogApi?.specUrl;
-  const repoSpec = await findExistingRepoSpecTyped(inputs.repoRoot);
-  let existingSpecPath;
-  let existingSpecFormat;
-  let existingSpecEvidence;
-  let existingSpecContent;
-  let existingSpecShouldWriteNative = false;
-  if (catalogSpecPath) {
-    const resolvedCatalogPath = resolvePathWithinRoot(inputs.repoRoot, catalogSpecPath, "catalog-spec-path");
-    const catalogStat = await (0, import_promises11.stat)(resolvedCatalogPath).catch(() => void 0);
-    if (catalogStat?.isFile()) {
-      existingSpecPath = catalogSpecPath.replace(/\\/g, "/");
-      existingSpecFormat = catalogFormatFor(catalogApi?.type, catalogSpecPath).format;
-      existingSpecEvidence = [`Resolved from Backstage catalog local ${catalogApi?.type ?? "api"} definition`];
-    } else {
-      actionCore.warning(userSafeWarning(`Backstage catalog spec path ${catalogSpecPath} was not found; continuing discovery`));
-    }
+  const fetchRemoteSpec = resolutionDependencies.fetchSpecFromUrl ?? fetchSpecFromUrl;
+  const repoSelection = await resolveRepoContractSelection(inputs, actionCore, fetchRemoteSpec);
+  const catalogApis = repoSelection.catalogApis;
+  if (repoSelection.earlyResult) {
+    return repoSelection.earlyResult;
   }
-  if (!existingSpecPath && repoSpec) {
-    existingSpecPath = repoSpec.path;
-    existingSpecFormat = repoSpec.format;
-    existingSpecEvidence = repoSpec.evidence;
-  }
-  if (!existingSpecPath && catalogSpecUrl) {
-    try {
-      actionCore.info(`Fetching spec from Backstage catalog URL: ${catalogSpecUrl}`);
-      const fetched = await fetchSpecFromUrl(catalogSpecUrl, { timeoutMs: 15e3 });
-      const folderName = catalogApi?.name ?? "catalog-api";
-      const catalogFormat = catalogFormatFor(catalogApi?.type, catalogSpecUrl);
-      const targetPath = import_node_path14.default.join(inputs.outputDir, folderName, catalogFormat.filename);
-      existingSpecPath = targetPath.replace(/\\/g, "/");
-      existingSpecFormat = catalogFormat.format;
-      existingSpecEvidence = [`Resolved from Backstage catalog remote ${catalogApi?.type ?? "api"} definition`];
-      existingSpecContent = fetched.content;
-      existingSpecShouldWriteNative = true;
-      actionCore.info(`Fetched remote spec from catalog URL for ${existingSpecPath}`);
-    } catch (error3) {
-      const detail = error3 instanceof Error ? error3.message : String(error3);
-      actionCore.warning(`Failed to fetch spec from catalog URL ${catalogSpecUrl}: ${detail}`);
-    }
-  }
+  const existingSpecPath = repoSelection.existingSpecPath;
+  const existingSpecFormat = repoSelection.existingSpecFormat;
+  const existingSpecEvidence = repoSelection.existingSpecEvidence;
+  const existingSpecContent = repoSelection.existingSpecContent;
+  const existingSpecShouldWriteNative = repoSelection.existingSpecShouldWriteNative;
   if (!existingSpecPath) {
     const localArtifactSpecs = await findLocalCfnArtifactSpecs(inputs.repoRoot);
     if (localArtifactSpecs.length === 1) {
       const artifact = localArtifactSpecs[0];
       const serviceName = artifact.logicalId;
-      const relativeDir = import_node_path14.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-      const relativeSpecPath = import_node_path14.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
+      const relativeDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+      const relativeSpecPath = import_node_path23.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
       const evidence = [
         `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId}`
       ];
@@ -170343,9 +174345,50 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   );
   let finalCandidates = uniqueGatewayCandidates([...domainResolution.candidates, ...narrowedCandidates]);
   let resolutionNarrowing;
-  if (inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
+  let exactTagEvidence = [];
+  let exactTagRestricted = false;
+  const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+  const resolveTaggingClient = () => {
+    if (resolutionDependencies.narrowingClients) {
+      return resolutionDependencies.narrowingClients.taggingClient;
+    }
+    try {
+      return new TaggingSdkClient(inputs.awsRegion, sdkOpts);
+    } catch {
+      return void 0;
+    }
+  };
+  const exactCorrelation = await actionCore.group(
+    "Exact repository tag correlation",
+    async () => correlateExactRepoTags({
+      repoSlug: inputs.repoContext.repoSlug,
+      taggingClient: resolveTaggingClient()
+    })
+  );
+  if (exactCorrelation) {
+    const beforeCount = finalCandidates.length;
+    const matched = exactCorrelation.gatewayIds.map((id) => finalCandidates.find((candidate) => candidate.id === id)).filter((candidate) => Boolean(candidate));
+    if (matched.length > 0) {
+      finalCandidates = matched;
+      exactTagRestricted = true;
+      exactTagEvidence = exactCorrelation.evidence;
+      const mode = exactCorrelation.mode === "select" && matched.length === 1 ? "select" : "narrow";
+      resolutionNarrowing = {
+        tier: "tag-prefilter",
+        mode,
+        droppedCount: beforeCount - matched.length
+      };
+      if (mode === "select") {
+        actionCore.info(`Exact tag correlation (${exactCorrelation.tagContract}) selected candidate ${matched[0].id}`);
+      } else {
+        actionCore.info(
+          `Exact tag correlation (${exactCorrelation.tagContract}) retained ${matched.length} per-environment candidate(s) for ambiguity-safe review`
+        );
+      }
+    }
+  }
+  if (!exactTagRestricted && inputs.maxCandidates > 0 && finalCandidates.length > inputs.maxCandidates) {
     const candidateCountBeforeNarrowing = finalCandidates.length;
-    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const narrowingResult = await actionCore.group("Progressive narrowing", async () => {
       let cfnClient;
       let taggingClient;
@@ -170393,9 +174436,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       finalCandidates = finalCandidates.slice(0, inputs.maxCandidates);
     }
   }
+  const resolverOptions = { repoSlug: inputs.repoContext.repoSlug };
   const gateways = [];
   for (const candidate of finalCandidates) {
-    const candidateEvidence = [];
+    const candidateEvidence = [...exactTagEvidence];
     let tags = {};
     try {
       tags = candidate.gatewayType === "REST" ? await awsClient.getRestTags(candidate.id) : await awsClient.getHttpTags(candidate.id);
@@ -170405,22 +174449,23 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
     gateways.push({ id: candidate.id, name: candidate.name, gatewayType: candidate.gatewayType, tags, evidence: candidateEvidence });
   }
-  const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals);
-  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals);
+  const resolvedCandidate = resolveServiceCandidate(gateways, enrichedSignals, resolverOptions);
+  const rankedGatewayCandidates = rankServiceCandidates(gateways, enrichedSignals, resolverOptions);
   let resolvedSnsCandidate;
   let resolvedSnsExport;
   const snsManualReviewEvidence = [];
   let snsManualReviewMetadata;
   const shouldAttemptSns = enrichedSignals.providerHints?.includes("sns") ?? false;
   if (shouldAttemptSns) {
-    const sdkOpts = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
+    const sdkOpts2 = { requestTimeoutMs: inputs.requestTimeoutMs, maxAttempts: inputs.maxAttempts };
     const snsRuntimeDependencies = {
-      fetchSpecFromUrl,
+      fetchSpecFromUrl: fetchRemoteSpec,
+      remoteFetchPolicy: inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY,
       catalogApis,
-      eventBridgeClient: resolutionDependencies.eventBridgeClient ?? new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts),
+      eventBridgeClient: resolutionDependencies.eventBridgeClient ?? new EventBridgeSchemasSdkClient(inputs.awsRegion, sdkOpts2),
       codeDerivedResolver: resolutionDependencies.codeDerivedResolver
     };
-    const snsProvider = resolutionDependencies.snsProvider ?? (resolutionDependencies.createSnsProvider ? resolutionDependencies.createSnsProvider(snsRuntimeDependencies) : new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), snsRuntimeDependencies));
+    const snsProvider = resolutionDependencies.snsProvider ?? (resolutionDependencies.createSnsProvider ? resolutionDependencies.createSnsProvider(snsRuntimeDependencies) : new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts2), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts2), snsRuntimeDependencies));
     let snsCandidates = [];
     try {
       const snsAvailable = await snsProvider.probe();
@@ -170500,6 +174545,17 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   if (resolutionNarrowing) {
     selectedSource.narrowing = resolutionNarrowing;
   }
+  if (selectedSource.status === "unresolved" && resolvedCandidate?.ambiguous) {
+    const rankedViews = rankServiceCandidates(gateways, enrichedSignals, resolverOptions).map((candidate, index) => ({
+      rank: index + 1,
+      serviceName: candidate.serviceName,
+      gatewayId: candidate.gatewayId,
+      gatewayType: candidate.gatewayType,
+      confidence: candidate.confidence,
+      evidence: candidate.evidence
+    }));
+    selectedSource.rankedCandidates = sanitizeJsonValue(rankedViews);
+  }
   if (resolvedCandidate?.ambiguous && rankedGatewayCandidates.length > 1 && selectedSource.status === "unresolved") {
     selectedSource.rankedCandidates = sanitizeJsonValue(
       rankedGatewayCandidates.map((candidate, index) => ({
@@ -170535,9 +174591,9 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!selectedSource.specPath || !selectedSource.specFormat) {
       return selectedSource;
     }
-    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path14.default.dirname(selectedSource.specPath) : import_node_path14.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
+    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path23.default.dirname(selectedSource.specPath) : import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
     try {
-      const content = existingSpecContent ?? await (0, import_promises11.readFile)(resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, "repo-spec-path"), "utf8");
+      const content = existingSpecContent ?? await (0, import_promises20.readFile)(resolvePathWithinRoot(inputs.repoRoot, selectedSource.specPath, "repo-spec-path"), "utf8");
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: relativeProviderDir,
@@ -170567,7 +174623,12 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     }
     let stageSelection;
     try {
-      stageSelection = await resolveStageSelection(awsClient, selectedGateway, inputs.stage);
+      stageSelection = await resolveStageSelection(
+        awsClient,
+        selectedGateway,
+        inputs.stage,
+        inputs.expectedGatewayIds.includes(selectedGateway.id)
+      );
     } catch (error3) {
       return toManualReviewResult(selectedSource, [`Stage lookup failed for ${selectedSource.gatewayId}: ${formatUserSafeError(error3)}`]);
     }
@@ -170579,7 +174640,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"));
     if (inputs.dryRun) {
       selectedSource.specPath = relativeSpecPath;
-      selectedSource.derivedOpenApiPath = import_node_path14.default.join(import_node_path14.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
+      selectedSource.derivedOpenApiPath = import_node_path23.default.join(import_node_path23.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
       selectedSource.derivedOpenApiFormat = "openapi-json";
       selectedSource.derivedOpenApiCompleteness = selectedSource.gatewayType === "WEBSOCKET" ? "partial" : void 0;
       selectedSource.derivedOpenApiEvidence = ["Dry run enabled; skipped API Gateway export and derived OpenAPI sidecar write"];
@@ -170600,7 +174661,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const body = normalized.content;
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
-        relativeDir: import_node_path14.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+        relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
         native: { relativePath: relativeSpecPath, content: body },
         derivation: {
           content: body,
@@ -170616,6 +174677,26 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       selectedSource.specFormat = "openapi-yaml";
       selectedSource.openapiContractAudit = normalized.openapiContractAudit;
       Object.assign(selectedSource, derivedOpenApi);
+      let resolveIdentity;
+      if (shouldResolveCallerIdentity(inputs)) {
+        try {
+          resolveIdentity = await awsClient.getCallerIdentity();
+        } catch {
+          resolveIdentity = void 0;
+        }
+      }
+      selectedSource.provenance = sanitizeJsonValue(
+        buildDeployedSourceProvenance({
+          inputs,
+          identity: resolveIdentity,
+          gatewayType: selectedSource.gatewayType,
+          apiId: selectedSource.gatewayId,
+          stageSelection,
+          content: body,
+          sourceTier: selectedSource.narrowing?.tier,
+          providerProbes: selectedSource.providerProbes
+        })
+      );
       if (selectedSource.gatewayType === "WEBSOCKET") {
         selectedSource.evidence = [
           ...selectedSource.evidence,
@@ -170644,10 +174725,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!resolvedSnsExport) {
       return toManualReviewResult(selectedSource, ["SNS contract was selected but export payload was unavailable"]);
     }
-    const relativeProviderDir = import_node_path14.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
-    const relativeProviderPath = import_node_path14.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+    const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
     const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-    const relativeMetadataPath = metadataSidecar ? import_node_path14.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+    const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
     const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
       repoRoot: inputs.repoRoot,
       relativeDir: relativeProviderDir,
@@ -170676,8 +174757,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   }
   if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
     const serviceName = selectedSource.serviceName ?? snsManualReviewMetadata?.serviceName ?? "service";
-    const relativeProviderDir = import_node_path14.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-    const relativeMetadataPath = import_node_path14.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+    const relativeMetadataPath = import_node_path23.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
     const manualReviewResult = toManualReviewResult(
       { ...selectedSource, contractOrigin: "manual-review", metadataPath: relativeMetadataPath },
       snsManualReviewEvidence
@@ -170692,7 +174773,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, "output-dir");
       await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
       for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
-        const relativeSidecarPath = import_node_path14.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
+        const relativeSidecarPath = import_node_path23.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
         const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
         await writeSpecFile(absoluteSidecarPath, sidecar.content);
       }
@@ -170713,8 +174794,13 @@ function buildProviderRegistry(inputs, awsClient) {
   registry.register(new GlueSchemaProvider(new GlueSchemaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new BedrockActionGroupProvider(new BedrockActionGroupsSdkClient(inputs.awsRegion, sdkOpts), new S3SdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new AlbListenerRulesProvider(new AlbListenerRulesSdkClient(inputs.awsRegion, sdkOpts)));
-  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts)));
-  registry.register(new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts)));
+  const remoteFetchPolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+  registry.register(new SsmProvider(new SsmSdkClient(inputs.awsRegion, sdkOpts), { remoteFetchPolicy }));
+  registry.register(
+    new SnsProvider(new SnsSdkClient(inputs.awsRegion, sdkOpts), inputs.repoRoot, new SsmSdkClient(inputs.awsRegion, sdkOpts), {
+      remoteFetchPolicy
+    })
+  );
   registry.register(new LambdaUrlProvider(new LambdaSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new LambdaEventSourceProvider(new LambdaEventSourceSdkClient(inputs.awsRegion, sdkOpts)));
   registry.register(new VerifiedPermissionsProvider(new VerifiedPermissionsSdkClient(inputs.awsRegion, sdkOpts)));
@@ -170725,7 +174811,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
   const discovered = [];
   const summary2 = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path14.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
   for (const provider of providers) {
     await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
       let candidates;
@@ -170765,8 +174851,8 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-          const relativeSpecPath = import_node_path14.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
-          const relativeProviderDir = import_node_path14.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
+          const relativeSpecPath = import_node_path23.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
+          const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
           const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
             repoRoot: resolvedRoot,
             relativeDir: relativeProviderDir,
@@ -170794,8 +174880,19 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             } catch {
             }
           }
-          const contractWarning = result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit) : void 0;
+          const contractProtocol = gatewayType === "HTTP" || gatewayType === "WEBSOCKET" ? gatewayType : "REST";
+          const contractWarning = result.openapiContractAudit ? formatOpenApiContractAuditWarning(result.openapiContractAudit, contractProtocol) : void 0;
           if (contractWarning) dependencies.core.warning(userSafeWarning(contractWarning));
+          const multiProvenance = result.provenance ? sanitizeJsonValue(
+            buildDeployedSourceProvenance({
+              inputs,
+              apiId: candidate.id,
+              gatewayType: provider.type === "api-gateway" ? gatewayType : void 0,
+              content: result.content,
+              sourceTier: provider.type,
+              base: result.provenance
+            })
+          ) : void 0;
           discovered.push({
             serviceName,
             specPath: relativeSpecPath,
@@ -170806,8 +174903,9 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             specFormat: result.format,
             contractOrigin,
             variantCount,
-            metadataPath: metadataSidecar ? import_node_path14.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
+            metadataPath: metadataSidecar ? import_node_path23.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
             openapiContractAudit: result.openapiContractAudit,
+            provenance: multiProvenance,
             ...derivedOpenApi
           });
           dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
@@ -170834,13 +174932,16 @@ function buildExecutionOutputs(result) {
       "source-type": "discover-many",
       "mapping-confidence": unresolved ? "0" : discovered.length > 0 ? "100" : "0",
       "export-summary-json": JSON.stringify(summary2),
-      "resolution-json": JSON.stringify({
-        status: unresolved ? "unresolved" : "resolved",
-        sourceType: "discover-many",
-        count: discovered.length,
-        summary: summary2,
-        providerProbes: result.providerProbes ?? []
-      }),
+      "resolution-json": JSON.stringify(
+        sanitizeJsonValue({
+          status: unresolved ? "unresolved" : "resolved",
+          sourceType: "discover-many",
+          count: discovered.length,
+          summary: summary2,
+          providerProbes: result.providerProbes ?? [],
+          services: discovered
+        })
+      ),
       "service-name": "",
       "gateway-id": "",
       "spec-path": "",
@@ -170865,7 +174966,10 @@ function buildExecutionOutputs(result) {
     confidence: 0,
     evidence: ["No resolution result produced"]
   };
-  const resolutionWithProbes = { ...resolution, providerProbes: resolution.providerProbes ?? result.providerProbes ?? [] };
+  const resolutionWithProbes = sanitizeJsonValue({
+    ...resolution,
+    providerProbes: resolution.providerProbes ?? result.providerProbes ?? []
+  });
   return {
     "resolution-json": JSON.stringify(resolutionWithProbes),
     "resolution-status": resolution.status,
@@ -170906,6 +175010,10 @@ async function execute(inputs, dependencies) {
     if (availableProviders.length === 0 && apiGwProvider) {
       availableProviders.push(apiGwProvider);
     }
+    const repoGroups = await dependencies.core.group(
+      "Discover repository service groups",
+      async () => discoverRepoServiceGroups(inputs, dependencies)
+    );
     const { discovered: legacyDiscovered, summary: legacySummary } = await runDiscovery(inputs, dependencies);
     const extraProviders = availableProviders.filter((p3) => p3.type !== "api-gateway");
     let extraDiscovered = [];
@@ -170920,12 +175028,15 @@ async function execute(inputs, dependencies) {
       extraDiscovered = extraResult.discovered;
       extraSummary = extraResult.summary;
     }
-    const discovered = [...legacyDiscovered, ...extraDiscovered];
+    const awsDiscovered = [...legacyDiscovered, ...extraDiscovered].filter(
+      (service) => !repoGroups.nativePaths.has(service.specPath)
+    );
+    const discovered = [...repoGroups.discovered, ...awsDiscovered];
     const summary2 = {
-      attempted: legacySummary.attempted + extraSummary.attempted,
-      exported: legacySummary.exported + extraSummary.exported,
-      failed: legacySummary.failed + extraSummary.failed,
-      skipped: legacySummary.skipped + extraSummary.skipped
+      attempted: repoGroups.summary.attempted + legacySummary.attempted + extraSummary.attempted,
+      exported: repoGroups.summary.exported + legacySummary.exported + extraSummary.exported,
+      failed: repoGroups.summary.failed + legacySummary.failed + extraSummary.failed,
+      skipped: repoGroups.summary.skipped + legacySummary.skipped + extraSummary.skipped
     };
     if (summary2.failed > 0) {
       dependencies.core.warning(
@@ -171497,8 +175608,8 @@ function normalizeRepoUrl2(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path15 = sshMatch[2];
-    return `https://${host}/${path15}`;
+    const path24 = sshMatch[2];
+    return `https://${host}/${path24}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -171574,14 +175685,14 @@ function detectRepoContext2(input, env2 = process.env) {
 }
 
 // node_modules/@postman-cse/automation-telemetry-core/dist/telemetry.js
-var import_node_crypto7 = require("node:crypto");
-var import_undici2 = __toESM(require_undici(), 1);
+var import_node_crypto8 = require("node:crypto");
+var import_undici3 = __toESM(require_undici(), 1);
 var SCHEMA_VERSION = 3;
 var DEFAULT_TIMEOUT_MS2 = 1500;
 var DEFAULT_ENDPOINT = "https://events.pm-cse.dev/v1/events";
 var proxyDispatcher;
 function getProxyDispatcher() {
-  return proxyDispatcher ??= new import_undici2.EnvHttpProxyAgent();
+  return proxyDispatcher ??= new import_undici3.EnvHttpProxyAgent();
 }
 function resolveActionVersion(explicit) {
   if (explicit) {
@@ -171601,7 +175712,7 @@ function telemetryDisabled(env2) {
   return false;
 }
 function sha256(value) {
-  return (0, import_node_crypto7.createHash)("sha256").update(value).digest("hex");
+  return (0, import_node_crypto8.createHash)("sha256").update(value).digest("hex");
 }
 function accountTypeFromConsumer(consumerType) {
   const t = (consumerType ?? "").trim().toLowerCase();
@@ -171648,7 +175759,7 @@ function buildTelemetryEvent(params) {
 async function send(event, options) {
   const env2 = options.env ?? process.env;
   const endpoint = options.endpoint ?? env2.POSTMAN_ACTIONS_TELEMETRY_ENDPOINT ?? DEFAULT_ENDPOINT;
-  const transport = options.transport ?? import_undici2.fetch;
+  const transport = options.transport ?? import_undici3.fetch;
   const dispatcher = options.dispatcher ?? getProxyDispatcher();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS2);
@@ -171710,11 +175821,11 @@ function createTelemetryContext(options) {
 }
 
 // src/action-version.ts
-var import_node_fs3 = require("node:fs");
-var import_node_path15 = require("node:path");
+var import_node_fs4 = require("node:fs");
+var import_node_path24 = require("node:path");
 function resolveActionVersion2() {
   try {
-    const raw = (0, import_node_fs3.readFileSync)((0, import_node_path15.join)(__dirname, "..", "package.json"), "utf8");
+    const raw = (0, import_node_fs4.readFileSync)((0, import_node_path24.join)(__dirname, "..", "package.json"), "utf8");
     return JSON.parse(raw).version ?? "unknown";
   } catch {
     return "unknown";
@@ -171801,6 +175912,8 @@ var outputNames = contractOutputNames;
 0 && (module.exports = {
   AlbListenerRulesProvider,
   AppSyncEventsProvider,
+  AppSyncProvider,
+  AppSyncSdkClient,
   BedrockActionGroupProvider,
   CloudFormationProvider,
   EventBridgeSurfaceProvider,

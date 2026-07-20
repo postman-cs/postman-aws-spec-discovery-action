@@ -66,24 +66,53 @@ export interface GatewayDomainMapping {
   gatewayType: 'REST' | 'HTTP' | 'WEBSOCKET';
 }
 
+/** Stage listing evidence from API Gateway; fields are omitted when AWS does not return them. */
+export interface GatewayStageSummary {
+  stageName: string;
+  deploymentId?: string;
+  /** HTTP/WebSocket auto-deploy flag when AWS returns it; never fabricated for REST. */
+  autoDeploy?: boolean;
+  /** HTTP/WebSocket API Gateway managed stage flag when AWS returns it. */
+  apiGatewayManaged?: boolean;
+}
+
+export interface AwsCallerIdentity {
+  accountId?: string;
+  arn?: string;
+  /** Partition derived from the caller ARN (`aws`, `aws-us-gov`, `aws-cn`, …). */
+  partition?: string;
+}
+
 export interface AwsGatewayClient {
   listRestApis(): Promise<RestApiSummary[]>;
   listHttpApis(): Promise<HttpApiSummary[]>;
   getRestApi(apiId: string): Promise<RestApiSummary | undefined>;
   getHttpApi(apiId: string): Promise<HttpApiSummary | undefined>;
-  listRestStages(apiId: string): Promise<string[]>;
-  listHttpStages(apiId: string): Promise<string[]>;
+  listRestStages(apiId: string): Promise<GatewayStageSummary[]>;
+  listHttpStages(apiId: string): Promise<GatewayStageSummary[]>;
   getRestTags(apiId: string): Promise<Record<string, string>>;
   getHttpTags(apiId: string): Promise<Record<string, string>>;
   exportRestApi(apiId: string, stage: string): Promise<string>;
   exportRestApiFallback?(apiId: string, stage?: string): Promise<string>;
   exportHttpApi(apiId: string, stage?: string): Promise<string>;
   exportWebSocketApi(apiId: string, stage?: string): Promise<string>;
-  getCallerIdentity(): Promise<{ accountId?: string; arn?: string }>;
+  getCallerIdentity(): Promise<AwsCallerIdentity>;
   probeApiGatewayReadAccess(): Promise<void>;
   probeHttpApiGatewayReadAccess?(): Promise<void>;
   listRestDomainMappings?(): Promise<GatewayDomainMapping[]>;
   listHttpDomainMappings?(): Promise<GatewayDomainMapping[]>;
+}
+
+export function partitionFromArn(arn: string | undefined): string | undefined {
+  if (!arn) return undefined;
+  const match = /^arn:([^:]+):/.exec(arn.trim());
+  return match?.[1] || undefined;
+}
+
+export function accountIndicatorFromAccountId(accountId: string | undefined): string | undefined {
+  const trimmed = (accountId ?? '').trim();
+  if (!/^\d{12}$/.test(trimmed)) return undefined;
+  return `***${trimmed.slice(-4)}`;
 }
 
 export interface AwsClientOptions {
@@ -379,26 +408,42 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
     }
   }
 
-  public async listRestStages(apiId: string): Promise<string[]> {
+  public async listRestStages(apiId: string): Promise<GatewayStageSummary[]> {
     const response = await this.restClient.send(
       new GetRestStagesCommand({
         restApiId: apiId
       })
     );
     return (response.item ?? [])
-      .map((stage) => (stage.stageName ?? '').trim())
-      .filter((stage) => stage.length > 0);
+      .map((stage) => {
+        const stageName = (stage.stageName ?? '').trim();
+        if (!stageName) return undefined;
+        const summary: GatewayStageSummary = { stageName };
+        const deploymentId = (stage.deploymentId ?? '').trim();
+        if (deploymentId) summary.deploymentId = deploymentId;
+        return summary;
+      })
+      .filter((stage): stage is GatewayStageSummary => Boolean(stage));
   }
 
-  public async listHttpStages(apiId: string): Promise<string[]> {
+  public async listHttpStages(apiId: string): Promise<GatewayStageSummary[]> {
     const response = await this.httpClient.send(
       new GetHttpStagesCommand({
         ApiId: apiId
       })
     );
     return (response.Items ?? [])
-      .map((stage) => (stage.StageName ?? '').trim())
-      .filter((stage) => stage.length > 0);
+      .map((stage) => {
+        const stageName = (stage.StageName ?? '').trim();
+        if (!stageName) return undefined;
+        const summary: GatewayStageSummary = { stageName };
+        const deploymentId = (stage.DeploymentId ?? '').trim();
+        if (deploymentId) summary.deploymentId = deploymentId;
+        if (typeof stage.AutoDeploy === 'boolean') summary.autoDeploy = stage.AutoDeploy;
+        if (typeof stage.ApiGatewayManaged === 'boolean') summary.apiGatewayManaged = stage.ApiGatewayManaged;
+        return summary;
+      })
+      .filter((stage): stage is GatewayStageSummary => Boolean(stage));
   }
 
   public async getRestTags(apiId: string): Promise<Record<string, string>> {
@@ -693,11 +738,12 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
     return routeResponses;
   }
 
-  public async getCallerIdentity(): Promise<{ accountId?: string; arn?: string }> {
+  public async getCallerIdentity(): Promise<AwsCallerIdentity> {
     const response = await this.stsClient.send(new GetCallerIdentityCommand({}));
     return {
       accountId: response.Account,
-      arn: response.Arn
+      arn: response.Arn,
+      partition: partitionFromArn(response.Arn)
     };
   }
 

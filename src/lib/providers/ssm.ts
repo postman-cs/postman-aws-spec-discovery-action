@@ -1,6 +1,11 @@
 import type { SpecFormat } from '../../contracts.js';
 import type { SsmSpecClient } from '../aws/ssm-client.js';
-import { fetchSpecFromUrl } from '../fetch/spec-fetcher.js';
+import {
+  DEFAULT_REMOTE_FETCH_POLICY,
+  fetchSpecFromUrl,
+  sanitizeUrlEvidence,
+  type RemoteFetchPolicy
+} from '../fetch/spec-fetcher.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 function detectFormat(content: string, key: string): { format: SpecFormat; filename: string } {
@@ -36,6 +41,11 @@ interface ServiceSpec {
   format?: string;
 }
 
+export interface SsmProviderOptions {
+  remoteFetchPolicy?: RemoteFetchPolicy;
+  fetchSpecFromUrl?: typeof fetchSpecFromUrl;
+}
+
 function groupByService(entries: { serviceName: string; key: string; value: string }[]): ServiceSpec[] {
   const map = new Map<string, ServiceSpec>();
   for (const entry of entries) {
@@ -57,8 +67,16 @@ function groupByService(entries: { serviceName: string; key: string; value: stri
 
 export class SsmProvider implements SpecProvider {
   public readonly type = 'ssm' as const;
+  private readonly remoteFetchPolicy: RemoteFetchPolicy;
+  private readonly fetchRemoteSpec: typeof fetchSpecFromUrl;
 
-  public constructor(private readonly client: SsmSpecClient) {}
+  public constructor(
+    private readonly client: SsmSpecClient,
+    options: SsmProviderOptions = {}
+  ) {
+    this.remoteFetchPolicy = options.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
+    this.fetchRemoteSpec = options.fetchSpecFromUrl ?? fetchSpecFromUrl;
+  }
 
   public async probe(): Promise<boolean> {
     return this.client.probe();
@@ -74,7 +92,7 @@ export class SsmProvider implements SpecProvider {
       tags: {},
       evidence: [`Found spec registration in SSM at /postman/specs/${svc.serviceName}/`],
       meta: {
-        url: svc.url ?? '',
+        url: svc.url ? sanitizeUrlEvidence(svc.url) : '',
         hasContent: svc.content ? 'true' : 'false',
         format: svc.format ?? ''
       }
@@ -98,21 +116,23 @@ export class SsmProvider implements SpecProvider {
     }
 
     if (svc?.url) {
-      // Attempt to fetch actual spec content from the registered URL
+      const safeUrl = sanitizeUrlEvidence(svc.url);
       try {
-        const fetched = await fetchSpecFromUrl(svc.url, { timeoutMs: 15000 });
+        const fetched = await this.fetchRemoteSpec(svc.url, {
+          timeoutMs: 15000,
+          policy: this.remoteFetchPolicy
+        });
         const { format, filename } = detectFormat(fetched.content, svc.url);
         return {
           content: fetched.content,
           format,
           filename,
-          evidence: [`Spec fetched from URL registered in SSM: ${svc.url}`]
+          evidence: [`Spec fetched from URL registered in SSM: ${safeUrl}`]
         };
       } catch (fetchError) {
-        // Fall back to pointer file if fetch fails (e.g. non-HTTPS, network error)
         const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
         const pointerContent = JSON.stringify({
-          specUrl: svc.url,
+          specUrl: safeUrl,
           serviceName: candidate.name,
           registeredVia: 'ssm-parameter-store',
           fetchError: detail
@@ -121,7 +141,7 @@ export class SsmProvider implements SpecProvider {
           content: pointerContent,
           format: 'openapi-json',
           filename: 'spec-pointer.json',
-          evidence: [`Spec URL registered in SSM: ${svc.url} (fetch failed: ${detail})`]
+          evidence: [`Spec URL registered in SSM: ${safeUrl} (fetch failed: ${detail})`]
         };
       }
     }

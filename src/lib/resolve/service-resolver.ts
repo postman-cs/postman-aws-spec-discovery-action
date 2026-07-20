@@ -1,5 +1,6 @@
 import type { GatewayType, ResolvedServiceCandidate } from '../../contracts.js';
 import type { RepoSignals } from '../repo/signals.js';
+import { matchExactRepoTagContract } from './narrowing-pipeline.js';
 
 export interface GatewayCandidateInput {
   id: string;
@@ -9,12 +10,20 @@ export interface GatewayCandidateInput {
   evidence?: string[];
 }
 
+export interface ServiceResolverOptions {
+  repoSlug?: string;
+}
+
 function includesIgnoreCase(value: string, candidates: string[]): boolean {
   const v = value.toLowerCase();
   return candidates.some((candidate) => candidate.toLowerCase() === v);
 }
 
-function scoreCandidate(candidate: GatewayCandidateInput, signals: RepoSignals): { score: number; evidence: string[] } {
+function scoreCandidate(
+  candidate: GatewayCandidateInput,
+  signals: RepoSignals,
+  options?: ServiceResolverOptions
+): { score: number; evidence: string[] } {
   let score = 0;
   const evidence: string[] = [];
 
@@ -24,6 +33,12 @@ function scoreCandidate(candidate: GatewayCandidateInput, signals: RepoSignals):
   } else if (includesIgnoreCase(candidate.id, signals.inferredGatewayIdHints)) {
     score += 25;
     evidence.push(`Matched inferred gateway ID ${candidate.id}`);
+  }
+
+  const tagContract = options?.repoSlug ? matchExactRepoTagContract(candidate.tags, options.repoSlug) : undefined;
+  if (tagContract) {
+    score += 100;
+    evidence.push(`Matched tag contract ${tagContract}`);
   }
 
   const serviceHints = signals.serviceHints.map((hint) => hint.toLowerCase());
@@ -64,10 +79,11 @@ function toResolved(candidate: GatewayCandidateInput, signals: RepoSignals, scor
  */
 export function rankServiceCandidates(
   gateways: GatewayCandidateInput[],
-  signals: RepoSignals
+  signals: RepoSignals,
+  options?: ServiceResolverOptions
 ): ResolvedServiceCandidate[] {
   const ranked = gateways.map((candidate) => {
-    const scored = scoreCandidate(candidate, signals);
+    const scored = scoreCandidate(candidate, signals, options);
     return toResolved(candidate, signals, scored.score, scored.evidence);
   });
   ranked.sort((left, right) => right.confidence - left.confidence || (left.gatewayId < right.gatewayId ? -1 : left.gatewayId > right.gatewayId ? 1 : 0));
@@ -76,9 +92,10 @@ export function rankServiceCandidates(
 
 export function resolveServiceCandidate(
   gateways: GatewayCandidateInput[],
-  signals: RepoSignals
+  signals: RepoSignals,
+  options?: ServiceResolverOptions
 ): ResolvedServiceCandidate | undefined {
-  const ranked = rankServiceCandidates(gateways, signals);
+  const ranked = rankServiceCandidates(gateways, signals, options);
   if (ranked.length === 0) return undefined;
   const best = ranked[0];
   // Equal top confidence across more than one candidate is ambiguous.

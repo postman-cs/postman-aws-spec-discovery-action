@@ -1,0 +1,11 @@
+{
+  "version": "99.0.0",
+  "artifacts": {
+    "FutureStack": {
+      "type": "aws:cloudformation:stack",
+      "properties": {
+        "templateFile": "FutureStack.template.json"
+      }
+    }
+  }
+}

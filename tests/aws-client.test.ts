@@ -169,11 +169,35 @@ describe('AwsApiGatewaySdkClient', () => {
           return { body: Buffer.from(['openapi: 3.0.1', 'info: { title: t, version: "1" }', 'paths:', '  /orders:', '    post:', '      responses:', '        "200": { description: OK }'].join('\n')) };
         case 'GetResourcesCommand':
           return command.input.position === undefined
-            ? { items: [{ path: '/orders', resourceMethods: { POST: { httpMethod: 'POST', requestModels: { 'application/json': 'CreateOrder' }, requestValidatorId: 'val1' } } }], position: 'page2' }
+            ? {
+                items: [{
+                  path: '/orders',
+                  resourceMethods: {
+                    POST: {
+                      httpMethod: 'POST',
+                      requestModels: { 'application/json': 'CreateOrder' },
+                      requestValidatorId: 'val1',
+                      methodResponses: {
+                        '200': {
+                          statusCode: '200',
+                          responseModels: { 'application/json': 'OrderAck' }
+                        }
+                      }
+                    }
+                  }
+                }],
+                position: 'page2'
+              }
             : { items: [] };
         case 'GetModelsCommand':
           return command.input.position === undefined
-            ? { items: [{ name: 'CreateOrder', schema: JSON.stringify({ type: 'object' }), contentType: 'application/json' }], position: 'page2' }
+            ? {
+                items: [
+                  { name: 'CreateOrder', schema: JSON.stringify({ type: 'object' }), contentType: 'application/json' },
+                  { name: 'OrderAck', schema: JSON.stringify({ type: 'object', properties: { accepted: { type: 'boolean' } } }), contentType: 'application/json' }
+                ],
+                position: 'page2'
+              }
             : { items: [] };
         case 'GetRequestValidatorsCommand':
           return command.input.position === undefined
@@ -188,10 +212,17 @@ describe('AwsApiGatewaySdkClient', () => {
     const output = await client.exportRestApi('rest-1', 'prod');
     const parsed = parse(output) as Record<string, never>;
     expect(parsed.components?.['schemas']?.['CreateOrder']).toEqual({ type: 'object' });
+    expect(parsed.components?.['schemas']?.['OrderAck']).toEqual({
+      type: 'object',
+      properties: { accepted: { type: 'boolean' } }
+    });
     expect(parsed['x-amazon-apigateway-request-validators']).toEqual({
       'body-only': { validateRequestBody: true, validateRequestParameters: false }
     });
     expect(parsed.paths?.['/orders']?.['post']?.['x-amazon-apigateway-request-validator']).toBe('body-only');
+    expect(
+      parsed.paths?.['/orders']?.['post']?.['responses']?.['200']?.['content']?.['application/json']?.['schema']?.['$ref']
+    ).toBe('#/components/schemas/OrderAck');
 
     for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand']) {
       const calls = commandInputs.filter((call) => call.name === name);
@@ -245,6 +276,43 @@ describe('AwsApiGatewaySdkClient', () => {
     for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand']) {
       expect(calls.get(name), name).toBe(3);
     }
+  });
+
+  it('exposes REST deploymentId stage evidence without fabricating autoDeploy', async () => {
+    apiGatewayRestSendMock.mockResolvedValue({
+      item: [
+        { stageName: 'prod', deploymentId: 'dep-rest-1' },
+        { stageName: '  ', deploymentId: 'ignored' },
+        { stageName: 'staging' }
+      ]
+    });
+
+    const client = new AwsApiGatewaySdkClient('us-east-1');
+    await expect(client.listRestStages('rest-1')).resolves.toEqual([
+      { stageName: 'prod', deploymentId: 'dep-rest-1' },
+      { stageName: 'staging' }
+    ]);
+  });
+
+  it('exposes HTTP deploymentId/autoDeploy/apiGatewayManaged evidence without fabricating missing fields', async () => {
+    apiGatewayV2SendMock.mockResolvedValue({
+      Items: [
+        { StageName: '$default', DeploymentId: 'dep-http-1', AutoDeploy: true, ApiGatewayManaged: true },
+        { StageName: 'preview', DeploymentId: 'dep-http-2' },
+        { StageName: '   ' }
+      ]
+    });
+
+    const client = new AwsApiGatewaySdkClient('us-east-1');
+    await expect(client.listHttpStages('http-1')).resolves.toEqual([
+      {
+        stageName: '$default',
+        deploymentId: 'dep-http-1',
+        autoDeploy: true,
+        apiGatewayManaged: true
+      },
+      { stageName: 'preview', deploymentId: 'dep-http-2' }
+    ]);
   });
 
 });

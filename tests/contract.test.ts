@@ -41,6 +41,11 @@ describe('action contract', () => {
     'aws-region': true,
     'gateway-id': false,
     stage: false,
+    'expected-account-id': false,
+    'expected-partition': false,
+    'spec-path': false,
+    'service-root': false,
+    'remote-fetch-allowlist-json': false,
     'output-dir': false,
     'postman-api-key': false,
     'postman-access-token': false
@@ -95,9 +100,58 @@ describe('action contract', () => {
 
   it('keeps expected defaults for optional inputs', () => {
     expect(actionContract.inputs['gateway-id'].default).toBe('');
+    expect(actionContract.inputs['expected-account-id'].default).toBe('');
+    expect(actionContract.inputs['expected-partition'].default).toBe('');
+    expect(actionContract.inputs['spec-path'].default).toBe('');
+    expect(actionContract.inputs['service-root'].default).toBe('');
+    expect(actionContract.inputs['remote-fetch-allowlist-json'].default).toBe('');
     expect(actionContract.inputs['output-dir'].default).toBe('discovered-specs');
     expect(actionManifest.inputs['gateway-id'].default).toBe('');
+    expect(actionManifest.inputs['expected-account-id'].default).toBe('');
+    expect(actionManifest.inputs['expected-partition'].default).toBe('');
+    expect(actionManifest.inputs['spec-path'].default).toBe('');
+    expect(actionManifest.inputs['service-root'].default).toBe('');
+    expect(actionManifest.inputs['remote-fetch-allowlist-json'].default).toBe('');
     expect(actionManifest.inputs['output-dir'].default).toBe('discovered-specs');
+  });
+
+  it('parses explicit selectors and remote-fetch allowlist policy', () => {
+    const parsed = resolveInputs({
+      INPUT_AWS_REGION: 'us-east-1',
+      INPUT_REPO_ROOT: '.',
+      INPUT_SPEC_PATH: 'openapi.yaml',
+      INPUT_SERVICE_ROOT: 'packages/orders',
+      INPUT_REMOTE_FETCH_ALLOWLIST_JSON: JSON.stringify([
+        { host: 'specs.example.com', path: '/catalog/' },
+        { hostname: 'backstage.example.com', pathPrefix: '/api/' }
+      ])
+    });
+    expect(parsed.specPath).toBe('openapi.yaml');
+    expect(parsed.serviceRoot).toBe('packages/orders');
+    expect(parsed.remoteFetchPolicy).toMatchObject({
+      enabled: true,
+      allowlist: [
+        { hostname: 'specs.example.com', pathPrefix: '/catalog/' },
+        { hostname: 'backstage.example.com', pathPrefix: '/api/' }
+      ]
+    });
+  });
+
+  it('rejects path traversal for explicit selectors', () => {
+    expect(() =>
+      resolveInputs({
+        INPUT_AWS_REGION: 'us-east-1',
+        INPUT_REPO_ROOT: '.',
+        INPUT_SPEC_PATH: '../outside.yaml'
+      })
+    ).toThrow(/spec-path/);
+    expect(() =>
+      resolveInputs({
+        INPUT_AWS_REGION: 'us-east-1',
+        INPUT_REPO_ROOT: '.',
+        INPUT_SERVICE_ROOT: '../outside'
+      })
+    ).toThrow(/service-root/);
   });
 
   it('keeps marketplace docs centered on action selection, region, and Postman handoff', () => {

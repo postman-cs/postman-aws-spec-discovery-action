@@ -1,6 +1,10 @@
 import type { GatewayType, OpenApiContractAudit } from '../../contracts.js';
 import { parseAwsError, type AwsGatewayClient, type HttpApiSummary, type RestApiSummary } from '../aws/client.js';
-import { formatOpenApiContractAuditWarning, normalizeOpenApiYaml } from '../spec/normalize-openapi.js';
+import {
+  AWS_WEBSOCKET_CONTRACT_PARTIAL,
+  formatOpenApiContractAuditWarning,
+  normalizeOpenApiYaml
+} from '../spec/normalize-openapi.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
 
 export interface ApiGatewayProviderOptions {
@@ -101,7 +105,7 @@ export class ApiGatewayProvider implements SpecProvider {
 
     const exported = await this.exportApiGatewayContent(candidate, gatewayType, stage);
 
-    const normalized = safeNormalizeOpenApi(exported.content);
+    const normalized = safeNormalizeOpenApi(exported.content, gatewayType === 'WEBSOCKET');
     const evidence = [
       exported.fallback
         ? `REST API Gateway fallback synthesized partial OpenAPI 3.0 spec for ${candidate.id} from API Gateway models and methods after native export failed`
@@ -117,8 +121,12 @@ export class ApiGatewayProvider implements SpecProvider {
         }
       }
     }
-    const contractWarning = normalized.openapiContractAudit
-      ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit)
+    const contractProtocol =
+      gatewayType === 'HTTP' || gatewayType === 'WEBSOCKET' ? gatewayType : 'REST';
+    const contractWarning = gatewayType === 'WEBSOCKET'
+      ? AWS_WEBSOCKET_CONTRACT_PARTIAL
+      : normalized.openapiContractAudit
+      ? formatOpenApiContractAuditWarning(normalized.openapiContractAudit, contractProtocol)
       : undefined;
     if (contractWarning) evidence.push(contractWarning);
 
@@ -180,13 +188,13 @@ function isKnownRestExportLimitation(message: string): boolean {
 // If we throw here the export step fails outright, which is strictly
 // worse than letting the original spec through and letting bootstrap's
 // validator surface the underlying problem.
-function safeNormalizeOpenApi(content: string): {
+function safeNormalizeOpenApi(content: string, skipContractAudit = false): {
   content: string;
   renamed: { path: string; method: string; original: string | null; renamed: string }[];
   openapiContractAudit?: OpenApiContractAudit;
 } {
   try {
-    const result = normalizeOpenApiYaml(content);
+    const result = normalizeOpenApiYaml(content, { skipContractAudit });
     return {
       content: result.content,
       renamed: result.renamed,

@@ -141,7 +141,8 @@ describe('verify-dist-artifact canonical contract', () => {
     expect(result.stderr).toBe('');
     expect(result.code).toBe(0);
     expect(result.stdout).toContain('verify-dist-artifact: ok');
-  }, 30_000);
+    // This invokes the committed multi-megabyte Node bundles, including direct execution and syntax checks.
+  }, 15_000);
 
   it('passes a well-formed temporary dist tree', async () => {
     const root = await makeTempDir('verify-dist-ok-');

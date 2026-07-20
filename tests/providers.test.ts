@@ -261,8 +261,11 @@ describe('ApiGatewayProvider', () => {
       defaultOnlyOperationCount: 1
     });
     expect(result.evidence).toEqual(expect.arrayContaining([
-      expect.stringContaining('AWS_OPENAPI_CONTRACT_INCOMPLETE:')
+      expect.stringMatching(
+        /^AWS_OPENAPI_CONTRACT_INCOMPLETE: REST export remains schema-incomplete after deterministic enrichment:/
+      )
     ]));
+    expect(result.evidence.some((line) => line.includes('Bind API Gateway Models'))).toBe(true);
     expect(result.derivedOpenApiCompleteness).toBeUndefined();
   });
 
@@ -298,7 +301,10 @@ describe('ApiGatewayProvider', () => {
         'paths:',
         '  /sendMessage:',
         '    post:',
-        '      x-amazon-apigateway-route-key: sendMessage'
+        '      x-amazon-apigateway-route-key: sendMessage',
+        '      responses:',
+        '        "200":',
+        '          description: WebSocket route accepted'
       ].join('\n'))
     });
     const provider = new ApiGatewayProvider(client, { includeV2: true });
@@ -312,6 +318,10 @@ describe('ApiGatewayProvider', () => {
     expect(result.filename).toBe('index.yaml');
     expect(result.content).toContain('x-amazon-apigateway-route-key: sendMessage');
     expect(result.evidence).toContain('Synthesized partial OpenAPI 3.0 spec for WebSocket API ws-1');
+    expect(result.evidence).toEqual(expect.arrayContaining([
+      expect.stringMatching(/^AWS_WEBSOCKET_CONTRACT_PARTIAL:/)
+    ]));
+    expect(result.evidence.some((line) => line.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toBe(false);
   });
 });
 
@@ -1115,13 +1125,12 @@ describe('SnsProvider', () => {
   it('resolveContract allows git-tracked generated AsyncAPI in ignored framework directories', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
     try {
-      childProcess.execFileSync('git', ['init'], { cwd: tempDir, stdio: 'ignore' });
-      childProcess.execFileSync('git', ['config', 'user.name', 'test-user'], { cwd: tempDir, stdio: 'ignore' });
-      childProcess.execFileSync('git', ['config', 'user.email', 'test-user@example.com'], { cwd: tempDir, stdio: 'ignore' });
+      // Stage before .gitignore so the path is index-tracked; commit is unnecessary
+      // for check-ignore semantics and avoids slow global pre-commit secret scans.
+      childProcess.execFileSync('git', ['-c', 'init.templateDir=', 'init'], { cwd: tempDir, stdio: 'ignore' });
       await mkdir(path.join(tempDir, 'build', 'generated'), { recursive: true });
       await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
       childProcess.execFileSync('git', ['add', '--', 'build/generated/orders.asyncapi.yaml'], { cwd: tempDir, stdio: 'ignore' });
-      childProcess.execFileSync('git', ['commit', '-m', 'track generated asyncapi fixture'], { cwd: tempDir, stdio: 'ignore' });
       await writeFile(path.join(tempDir, '.gitignore'), 'build/\n', 'utf8');
 
       const provider = new SnsProvider(createSnsClientStub(), tempDir);
@@ -1143,6 +1152,27 @@ describe('SnsProvider', () => {
       await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
       await mkdir(path.join(tempDir, 'spec'), { recursive: true });
       await writeFile(path.join(tempDir, 'spec', 'orders-topic.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
+      const gitIgnoreChecker = vi.fn().mockResolvedValue(false);
+
+      const provider = new SnsProvider(createSnsClientStub(), tempDir, undefined, { gitIgnoreChecker });
+      const result = await provider.resolveContract(createSnsCandidate());
+
+      expect(result).toMatchObject({ resolved: true, origin: 'generated-asyncapi' });
+      expect(gitIgnoreChecker).toHaveBeenCalledTimes(1);
+      expect(gitIgnoreChecker).toHaveBeenCalledWith(tempDir, path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'));
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolveContract checks git-ignore only for framework generated AsyncAPI candidates', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'sns-provider-test-'));
+    try {
+      for (let index = 0; index < 30; index += 1) {
+        await writeFile(path.join(tempDir, `noise-${index}.yaml`), 'openapi: 3.0.0\npaths: {}\n', 'utf8');
+      }
+      await mkdir(path.join(tempDir, 'build', 'generated'), { recursive: true });
+      await writeFile(path.join(tempDir, 'build', 'generated', 'orders.asyncapi.yaml'), 'asyncapi: 2.6.0\nchannels: {}', 'utf8');
       const gitIgnoreChecker = vi.fn().mockResolvedValue(false);
 
       const provider = new SnsProvider(createSnsClientStub(), tempDir, undefined, { gitIgnoreChecker });
@@ -1356,9 +1386,9 @@ describe('SnsProvider', () => {
       if (urlResult.resolved) expect(urlResult.result.format).toBe('asyncapi-yaml');
       if (specUrlResult.resolved) expect(specUrlResult.result.format).toBe('asyncapi-json');
       if (jsonSchemaResult.resolved) expect(jsonSchemaResult.result.format).toBe('json-schema');
-      expect(urlFetcher).toHaveBeenNthCalledWith(1, 'https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000 });
-      expect(urlFetcher).toHaveBeenNthCalledWith(2, 'https://example.com/orders.asyncapi.json', { timeoutMs: 15000 });
-      expect(urlFetcher).toHaveBeenNthCalledWith(3, 'https://example.com/orders.schema.json', { timeoutMs: 15000 });
+      expect(urlFetcher).toHaveBeenNthCalledWith(1, 'https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
+      expect(urlFetcher).toHaveBeenNthCalledWith(2, 'https://example.com/orders.asyncapi.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
+      expect(urlFetcher).toHaveBeenNthCalledWith(3, 'https://example.com/orders.schema.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1490,7 +1520,7 @@ describe('SnsProvider', () => {
 
       expect(result).toMatchObject({ resolved: true, origin: 'catalog-url' });
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000 });
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.asyncapi.yaml', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1517,7 +1547,7 @@ describe('SnsProvider', () => {
       if (result.resolved) {
         expect(result.result.format).toBe('asyncapi-json');
       }
-      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.registry.asyncapi.yaml', { timeoutMs: 15000 });
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/orders.registry.asyncapi.yaml', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -1715,13 +1745,13 @@ describe('SnsProvider', () => {
 
       ssmState.content = undefined;
       expect(await resolveOrigin()).toBe('ssm-url');
-      expect(fetchMock).toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000 });
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
       expect(listRegistriesMock).toHaveBeenCalledTimes(0);
       expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
       ssmState.url = undefined;
       expect(await resolveOrigin()).toBe('catalog-url');
-      expect(fetchMock).toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000 });
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
       expect(listRegistriesMock).toHaveBeenCalledTimes(0);
       expect(codeDerivedMock).toHaveBeenCalledTimes(0);
 
@@ -1844,10 +1874,10 @@ describe('SnsProvider', () => {
         expect(listSpecParametersMock).toHaveBeenCalledTimes(0);
       }
       if (lower === 'ssm-url') {
-        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000 });
+        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/ssm.asyncapi.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
       }
       if (lower === 'catalog-url') {
-        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000 });
+        expect(fetchMock).not.toHaveBeenCalledWith('https://example.com/catalog.asyncapi.json', { timeoutMs: 15000, policy: expect.objectContaining({ enabled: false, allowlist: [] }) });
       }
       if (lower === 'eventbridge-derived') {
         expect(eventBridgeClient.listRegistries).toHaveBeenCalledTimes(0);

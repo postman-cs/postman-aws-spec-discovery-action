@@ -44,7 +44,25 @@ const required = [
   'validation/scripts/validate-repo-spec-matrix.mjs',
   'validation/scripts/validate-iac-signals.mjs',
   'validation/scripts/validate-p3-surfaces.mjs',
-  'validation/scripts/validate-live-aws-surfaces.mjs'
+  'validation/scripts/validate-live-aws-surfaces.mjs',
+  'validation/support-ledger.json',
+  'validation/SUPPORT_LEDGER.md',
+  'validation/scripts/validate-support-ledger.mjs',
+  'validation/scripts/validate-resolution-closure.mjs',
+  'validation/scripts/emit-live-required-matrix.mjs',
+  'validation/fixtures/closure/fox-tags/expected-contracts.json',
+  'validation/fixtures/closure/json-schema/order.schema.json',
+  'validation/fixtures/closure/avro/order.avsc',
+  'validation/fixtures/closure/smithy-project/smithy-build.json',
+  'validation/fixtures/closure/graphql-multi/graphql/schema.graphql',
+  'validation/fixtures/closure/monorepo/packages/orders/openapi.yaml',
+  'validation/fixtures/closure/backstage-multi/catalog-info.yaml',
+  'validation/fixtures/closure/iac-static/cfn-inline/template.yaml',
+  'validation/fixtures/closure/iac-static/cdk-assembly/cdk.out/manifest.json',
+  'validation/fixtures/closure/iac-static/terraform-literal/main.tf',
+  'validation/fixtures/closure/iac-static/serverless-static/serverless.yml',
+  'validation/fixtures/closure/adversarial/remote/catalog-info.yaml',
+  'validation/fixtures/closure/provenance/resolution.example.json',
 ];
 
 const markerChecks = [
@@ -73,7 +91,13 @@ const markerChecks = [
   ['validation/fixtures/iac/deployment/docker-compose.yml', 'abc123def4.execute-api'],
   ['validation/fixtures/iac/deployment/spring/application.yml', 'lambda-url.us-east-1.on.aws'],
   ['validation/fixtures/iac/readme/README.md', 'lambda-url.us-east-1.on.aws'],
-  ['validation/runbooks/aws-derived-surfaces.md', 'live-validated against dedicated resources']
+  ['validation/runbooks/aws-derived-surfaces.md', 'live-validated against dedicated resources'],
+  ['validation/support-ledger.json', '"schemaVersion": 1'],
+  ['validation/fixtures/closure/fox-tags/expected-contracts.json', 'GithubOrg+GithubRepo'],
+  ['validation/fixtures/closure/provenance/latest-configuration.example.json', 'latest-configuration'],
+  ['validation/fixtures/closure/iac-static/cdk-assembly/cdk.out/OrdersStack.template.json', 'openapi'],
+  ['docs/providers.md', 'deny-by-default'],
+  ['docs/providers.md', 'remote-fetch-allowlist-json'],
 ];
 
 const missing = [];

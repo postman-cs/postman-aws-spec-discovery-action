@@ -14,6 +14,7 @@ import { resolveServiceCandidate } from '../src/lib/resolve/service-resolver.js'
 import { chooseSource } from '../src/lib/resolve/source-selector.js';
 import { ProviderRegistry } from '../src/lib/providers/registry.js';
 import type { SpecProvider } from '../src/lib/providers/types.js';
+import { createRemoteFetchPolicy } from '../src/lib/fetch/spec-fetcher.js';
 import { buildExecutionOutputs, buildProviderRegistry, execute, runResolution, type ResolutionDependencies } from '../src/runtime.js';
 
 function createCoreStub(values: Record<string, string> = {}) {
@@ -225,8 +226,8 @@ describe('runDiscovery', () => {
       getHttpApi: vi.fn(),
       listRestStages: vi
         .fn()
-        .mockImplementation(async (id: string) => (id === 'rest-2' ? ['staging'] : ['prod'])),
-      listHttpStages: vi.fn().mockResolvedValue(['$default']),
+        .mockImplementation(async (id: string) => (id === 'rest-2' ? [{ stageName: 'staging' }] : [{ stageName: 'prod' }])),
+      listHttpStages: vi.fn().mockResolvedValue([{ stageName: '$default' }]),
       getRestTags: vi.fn().mockImplementation(async (id: string) => {
         if (id === 'rest-1') {
           return {
@@ -286,36 +287,49 @@ describe('runDiscovery', () => {
     );
     const discovered = result.discovered;
 
-    expect(discovered).toEqual<DiscoveredService[]>([
-      {
-        serviceName: 'payments-core',
-        specPath: 'discovered-specs/payments-core/index.yaml',
-        gatewayId: 'rest-1',
-        gatewayType: 'REST',
+    expect(discovered).toHaveLength(2);
+    expect(discovered[0]).toMatchObject({
+      serviceName: 'payments-core',
+      specPath: 'discovered-specs/payments-core/index.yaml',
+      gatewayId: 'rest-1',
+      gatewayType: 'REST',
+      stage: 'prod',
+      providerType: 'api-gateway',
+      specFormat: 'openapi-yaml',
+      derivedOpenApiPath: 'discovered-specs/payments-core/openapi.derived.json',
+      derivedOpenApiVersion: '3.0.3',
+      derivedOpenApiCompleteness: 'full',
+      derivedOpenApiFormat: 'openapi-json',
+      derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x'],
+      provenance: {
+        configurationMode: 'deployed-stage',
         stage: 'prod',
-        providerType: 'api-gateway',
-        specFormat: 'openapi-yaml',
-        derivedOpenApiPath: 'discovered-specs/payments-core/openapi.derived.json',
-        derivedOpenApiVersion: '3.0.3',
-        derivedOpenApiCompleteness: 'full',
-        derivedOpenApiFormat: 'openapi-json',
-        derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x']
-      },
-      {
-        serviceName: 'checkout-service',
-        specPath: 'discovered-specs/checkout-service/index.yaml',
-        gatewayId: 'http-1',
-        gatewayType: 'HTTP',
-        stage: '$default',
-        providerType: 'api-gateway',
-        specFormat: 'openapi-yaml',
-        derivedOpenApiPath: 'discovered-specs/checkout-service/openapi.derived.json',
-        derivedOpenApiVersion: '3.0.3',
-        derivedOpenApiCompleteness: 'full',
-        derivedOpenApiFormat: 'openapi-json',
-        derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x']
+        accountIndicator: '***9012',
+        region: 'us-east-1',
+        protocol: 'REST'
       }
-    ]);
+    });
+    expect(discovered[1]).toMatchObject({
+      serviceName: 'checkout-service',
+      specPath: 'discovered-specs/checkout-service/index.yaml',
+      gatewayId: 'http-1',
+      gatewayType: 'HTTP',
+      stage: '$default',
+      providerType: 'api-gateway',
+      specFormat: 'openapi-yaml',
+      derivedOpenApiPath: 'discovered-specs/checkout-service/openapi.derived.json',
+      derivedOpenApiVersion: '3.0.3',
+      derivedOpenApiCompleteness: 'full',
+      derivedOpenApiFormat: 'openapi-json',
+      derivedOpenApiEvidence: ['Source artifact is already OpenAPI 3.x'],
+      provenance: {
+        configurationMode: 'deployed-stage',
+        stage: '$default',
+        accountIndicator: '***9012',
+        region: 'us-east-1',
+        protocol: 'HTTP'
+      }
+    });
 
     expect(
       [...written.keys()].some((entry) => entry.endsWith('/discovered-specs/payments-core/index.yaml'))
@@ -344,8 +358,8 @@ describe('runDiscovery', () => {
       listHttpApis: vi.fn().mockResolvedValue([{ id: 'http-1', name: 'payments-http', protocolType: 'HTTP' }]),
       getRestApi: vi.fn(),
       getHttpApi: vi.fn(),
-      listRestStages: vi.fn().mockResolvedValue(['prod']),
-      listHttpStages: vi.fn().mockResolvedValue(['prod']),
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
+      listHttpStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
       getRestTags: vi.fn().mockResolvedValue({}),
       getHttpTags: vi.fn().mockResolvedValue({}),
       getCallerIdentity: vi.fn().mockResolvedValue({
@@ -395,7 +409,7 @@ describe('runDiscovery', () => {
     const { core } = createCoreStub();
     const aws = createAwsClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-a', name: 'payments-public' }]),
-      listRestStages: vi.fn().mockResolvedValue(['prod'])
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }])
     });
     const result = await runDiscovery(
       {
@@ -434,7 +448,7 @@ describe('runDiscovery', () => {
       const aws = createAwsClientStub({
         getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-api' }),
         getRestTags: vi.fn().mockResolvedValue({}),
-        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
         exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
       });
 
@@ -476,16 +490,91 @@ describe('runDiscovery', () => {
     }
   });
 
-  it('routes Backstage remote specs through the shared writer and writes nothing in dry-run', async () => {
+  it('routes allowlisted Backstage remote specs through the shared writer and writes nothing in dry-run', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-remote-dry-run-'));
     const writeSpecFile = vi.fn().mockResolvedValue(undefined);
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        'openapi: 3.0.3\ninfo:\n  title: Orders\n  version: "1.0.0"\npaths: {}\n',
-        { status: 200, headers: { 'content-type': 'application/yaml' } }
-      )
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    const fetchMock = vi.fn().mockResolvedValue({
+      content: 'openapi: 3.0.3\ninfo:\n  title: Orders\n  version: "1.0.0"\npaths: {}\n',
+      contentType: 'application/yaml',
+      finalUrl: 'https://example.com/openapi.yaml'
+    });
+    try {
+      await writeFile(
+        path.join(tempDir, 'catalog-info.yaml'),
+        [
+          'apiVersion: backstage.io/v1alpha1',
+          'kind: API',
+          'metadata:',
+          '  name: orders-api',
+          'spec:',
+          '  type: openapi',
+          '  definition:',
+          '    $text: https://example.com/openapi.yaml'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const result = await runResolution(
+        {
+          mode: 'resolve-one',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'github', repoSlug: 'postman/orders-api' },
+          expectedServiceName: undefined,
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: true,
+          preflightPermissionProbe: true,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: true,
+          remoteFetchPolicy: createRemoteFetchPolicy({
+            enabled: true,
+            allowlist: [{ hostname: 'example.com', pathPrefix: '/' }]
+          })
+        },
+        createAwsClientStub(),
+        createCoreStub().core,
+        writeSpecFile,
+        { fetchSpecFromUrl: fetchMock }
+      );
+
+      expect(result.sourceType).toBe('repo-spec');
+      expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
+      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
+      expect(result.derivedOpenApiFormat).toBe('openapi-json');
+      expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://example.com/openapi.yaml',
+        expect.objectContaining({
+          timeoutMs: 15000,
+          policy: expect.objectContaining({ enabled: true })
+        })
+      );
+      expect(writeSpecFile).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('denies Backstage remote fetches when remote-fetch-allowlist-json is absent', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'catalog-remote-deny-'));
+    const writeSpecFile = vi.fn().mockResolvedValue(undefined);
+    const fetchMock = vi.fn(async (_url: string, options?: { policy?: { enabled?: boolean } }) => {
+      if (!options?.policy?.enabled) {
+        throw new Error('Remote spec fetch is disabled by default');
+      }
+      return {
+        content: 'openapi: 3.0.3\ninfo:\n  title: Orders\n  version: "1.0.0"\npaths: {}\n',
+        contentType: 'application/yaml',
+        finalUrl: 'https://example.com/openapi.yaml'
+      };
+    });
     try {
       await writeFile(
         path.join(tempDir, 'catalog-info.yaml'),
@@ -524,21 +613,14 @@ describe('runDiscovery', () => {
         },
         createAwsClientStub(),
         createCoreStub().core,
-        writeSpecFile
+        writeSpecFile,
+        { fetchSpecFromUrl: fetchMock }
       );
 
-      expect(result.sourceType).toBe('repo-spec');
-      expect(result.specPath).toBe('discovered-specs/orders-api/index.yaml');
-      expect(result.derivedOpenApiPath).toBe('discovered-specs/orders-api/openapi.derived.json');
-      expect(result.derivedOpenApiFormat).toBe('openapi-json');
-      expect(result.derivedOpenApiEvidence).toEqual(expect.arrayContaining([expect.stringContaining('Dry run enabled')]));
-      expect(fetchMock).toHaveBeenCalledWith(
-        'https://example.com/openapi.yaml',
-        expect.objectContaining({ redirect: 'follow' })
-      );
+      expect(result.sourceType).not.toBe('repo-spec');
+      expect(fetchMock).toHaveBeenCalled();
       expect(writeSpecFile).not.toHaveBeenCalled();
     } finally {
-      vi.unstubAllGlobals();
       await rm(tempDir, { recursive: true, force: true });
     }
   });
@@ -637,7 +719,7 @@ describe('SNS runtime integration', () => {
       const awsClient = createAwsClientStub({
         listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'payments-api' }]),
         getRestTags: vi.fn().mockResolvedValue({}),
-        listRestStages: vi.fn().mockResolvedValue(['prod'])
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }])
       });
 
       const result = await runResolution(
@@ -724,7 +806,7 @@ describe('SNS runtime integration', () => {
       const awsClient = createAwsClientStub({
         getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'payments-api' }),
         getRestTags: vi.fn().mockResolvedValue({}),
-        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
         exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
       });
 
@@ -764,7 +846,7 @@ describe('SNS runtime integration', () => {
       const awsClient = createAwsClientStub({
         getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'payments-api' }),
         getRestTags: vi.fn().mockResolvedValue({}),
-        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
         exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
       });
       const inputs = {
@@ -883,7 +965,7 @@ describe('SNS runtime integration', () => {
         createAwsClientStub({
           listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'orders-api' }]),
           getRestTags: vi.fn().mockResolvedValue({ 'postman:project-name': 'orders' }),
-          listRestStages: vi.fn().mockResolvedValue(['prod']),
+          listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
           exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
         }),
         createCoreStub().core,
@@ -1151,6 +1233,7 @@ describe('SNS runtime integration', () => {
   });
 
   it('includes SNS results in discover-many services output', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-sns-'));
     const { core, warnings } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
       listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')])
@@ -1159,7 +1242,7 @@ describe('SNS runtime integration', () => {
     registry.register(snsProvider);
     const awsClient = createAwsClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'orders-api' }]),
-      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
       exportRestApi: vi.fn().mockResolvedValue([
         'openapi: 3.0.3',
         'info: { title: orders-api, version: "1" }',
@@ -1171,56 +1254,65 @@ describe('SNS runtime integration', () => {
       ].join('\n'))
     });
 
-    const result = await execute(
-      {
-        mode: 'discover-many',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'unknown' },
-        expectedGatewayIds: [],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 50,
-        dryRun: false,
-        preflightChecks: false,
-        preflightPermissionProbe: false,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: false
-      },
-      {
-        core,
-        aws: awsClient,
-        providerRegistry: registry,
-        writeSpecFile: async () => undefined
-      }
-    );
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: awsClient,
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
 
-    const providerTypes = result.discovered.map((entry) => entry.providerType);
-    expect(providerTypes).toContain('api-gateway');
-    expect(providerTypes).toContain('sns');
-    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
-      providerType?: string;
-      openapiContractAudit?: DiscoveredService['openapiContractAudit'];
-    }>;
-    expect(services.map((entry) => entry.providerType)).toContain('api-gateway');
-    expect(services.map((entry) => entry.providerType)).toContain('sns');
-    const discoveredGateway = result.discovered.find((entry) => entry.providerType === 'api-gateway');
-    const outputGateway = services.find((entry) => entry.providerType === 'api-gateway');
-    expect(discoveredGateway?.openapiContractAudit).toMatchObject({
-      schemaVersion: 1,
-      status: 'schema-incomplete',
-      responsesWithoutContent: 1,
-      defaultOnlyOperationCount: 1
-    });
-    expect(outputGateway?.openapiContractAudit).toEqual(discoveredGateway?.openapiContractAudit);
-    expect(services.find((entry) => entry.providerType === 'sns')?.openapiContractAudit).toBeUndefined();
-    expect(warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toHaveLength(1);
+      const providerTypes = result.discovered.map((entry) => entry.providerType);
+      expect(providerTypes).toContain('api-gateway');
+      expect(providerTypes).toContain('sns');
+      const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
+        providerType?: string;
+        openapiContractAudit?: DiscoveredService['openapiContractAudit'];
+      }>;
+      expect(services.map((entry) => entry.providerType)).toContain('api-gateway');
+      expect(services.map((entry) => entry.providerType)).toContain('sns');
+      const discoveredGateway = result.discovered.find((entry) => entry.providerType === 'api-gateway');
+      const outputGateway = services.find((entry) => entry.providerType === 'api-gateway');
+      expect(discoveredGateway?.openapiContractAudit).toMatchObject({
+        schemaVersion: 1,
+        status: 'schema-incomplete',
+        responsesWithoutContent: 1,
+        defaultOnlyOperationCount: 1
+      });
+      expect(outputGateway?.openapiContractAudit).toEqual(discoveredGateway?.openapiContractAudit);
+      expect(services.find((entry) => entry.providerType === 'sns')?.openapiContractAudit).toBeUndefined();
+      expect(warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toHaveLength(1);
+      expect(warnings.some((message) =>
+        message.includes('REST export remains schema-incomplete after deterministic enrichment')
+        && message.includes('Bind API Gateway Models')
+      )).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('writes SNS metadata sidecar in discover-many and records metadataPath', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-meta-'));
     const { core } = createCoreStub();
     const writes = new Map<string, string>();
     const snsProvider = createDiscoverManySnsProvider({
@@ -1236,42 +1328,47 @@ describe('SNS runtime integration', () => {
     const registry = new ProviderRegistry();
     registry.register(snsProvider);
 
-    const result = await execute(
-      {
-        mode: 'discover-many',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'unknown' },
-        expectedGatewayIds: [],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 50,
-        dryRun: false,
-        preflightChecks: false,
-        preflightPermissionProbe: false,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: false
-      },
-      {
-        core,
-        aws: createAwsClientStub(),
-        providerRegistry: registry,
-        writeSpecFile: async (outputPath: string, content: string) => {
-          writes.set(outputPath.replace(/\\/g, '/'), content);
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async (outputPath: string, content: string) => {
+            writes.set(outputPath.replace(/\\/g, '/'), content);
+          }
         }
-      }
-    );
+      );
 
-    const service = result.discovered.find((entry) => entry.providerType === 'sns');
-    expect(service?.metadataPath).toBe('discovered-specs/orders-topic/sns-resolution-metadata.json');
-    expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/asyncapi.yaml'))).toBe(true);
-    expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/sns-resolution-metadata.json'))).toBe(true);
+      const service = result.discovered.find((entry) => entry.providerType === 'sns');
+      expect(service?.metadataPath).toBe('discovered-specs/orders-topic/sns-resolution-metadata.json');
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/asyncapi.yaml'))).toBe(true);
+      expect([...writes.keys()].some((file) => file.endsWith('/discovered-specs/orders-topic/sns-resolution-metadata.json'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('propagates SNS contractOrigin and variantCount into discover-many services-json entries', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-origin-'));
     const { core } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
       listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')]),
@@ -1291,45 +1388,49 @@ describe('SNS runtime integration', () => {
     const registry = new ProviderRegistry();
     registry.register(snsProvider);
 
-    const result = await execute(
-      {
-        mode: 'discover-many',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'unknown' },
-        expectedGatewayIds: [],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 50,
-        dryRun: false,
-        preflightChecks: false,
-        preflightPermissionProbe: false,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: false
-      },
-      {
-        core,
-        aws: createAwsClientStub(),
-        providerRegistry: registry,
-        writeSpecFile: async () => undefined
-      }
-    );
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
 
-    const snsEntry = result.discovered.find((entry) => entry.providerType === 'sns');
-    expect(snsEntry?.contractOrigin).toBe('repo-asyncapi');
-    expect(snsEntry?.variantCount).toBe(2);
+      const snsEntry = result.discovered.find((entry) => entry.providerType === 'sns');
+      expect(snsEntry?.contractOrigin).toBe('repo-asyncapi');
+      expect(snsEntry?.variantCount).toBe(2);
 
-    const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
-      providerType?: string;
-      contractOrigin?: string;
-      variantCount?: number;
-    }>;
-    const serializedSns = services.find((entry) => entry.providerType === 'sns');
-    expect(serializedSns?.contractOrigin).toBe('repo-asyncapi');
-    expect(serializedSns?.variantCount).toBe(2);
+      const services = JSON.parse(result.outputs['services-json'] ?? '[]') as Array<{
+        providerType?: string;
+        contractOrigin?: string;
+        variantCount?: number;
+      }>;
+      const serializedSns = services.find((entry) => entry.providerType === 'sns');
+      expect(serializedSns?.contractOrigin).toBe('repo-asyncapi');
+      expect(serializedSns?.variantCount).toBe(2);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('threads SNS discover-many resolution context so bridge-backed exports can emit eventbridge-derived origin', async () => {
@@ -1419,6 +1520,7 @@ describe('SNS runtime integration', () => {
   });
 
   it('supports discover-many dry-run for SNS without exporting', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-dry-run-'));
     const { core } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
       listCandidates: vi.fn().mockResolvedValue([createSnsTopicCandidate('orders-topic')])
@@ -1426,39 +1528,44 @@ describe('SNS runtime integration', () => {
     const registry = new ProviderRegistry();
     registry.register(snsProvider);
 
-    const result = await execute(
-      {
-        mode: 'discover-many',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'unknown' },
-        expectedGatewayIds: [],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 50,
-        dryRun: true,
-        preflightChecks: false,
-        preflightPermissionProbe: false,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: false
-      },
-      {
-        core,
-        aws: createAwsClientStub(),
-        providerRegistry: registry,
-        writeSpecFile: async () => undefined
-      }
-    );
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 50,
+          dryRun: true,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
 
-    expect(result.discovered).toEqual([]);
-    expect(result.exportSummary?.skipped).toBe(1);
-    expect(snsProvider.exportSpec).not.toHaveBeenCalled();
+      expect(result.discovered).toEqual([]);
+      expect(result.exportSummary?.skipped).toBe(1);
+      expect(snsProvider.exportSpec).not.toHaveBeenCalled();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('limits SNS candidates per provider with max-candidates', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-discover-many-limit-'));
     const { core } = createCoreStub();
     const snsProvider = createDiscoverManySnsProvider({
       listCandidates: vi.fn().mockResolvedValue([
@@ -1470,35 +1577,39 @@ describe('SNS runtime integration', () => {
     const registry = new ProviderRegistry();
     registry.register(snsProvider);
 
-    const result = await execute(
-      {
-        mode: 'discover-many',
-        awsRegion: 'us-east-1',
-        repoRoot: '.',
-        repoContext: { provider: 'unknown' },
-        expectedGatewayIds: [],
-        stage: undefined,
-        apiFilter: undefined,
-        serviceMapping: {},
-        outputDir: 'discovered-specs',
-        maxCandidates: 2,
-        dryRun: false,
-        preflightChecks: false,
-        preflightPermissionProbe: false,
-        requestTimeoutMs: 30000,
-        maxAttempts: 3,
-        includeV2: false
-      },
-      {
-        core,
-        aws: createAwsClientStub(),
-        providerRegistry: registry,
-        writeSpecFile: async () => undefined
-      }
-    );
+    try {
+      const result = await execute(
+        {
+          mode: 'discover-many',
+          awsRegion: 'us-east-1',
+          repoRoot: tempDir,
+          repoContext: { provider: 'unknown' },
+          expectedGatewayIds: [],
+          stage: undefined,
+          apiFilter: undefined,
+          serviceMapping: {},
+          outputDir: 'discovered-specs',
+          maxCandidates: 2,
+          dryRun: false,
+          preflightChecks: false,
+          preflightPermissionProbe: false,
+          requestTimeoutMs: 30000,
+          maxAttempts: 3,
+          includeV2: false
+        },
+        {
+          core,
+          aws: createAwsClientStub(),
+          providerRegistry: registry,
+          writeSpecFile: async () => undefined
+        }
+      );
 
-    expect(snsProvider.exportSpec).toHaveBeenCalledTimes(2);
-    expect(result.exportSummary?.skipped).toBe(1);
+      expect(snsProvider.exportSpec).toHaveBeenCalledTimes(2);
+      expect(result.exportSummary?.skipped).toBe(1);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('writes SNS manual-review metadata sidecar and propagates metadataPath/contractOrigin in resolve-one', async () => {
@@ -1801,7 +1912,7 @@ describe('provider-agnostic resolve-one', () => {
         ]),
         getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-api' }),
         getRestTags: vi.fn().mockResolvedValue({}),
-        listRestStages: vi.fn().mockResolvedValue(['prod']),
+        listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
         exportRestApi: vi.fn().mockResolvedValue('openapi: 3.0.1')
       });
 
@@ -1873,7 +1984,10 @@ describe('provider-agnostic resolve-one', () => {
             'paths:',
             '  /sendMessage:',
             '    post:',
-            '      x-amazon-apigateway-route-key: sendMessage'
+            '      x-amazon-apigateway-route-key: sendMessage',
+            '      responses:',
+            '        "200":',
+            '          description: WebSocket route accepted'
           ].join('\n'))
         }),
         createCoreStub().core,
@@ -1889,6 +2003,10 @@ describe('provider-agnostic resolve-one', () => {
       expect(result.gatewayType).toBe('WEBSOCKET');
       expect(result.derivedOpenApiCompleteness).toBe('partial');
       expect(result.evidence).toContain('Synthesized partial OpenAPI 3.0 spec for WebSocket API ws-1');
+      expect(result.evidence).toEqual(expect.arrayContaining([
+        expect.stringMatching(/^AWS_WEBSOCKET_CONTRACT_PARTIAL:/)
+      ]));
+      expect(result.evidence.some((line) => line.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toBe(false);
       expect([...written.values()].some((content) => content.includes('x-amazon-apigateway-route-key: sendMessage'))).toBe(true);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
@@ -1909,7 +2027,7 @@ describe('runAction', () => {
     const awsClient = createAwsClientStub({
       getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'billing' }),
       getRestTags: vi.fn().mockResolvedValue({}),
-      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
       exportRestApi: vi.fn().mockResolvedValue([
         'openapi: 3.0.3',
         'info: { title: billing, version: "1" }',
@@ -1951,9 +2069,12 @@ describe('runAction', () => {
         defaultOnlyOperationCount: 1
       });
       expect(resolution.evidence).toEqual(expect.arrayContaining([
-        expect.stringContaining('AWS_OPENAPI_CONTRACT_INCOMPLETE:')
+        expect.stringMatching(
+          /^AWS_OPENAPI_CONTRACT_INCOMPLETE: REST export remains schema-incomplete after deterministic enrichment:/
+        )
       ]));
       expect(warnings.filter((message) => message.startsWith('AWS_OPENAPI_CONTRACT_INCOMPLETE:'))).toHaveLength(1);
+      expect(warnings.some((message) => message.includes('Bind API Gateway Models'))).toBe(true);
     } finally {
       if (previousWorkspace === undefined) {
         delete process.env.GITHUB_WORKSPACE;
@@ -2014,7 +2135,7 @@ describe('runAction', () => {
     const awsClient = createAwsClientStub({
       getRestApi: vi.fn().mockResolvedValue({ id: 'rest-1', name: 'orders-rest' }),
       getRestTags: vi.fn().mockResolvedValue({}),
-      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
       exportRestApi: vi.fn().mockRejectedValue(
         Object.assign(new Error('Only found non-JSON body models for REST API export'), {
           name: 'BadRequestException'
@@ -2190,7 +2311,7 @@ describe('runAction', () => {
     });
     const awsClient = createAwsClientStub({
       listRestApis: vi.fn().mockResolvedValue([{ id: 'rest-1', name: 'billing' }]),
-      listRestStages: vi.fn().mockResolvedValue(['prod']),
+      listRestStages: vi.fn().mockResolvedValue([{ stageName: 'prod' }]),
       exportRestApi: vi.fn().mockRejectedValue(new Error('exploded'))
     });
     try {
@@ -2467,7 +2588,8 @@ describe('hardening helpers', () => {
         name: 'orders-api',
         type: 'openapi',
         specPath: 'services/orders/openapi.yaml',
-        specUrl: undefined
+        specUrl: undefined,
+        catalogPath: 'services/orders/catalog-info.yaml'
       });
     } finally {
       await rm(tempDir, { recursive: true, force: true });

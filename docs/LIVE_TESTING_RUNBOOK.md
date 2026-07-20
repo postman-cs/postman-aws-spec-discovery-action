@@ -1,33 +1,63 @@
 # Live Testing Runbook
 
-End-to-end integration tests that run the built CLI against real AWS resources. These tests validate the full discovery and resolution pipeline, including SNS contract resolution with subscription enrichment, metadata sidecars, and webhook sidecars.
+Live validation proves AWS-facing resolution contracts against real resources. There are two complementary live surfaces:
+
+1. **Validation matrix** (`validation/scripts/validate-live-aws-surfaces.mjs`) — customer-safe evidence for every live-supported provider, plus required current-run cases from the support ledger.
+2. **SNS vitest suite** (`npm run test:live:sns`) — focused CLI integration tests for SNS contract resolution.
+
+Neither surface may embed credentials, raw account IDs, request IDs, or signed URLs in committed evidence. Raw manifests stay in gitignored `*.local.json` files.
+
+## Evidence
+
+A successful live run is current-run proof for every required ledger row. Commit only the sanitized `validation/evidence/live-validation-summary.json` and generated sections in `validation/evidence/README.md`. Keep raw manifests and the built-CLI receipt (`validation/evidence/built-cli-live.local.json`) gitignored.
 
 ## Prerequisites
 
-### AWS account
-
-You need an AWS account with sufficient IAM permissions. The minimum policy for all providers is documented in [Provider Discovery](providers.md#security-and-iam). In addition to those read-only permissions, deploying the test stack requires:
-
-- `cloudformation:CreateStack`, `cloudformation:UpdateStack`, `cloudformation:DeleteStack`, `cloudformation:DescribeStacks`, `cloudformation:DescribeStackEvents`
-- `sqs:CreateQueue`, `sqs:DeleteQueue`, `sqs:SetQueueAttributes`, `sqs:GetQueueAttributes`
-- `iam:CreateRole`, `iam:DeleteRole`, `iam:AttachRolePolicy`, `iam:DetachRolePolicy` (only if the stack includes IAM resources via `CAPABILITY_IAM`)
-- Standard resource creation permissions for SNS, SSM, API Gateway, AppSync, EventBridge Schemas, and Glue
-
-AWS CLI must be configured and authenticated (`aws sts get-caller-identity` should succeed).
-
-### Local environment
-
 - Node.js 24+
-- Dependencies installed: `npm ci`
-- CLI built: `npm run build`
+- `npm ci` and `npm run build` (live runners execute `dist/cli.cjs` / `dist/index.cjs`)
+- AWS credentials with read access documented in [Provider Discovery](providers.md#security-and-iam)
+- Live stack `spec-discovery-validation` in `us-east-1` with exact Fox tags, multi-environment duplicates, merged AppSync, and provider-denial roles
 
-Live tests execute `dist/cli.cjs`, **not** source TypeScript. Always rebuild before running live tests.
+Confirm identity without printing secrets:
 
-## Stack deployment
+```bash
+aws sts get-caller-identity --query 'Account' --output text >/dev/null
+```
 
-The test CloudFormation stack creates all the AWS resources needed by the live tests.
+## Full live validation matrix
 
-### Deploy
+```bash
+npm run build
+node validation/scripts/capture-live-manifest.mjs --stack-name spec-discovery-validation --region us-east-1
+node validation/scripts/validate-live-aws-surfaces.mjs
+```
+
+### Required current-run cases
+
+The live script always executes these required cases and fails if a required fixture is missing. Existing provider happy paths remain mandatory; the following correctness boundaries are also required:
+
+| Case | Requirement |
+| --- | --- |
+| `fox-tag-zero-config` | From a checked-out Fox-tagged service repo, resolve the intended REST/HTTP/WebSocket gateway with only ambient AWS credentials/region and CI repository identity (no explicit gateway/service input). Prefer `postman:repo`, then `GithubOrg`+`GithubRepo`. |
+| `fox-multi-environment-ambiguity` | Exact multi-environment duplicates remain ranked `manual-review`. |
+| `api-gateway-rest-native` / `api-gateway-rest-fallback` | Native export and recognized fallback labeled partial. |
+| `api-gateway-http-deployed-stage` | Explicit/evidenced stage export with `configurationMode=deployed-stage`. |
+| `api-gateway-http-latest-configuration-divergence` | No-stage `latest-configuration` diverges from deployed-stage after an undeployed change. |
+| `api-gateway-websocket-partial-control-plane` | Partial route/model/integration/authorizer/response reconstruction. |
+| `appsync-merged-associations` | Merged SDL once; source associations in provenance. |
+| `expected-identity-mismatch` | Wrong `expected-account-id` / `expected-partition` fails closed with sanitized error. |
+| `provider-denial-typed` | IAM denial recorded in `providerProbes`. |
+| `all-existing-live-supported-providers` | Refresh every previously live-supported provider surface. |
+
+`expected-identity-mismatch` intentionally uses a wrong account/partition and must fail closed with a sanitized error. The runner creates and deletes a temporary undeployed HTTP route to prove latest-configuration divergence; zero temporary routes must remain after completion.
+
+## SNS vitest live suite
+
+```bash
+npm run build && npm run test:live:sns
+```
+
+### Stack (SNS-focused)
 
 ```bash
 aws cloudformation deploy \
@@ -37,170 +67,28 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_IAM
 ```
 
-### Verify
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name spec-discovery-test \
-  --query 'Stacks[0].StackStatus'
-```
-
-Expected output: `"CREATE_COMPLETE"` or `"UPDATE_COMPLETE"`.
-
-### What the stack creates
-
-| Category | Resources |
-| --- | --- |
-| SNS topics | 5 topics: `SpecDiscoveryTestTopic`, `SpecDiscoveryTaggedTopic` (tagged `postman:project-name=test-service`), `SpecDiscoveryTestTopic.fifo` (FIFO), `SpecDiscoverySubscribedTopic`, `SpecDiscoveryUrlTopic` |
-| SQS queues | 2 queues: `SpecDiscoverySubscriptionQueue` (envelope delivery), `SpecDiscoveryRawSubscriptionQueue` (raw delivery) -- both subscribed to `SpecDiscoverySubscribedTopic` |
-| SNS subscriptions | SQS envelope, SQS raw-payload, HTTPS to `https://example.com/sns-webhook-test` |
-| SSM parameters | 4 parameters: inline AsyncAPI content + format for `spec-discovery-test-topic`, spec-url + format for `spec-discovery-url-topic` |
-| API Gateway | 1 REST API (`spec-discovery-test-rest` with prod stage), 1 HTTP API (`spec-discovery-test-http`), 1 WebSocket API (`spec-discovery-test-websocket`) |
-| AppSync | 1 GraphQL API (`spec-discovery-test-graphql`) with schema |
-| EventBridge | 1 Schema Registry (`spec-discovery-test-registry`) with `OrderCreated` schema |
-| Glue | 1 Schema Registry (`spec-discovery-test-glue-registry`) with Avro schema |
-
-The HTTPS subscription to `example.com` will remain in `PendingConfirmation` state permanently. This is expected and does not affect test execution.
-
-## Running live tests
-
-### Standard command
-
-```bash
-npm run test:live:sns
-```
-
-### Direct vitest invocation
-
-```bash
-npx vitest run --config vitest.live.config.ts
-```
-
-### Configuration details
-
-- **Region**: hardcoded to `us-east-1` (cannot be overridden without code changes)
-- **Timeout**: 180 seconds per test
-- **Workspaces**: tests create temporary directories in the OS temp folder, cleaned up automatically via `afterEach`
-- **Retry**: built-in retry (up to 3 attempts) with 1500ms throttle backoff on `TooManyRequests` errors
-
-### Recommended workflow
-
-```bash
-npm run build && npm run test:live:sns
-```
-
-Always rebuild before running live tests since they execute the bundled `dist/cli.cjs`.
-
-## What the tests cover
-
-The live test suite (`tests/live/sns-integration.test.ts`) contains 7 tests:
+### Coverage
 
 | Test | Description |
 | --- | --- |
-| discover-many | Full multi-provider discovery including SNS with subscription metadata and webhook sidecars. Validates service count, output directory structure, metadata sidecar content, and webhook sidecar OpenAPI structure. Confirms both `sns` and `api-gateway` providers appear. |
-| resolve-one with repo-local AsyncAPI | Copies `asyncapi.yaml` fixture into workspace, verifies SNS contract resolution prefers repo-local AsyncAPI. Checks spec format is `asyncapi-yaml` and exported file contains `asyncapi: 2.6.0`. |
-| resolve-one with repo-local JSON Schema | Copies `schema.json` fixture into workspace, verifies SNS contract resolution uses repo-local JSON Schema. Checks spec format is `json-schema` and exported file contains `$schema`. |
-| resolve-one with SSM inline content | No local contract in workspace. Verifies fallback to SSM inline content at `/postman/specs/spec-discovery-test-topic/content`. Checks resolution evidence references the SSM path. |
-| resolve-one with SSM spec-url fetch | No local contract in workspace. Verifies fallback to SSM `spec-url` at `/postman/specs/spec-discovery-url-topic/spec-url`, which points to `https://json.schemastore.org/package`. Validates metadata sidecar is emitted with `contractOrigin: ssm-url`. |
-| resolve-one manual-review | No local contract, no SSM match for `SpecDiscoverySubscribedTopic`. Verifies `resolution-status: unresolved` and `source-type: manual-review`. |
-| Tag-based candidate ranking | Uses `SpecDiscoveryTaggedTopic` (tagged `postman:project-name=test-service`) with `expected-service-name=test-service`. Verifies tag-based scoring selects the correct topic and `service-name` output matches. |
+| discover-many | Multi-provider discovery including SNS sidecars |
+| resolve-one with repo-local AsyncAPI | Prefers repo-local AsyncAPI |
+| resolve-one with repo-local JSON Schema | Prefers repo-local JSON Schema |
+| resolve-one with SSM inline content | Falls back to SSM content |
+| resolve-one with SSM spec-url fetch | Allowlisted/remote URL path (subject to deny-by-default remote policy) |
+| resolve-one manual-review | Unresolved when no contract matches |
+| Tag-based candidate ranking | `postman:project-name` scoring |
 
 ## Troubleshooting
 
-### Build dependency
+- Rebuild before live runs; tests execute bundled `dist/`.
+- Throttling: retry with backoff; reduce concurrent AWS activity.
+- Region mismatch: validation stack and runners expect `us-east-1`.
+- Remote URL cases: remote fetch is deny-by-default; supply `remote-fetch-allowlist-json` for trusted hosts when exercising URL registry paths.
+- Never commit `*.local.json` manifests or credential-bearing logs.
 
-Tests run `dist/cli.cjs`, not source TypeScript. If tests fail with `CLI bundle not found`, rebuild:
+## Related docs
 
-```bash
-npm run build && npm run test:live:sns
-```
-
-### TooManyRequests / throttling
-
-The test harness has built-in retry with 1500ms backoff. Accounts with many APIs may still exhaust retries. If throttling persists:
-
-1. Wait a few minutes and rerun
-2. Reduce concurrent AWS activity in the account
-3. Multiple runs may be needed for heavily loaded accounts
-
-### SSM URL test fails with `resolution-status: unresolved`
-
-Verify the SSM parameters exist:
-
-```bash
-aws ssm get-parameters-by-path \
-  --path /postman/specs/spec-discovery-url-topic \
-  --region us-east-1
-```
-
-Confirm the URL (`https://json.schemastore.org/package`) is reachable from your network:
-
-```bash
-curl -sI https://json.schemastore.org/package | head -1
-```
-
-### External URL dependency
-
-The SSM URL test fetches `json.schemastore.org`. If that site is down, the test will fail. This is an expected external dependency.
-
-### Region mismatch
-
-All stack resources must be in `us-east-1`. The test harness hardcodes `INPUT_AWS_REGION=us-east-1`. Deploying the stack in a different region will cause all tests to fail.
-
-### Account resource collision
-
-The stack uses fixed resource names (e.g., `SpecDiscoveryTestTopic`, `spec-discovery-test-rest`). Only one instance of the stack can exist per account. If a previous deployment exists, update or delete it before redeploying.
-
-### Subscription PendingConfirmation
-
-The HTTPS subscription to `example.com` will permanently show `PendingConfirmation`. This is expected behavior -- the endpoint never confirms. Tests account for this state.
-
-## Stack teardown
-
-### Delete
-
-```bash
-aws cloudformation delete-stack \
-  --stack-name spec-discovery-test \
-  --region us-east-1
-```
-
-### Verify deletion
-
-```bash
-aws cloudformation wait stack-delete-complete \
-  --stack-name spec-discovery-test \
-  --region us-east-1
-```
-
-This command blocks until the stack is fully deleted.
-
-## Test architecture
-
-### Separation of unit and live tests
-
-| Config | File | Tests | Command | Requires AWS |
-| --- | --- | --- | --- | --- |
-| `vitest.config.ts` | Unit tests | 276 tests in `tests/**/*.test.ts` | `npm test` | No |
-| `vitest.live.config.ts` | Live tests | 7 tests in `tests/live/**/*.test.ts` | `npm run test:live:sns` | Yes |
-
-The two configs are completely separate. Unit tests explicitly exclude `tests/live/`, and live tests only include `tests/live/`. There is no shared setup between them.
-
-### Live test fixtures
-
-Located in `tests/live/fixtures/`:
-
-- `asyncapi.yaml` -- AsyncAPI 2.6.0 contract used by the repo-local AsyncAPI test
-- `schema.json` -- JSON Schema (draft 2020-12) used by the repo-local JSON Schema test
-- `asyncapi-malformed.yaml` -- malformed AsyncAPI file (available for negative testing)
-
-### How live tests work
-
-Each test:
-
-1. Creates a temporary workspace directory via `mkdtemp`
-2. Writes a minimal `template.yaml` with an `AWS::SNS::Topic` resource (and optionally copies fixture files)
-3. Invokes `dist/cli.cjs` via `execFileSync` with environment variables controlling mode, region, and service name
-4. Parses both stdout JSON and `result.json` file output, verifying they match
-5. Asserts on resolution status, source type, provider type, spec format, file existence, and content
-6. Cleans up the workspace in `afterEach`
+- [`validation/SUPPORT_LEDGER.md`](../validation/SUPPORT_LEDGER.md)
+- [`validation/README.md`](../validation/README.md)
+- [`docs/providers.md`](providers.md)

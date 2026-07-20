@@ -39,6 +39,7 @@ const manifest = {
   stackName,
   region,
   accountId: identity.Account,
+  partition: String(identity.Arn ?? '').split(':')[1] || 'aws',
   status: stack.StackStatus,
   outputs
 };
@@ -54,6 +55,7 @@ const summary = [
   `- Stack: ${stackName}`,
   `- Region: ${region}`,
   `- Account: ${String(identity.Account ?? '').replace(/\d/g, 'X')}`,
+  `- Partition: ${String(manifest.partition).replace(/[^a-z-]/gi, 'X')}`,
   `- Status: ${stack.StackStatus}`,
   `- Output keys: ${outputKeys.join(', ')}`,
   '',

@@ -24,6 +24,8 @@ export interface CloudFormationSpecClient {
   listApiResources(stackName: string): Promise<CfnResourceSummary[]>;
   getTemplate(stackName: string): Promise<string>;
   getStackTags(stackName: string): Promise<Record<string, string>>;
+  /** Literal stack output key/value pairs (NoEcho values omitted). */
+  getStackOutputs?(stackName: string): Promise<Record<string, string>>;
   probe(): Promise<boolean>;
 }
 
@@ -109,6 +111,20 @@ export class CloudFormationSdkClient implements CloudFormationSpecClient {
       if (tag.Key) tags[tag.Key] = tag.Value ?? '';
     }
     return tags;
+  }
+
+  public async getStackOutputs(stackName: string): Promise<Record<string, string>> {
+    const response = await this.client.send(new DescribeStacksCommand({ StackName: stackName }));
+    const stack = response.Stacks?.[0];
+    if (!stack) return {};
+    const outputs: Record<string, string> = {};
+    for (const output of stack.Outputs ?? []) {
+      if (!output.OutputKey || output.OutputValue == null) continue;
+      // Never surface NoEcho / sensitive output values into static resolution.
+      if ((output as { NoEcho?: boolean }).NoEcho) continue;
+      outputs[output.OutputKey] = output.OutputValue;
+    }
+    return outputs;
   }
 
   public async probe(): Promise<boolean> {
