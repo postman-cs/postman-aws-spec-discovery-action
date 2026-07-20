@@ -159727,10 +159727,7 @@ var ACCOUNT_ID_RE = /\b\d{12}\b/g;
 var ARN_RE = /\barn:aws[a-z-]*:[^\s'"]+/gi;
 var ACCESS_KEY_RE = /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g;
 var SECRET_KEY_RE = /\b(?:(?:aws_)?secret(?:_access)?_key)\b\s*[:=]\s*["']?([A-Za-z0-9/+_=.-]{16,})/gi;
-var ABS_PATH_RE = /(?:^|(?<=[\s'"=([{,:]))(?:[A-Za-z]:\\|\/)[^\s'"]+/g;
-function isDebugLoggingEnabled(env2 = process.env) {
-  return String(env2.ACTIONS_STEP_DEBUG || "").toLowerCase() === "true";
-}
+var ABS_PATH_RE = /(?:^|(?<=[\s'"=([{,:]))(?:[A-Za-z]:\\|(?<!https?:)\/)[^\s'"]+/g;
 function sanitizeLogMessage(message) {
   return message.replace(ARN_RE, "[redacted-arn]").replace(ACCOUNT_ID_RE, "[redacted-account-id]").replace(ACCESS_KEY_RE, "[redacted-access-key]").replace(SECRET_KEY_RE, (_full, value) => `[redacted-secret-key:${"*".repeat(Math.min(value.length, 8))}]`).replace(ABS_PATH_RE, "[redacted-path]");
 }
@@ -159754,11 +159751,8 @@ function errorMessage(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
 }
 function formatUserSafeError(error2, env2 = process.env) {
-  const message = errorMessage(error2);
-  if (isDebugLoggingEnabled(env2)) {
-    return message;
-  }
-  return sanitizeLogMessage(message);
+  void env2;
+  return sanitizeLogMessage(errorMessage(error2));
 }
 
 // src/runtime.ts
@@ -171315,11 +171309,15 @@ async function lookupCandidatesByIds(inputs, awsClient, actionCore) {
   }
   return candidates;
 }
-async function safeListRestApis(awsClient, actionCore) {
+async function safeListRestApis(awsClient, actionCore, region) {
   try {
     return await awsClient.listRestApis();
   } catch (error2) {
-    actionCore.warning(userSafeWarning(`Skipping REST API enumeration: ${formatUserSafeError(error2)}`));
+    actionCore.warning(
+      userSafeWarning(
+        `Attempted REST API enumeration in region ${region} failed: ${formatUserSafeError(error2)}. Continuing without REST candidates. Grant API Gateway read permission or use the correct role.`
+      )
+    );
     return [];
   }
 }
@@ -171330,7 +171328,11 @@ async function safeListHttpApis(inputs, awsClient, actionCore) {
   try {
     return await awsClient.listHttpApis();
   } catch (error2) {
-    actionCore.warning(userSafeWarning(`Skipping HTTP API enumeration: ${formatUserSafeError(error2)}`));
+    actionCore.warning(
+      userSafeWarning(
+        `Attempted HTTP API enumeration in region ${inputs.awsRegion} failed: ${formatUserSafeError(error2)}. Continuing without HTTP candidates. Grant API Gateway read permission or use the correct role.`
+      )
+    );
     return [];
   }
 }
@@ -171901,10 +171903,11 @@ async function runPreflight(inputs, dependencies) {
   } catch (error2) {
     const parsed = parseAwsError(error2);
     const name = parsed.name ?? "";
+    const cause = formatUserSafeError(error2);
     if (name === "ExpiredTokenException" || name === "ExpiredToken") {
       throw new Error(
         userSafeWarning(
-          "AWS credentials are expired; refresh the role/session (re-assume the role or rotate the access keys) and re-run."
+          `Attempted sts:GetCallerIdentity in region ${inputs.awsRegion} failed: ${cause}. Refresh the role/session (re-assume the role or rotate the access keys) and re-run.`
         ),
         { cause: error2 }
       );
@@ -171912,7 +171915,7 @@ async function runPreflight(inputs, dependencies) {
     if (name === "AccessDeniedException" || name === "AccessDenied") {
       throw new Error(
         userSafeWarning(
-          "The AWS identity cannot call sts:GetCallerIdentity; the credentials are malformed or the principal is denied STS. Check the role/keys and trust policy."
+          `Attempted sts:GetCallerIdentity in region ${inputs.awsRegion} failed: ${cause}. Credentials are malformed or the principal is denied STS; check the role/keys and trust policy.`
         ),
         { cause: error2 }
       );
@@ -171920,12 +171923,17 @@ async function runPreflight(inputs, dependencies) {
     if (name === "CredentialsProviderError") {
       throw new Error(
         userSafeWarning(
-          "No AWS credentials were resolved from the provider chain (env, profile, OIDC, instance role). Configure credentials for this runner."
+          `Attempted sts:GetCallerIdentity in region ${inputs.awsRegion} failed: ${cause}. Configure credentials for this runner via the provider chain (env, profile, OIDC, instance role).`
         ),
         { cause: error2 }
       );
     }
-    throw error2;
+    throw new Error(
+      userSafeWarning(
+        `Attempted sts:GetCallerIdentity in region ${inputs.awsRegion} failed: ${cause}. Verify AWS credentials, region, and IAM permission for sts:GetCallerIdentity, then re-run.`
+      ),
+      { cause: error2 }
+    );
   }
   const partition2 = identity.partition ?? partitionFromArn(identity.arn);
   if (inputs.expectedAccountId) {
@@ -171952,7 +171960,9 @@ async function runPreflight(inputs, dependencies) {
       await dependencies.aws.probeApiGatewayReadAccess();
     } catch (error2) {
       dependencies.core.warning(
-        userSafeWarning(`API Gateway REST preflight probe failed; other provider discovery will continue: ${formatUserSafeError(error2)}`)
+        userSafeWarning(
+          `Attempted API Gateway REST read preflight in region ${inputs.awsRegion} failed: ${formatUserSafeError(error2)}. REST discovery/export may be unavailable while other providers continue. Grant API Gateway read permission or use the correct role.`
+        )
       );
     }
   }
@@ -171964,7 +171974,7 @@ async function runPreflight(inputs, dependencies) {
 async function runDiscovery(inputs, dependencies) {
   const restStart = Date.now();
   const restApis = await dependencies.core.group("Discover REST APIs", async () => {
-    const items = await safeListRestApis(dependencies.aws, dependencies.core);
+    const items = await safeListRestApis(dependencies.aws, dependencies.core, inputs.awsRegion);
     dependencies.core.info(`Found ${items.length} REST API(s) in ${Date.now() - restStart}ms`);
     return items;
   });
@@ -172083,7 +172093,9 @@ async function runDiscovery(inputs, dependencies) {
       } catch (error2) {
         summary.failed += 1;
         dependencies.core.warning(
-          userSafeWarning(`Failed exporting ${candidate.gatewayType} API ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`)
+          userSafeWarning(
+            `Attempted export of ${candidate.gatewayType} API ${candidate.id} (${candidate.name}) in region ${inputs.awsRegion} failed: ${formatUserSafeError(error2)}. Continuing with remaining candidates; this failure increments the export summary failed count. Grant API Gateway export/read permission for this API or fix stage/export errors, then re-run.`
+          )
         );
       }
     }
@@ -172209,7 +172221,7 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
       } catch (error2) {
         actionCore.warning(
           userSafeWarning(
-            `Backstage catalog spec path ${api.specPath} for ${api.name} was not usable (${formatUserSafeError(error2)}); continuing discovery`
+            `Attempted read of Backstage entity ${api.name} local definition at ${api.specPath} failed: ${formatUserSafeError(error2)}. Continuing discovery without this catalog contract. Correct the catalog definition or local path, then re-run.`
           )
         );
       }
@@ -172236,8 +172248,11 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
         });
         actionCore.info(`Fetched remote spec from catalog URL for ${targetPath}`);
       } catch (error2) {
-        const detail = error2 instanceof Error ? error2.message : String(error2);
-        actionCore.warning(userSafeWarning(`Failed to fetch spec from catalog URL ${safeUrl}: ${detail}`));
+        actionCore.warning(
+          userSafeWarning(
+            `Attempted fetch of Backstage entity ${api.name} remote definition at ${safeUrl} failed: ${formatUserSafeError(error2)}. Continuing discovery without this catalog contract. Correct the catalog definition or allowlist the HTTPS host/path, then re-run.`
+          )
+        );
       }
     }
   }
@@ -172519,7 +172534,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     "Resolve API candidates by explicit gateway ID",
     async () => lookupCandidatesByIds(inputs, awsClient, actionCore)
   ) : filterCandidates(
-    await actionCore.group("Resolve REST API candidates", async () => safeListRestApis(awsClient, actionCore)),
+    await actionCore.group(
+      "Resolve REST API candidates",
+      async () => safeListRestApis(awsClient, actionCore, inputs.awsRegion)
+    ),
     await actionCore.group("Resolve HTTP API candidates", async () => safeListHttpApis(inputs, awsClient, actionCore)),
     inputs.includeV2,
     inputs.apiFilter
@@ -173011,7 +173029,11 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
       try {
         candidates = await provider.listCandidates();
       } catch (error2) {
-        dependencies.core.warning(userSafeWarning(`Failed listing candidates from ${provider.type}: ${formatUserSafeError(error2)}`));
+        dependencies.core.warning(
+          userSafeWarning(
+            `Attempted listing candidates from ${provider.type} in region ${inputs.awsRegion} failed: ${formatUserSafeError(error2)}. Continuing with other providers; this failure increments the export summary failed count. Grant ${provider.type} read permission or verify the service is available in this region.`
+          )
+        );
         summary.failed += 1;
         return;
       }
@@ -173105,7 +173127,9 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
         } catch (error2) {
           summary.failed += 1;
           dependencies.core.warning(
-            userSafeWarning(`Failed exporting ${provider.type} candidate ${candidate.id} (${candidate.name}): ${formatUserSafeError(error2)}`)
+            userSafeWarning(
+              `Attempted export of ${provider.type} candidate ${candidate.id} (${candidate.name}) in region ${inputs.awsRegion} failed: ${formatUserSafeError(error2)}. Continuing with remaining candidates; this failure increments the export summary failed count. Grant ${provider.type} export/read permission or verify the service is available in this region.`
+            )
           );
         }
       }
@@ -173248,7 +173272,9 @@ async function execute(inputs, dependencies) {
     };
     if (summary.failed > 0) {
       dependencies.core.warning(
-        userSafeWarning(`discover-many encountered ${summary.failed} export failure(s); strict mode marks resolution as unresolved`)
+        userSafeWarning(
+          `discover-many partial success: attempted=${summary.attempted}, exported=${summary.exported}, failed=${summary.failed}, skipped=${summary.skipped}. Successful artifacts remain but resolution-status is unresolved. Inspect export-summary-json and preceding warnings, fix IAM/stage/source errors, then re-run.`
+        )
       );
     }
     return {
