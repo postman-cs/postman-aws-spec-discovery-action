@@ -400,7 +400,7 @@ async function listFilesRecursive(rootDir: string): Promise<string[]> {
 }
 
 async function fsyncFile(absolutePath: string): Promise<void> {
-  const handle = await open(absolutePath, 'r');
+  const handle = await open(absolutePath, 'r+');
   try {
     await handle.sync();
   } finally {

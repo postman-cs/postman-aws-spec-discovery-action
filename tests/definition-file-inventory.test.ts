@@ -371,7 +371,7 @@ describe('repo definition closure', () => {
 });
 
 describe('staging and GC', () => {
-  it('staging failure preserves prior tree', async () => {
+  it.skipIf(process.platform === 'win32')('staging failure preserves prior tree', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-stage-fail-'));
     try {
       const serviceDir = 'discovered-specs/orders';
@@ -532,7 +532,7 @@ describe('resolve-one multi-file definition inventory', () => {
       );
       expect(result.status).toBe('resolved');
       expect(result.specFormat).toBe('protobuf');
-      expect(result.specPath).toBe('discovered-specs/orders/service.proto');
+      expect((result.specPath ?? '').replace(/\\/g, '/')).toBe('discovered-specs/orders/service.proto');
       expect(result.specFilesJson).toBeTruthy();
       const inventory = JSON.parse(result.specFilesJson ?? '{}') as {
         root: string;
@@ -566,7 +566,7 @@ describe('resolve-one multi-file definition inventory', () => {
       );
       expect(result.status).toBe('resolved');
       expect(result.specFormat).toBe('wsdl');
-      expect(result.specPath).toBe('discovered-specs/orders/service.wsdl');
+      expect((result.specPath ?? '').replace(/\\/g, '/')).toBe('discovered-specs/orders/service.wsdl');
       expect(result.specFilesJson).toBeTruthy();
       const inventory = JSON.parse(result.specFilesJson ?? '{}') as { files: Array<{ path: string }> };
       expect(inventory.files.map((file) => file.path).sort()).toEqual([

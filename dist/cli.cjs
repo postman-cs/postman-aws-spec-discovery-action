@@ -160437,7 +160437,7 @@ async function listFilesRecursive(rootDir) {
   return out;
 }
 async function fsyncFile(absolutePath) {
-  const handle = await (0, import_promises4.open)(absolutePath, "r");
+  const handle = await (0, import_promises4.open)(absolutePath, "r+");
   try {
     await handle.sync();
   } finally {
