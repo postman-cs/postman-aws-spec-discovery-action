@@ -2947,7 +2947,7 @@ describe('hardening helpers', () => {
       expect(signals.inferredGatewayIdHints).toEqual(expect.arrayContaining(['abc123def4', 'bcdef12345', 'cdef123456']));
       expect(signals.customDomainHints).toEqual(expect.arrayContaining(['api.orders.example.test', 'orders.internal.example.test']));
       expect(signals.lambdaUrlHints).toContain('orders-lambda.lambda-url.us-east-1.on.aws');
-      expect(signals.evidence).toEqual(expect.arrayContaining([
+      expect((signals.evidence as string[]).map((e) => e.replace(/\\/g, '/'))).toEqual(expect.arrayContaining([
         expect.stringContaining('helm/orders/templates/ingress.yaml'),
         expect.stringContaining('docker-compose.yml'),
         expect.stringContaining('ecs/task-definition.json'),
