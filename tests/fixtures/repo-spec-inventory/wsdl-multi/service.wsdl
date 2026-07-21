@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://example.test/orders"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             targetNamespace="http://example.test/orders"
+             name="OrdersService">
+  <types>
+    <xsd:schema>
+      <xsd:import namespace="http://example.test/orders/types" schemaLocation="types.xsd"/>
+    </xsd:schema>
+  </types>
+  <message name="GetOrderRequest">
+    <part name="body" element="tns:GetOrderRequest"/>
+  </message>
+  <portType name="OrdersPortType">
+    <operation name="GetOrder">
+      <input message="tns:GetOrderRequest"/>
+    </operation>
+  </portType>
+  <binding name="OrdersSoapBinding" type="tns:OrdersPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+    <operation name="GetOrder">
+      <soap:operation soapAction="GetOrder"/>
+      <input><soap:body use="literal"/></input>
+    </operation>
+  </binding>
+  <service name="OrdersService">
+    <port name="OrdersPort" binding="tns:OrdersSoapBinding">
+      <soap:address location="https://example.test/orders"/>
+    </port>
+  </service>
+</definitions>

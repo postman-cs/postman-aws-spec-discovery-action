@@ -82,6 +82,13 @@ export interface ResolveLocalReadOptions {
    * When omitted, size is taken from stat of the resolved file.
    */
   fileByteLength?: number;
+  /**
+   * When true, reject any symbolic link among lexical path components
+   * (reject-not-follow). Default false preserves in-root symlink following for
+   * non-authoritative local reads. Authoritative definition root/dependency
+   * reads must set this (or call {@link assertNoSymlinkComponentsWithinRoot}).
+   */
+  rejectSymlinkComponents?: boolean;
 }
 
 function isPathInsideRoot(root: string, candidate: string): boolean {
@@ -113,15 +120,22 @@ async function resolveCanonicalRoot(rootPath: string): Promise<string> {
   }
 }
 
+type SymlinkComponentMode = 'follow-in-root' | 'reject-any';
+
 /**
- * Walk each path component with lstat, resolving in-root symlinks and rejecting
- * escapes, dangling links, and symlink loops before the final realpath check.
+ * Walk each path component with lstat.
+ * - `follow-in-root`: resolve in-root symlinks; reject escapes, dangling links, loops.
+ * - `reject-any`: refuse every symbolic link component (reject-not-follow).
+ * When `allowMissing` is true, stop at the first missing component after verifying
+ * the existing prefix has no symlinks (write destinations that do not exist yet).
  */
 async function walkPathComponentsWithinRoot(
   lexicalRoot: string,
   absoluteLexical: string,
   fieldName: string,
-  originalTarget: string
+  originalTarget: string,
+  mode: SymlinkComponentMode = 'follow-in-root',
+  allowMissing = false
 ): Promise<void> {
   const relativeTarget = path.relative(lexicalRoot, absoluteLexical);
   if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
@@ -140,6 +154,9 @@ async function walkPathComponentsWithinRoot(
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (code === 'ENOENT') {
+        if (allowMissing) {
+          break;
+        }
         throw new Error(
           `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
           { cause: error }
@@ -150,6 +167,12 @@ async function walkPathComponentsWithinRoot(
 
     if (!linkStat.isSymbolicLink()) {
       continue;
+    }
+
+    if (mode === 'reject-any') {
+      throw new Error(
+        `${fieldName} must stay within repo-root/workspace and must not traverse symbolic links; received ${originalTarget}`
+      );
     }
 
     let linkTarget: string;
@@ -181,6 +204,31 @@ async function walkPathComponentsWithinRoot(
     // Continue walking from the symlink destination for remaining components.
     current = resolvedLink;
   }
+}
+
+/**
+ * Lexical containment + lstat-walk that rejects any symbolic link component
+ * (reject-not-follow). Missing trailing components are allowed so writeNative
+ * destinations that do not exist yet can still refuse symlink prefixes.
+ * Unrelated callers should keep {@link resolveLocalReadWithinRoot} default
+ * follow-in-root behavior.
+ */
+export async function assertNoSymlinkComponentsWithinRoot(
+  rootPath: string,
+  targetPath: string,
+  fieldName = 'path'
+): Promise<string> {
+  const lexicalRoot = path.resolve(rootPath);
+  const absoluteLexical = resolvePathWithinRoot(lexicalRoot, targetPath, fieldName);
+  await walkPathComponentsWithinRoot(
+    lexicalRoot,
+    absoluteLexical,
+    fieldName,
+    targetPath,
+    'reject-any',
+    true
+  );
+  return absoluteLexical;
 }
 
 /**
@@ -223,7 +271,16 @@ export async function resolveLocalReadWithinRoot(
     throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
   }
 
-  await walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, targetPath);
+  const symlinkMode: SymlinkComponentMode = options.rejectSymlinkComponents
+    ? 'reject-any'
+    : 'follow-in-root';
+  await walkPathComponentsWithinRoot(
+    lexicalRoot,
+    absoluteLexical,
+    fieldName,
+    targetPath,
+    symlinkMode
+  );
 
   let canonicalPath: string;
   try {
