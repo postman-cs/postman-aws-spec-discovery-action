@@ -168,7 +168,7 @@ describe('appendAmbiguityStepSummary', () => {
     }
   });
 
-  it('U3.5 emits one sanitized warning and does not throw when the path is unwritable', async () => {
+  it.skipIf(process.platform === 'win32')('U3.5 emits one sanitized warning and does not throw when the path is unwritable', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-summary-ro-'));
     try {
       await chmod(tempDir, 0o500);
