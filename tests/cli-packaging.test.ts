@@ -195,7 +195,7 @@ describe('CLI packaging contract', () => {
       expect(symlinkHelp.stdout).toMatch(/Usage:\s+postman-aws-spec-discovery/i);
     }
     // npm pack/install exercises the published-package path and can require a cold local npm cache.
-  }, 120000);
+  }, 240000);
 
   it('runs the direct dist/cli.cjs artifact with a shebang path', async () => {
     if (process.platform === 'win32') return;
