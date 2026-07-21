@@ -64,13 +64,16 @@ export type SpecFormat =
   | 'openapi-yaml'
   | 'openapi-json'
   | 'graphql-sdl'
+  | 'graphql-introspection-json'
   | 'asyncapi-yaml'
   | 'asyncapi-json'
   | 'json-schema'
   | 'postman-collection'
   | 'smithy'
   | 'avro'
-  | 'protobuf';
+  | 'protobuf'
+  | 'wsdl'
+  | 'mcp-json';
 
 export type DerivedOpenApiVersion = '3.0.3' | '3.1.0';
 
@@ -139,6 +142,14 @@ export interface ResolutionResult {
   serviceName: string;
   confidence: number;
   specPath?: string;
+  /**
+   * Optional single-line definition inventory JSON (schemaVersion 1).
+   * Empty/omitted for single-file, unresolved, discover-many top-level,
+   * derived OpenAPI, and deterministic GraphQL/Smithy composition.
+   */
+  specFilesJson?: string;
+  /** Present when a native definition closure was assessed as full or partial. */
+  definitionCompleteness?: 'full' | 'partial';
   gatewayId?: string;
   gatewayType?: GatewayType;
   providerType?: ProviderType;
@@ -298,6 +309,10 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     'spec-path': {
       description: 'Path to resolved or generated specification when available.'
     },
+    'spec-files-json': {
+      description:
+        'Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition.'
+    },
     'gateway-id': {
       description: 'Resolved API Gateway ID when available.'
     },
@@ -324,7 +339,7 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'spec-format': {
       description:
-        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf.'
+        'Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, graphql-introspection-json, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, protobuf, wsdl, or mcp-json.'
     },
     'contract-origin': {
       description:

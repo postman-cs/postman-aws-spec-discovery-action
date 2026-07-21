@@ -12,6 +12,7 @@ import type { SnsSpecClient } from '../src/lib/aws/sns-client.js';
 import { collectRepoSignals } from '../src/lib/repo/signals.js';
 import { inventoryRepoSpecs } from '../src/lib/repo/specs.js';
 import {
+  assertNoSymlinkComponentsWithinRoot,
   createLocalReferenceTraversalState,
   resolveLocalReadWithinRoot,
   resolvePathWithinRoot,
@@ -90,6 +91,38 @@ describe('resolveLocalReadWithinRoot (canonical)', () => {
     await expect(
       resolveLocalReadWithinRoot(root, 'escape-link.yaml', { fieldName: 'spec-path' })
     ).rejects.toThrow(/escaping symbolic links/);
+  });
+
+  it('default follow-in-root allows an in-root parent-directory symlink; strict mode rejects any component', async () => {
+    const { root } = await makeSandbox('path-sec-parent-sym-');
+    await mkdir(path.join(root, 'real-dir'), { recursive: true });
+    await writeFile(path.join(root, 'real-dir', 'openapi.yaml'), 'openapi: 3.0.3\n', 'utf8');
+    await symlink(path.join(root, 'real-dir'), path.join(root, 'linked-dir'));
+
+    const followed = await resolveLocalReadWithinRoot(root, 'linked-dir/openapi.yaml', {
+      fieldName: 'spec-path',
+      countAsReference: false
+    });
+    expect(followed.canonicalPath).toBe(await realpath(path.join(root, 'real-dir', 'openapi.yaml')));
+
+    await expect(
+      resolveLocalReadWithinRoot(root, 'linked-dir/openapi.yaml', {
+        fieldName: 'spec-path',
+        countAsReference: false,
+        rejectSymlinkComponents: true
+      })
+    ).rejects.toThrow(/must not traverse symbolic links/);
+
+    await expect(
+      assertNoSymlinkComponentsWithinRoot(root, 'linked-dir/openapi.yaml', 'spec-path')
+    ).rejects.toThrow(/must not traverse symbolic links/);
+
+    const nestedOk = await resolveLocalReadWithinRoot(root, 'real-dir/openapi.yaml', {
+      fieldName: 'spec-path',
+      countAsReference: false,
+      rejectSymlinkComponents: true
+    });
+    expect(nestedOk.relativePath).toBe(path.join('real-dir', 'openapi.yaml'));
   });
 
   it('rejects a dangling symlink', async () => {

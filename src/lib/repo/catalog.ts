@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseAllDocuments } from 'yaml';
+import { parseAllDocuments, stringify } from 'yaml';
 import { findIaCFiles } from './scan.js';
 import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 
@@ -9,6 +9,8 @@ export interface CatalogApiRef {
   type?: string;
   specPath?: string;
   specUrl?: string;
+  /** Inline definition bytes acquired from the catalog entity (not a path/URL ref). */
+  inlineContent?: string;
   /** Catalog file that declared this API (posix, relative to repo root). */
   catalogPath?: string;
 }
@@ -26,7 +28,7 @@ interface CatalogEntity {
   metadata?: { name?: string; [k: string]: unknown };
   spec?: {
     type?: string;
-    definition?: string | { $text?: string; $json?: string };
+    definition?: string | Record<string, unknown>;
     [k: string]: unknown;
   };
 }
@@ -86,8 +88,8 @@ function scopeCatalogApis(apis: CatalogApiRef[], options: DetectCatalogApisOptio
         return true;
       }
     }
-    // Remote-only entities under an explicit service root match by name filter above, or by catalog location.
-    if (!api.specPath && api.specUrl) {
+    // Remote/inline-only entities under an explicit service root match by catalog location.
+    if ((!api.specPath && api.specUrl) || api.inlineContent) {
       return Boolean(api.catalogPath && isUnderServiceRoot(api.catalogPath, serviceRoot));
     }
     return false;
@@ -120,31 +122,95 @@ function extractCatalogApis(catalogPath: string, docs: CatalogEntity[]): Catalog
     if (!name) continue;
     const type = typeof doc.spec?.type === 'string' ? doc.spec.type : undefined;
 
-    const def = doc.spec?.definition;
-    let specPath: string | undefined;
-    let specUrl: string | undefined;
+    const acquired = acquireDefinition(catalogPath, doc.spec?.definition);
+    if (!acquired) continue;
 
-    if (typeof def === 'string') {
-      if (def.startsWith('http://') || def.startsWith('https://')) {
-        specUrl = def;
-      } else {
-        specPath = resolveCatalogPath(catalogPath, def);
-      }
-    } else if (def && typeof def === 'object') {
-      const ref = typeof def.$text === 'string' ? def.$text : typeof def.$json === 'string' ? def.$json : undefined;
-      if (typeof ref === 'string') {
-        if (ref.startsWith('http://') || ref.startsWith('https://')) {
-          specUrl = ref;
-        } else {
-          specPath = resolveCatalogPath(catalogPath, ref);
-        }
-      }
-    }
-
-    apis.push({ name, type, specPath, specUrl, catalogPath: catalogPath.replace(/\\/g, '/') });
+    apis.push({
+      name,
+      type,
+      ...acquired,
+      catalogPath: catalogPath.replace(/\\/g, '/')
+    });
   }
 
   return apis;
+}
+
+type AcquiredDefinition =
+  | { specPath: string; specUrl?: undefined; inlineContent?: undefined }
+  | { specUrl: string; specPath?: undefined; inlineContent?: undefined }
+  | { inlineContent: string; specPath?: undefined; specUrl?: undefined };
+
+function acquireDefinition(
+  catalogPath: string,
+  def: string | Record<string, unknown> | undefined
+): AcquiredDefinition | undefined {
+  if (typeof def === 'string') {
+    return classifyDefinitionString(catalogPath, def);
+  }
+  if (!def || typeof def !== 'object' || Array.isArray(def)) {
+    return undefined;
+  }
+
+  const refKeys = ['$text', '$json', '$yaml'] as const;
+  for (const key of refKeys) {
+    const value = def[key];
+    if (typeof value === 'string' && value.trim()) {
+      return classifyDefinitionString(catalogPath, value);
+    }
+  }
+
+  // Inline document embedded directly as a YAML/JSON object (no $text/$json/$yaml wrapper).
+  if (looksLikeInlineDocumentObject(def)) {
+    try {
+      return { inlineContent: stringify(def) };
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
+function classifyDefinitionString(catalogPath: string, value: string): AcquiredDefinition {
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return { specUrl: trimmed };
+  }
+  if (isInlineDefinitionBytes(trimmed)) {
+    return { inlineContent: value };
+  }
+  return { specPath: resolveCatalogPath(catalogPath, trimmed) };
+}
+
+/**
+ * Distinguish inline document bytes from local path references.
+ * Paths stay path-like (no newlines, no document markers); everything else is inline.
+ */
+function isInlineDefinitionBytes(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed.includes('\n') || trimmed.includes('\r')) return true;
+  if (trimmed.startsWith('{') || trimmed.startsWith('<')) return true;
+  if (/^\s*(openapi|swagger|asyncapi)\s*:/i.test(trimmed)) return true;
+  if (/^\s*\$version\s*:/i.test(trimmed)) return true;
+  // Path-like: optional ./ ../, segments, extension
+  if (/^(\.\/|\.\.\/)?[\w.@+-]+(?:\/[\w.@+-]+)*\.[A-Za-z0-9]+$/.test(trimmed)) return false;
+  if (trimmed.startsWith('./') || trimmed.startsWith('../')) return false;
+  // Ambiguous short strings without extension still treated as paths for Backstage relative refs.
+  if (trimmed.length < 80 && !/\s{2,}/.test(trimmed)) return false;
+  return true;
+}
+
+function looksLikeInlineDocumentObject(def: Record<string, unknown>): boolean {
+  return Boolean(
+    def.openapi
+    || def.swagger
+    || def.asyncapi
+    || def.__schema
+    || def.mcpServers
+    || (def.data && typeof def.data === 'object')
+  );
 }
 
 function resolveCatalogPath(catalogPath: string, reference: string): string {

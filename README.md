@@ -234,6 +234,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | `source-type` | Resolved source type: repo-spec, gateway-export, appsync-schema, appsync-event-api, eventbridge-schema, eventbridge-surface, cfn-embedded, glue-schema, bedrock-action-group, alb-listener-rule, sns-contract, ssm-registry, lambda-url-export, lambda-event-source, verified-permissions-schema, step-functions-asl, manual-review, or discover-many. |
 | `mapping-confidence` | Numeric confidence score for selected service candidate. |
 | `spec-path` | Path to resolved or generated specification when available. |
+| `spec-files-json` | Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition. |
 | `gateway-id` | Resolved API Gateway ID when available. |
 | `service-name` | Resolved service name. |
 | `services-json` | Legacy discover-many output: JSON array of exported services. |
@@ -241,7 +242,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | `export-summary-json` | discover-many summary JSON with attempted/exported/failed/skipped counts. |
 | `candidates-json` | JSON array of top candidates when resolution is ambiguous. |
 | `provider-type` | Provider that resolved the spec: api-gateway, appsync, appsync-events, eventbridge-schemas, eventbridge, cloudformation, glue, bedrock-action-group, alb-listener-rule, sns, ssm, lambda-url, lambda-event-source, verified-permissions, or step-functions. |
-| `spec-format` | Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, or protobuf. |
+| `spec-format` | Format of the resolved spec: openapi-yaml, openapi-json, graphql-sdl, graphql-introspection-json, asyncapi-yaml, asyncapi-json, json-schema, postman-collection, smithy, avro, protobuf, wsdl, or mcp-json. |
 | `contract-origin` | SNS contract provenance when available: repo-asyncapi, repo-json-schema, generated-asyncapi, ssm-content, ssm-url, catalog-url, eventbridge-derived, code-derived, or manual-review. |
 | `contract-metadata-path` | Path to SNS resolution metadata sidecar when available. |
 | `variant-count` | Number of SNS delivery variants discovered when available. |

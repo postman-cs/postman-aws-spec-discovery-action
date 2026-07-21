@@ -46,6 +46,24 @@ const cases = [
     }
   },
   {
+    name: 'graphql-introspection-json',
+    source: 'validation/fixtures/repo-spec/introspection.json',
+    target: 'introspection.json',
+    expectedFormat: 'graphql-introspection-json'
+  },
+  {
+    name: 'wsdl',
+    source: 'validation/fixtures/repo-spec/service.wsdl',
+    target: 'service.wsdl',
+    expectedFormat: 'wsdl'
+  },
+  {
+    name: 'mcp-json',
+    source: 'validation/fixtures/repo-spec/mcp.json',
+    target: 'mcp.json',
+    expectedFormat: 'mcp-json'
+  },
+  {
     name: 'asyncapi-yaml',
     source: 'validation/fixtures/repo-spec/asyncapi.yaml',
     target: 'asyncapi.yaml',

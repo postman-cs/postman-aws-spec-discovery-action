@@ -17,6 +17,14 @@ import {
   type SpecFormat
 } from './contracts.js';
 import {
+  buildDefinitionFileInventory,
+  resolveRepoDefinitionClosure,
+  serializeDefinitionFileInventory,
+  stageDefinitionExportTree,
+  type DefinitionMemberInput
+} from './lib/spec/definition-file-inventory.js';
+import type { SpecDefinitionArtifact } from './lib/providers/types.js';
+import {
   accountIndicatorFromAccountId,
   parseAwsError,
   partitionFromArn,
@@ -54,6 +62,11 @@ import {
   normalizeOpenApiYaml,
   type OperationIdRename
 } from './lib/spec/normalize-openapi.js';
+import {
+  classifySpecContent,
+  classifyWithDeclaredFormat,
+  filenameForFormat
+} from './lib/spec/classify-format.js';
 import { deriveOpenApiDocument, type OpenApiDerivationResult } from './lib/spec/oas-derivation.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { ApiGatewayProvider } from './lib/providers/api-gateway.js';
@@ -88,7 +101,11 @@ import {
 import type { ExactRepoTagContract } from './lib/resolve/narrowing-pipeline.js';
 import type { InventoryStaticIacOptions } from './lib/repo/specs.js';
 import { resolveStaticIacCandidates, type StaticIacResolution } from './lib/iac/index.js';
-import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from './lib/utils/resolve-path-within-root.js';
+import {
+  assertNoSymlinkComponentsWithinRoot,
+  resolveLocalReadWithinRoot,
+  resolvePathWithinRoot
+} from './lib/utils/resolve-path-within-root.js';
 import type { EventBridgeSchemasSpecClient } from './lib/aws/schemas-client.js';
 import type { SpecProvider, SpecCandidate, SpecExportResult } from './lib/providers/types.js';
 import type { SnsContractResolutionContext, SnsContractResult } from './lib/providers/sns.js';
@@ -643,7 +660,12 @@ export async function defaultWriteSpecFile(outputPath: string, content: string):
 
 type DerivedOpenApiMetadata = Pick<
   ResolutionResult,
-  'derivedOpenApiPath' | 'derivedOpenApiVersion' | 'derivedOpenApiCompleteness' | 'derivedOpenApiFormat' | 'derivedOpenApiEvidence'
+  | 'derivedOpenApiPath'
+  | 'derivedOpenApiVersion'
+  | 'derivedOpenApiCompleteness'
+  | 'derivedOpenApiFormat'
+  | 'derivedOpenApiEvidence'
+  | 'specFilesJson'
 >;
 
 interface ArtifactSidecar {
@@ -658,6 +680,12 @@ interface ResolvedArtifactWriteInput {
     relativePath: string;
     content: string;
   };
+  /**
+   * Authoritative multi-file definition members (workspace-relative paths).
+   * When present with 2+ files, staged atomically; never includes sidecars/derived OpenAPI.
+   */
+  definitionMembers?: DefinitionMemberInput[];
+  definitionFormat?: SpecFormat;
   sidecars?: ArtifactSidecar[];
   derivation?: {
     content: string;
@@ -696,52 +724,117 @@ function normalizeDerivedOpenApiJson(derivation: OpenApiDerivationResult): { con
   }
 }
 
+function inventoryFromDefinitionMembers(
+  members: DefinitionMemberInput[] | undefined,
+  format: SpecFormat | undefined
+): string {
+  if (!members || members.length < 2 || !format) return '';
+  const root = members.find((member) => member.role === 'root');
+  if (!root) return '';
+  return serializeDefinitionFileInventory(
+    buildDefinitionFileInventory({
+      root: root.path,
+      format,
+      completeness: 'full',
+      files: members
+    })
+  );
+}
+
+function definitionMembersFromArtifacts(
+  serviceDirRelative: string,
+  artifacts: SpecDefinitionArtifact[] | undefined,
+  fallbackRoot: { relativePath: string; content: string; filename: string }
+): DefinitionMemberInput[] | undefined {
+  if (!artifacts || artifacts.length === 0) {
+    return undefined;
+  }
+  const members: DefinitionMemberInput[] = artifacts.map((artifact) => ({
+    path: path.posix.join(serviceDirRelative, artifact.relativePath.replace(/\\/g, '/')),
+    role: artifact.role,
+    content: artifact.content
+  }));
+  if (!members.some((member) => member.role === 'root')) {
+    members.push({
+      path: path.posix.join(serviceDirRelative, fallbackRoot.filename),
+      role: 'root',
+      content: fallbackRoot.content
+    });
+  }
+  return members;
+}
+
 async function writeResolvedArtifactWithDerivedOpenApi(input: ResolvedArtifactWriteInput): Promise<DerivedOpenApiMetadata> {
-  if (!input.dryRun && input.native) {
+  const definitionMembers = input.definitionMembers;
+  const multiFile = (definitionMembers?.length ?? 0) >= 2;
+  const specFilesJson = inventoryFromDefinitionMembers(definitionMembers, input.definitionFormat);
+
+  let derivedMeta: DerivedOpenApiMetadata = {};
+  let derivedSidecar: ArtifactSidecar | undefined;
+  if (input.derivation) {
+    const derived = deriveOpenApiDocument(input.derivation);
+    const completeness = input.derivation.forceCompleteness ?? derived.completeness;
+    const normalized = normalizeDerivedOpenApiJson(derived);
+    if (!normalized.content) {
+      derivedMeta = {
+        derivedOpenApiVersion: derived.version,
+        derivedOpenApiCompleteness: completeness,
+        derivedOpenApiFormat: 'openapi-json',
+        derivedOpenApiEvidence: normalized.evidence
+      };
+    } else {
+      const filename = derivedOpenApiFilename(input.sidecars);
+      const relativeDerivedPath = path.join(input.relativeDir, filename).replace(/\\/g, '/');
+      derivedSidecar = { filename, content: normalized.content };
+      derivedMeta = {
+        derivedOpenApiPath: relativeDerivedPath,
+        derivedOpenApiVersion: derived.version,
+        derivedOpenApiCompleteness: completeness,
+        derivedOpenApiFormat: 'openapi-json',
+        derivedOpenApiEvidence: input.dryRun
+          ? [...normalized.evidence, 'Dry run enabled; skipped derived OpenAPI sidecar write']
+          : normalized.evidence
+      };
+    }
+  }
+
+  if (input.dryRun) {
+    return { ...derivedMeta, ...(specFilesJson ? { specFilesJson } : {}) };
+  }
+
+  if (multiFile && definitionMembers) {
+    const transactionSidecars = [
+      ...(input.sidecars ?? []),
+      ...(derivedSidecar ? [derivedSidecar] : [])
+    ];
+    await stageDefinitionExportTree({
+      repoRoot: input.repoRoot,
+      serviceDirRelative: input.relativeDir.replace(/\\/g, '/'),
+      members: definitionMembers,
+      sidecars: transactionSidecars,
+      writeFile: input.writeSpecFile
+    });
+    return { ...derivedMeta, specFilesJson };
+  }
+
+  if (input.native) {
     const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, 'output-dir');
     await input.writeSpecFile(absoluteSpecPath, input.native.content);
   }
 
-  if (!input.dryRun) {
-    for (const sidecar of input.sidecars ?? []) {
-      const relativeSidecarPath = path.join(input.relativeDir, sidecar.filename).replace(/\\/g, '/');
-      const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, 'output-dir');
-      await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
-    }
+  for (const sidecar of input.sidecars ?? []) {
+    const relativeSidecarPath = path.join(input.relativeDir, sidecar.filename).replace(/\\/g, '/');
+    const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, 'output-dir');
+    await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
   }
 
-  if (!input.derivation) {
-    return {};
-  }
-
-  const derived = deriveOpenApiDocument(input.derivation);
-  const completeness = input.derivation.forceCompleteness ?? derived.completeness;
-  const normalized = normalizeDerivedOpenApiJson(derived);
-  if (!normalized.content) {
-    return {
-      derivedOpenApiVersion: derived.version,
-      derivedOpenApiCompleteness: completeness,
-      derivedOpenApiFormat: 'openapi-json',
-      derivedOpenApiEvidence: normalized.evidence
-    };
-  }
-
-  const filename = derivedOpenApiFilename(input.sidecars);
-  const relativeDerivedPath = path.join(input.relativeDir, filename).replace(/\\/g, '/');
-  if (!input.dryRun) {
+  if (derivedSidecar) {
+    const relativeDerivedPath = path.join(input.relativeDir, derivedSidecar.filename).replace(/\\/g, '/');
     const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, 'output-dir');
-    await input.writeSpecFile(absoluteDerivedPath, normalized.content);
+    await input.writeSpecFile(absoluteDerivedPath, derivedSidecar.content);
   }
 
-  return {
-    derivedOpenApiPath: relativeDerivedPath,
-    derivedOpenApiVersion: derived.version,
-    derivedOpenApiCompleteness: completeness,
-    derivedOpenApiFormat: 'openapi-json',
-    derivedOpenApiEvidence: input.dryRun
-      ? [...normalized.evidence, 'Dry run enabled; skipped derived OpenAPI sidecar write']
-      : normalized.evidence
-  };
+  return { ...derivedMeta, ...(specFilesJson ? { specFilesJson } : {}) };
 }
 
 /**
@@ -988,67 +1081,23 @@ function inferFallbackServiceName(inputs: ResolvedInputs): string | undefined {
   return inputs.expectedServiceName ?? inputs.repoContext.repoSlug?.split('/').pop()?.trim() ?? inputs.repoContext.repoUrl?.split('/').pop()?.trim();
 }
 
-function catalogFormatFor(type: string | undefined, reference: string | undefined): { format?: SpecFormat; filename: string } {
-  const normalizedType = (type ?? '').toLowerCase();
-  const normalizedRef = (reference ?? '').toLowerCase();
-  if (normalizedType === 'graphql' || normalizedRef.endsWith('.graphql') || normalizedRef.endsWith('.gql')) {
-    return { format: 'graphql-sdl', filename: 'schema.graphql' };
-  }
-  if (normalizedType === 'asyncapi' || normalizedRef.includes('asyncapi')) {
-    return { format: normalizedRef.endsWith('.json') ? 'asyncapi-json' : 'asyncapi-yaml', filename: normalizedRef.endsWith('.json') ? 'asyncapi.json' : 'asyncapi.yaml' };
-  }
-  if (normalizedType === 'grpc' || normalizedRef.endsWith('.proto')) {
-    return { format: 'protobuf', filename: 'schema.proto' };
-  }
-  if (
-    normalizedType === 'json-schema'
-    || normalizedRef.endsWith('.schema.json')
-    || normalizedRef === 'schema.json'
-  ) {
-    return { format: 'json-schema', filename: path.posix.basename(normalizedRef) || 'schema.json' };
-  }
-  if (normalizedType === 'avro' || normalizedRef.endsWith('.avsc') || normalizedRef.endsWith('.avro')) {
-    return { format: 'avro', filename: path.posix.basename(normalizedRef) || 'schema.avsc' };
-  }
-  if (normalizedType === 'smithy' || normalizedRef.endsWith('.smithy') || normalizedRef.endsWith('smithy-build.json')) {
-    return { format: 'smithy', filename: path.posix.basename(normalizedRef) || 'model.smithy' };
-  }
-  if (normalizedRef.endsWith('.json')) {
-    return { format: 'openapi-json', filename: 'index.json' };
-  }
-  return { format: 'openapi-yaml', filename: 'index.yaml' };
+function inferFormatFromContent(relativePath: string, content: string): SpecFormat | undefined {
+  return classifySpecContent(content, { pathHint: relativePath })?.format;
 }
 
-function inferFormatFromContent(relativePath: string, content: string): SpecFormat | undefined {
-  const fromName = catalogFormatFor(undefined, relativePath).format;
-  const trimmed = content.trim();
-  if (fromName === 'json-schema' || fromName === 'avro' || fromName === 'smithy' || fromName === 'graphql-sdl' || fromName === 'protobuf') {
-    return fromName;
-  }
-  if (trimmed.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(trimmed) as Record<string, unknown>;
-      if (typeof parsed.$schema === 'string' || parsed.type === 'object' || parsed.type === 'array') {
-        if (!parsed.openapi && !parsed.swagger && !parsed.asyncapi) {
-          return 'json-schema';
-        }
-      }
-      if (parsed.type === 'record' && typeof parsed.name === 'string') {
-        return 'avro';
-      }
-      if (typeof parsed.asyncapi === 'string') {
-        return 'asyncapi-json';
-      }
-      if (typeof parsed.openapi === 'string' || typeof parsed.swagger === 'string') {
-        return 'openapi-json';
-      }
-    } catch {
-      // fall through
-    }
-  }
-  if (/^\s*asyncapi\s*:/i.test(trimmed)) return 'asyncapi-yaml';
-  if (/^\s*(openapi|swagger)\s*:/i.test(trimmed)) return 'openapi-yaml';
-  return fromName;
+function classifyCatalogBytes(
+  content: string,
+  declaredType: string | undefined,
+  pathHint?: string
+): { format: SpecFormat; filename: string } | undefined {
+  const classified = declaredType?.trim()
+    ? classifyWithDeclaredFormat(content, declaredType, { pathHint })
+    : classifySpecContent(content, { pathHint });
+  if (!classified) return undefined;
+  return {
+    format: classified.format,
+    filename: filenameForFormat(classified.format, pathHint)
+  };
 }
 
 function normalizeSnsName(value: string): string {
@@ -1254,10 +1303,42 @@ async function exportProviderResolutionCandidate(
   const relativeProviderPath = path.join(relativeProviderDir, result.filename).replace(/\\/g, '/');
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === 'sns-resolution-metadata.json');
   const relativeMetadataPath = metadataSidecar ? path.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, '/') : undefined;
+
+  if (result.definitionCompleteness === 'partial') {
+    return {
+      status: 'unresolved',
+      sourceType: 'manual-review',
+      serviceName,
+      confidence: 0,
+      gatewayId: resolved.candidate.id,
+      providerType: resolved.provider.type,
+      specFormat: result.format,
+      definitionCompleteness: 'partial',
+      specFilesJson: '',
+      evidence: [
+        ...resolved.evidence,
+        ...result.evidence,
+        'Provider definition source set is incomplete; refusing partial multi-file export'
+      ]
+    };
+  }
+
+  const definitionMembers = definitionMembersFromArtifacts(relativeProviderDir, result.definitionArtifacts, {
+    relativePath: relativeProviderPath,
+    content: result.content,
+    filename: result.filename
+  });
+  const rootMember = definitionMembers?.find((member) => member.role === 'root');
+  const effectiveSpecPath = rootMember?.path ?? relativeProviderPath;
+
   const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
     repoRoot: inputs.repoRoot,
     relativeDir: relativeProviderDir,
-    native: { relativePath: relativeProviderPath, content: result.content },
+    native: definitionMembers && definitionMembers.length >= 2
+      ? undefined
+      : { relativePath: relativeProviderPath, content: result.content },
+    definitionMembers,
+    definitionFormat: result.format,
     sidecars: result.sidecars,
     derivation: {
       content: result.content,
@@ -1286,7 +1367,8 @@ async function exportProviderResolutionCandidate(
     sourceType: resolved.sourceType,
     serviceName,
     confidence: resolved.confidence,
-    specPath: relativeProviderPath,
+    specPath: effectiveSpecPath,
+    definitionCompleteness: result.definitionCompleteness ?? (definitionMembers && definitionMembers.length >= 2 ? 'full' : undefined),
     gatewayId: resolved.candidate.id,
     gatewayType,
     providerType: resolved.provider.type,
@@ -1950,21 +2032,44 @@ function materializeAggregatedRepoArtifact(
 
 async function selectExplicitRepoSpec(
   inputs: ResolvedInputs
-): Promise<Omit<RepoContractSelection, 'catalogApis' | 'earlyResult'>> {
+): Promise<Omit<RepoContractSelection, 'catalogApis'>> {
   const relative = inputs.specPath!;
-  const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative, {
-    fieldName: 'spec-path',
-    countAsReference: false
-  });
-  const content = await readFile(resolved.canonicalPath, 'utf8');
-  const format = inferFormatFromContent(relative, content);
-  return {
-    existingSpecPath: relative.replace(/\\/g, '/'),
-    existingSpecFormat: format,
-    existingSpecEvidence: [`Resolved from explicit spec-path ${relative}`],
-    existingSpecContent: content,
-    existingSpecShouldWriteNative: false
-  };
+  try {
+    // Authoritative explicit roots: reject-not-follow for every lexical component
+    // before readFile so symlink target bytes are never materialized.
+    const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative, {
+      fieldName: 'spec-path',
+      countAsReference: false,
+      rejectSymlinkComponents: true
+    });
+    const content = await readFile(resolved.canonicalPath, 'utf8');
+    const format = inferFormatFromContent(relative, content);
+    return {
+      existingSpecPath: relative.replace(/\\/g, '/'),
+      existingSpecFormat: format,
+      existingSpecEvidence: [`Resolved from explicit spec-path ${relative}`],
+      existingSpecContent: content,
+      existingSpecShouldWriteNative: false
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/symbolic link/i.test(message)) {
+      return {
+        existingSpecShouldWriteNative: false,
+        earlyResult: {
+          status: 'unresolved',
+          sourceType: 'manual-review',
+          serviceName: inferFallbackServiceName(inputs) ?? 'unknown-service',
+          confidence: 0,
+          specPath: '',
+          specFilesJson: '',
+          definitionCompleteness: 'partial',
+          evidence: [`Refusing symlink repo definition root at ${relative}`]
+        }
+      };
+    }
+    throw error;
+  }
 }
 
 async function selectCatalogContract(
@@ -1976,7 +2081,7 @@ async function selectCatalogContract(
   const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
   const viable: Array<{
     api: CatalogApiRef;
-    kind: 'local' | 'remote';
+    kind: 'local' | 'remote' | 'inline';
     path?: string;
     format?: SpecFormat;
     content?: string;
@@ -1985,6 +2090,31 @@ async function selectCatalogContract(
   }> = [];
 
   for (const api of catalogApis) {
+    if (api.inlineContent) {
+      const classified = classifyCatalogBytes(api.inlineContent, api.type, `${api.name}.inline`);
+      if (!classified) {
+        actionCore.warning(
+          userSafeWarning(
+            `Backstage entity ${api.name} inline definition could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+          )
+        );
+        continue;
+      }
+      const targetPath = path
+        .join(inputs.outputDir, projectFolderName(api.name), classified.filename)
+        .replace(/\\/g, '/');
+      viable.push({
+        api,
+        kind: 'inline',
+        path: targetPath,
+        format: classified.format,
+        content: api.inlineContent,
+        evidence: [`Resolved from Backstage catalog inline ${api.type ?? 'api'} definition (${api.name})`],
+        writeNative: true
+      });
+      continue;
+    }
+
     if (api.specPath) {
       try {
         const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, api.specPath, {
@@ -1992,12 +2122,23 @@ async function selectCatalogContract(
           countAsReference: false
         });
         const content = await readFile(resolved.canonicalPath, 'utf8');
-        const relative = path.relative(path.resolve(inputs.repoRoot), resolved.canonicalPath).replace(/\\/g, '/');
+        // Prefer the containment helper's relative path (canonical-root aware) over
+        // path.relative(repoRoot, canonicalPath), which breaks on macOS /var vs /private/var.
+        const relative = resolved.relativePath.replace(/\\/g, '/');
+        const classified = classifyCatalogBytes(content, api.type, api.specPath);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} local definition at ${api.specPath} could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
         viable.push({
           api,
           kind: 'local',
           path: relative,
-          format: catalogFormatFor(api.type, api.specPath).format,
+          format: classified.format,
           content,
           evidence: [`Resolved from Backstage catalog local ${api.type ?? 'api'} definition (${api.name})`],
           writeNative: false
@@ -2020,13 +2161,23 @@ async function selectCatalogContract(
           timeoutMs: 15000,
           policy: remotePolicy
         });
-        const catalogFormat = catalogFormatFor(api.type, api.specUrl);
-        const targetPath = path.join(inputs.outputDir, projectFolderName(api.name), catalogFormat.filename).replace(/\\/g, '/');
+        const classified = classifyCatalogBytes(fetched.content, api.type, api.specUrl);
+        if (!classified) {
+          actionCore.warning(
+            userSafeWarning(
+              `Backstage entity ${api.name} remote definition at ${safeUrl} could not be classified${api.type ? ` as declared type "${api.type}"` : ''}. Continuing discovery without this catalog contract.`
+            )
+          );
+          continue;
+        }
+        const targetPath = path
+          .join(inputs.outputDir, projectFolderName(api.name), classified.filename)
+          .replace(/\\/g, '/');
         viable.push({
           api,
           kind: 'remote',
           path: targetPath,
-          format: catalogFormat.format,
+          format: classified.format,
           content: fetched.content,
           evidence: [`Resolved from Backstage catalog remote ${api.type ?? 'api'} definition (${api.name})`],
           writeNative: true
@@ -2664,21 +2815,115 @@ export async function runResolution(
   }
   if (selectedSource.sourceType === 'repo-spec') {
     if (!selectedSource.specPath || !selectedSource.specFormat) {
-      return selectedSource;
+      return { ...selectedSource, specFilesJson: '' };
     }
     const relativeProviderDir = (
       existingSpecShouldWriteNative
         ? path.dirname(selectedSource.specPath)
         : path.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'))
     ).replace(/\\/g, '/');
+    const rejectSymlinkRepoRoot = (): ResolutionResult => ({
+      status: 'unresolved',
+      sourceType: 'manual-review',
+      serviceName: selectedSource.serviceName,
+      confidence: 0,
+      specPath: '',
+      specFilesJson: '',
+      definitionCompleteness: 'partial',
+      specFormat: selectedSource.specFormat,
+      evidence: [
+        ...selectedSource.evidence,
+        `Refusing symlink repo definition root at ${selectedSource.specPath}`
+      ]
+    });
     try {
+      // Authoritative definition roots: reject-not-follow for every lexical
+      // path component (including in-root parent directory symlinks) before
+      // consuming existingSpecContent or reading canonicalPath. Materialized
+      // GraphQL/Smithy writeNative destinations may not exist yet; the assert
+      // allows missing trailing components after verifying the existing prefix.
+      try {
+        await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          selectedSource.specPath,
+          'repo-spec-path'
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/symbolic link/i.test(message)) {
+          return rejectSymlinkRepoRoot();
+        }
+        throw error;
+      }
+
       let content = existingSpecContent;
       if (content === undefined) {
         const resolvedSpec = await resolveLocalReadWithinRoot(inputs.repoRoot, selectedSource.specPath, {
-          fieldName: 'repo-spec-path'
+          fieldName: 'repo-spec-path',
+          countAsReference: false,
+          rejectSymlinkComponents: true
         });
         content = await readFile(resolvedSpec.canonicalPath, 'utf8');
       }
+
+      // GraphQL/Smithy deterministic composition remains one artifact with empty inventory.
+      const isComposedAggregate =
+        existingSpecShouldWriteNative
+        && (selectedSource.specFormat === 'graphql-sdl' || selectedSource.specFormat === 'smithy');
+
+      if (!isComposedAggregate && (selectedSource.specFormat === 'wsdl' || selectedSource.specFormat === 'protobuf')) {
+        const closure = await resolveRepoDefinitionClosure({
+          repoRoot: inputs.repoRoot,
+          rootRelativePath: selectedSource.specPath,
+          rootContent: content,
+          format: selectedSource.specFormat
+        });
+        if (closure.status === 'partial') {
+          return {
+            status: 'unresolved',
+            sourceType: 'manual-review',
+            serviceName: selectedSource.serviceName,
+            confidence: 0,
+            specPath: '',
+            specFilesJson: '',
+            definitionCompleteness: 'partial',
+            specFormat: selectedSource.specFormat,
+            evidence: [...selectedSource.evidence, ...closure.evidence]
+          };
+        }
+        if (closure.status === 'multi') {
+          const serviceDir = path
+            .join(inputs.outputDir, projectFolderName(selectedSource.serviceName || 'service'))
+            .replace(/\\/g, '/');
+          const definitionMembers: DefinitionMemberInput[] = closure.members.map((member) => ({
+            path: path.posix.join(serviceDir, member.relativeToBundleBase),
+            role: member.role,
+            content: member.content
+          }));
+          const rootMember = definitionMembers.find((member) => member.role === 'root')!;
+          const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: inputs.repoRoot,
+            relativeDir: serviceDir,
+            definitionMembers,
+            definitionFormat: selectedSource.specFormat,
+            derivation: {
+              content,
+              format: selectedSource.specFormat,
+              title: selectedSource.serviceName
+            },
+            dryRun: inputs.dryRun,
+            writeSpecFile
+          });
+          return {
+            ...selectedSource,
+            specPath: rootMember.path,
+            definitionCompleteness: 'full',
+            evidence: [...selectedSource.evidence, ...closure.evidence],
+            ...derivedOpenApi
+          };
+        }
+      }
+
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
         relativeDir: relativeProviderDir,
@@ -2691,10 +2936,11 @@ export async function runResolution(
         dryRun: inputs.dryRun,
         writeSpecFile
       });
-      return { ...selectedSource, ...derivedOpenApi };
+      return { ...selectedSource, specFilesJson: '', ...derivedOpenApi };
     } catch (error) {
       return {
         ...selectedSource,
+        specFilesJson: '',
         derivedOpenApiEvidence: [
           `Skipped derived OpenAPI sidecar for repo spec ${selectedSource.specPath}: ${formatUserSafeError(error)}`
         ]
@@ -2972,10 +3218,30 @@ async function runMultiProviderDiscovery(
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
           const relativeSpecPath = path.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, '/');
           const relativeProviderDir = path.join(inputs.outputDir, folderName).replace(/\\/g, '/');
+          if (result.definitionCompleteness === 'partial') {
+            summary.failed += 1;
+            dependencies.core.warning(
+              userSafeWarning(
+                `Skipped incomplete definition source set for ${provider.type} candidate ${candidate.id}; export remains unresolved/manual`
+              )
+            );
+            continue;
+          }
+          const definitionMembers = definitionMembersFromArtifacts(relativeProviderDir, result.definitionArtifacts, {
+            relativePath: relativeSpecPath,
+            content: result.content,
+            filename: result.filename
+          });
+          const rootMember = definitionMembers?.find((member) => member.role === 'root');
+          const effectiveSpecPath = rootMember?.path ?? relativeSpecPath;
           const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
             repoRoot: resolvedRoot,
             relativeDir: relativeProviderDir,
-            native: { relativePath: relativeSpecPath, content: result.content },
+            native: definitionMembers && definitionMembers.length >= 2
+              ? undefined
+              : { relativePath: relativeSpecPath, content: result.content },
+            definitionMembers,
+            definitionFormat: result.format,
             sidecars: result.sidecars,
             derivation: {
               content: result.content,
@@ -3024,7 +3290,7 @@ async function runMultiProviderDiscovery(
             : undefined;
           discovered.push({
             serviceName,
-            specPath: relativeSpecPath,
+            specPath: effectiveSpecPath,
             gatewayId: candidate.id,
             gatewayType,
             stage: result.stage ?? '',
@@ -3035,9 +3301,13 @@ async function runMultiProviderDiscovery(
             metadataPath: metadataSidecar ? path.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, '/') : undefined,
             openapiContractAudit: result.openapiContractAudit,
             provenance: multiProvenance,
-            ...derivedOpenApi
+            derivedOpenApiPath: derivedOpenApi.derivedOpenApiPath,
+            derivedOpenApiVersion: derivedOpenApi.derivedOpenApiVersion,
+            derivedOpenApiCompleteness: derivedOpenApi.derivedOpenApiCompleteness,
+            derivedOpenApiFormat: derivedOpenApi.derivedOpenApiFormat,
+            derivedOpenApiEvidence: derivedOpenApi.derivedOpenApiEvidence
           });
-          dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
+          dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${effectiveSpecPath}`);
         } catch (error) {
           summary.failed += 1;
           dependencies.core.warning(
@@ -3090,6 +3360,7 @@ export function buildExecutionOutputs(result: {
       'service-name': '',
       'gateway-id': '',
       'spec-path': '',
+      'spec-files-json': '',
       'candidates-json': '',
       'provider-type': discovered.length > 0 ? (discovered[0]?.providerType ?? '') : '',
       'spec-format': discovered.length > 0 ? (discovered[0]?.specFormat ?? '') : '',
@@ -3112,8 +3383,10 @@ export function buildExecutionOutputs(result: {
     confidence: 0,
     evidence: ['No resolution result produced']
   };
+  const unresolved = resolution.status === 'unresolved';
   const resolutionWithProbes = sanitizeJsonValue({
     ...resolution,
+    ...(resolution.definitionCompleteness ? { completeness: resolution.definitionCompleteness } : {}),
     providerProbes: resolution.providerProbes ?? result.providerProbes ?? []
   });
   return {
@@ -3123,12 +3396,14 @@ export function buildExecutionOutputs(result: {
     'mapping-confidence': String(resolution.confidence),
     'service-name': resolution.serviceName,
     'gateway-id': resolution.gatewayId ?? '',
-    'spec-path': resolution.specPath ?? '',
+    // Incomplete/unresolved definition closures and ordinary unresolved runs keep blank downstream outputs.
+    'spec-path': unresolved ? '' : (resolution.specPath ?? ''),
+    'spec-files-json': unresolved ? '' : (resolution.specFilesJson ?? ''),
     'services-json': '[]',
     'service-count': '0',
     'export-summary-json': JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
     'candidates-json':
-      resolution.status === 'unresolved' && (resolution.rankedCandidates?.length ?? 0) >= 2
+      unresolved && (resolution.rankedCandidates?.length ?? 0) >= 2
         ? JSON.stringify(resolution.rankedCandidates)
         : '',
     'provider-type': resolution.providerType ?? (resolution.sourceType === 'gateway-export' ? 'api-gateway' : ''),

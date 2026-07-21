@@ -1,0 +1,43 @@
+{
+  "__schema": {
+    "queryType": { "name": "Query" },
+    "mutationType": null,
+    "subscriptionType": null,
+    "types": [
+      {
+        "kind": "OBJECT",
+        "name": "Query",
+        "fields": [
+          {
+            "name": "item",
+            "args": [
+              {
+                "name": "id",
+                "type": { "kind": "NON_NULL", "name": null, "ofType": { "kind": "SCALAR", "name": "ID", "ofType": null } }
+              }
+            ],
+            "type": { "kind": "OBJECT", "name": "Item", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Item",
+        "fields": [
+          {
+            "name": "id",
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "ID", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": []
+      }
+    ],
+    "directives": []
+  }
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://example.test/validation"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             targetNamespace="http://example.test/validation"
+             name="ValidationService">
+  <portType name="ValidationPortType">
+    <operation name="GetItem">
+      <input message="tns:GetItemRequest"/>
+    </operation>
+  </portType>
+  <binding name="ValidationSoapBinding" type="tns:ValidationPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+    <operation name="GetItem">
+      <soap:operation soapAction="GetItem"/>
+      <input><soap:body use="literal"/></input>
+    </operation>
+  </binding>
+  <service name="ValidationService">
+    <port name="ValidationPort" binding="tns:ValidationSoapBinding">
+      <soap:address location="https://example.test/validation"/>
+    </port>
+  </service>
+</definitions>
