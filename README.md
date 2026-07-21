@@ -234,6 +234,7 @@ Optional resolution tuning inputs (`mode`, `expected-service-name`, `api-filter`
 | `source-type` | Resolved source type: repo-spec, gateway-export, appsync-schema, appsync-event-api, eventbridge-schema, eventbridge-surface, cfn-embedded, glue-schema, bedrock-action-group, alb-listener-rule, sns-contract, ssm-registry, lambda-url-export, lambda-event-source, verified-permissions-schema, step-functions-asl, manual-review, or discover-many. |
 | `mapping-confidence` | Numeric confidence score for selected service candidate. |
 | `spec-path` | Path to resolved or generated specification when available. |
+| `spec-files-json` | Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition. |
 | `gateway-id` | Resolved API Gateway ID when available. |
 | `service-name` | Resolved service name. |
 | `services-json` | Legacy discover-many output: JSON array of exported services. |

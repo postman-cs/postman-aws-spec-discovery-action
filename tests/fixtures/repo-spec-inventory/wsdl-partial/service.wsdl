@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://example.test/partial"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             targetNamespace="http://example.test/partial"
+             name="PartialService">
+  <types>
+    <xsd:schema>
+      <xsd:import namespace="http://example.test/partial/types" schemaLocation="missing-types.xsd"/>
+    </xsd:schema>
+  </types>
+  <portType name="PartialPortType">
+    <operation name="Ping"/>
+  </portType>
+</definitions>

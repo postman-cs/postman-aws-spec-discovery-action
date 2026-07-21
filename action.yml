@@ -67,6 +67,8 @@ outputs:
     description: Numeric confidence score for selected service candidate.
   spec-path:
     description: Path to resolved or generated specification when available.
+  spec-files-json:
+    description: Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition.
   gateway-id:
     description: Resolved API Gateway ID when available.
   service-name:

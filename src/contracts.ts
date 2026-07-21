@@ -142,6 +142,14 @@ export interface ResolutionResult {
   serviceName: string;
   confidence: number;
   specPath?: string;
+  /**
+   * Optional single-line definition inventory JSON (schemaVersion 1).
+   * Empty/omitted for single-file, unresolved, discover-many top-level,
+   * derived OpenAPI, and deterministic GraphQL/Smithy composition.
+   */
+  specFilesJson?: string;
+  /** Present when a native definition closure was assessed as full or partial. */
+  definitionCompleteness?: 'full' | 'partial';
   gatewayId?: string;
   gatewayType?: GatewayType;
   providerType?: ProviderType;
@@ -300,6 +308,10 @@ export const actionContract: AwsSpecDiscoveryActionContract = {
     },
     'spec-path': {
       description: 'Path to resolved or generated specification when available.'
+    },
+    'spec-files-json': {
+      description:
+        'Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition.'
     },
     'gateway-id': {
       description: 'Resolved API Gateway ID when available.'

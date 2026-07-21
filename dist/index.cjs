@@ -1081,14 +1081,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol || ""}//${url.hostname || ""}:${port}`;
-        let path24 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path25 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin[origin.length - 1] === "/") {
           origin = origin.slice(0, origin.length - 1);
         }
-        if (path24 && path24[0] !== "/") {
-          path24 = `/${path24}`;
+        if (path25 && path25[0] !== "/") {
+          path25 = `/${path25}`;
         }
-        return new URL(`${origin}${path24}`);
+        return new URL(`${origin}${path25}`);
       }
       if (!isHttpOrHttpsPrefixed(url.origin || url.protocol)) {
         throw new InvalidArgumentError("Invalid URL protocol: the URL must start with `http:` or `https:`.");
@@ -1539,39 +1539,39 @@ var require_diagnostics = __commonJS({
       });
       diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
         const {
-          request: { method, path: path24, origin }
+          request: { method, path: path25, origin }
         } = evt;
-        debuglog("sending request to %s %s/%s", method, origin, path24);
+        debuglog("sending request to %s %s/%s", method, origin, path25);
       });
       diagnosticsChannel.channel("undici:request:headers").subscribe((evt) => {
         const {
-          request: { method, path: path24, origin },
+          request: { method, path: path25, origin },
           response: { statusCode }
         } = evt;
         debuglog(
           "received response to %s %s/%s - HTTP %d",
           method,
           origin,
-          path24,
+          path25,
           statusCode
         );
       });
       diagnosticsChannel.channel("undici:request:trailers").subscribe((evt) => {
         const {
-          request: { method, path: path24, origin }
+          request: { method, path: path25, origin }
         } = evt;
-        debuglog("trailers received from %s %s/%s", method, origin, path24);
+        debuglog("trailers received from %s %s/%s", method, origin, path25);
       });
       diagnosticsChannel.channel("undici:request:error").subscribe((evt) => {
         const {
-          request: { method, path: path24, origin },
+          request: { method, path: path25, origin },
           error: error3
         } = evt;
         debuglog(
           "request to %s %s/%s errored - %s",
           method,
           origin,
-          path24,
+          path25,
           error3.message
         );
       });
@@ -1620,9 +1620,9 @@ var require_diagnostics = __commonJS({
         });
         diagnosticsChannel.channel("undici:client:sendHeaders").subscribe((evt) => {
           const {
-            request: { method, path: path24, origin }
+            request: { method, path: path25, origin }
           } = evt;
-          debuglog("sending request to %s %s/%s", method, origin, path24);
+          debuglog("sending request to %s %s/%s", method, origin, path25);
         });
       }
       diagnosticsChannel.channel("undici:websocket:open").subscribe((evt) => {
@@ -1685,7 +1685,7 @@ var require_request = __commonJS({
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
       constructor(origin, {
-        path: path24,
+        path: path25,
         method,
         body,
         headers,
@@ -1700,11 +1700,11 @@ var require_request = __commonJS({
         expectContinue,
         servername
       }, handler) {
-        if (typeof path24 !== "string") {
+        if (typeof path25 !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path24[0] !== "/" && !(path24.startsWith("http://") || path24.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path25[0] !== "/" && !(path25.startsWith("http://") || path25.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.test(path24)) {
+        } else if (invalidPathRegex.test(path25)) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -1770,7 +1770,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? buildURL(path24, query) : path24;
+        this.path = query ? buildURL(path25, query) : path25;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6334,7 +6334,7 @@ var require_client_h1 = __commonJS({
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
     function writeH1(client, request) {
-      const { method, path: path24, host, upgrade, blocking, reset } = request;
+      const { method, path: path25, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
       if (util.isFormDataLike(body)) {
@@ -6400,7 +6400,7 @@ var require_client_h1 = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path24} HTTP/1.1\r
+      let header = `${method} ${path25} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -6926,7 +6926,7 @@ var require_client_h2 = __commonJS({
     }
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
-      const { method, path: path24, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { method, path: path25, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
         util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
@@ -6993,7 +6993,7 @@ var require_client_h2 = __commonJS({
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path24;
+      headers[HTTP2_HEADER_PATH] = path25;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -7346,9 +7346,9 @@ var require_redirect_handler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path24 = search ? `${pathname}${search}` : pathname;
+        const path25 = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path24;
+        this.opts.path = path25;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -8583,10 +8583,10 @@ var require_proxy_agent = __commonJS({
         };
         const {
           origin,
-          path: path24 = "/",
+          path: path25 = "/",
           headers = {}
         } = opts;
-        opts.path = origin + path24;
+        opts.path = origin + path25;
         if (!("host" in headers) && !("Host" in headers)) {
           const { host } = new URL2(origin);
           headers.host = host;
@@ -10507,20 +10507,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path24) {
-      if (typeof path24 !== "string") {
-        return path24;
+    function safeUrl(path25) {
+      if (typeof path25 !== "string") {
+        return path25;
       }
-      const pathSegments = path24.split("?");
+      const pathSegments = path25.split("?");
       if (pathSegments.length !== 2) {
-        return path24;
+        return path25;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path24, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path24);
+    function matchKey(mockDispatch2, { path: path25, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path25);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10542,7 +10542,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath2 = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path24 }) => matchValue(safeUrl(path24), resolvedPath2));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path25 }) => matchValue(safeUrl(path25), resolvedPath2));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath2}'`);
       }
@@ -10580,9 +10580,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path24, method, body, headers, query } = opts;
+      const { path: path25, method, body, headers, query } = opts;
       return {
-        path: path24,
+        path: path25,
         method,
         body,
         headers,
@@ -11045,10 +11045,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path24, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path: path25, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path24,
+            Path: path25,
             "Status code": statusCode,
             Persistent: persist ? PERSISTENT : NOT_PERSISTENT,
             Invocations: timesInvoked,
@@ -15929,9 +15929,9 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path24) {
-      for (let i5 = 0; i5 < path24.length; ++i5) {
-        const code = path24.charCodeAt(i5);
+    function validateCookiePath(path25) {
+      for (let i5 = 0; i5 < path25.length; ++i5) {
+        const code = path25.charCodeAt(i5);
         if (code < 32 || // exclude CTLs (0-31)
         code === 127 || // DEL
         code === 59) {
@@ -18608,11 +18608,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path24 = opts.path;
+          let path25 = opts.path;
           if (!opts.path.startsWith("/")) {
-            path24 = `/${path24}`;
+            path25 = `/${path25}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path24);
+          url = new URL(util.parseOrigin(url).origin + path25);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -22599,14 +22599,14 @@ var init_readFile = __esm({
     import_promises2 = require("node:fs/promises");
     filePromises = {};
     fileIntercept = {};
-    readFile2 = (path24, options) => {
-      if (fileIntercept[path24] !== void 0) {
-        return fileIntercept[path24];
+    readFile2 = (path25, options) => {
+      if (fileIntercept[path25] !== void 0) {
+        return fileIntercept[path25];
       }
-      if (!filePromises[path24] || options?.ignoreCache) {
-        filePromises[path24] = (0, import_promises2.readFile)(path24, "utf8");
+      if (!filePromises[path25] || options?.ignoreCache) {
+        filePromises[path25] = (0, import_promises2.readFile)(path25, "utf8");
       }
-      return filePromises[path24];
+      return filePromises[path25];
     };
   }
 });
@@ -22718,8 +22718,8 @@ var init_externalDataInterceptor = __esm({
       getFileRecord() {
         return fileIntercept;
       },
-      interceptFile(path24, contents) {
-        fileIntercept[path24] = Promise.resolve(contents);
+      interceptFile(path25, contents) {
+        fileIntercept[path25] = Promise.resolve(contents);
       },
       getTokenRecord() {
         return tokenIntercept;
@@ -23493,8 +23493,8 @@ var init_createConfigValueProvider = __esm({
               return endpoint.url.href;
             }
             if ("hostname" in endpoint) {
-              const { protocol, hostname, port, path: path24 } = endpoint;
-              return `${protocol}//${hostname}${port ? ":" + port : ""}${path24}`;
+              const { protocol, hostname, port, path: path25 } = endpoint;
+              return `${protocol}//${hostname}${port ? ":" + port : ""}${path25}`;
             }
           }
           return endpoint;
@@ -23867,18 +23867,18 @@ var getAttrPathList;
 var init_getAttrPathList = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttrPathList.js"() {
     init_types2();
-    getAttrPathList = (path24) => {
-      const parts = path24.split(".");
+    getAttrPathList = (path25) => {
+      const parts = path25.split(".");
       const pathList = [];
       for (const part of parts) {
         const squareBracketIndex = part.indexOf("[");
         if (squareBracketIndex !== -1) {
           if (part.indexOf("]") !== part.length - 1) {
-            throw new EndpointError(`Path: '${path24}' does not end with ']'`);
+            throw new EndpointError(`Path: '${path25}' does not end with ']'`);
           }
           const arrayIndex = part.slice(squareBracketIndex + 1, -1);
           if (Number.isNaN(parseInt(arrayIndex))) {
-            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path24}'`);
+            throw new EndpointError(`Invalid array index: '${arrayIndex}' in path: '${path25}'`);
           }
           if (squareBracketIndex !== 0) {
             pathList.push(part.slice(0, squareBracketIndex));
@@ -23899,9 +23899,9 @@ var init_getAttr = __esm({
   "node_modules/@smithy/core/dist-es/submodules/endpoints/util-endpoints/lib/getAttr.js"() {
     init_types2();
     init_getAttrPathList();
-    getAttr = (value, path24) => getAttrPathList(path24).reduce((acc, index) => {
+    getAttr = (value, path25) => getAttrPathList(path25).reduce((acc, index) => {
       if (typeof acc !== "object") {
-        throw new EndpointError(`Index '${index}' in '${path24}' not found in '${JSON.stringify(value)}'`);
+        throw new EndpointError(`Index '${index}' in '${path25}' not found in '${JSON.stringify(value)}'`);
       } else if (Array.isArray(acc)) {
         const i5 = parseInt(index);
         return acc[i5 < 0 ? acc.length + i5 : i5];
@@ -23962,8 +23962,8 @@ var init_parseURL = __esm({
             return value;
           }
           if (typeof value === "object" && "hostname" in value) {
-            const { hostname: hostname2, port, protocol: protocol2 = "", path: path24 = "", query = {} } = value;
-            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path24}`);
+            const { hostname: hostname2, port, protocol: protocol2 = "", path: path25 = "", query = {} } = value;
+            const url = new URL(`${protocol2}//${hostname2}${port ? `:${port}` : ""}${path25}`);
             url.search = Object.entries(query).map(([k5, v]) => `${k5}=${v}`).join("&");
             return url;
           }
@@ -27566,11 +27566,11 @@ var init_HttpBindingProtocol = __esm({
           const opTraits = translateTraits(operationSchema.traits);
           if (opTraits.http) {
             request.method = opTraits.http[0];
-            const [path24, search] = opTraits.http[1].split("?");
+            const [path25, search] = opTraits.http[1].split("?");
             if (request.path == "/") {
-              request.path = path24;
+              request.path = path25;
             } else {
-              request.path += path24;
+              request.path += path25;
             }
             const traitSearchParams = new URLSearchParams(search ?? "");
             for (const [key, value] of traitSearchParams) {
@@ -27971,8 +27971,8 @@ var init_requestBuilder = __esm({
         return this;
       }
       p(memberName, labelValueProvider, uriLabel, isGreedyLabel) {
-        this.resolvePathStack.push((path24) => {
-          this.path = resolvedPath(path24, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
+        this.resolvePathStack.push((path25) => {
+          this.path = resolvedPath(path25, this.input, memberName, labelValueProvider, uriLabel, isGreedyLabel);
         });
         return this;
       }
@@ -30080,9 +30080,9 @@ var init_createPaginator = __esm({
       command5 = withCommand(command5) ?? command5;
       return await client.send(command5, ...args);
     };
-    get = (fromObject, path24) => {
+    get = (fromObject, path25) => {
       let cursor2 = fromObject;
-      const pathComponents = path24.split(".");
+      const pathComponents = path25.split(".");
       for (const step of pathComponents) {
         if (!cursor2 || typeof cursor2 !== "object") {
           return void 0;
@@ -32591,10 +32591,10 @@ ${longDate}
 ${credentialScope}
 ${toHex2(hashedRequest)}`;
       }
-      getCanonicalPath({ path: path24 }) {
+      getCanonicalPath({ path: path25 }) {
         if (this.uriEscapePath) {
           const normalizedPathSegments = [];
-          for (const pathSegment of path24.split("/")) {
+          for (const pathSegment of path25.split("/")) {
             if (pathSegment?.length === 0)
               continue;
             if (pathSegment === ".")
@@ -32605,11 +32605,11 @@ ${toHex2(hashedRequest)}`;
               normalizedPathSegments.push(pathSegment);
             }
           }
-          const normalizedPath = `${path24?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path24?.endsWith("/") ? "/" : ""}`;
+          const normalizedPath = `${path25?.startsWith("/") ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && path25?.endsWith("/") ? "/" : ""}`;
           const doubleEncoded = escapeUri2(normalizedPath);
           return doubleEncoded.replace(/%2F/g, "/");
         }
-        return path24;
+        return path25;
       }
       validateResolvedCredentials(credentials) {
         if (typeof credentials !== "object" || typeof credentials.accessKeyId !== "string" || typeof credentials.secretAccessKey !== "string") {
@@ -33745,12 +33745,12 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             const password = request.password ?? "";
             auth = `${username}:${password}`;
           }
-          let path24 = request.path;
+          let path25 = request.path;
           if (queryString) {
-            path24 += `?${queryString}`;
+            path25 += `?${queryString}`;
           }
           if (request.fragment) {
-            path24 += `#${request.fragment}`;
+            path25 += `#${request.fragment}`;
           }
           let hostname = request.hostname ?? "";
           if (hostname[0] === "[" && hostname.endsWith("]")) {
@@ -33762,7 +33762,7 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             headers: request.headers,
             host: hostname,
             method: request.method,
-            path: path24,
+            path: path25,
             port: request.port,
             agent,
             auth
@@ -34165,16 +34165,16 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
             reject(err);
           };
           const queryString = query ? buildQueryString2(query) : "";
-          let path24 = request.path;
+          let path25 = request.path;
           if (queryString) {
-            path24 += `?${queryString}`;
+            path25 += `?${queryString}`;
           }
           if (request.fragment) {
-            path24 += `#${request.fragment}`;
+            path25 += `#${request.fragment}`;
           }
           const clientHttp2Stream = session.request({
             ...request.headers,
-            [constants3.HTTP2_HEADER_PATH]: path24,
+            [constants3.HTTP2_HEADER_PATH]: path25,
             [constants3.HTTP2_HEADER_METHOD]: method
           });
           if (effectiveRequestTimeout) {
@@ -35734,11 +35734,11 @@ var init_SmithyRpcV2CborProtocol = __esm({
           }
         }
         const { service, operation: operation2 } = getSmithyContext(context);
-        const path24 = `/service/${service}/operation/${operation2}`;
+        const path25 = `/service/${service}/operation/${operation2}`;
         if (request.path.endsWith("/")) {
-          request.path += path24.slice(1);
+          request.path += path25.slice(1);
         } else {
-          request.path += path24;
+          request.path += path25;
         }
         return request;
       }
@@ -39135,11 +39135,11 @@ var require_dist_cjs9 = __commonJS({
         throw new TokenProviderError2(`Value not present for '${key}' in SSO Token${forRefresh ? ". Cannot refresh" : ""}. ${REFRESH_MESSAGE}`, false);
       }
     };
-    var { writeFile: writeFile3 } = promises3;
+    var { writeFile: writeFile4 } = promises3;
     var writeSSOTokenToFile = (id, ssoToken) => {
       const tokenFilepath = getSSOTokenFilepath2(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
-      return writeFile3(tokenFilepath, tokenString);
+      return writeFile4(tokenFilepath, tokenString);
     };
     var lastRefreshAttemptTime = /* @__PURE__ */ new Date(0);
     var fromSso = (init = {}) => async ({ callerClientConfig } = {}) => {
@@ -42362,9 +42362,9 @@ var init_signin = __esm({
 var require_dist_cjs12 = __commonJS({
   "node_modules/@aws-sdk/credential-provider-login/dist-cjs/index.js"(exports2) {
     var { setCredentialFeature: setCredentialFeature2 } = (init_client3(), __toCommonJS(client_exports2));
-    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile12, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
+    var { CredentialsProviderError: CredentialsProviderError2, readFile: readFile13, parseKnownFiles: parseKnownFiles2, getProfileName: getProfileName2 } = (init_config2(), __toCommonJS(config_exports));
     var { HttpRequest: HttpRequest2 } = (init_protocols(), __toCommonJS(protocols_exports));
-    var { createHash: createHash8, createPrivateKey, createPublicKey, sign: sign3 } = require("node:crypto");
+    var { createHash: createHash9, createPrivateKey, createPublicKey, sign: sign3 } = require("node:crypto");
     var { promises: promises3 } = require("node:fs");
     var { homedir: homedir2 } = require("node:os");
     var { dirname: dirname3, join: join8 } = require("node:path");
@@ -42490,7 +42490,7 @@ var require_dist_cjs12 = __commonJS({
         try {
           let tokenData;
           try {
-            tokenData = await readFile12(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
+            tokenData = await readFile13(tokenFilePath, { ignoreCache: this.init?.ignoreCache });
           } catch {
             tokenData = await promises3.readFile(tokenFilePath, "utf8");
           }
@@ -42525,7 +42525,7 @@ var require_dist_cjs12 = __commonJS({
       getTokenFilePath() {
         const directory = process.env.AWS_LOGIN_CACHE_DIRECTORY ?? join8(homedir2(), ".aws", "login", "cache");
         const loginSessionBytes = Buffer.from(this.loginSession, "utf8");
-        const loginSessionSha256 = createHash8("sha256").update(loginSessionBytes).digest("hex");
+        const loginSessionSha256 = createHash9("sha256").update(loginSessionBytes).digest("hex");
         return join8(directory, `${loginSessionSha256}.json`);
       }
       derToRawSignature(derSignature) {
@@ -54875,17 +54875,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path24) {
-      const ctrl = callVisitor(key, node, visitor, path24);
+    function visit_(key, node, visitor, path25) {
+      const ctrl = callVisitor(key, node, visitor, path25);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path24, ctrl);
-        return visit_(key, ctrl, visitor, path24);
+        replaceNode(key, path25, ctrl);
+        return visit_(key, ctrl, visitor, path25);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path24 = Object.freeze(path24.concat(node));
+          path25 = Object.freeze(path25.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = visit_(i5, node.items[i5], visitor, path24);
+            const ci = visit_(i5, node.items[i5], visitor, path25);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54896,13 +54896,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path24 = Object.freeze(path24.concat(node));
-          const ck = visit_("key", node.key, visitor, path24);
+          path25 = Object.freeze(path25.concat(node));
+          const ck = visit_("key", node.key, visitor, path25);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path24);
+          const cv = visit_("value", node.value, visitor, path25);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54923,17 +54923,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path24) {
-      const ctrl = await callVisitor(key, node, visitor, path24);
+    async function visitAsync_(key, node, visitor, path25) {
+      const ctrl = await callVisitor(key, node, visitor, path25);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path24, ctrl);
-        return visitAsync_(key, ctrl, visitor, path24);
+        replaceNode(key, path25, ctrl);
+        return visitAsync_(key, ctrl, visitor, path25);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path24 = Object.freeze(path24.concat(node));
+          path25 = Object.freeze(path25.concat(node));
           for (let i5 = 0; i5 < node.items.length; ++i5) {
-            const ci = await visitAsync_(i5, node.items[i5], visitor, path24);
+            const ci = await visitAsync_(i5, node.items[i5], visitor, path25);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -54944,13 +54944,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path24 = Object.freeze(path24.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path24);
+          path25 = Object.freeze(path25.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path25);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path24);
+          const cv = await visitAsync_("value", node.value, visitor, path25);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -54977,23 +54977,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path24) {
+    function callVisitor(key, node, visitor, path25) {
       if (typeof visitor === "function")
-        return visitor(key, node, path24);
+        return visitor(key, node, path25);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path24);
+        return visitor.Map?.(key, node, path25);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path24);
+        return visitor.Seq?.(key, node, path25);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path24);
+        return visitor.Pair?.(key, node, path25);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path24);
+        return visitor.Scalar?.(key, node, path25);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path24);
+        return visitor.Alias?.(key, node, path25);
       return void 0;
     }
-    function replaceNode(key, path24, node) {
-      const parent = path24[path24.length - 1];
+    function replaceNode(key, path25, node) {
+      const parent = path25[path25.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -55603,10 +55603,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path24, value) {
+    function collectionFromPath(schema, path25, value) {
       let v = value;
-      for (let i5 = path24.length - 1; i5 >= 0; --i5) {
-        const k5 = path24[i5];
+      for (let i5 = path25.length - 1; i5 >= 0; --i5) {
+        const k5 = path25[i5];
         if (typeof k5 === "number" && Number.isInteger(k5) && k5 >= 0) {
           const a5 = [];
           a5[k5] = v;
@@ -55625,7 +55625,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path24) => path24 == null || typeof path24 === "object" && !!path24[Symbol.iterator]().next().done;
+    var isEmptyPath = (path25) => path25 == null || typeof path25 === "object" && !!path25[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -55655,11 +55655,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path24, value) {
-        if (isEmptyPath(path24))
+      addIn(path25, value) {
+        if (isEmptyPath(path25))
           this.add(value);
         else {
-          const [key, ...rest] = path24;
+          const [key, ...rest] = path25;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -55673,8 +55673,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path24) {
-        const [key, ...rest] = path24;
+      deleteIn(path25) {
+        const [key, ...rest] = path25;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -55688,8 +55688,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path24, keepScalar) {
-        const [key, ...rest] = path24;
+      getIn(path25, keepScalar) {
+        const [key, ...rest] = path25;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -55707,8 +55707,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path24) {
-        const [key, ...rest] = path24;
+      hasIn(path25) {
+        const [key, ...rest] = path25;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -55718,8 +55718,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path24, value) {
-        const [key, ...rest] = path24;
+      setIn(path25, value) {
+        const [key, ...rest] = path25;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -58234,9 +58234,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path24, value) {
+      addIn(path25, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path24, value);
+          this.contents.addIn(path25, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -58311,14 +58311,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path24) {
-        if (Collection.isEmptyPath(path24)) {
+      deleteIn(path25) {
+        if (Collection.isEmptyPath(path25)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path24) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path25) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -58333,10 +58333,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path24, keepScalar) {
-        if (Collection.isEmptyPath(path24))
+      getIn(path25, keepScalar) {
+        if (Collection.isEmptyPath(path25))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path24, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path25, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -58347,10 +58347,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path24) {
-        if (Collection.isEmptyPath(path24))
+      hasIn(path25) {
+        if (Collection.isEmptyPath(path25))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path24) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path25) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -58367,13 +58367,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path24, value) {
-        if (Collection.isEmptyPath(path24)) {
+      setIn(path25, value) {
+        if (Collection.isEmptyPath(path25)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path24), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path25), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path24, value);
+          this.contents.setIn(path25, value);
         }
       }
       /**
@@ -60333,9 +60333,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path24) => {
+    visit.itemAtPath = (cst, path25) => {
       let item = cst;
-      for (const [field, index] of path24) {
+      for (const [field, index] of path25) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -60344,23 +60344,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path24) => {
-      const parent = visit.itemAtPath(cst, path24.slice(0, -1));
-      const field = path24[path24.length - 1][0];
+    visit.parentCollection = (cst, path25) => {
+      const parent = visit.itemAtPath(cst, path25.slice(0, -1));
+      const field = path25[path25.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path24, item, visitor) {
-      let ctrl = visitor(item, path24);
+    function _visit(path25, item, visitor) {
+      let ctrl = visitor(item, path25);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i5 = 0; i5 < token.items.length; ++i5) {
-            const ci = _visit(Object.freeze(path24.concat([[field, i5]])), token.items[i5], visitor);
+            const ci = _visit(Object.freeze(path25.concat([[field, i5]])), token.items[i5], visitor);
             if (typeof ci === "number")
               i5 = ci - 1;
             else if (ci === BREAK)
@@ -60371,10 +60371,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path24);
+            ctrl = ctrl(item, path25);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path24) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path25) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -148013,7 +148013,7 @@ function buildNativeClass4() {
       this.finished = false;
     }
     createHash() {
-      return this.secret ? (0, import_node_crypto6.createHmac)("sha1", toBuffer2(this.secret)) : (0, import_node_crypto6.createHash)("sha1");
+      return this.secret ? (0, import_node_crypto7.createHmac)("sha1", toBuffer2(this.secret)) : (0, import_node_crypto7.createHash)("sha1");
     }
   };
 }
@@ -148026,14 +148026,14 @@ function toBuffer2(data2) {
   }
   return Buffer.from(data2);
 }
-var import_node_crypto6, hasNativeCrypto3, Sha1Node;
+var import_node_crypto7, hasNativeCrypto3, Sha1Node;
 var init_Sha1Node = __esm({
   "node_modules/@aws-sdk/checksums/dist-es/submodules/sha/sha1/Sha1Node.js"() {
-    import_node_crypto6 = require("node:crypto");
+    import_node_crypto7 = require("node:crypto");
     init_Sha1Js();
     hasNativeCrypto3 = (() => {
       try {
-        (0, import_node_crypto6.createHash)("sha1");
+        (0, import_node_crypto7.createHash)("sha1");
         return true;
       } catch {
         return false;
@@ -161240,6 +161240,9 @@ var actionContract = {
     "spec-path": {
       description: "Path to resolved or generated specification when available."
     },
+    "spec-files-json": {
+      description: "Optional single-line JSON inventory of authoritative multi-file definition members (schemaVersion 1). Empty for single-file results, unresolved runs, discover-many top-level outputs, derived OpenAPI, and deterministic GraphQL/Smithy composition."
+    },
     "gateway-id": {
       description: "Resolved API Gateway ID when available."
     },
@@ -161335,8 +161338,8 @@ function synthesizeWebSocketOpenApi(input) {
   }
   for (const route of routes) {
     const routeKey = route.routeKey || "$default";
-    const path24 = routePath(routeKey);
-    document.paths[path24] = {
+    const path25 = routePath(routeKey);
+    document.paths[path25] = {
       post: routeOperation(route, routeKey)
     };
   }
@@ -162818,8 +162821,8 @@ var ApiGatewayProvider = class {
     if (normalized.renamed.length > 0) {
       evidence.push(`Normalized ${normalized.renamed.length} operationId(s) for OpenAPI uniqueness`);
       if (this.options.onOperationIdRenamed) {
-        for (const rename2 of normalized.renamed) {
-          this.options.onOperationIdRenamed({ ...rename2, candidateId: candidate.id });
+        for (const rename3 of normalized.renamed) {
+          this.options.onOperationIdRenamed({ ...rename3, candidateId: candidate.id });
         }
       }
     }
@@ -162880,10 +162883,663 @@ function safeNormalizeOpenApi(content, skipContractAudit = false) {
 }
 
 // src/runtime.ts
-var import_node_crypto7 = require("node:crypto");
-var import_promises20 = require("node:fs/promises");
-var import_node_path23 = __toESM(require("node:path"), 1);
+var import_node_crypto8 = require("node:crypto");
+var import_promises21 = require("node:fs/promises");
+var import_node_path24 = __toESM(require("node:path"), 1);
 var import_yaml14 = __toESM(require_dist(), 1);
+
+// src/lib/spec/definition-file-inventory.ts
+var import_node_crypto6 = require("node:crypto");
+var import_promises5 = require("node:fs/promises");
+var import_node_path7 = __toESM(require("node:path"), 1);
+
+// src/lib/utils/resolve-path-within-root.ts
+var import_promises4 = require("node:fs/promises");
+var import_node_path6 = __toESM(require("node:path"), 1);
+function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
+  const base = import_node_path6.default.resolve(rootPath);
+  const resolved = import_node_path6.default.resolve(base, targetPath);
+  const relative2 = import_node_path6.default.relative(base, resolved);
+  if (relative2.startsWith("..") || import_node_path6.default.isAbsolute(relative2)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
+  }
+  return resolved;
+}
+var DEFAULT_LOCAL_REFERENCE_LIMITS = {
+  maxDepth: 20,
+  maxRefs: 100,
+  maxBytesPerFile: 10 * 1024 * 1024,
+  maxTotalBytes: 25 * 1024 * 1024
+};
+function createLocalReferenceTraversalState() {
+  return {
+    depth: 0,
+    refs: 0,
+    totalBytes: 0,
+    visitedCanonicalPaths: /* @__PURE__ */ new Set()
+  };
+}
+function isPathInsideRoot(root5, candidate) {
+  const relative2 = import_node_path6.default.relative(root5, candidate);
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path6.default.isAbsolute(relative2);
+}
+function resolveBaseWithinRoot(lexicalRoot, basePath) {
+  if (!basePath) return lexicalRoot;
+  const resolvedBase = import_node_path6.default.isAbsolute(basePath) ? import_node_path6.default.resolve(basePath) : import_node_path6.default.resolve(lexicalRoot, basePath);
+  if (!isPathInsideRoot(lexicalRoot, resolvedBase)) {
+    throw new Error(`basePath must stay within repo-root/workspace; received ${basePath}`);
+  }
+  return resolvedBase;
+}
+async function resolveCanonicalRoot(rootPath) {
+  const resolvedRoot = import_node_path6.default.resolve(rootPath);
+  try {
+    return await (0, import_promises4.realpath)(resolvedRoot);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(`Allowed root does not exist: ${resolvedRoot}`, { cause: error3 });
+    }
+    throw error3;
+  }
+}
+async function walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, originalTarget, mode = "follow-in-root", allowMissing = false) {
+  const relativeTarget = import_node_path6.default.relative(lexicalRoot, absoluteLexical);
+  if (relativeTarget.startsWith("..") || import_node_path6.default.isAbsolute(relativeTarget)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${originalTarget}`);
+  }
+  let current = lexicalRoot;
+  const seenLinkTargets = /* @__PURE__ */ new Set();
+  const components = relativeTarget.split(import_node_path6.default.sep).filter(Boolean);
+  for (const component of components) {
+    current = import_node_path6.default.join(current, component);
+    let linkStat;
+    try {
+      linkStat = await (0, import_promises4.lstat)(current);
+    } catch (error3) {
+      const code = error3.code;
+      if (code === "ENOENT") {
+        if (allowMissing) {
+          break;
+        }
+        throw new Error(
+          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
+          { cause: error3 }
+        );
+      }
+      throw error3;
+    }
+    if (!linkStat.isSymbolicLink()) {
+      continue;
+    }
+    if (mode === "reject-any") {
+      throw new Error(
+        `${fieldName} must stay within repo-root/workspace and must not traverse symbolic links; received ${originalTarget}`
+      );
+    }
+    let linkTarget;
+    try {
+      linkTarget = await (0, import_promises4.readlink)(current);
+    } catch (error3) {
+      const code = error3.code;
+      if (code === "ENOENT") {
+        throw new Error(
+          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
+          { cause: error3 }
+        );
+      }
+      throw error3;
+    }
+    const resolvedLink = import_node_path6.default.resolve(import_node_path6.default.dirname(current), linkTarget);
+    if (seenLinkTargets.has(resolvedLink)) {
+      throw new Error(`${fieldName} contains a symbolic link loop; received ${originalTarget}`);
+    }
+    seenLinkTargets.add(resolvedLink);
+    if (!isPathInsideRoot(lexicalRoot, resolvedLink)) {
+      throw new Error(
+        `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${originalTarget}`
+      );
+    }
+    current = resolvedLink;
+  }
+}
+async function assertNoSymlinkComponentsWithinRoot(rootPath, targetPath, fieldName = "path") {
+  const lexicalRoot = import_node_path6.default.resolve(rootPath);
+  const absoluteLexical = resolvePathWithinRoot(lexicalRoot, targetPath, fieldName);
+  await walkPathComponentsWithinRoot(
+    lexicalRoot,
+    absoluteLexical,
+    fieldName,
+    targetPath,
+    "reject-any",
+    true
+  );
+  return absoluteLexical;
+}
+async function resolveLocalReadWithinRoot(rootPath, targetPath, options = {}) {
+  const fieldName = options.fieldName ?? "path";
+  const limits = {
+    ...DEFAULT_LOCAL_REFERENCE_LIMITS,
+    ...options.limits
+  };
+  const countAsReference = options.countAsReference !== false;
+  const traversal = options.traversal;
+  if (traversal) {
+    if (traversal.depth > limits.maxDepth) {
+      throw new Error(
+        `${fieldName} local reference depth exceeded ${limits.maxDepth}; received ${targetPath}`
+      );
+    }
+    if (countAsReference && traversal.refs >= limits.maxRefs) {
+      throw new Error(
+        `${fieldName} local reference count exceeded ${limits.maxRefs}; received ${targetPath}`
+      );
+    }
+  }
+  const lexicalRoot = import_node_path6.default.resolve(rootPath);
+  const canonicalRoot = await resolveCanonicalRoot(lexicalRoot);
+  const lexicalBase = resolveBaseWithinRoot(lexicalRoot, options.basePath);
+  const absoluteLexical = resolvePathWithinRoot(lexicalBase, targetPath, fieldName);
+  if (!isPathInsideRoot(lexicalRoot, absoluteLexical)) {
+    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
+  }
+  const symlinkMode = options.rejectSymlinkComponents ? "reject-any" : "follow-in-root";
+  await walkPathComponentsWithinRoot(
+    lexicalRoot,
+    absoluteLexical,
+    fieldName,
+    targetPath,
+    symlinkMode
+  );
+  let canonicalPath;
+  try {
+    canonicalPath = await (0, import_promises4.realpath)(absoluteLexical);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(
+        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
+        { cause: error3 }
+      );
+    }
+    if (code === "ELOOP") {
+      throw new Error(`${fieldName} contains a symbolic link loop; received ${targetPath}`, {
+        cause: error3
+      });
+    }
+    throw error3;
+  }
+  if (!isPathInsideRoot(canonicalRoot, canonicalPath)) {
+    throw new Error(
+      `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${targetPath}`
+    );
+  }
+  let fileStat;
+  try {
+    fileStat = await (0, import_promises4.stat)(canonicalPath);
+  } catch (error3) {
+    const code = error3.code;
+    if (code === "ENOENT") {
+      throw new Error(
+        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
+        { cause: error3 }
+      );
+    }
+    throw error3;
+  }
+  if (!fileStat.isFile()) {
+    throw new Error(`${fieldName} must resolve to a regular file; received ${targetPath}`);
+  }
+  const byteLength = options.fileByteLength ?? fileStat.size;
+  if (byteLength > limits.maxBytesPerFile) {
+    throw new Error(
+      `${fieldName} exceeds per-file byte limit (${byteLength} > ${limits.maxBytesPerFile}); received ${targetPath}`
+    );
+  }
+  if (traversal) {
+    if (countAsReference) {
+      traversal.refs += 1;
+    }
+    if (traversal.visitedCanonicalPaths.has(canonicalPath)) {
+      throw new Error(
+        `${fieldName} local reference cycle detected at ${import_node_path6.default.relative(canonicalRoot, canonicalPath)}`
+      );
+    }
+    traversal.visitedCanonicalPaths.add(canonicalPath);
+    traversal.totalBytes += byteLength;
+    if (traversal.totalBytes > limits.maxTotalBytes) {
+      throw new Error(
+        `${fieldName} local reference cumulative bytes exceeded ${limits.maxTotalBytes}`
+      );
+    }
+  }
+  return {
+    absolutePath: absoluteLexical,
+    relativePath: import_node_path6.default.relative(lexicalRoot, absoluteLexical),
+    canonicalPath,
+    canonicalRoot
+  };
+}
+function enterLocalReferenceDepth(traversal) {
+  traversal.depth += 1;
+}
+function leaveLocalReferenceDepth(traversal) {
+  traversal.depth = Math.max(0, traversal.depth - 1);
+}
+async function withLocalReferenceDepth(traversal, fn) {
+  enterLocalReferenceDepth(traversal);
+  try {
+    return await fn();
+  } finally {
+    leaveLocalReferenceDepth(traversal);
+  }
+}
+
+// src/lib/spec/definition-file-inventory.ts
+var WELL_KNOWN_PROTO_PREFIXES = [
+  "google/protobuf/",
+  "google/api/",
+  "google/rpc/",
+  "google/type/",
+  "google/longrunning/"
+];
+var MAX_DEFINITION_FILES = 101;
+var MAX_DEFINITION_DEPTH = 20;
+var MAX_BYTES_PER_FILE = 25 * 1024 * 1024;
+var MAX_TOTAL_BYTES = 25 * 1024 * 1024;
+function sha256Utf8(content) {
+  return (0, import_node_crypto6.createHash)("sha256").update(content, "utf8").digest("hex");
+}
+function isWellKnownProtobufImport(value) {
+  return WELL_KNOWN_PROTO_PREFIXES.some((prefix) => value.startsWith(prefix));
+}
+function extractProtobufImports(content) {
+  const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, "");
+  const refs = [];
+  const pattern = /^\s*import\s+(?:public\s+|weak\s+)?"([^"]+)"\s*;/gm;
+  let match;
+  while ((match = pattern.exec(withoutComments)) !== null) {
+    const value = match[1]?.trim();
+    if (value) refs.push(value);
+  }
+  return [...new Set(refs)];
+}
+function extractXmlSchemaDependencyRefs(content) {
+  const refs = [];
+  const patterns = [
+    /\b(?:schemaLocation|itemSchemaLocation)\s*=\s*["']([^"']+)["']/gi,
+    /<(?:[\w.-]+:)?import\b[^>]*\blocation\s*=\s*["']([^"']+)["']/gi,
+    /<(?:[\w.-]+:)?include\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi,
+    /<(?:[\w.-]+:)?redefine\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi
+  ];
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      const value = match[1]?.trim();
+      if (value) refs.push(value);
+    }
+  }
+  return [...new Set(refs)];
+}
+function listDefinitionDependencyRefs(content, format2) {
+  if (format2 === "protobuf") return extractProtobufImports(content);
+  if (format2 === "wsdl") return extractXmlSchemaDependencyRefs(content);
+  return [];
+}
+function isAbsoluteOrRemoteRef(ref) {
+  return /^[a-z][a-z0-9+.-]*:/i.test(ref) || ref.startsWith("//");
+}
+function normalizeRelativeDependencyRef(ref) {
+  if (!ref || isAbsoluteOrRemoteRef(ref)) return void 0;
+  const normalized = ref.replace(/\\/g, "/").replace(/^\.\//, "");
+  if (!normalized || normalized.includes("\0") || normalized.split("/").includes("..")) {
+    return void 0;
+  }
+  if (normalized.split("/").some((part) => part === "" || part === ".")) {
+    return void 0;
+  }
+  return normalized;
+}
+function assertSafeBundleRelativePath(relativePath2) {
+  const normalized = relativePath2.replace(/\\/g, "/").normalize("NFC");
+  if (!normalized || normalized.includes("\0") || import_node_path7.default.posix.isAbsolute(normalized) || /^[A-Za-z]:\//.test(normalized)) {
+    throw new Error(`Unsafe definition path: ${relativePath2}`);
+  }
+  const parts = normalized.split("/");
+  if (parts.some((part) => part === "" || part === "." || part === "..")) {
+    throw new Error(`Unsafe definition path: ${relativePath2}`);
+  }
+  return normalized;
+}
+function buildDefinitionFileInventory(input) {
+  const root5 = assertSafeBundleRelativePath(input.root);
+  const roots = input.files.filter((file) => file.role === "root");
+  if (roots.length !== 1) {
+    throw new Error(`Definition inventory requires exactly one root; received ${roots.length}`);
+  }
+  if (assertSafeBundleRelativePath(roots[0].path) !== root5) {
+    throw new Error("Definition inventory root path mismatch");
+  }
+  const seen = /* @__PURE__ */ new Set();
+  const files = input.files.map((file) => {
+    const pathKey = assertSafeBundleRelativePath(file.path);
+    if (seen.has(pathKey) || seen.has(pathKey.toLowerCase())) {
+      throw new Error(`Duplicate definition inventory path: ${pathKey}`);
+    }
+    seen.add(pathKey);
+    seen.add(pathKey.toLowerCase());
+    const bytes = Buffer.byteLength(file.content, "utf8");
+    return {
+      path: pathKey,
+      role: file.role,
+      bytes,
+      sha256: sha256Utf8(file.content)
+    };
+  }).sort((left, right) => left.path.localeCompare(right.path));
+  return {
+    schemaVersion: 1,
+    root: root5,
+    format: input.format,
+    completeness: input.completeness,
+    provenance: { kind: "provider", provider: "aws" },
+    files
+  };
+}
+function serializeDefinitionFileInventory(inventory) {
+  if (!inventory || inventory.completeness !== "full" || inventory.files.length < 2) {
+    return "";
+  }
+  return JSON.stringify(inventory);
+}
+async function resolveRepoDefinitionClosure(options) {
+  if (options.format !== "protobuf" && options.format !== "wsdl") {
+    return {
+      status: "single",
+      completeness: "full",
+      rootContent: options.rootContent,
+      evidence: [`Format ${options.format} is not a multi-file definition closure source`]
+    };
+  }
+  const rootRelative = assertSafeBundleRelativePath(options.rootRelativePath.replace(/\\/g, "/"));
+  const bundleBase = import_node_path7.default.posix.dirname(rootRelative);
+  const rootBaseName = import_node_path7.default.posix.basename(rootRelative);
+  const queue = [
+    { relativeToBundleBase: rootBaseName, content: options.rootContent, role: "root", depth: 0 }
+  ];
+  const members = /* @__PURE__ */ new Map();
+  members.set(rootBaseName, {
+    relativeToBundleBase: rootBaseName,
+    content: options.rootContent,
+    role: "root",
+    sourcePath: rootRelative
+  });
+  const missingRefs = [];
+  let totalBytes = Buffer.byteLength(options.rootContent, "utf8");
+  while (queue.length > 0) {
+    if (members.size > MAX_DEFINITION_FILES) {
+      return {
+        status: "partial",
+        completeness: "partial",
+        rootContent: options.rootContent,
+        missingRefs: ["<ref-count-exceeded>"],
+        evidence: [`Definition closure exceeded ${MAX_DEFINITION_FILES} files`]
+      };
+    }
+    const current = queue.shift();
+    if (current.depth > MAX_DEFINITION_DEPTH) {
+      return {
+        status: "partial",
+        completeness: "partial",
+        rootContent: options.rootContent,
+        missingRefs: ["<ref-depth-exceeded>"],
+        evidence: [`Definition closure exceeded depth ${MAX_DEFINITION_DEPTH}`]
+      };
+    }
+    const refs = listDefinitionDependencyRefs(current.content, options.format);
+    for (const ref of refs) {
+      if (options.format === "protobuf" && isWellKnownProtobufImport(ref)) {
+        continue;
+      }
+      const key = normalizeRelativeDependencyRef(ref);
+      if (!key) {
+        missingRefs.push(ref);
+        continue;
+      }
+      const candidateRelative = current.relativeToBundleBase.includes("/") ? import_node_path7.default.posix.normalize(import_node_path7.default.posix.join(import_node_path7.default.posix.dirname(current.relativeToBundleBase), key)) : import_node_path7.default.posix.normalize(key);
+      if (candidateRelative.split("/").includes("..")) {
+        missingRefs.push(ref);
+        continue;
+      }
+      if (members.has(candidateRelative)) continue;
+      const childDepth = current.depth + 1;
+      if (childDepth > MAX_DEFINITION_DEPTH) {
+        return {
+          status: "partial",
+          completeness: "partial",
+          rootContent: options.rootContent,
+          missingRefs: ["<ref-depth-exceeded>"],
+          evidence: [`Definition closure exceeded depth ${MAX_DEFINITION_DEPTH}`]
+        };
+      }
+      const sourcePath = bundleBase === "." ? candidateRelative : import_node_path7.default.posix.join(bundleBase, candidateRelative);
+      try {
+        const resolved = await resolveLocalReadWithinRoot(options.repoRoot, sourcePath, {
+          fieldName: "definition-dependency",
+          countAsReference: false,
+          rejectSymlinkComponents: true,
+          limits: {
+            maxDepth: MAX_DEFINITION_DEPTH,
+            maxRefs: MAX_DEFINITION_FILES,
+            maxBytesPerFile: MAX_BYTES_PER_FILE,
+            maxTotalBytes: MAX_TOTAL_BYTES
+          }
+        });
+        const content = await (0, import_promises5.readFile)(resolved.canonicalPath, "utf8");
+        const byteLength = Buffer.byteLength(content, "utf8");
+        if (byteLength > MAX_BYTES_PER_FILE || totalBytes + byteLength > MAX_TOTAL_BYTES) {
+          missingRefs.push(ref);
+          continue;
+        }
+        totalBytes += byteLength;
+        members.set(candidateRelative, {
+          relativeToBundleBase: candidateRelative,
+          content,
+          role: "dependency",
+          sourcePath
+        });
+        queue.push({
+          relativeToBundleBase: candidateRelative,
+          content,
+          role: "dependency",
+          depth: childDepth
+        });
+      } catch {
+        missingRefs.push(ref);
+      }
+    }
+  }
+  if (missingRefs.length > 0) {
+    return {
+      status: "partial",
+      completeness: "partial",
+      rootContent: options.rootContent,
+      missingRefs: [...new Set(missingRefs)],
+      evidence: [
+        `${options.format} definition closure is incomplete; missing or remote dependency reference(s): ${[...new Set(missingRefs)].join(", ")}`
+      ]
+    };
+  }
+  if (members.size === 1) {
+    return {
+      status: "single",
+      completeness: "full",
+      rootContent: options.rootContent,
+      evidence: [`No external ${options.format} dependency references; primary document is dependency-closed`]
+    };
+  }
+  return {
+    status: "multi",
+    completeness: "full",
+    rootContent: options.rootContent,
+    members: [...members.values()].sort(
+      (left, right) => left.relativeToBundleBase.localeCompare(right.relativeToBundleBase)
+    ),
+    evidence: [
+      `Resolved complete ${options.format} definition closure with ${members.size} file(s) under ${bundleBase === "." ? "." : bundleBase}`
+    ]
+  };
+}
+async function pathExists(target) {
+  try {
+    await (0, import_promises5.stat)(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function listFilesRecursive(rootDir) {
+  const out = [];
+  async function walk(current) {
+    let entries;
+    try {
+      entries = await (0, import_promises5.readdir)(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const absolute = import_node_path7.default.join(current, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+      } else if (entry.isFile()) {
+        out.push(absolute);
+      }
+    }
+  }
+  await walk(rootDir);
+  return out;
+}
+async function fsyncFile(absolutePath) {
+  const handle = await (0, import_promises5.open)(absolutePath, "r");
+  try {
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+}
+function isPreservedNonDefinitionSidecar(relativeInsideServiceDir) {
+  const normalized = relativeInsideServiceDir.replace(/\\/g, "/");
+  if (normalized.includes("/")) {
+    return false;
+  }
+  return normalized === "sns-resolution-metadata.json" || normalized === "webhook.openapi.json" || normalized === "openapi.derived.json" || /^openapi\.derived-\d+\.json$/.test(normalized);
+}
+async function stageDefinitionExportTree(input) {
+  const serviceDirRelative = assertSafeBundleRelativePath(input.serviceDirRelative.replace(/\\/g, "/"));
+  const canonicalAbsolute = resolvePathWithinRoot(input.repoRoot, serviceDirRelative, "output-dir");
+  const runId = input.runId ?? (0, import_node_crypto6.randomBytes)(8).toString("hex");
+  const parentDir = import_node_path7.default.dirname(canonicalAbsolute);
+  const baseName = import_node_path7.default.basename(canonicalAbsolute);
+  const stageAbsolute = import_node_path7.default.join(parentDir, `${baseName}.stage-${runId}`);
+  const backupAbsolute = import_node_path7.default.join(parentDir, `${baseName}.backup-${runId}`);
+  const write = input.writeFile ?? (async (absolutePath, content) => {
+    await (0, import_promises5.mkdir)(import_node_path7.default.dirname(absolutePath), { recursive: true });
+    await (0, import_promises5.writeFile)(absolutePath, content, "utf8");
+  });
+  const ownedRelativePaths = input.members.map((member2) => assertSafeBundleRelativePath(member2.path.replace(/\\/g, "/")));
+  const ownedBasenames = new Set(
+    ownedRelativePaths.map((memberPath) => {
+      const prefix = `${serviceDirRelative}/`;
+      if (!memberPath.startsWith(prefix)) {
+        throw new Error(`Definition member ${memberPath} is outside service directory ${serviceDirRelative}`);
+      }
+      return memberPath.slice(prefix.length);
+    })
+  );
+  await (0, import_promises5.rm)(stageAbsolute, { recursive: true, force: true });
+  await (0, import_promises5.mkdir)(stageAbsolute, { recursive: true });
+  try {
+    for (const member2 of input.members) {
+      const memberPath = assertSafeBundleRelativePath(member2.path.replace(/\\/g, "/"));
+      const prefix = `${serviceDirRelative}/`;
+      if (!memberPath.startsWith(prefix)) {
+        throw new Error(`Definition member ${memberPath} is outside service directory ${serviceDirRelative}`);
+      }
+      const relativeInside = memberPath.slice(prefix.length);
+      const absolute = import_node_path7.default.join(stageAbsolute, relativeInside);
+      await write(absolute, member2.content);
+      await fsyncFile(absolute);
+      const written = await (0, import_promises5.readFile)(absolute);
+      const expectedSha = sha256Utf8(member2.content);
+      const actualSha = (0, import_node_crypto6.createHash)("sha256").update(written).digest("hex");
+      if (actualSha !== expectedSha || written.byteLength !== Buffer.byteLength(member2.content, "utf8")) {
+        throw new Error(`Staged definition member hash mismatch for ${memberPath}`);
+      }
+    }
+    for (const sidecar of input.sidecars ?? []) {
+      const filename = assertSafeBundleRelativePath(sidecar.filename.replace(/\\/g, "/"));
+      if (ownedBasenames.has(filename)) {
+        throw new Error(`Sidecar ${filename} collides with a definition member`);
+      }
+      const absolute = import_node_path7.default.join(stageAbsolute, filename);
+      await write(absolute, sidecar.content);
+      await fsyncFile(absolute);
+    }
+    if (await pathExists(canonicalAbsolute)) {
+      const priorFiles = await listFilesRecursive(canonicalAbsolute);
+      for (const priorAbsolute of priorFiles) {
+        const relativeInside = import_node_path7.default.relative(canonicalAbsolute, priorAbsolute).split(import_node_path7.default.sep).join("/");
+        if (!relativeInside || relativeInside.split("/").includes("..")) continue;
+        if (ownedBasenames.has(relativeInside)) continue;
+        if ((input.sidecars ?? []).some((sidecar) => sidecar.filename.replace(/\\/g, "/") === relativeInside)) {
+          continue;
+        }
+        if (!isPreservedNonDefinitionSidecar(relativeInside)) continue;
+        const destination = import_node_path7.default.join(stageAbsolute, relativeInside);
+        await (0, import_promises5.mkdir)(import_node_path7.default.dirname(destination), { recursive: true });
+        await (0, import_promises5.copyFile)(priorAbsolute, destination);
+        await fsyncFile(destination);
+      }
+    }
+    const hadCanonical = await pathExists(canonicalAbsolute);
+    if (hadCanonical) {
+      await (0, import_promises5.rename)(canonicalAbsolute, backupAbsolute);
+    }
+    try {
+      await (0, import_promises5.rename)(stageAbsolute, canonicalAbsolute);
+    } catch (error3) {
+      if (hadCanonical && await pathExists(backupAbsolute)) {
+        await (0, import_promises5.rm)(canonicalAbsolute, { recursive: true, force: true });
+        await (0, import_promises5.rename)(backupAbsolute, canonicalAbsolute);
+      }
+      throw error3;
+    }
+    for (const member2 of input.members) {
+      const memberPath = assertSafeBundleRelativePath(member2.path.replace(/\\/g, "/"));
+      const absolute = resolvePathWithinRoot(input.repoRoot, memberPath, "output-dir");
+      const written = await (0, import_promises5.readFile)(absolute);
+      const expectedSha = sha256Utf8(member2.content);
+      const actualSha = (0, import_node_crypto6.createHash)("sha256").update(written).digest("hex");
+      if (actualSha !== expectedSha) {
+        if (await pathExists(backupAbsolute)) {
+          await (0, import_promises5.rm)(canonicalAbsolute, { recursive: true, force: true });
+          await (0, import_promises5.rename)(backupAbsolute, canonicalAbsolute);
+        }
+        throw new Error(`Canonical definition member hash mismatch for ${memberPath}`);
+      }
+    }
+    await (0, import_promises5.rm)(backupAbsolute, { recursive: true, force: true });
+    await (0, import_promises5.rm)(stageAbsolute, { recursive: true, force: true });
+    return { ownedRelativePaths };
+  } catch (error3) {
+    await (0, import_promises5.rm)(stageAbsolute, { recursive: true, force: true });
+    if (await pathExists(backupAbsolute) && !await pathExists(canonicalAbsolute)) {
+      await (0, import_promises5.rename)(backupAbsolute, canonicalAbsolute);
+    } else {
+      await (0, import_promises5.rm)(backupAbsolute, { recursive: true, force: true });
+    }
+    throw error3;
+  }
+}
 
 // src/lib/aws/appsync-client.ts
 var import_client_appsync = __toESM(require_dist_cjs20(), 1);
@@ -164082,8 +164738,8 @@ function normalizeRepoUrl(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path24 = sshMatch[2];
-    return `https://${host}/${path24}`;
+    const path25 = sshMatch[2];
+    return `https://${host}/${path25}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -164135,236 +164791,20 @@ function detectRepoContext(input, env2 = process.env) {
 }
 
 // src/lib/repo/specs.ts
-var import_promises13 = require("node:fs/promises");
-var import_node_path17 = __toESM(require("node:path"), 1);
+var import_promises14 = require("node:fs/promises");
+var import_node_path18 = __toESM(require("node:path"), 1);
 var import_yaml8 = __toESM(require_dist(), 1);
 
 // src/lib/iac/resolve.ts
-var import_promises11 = require("node:fs/promises");
-var import_node_path13 = __toESM(require("node:path"), 1);
+var import_promises12 = require("node:fs/promises");
+var import_node_path14 = __toESM(require("node:path"), 1);
 
 // src/lib/iac/cloudformation.ts
-var import_node_path9 = __toESM(require("node:path"), 1);
+var import_node_path10 = __toESM(require("node:path"), 1);
 
 // src/lib/providers/cloudformation.ts
 var import_yaml4 = __toESM(require_dist(), 1);
-var import_promises5 = require("node:fs/promises");
-
-// src/lib/utils/resolve-path-within-root.ts
-var import_promises4 = require("node:fs/promises");
-var import_node_path6 = __toESM(require("node:path"), 1);
-function resolvePathWithinRoot(rootPath, targetPath, fieldName) {
-  const base = import_node_path6.default.resolve(rootPath);
-  const resolved = import_node_path6.default.resolve(base, targetPath);
-  const relative2 = import_node_path6.default.relative(base, resolved);
-  if (relative2.startsWith("..") || import_node_path6.default.isAbsolute(relative2)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
-  }
-  return resolved;
-}
-var DEFAULT_LOCAL_REFERENCE_LIMITS = {
-  maxDepth: 20,
-  maxRefs: 100,
-  maxBytesPerFile: 10 * 1024 * 1024,
-  maxTotalBytes: 25 * 1024 * 1024
-};
-function createLocalReferenceTraversalState() {
-  return {
-    depth: 0,
-    refs: 0,
-    totalBytes: 0,
-    visitedCanonicalPaths: /* @__PURE__ */ new Set()
-  };
-}
-function isPathInsideRoot(root5, candidate) {
-  const relative2 = import_node_path6.default.relative(root5, candidate);
-  return relative2 === "" || !relative2.startsWith("..") && !import_node_path6.default.isAbsolute(relative2);
-}
-function resolveBaseWithinRoot(lexicalRoot, basePath) {
-  if (!basePath) return lexicalRoot;
-  const resolvedBase = import_node_path6.default.isAbsolute(basePath) ? import_node_path6.default.resolve(basePath) : import_node_path6.default.resolve(lexicalRoot, basePath);
-  if (!isPathInsideRoot(lexicalRoot, resolvedBase)) {
-    throw new Error(`basePath must stay within repo-root/workspace; received ${basePath}`);
-  }
-  return resolvedBase;
-}
-async function resolveCanonicalRoot(rootPath) {
-  const resolvedRoot = import_node_path6.default.resolve(rootPath);
-  try {
-    return await (0, import_promises4.realpath)(resolvedRoot);
-  } catch (error3) {
-    const code = error3.code;
-    if (code === "ENOENT") {
-      throw new Error(`Allowed root does not exist: ${resolvedRoot}`, { cause: error3 });
-    }
-    throw error3;
-  }
-}
-async function walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, originalTarget) {
-  const relativeTarget = import_node_path6.default.relative(lexicalRoot, absoluteLexical);
-  if (relativeTarget.startsWith("..") || import_node_path6.default.isAbsolute(relativeTarget)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${originalTarget}`);
-  }
-  let current = lexicalRoot;
-  const seenLinkTargets = /* @__PURE__ */ new Set();
-  const components = relativeTarget.split(import_node_path6.default.sep).filter(Boolean);
-  for (const component of components) {
-    current = import_node_path6.default.join(current, component);
-    let linkStat;
-    try {
-      linkStat = await (0, import_promises4.lstat)(current);
-    } catch (error3) {
-      const code = error3.code;
-      if (code === "ENOENT") {
-        throw new Error(
-          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
-          { cause: error3 }
-        );
-      }
-      throw error3;
-    }
-    if (!linkStat.isSymbolicLink()) {
-      continue;
-    }
-    let linkTarget;
-    try {
-      linkTarget = await (0, import_promises4.readlink)(current);
-    } catch (error3) {
-      const code = error3.code;
-      if (code === "ENOENT") {
-        throw new Error(
-          `${fieldName} path does not exist or is a dangling link; received ${originalTarget}`,
-          { cause: error3 }
-        );
-      }
-      throw error3;
-    }
-    const resolvedLink = import_node_path6.default.resolve(import_node_path6.default.dirname(current), linkTarget);
-    if (seenLinkTargets.has(resolvedLink)) {
-      throw new Error(`${fieldName} contains a symbolic link loop; received ${originalTarget}`);
-    }
-    seenLinkTargets.add(resolvedLink);
-    if (!isPathInsideRoot(lexicalRoot, resolvedLink)) {
-      throw new Error(
-        `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${originalTarget}`
-      );
-    }
-    current = resolvedLink;
-  }
-}
-async function resolveLocalReadWithinRoot(rootPath, targetPath, options = {}) {
-  const fieldName = options.fieldName ?? "path";
-  const limits = {
-    ...DEFAULT_LOCAL_REFERENCE_LIMITS,
-    ...options.limits
-  };
-  const countAsReference = options.countAsReference !== false;
-  const traversal = options.traversal;
-  if (traversal) {
-    if (traversal.depth > limits.maxDepth) {
-      throw new Error(
-        `${fieldName} local reference depth exceeded ${limits.maxDepth}; received ${targetPath}`
-      );
-    }
-    if (countAsReference && traversal.refs >= limits.maxRefs) {
-      throw new Error(
-        `${fieldName} local reference count exceeded ${limits.maxRefs}; received ${targetPath}`
-      );
-    }
-  }
-  const lexicalRoot = import_node_path6.default.resolve(rootPath);
-  const canonicalRoot = await resolveCanonicalRoot(lexicalRoot);
-  const lexicalBase = resolveBaseWithinRoot(lexicalRoot, options.basePath);
-  const absoluteLexical = resolvePathWithinRoot(lexicalBase, targetPath, fieldName);
-  if (!isPathInsideRoot(lexicalRoot, absoluteLexical)) {
-    throw new Error(`${fieldName} must stay within repo-root/workspace; received ${targetPath}`);
-  }
-  await walkPathComponentsWithinRoot(lexicalRoot, absoluteLexical, fieldName, targetPath);
-  let canonicalPath;
-  try {
-    canonicalPath = await (0, import_promises4.realpath)(absoluteLexical);
-  } catch (error3) {
-    const code = error3.code;
-    if (code === "ENOENT") {
-      throw new Error(
-        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
-        { cause: error3 }
-      );
-    }
-    if (code === "ELOOP") {
-      throw new Error(`${fieldName} contains a symbolic link loop; received ${targetPath}`, {
-        cause: error3
-      });
-    }
-    throw error3;
-  }
-  if (!isPathInsideRoot(canonicalRoot, canonicalPath)) {
-    throw new Error(
-      `${fieldName} must stay within repo-root/workspace and must not follow escaping symbolic links; received ${targetPath}`
-    );
-  }
-  let fileStat;
-  try {
-    fileStat = await (0, import_promises4.stat)(canonicalPath);
-  } catch (error3) {
-    const code = error3.code;
-    if (code === "ENOENT") {
-      throw new Error(
-        `${fieldName} path does not exist or is a dangling link; received ${targetPath}`,
-        { cause: error3 }
-      );
-    }
-    throw error3;
-  }
-  if (!fileStat.isFile()) {
-    throw new Error(`${fieldName} must resolve to a regular file; received ${targetPath}`);
-  }
-  const byteLength = options.fileByteLength ?? fileStat.size;
-  if (byteLength > limits.maxBytesPerFile) {
-    throw new Error(
-      `${fieldName} exceeds per-file byte limit (${byteLength} > ${limits.maxBytesPerFile}); received ${targetPath}`
-    );
-  }
-  if (traversal) {
-    if (countAsReference) {
-      traversal.refs += 1;
-    }
-    if (traversal.visitedCanonicalPaths.has(canonicalPath)) {
-      throw new Error(
-        `${fieldName} local reference cycle detected at ${import_node_path6.default.relative(canonicalRoot, canonicalPath)}`
-      );
-    }
-    traversal.visitedCanonicalPaths.add(canonicalPath);
-    traversal.totalBytes += byteLength;
-    if (traversal.totalBytes > limits.maxTotalBytes) {
-      throw new Error(
-        `${fieldName} local reference cumulative bytes exceeded ${limits.maxTotalBytes}`
-      );
-    }
-  }
-  return {
-    absolutePath: absoluteLexical,
-    relativePath: import_node_path6.default.relative(lexicalRoot, absoluteLexical),
-    canonicalPath,
-    canonicalRoot
-  };
-}
-function enterLocalReferenceDepth(traversal) {
-  traversal.depth += 1;
-}
-function leaveLocalReferenceDepth(traversal) {
-  traversal.depth = Math.max(0, traversal.depth - 1);
-}
-async function withLocalReferenceDepth(traversal, fn) {
-  enterLocalReferenceDepth(traversal);
-  try {
-    return await fn();
-  } finally {
-    leaveLocalReferenceDepth(traversal);
-  }
-}
-
-// src/lib/providers/cloudformation.ts
+var import_promises6 = require("node:fs/promises");
 var CFN_CUSTOM_TAGS = [
   "!Ref",
   "!Sub",
@@ -164439,7 +164879,7 @@ async function readReferencedSpec(repoRoot, s3Client, value) {
       return void 0;
     }
     const localPath = await resolveLocalReadWithinRoot(repoRoot, value, { fieldName: "definition-uri" });
-    return (0, import_promises5.readFile)(localPath.canonicalPath, "utf8");
+    return (0, import_promises6.readFile)(localPath.canonicalPath, "utf8");
   }
   const s3 = parseS3Location(value);
   if (s3 && s3Client) {
@@ -164566,12 +165006,12 @@ var CloudFormationProvider = class {
 };
 
 // src/lib/iac/freshness.ts
-var import_promises7 = require("node:fs/promises");
-var import_node_path8 = __toESM(require("node:path"), 1);
+var import_promises8 = require("node:fs/promises");
+var import_node_path9 = __toESM(require("node:path"), 1);
 
 // src/lib/iac/read.ts
-var import_promises6 = require("node:fs/promises");
-var import_node_path7 = __toESM(require("node:path"), 1);
+var import_promises7 = require("node:fs/promises");
+var import_node_path8 = __toESM(require("node:path"), 1);
 
 // src/lib/iac/types.ts
 var DEFAULT_IAC_BOUNDS = {
@@ -164639,7 +165079,7 @@ async function readIacFile(repoRoot, targetPath, budget, errors, options = {}) {
       limits,
       countAsReference: false
     });
-    const content = await (0, import_promises6.readFile)(resolved.canonicalPath, "utf8");
+    const content = await (0, import_promises7.readFile)(resolved.canonicalPath, "utf8");
     const bytes = Buffer.byteLength(content, "utf8");
     if (bytes > budget.maxFileBytes) {
       errors.push({
@@ -164677,7 +165117,7 @@ async function readIacFile(repoRoot, targetPath, budget, errors, options = {}) {
   }
 }
 function dirnamePosix(relativePath2) {
-  const dir = import_node_path7.default.posix.dirname(toPosix(relativePath2));
+  const dir = import_node_path8.default.posix.dirname(toPosix(relativePath2));
   return dir === "." ? "" : dir;
 }
 
@@ -164699,10 +165139,10 @@ async function classifyIacArtifact(repoRoot, relativePath2, sourceHints = []) {
   if (!GENERATED_PATH_RE.test(posix)) {
     return "authored";
   }
-  const absolute = import_node_path8.default.resolve(repoRoot, posix);
+  const absolute = import_node_path9.default.resolve(repoRoot, posix);
   let artifactMtime;
   try {
-    const info2 = await (0, import_promises7.lstat)(absolute);
+    const info2 = await (0, import_promises8.lstat)(absolute);
     if (info2.isSymbolicLink()) {
       return "freshness-unknown";
     }
@@ -164718,7 +165158,7 @@ async function classifyIacArtifact(repoRoot, relativePath2, sourceHints = []) {
   let sawSource = false;
   for (const candidate of candidates) {
     try {
-      const info2 = await (0, import_promises7.stat)(import_node_path8.default.resolve(repoRoot, candidate));
+      const info2 = await (0, import_promises8.stat)(import_node_path9.default.resolve(repoRoot, candidate));
       if (info2.isFile()) {
         sawSource = true;
         newestSource = Math.max(newestSource, info2.mtimeMs);
@@ -164734,11 +165174,11 @@ async function classifyIacArtifact(repoRoot, relativePath2, sourceHints = []) {
 async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) {
   const artifactPosix = toPosix(artifactRelative);
   const results = new Set(sourceHints.map(toPosix).filter((hint) => hint !== artifactPosix));
-  const root5 = import_node_path8.default.resolve(repoRoot);
-  let current = import_node_path8.default.dirname(import_node_path8.default.resolve(root5, artifactRelative));
+  const root5 = import_node_path9.default.resolve(repoRoot);
+  let current = import_node_path9.default.dirname(import_node_path9.default.resolve(root5, artifactRelative));
   for (let depth = 0; depth < 6; depth += 1) {
     if (!current.startsWith(root5)) break;
-    const relativeDir = toPosix(import_node_path8.default.relative(root5, current)) || ".";
+    const relativeDir = toPosix(import_node_path9.default.relative(root5, current)) || ".";
     const joinRelative = (entry) => relativeDir === "." ? entry : `${relativeDir}/${entry}`;
     for (const basename3 of [...SOURCE_BASENAMES].sort((a5, b5) => a5.localeCompare(b5))) {
       const relative2 = joinRelative(basename3);
@@ -164746,7 +165186,7 @@ async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) 
         continue;
       }
       try {
-        const info2 = await (0, import_promises7.stat)(import_node_path8.default.join(current, basename3));
+        const info2 = await (0, import_promises8.stat)(import_node_path9.default.join(current, basename3));
         if (info2.isFile()) {
           results.add(relative2);
         }
@@ -164755,7 +165195,7 @@ async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) 
     }
     try {
       let inspected = 0;
-      const directory = await (0, import_promises7.opendir)(current);
+      const directory = await (0, import_promises8.opendir)(current);
       for await (const dirent of directory) {
         if (inspected >= MAX_SOURCE_DIR_ENTRIES) {
           break;
@@ -164772,7 +165212,7 @@ async function collectSourceCandidates(repoRoot, artifactRelative, sourceHints) 
     } catch {
     }
     if (current === root5) break;
-    current = import_node_path8.default.dirname(current);
+    current = import_node_path9.default.dirname(current);
   }
   return [...results].sort((a5, b5) => a5.localeCompare(b5));
 }
@@ -164975,7 +165415,7 @@ function extractNestedTemplateRefs(resources, templateRelative) {
     const templateUrl = props.TemplateURL ?? props.Location;
     if (typeof templateUrl === "string" && !isUnresolvedIntrinsic(templateUrl) && !/^https?:\/\//i.test(templateUrl) && !templateUrl.startsWith("s3://")) {
       const base = dirnamePosix(templateRelative);
-      const joined = base ? import_node_path9.default.posix.join(base, templateUrl) : templateUrl;
+      const joined = base ? import_node_path10.default.posix.join(base, templateUrl) : templateUrl;
       refs.push({ logicalId, ref: toPosix(joined) });
     } else if (isUnresolvedIntrinsic(templateUrl) || typeof templateUrl === "string" && (/^https?:\/\//i.test(templateUrl) || templateUrl.startsWith("s3://"))) {
       refs.push({ logicalId, ref: `__unresolved__:${describeUnresolved(templateUrl)}` });
@@ -165153,7 +165593,7 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, errors) {
       markBoundsExceeded(dir);
       break;
     }
-    const absolute = import_node_path9.default.resolve(repoRoot, dir);
+    const absolute = import_node_path10.default.resolve(repoRoot, dir);
     let info2;
     try {
       info2 = await lstat11(absolute);
@@ -165162,7 +165602,7 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, errors) {
     }
     if (info2.isSymbolicLink()) continue;
     if (info2.isFile()) {
-      const base = import_node_path9.default.basename(dir).toLowerCase();
+      const base = import_node_path10.default.basename(dir).toLowerCase();
       if (base === "template.yaml" || base === "template.yml" || base === "template.json") {
         found.add(toPosix(dir));
       }
@@ -165188,7 +165628,7 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, errors) {
       if (lower === "template.yaml" || lower === "template.yml" || lower === "template.json" || lower.endsWith(".yaml") && lower.includes("template") || lower.endsWith(".yml") && lower.includes("template")) {
         const relative2 = dir === "." ? entry : `${dir}/${entry}`;
         try {
-          const entryInfo = await lstat11(import_node_path9.default.resolve(repoRoot, relative2));
+          const entryInfo = await lstat11(import_node_path10.default.resolve(repoRoot, relative2));
           if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
         } catch {
           continue;
@@ -165202,8 +165642,8 @@ async function discoverCloudFormationTemplatePaths(repoRoot, budget, errors) {
 }
 
 // src/lib/iac/cdk.ts
-var import_promises8 = require("node:fs/promises");
-var import_node_path10 = __toESM(require("node:path"), 1);
+var import_promises9 = require("node:fs/promises");
+var import_node_path11 = __toESM(require("node:path"), 1);
 function parseMajorVersion(version) {
   if (!version) return void 0;
   const match = /^(\d+)\./.exec(version.trim());
@@ -165211,7 +165651,7 @@ function parseMajorVersion(version) {
   return Number(match[1]);
 }
 function resolveCdkDirectoryWithinRoot(repoRoot, directory, errors) {
-  const normalized = toPosix(import_node_path10.default.posix.normalize((directory || ".").trim()));
+  const normalized = toPosix(import_node_path11.default.posix.normalize((directory || ".").trim()));
   const relativeDir = normalized === "." ? "" : normalized.replace(/\/+$/, "");
   const checkPath = relativeDir || ".";
   try {
@@ -165297,7 +165737,7 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
         });
         continue;
       }
-      const templateRelative = relativeDir ? toPosix(import_node_path10.default.posix.join(relativeDir, templateFile)) : toPosix(templateFile);
+      const templateRelative = relativeDir ? toPosix(import_node_path11.default.posix.join(relativeDir, templateFile)) : toPosix(templateFile);
       const stackCandidates = await resolveCloudFormationTemplate(
         repoRoot,
         templateRelative,
@@ -165336,7 +165776,7 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
         continue;
       }
       const nestedRaw = toPosix(nestedDir.trim());
-      const nestedJoined = relativeDir ? import_node_path10.default.posix.normalize(import_node_path10.default.posix.join(relativeDir, nestedRaw)) : import_node_path10.default.posix.normalize(nestedRaw);
+      const nestedJoined = relativeDir ? import_node_path11.default.posix.normalize(import_node_path11.default.posix.join(relativeDir, nestedRaw)) : import_node_path11.default.posix.normalize(nestedRaw);
       const nestedRelative = resolveCdkDirectoryWithinRoot(repoRoot, nestedJoined, errors);
       if (nestedRelative === void 0) continue;
       const nested = await resolveAssemblyDirectory(repoRoot, nestedRelative, budget, errors, {
@@ -165374,9 +165814,9 @@ async function resolveAssemblyDirectory(repoRoot, assemblyDir, budget, errors, o
 async function resolveTemplateGlob(repoRoot, directory, budget, errors, options) {
   const relativeDir = resolveCdkDirectoryWithinRoot(repoRoot, directory, errors);
   if (relativeDir === void 0) return [];
-  const absolute = import_node_path10.default.resolve(repoRoot, relativeDir || ".");
+  const absolute = import_node_path11.default.resolve(repoRoot, relativeDir || ".");
   try {
-    const info2 = await (0, import_promises8.lstat)(absolute);
+    const info2 = await (0, import_promises9.lstat)(absolute);
     if (info2.isSymbolicLink() || !info2.isDirectory()) return [];
   } catch {
     return [];
@@ -165396,7 +165836,7 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
   };
   let directoryHandle;
   try {
-    directoryHandle = await (0, import_promises8.opendir)(absolute);
+    directoryHandle = await (0, import_promises9.opendir)(absolute);
   } catch {
     return [];
   }
@@ -165409,9 +165849,9 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
     inspectedEntries += 1;
     const entry = dirent.name;
     if (!entry.endsWith(".template.json")) continue;
-    const relative2 = toPosix(import_node_path10.default.posix.join(relativeDir || ".", entry));
+    const relative2 = toPosix(import_node_path11.default.posix.join(relativeDir || ".", entry));
     try {
-      const entryInfo = await (0, import_promises8.lstat)(import_node_path10.default.resolve(repoRoot, relative2));
+      const entryInfo = await (0, import_promises9.lstat)(import_node_path11.default.resolve(repoRoot, relative2));
       if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
     } catch {
       continue;
@@ -165421,7 +165861,7 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
   matching.sort((a5, b5) => a5.localeCompare(b5));
   const candidates = [];
   for (const entry of matching) {
-    const relative2 = toPosix(import_node_path10.default.posix.join(relativeDir || ".", entry));
+    const relative2 = toPosix(import_node_path11.default.posix.join(relativeDir || ".", entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,
       relative2,
@@ -165438,9 +165878,9 @@ async function resolveTemplateGlob(repoRoot, directory, budget, errors, options)
   return candidates;
 }
 async function resolveCdkAssembly(repoRoot, budget, errors, options = {}) {
-  const cdkOut = import_node_path10.default.resolve(repoRoot, "cdk.out");
+  const cdkOut = import_node_path11.default.resolve(repoRoot, "cdk.out");
   try {
-    const info2 = await (0, import_promises8.lstat)(cdkOut);
+    const info2 = await (0, import_promises9.lstat)(cdkOut);
     if (info2.isSymbolicLink() || !info2.isDirectory()) {
       return [];
     }
@@ -165454,8 +165894,8 @@ async function resolveCdkAssembly(repoRoot, budget, errors, options = {}) {
 }
 
 // src/lib/iac/serverless.ts
-var import_promises9 = require("node:fs/promises");
-var import_node_path11 = __toESM(require("node:path"), 1);
+var import_promises10 = require("node:fs/promises");
+var import_node_path12 = __toESM(require("node:path"), 1);
 var import_yaml6 = __toESM(require_dist(), 1);
 var STATIC_CONFIG_NAMES = ["serverless.yml", "serverless.yaml", "serverless.json"];
 function isJsTsConfig(filename) {
@@ -165465,7 +165905,7 @@ async function loadStaticServerlessConfig(repoRoot, budget, errors) {
   const results = [];
   for (const name of STATIC_CONFIG_NAMES) {
     try {
-      const info2 = await (0, import_promises9.lstat)(import_node_path11.default.resolve(repoRoot, name));
+      const info2 = await (0, import_promises10.lstat)(import_node_path12.default.resolve(repoRoot, name));
       if (info2.isSymbolicLink() || !info2.isFile()) continue;
     } catch {
       continue;
@@ -165599,9 +166039,9 @@ async function extractFromServerlessResources(repoRoot, configRelative, parsed, 
   return candidates;
 }
 async function resolvePackageArtifacts(repoRoot, budget, errors) {
-  const packageDir = import_node_path11.default.resolve(repoRoot, ".serverless");
+  const packageDir = import_node_path12.default.resolve(repoRoot, ".serverless");
   try {
-    const info2 = await (0, import_promises9.lstat)(packageDir);
+    const info2 = await (0, import_promises10.lstat)(packageDir);
     if (info2.isSymbolicLink() || !info2.isDirectory()) return [];
   } catch {
     return [];
@@ -165621,7 +166061,7 @@ async function resolvePackageArtifacts(repoRoot, budget, errors) {
   };
   let directoryHandle;
   try {
-    directoryHandle = await (0, import_promises9.opendir)(packageDir);
+    directoryHandle = await (0, import_promises10.opendir)(packageDir);
   } catch {
     return [];
   }
@@ -165638,9 +166078,9 @@ async function resolvePackageArtifacts(repoRoot, budget, errors) {
       continue;
     }
     if (!/cloudformation|template/i.test(entry)) continue;
-    const relative2 = toPosix(import_node_path11.default.posix.join(".serverless", entry));
+    const relative2 = toPosix(import_node_path12.default.posix.join(".serverless", entry));
     try {
-      const entryInfo = await (0, import_promises9.lstat)(import_node_path11.default.resolve(repoRoot, relative2));
+      const entryInfo = await (0, import_promises10.lstat)(import_node_path12.default.resolve(repoRoot, relative2));
       if (entryInfo.isSymbolicLink() || !entryInfo.isFile()) continue;
     } catch {
       continue;
@@ -165650,7 +166090,7 @@ async function resolvePackageArtifacts(repoRoot, budget, errors) {
   matching.sort((a5, b5) => a5.localeCompare(b5));
   const candidates = [];
   for (const entry of matching) {
-    const relative2 = toPosix(import_node_path11.default.posix.join(".serverless", entry));
+    const relative2 = toPosix(import_node_path12.default.posix.join(".serverless", entry));
     const stackCandidates = await resolveCloudFormationTemplate(
       repoRoot,
       relative2,
@@ -165706,7 +166146,7 @@ function extractDeployedOutputIds(deployedStackOutputs, configRelative) {
 async function resolveServerlessStatic(repoRoot, budget, errors, options = {}) {
   for (const name of ["serverless.ts", "serverless.js", "serverless.mjs", "serverless.cjs"]) {
     try {
-      const info2 = await (0, import_promises9.lstat)(import_node_path11.default.resolve(repoRoot, name));
+      const info2 = await (0, import_promises10.lstat)(import_node_path12.default.resolve(repoRoot, name));
       if (info2.isFile() && !info2.isSymbolicLink()) {
         errors.push({
           code: "unresolved-expression",
@@ -165741,8 +166181,8 @@ async function resolveServerlessStatic(repoRoot, budget, errors, options = {}) {
 }
 
 // src/lib/iac/terraform.ts
-var import_promises10 = require("node:fs/promises");
-var import_node_path12 = __toESM(require("node:path"), 1);
+var import_promises11 = require("node:fs/promises");
+var import_node_path13 = __toESM(require("node:path"), 1);
 var DYNAMIC_EXPR_RE = /\$\{|var\.|local\.|module\.|data\.|terraform\.|path\.|file\s*\(|templatefile\s*\(|jsonencode\s*\(/i;
 var FILE_CALL_RE = /(?:body|filename|definition|openapi_spec|content)\s*=\s*file\(\s*["']([^"']+)["']\s*\)/gi;
 var HEREDOC_BODY_RE = /(?:body|definition|content)\s*=\s*<<-?([A-Za-z_][A-Za-z0-9_]*)\n([\s\S]*?)\n\s*\1/gi;
@@ -166127,7 +166567,7 @@ async function resolveLocalStateArtifact(repoRoot, relative2, budget, errors) {
 }
 async function collectTfPaths(repoRoot, budget, errors) {
   const found = [];
-  const root5 = import_node_path12.default.resolve(repoRoot);
+  const root5 = import_node_path13.default.resolve(repoRoot);
   const maxInspectedEntries = Math.max(0, budget.maxFiles);
   let inspectedEntries = 0;
   let boundsExceededRecorded = false;
@@ -166146,29 +166586,29 @@ async function collectTfPaths(repoRoot, budget, errors) {
   async function walk(current, depth) {
     if (exhausted) return;
     if (depth > budget.maxDepth) {
-      markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+      markBoundsExceeded(import_node_path13.default.relative(root5, current) || ".");
       return;
     }
     if (inspectedEntries >= maxInspectedEntries) {
-      markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+      markBoundsExceeded(import_node_path13.default.relative(root5, current) || ".");
       return;
     }
     try {
-      const info2 = await (0, import_promises10.lstat)(current);
+      const info2 = await (0, import_promises11.lstat)(current);
       if (info2.isSymbolicLink() || !info2.isDirectory()) return;
     } catch {
       return;
     }
     let directoryHandle;
     try {
-      directoryHandle = await (0, import_promises10.opendir)(current);
+      directoryHandle = await (0, import_promises11.opendir)(current);
     } catch {
       return;
     }
     const entries = [];
     for await (const dirent of directoryHandle) {
       if (inspectedEntries >= maxInspectedEntries) {
-        markBoundsExceeded(import_node_path12.default.relative(root5, current) || ".");
+        markBoundsExceeded(import_node_path13.default.relative(root5, current) || ".");
         break;
       }
       inspectedEntries += 1;
@@ -166176,10 +166616,10 @@ async function collectTfPaths(repoRoot, budget, errors) {
       if (entry === ".git" || entry === "node_modules" || entry === ".terraform" || entry === "cdk.out") {
         continue;
       }
-      const full = import_node_path12.default.join(current, entry);
+      const full = import_node_path13.default.join(current, entry);
       let info2;
       try {
-        info2 = await (0, import_promises10.lstat)(full);
+        info2 = await (0, import_promises11.lstat)(full);
       } catch {
         continue;
       }
@@ -166200,7 +166640,7 @@ async function collectTfPaths(repoRoot, budget, errors) {
         continue;
       }
       if (entry.isTfFile) {
-        found.push(toPosix(import_node_path12.default.relative(root5, entry.full)));
+        found.push(toPosix(import_node_path13.default.relative(root5, entry.full)));
       }
     }
   }
@@ -166227,7 +166667,7 @@ async function resolveTerraformStatic(repoRoot, budget, errors, options = {}) {
 // src/lib/iac/resolve.ts
 async function optionalRegularFile(repoRoot, relativePath2) {
   try {
-    const info2 = await (0, import_promises11.lstat)(import_node_path13.default.resolve(repoRoot, relativePath2));
+    const info2 = await (0, import_promises12.lstat)(import_node_path14.default.resolve(repoRoot, relativePath2));
     return !info2.isSymbolicLink() && info2.isFile();
   } catch {
     return false;
@@ -166335,13 +166775,13 @@ function contentBearingIacCandidates(resolution) {
 }
 
 // src/lib/spec/classify-format.ts
-var import_node_path14 = __toESM(require("node:path"), 1);
+var import_node_path15 = __toESM(require("node:path"), 1);
 var import_yaml7 = __toESM(require_dist(), 1);
 function classifySpecContent(content, options = {}) {
   const trimmed = content.trim();
   if (!trimmed) return void 0;
   const pathHint = options.pathHint?.replace(/\\/g, "/");
-  const basename3 = pathHint ? import_node_path14.default.posix.basename(pathHint).toLowerCase() : "";
+  const basename3 = pathHint ? import_node_path15.default.posix.basename(pathHint).toLowerCase() : "";
   if (looksLikeWsdl(trimmed)) {
     return { format: "wsdl", filename: filenameForFormat("wsdl", pathHint) };
   }
@@ -166477,7 +166917,7 @@ function declaredFormatCompatible(declared, detected) {
   }
 }
 function filenameForFormat(format2, pathHint) {
-  const basename3 = pathHint ? import_node_path14.default.posix.basename(pathHint.replace(/\\/g, "/")) : "";
+  const basename3 = pathHint ? import_node_path15.default.posix.basename(pathHint.replace(/\\/g, "/")) : "";
   switch (format2) {
     case "openapi-yaml":
       return basename3 && /\.(ya?ml)$/i.test(basename3) ? basename3 : "index.yaml";
@@ -166579,7 +167019,7 @@ function looksLikeSmithy(content) {
 }
 
 // src/lib/repo/graphql-compose.ts
-var import_node_path15 = __toESM(require("node:path"), 1);
+var import_node_path16 = __toESM(require("node:path"), 1);
 function groupGraphqlByServiceRoot(files) {
   const byRoot = /* @__PURE__ */ new Map();
   for (const file of files) {
@@ -166594,7 +167034,7 @@ function groupGraphqlByServiceRoot(files) {
     const members = (byRoot.get(serviceRoot) ?? []).sort((a5, b5) => a5.path.localeCompare(b5.path));
     if (members.length === 0) continue;
     const preferred = members.find((member2) => {
-      const base = import_node_path15.default.posix.basename(member2.path).toLowerCase();
+      const base = import_node_path16.default.posix.basename(member2.path).toLowerCase();
       return base === "schema.graphql" || base === "schema.gql";
     }) ?? members[0];
     const memberPaths = members.map((member2) => member2.path);
@@ -166618,13 +167058,13 @@ function serviceRootFor(relativePath2) {
   if (parts.length >= 2 && (parts[0] === "packages" || parts[0] === "services" || parts[0] === "apps")) {
     return `${parts[0]}/${parts[1]}`;
   }
-  const dirname3 = import_node_path15.default.posix.dirname(normalized);
+  const dirname3 = import_node_path16.default.posix.dirname(normalized);
   if (dirname3 === "." || dirname3 === "") {
     return ".";
   }
-  const base = import_node_path15.default.posix.basename(dirname3);
+  const base = import_node_path16.default.posix.basename(dirname3);
   if (base === "graphql" || base === "schema" || base === "schemas" || base === "api" || base === "src") {
-    const parent = import_node_path15.default.posix.dirname(dirname3);
+    const parent = import_node_path16.default.posix.dirname(dirname3);
     return parent === "." ? "." : parent;
   }
   return dirname3;
@@ -166634,16 +167074,16 @@ function toPosix2(value) {
 }
 
 // src/lib/repo/smithy-project.ts
-var import_promises12 = require("node:fs/promises");
-var import_node_path16 = __toESM(require("node:path"), 1);
+var import_promises13 = require("node:fs/promises");
+var import_node_path17 = __toESM(require("node:path"), 1);
 var DEFAULT_MAX_FILES = 200;
 var DEFAULT_MAX_FILE_BYTES = 1048576;
 var DEFAULT_MAX_CUMULATIVE_BYTES = 8388608;
 var DEFAULT_MAX_DEPTH = 8;
 async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
-  const resolvedRoot = import_node_path16.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
   const buildRelative = toPosix3(buildRelativePath);
-  const buildAbsolute = import_node_path16.default.resolve(resolvedRoot, buildRelative);
+  const buildAbsolute = import_node_path17.default.resolve(resolvedRoot, buildRelative);
   const empty = {
     buildPath: buildRelative,
     memberPaths: [],
@@ -166664,7 +167104,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
   }
   const state2 = {
     repoRoot: resolvedRoot,
-    buildDir: import_node_path16.default.dirname(buildAbsolute),
+    buildDir: import_node_path17.default.dirname(buildAbsolute),
     buildRelative,
     maxFiles: options.maxFiles ?? DEFAULT_MAX_FILES,
     maxFileBytes: options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
@@ -166674,7 +167114,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
     contents: /* @__PURE__ */ new Map(),
     projections: [],
     errors: [],
-    visiting: /* @__PURE__ */ new Set([import_node_path16.default.resolve(buildAbsolute)]),
+    visiting: /* @__PURE__ */ new Set([import_node_path17.default.resolve(buildAbsolute)]),
     visitedDirs: /* @__PURE__ */ new Set(),
     cumulativeBytes: 0,
     filesRead: 0,
@@ -166742,7 +167182,7 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
       await collectPathEntry(state2, entry, "projection-import");
     }
   }
-  state2.visiting.delete(import_node_path16.default.resolve(buildAbsolute));
+  state2.visiting.delete(import_node_path17.default.resolve(buildAbsolute));
   const memberPaths = [...state2.contents.keys()].sort((a5, b5) => a5.localeCompare(b5));
   const content = memberPaths.map((member2) => state2.contents.get(member2) ?? "").join("\n");
   const evidence = [
@@ -166765,7 +167205,7 @@ async function readSmithyConfigFile(state2, absolute, relative2) {
   }
   let info2;
   try {
-    info2 = await (0, import_promises12.lstat)(absolute);
+    info2 = await (0, import_promises13.lstat)(absolute);
   } catch (error3) {
     state2.errors.push({
       code: "unreadable",
@@ -166808,7 +167248,7 @@ async function readSmithyConfigFile(state2, absolute, relative2) {
   }
   let raw;
   try {
-    raw = await (0, import_promises12.readFile)(absolute, "utf8");
+    raw = await (0, import_promises13.readFile)(absolute, "utf8");
   } catch (error3) {
     state2.errors.push({
       code: "unreadable",
@@ -166850,17 +167290,17 @@ async function collectPathEntry(state2, entry, kind) {
     });
     return;
   }
-  const absolute = import_node_path16.default.resolve(state2.buildDir, entry);
+  const absolute = import_node_path17.default.resolve(state2.buildDir, entry);
   if (!isPathInsideRoot2(state2.repoRoot, absolute)) {
     state2.errors.push({
       code: "path-escape",
-      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute)),
+      path: toPosix3(import_node_path17.default.relative(state2.repoRoot, absolute)),
       message: `Smithy ${kind} escapes repository root: ${entry}`
     });
     return;
   }
-  const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, absolute));
-  const canonicalKey = import_node_path16.default.resolve(absolute);
+  const relative2 = toPosix3(import_node_path17.default.relative(state2.repoRoot, absolute));
+  const canonicalKey = import_node_path17.default.resolve(absolute);
   if (state2.visiting.has(canonicalKey)) {
     state2.errors.push({
       code: "cycle",
@@ -166871,7 +167311,7 @@ async function collectPathEntry(state2, entry, kind) {
   }
   let info2;
   try {
-    info2 = await (0, import_promises12.lstat)(absolute);
+    info2 = await (0, import_promises13.lstat)(absolute);
   } catch {
     state2.errors.push({
       code: "missing-import",
@@ -166889,7 +167329,7 @@ async function collectPathEntry(state2, entry, kind) {
     return;
   }
   if (info2.isFile()) {
-    if (import_node_path16.default.basename(absolute).toLowerCase() === "smithy-build.json") {
+    if (import_node_path17.default.basename(absolute).toLowerCase() === "smithy-build.json") {
       await collectNestedSmithyBuild(state2, absolute, relative2);
       return;
     }
@@ -166913,7 +167353,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
   if (depth > state2.maxDepth) {
     state2.errors.push({
       code: "bounds-exceeded",
-      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+      path: toPosix3(import_node_path17.default.relative(state2.repoRoot, directory)),
       message: `Smithy directory depth exceeded maxDepth=${state2.maxDepth}`
     });
     return;
@@ -166921,20 +167361,20 @@ async function walkSmithyDirectory(state2, directory, depth) {
   if (state2.inspectedEntries >= state2.maxFiles) {
     state2.errors.push({
       code: "bounds-exceeded",
-      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+      path: toPosix3(import_node_path17.default.relative(state2.repoRoot, directory)),
       message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
     });
     return;
   }
-  const canonicalDir = import_node_path16.default.resolve(directory);
+  const canonicalDir = import_node_path17.default.resolve(directory);
   if (state2.visitedDirs.has(canonicalDir)) {
     return;
   }
   if (state2.visiting.has(canonicalDir)) {
     state2.errors.push({
       code: "cycle",
-      path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
-      message: `Cycle detected while walking Smithy directory: ${toPosix3(import_node_path16.default.relative(state2.repoRoot, directory))}`
+      path: toPosix3(import_node_path17.default.relative(state2.repoRoot, directory)),
+      message: `Cycle detected while walking Smithy directory: ${toPosix3(import_node_path17.default.relative(state2.repoRoot, directory))}`
     });
     return;
   }
@@ -166943,7 +167383,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
   try {
     let dirHandle;
     try {
-      dirHandle = await (0, import_promises12.opendir)(directory);
+      dirHandle = await (0, import_promises13.opendir)(directory);
     } catch {
       return;
     }
@@ -166954,7 +167394,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
       if (state2.inspectedEntries >= state2.maxFiles) {
         state2.errors.push({
           code: "bounds-exceeded",
-          path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+          path: toPosix3(import_node_path17.default.relative(state2.repoRoot, directory)),
           message: `Smithy directory entry inspection exceeded maxFiles=${state2.maxFiles}`
         });
         return;
@@ -166963,21 +167403,21 @@ async function walkSmithyDirectory(state2, directory, depth) {
       if (state2.filesRead >= state2.maxFiles) {
         state2.errors.push({
           code: "bounds-exceeded",
-          path: toPosix3(import_node_path16.default.relative(state2.repoRoot, directory)),
+          path: toPosix3(import_node_path17.default.relative(state2.repoRoot, directory)),
           message: `Smithy model file count exceeded maxFiles=${state2.maxFiles}`
         });
         return;
       }
       const entry = dirent.name;
-      const fullPath = import_node_path16.default.join(directory, entry);
-      const info2 = await (0, import_promises12.lstat)(fullPath).catch(() => void 0);
+      const fullPath = import_node_path17.default.join(directory, entry);
+      const info2 = await (0, import_promises13.lstat)(fullPath).catch(() => void 0);
       if (!info2 || info2.isSymbolicLink()) continue;
       if (info2.isDirectory()) {
         await walkSmithyDirectory(state2, fullPath, depth + 1);
         continue;
       }
       if (info2.isFile() && entry.toLowerCase().endsWith(".smithy")) {
-        const relative2 = toPosix3(import_node_path16.default.relative(state2.repoRoot, fullPath));
+        const relative2 = toPosix3(import_node_path17.default.relative(state2.repoRoot, fullPath));
         await readSmithyModelFile(state2, fullPath, relative2);
       }
     }
@@ -166986,7 +167426,7 @@ async function walkSmithyDirectory(state2, directory, depth) {
   }
 }
 async function collectNestedSmithyBuild(state2, absolute, relative2) {
-  const canonical = import_node_path16.default.resolve(absolute);
+  const canonical = import_node_path17.default.resolve(absolute);
   if (state2.visiting.has(canonical)) {
     state2.errors.push({
       code: "cycle",
@@ -167012,7 +167452,7 @@ async function collectNestedSmithyBuild(state2, absolute, relative2) {
       });
       return;
     }
-    const nestedBuildDir = import_node_path16.default.dirname(absolute);
+    const nestedBuildDir = import_node_path17.default.dirname(absolute);
     const previousBuildDir = state2.buildDir;
     const previousBuildRelative = state2.buildRelative;
     state2.buildDir = nestedBuildDir;
@@ -167068,7 +167508,7 @@ async function readSmithyModelFile(state2, absolute, relative2) {
 async function readBoundedSmithyModelBytes(absolute, relative2, state2) {
   let handle;
   try {
-    handle = await (0, import_promises12.open)(absolute, "r");
+    handle = await (0, import_promises13.open)(absolute, "r");
   } catch (error3) {
     return {
       ok: false,
@@ -167175,8 +167615,8 @@ function asStringArray(value) {
   return value.filter((entry) => typeof entry === "string");
 }
 function isPathInsideRoot2(root5, target) {
-  const relative2 = import_node_path16.default.relative(import_node_path16.default.resolve(root5), import_node_path16.default.resolve(target));
-  return relative2 === "" || !relative2.startsWith("..") && !import_node_path16.default.isAbsolute(relative2);
+  const relative2 = import_node_path17.default.relative(import_node_path17.default.resolve(root5), import_node_path17.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path17.default.isAbsolute(relative2);
 }
 function toPosix3(value) {
   return value.replace(/\\/g, "/");
@@ -167445,12 +167885,12 @@ function toPosix4(value) {
   return value.replace(/\\/g, "/");
 }
 function isPathInsideRoot3(root5, target) {
-  const relative2 = import_node_path17.default.relative(import_node_path17.default.resolve(root5), import_node_path17.default.resolve(target));
-  return relative2 === "" || !relative2.startsWith("..") && !import_node_path17.default.isAbsolute(relative2);
+  const relative2 = import_node_path18.default.relative(import_node_path18.default.resolve(root5), import_node_path18.default.resolve(target));
+  return relative2 === "" || !relative2.startsWith("..") && !import_node_path18.default.isAbsolute(relative2);
 }
 async function isRegularNonSymlinkFile(absolutePath) {
   try {
-    const link = await (0, import_promises13.lstat)(absolutePath);
+    const link = await (0, import_promises14.lstat)(absolutePath);
     if (link.isSymbolicLink()) {
       return false;
     }
@@ -167461,7 +167901,7 @@ async function isRegularNonSymlinkFile(absolutePath) {
 }
 function detectRepoSpec(candidate, content) {
   const normalized = toPosix4(candidate).toLowerCase();
-  const basename3 = import_node_path17.default.posix.basename(normalized);
+  const basename3 = import_node_path18.default.posix.basename(normalized);
   let type;
   if ((basename3.endsWith(".graphql") || basename3.endsWith(".gql")) && isLikelyGraphqlSchema(content)) {
     type = "graphql";
@@ -167502,7 +167942,7 @@ function isSpecLikeFilename(filename) {
 }
 function specCandidateScore(candidate, type, artifactClass) {
   const normalized = toPosix4(candidate).toLowerCase();
-  const basename3 = import_node_path17.default.posix.basename(normalized);
+  const basename3 = import_node_path18.default.posix.basename(normalized);
   let score = 0;
   if (artifactClass === "authored") score += 500;
   if (DIRECT_SPEC_CANDIDATES.includes(normalized) && basename3 !== "smithy-build.json") score += 200;
@@ -167525,7 +167965,7 @@ function specCandidateScore(candidate, type, artifactClass) {
   return score;
 }
 async function inventoryRepoSpecs(repoRoot, options = {}) {
-  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path18.default.resolve(repoRoot);
   const budget = {
     files: 0,
     cumulativeBytes: 0,
@@ -167545,7 +167985,7 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
     const posix = toPosix4(candidate);
     return posix === scopeRoot || posix.startsWith(`${scopeRoot}/`) || serviceRootFor(posix) === scopeRoot;
   }) : pathCandidates;
-  const smithyBuildPaths = scopedPaths.filter((candidate) => import_node_path17.default.posix.basename(toPosix4(candidate)).toLowerCase() === "smithy-build.json");
+  const smithyBuildPaths = scopedPaths.filter((candidate) => import_node_path18.default.posix.basename(toPosix4(candidate)).toLowerCase() === "smithy-build.json");
   const smithyMemberPaths = /* @__PURE__ */ new Set();
   const raw = [];
   for (const buildPath of smithyBuildPaths.sort((a5, b5) => a5.localeCompare(b5))) {
@@ -167582,10 +168022,10 @@ async function inventoryRepoSpecs(repoRoot, options = {}) {
   const singleFileCandidates = [];
   for (const candidate of scopedPaths.sort((a5, b5) => a5.localeCompare(b5))) {
     const relative2 = toPosix4(candidate);
-    const basename3 = import_node_path17.default.posix.basename(relative2).toLowerCase();
+    const basename3 = import_node_path18.default.posix.basename(relative2).toLowerCase();
     if (basename3 === "smithy-build.json") continue;
     if (relative2.endsWith(".smithy") && smithyMemberPaths.has(relative2)) continue;
-    const absolute = import_node_path17.default.resolve(resolvedRoot, relative2);
+    const absolute = import_node_path18.default.resolve(resolvedRoot, relative2);
     if (!isPathInsideRoot3(resolvedRoot, absolute)) {
       errors.push({
         code: "path-escape",
@@ -167703,7 +168143,7 @@ async function readBoundedFile(repoRoot, relative2, budget, errors) {
       fieldName: "repo-spec-candidate",
       limits: { maxBytesPerFile: budget.maxFileBytes }
     });
-    content = await (0, import_promises13.readFile)(resolved.canonicalPath, "utf8");
+    content = await (0, import_promises14.readFile)(resolved.canonicalPath, "utf8");
   } catch (error3) {
     errors.push({
       code: "unreadable",
@@ -167744,7 +168184,7 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
       budget.truncated = true;
       break;
     }
-    const root5 = import_node_path17.default.resolve(repoRoot, dir);
+    const root5 = import_node_path18.default.resolve(repoRoot, dir);
     if (!isPathInsideRoot3(repoRoot, root5)) {
       errors.push({
         code: "path-escape",
@@ -167753,7 +168193,7 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
       });
       continue;
     }
-    const fileStat = await (0, import_promises13.lstat)(root5).catch(() => void 0);
+    const fileStat = await (0, import_promises14.lstat)(root5).catch(() => void 0);
     if (!fileStat) continue;
     if (fileStat.isSymbolicLink()) {
       errors.push({
@@ -167764,8 +168204,8 @@ async function collectSpecCandidatePaths(repoRoot, budget, errors) {
       continue;
     }
     if (fileStat.isFile()) {
-      const relative2 = toPosix4(import_node_path17.default.relative(repoRoot, root5));
-      if (isSpecLikeFilename(import_node_path17.default.basename(relative2))) {
+      const relative2 = toPosix4(import_node_path18.default.relative(repoRoot, root5));
+      if (isSpecLikeFilename(import_node_path18.default.basename(relative2))) {
         candidates.add(relative2);
       }
       continue;
@@ -167787,7 +168227,7 @@ async function walkSpecCandidates(repoRoot, current, budget, depth) {
   const results = [];
   let directory;
   try {
-    directory = await (0, import_promises13.opendir)(current);
+    directory = await (0, import_promises14.opendir)(current);
   } catch {
     return [];
   }
@@ -167800,11 +168240,11 @@ async function walkSpecCandidates(repoRoot, current, budget, depth) {
     budget.inspectedEntries += 1;
     const entry = dirent.name;
     if (SKIP_DIRS.has(entry)) continue;
-    const fullPath = import_node_path17.default.join(current, entry);
+    const fullPath = import_node_path18.default.join(current, entry);
     if (!isPathInsideRoot3(repoRoot, fullPath)) {
       continue;
     }
-    const info2 = await (0, import_promises13.lstat)(fullPath).catch(() => void 0);
+    const info2 = await (0, import_promises14.lstat)(fullPath).catch(() => void 0);
     if (!info2 || info2.isSymbolicLink()) continue;
     if (info2.isDirectory()) {
       results.push(...await walkSpecCandidates(repoRoot, fullPath, budget, depth + 1));
@@ -167812,7 +168252,7 @@ async function walkSpecCandidates(repoRoot, current, budget, depth) {
     }
     if (info2.isFile() && isSpecLikeFilename(entry)) {
       budget.files += 1;
-      results.push(toPosix4(import_node_path17.default.relative(repoRoot, fullPath)));
+      results.push(toPosix4(import_node_path18.default.relative(repoRoot, fullPath)));
     }
   }
   return results;
@@ -167826,15 +168266,15 @@ var CFN_ARTIFACT_API_TYPES = {
 var MAX_LOCAL_CDK_OUT_TEMPLATES = 40;
 var MAX_LOCAL_CDK_OUT_ENTRIES = 256;
 async function findLocalCfnArtifactSpecs(repoRoot) {
-  const resolvedRoot = import_node_path17.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path18.default.resolve(repoRoot);
   const artifactPaths = [];
-  const cdkOutDir = import_node_path17.default.join(resolvedRoot, "cdk.out");
+  const cdkOutDir = import_node_path18.default.join(resolvedRoot, "cdk.out");
   try {
-    const cdkLink = await (0, import_promises13.lstat)(cdkOutDir);
+    const cdkLink = await (0, import_promises14.lstat)(cdkOutDir);
     if (!cdkLink.isSymbolicLink() && cdkLink.isDirectory()) {
       const templateNames = [];
       let inspected = 0;
-      const directory = await (0, import_promises13.opendir)(cdkOutDir);
+      const directory = await (0, import_promises14.opendir)(cdkOutDir);
       for await (const dirent of directory) {
         if (inspected >= MAX_LOCAL_CDK_OUT_ENTRIES) {
           break;
@@ -167846,19 +168286,19 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
         templateNames.push(dirent.name);
       }
       for (const entry of templateNames.sort((a5, b5) => a5.localeCompare(b5)).slice(0, MAX_LOCAL_CDK_OUT_TEMPLATES)) {
-        artifactPaths.push(import_node_path17.default.posix.join("cdk.out", entry));
+        artifactPaths.push(import_node_path18.default.posix.join("cdk.out", entry));
       }
     }
   } catch {
   }
-  const samTemplate = import_node_path17.default.posix.join(".aws-sam", "build", "template.yaml");
-  if (await isRegularNonSymlinkFile(import_node_path17.default.join(resolvedRoot, samTemplate))) {
+  const samTemplate = import_node_path18.default.posix.join(".aws-sam", "build", "template.yaml");
+  if (await isRegularNonSymlinkFile(import_node_path18.default.join(resolvedRoot, samTemplate))) {
     artifactPaths.push(samTemplate);
   }
   const specs = [];
   for (const artifactPath of artifactPaths.sort((a5, b5) => a5.localeCompare(b5))) {
-    const absolutePath = import_node_path17.default.join(resolvedRoot, artifactPath);
-    if (!absolutePath.startsWith(resolvedRoot + import_node_path17.default.sep)) {
+    const absolutePath = import_node_path18.default.join(resolvedRoot, artifactPath);
+    if (!absolutePath.startsWith(resolvedRoot + import_node_path18.default.sep)) {
       continue;
     }
     if (!await isRegularNonSymlinkFile(absolutePath)) {
@@ -167866,7 +168306,7 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
     }
     let template;
     try {
-      template = parseCfnTemplateBody(await (0, import_promises13.readFile)(absolutePath, "utf8"));
+      template = parseCfnTemplateBody(await (0, import_promises14.readFile)(absolutePath, "utf8"));
     } catch {
       continue;
     }
@@ -167907,12 +168347,12 @@ async function findLocalCfnArtifactSpecs(repoRoot) {
 }
 
 // src/lib/repo/signals.ts
-var import_promises15 = require("node:fs/promises");
-var import_node_path19 = __toESM(require("node:path"), 1);
+var import_promises16 = require("node:fs/promises");
+var import_node_path20 = __toESM(require("node:path"), 1);
 
 // src/lib/repo/scan.ts
-var import_promises14 = require("node:fs/promises");
-var import_node_path18 = __toESM(require("node:path"), 1);
+var import_promises15 = require("node:fs/promises");
+var import_node_path19 = __toESM(require("node:path"), 1);
 var SKIP_DIRS2 = /* @__PURE__ */ new Set([
   ".git",
   "node_modules",
@@ -167969,7 +168409,7 @@ async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value:
   const results = [];
   let directory;
   try {
-    directory = await (0, import_promises14.opendir)(root5);
+    directory = await (0, import_promises15.opendir)(root5);
   } catch {
     return depth === 0 ? [] : results;
   }
@@ -167978,8 +168418,8 @@ async function findIaCFiles(root5, extensions, depth = 0, globalCount = { value:
     scanState.inspectedEntries += 1;
     const entry = dirent.name;
     if (SKIP_DIRS2.has(entry)) continue;
-    const fullPath = import_node_path18.default.join(root5, entry);
-    const info2 = await (0, import_promises14.stat)(fullPath).catch(() => null);
+    const fullPath = import_node_path19.default.join(root5, entry);
+    const info2 = await (0, import_promises15.stat)(fullPath).catch(() => null);
     if (!info2) continue;
     if (info2.isDirectory()) {
       const sub = await findIaCFiles(fullPath, extensions, depth + 1, scanState.files, limits, scanState);
@@ -168020,7 +168460,7 @@ async function resolveSignalsStaticIac(repoRoot, staticIac) {
 }
 async function readRepoFile(repoRoot, targetPath, fieldName) {
   const resolved = await resolveLocalReadWithinRoot(repoRoot, targetPath, { fieldName });
-  return (0, import_promises15.readFile)(resolved.canonicalPath, "utf8");
+  return (0, import_promises16.readFile)(resolved.canonicalPath, "utf8");
 }
 function unique(values) {
   return [...new Set(values.filter((value) => value.trim().length > 0))];
@@ -168173,11 +168613,11 @@ function detectProviderHints(content) {
   return [...found];
 }
 function toEvidencePath(repoRoot, filePath) {
-  const relative2 = import_node_path19.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path20.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2;
 }
 function shouldDetectProviderHintsForFile(filePath) {
-  const ext = import_node_path19.default.extname(filePath).toLowerCase();
+  const ext = import_node_path20.default.extname(filePath).toLowerCase();
   return ext !== ".md" && ext !== ".markdown";
 }
 var FIXED_INSPECT_FILES = [
@@ -168192,16 +168632,16 @@ var FIXED_INSPECT_FILES = [
 ];
 function isKnownSignalConfigFile(relativePath2) {
   const normalized = relativePath2.replace(/\\/g, "/").toLowerCase();
-  const basename3 = import_node_path19.default.basename(normalized);
+  const basename3 = import_node_path20.default.basename(normalized);
   return /^\.github\/workflows\/[^/]+\.ya?ml$/.test(normalized) || normalized === ".gitlab-ci.yml" || normalized === ".circleci/config.yml" || normalized === ".buildkite/pipeline.yml" || /^serverless\.(?:ya?ml|json|ts|js)$/.test(basename3) || /(^|\/)template\.(?:ya?ml|json)$/.test(normalized) || basename3 === "samconfig.toml" || basename3 === "redocly.yaml" || basename3 === "redocly.yml" || basename3 === "swagger-jsdoc.js" || basename3 === "swagger-jsdoc.ts" || basename3 === "tsoa.json" || basename3 === "openapi-generator.json" || basename3 === "openapi-generator.yaml" || basename3 === "openapi-generator.yml" || basename3 === "pulumi.yaml" || basename3 === "docker-compose.yml" || basename3 === "docker-compose.yaml" || basename3 === "compose.yml" || basename3 === "compose.yaml" || basename3 === "values.yaml" || basename3 === "values.yml" || basename3 === "chart.yaml" || basename3 === "chart.yml" || basename3 === "task-definition.json" || basename3 === "ecs-task-definition.json" || basename3 === "ecs-service.json" || basename3 === "service-definition.json" || basename3 === "application.yml" || basename3 === "application.yaml" || basename3 === "application.properties" || /^appsettings(?:\.[^.]+)?\.json$/.test(basename3) || /(^|\/)(?:helm|charts)\/.+\.ya?ml$/.test(normalized) || /(^|\/)(?:k8s|kubernetes|manifests)\/.+\.ya?ml$/.test(normalized) || /(^|\/)ecs\/.+\.json$/.test(normalized);
 }
 async function collectInspectFiles(repoRoot) {
   const discovered = await findIaCFiles(repoRoot, [".yml", ".yaml", ".json", ".ts", ".js", ".toml", ".properties"]);
-  const discoveredRelative = discovered.map((filePath) => import_node_path19.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
+  const discoveredRelative = discovered.map((filePath) => import_node_path20.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter(isKnownSignalConfigFile);
   return unique([...FIXED_INSPECT_FILES, ...discoveredRelative]);
 }
 function isSnsEventContractFile(filePath) {
-  const lower = import_node_path19.default.basename(filePath).toLowerCase();
+  const lower = import_node_path20.default.basename(filePath).toLowerCase();
   return lower === "asyncapi.yaml" || lower === "asyncapi.yml" || lower === "asyncapi.json" || lower.endsWith(".schema.json");
 }
 async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expectedGatewayIds = [], options = {}) {
@@ -168240,7 +168680,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
           providerHintSet.add(hint);
           evidence.push(`Detected ${hint} provider hint in ${file}`);
           if (hint === "sns") {
-            snsEvidenceRoots.add(import_node_path19.default.dirname(import_node_path19.default.resolve(repoRoot, file)));
+            snsEvidenceRoots.add(import_node_path20.default.dirname(import_node_path20.default.resolve(repoRoot, file)));
           }
         }
         if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168291,7 +168731,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
       providerHintSet.add(hint);
       evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
       if (hint === "sns") {
-        snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
+        snsEvidenceRoots.add(import_node_path20.default.dirname(filePath));
       }
     }
     if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168321,7 +168761,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path20.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -168357,7 +168797,7 @@ async function collectRepoSignals(repoRoot, repoSlug, expectedServiceName, expec
         providerHintSet.add(hint);
         evidence.push(`Detected ${hint} provider hint in ${toEvidencePath(repoRoot, filePath)}`);
         if (hint === "sns") {
-          snsEvidenceRoots.add(import_node_path19.default.dirname(filePath));
+          snsEvidenceRoots.add(import_node_path20.default.dirname(filePath));
         }
       }
       if (detectSnsEventBridgeBridgePattern(content)) {
@@ -169157,9 +169597,9 @@ function postmanToOpenApi(content, title) {
   const document = baseDocument(stringValue(recordValue2(parsed.info).name) || title);
   for (const request of postmanRequests(parsed.item)) {
     const method = request.method.toLowerCase();
-    const path24 = request.path;
+    const path25 = request.path;
     const operation2 = {
-      operationId: safeOperationName2(`${method} ${path24}`),
+      operationId: safeOperationName2(`${method} ${path25}`),
       summary: request.name,
       responses: postmanResponsesToOpenApi(request.responses)
     };
@@ -169181,8 +169621,8 @@ function postmanToOpenApi(content, title) {
         }
       };
     }
-    document.paths[path24] = {
-      ...recordValue2(document.paths[path24]),
+    document.paths[path25] = {
+      ...recordValue2(document.paths[path25]),
       [method]: operation2
     };
   }
@@ -169592,16 +170032,16 @@ function postmanPath(url) {
     }
   }
   const record = recordValue2(url);
-  const path24 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
-  if (!path24) return "/";
-  if (/^https?:\/\//i.test(path24)) {
+  const path25 = Array.isArray(record.path) ? record.path.map((entry) => String(entry)).join("/") : stringValue(record.raw);
+  if (!path25) return "/";
+  if (/^https?:\/\//i.test(path25)) {
     try {
-      return new URL(path24).pathname || "/";
+      return new URL(path25).pathname || "/";
     } catch {
       return "/";
     }
   }
-  return path24.startsWith("/") ? path24 : `/${path24}`;
+  return path25.startsWith("/") ? path25 : `/${path25}`;
 }
 function postmanQueryParameters(url) {
   const record = recordValue2(url);
@@ -170366,11 +170806,11 @@ function pipeDocument(candidate, detail) {
 function apiDestinationDocument(candidate) {
   const endpoint = parseUrl2(candidate.meta.invocationEndpoint);
   const method = (candidate.meta.httpMethod || "POST").toLowerCase();
-  const path24 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
+  const path25 = endpoint?.pathname && endpoint.pathname !== "" ? endpoint.pathname : "/";
   const document = baseDocument2(candidate.name);
   document.servers = endpoint ? [{ url: `${endpoint.protocol}//${endpoint.host}` }] : [];
   document.paths = {
-    [path24]: {
+    [path25]: {
       [method]: {
         operationId: `${camel(candidate.name)}ApiDestination`,
         summary: `EventBridge API destination ${candidate.name}`,
@@ -170574,13 +171014,13 @@ var AlbListenerRulesProvider = class {
       },
       servers: candidate.meta.loadBalancerDnsName ? [{ url: `https://${candidate.meta.loadBalancerDnsName}` }] : [],
       paths: Object.fromEntries(
-        paths.map((path24) => [
-          path24,
+        paths.map((path25) => [
+          path25,
           Object.fromEntries(
             methods.map((method) => [
               method.toLowerCase(),
               {
-                operationId: `${method.toLowerCase()}${camelPath(path24)}AlbRule`,
+                operationId: `${method.toLowerCase()}${camelPath(path25)}AlbRule`,
                 summary: `ALB listener rule ${candidate.meta.priority || candidate.name}`,
                 parameters: [
                   ...queryParams.map((param) => ({
@@ -170854,7 +171294,7 @@ var StepFunctionsProvider = class {
   async exportSpec(candidate, _options) {
     void _options;
     const detail = await this.client.describeStateMachine(candidate.meta.stateMachineArn || candidate.id);
-    const path24 = `/step-functions/${safePath(detail.name)}/executions`;
+    const path25 = `/step-functions/${safePath(detail.name)}/executions`;
     const document = {
       openapi: "3.1.0",
       info: {
@@ -170863,7 +171303,7 @@ var StepFunctionsProvider = class {
         description: "Partial Step Functions surface derived from Amazon States Language workflow metadata."
       },
       paths: {
-        [path24]: {
+        [path25]: {
           post: {
             operationId: `start${pascal2(detail.name)}Execution`,
             summary: `Start ${detail.name} state machine execution`,
@@ -170914,7 +171354,7 @@ function pascal2(value) {
 }
 
 // src/lib/fetch/spec-fetcher.ts
-var import_promises16 = require("node:dns/promises");
+var import_promises17 = require("node:dns/promises");
 var import_node_net2 = require("node:net");
 var import_undici2 = __toESM(require_undici(), 1);
 
@@ -171070,7 +171510,7 @@ function sameOrigin(a5, b5) {
   return a5.protocol === b5.protocol && a5.hostname === b5.hostname && a5.port === b5.port;
 }
 async function defaultLookup(hostname) {
-  const results = await (0, import_promises16.lookup)(hostname, { all: true, verbatim: true });
+  const results = await (0, import_promises17.lookup)(hostname, { all: true, verbatim: true });
   return results.map((entry) => ({ address: entry.address, family: entry.family }));
 }
 async function resolvePublicAddress(parsed, lookupFn) {
@@ -171408,13 +171848,13 @@ var SsmProvider = class {
 // src/lib/providers/sns.ts
 var import_node_child_process = require("node:child_process");
 var import_node_fs3 = require("node:fs");
-var import_promises19 = require("node:fs/promises");
-var import_node_path22 = __toESM(require("node:path"), 1);
+var import_promises20 = require("node:fs/promises");
+var import_node_path23 = __toESM(require("node:path"), 1);
 var import_yaml13 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
-var import_promises17 = require("node:fs/promises");
-var import_node_path20 = __toESM(require("node:path"), 1);
+var import_promises18 = require("node:fs/promises");
+var import_node_path21 = __toESM(require("node:path"), 1);
 var import_yaml11 = __toESM(require_dist(), 1);
 async function detectCatalogApis(repoRoot, options = {}) {
   const candidates = await catalogCandidates(repoRoot);
@@ -171426,7 +171866,7 @@ async function detectCatalogApis(repoRoot, options = {}) {
         fieldName: "catalog-info",
         countAsReference: false
       });
-      content = await (0, import_promises17.readFile)(resolved.canonicalPath, "utf8");
+      content = await (0, import_promises18.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       continue;
     }
@@ -171452,7 +171892,7 @@ function scopeCatalogApis(apis, options) {
       return true;
     }
     if (api.catalogPath) {
-      const catalogDir = import_node_path20.default.posix.dirname(api.catalogPath.replace(/\\/g, "/"));
+      const catalogDir = import_node_path21.default.posix.dirname(api.catalogPath.replace(/\\/g, "/"));
       if (catalogDir === serviceRoot || catalogDir.startsWith(`${serviceRoot}/`)) {
         return true;
       }
@@ -171471,7 +171911,7 @@ function scopeCatalogApis(apis, options) {
 }
 function isUnderServiceRoot(relativePath2, serviceRoot) {
   const normalized = relativePath2.replace(/\\/g, "/");
-  const dir = import_node_path20.default.posix.dirname(normalized);
+  const dir = import_node_path21.default.posix.dirname(normalized);
   return dir === serviceRoot || dir.startsWith(`${serviceRoot}/`) || normalized.startsWith(`${serviceRoot}/`);
 }
 async function catalogCandidates(repoRoot) {
@@ -171479,7 +171919,7 @@ async function catalogCandidates(repoRoot) {
   return [.../* @__PURE__ */ new Set([
     "catalog-info.yaml",
     "catalog-info.yml",
-    ...discovered.map((filePath) => import_node_path20.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
+    ...discovered.map((filePath) => import_node_path21.default.relative(repoRoot, filePath).replace(/\\/g, "/")).filter((filePath) => /(^|\/)catalog-info\.ya?ml$/.test(filePath))
   ])];
 }
 function extractCatalogApis(catalogPath, docs) {
@@ -171552,19 +171992,19 @@ function looksLikeInlineDocumentObject(def) {
 }
 function resolveCatalogPath(catalogPath, reference) {
   const normalized = reference.replace(/\\/g, "/");
-  if (import_node_path20.default.posix.isAbsolute(normalized)) {
+  if (import_node_path21.default.posix.isAbsolute(normalized)) {
     return normalized.replace(/^\/+/, "");
   }
-  const catalogDir = import_node_path20.default.posix.dirname(catalogPath);
+  const catalogDir = import_node_path21.default.posix.dirname(catalogPath);
   if (catalogDir === ".") {
     return normalized;
   }
-  return import_node_path20.default.posix.normalize(import_node_path20.default.posix.join(catalogDir, normalized));
+  return import_node_path21.default.posix.normalize(import_node_path21.default.posix.join(catalogDir, normalized));
 }
 
 // src/lib/providers/sns-code-derived.ts
-var import_promises18 = require("node:fs/promises");
-var import_node_path21 = __toESM(require("node:path"), 1);
+var import_promises19 = require("node:fs/promises");
+var import_node_path22 = __toESM(require("node:path"), 1);
 var import_yaml12 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
@@ -171573,7 +172013,7 @@ function normalizeHint(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function relativePath(repoRoot, filePath) {
-  return import_node_path21.default.relative(repoRoot, filePath).replace(/\\/g, "/");
+  return import_node_path22.default.relative(repoRoot, filePath).replace(/\\/g, "/");
 }
 function hasTopicLinkage(content, hints) {
   const lowered = content.toLowerCase();
@@ -171626,9 +172066,9 @@ async function walkFiles(root5) {
   while (queue.length > 0) {
     const current = queue.pop();
     if (!current) continue;
-    const entries = await (0, import_promises18.readdir)(current, { withFileTypes: true }).catch(() => []);
+    const entries = await (0, import_promises19.readdir)(current, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      const fullPath = import_node_path21.default.join(current, entry.name);
+      const fullPath = import_node_path22.default.join(current, entry.name);
       if (entry.isDirectory()) {
         if (!IGNORED_DIRS.has(entry.name)) {
           queue.push(fullPath);
@@ -171644,7 +172084,7 @@ async function walkFiles(root5) {
 }
 async function fileExists(filePath) {
   try {
-    await (0, import_promises18.access)(filePath);
+    await (0, import_promises19.access)(filePath);
     return true;
   } catch {
     return false;
@@ -171705,7 +172145,7 @@ function detectAsyncApiFormat(content, filePath) {
     return {
       content,
       format: filePath.endsWith(".json") ? "asyncapi-json" : "asyncapi-yaml",
-      filename: import_node_path21.default.basename(filePath),
+      filename: import_node_path22.default.basename(filePath),
       evidence: []
     };
   } catch {
@@ -171728,14 +172168,14 @@ var resolveCodeDerivedContract = async ({
     ].filter(Boolean)
   );
   const springwolfPaths = [
-    import_node_path21.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
-    import_node_path21.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
+    import_node_path22.default.join(repoRoot, "build", "springwolf", "asyncapi.json"),
+    import_node_path22.default.join(repoRoot, "target", "springwolf", "asyncapi.json")
   ];
   for (const springwolfPath of springwolfPaths) {
     if (!await fileExists(springwolfPath)) {
       continue;
     }
-    const content = await (0, import_promises18.readFile)(springwolfPath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises19.readFile)(springwolfPath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -171751,15 +172191,15 @@ var resolveCodeDerivedContract = async ({
     });
   }
   const generatedAsyncApiPaths = [
-    import_node_path21.default.join(repoRoot, "generated", "asyncapi.json"),
-    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yaml"),
-    import_node_path21.default.join(repoRoot, "generated", "asyncapi.yml")
+    import_node_path22.default.join(repoRoot, "generated", "asyncapi.json"),
+    import_node_path22.default.join(repoRoot, "generated", "asyncapi.yaml"),
+    import_node_path22.default.join(repoRoot, "generated", "asyncapi.yml")
   ];
   for (const generatedPath of generatedAsyncApiPaths) {
     if (!await fileExists(generatedPath)) {
       continue;
     }
-    const content = await (0, import_promises18.readFile)(generatedPath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises19.readFile)(generatedPath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -171776,11 +172216,11 @@ var resolveCodeDerivedContract = async ({
   }
   const files = await walkFiles(repoRoot);
   for (const filePath of files) {
-    const extension = import_node_path21.default.extname(filePath).toLowerCase();
+    const extension = import_node_path22.default.extname(filePath).toLowerCase();
     if (!CODE_EXTENSIONS.has(extension) && !JAVA_EXTENSIONS.has(extension)) {
       continue;
     }
-    const content = await (0, import_promises18.readFile)(filePath, "utf8").catch(() => void 0);
+    const content = await (0, import_promises19.readFile)(filePath, "utf8").catch(() => void 0);
     if (!content) {
       continue;
     }
@@ -171796,7 +172236,7 @@ var resolveCodeDerivedContract = async ({
         try {
           resolvedRefPath = resolvePathWithinRoot(
             repoRoot,
-            import_node_path21.default.resolve(import_node_path21.default.dirname(filePath), refPath),
+            import_node_path22.default.resolve(import_node_path22.default.dirname(filePath), refPath),
             `code-derived JSON schema import in ${displayPath}`
           );
         } catch {
@@ -171805,7 +172245,7 @@ var resolveCodeDerivedContract = async ({
           );
           continue;
         }
-        const schemaContent = await (0, import_promises18.readFile)(resolvedRefPath, "utf8").catch(() => void 0);
+        const schemaContent = await (0, import_promises19.readFile)(resolvedRefPath, "utf8").catch(() => void 0);
         if (!schemaContent) {
           continue;
         }
@@ -171821,7 +172261,7 @@ var resolveCodeDerivedContract = async ({
             result: {
               content: schemaContent,
               format: "json-schema",
-              filename: import_node_path21.default.basename(resolvedRefPath),
+              filename: import_node_path22.default.basename(resolvedRefPath),
               evidence: []
             }
           });
@@ -172133,7 +172573,7 @@ function normalizeServiceKey(value) {
   return value.replace(/\.fifo$/i, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").replace(/-+/g, "-").toLowerCase();
 }
 function toEvidencePath2(repoRoot, filePath) {
-  const relative2 = import_node_path22.default.relative(repoRoot, filePath);
+  const relative2 = import_node_path23.default.relative(repoRoot, filePath);
   return relative2.startsWith("..") ? filePath : relative2.replace(/\\/g, "/");
 }
 function groupByService2(entries) {
@@ -172266,7 +172706,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
         fieldName: "contract-registry-path",
         countAsReference: false
       });
-      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
+      content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       continue;
     }
@@ -172723,12 +173163,12 @@ function normalizePathForMatch(value) {
   return value.replace(/\\/g, "/").replace(/^\/+/, "");
 }
 function isGeneratedSearchRootPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path23.default.relative(repoRoot, filePath));
   return GENERATED_ROOT_PREFIXES.some((prefix) => relative2.startsWith(prefix));
 }
 function isGeneratedAsyncApiPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
-  const base = import_node_path22.default.basename(relative2).toLowerCase();
+  const relative2 = normalizePathForMatch(import_node_path23.default.relative(repoRoot, filePath));
+  const base = import_node_path23.default.basename(relative2).toLowerCase();
   const isDotAsyncApi = base.endsWith(".asyncapi.yaml") || base.endsWith(".asyncapi.yml") || base.endsWith(".asyncapi.json");
   const isNamedAsyncApi = base === "asyncapi.yaml" || base === "asyncapi.yml" || base === "asyncapi.json";
   if (relative2.startsWith("spec/") || relative2.startsWith("contracts/")) {
@@ -172761,7 +173201,7 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
       truncationEvidence = `SNS generated-artifact search truncated at maxVisited=${GENERATED_ARTIFACT_MAX_VISITED}`;
       return;
     }
-    const entries = await (0, import_promises19.readdir)(currentPath, { withFileTypes: true }).catch(() => []);
+    const entries = await (0, import_promises20.readdir)(currentPath, { withFileTypes: true }).catch(() => []);
     const sorted = [...entries].sort((left, right) => left.name.localeCompare(right.name));
     for (const entry of sorted) {
       if (truncated) {
@@ -172773,7 +173213,7 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
         return;
       }
       visited += 1;
-      const fullPath = import_node_path22.default.join(currentPath, entry.name);
+      const fullPath = import_node_path23.default.join(currentPath, entry.name);
       if (entry.isSymbolicLink()) {
         continue;
       }
@@ -172787,7 +173227,7 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
       if (!entry.isFile()) {
         continue;
       }
-      if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path22.default.extname(entry.name).toLowerCase())) {
+      if (GENERATED_ASYNCAPI_EXTENSIONS.has(import_node_path23.default.extname(entry.name).toLowerCase())) {
         files.push(fullPath);
       }
     }
@@ -172803,24 +173243,24 @@ async function collectGeneratedArtifactFilesBounded(rootPath) {
   return { files, truncated: false, evidence: [] };
 }
 function isFrameworkOutputPath(repoRoot, filePath) {
-  const relative2 = normalizePathForMatch(import_node_path22.default.relative(repoRoot, filePath));
+  const relative2 = normalizePathForMatch(import_node_path23.default.relative(repoRoot, filePath));
   return relative2.startsWith("build/") || relative2.startsWith(".build/") || relative2.startsWith("out/");
 }
 var gitWorkTreeCache = /* @__PURE__ */ new Map();
 var gitIgnoreResultCache = /* @__PURE__ */ new Map();
 function isGitWorkTree(repoRoot) {
-  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
   const cached = gitWorkTreeCache.get(resolvedRoot);
   if (cached !== void 0) {
     return cached;
   }
-  const hasGitDir = (0, import_node_fs3.existsSync)(import_node_path22.default.join(resolvedRoot, ".git"));
+  const hasGitDir = (0, import_node_fs3.existsSync)(import_node_path23.default.join(resolvedRoot, ".git"));
   gitWorkTreeCache.set(resolvedRoot, hasGitDir);
   return hasGitDir;
 }
 async function isGitIgnoredByGit(repoRoot, filePath) {
-  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
-  const relative2 = normalizePathForMatch(import_node_path22.default.relative(resolvedRoot, filePath));
+  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
+  const relative2 = normalizePathForMatch(import_node_path23.default.relative(resolvedRoot, filePath));
   if (!relative2 || relative2.startsWith("..")) {
     return true;
   }
@@ -172850,10 +173290,10 @@ async function isGitIgnoredByGit(repoRoot, filePath) {
   }
 }
 function toRepoRelativePath(repoRoot, filePath) {
-  const resolvedRoot = import_node_path22.default.resolve(repoRoot);
-  const absolute = import_node_path22.default.isAbsolute(filePath) ? import_node_path22.default.resolve(filePath) : import_node_path22.default.resolve(resolvedRoot, filePath);
-  const relative2 = import_node_path22.default.relative(resolvedRoot, absolute);
-  if (relative2.startsWith("..") || import_node_path22.default.isAbsolute(relative2)) {
+  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
+  const absolute = import_node_path23.default.isAbsolute(filePath) ? import_node_path23.default.resolve(filePath) : import_node_path23.default.resolve(resolvedRoot, filePath);
+  const relative2 = import_node_path23.default.relative(resolvedRoot, absolute);
+  if (relative2.startsWith("..") || import_node_path23.default.isAbsolute(relative2)) {
     return void 0;
   }
   return relative2 || ".";
@@ -172867,12 +173307,12 @@ async function findContractFiles(repoRoot, topicName, scannedFiles) {
     if (!relativePath2 || relativePath2 === ".") {
       continue;
     }
-    const safePath2 = import_node_path22.default.resolve(repoRoot, relativePath2);
+    const safePath2 = import_node_path23.default.resolve(repoRoot, relativePath2);
     const normalizedRelativePath = normalizePathForMatch(relativePath2).toLowerCase();
     if (normalizedRelativePath === "build/springwolf/asyncapi.json" || normalizedRelativePath === "target/springwolf/asyncapi.json") {
       continue;
     }
-    const baseName = import_node_path22.default.basename(safePath2).toLowerCase();
+    const baseName = import_node_path23.default.basename(safePath2).toLowerCase();
     if (isGeneratedSearchRootPath(repoRoot, safePath2)) {
       if (baseName === "schema.json" || baseName.endsWith(".schema.json")) {
         jsonSchema.push(safePath2);
@@ -172898,8 +173338,8 @@ async function findGeneratedAsyncApiFiles(repoRoot, topicName, gitIgnoreChecker 
   const evidence = [];
   let frameworkSearchTruncated = false;
   for (const frameworkRoot of ["build", ".build", "out"]) {
-    const rootPath = import_node_path22.default.join(repoRoot, frameworkRoot);
-    const rootStats = await (0, import_promises19.lstat)(rootPath).catch(() => null);
+    const rootPath = import_node_path23.default.join(repoRoot, frameworkRoot);
+    const rootStats = await (0, import_promises20.lstat)(rootPath).catch(() => null);
     if (!rootStats || rootStats.isSymbolicLink() || !rootStats.isDirectory()) {
       continue;
     }
@@ -172946,7 +173386,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
         fieldName: "asyncapi-contract-path",
         countAsReference: false
       });
-      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
+      content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (unreadable)`);
       continue;
@@ -172963,7 +173403,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
         match: {
           content,
           format: format2,
-          filename: import_node_path22.default.basename(filePath),
+          filename: import_node_path23.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from ${sourceDescription} file ${relativePath2}`]
         },
         evidence
@@ -172988,7 +173428,7 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
         fieldName: "json-schema-contract-path",
         countAsReference: false
       });
-      content = await (0, import_promises19.readFile)(resolved.canonicalPath, "utf8");
+      content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
     } catch {
       evidence.push(`Skipped malformed JSON Schema file ${relativePath2} (unreadable)`);
       continue;
@@ -173003,7 +173443,7 @@ async function resolveJsonSchemaContract(repoRoot, files, inheritedEvidence = []
         match: {
           content,
           format: "json-schema",
-          filename: import_node_path22.default.basename(filePath),
+          filename: import_node_path23.default.basename(filePath),
           evidence: [...evidence, `Resolved SNS contract from repo-local JSON Schema file ${relativePath2}`]
         },
         evidence
@@ -173078,7 +173518,7 @@ var SnsProvider = class {
     return candidates;
   }
   async exportSpec(candidate, options = {}) {
-    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path23.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     resolvePathWithinRoot(resolvedRepoRoot, topicName, "topic-name");
@@ -173118,7 +173558,7 @@ var SnsProvider = class {
     };
   }
   async resolveContract(candidate, resolutionContext = {}) {
-    const resolvedRepoRoot = import_node_path22.default.resolve(this.repoRoot);
+    const resolvedRepoRoot = import_node_path23.default.resolve(this.repoRoot);
     const topicArn = candidate.meta.topicArn ?? candidate.id;
     const topicName = topicNameFromArn(topicArn);
     const affinityHints = collectHints(topicName, candidate.name);
@@ -173990,10 +174430,10 @@ function parseRemoteFetchAllowlistJson(raw) {
   return createRemoteFetchPolicy({ enabled: true, allowlist });
 }
 function validateRepoRelativeSelector(repoRoot, relativePath2, fieldName, kind) {
-  const resolvedRoot = import_node_path23.default.resolve(repoRoot);
+  const resolvedRoot = import_node_path24.default.resolve(repoRoot);
   const absolute = resolvePathWithinRoot(resolvedRoot, relativePath2, fieldName);
-  const relative2 = import_node_path23.default.relative(resolvedRoot, absolute).replace(/\\/g, "/");
-  if (relative2.startsWith("..") || import_node_path23.default.isAbsolute(relative2)) {
+  const relative2 = import_node_path24.default.relative(resolvedRoot, absolute).replace(/\\/g, "/");
+  if (relative2.startsWith("..") || import_node_path24.default.isAbsolute(relative2)) {
     throw new Error(`${fieldName} must stay within repo-root; received ${relativePath2}`);
   }
   if (kind === "directory" && (relative2 === "" || relative2 === ".")) {
@@ -174180,14 +174620,14 @@ function projectFolderName(projectName) {
   return safe || "service";
 }
 function toRelativeSpecPath(outputDir, folderName) {
-  return import_node_path23.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
+  return import_node_path24.default.join(outputDir, folderName, "index.yaml").replace(/\\/g, "/");
 }
 function userSafeWarning(message) {
   return sanitizeLogMessage(message);
 }
 async function defaultWriteSpecFile(outputPath, content) {
-  await (0, import_promises20.mkdir)(import_node_path23.default.dirname(outputPath), { recursive: true });
-  await (0, import_promises20.writeFile)(outputPath, content, "utf8");
+  await (0, import_promises21.mkdir)(import_node_path24.default.dirname(outputPath), { recursive: true });
+  await (0, import_promises21.writeFile)(outputPath, content, "utf8");
 }
 var CANONICAL_DERIVED_OPENAPI_FILENAME = "openapi.derived.json";
 var CANONICAL_DERIVED_OPENAPI_COLLISION_FILENAME = "openapi.derived-2.json";
@@ -174210,45 +174650,99 @@ function normalizeDerivedOpenApiJson(derivation) {
     };
   }
 }
+function inventoryFromDefinitionMembers(members, format2) {
+  if (!members || members.length < 2 || !format2) return "";
+  const root5 = members.find((member2) => member2.role === "root");
+  if (!root5) return "";
+  return serializeDefinitionFileInventory(
+    buildDefinitionFileInventory({
+      root: root5.path,
+      format: format2,
+      completeness: "full",
+      files: members
+    })
+  );
+}
+function definitionMembersFromArtifacts(serviceDirRelative, artifacts, fallbackRoot) {
+  if (!artifacts || artifacts.length === 0) {
+    return void 0;
+  }
+  const members = artifacts.map((artifact) => ({
+    path: import_node_path24.default.posix.join(serviceDirRelative, artifact.relativePath.replace(/\\/g, "/")),
+    role: artifact.role,
+    content: artifact.content
+  }));
+  if (!members.some((member2) => member2.role === "root")) {
+    members.push({
+      path: import_node_path24.default.posix.join(serviceDirRelative, fallbackRoot.filename),
+      role: "root",
+      content: fallbackRoot.content
+    });
+  }
+  return members;
+}
 async function writeResolvedArtifactWithDerivedOpenApi(input) {
-  if (!input.dryRun && input.native) {
+  const definitionMembers = input.definitionMembers;
+  const multiFile = (definitionMembers?.length ?? 0) >= 2;
+  const specFilesJson = inventoryFromDefinitionMembers(definitionMembers, input.definitionFormat);
+  let derivedMeta = {};
+  let derivedSidecar;
+  if (input.derivation) {
+    const derived = deriveOpenApiDocument(input.derivation);
+    const completeness = input.derivation.forceCompleteness ?? derived.completeness;
+    const normalized = normalizeDerivedOpenApiJson(derived);
+    if (!normalized.content) {
+      derivedMeta = {
+        derivedOpenApiVersion: derived.version,
+        derivedOpenApiCompleteness: completeness,
+        derivedOpenApiFormat: "openapi-json",
+        derivedOpenApiEvidence: normalized.evidence
+      };
+    } else {
+      const filename = derivedOpenApiFilename(input.sidecars);
+      const relativeDerivedPath = import_node_path24.default.join(input.relativeDir, filename).replace(/\\/g, "/");
+      derivedSidecar = { filename, content: normalized.content };
+      derivedMeta = {
+        derivedOpenApiPath: relativeDerivedPath,
+        derivedOpenApiVersion: derived.version,
+        derivedOpenApiCompleteness: completeness,
+        derivedOpenApiFormat: "openapi-json",
+        derivedOpenApiEvidence: input.dryRun ? [...normalized.evidence, "Dry run enabled; skipped derived OpenAPI sidecar write"] : normalized.evidence
+      };
+    }
+  }
+  if (input.dryRun) {
+    return { ...derivedMeta, ...specFilesJson ? { specFilesJson } : {} };
+  }
+  if (multiFile && definitionMembers) {
+    const transactionSidecars = [
+      ...input.sidecars ?? [],
+      ...derivedSidecar ? [derivedSidecar] : []
+    ];
+    await stageDefinitionExportTree({
+      repoRoot: input.repoRoot,
+      serviceDirRelative: input.relativeDir.replace(/\\/g, "/"),
+      members: definitionMembers,
+      sidecars: transactionSidecars,
+      writeFile: input.writeSpecFile
+    });
+    return { ...derivedMeta, specFilesJson };
+  }
+  if (input.native) {
     const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, "output-dir");
     await input.writeSpecFile(absoluteSpecPath, input.native.content);
   }
-  if (!input.dryRun) {
-    for (const sidecar of input.sidecars ?? []) {
-      const relativeSidecarPath = import_node_path23.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
-      const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
-      await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
-    }
+  for (const sidecar of input.sidecars ?? []) {
+    const relativeSidecarPath = import_node_path24.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
+    const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
+    await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
   }
-  if (!input.derivation) {
-    return {};
-  }
-  const derived = deriveOpenApiDocument(input.derivation);
-  const completeness = input.derivation.forceCompleteness ?? derived.completeness;
-  const normalized = normalizeDerivedOpenApiJson(derived);
-  if (!normalized.content) {
-    return {
-      derivedOpenApiVersion: derived.version,
-      derivedOpenApiCompleteness: completeness,
-      derivedOpenApiFormat: "openapi-json",
-      derivedOpenApiEvidence: normalized.evidence
-    };
-  }
-  const filename = derivedOpenApiFilename(input.sidecars);
-  const relativeDerivedPath = import_node_path23.default.join(input.relativeDir, filename).replace(/\\/g, "/");
-  if (!input.dryRun) {
+  if (derivedSidecar) {
+    const relativeDerivedPath = import_node_path24.default.join(input.relativeDir, derivedSidecar.filename).replace(/\\/g, "/");
     const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, "output-dir");
-    await input.writeSpecFile(absoluteDerivedPath, normalized.content);
+    await input.writeSpecFile(absoluteDerivedPath, derivedSidecar.content);
   }
-  return {
-    derivedOpenApiPath: relativeDerivedPath,
-    derivedOpenApiVersion: derived.version,
-    derivedOpenApiCompleteness: completeness,
-    derivedOpenApiFormat: "openapi-json",
-    derivedOpenApiEvidence: input.dryRun ? [...normalized.evidence, "Dry run enabled; skipped derived OpenAPI sidecar write"] : normalized.evidence
-  };
+  return { ...derivedMeta, ...specFilesJson ? { specFilesJson } : {} };
 }
 function normalizeApiGatewaySpec(body, candidate, reporter) {
   let result;
@@ -174261,9 +174755,9 @@ function normalizeApiGatewaySpec(body, candidate, reporter) {
     return { content: body };
   }
   if (result.normalized) {
-    for (const rename2 of result.renamed) {
-      const from = rename2.original === null ? "<missing>" : rename2.original;
-      reporter.info(`operationId normalized: ${candidate.id} ${rename2.method.toUpperCase()} ${rename2.path} \`${from}\` -> \`${rename2.renamed}\``);
+    for (const rename3 of result.renamed) {
+      const from = rename3.original === null ? "<missing>" : rename3.original;
+      reporter.info(`operationId normalized: ${candidate.id} ${rename3.method.toUpperCase()} ${rename3.path} \`${from}\` -> \`${rename3.renamed}\``);
     }
   }
   const protocol = candidate.gatewayType === "HTTP" || candidate.gatewayType === "WEBSOCKET" ? candidate.gatewayType : "REST";
@@ -174595,14 +175089,41 @@ function serviceNameForProviderCandidate(candidate) {
 async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile) {
   const serviceName = serviceNameForProviderCandidate(resolved.candidate);
   const result = await resolved.provider.exportSpec(resolved.candidate, { stage: inputs.stage, dryRun: inputs.dryRun });
-  const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
-  const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
+  const relativeProviderDir = import_node_path24.default.join(inputs.outputDir, projectFolderName(serviceName || "service")).replace(/\\/g, "/");
+  const relativeProviderPath = import_node_path24.default.join(relativeProviderDir, result.filename).replace(/\\/g, "/");
   const metadataSidecar = result.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-  const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+  const relativeMetadataPath = metadataSidecar ? import_node_path24.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+  if (result.definitionCompleteness === "partial") {
+    return {
+      status: "unresolved",
+      sourceType: "manual-review",
+      serviceName,
+      confidence: 0,
+      gatewayId: resolved.candidate.id,
+      providerType: resolved.provider.type,
+      specFormat: result.format,
+      definitionCompleteness: "partial",
+      specFilesJson: "",
+      evidence: [
+        ...resolved.evidence,
+        ...result.evidence,
+        "Provider definition source set is incomplete; refusing partial multi-file export"
+      ]
+    };
+  }
+  const definitionMembers = definitionMembersFromArtifacts(relativeProviderDir, result.definitionArtifacts, {
+    relativePath: relativeProviderPath,
+    content: result.content,
+    filename: result.filename
+  });
+  const rootMember = definitionMembers?.find((member2) => member2.role === "root");
+  const effectiveSpecPath = rootMember?.path ?? relativeProviderPath;
   const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
     repoRoot: inputs.repoRoot,
     relativeDir: relativeProviderDir,
-    native: { relativePath: relativeProviderPath, content: result.content },
+    native: definitionMembers && definitionMembers.length >= 2 ? void 0 : { relativePath: relativeProviderPath, content: result.content },
+    definitionMembers,
+    definitionFormat: result.format,
     sidecars: result.sidecars,
     derivation: {
       content: result.content,
@@ -174627,7 +175148,8 @@ async function exportProviderResolutionCandidate(resolved, inputs, writeSpecFile
     sourceType: resolved.sourceType,
     serviceName,
     confidence: resolved.confidence,
-    specPath: relativeProviderPath,
+    specPath: effectiveSpecPath,
+    definitionCompleteness: result.definitionCompleteness ?? (definitionMembers && definitionMembers.length >= 2 ? "full" : void 0),
     gatewayId: resolved.candidate.id,
     gatewayType,
     providerType: resolved.provider.type,
@@ -174809,7 +175331,7 @@ async function resolveStageSelection(aws, candidate, preferredStage, preferLates
   };
 }
 function sha256Hex(content) {
-  return (0, import_node_crypto7.createHash)("sha256").update(content, "utf8").digest("hex");
+  return (0, import_node_crypto8.createHash)("sha256").update(content, "utf8").digest("hex");
 }
 function gatewayApiArn(partition2, region, gatewayType, apiId) {
   const resolvedPartition = partition2 || "aws";
@@ -174997,7 +175519,7 @@ async function runDiscovery(inputs, dependencies) {
   const discovered = [];
   const summary2 = { attempted: selectedCandidates.length, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path24.default.resolve(inputs.repoRoot);
   const resolvedOutputDir = resolvePathWithinRoot(resolvedRoot, inputs.outputDir, "output-dir");
   let callerIdentity;
   if (shouldResolveCallerIdentity(inputs)) {
@@ -175040,7 +175562,7 @@ async function runDiscovery(inputs, dependencies) {
         const next = (slugUsage.get(baseFolder) ?? 0) + 1;
         slugUsage.set(baseFolder, next);
         const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-        const relativeSpecPath = toRelativeSpecPath(import_node_path23.default.relative(resolvedRoot, resolvedOutputDir), folderName);
+        const relativeSpecPath = toRelativeSpecPath(import_node_path24.default.relative(resolvedRoot, resolvedOutputDir), folderName);
         if (inputs.dryRun) {
           summary2.skipped += 1;
           dependencies.core.info(`Dry run: skipping export for ${candidate.gatewayType} API ${candidate.id} (${candidate.name})`);
@@ -175052,7 +175574,7 @@ async function runDiscovery(inputs, dependencies) {
         const specBody = normalized.content;
         const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
           repoRoot: resolvedRoot,
-          relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+          relativeDir: import_node_path24.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
           native: { relativePath: relativeSpecPath, content: specBody },
           derivation: {
             content: specBody,
@@ -175150,13 +175672,13 @@ function gatewayTypeForRepoFormat(format2) {
 }
 function serviceNameForRepoCandidate(inputs, candidate) {
   if (candidate.serviceRoot && candidate.serviceRoot !== ".") {
-    return import_node_path23.default.posix.basename(candidate.serviceRoot);
+    return import_node_path24.default.posix.basename(candidate.serviceRoot);
   }
-  return inferFallbackServiceName(inputs) ?? (import_node_path23.default.posix.basename(candidate.path, import_node_path23.default.posix.extname(candidate.path)) || "service");
+  return inferFallbackServiceName(inputs) ?? (import_node_path24.default.posix.basename(candidate.path, import_node_path24.default.posix.extname(candidate.path)) || "service");
 }
 function materializeAggregatedRepoArtifact(inputs, candidate) {
   const members = candidate.memberPaths ?? [];
-  const isSmithyProject = candidate.type === "smithy" && (members.length > 0 || import_node_path23.default.posix.basename(candidate.path).toLowerCase() === "smithy-build.json");
+  const isSmithyProject = candidate.type === "smithy" && (members.length > 0 || import_node_path24.default.posix.basename(candidate.path).toLowerCase() === "smithy-build.json");
   const isGraphqlAggregate = candidate.type === "graphql" && members.length > 1;
   if (!isSmithyProject && !isGraphqlAggregate || !candidate.content?.trim()) {
     return {
@@ -175168,7 +175690,7 @@ function materializeAggregatedRepoArtifact(inputs, candidate) {
   }
   const serviceName = serviceNameForRepoCandidate(inputs, candidate);
   const filename = candidate.type === "smithy" ? "model.smithy" : "schema.graphql";
-  const aggregatePath = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName), filename).replace(/\\/g, "/");
+  const aggregatePath = import_node_path24.default.join(inputs.outputDir, projectFolderName(serviceName), filename).replace(/\\/g, "/");
   return {
     path: aggregatePath,
     writeNative: true,
@@ -175181,19 +175703,40 @@ function materializeAggregatedRepoArtifact(inputs, candidate) {
 }
 async function selectExplicitRepoSpec(inputs) {
   const relative2 = inputs.specPath;
-  const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative2, {
-    fieldName: "spec-path",
-    countAsReference: false
-  });
-  const content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
-  const format2 = inferFormatFromContent(relative2, content);
-  return {
-    existingSpecPath: relative2.replace(/\\/g, "/"),
-    existingSpecFormat: format2,
-    existingSpecEvidence: [`Resolved from explicit spec-path ${relative2}`],
-    existingSpecContent: content,
-    existingSpecShouldWriteNative: false
-  };
+  try {
+    const resolved = await resolveLocalReadWithinRoot(inputs.repoRoot, relative2, {
+      fieldName: "spec-path",
+      countAsReference: false,
+      rejectSymlinkComponents: true
+    });
+    const content = await (0, import_promises21.readFile)(resolved.canonicalPath, "utf8");
+    const format2 = inferFormatFromContent(relative2, content);
+    return {
+      existingSpecPath: relative2.replace(/\\/g, "/"),
+      existingSpecFormat: format2,
+      existingSpecEvidence: [`Resolved from explicit spec-path ${relative2}`],
+      existingSpecContent: content,
+      existingSpecShouldWriteNative: false
+    };
+  } catch (error3) {
+    const message = error3 instanceof Error ? error3.message : String(error3);
+    if (/symbolic link/i.test(message)) {
+      return {
+        existingSpecShouldWriteNative: false,
+        earlyResult: {
+          status: "unresolved",
+          sourceType: "manual-review",
+          serviceName: inferFallbackServiceName(inputs) ?? "unknown-service",
+          confidence: 0,
+          specPath: "",
+          specFilesJson: "",
+          definitionCompleteness: "partial",
+          evidence: [`Refusing symlink repo definition root at ${relative2}`]
+        }
+      };
+    }
+    throw error3;
+  }
 }
 async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemoteSpec = fetchSpecFromUrl) {
   const remotePolicy = inputs.remoteFetchPolicy ?? DEFAULT_REMOTE_FETCH_POLICY;
@@ -175209,7 +175752,7 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
         );
         continue;
       }
-      const targetPath = import_node_path23.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
+      const targetPath = import_node_path24.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
       viable.push({
         api,
         kind: "inline",
@@ -175227,7 +175770,7 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
           fieldName: "catalog-spec-path",
           countAsReference: false
         });
-        const content = await (0, import_promises20.readFile)(resolved.canonicalPath, "utf8");
+        const content = await (0, import_promises21.readFile)(resolved.canonicalPath, "utf8");
         const relative2 = resolved.relativePath.replace(/\\/g, "/");
         const classified = classifyCatalogBytes(content, api.type, api.specPath);
         if (!classified) {
@@ -175273,7 +175816,7 @@ async function selectCatalogContract(inputs, catalogApis, actionCore, fetchRemot
           );
           continue;
         }
-        const targetPath = import_node_path23.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
+        const targetPath = import_node_path24.default.join(inputs.outputDir, projectFolderName(api.name), classified.filename).replace(/\\/g, "/");
         viable.push({
           api,
           kind: "remote",
@@ -175339,7 +175882,7 @@ async function selectInventoryContract(inputs, staticIac) {
         earlyResult: rankedRepoAmbiguity(
           inputs,
           rootWinners.map((candidate) => ({
-            serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
+            serviceName: candidate.serviceRoot === "." ? import_node_path24.default.posix.basename(candidate.path) : import_node_path24.default.posix.basename(candidate.serviceRoot),
             gatewayId: candidate.path,
             gatewayType: gatewayTypeForRepoFormat(candidate.format),
             confidence: Math.max(50, Math.min(95, candidate.score)),
@@ -175357,7 +175900,7 @@ async function selectInventoryContract(inputs, staticIac) {
       earlyResult: rankedRepoAmbiguity(
         inputs,
         sameTier.map((candidate) => ({
-          serviceName: candidate.serviceRoot === "." ? import_node_path23.default.posix.basename(candidate.path) : import_node_path23.default.posix.basename(candidate.serviceRoot),
+          serviceName: candidate.serviceRoot === "." ? import_node_path24.default.posix.basename(candidate.path) : import_node_path24.default.posix.basename(candidate.serviceRoot),
           gatewayId: candidate.path,
           gatewayType: gatewayTypeForRepoFormat(candidate.format),
           confidence: Math.max(50, Math.min(95, candidate.score)),
@@ -175495,8 +176038,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
         );
       } else {
         const serviceName = artifact.logicalId;
-        const relativeDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-        const relativeSpecPath = import_node_path23.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
+        const relativeDir = import_node_path24.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+        const relativeSpecPath = import_node_path24.default.join(relativeDir, artifact.filename).replace(/\\/g, "/");
         const evidence = [
           `Extracted embedded OpenAPI document from local build artifact ${artifact.artifactPath} resource ${artifact.logicalId} (${artifact.artifactClass})`
         ];
@@ -175823,16 +176366,96 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   }
   if (selectedSource.sourceType === "repo-spec") {
     if (!selectedSource.specPath || !selectedSource.specFormat) {
-      return selectedSource;
+      return { ...selectedSource, specFilesJson: "" };
     }
-    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path23.default.dirname(selectedSource.specPath) : import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
+    const relativeProviderDir = (existingSpecShouldWriteNative ? import_node_path24.default.dirname(selectedSource.specPath) : import_node_path24.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"))).replace(/\\/g, "/");
+    const rejectSymlinkRepoRoot = () => ({
+      status: "unresolved",
+      sourceType: "manual-review",
+      serviceName: selectedSource.serviceName,
+      confidence: 0,
+      specPath: "",
+      specFilesJson: "",
+      definitionCompleteness: "partial",
+      specFormat: selectedSource.specFormat,
+      evidence: [
+        ...selectedSource.evidence,
+        `Refusing symlink repo definition root at ${selectedSource.specPath}`
+      ]
+    });
     try {
+      try {
+        await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          selectedSource.specPath,
+          "repo-spec-path"
+        );
+      } catch (error3) {
+        const message = error3 instanceof Error ? error3.message : String(error3);
+        if (/symbolic link/i.test(message)) {
+          return rejectSymlinkRepoRoot();
+        }
+        throw error3;
+      }
       let content = existingSpecContent;
       if (content === void 0) {
         const resolvedSpec = await resolveLocalReadWithinRoot(inputs.repoRoot, selectedSource.specPath, {
-          fieldName: "repo-spec-path"
+          fieldName: "repo-spec-path",
+          countAsReference: false,
+          rejectSymlinkComponents: true
         });
-        content = await (0, import_promises20.readFile)(resolvedSpec.canonicalPath, "utf8");
+        content = await (0, import_promises21.readFile)(resolvedSpec.canonicalPath, "utf8");
+      }
+      const isComposedAggregate = existingSpecShouldWriteNative && (selectedSource.specFormat === "graphql-sdl" || selectedSource.specFormat === "smithy");
+      if (!isComposedAggregate && (selectedSource.specFormat === "wsdl" || selectedSource.specFormat === "protobuf")) {
+        const closure = await resolveRepoDefinitionClosure({
+          repoRoot: inputs.repoRoot,
+          rootRelativePath: selectedSource.specPath,
+          rootContent: content,
+          format: selectedSource.specFormat
+        });
+        if (closure.status === "partial") {
+          return {
+            status: "unresolved",
+            sourceType: "manual-review",
+            serviceName: selectedSource.serviceName,
+            confidence: 0,
+            specPath: "",
+            specFilesJson: "",
+            definitionCompleteness: "partial",
+            specFormat: selectedSource.specFormat,
+            evidence: [...selectedSource.evidence, ...closure.evidence]
+          };
+        }
+        if (closure.status === "multi") {
+          const serviceDir = import_node_path24.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+          const definitionMembers = closure.members.map((member2) => ({
+            path: import_node_path24.default.posix.join(serviceDir, member2.relativeToBundleBase),
+            role: member2.role,
+            content: member2.content
+          }));
+          const rootMember = definitionMembers.find((member2) => member2.role === "root");
+          const derivedOpenApi2 = await writeResolvedArtifactWithDerivedOpenApi({
+            repoRoot: inputs.repoRoot,
+            relativeDir: serviceDir,
+            definitionMembers,
+            definitionFormat: selectedSource.specFormat,
+            derivation: {
+              content,
+              format: selectedSource.specFormat,
+              title: selectedSource.serviceName
+            },
+            dryRun: inputs.dryRun,
+            writeSpecFile
+          });
+          return {
+            ...selectedSource,
+            specPath: rootMember.path,
+            definitionCompleteness: "full",
+            evidence: [...selectedSource.evidence, ...closure.evidence],
+            ...derivedOpenApi2
+          };
+        }
       }
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
@@ -175846,10 +176469,11 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
         dryRun: inputs.dryRun,
         writeSpecFile
       });
-      return { ...selectedSource, ...derivedOpenApi };
+      return { ...selectedSource, specFilesJson: "", ...derivedOpenApi };
     } catch (error3) {
       return {
         ...selectedSource,
+        specFilesJson: "",
         derivedOpenApiEvidence: [
           `Skipped derived OpenAPI sidecar for repo spec ${selectedSource.specPath}: ${formatUserSafeError(error3)}`
         ]
@@ -175880,7 +176504,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     const relativeSpecPath = toRelativeSpecPath(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service"));
     if (inputs.dryRun) {
       selectedSource.specPath = relativeSpecPath;
-      selectedSource.derivedOpenApiPath = import_node_path23.default.join(import_node_path23.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
+      selectedSource.derivedOpenApiPath = import_node_path24.default.join(import_node_path24.default.dirname(relativeSpecPath), CANONICAL_DERIVED_OPENAPI_FILENAME).replace(/\\/g, "/");
       selectedSource.derivedOpenApiFormat = "openapi-json";
       selectedSource.derivedOpenApiCompleteness = selectedSource.gatewayType === "WEBSOCKET" ? "partial" : void 0;
       selectedSource.derivedOpenApiEvidence = ["Dry run enabled; skipped API Gateway export and derived OpenAPI sidecar write"];
@@ -175901,7 +176525,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const body = normalized.content;
       const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
         repoRoot: inputs.repoRoot,
-        relativeDir: import_node_path23.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
+        relativeDir: import_node_path24.default.dirname(relativeSpecPath).replace(/\\/g, "/"),
         native: { relativePath: relativeSpecPath, content: body },
         derivation: {
           content: body,
@@ -175966,10 +176590,10 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
     if (!resolvedSnsExport) {
       return toManualReviewResult(selectedSource, ["SNS contract was selected but export payload was unavailable"]);
     }
-    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
-    const relativeProviderPath = import_node_path23.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path24.default.join(inputs.outputDir, projectFolderName(selectedSource.serviceName || "service")).replace(/\\/g, "/");
+    const relativeProviderPath = import_node_path24.default.join(relativeProviderDir, resolvedSnsExport.filename).replace(/\\/g, "/");
     const metadataSidecar = resolvedSnsExport.sidecars?.find((sidecar) => sidecar.filename === "sns-resolution-metadata.json");
-    const relativeMetadataPath = metadataSidecar ? import_node_path23.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
+    const relativeMetadataPath = metadataSidecar ? import_node_path24.default.join(relativeProviderDir, metadataSidecar.filename).replace(/\\/g, "/") : void 0;
     const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
       repoRoot: inputs.repoRoot,
       relativeDir: relativeProviderDir,
@@ -175998,8 +176622,8 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
   }
   if (selectedSource.sourceType === "manual-review" && snsManualReviewEvidence.length > 0) {
     const serviceName = selectedSource.serviceName ?? snsManualReviewMetadata?.serviceName ?? "service";
-    const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
-    const relativeMetadataPath = import_node_path23.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
+    const relativeProviderDir = import_node_path24.default.join(inputs.outputDir, projectFolderName(serviceName)).replace(/\\/g, "/");
+    const relativeMetadataPath = import_node_path24.default.join(relativeProviderDir, "sns-resolution-metadata.json").replace(/\\/g, "/");
     const manualReviewResult = toManualReviewResult(
       { ...selectedSource, contractOrigin: "manual-review", metadataPath: relativeMetadataPath },
       snsManualReviewEvidence
@@ -176014,7 +176638,7 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, "output-dir");
       await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
       for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
-        const relativeSidecarPath = import_node_path23.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
+        const relativeSidecarPath = import_node_path24.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
         const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
         await writeSpecFile(absoluteSidecarPath, sidecar.content);
       }
@@ -176059,7 +176683,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
   const discovered = [];
   const summary2 = { attempted: 0, exported: 0, failed: 0, skipped: 0 };
   const slugUsage = /* @__PURE__ */ new Map();
-  const resolvedRoot = import_node_path23.default.resolve(inputs.repoRoot);
+  const resolvedRoot = import_node_path24.default.resolve(inputs.repoRoot);
   for (const provider of providers) {
     await dependencies.core.group(`Discover specs from ${provider.type}`, async () => {
       let candidates;
@@ -176103,12 +176727,30 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
           const next = (slugUsage.get(baseFolder) ?? 0) + 1;
           slugUsage.set(baseFolder, next);
           const folderName = next === 1 ? baseFolder : `${baseFolder}-${candidate.id}`;
-          const relativeSpecPath = import_node_path23.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
-          const relativeProviderDir = import_node_path23.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
+          const relativeSpecPath = import_node_path24.default.join(inputs.outputDir, folderName, result.filename).replace(/\\/g, "/");
+          const relativeProviderDir = import_node_path24.default.join(inputs.outputDir, folderName).replace(/\\/g, "/");
+          if (result.definitionCompleteness === "partial") {
+            summary2.failed += 1;
+            dependencies.core.warning(
+              userSafeWarning(
+                `Skipped incomplete definition source set for ${provider.type} candidate ${candidate.id}; export remains unresolved/manual`
+              )
+            );
+            continue;
+          }
+          const definitionMembers = definitionMembersFromArtifacts(relativeProviderDir, result.definitionArtifacts, {
+            relativePath: relativeSpecPath,
+            content: result.content,
+            filename: result.filename
+          });
+          const rootMember = definitionMembers?.find((member2) => member2.role === "root");
+          const effectiveSpecPath = rootMember?.path ?? relativeSpecPath;
           const derivedOpenApi = await writeResolvedArtifactWithDerivedOpenApi({
             repoRoot: resolvedRoot,
             relativeDir: relativeProviderDir,
-            native: { relativePath: relativeSpecPath, content: result.content },
+            native: definitionMembers && definitionMembers.length >= 2 ? void 0 : { relativePath: relativeSpecPath, content: result.content },
+            definitionMembers,
+            definitionFormat: result.format,
             sidecars: result.sidecars,
             derivation: {
               content: result.content,
@@ -176147,7 +176789,7 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
           ) : void 0;
           discovered.push({
             serviceName,
-            specPath: relativeSpecPath,
+            specPath: effectiveSpecPath,
             gatewayId: candidate.id,
             gatewayType,
             stage: result.stage ?? "",
@@ -176155,12 +176797,16 @@ async function runMultiProviderDiscovery(providers, inputs, dependencies, snsRes
             specFormat: result.format,
             contractOrigin,
             variantCount,
-            metadataPath: metadataSidecar ? import_node_path23.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
+            metadataPath: metadataSidecar ? import_node_path24.default.join(inputs.outputDir, folderName, metadataSidecar.filename).replace(/\\/g, "/") : void 0,
             openapiContractAudit: result.openapiContractAudit,
             provenance: multiProvenance,
-            ...derivedOpenApi
+            derivedOpenApiPath: derivedOpenApi.derivedOpenApiPath,
+            derivedOpenApiVersion: derivedOpenApi.derivedOpenApiVersion,
+            derivedOpenApiCompleteness: derivedOpenApi.derivedOpenApiCompleteness,
+            derivedOpenApiFormat: derivedOpenApi.derivedOpenApiFormat,
+            derivedOpenApiEvidence: derivedOpenApi.derivedOpenApiEvidence
           });
-          dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${relativeSpecPath}`);
+          dependencies.core.info(`Exported ${provider.type} candidate ${candidate.id} (${candidate.name}) to ${effectiveSpecPath}`);
         } catch (error3) {
           summary2.failed += 1;
           dependencies.core.warning(
@@ -176178,20 +176824,20 @@ function buildExecutionOutputs(result) {
   if (result.mode === "discover-many") {
     const discovered = result.discovered;
     const summary2 = result.exportSummary ?? { attempted: discovered.length, exported: discovered.length, failed: 0, skipped: 0 };
-    const unresolved = summary2.failed > 0;
+    const unresolved2 = summary2.failed > 0;
     return {
       "services-json": JSON.stringify(discovered),
       "service-count": String(discovered.length),
-      "resolution-status": unresolved ? "unresolved" : "resolved",
+      "resolution-status": unresolved2 ? "unresolved" : "resolved",
       "source-type": "discover-many",
-      "mapping-confidence": unresolved ? "0" : discovered.length > 0 ? "100" : "0",
+      "mapping-confidence": unresolved2 ? "0" : discovered.length > 0 ? "100" : "0",
       "export-summary-json": JSON.stringify(summary2),
       "resolution-json": JSON.stringify(
         sanitizeJsonValue({
-          status: unresolved ? "unresolved" : "resolved",
+          status: unresolved2 ? "unresolved" : "resolved",
           sourceType: "discover-many",
           serviceName: "multiple-services",
-          confidence: unresolved ? 0 : discovered.length > 0 ? 100 : 0,
+          confidence: unresolved2 ? 0 : discovered.length > 0 ? 100 : 0,
           evidence: [
             `discover-many exported ${summary2.exported} service(s)`,
             ...summary2.failed > 0 ? [`${summary2.failed} export(s) failed`] : []
@@ -176205,6 +176851,7 @@ function buildExecutionOutputs(result) {
       "service-name": "",
       "gateway-id": "",
       "spec-path": "",
+      "spec-files-json": "",
       "candidates-json": "",
       "provider-type": discovered.length > 0 ? discovered[0]?.providerType ?? "" : "",
       "spec-format": discovered.length > 0 ? discovered[0]?.specFormat ?? "" : "",
@@ -176226,8 +176873,10 @@ function buildExecutionOutputs(result) {
     confidence: 0,
     evidence: ["No resolution result produced"]
   };
+  const unresolved = resolution.status === "unresolved";
   const resolutionWithProbes = sanitizeJsonValue({
     ...resolution,
+    ...resolution.definitionCompleteness ? { completeness: resolution.definitionCompleteness } : {},
     providerProbes: resolution.providerProbes ?? result.providerProbes ?? []
   });
   return {
@@ -176237,11 +176886,13 @@ function buildExecutionOutputs(result) {
     "mapping-confidence": String(resolution.confidence),
     "service-name": resolution.serviceName,
     "gateway-id": resolution.gatewayId ?? "",
-    "spec-path": resolution.specPath ?? "",
+    // Incomplete/unresolved definition closures and ordinary unresolved runs keep blank downstream outputs.
+    "spec-path": unresolved ? "" : resolution.specPath ?? "",
+    "spec-files-json": unresolved ? "" : resolution.specFilesJson ?? "",
     "services-json": "[]",
     "service-count": "0",
     "export-summary-json": JSON.stringify({ attempted: 0, exported: 0, failed: 0, skipped: 0 }),
-    "candidates-json": resolution.status === "unresolved" && (resolution.rankedCandidates?.length ?? 0) >= 2 ? JSON.stringify(resolution.rankedCandidates) : "",
+    "candidates-json": unresolved && (resolution.rankedCandidates?.length ?? 0) >= 2 ? JSON.stringify(resolution.rankedCandidates) : "",
     "provider-type": resolution.providerType ?? (resolution.sourceType === "gateway-export" ? "api-gateway" : ""),
     "spec-format": resolution.specFormat ?? "",
     "contract-origin": resolution.contractOrigin ?? "",
@@ -176885,8 +177536,8 @@ function normalizeRepoUrl2(url) {
   const sshMatch = raw.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
   if (sshMatch) {
     const host = sshMatch[1];
-    const path24 = sshMatch[2];
-    return `https://${host}/${path24}`;
+    const path25 = sshMatch[2];
+    return `https://${host}/${path25}`;
   }
   return raw.replace(/\.git$/, "");
 }
@@ -176962,7 +177613,7 @@ function detectRepoContext2(input, env2 = process.env) {
 }
 
 // node_modules/@postman-cse/automation-telemetry-core/dist/telemetry.js
-var import_node_crypto8 = require("node:crypto");
+var import_node_crypto9 = require("node:crypto");
 var import_undici3 = __toESM(require_undici(), 1);
 var SCHEMA_VERSION = 3;
 var DEFAULT_TIMEOUT_MS2 = 1500;
@@ -176989,7 +177640,7 @@ function telemetryDisabled(env2) {
   return false;
 }
 function sha256(value) {
-  return (0, import_node_crypto8.createHash)("sha256").update(value).digest("hex");
+  return (0, import_node_crypto9.createHash)("sha256").update(value).digest("hex");
 }
 function accountTypeFromConsumer(consumerType) {
   const t = (consumerType ?? "").trim().toLowerCase();
@@ -177099,10 +177750,10 @@ function createTelemetryContext(options) {
 
 // src/action-version.ts
 var import_node_fs4 = require("node:fs");
-var import_node_path24 = require("node:path");
+var import_node_path25 = require("node:path");
 function resolveActionVersion2() {
   try {
-    const raw = (0, import_node_fs4.readFileSync)((0, import_node_path24.join)(__dirname, "..", "package.json"), "utf8");
+    const raw = (0, import_node_fs4.readFileSync)((0, import_node_path25.join)(__dirname, "..", "package.json"), "utf8");
     return JSON.parse(raw).version ?? "unknown";
   } catch {
     return "unknown";
