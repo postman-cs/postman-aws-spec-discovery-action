@@ -6,33 +6,13 @@ import {
   sanitizeUrlEvidence,
   type RemoteFetchPolicy
 } from '../fetch/spec-fetcher.js';
+import {
+  classifySpecContent,
+  classifyWithDeclaredFormat,
+  filenameForFormat,
+  type ClassifiedSpecFormat
+} from '../spec/classify-format.js';
 import type { ExportOptions, SpecCandidate, SpecExportResult, SpecProvider } from './types.js';
-
-function detectFormat(content: string, key: string): { format: SpecFormat; filename: string } {
-  const trimmed = content.trim();
-  if (key.endsWith('.graphql') || key.endsWith('.gql') || /\btype\s+Query\b/.test(trimmed)) {
-    return { format: 'graphql-sdl', filename: 'schema.graphql' };
-  }
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed.openapi || parsed.swagger) return { format: 'openapi-json', filename: 'index.json' };
-    if (parsed.asyncapi) return { format: 'asyncapi-json', filename: 'asyncapi.json' };
-    if (parsed.info?.schema?.includes?.('schema.getpostman.com/json/collection')) {
-      return { format: 'postman-collection', filename: 'collection.postman_collection.json' };
-    }
-    if (parsed.$schema || parsed.type === 'object' || parsed.type === 'record') return { format: 'json-schema', filename: 'schema.json' };
-  } catch { /* not JSON */ }
-  if (trimmed.startsWith('openapi:') || trimmed.startsWith('swagger:')) {
-    return { format: 'openapi-yaml', filename: 'index.yaml' };
-  }
-  if (trimmed.startsWith('asyncapi:')) {
-    return { format: 'asyncapi-yaml', filename: 'asyncapi.yaml' };
-  }
-  if (key.endsWith('.proto') || /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(trimmed)) {
-    return { format: 'protobuf', filename: 'schema.proto' };
-  }
-  return { format: 'openapi-json', filename: 'index.json' };
-}
 
 interface ServiceSpec {
   serviceName: string;
@@ -63,6 +43,28 @@ function groupByService(entries: { serviceName: string; key: string; value: stri
     }
   }
   return [...map.values()].filter((s) => s.url || s.content);
+}
+
+function resolveClassifiedFormat(
+  content: string,
+  declaredFormat: string | undefined,
+  pathHint: string
+): ClassifiedSpecFormat {
+  const classified = declaredFormat?.trim()
+    ? classifyWithDeclaredFormat(content, declaredFormat, { pathHint })
+    : classifySpecContent(content, { pathHint });
+  if (!classified) {
+    if (declaredFormat?.trim()) {
+      throw new Error(
+        `SSM spec content does not match declared format "${declaredFormat.trim()}" (or could not be classified)`
+      );
+    }
+    throw new Error('SSM spec content could not be classified as a supported specification format');
+  }
+  return {
+    format: classified.format,
+    filename: filenameForFormat(classified.format, pathHint) || classified.filename
+  };
 }
 
 export class SsmProvider implements SpecProvider {
@@ -106,7 +108,11 @@ export class SsmProvider implements SpecProvider {
     const svc = services.find((s) => s.serviceName === candidate.name);
 
     if (svc?.content) {
-      const { format, filename } = detectFormat(svc.content, candidate.name);
+      const { format, filename } = resolveClassifiedFormat(
+        svc.content,
+        svc.format ?? candidate.meta.format,
+        candidate.name
+      );
       return {
         content: svc.content,
         format,
@@ -122,7 +128,11 @@ export class SsmProvider implements SpecProvider {
           timeoutMs: 15000,
           policy: this.remoteFetchPolicy
         });
-        const { format, filename } = detectFormat(fetched.content, svc.url);
+        const { format, filename } = resolveClassifiedFormat(
+          fetched.content,
+          svc.format ?? candidate.meta.format,
+          svc.url
+        );
         return {
           content: fetched.content,
           format,
@@ -131,21 +141,21 @@ export class SsmProvider implements SpecProvider {
         };
       } catch (fetchError) {
         const detail = fetchError instanceof Error ? fetchError.message : String(fetchError);
-        const pointerContent = JSON.stringify({
-          specUrl: safeUrl,
-          serviceName: candidate.name,
-          registeredVia: 'ssm-parameter-store',
-          fetchError: detail
-        }, null, 2);
-        return {
-          content: pointerContent,
-          format: 'openapi-json',
-          filename: 'spec-pointer.json',
-          evidence: [`Spec URL registered in SSM: ${safeUrl} (fetch failed: ${detail})`]
-        };
+        // Fail closed: never materialize a fetch-failure pointer as a resolved OpenAPI artifact.
+        // Safe URL evidence is retained in the thrown error for provider failure semantics.
+        throw new Error(`SSM remote spec fetch failed for ${safeUrl}: ${detail}`, { cause: fetchError });
       }
     }
 
     throw new Error(`No spec content or URL found in SSM for service ${candidate.name}`);
   }
+}
+
+/** @internal test helper */
+export function classifySsmContentForTest(
+  content: string,
+  declaredFormat?: string,
+  pathHint = 'spec'
+): { format: SpecFormat; filename: string } {
+  return resolveClassifiedFormat(content, declaredFormat, pathHint);
 }

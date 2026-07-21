@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format follows Keep a Changelog and this project uses Semantic Versioning.
 
+## [3.1.0] - 2026-07-20
+
+### Added
+- Native WSDL/SOAP, MCP JSON, and GraphQL introspection discovery across repository and content-bearing registry sources.
+- Content-free `spec-files-json` output for complete protobuf and WSDL source sets, preserving exact dependency paths and hashes for bootstrap.
+- Atomic staged materialization with rollback, stale-member cleanup, source-set limits, and all-component symlink rejection.
+
+### Changed
+- SSM and Backstage definitions now use strict content classification instead of defaulting unknown bytes to OpenAPI.
+- Incomplete or ambiguous dependency sets remain unresolved rather than emitting a partial downstream `spec-path`.
+
 ## [3.0.0] - 2026-07-20
 
 ### Added

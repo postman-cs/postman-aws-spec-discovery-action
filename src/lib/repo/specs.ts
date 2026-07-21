@@ -19,6 +19,7 @@ import {
   type ParsedTemplate,
   type TemplateResource
 } from '../providers/cloudformation.js';
+import { looksLikeIntrospection } from '../spec/classify-format.js';
 import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 import { groupGraphqlByServiceRoot, serviceRootFor } from './graphql-compose.js';
 import { resolveSmithyProject } from './smithy-project.js';
@@ -66,7 +67,12 @@ const DIRECT_SPEC_CANDIDATES = [
   'schema.json',
   'order.schema.json',
   'schema.avsc',
-  'order.avsc'
+  'order.avsc',
+  'service.wsdl',
+  'api.wsdl',
+  'mcp.json',
+  'server.json',
+  'introspection.json'
 ];
 
 const COMMON_SCAN_DIRS = [
@@ -128,12 +134,15 @@ export const DEFAULT_INVENTORY_BOUNDS = {
 export type RepoSpecKind =
   | 'openapi'
   | 'graphql'
+  | 'graphql-introspection'
   | 'asyncapi'
   | 'postman-collection'
   | 'protobuf'
   | 'smithy'
   | 'json-schema'
-  | 'avro';
+  | 'avro'
+  | 'wsdl'
+  | 'mcp';
 
 export type RepoSpecArtifactClass = 'authored' | 'generated';
 
@@ -314,6 +323,8 @@ function isLikelyJsonSchema(content: string): boolean {
     const parsed = JSON.parse(content) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
     if (parsed.openapi || parsed.swagger || parsed.asyncapi) return false;
+    // Introspection / MCP are distinct families; never classify as JSON Schema.
+    if (looksLikeIntrospection(parsed) || isLikelyMcpDocument(parsed)) return false;
     if (typeof parsed.$schema === 'string' && /json-schema/i.test(parsed.$schema)) return true;
     if (typeof parsed.$id === 'string' && (parsed.type || parsed.properties || parsed.$defs || parsed.definitions)) return true;
     if (parsed.type === 'object' && (parsed.properties || parsed.required || parsed.$defs || parsed.definitions)) return true;
@@ -322,6 +333,64 @@ function isLikelyJsonSchema(content: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isLikelyGraphqlIntrospection(content: string): boolean {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    return looksLikeIntrospection(parsed as Record<string, unknown>);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Conservative WSDL 1.1 / 2.0 detection (bootstrap-aligned):
+ * root element definitions|description plus a WSDL namespace or wsdl token.
+ * Arbitrary XML without WSDL markers is rejected.
+ */
+function isLikelyWsdlDocument(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith('<')) return false;
+  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, '').trim();
+  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
+  if (!rootMatch) return false;
+  const qualified = rootMatch[1] ?? '';
+  const localName = (qualified.includes(':') ? qualified.split(':').pop()! : qualified).toLowerCase();
+  if (localName !== 'definitions' && localName !== 'description') return false;
+  const head = `${qualified} ${rootMatch[2] ?? ''}`;
+  return /wsdl/i.test(head)
+    || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
+}
+
+/**
+ * Conservative MCP detection matching bootstrap:
+ * mcpServers object, modelcontextprotocol $schema, or registry name + remotes/packages.
+ */
+function isLikelyMcpDocument(parsed: Record<string, unknown>): boolean {
+  if (parsed.mcpServers && typeof parsed.mcpServers === 'object' && !Array.isArray(parsed.mcpServers)) {
+    return true;
+  }
+  if (typeof parsed.$schema === 'string' && /modelcontextprotocol/i.test(parsed.$schema)) {
+    return true;
+  }
+  return typeof parsed.name === 'string'
+    && (Array.isArray(parsed.remotes) || Array.isArray(parsed.packages));
+}
+
+function isLikelyMcpContent(content: string): boolean {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    return isLikelyMcpDocument(parsed as Record<string, unknown>);
+  } catch {
+    return false;
+  }
+}
+
+function isMcpConfigBasename(basename: string): boolean {
+  return basename === 'mcp.json' || basename === 'server.json';
 }
 
 function isLikelyAvro(content: string): boolean {
@@ -343,6 +412,8 @@ function formatFor(type: RepoSpecKind, candidate: string): SpecFormat | undefine
       return candidate.endsWith('.json') ? 'openapi-json' : 'openapi-yaml';
     case 'graphql':
       return 'graphql-sdl';
+    case 'graphql-introspection':
+      return 'graphql-introspection-json';
     case 'asyncapi':
       return candidate.endsWith('.json') ? 'asyncapi-json' : 'asyncapi-yaml';
     case 'postman-collection':
@@ -355,6 +426,10 @@ function formatFor(type: RepoSpecKind, candidate: string): SpecFormat | undefine
       return 'json-schema';
     case 'avro':
       return 'avro';
+    case 'wsdl':
+      return 'wsdl';
+    case 'mcp':
+      return 'mcp-json';
   }
 }
 
@@ -401,8 +476,22 @@ function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch,
   } else if (basename === 'smithy-build.json') {
     // Inventory resolves project closure separately; never treat JSON config as model.
     return undefined;
+  } else if (basename.endsWith('.wsdl')) {
+    if (isLikelyWsdlDocument(content)) type = 'wsdl';
+  } else if (isMcpConfigBasename(basename)) {
+    // mcp.json / server.json only when content validates as MCP (no name-only acceptance).
+    if (isLikelyMcpContent(content)) type = 'mcp';
   } else if (basename.endsWith('.avsc') || basename.endsWith('.avro')) {
     if (isLikelyAvro(content)) type = 'avro';
+  } else if (
+    basename === 'introspection.json'
+    || (basename.endsWith('.json')
+      && !basename.endsWith('.postman_collection.json')
+      && !isMcpConfigBasename(basename)
+      && isLikelyGraphqlIntrospection(content))
+  ) {
+    // GraphQL introspection must win over generic JSON Schema / OpenAPI JSON.
+    if (isLikelyGraphqlIntrospection(content)) type = 'graphql-introspection';
   } else if (
     basename === 'schema.json'
     || basename.endsWith('.schema.json')
@@ -439,6 +528,10 @@ function isSpecLikeFilename(filename: string): boolean {
     || lower.endsWith('.schema.json')
     || lower.endsWith('.avsc')
     || lower.endsWith('.avro')
+    || lower.endsWith('.wsdl')
+    || lower === 'mcp.json'
+    || lower === 'server.json'
+    || lower === 'introspection.json'
   );
 }
 
@@ -454,7 +547,10 @@ function specCandidateScore(candidate: string, type: RepoSpecKind, artifactClass
   if (type === 'graphql' || basename === 'schema.graphql' || basename === 'schema.gql') score += 75;
   if (type === 'smithy' && basename === 'smithy-build.json') score += 95;
   if (type === 'smithy' && basename.endsWith('.smithy')) score += 70;
+  if (type === 'wsdl' || basename.endsWith('.wsdl')) score += 70;
+  if (type === 'graphql-introspection' || basename === 'introspection.json') score += 68;
   if (type === 'json-schema' || basename === 'schema.json' || basename.endsWith('.schema.json')) score += 65;
+  if (type === 'mcp' || basename === 'mcp.json' || basename === 'server.json') score += 62;
   if (type === 'avro' || basename.endsWith('.avsc') || basename.endsWith('.avro')) score += 60;
   if (type === 'postman-collection' || basename.endsWith('.postman_collection.json')) score += 55;
   if (type === 'protobuf' || basename.endsWith('.proto')) score += 50;

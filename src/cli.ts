@@ -206,6 +206,7 @@ export function toDotenv(outputs: Record<string, string>): string {
     POSTMAN_AWS_SPEC_SOURCE_TYPE: outputs['source-type'] ?? '',
     POSTMAN_AWS_SPEC_MAPPING_CONFIDENCE: outputs['mapping-confidence'] ?? '',
     POSTMAN_AWS_SPEC_PATH: outputs['spec-path'] ?? '',
+    POSTMAN_AWS_SPEC_FILES_JSON: outputs['spec-files-json'] ?? '',
     POSTMAN_AWS_SPEC_GATEWAY_ID: outputs['gateway-id'] ?? '',
     POSTMAN_AWS_SPEC_SERVICE_NAME: outputs['service-name'] ?? '',
     POSTMAN_AWS_SPEC_EXPORT_SUMMARY_JSON: outputs['export-summary-json'] ?? '',

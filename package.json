@@ -1,6 +1,6 @@
 {
   "name": "@postman-cse/onboarding-aws-spec-discovery",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Discover AWS-hosted API specs and hand the result to Postman API onboarding.",
   "type": "module",
   "main": "dist/index.cjs",
