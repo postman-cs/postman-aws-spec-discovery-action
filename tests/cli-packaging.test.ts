@@ -8,6 +8,8 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
+const npmCommand = process.platform === 'win32' ? process.execPath : 'npm';
+const npmCliArgs = process.platform === 'win32' ? [process.env.npm_execpath || ''] : [];
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempDirs: string[] = [];
 
@@ -27,9 +29,11 @@ describe('CLI packaging contract', () => {
     const contents = await readFile(cliPath, 'utf8');
     expect(contents.startsWith('#!/usr/bin/env node\n')).toBe(true);
 
-    const mode = (await stat(cliPath)).mode & 0o777;
-    expect(mode & 0o111).not.toBe(0);
-    await access(cliPath, constants.X_OK);
+    if (process.platform !== 'win32') {
+      const mode = (await stat(cliPath)).mode & 0o777;
+      expect(mode & 0o111).not.toBe(0);
+      await access(cliPath, constants.X_OK);
+    }
 
     const staged = await execFileAsync('git', ['ls-files', '--stage', 'dist/cli.cjs'], {
       cwd: repoRoot,
@@ -60,8 +64,8 @@ describe('CLI packaging contract', () => {
     const packageJson = JSON.parse(await readFile(path.join(repoRoot, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
-    expect(packageJson.scripts.bundle).toContain("--banner:js='#!/usr/bin/env node'");
-    expect(packageJson.scripts.bundle).toContain('chmod 755 dist/cli.cjs');
+    expect(packageJson.scripts.bundle).toContain('--banner:js="#!/usr/bin/env node"');
+    expect(packageJson.scripts.bundle).toContain("process.platform!=='win32'");
     expect(packageJson.scripts.build).toBe('npm run typecheck && npm run bundle');
     expect(packageJson.scripts['verify:dist:assert']).toBe(
       'git diff --ignore-space-at-eol --text --exit-code -- dist && node scripts/verify-dist-artifact.mjs'
@@ -89,7 +93,8 @@ describe('CLI packaging contract', () => {
 
   it('bundles once before CI fan-out and runs only the read-only dist assertion in-gate', async () => {
     const workflow = await readFile(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
-    expect(workflow.match(/npm run bundle/g)).toHaveLength(1);
+    expect(workflow.match(/npm run bundle/g)).toHaveLength(2);
+    expect(workflow).toContain('runs-on: windows-latest');
     expect(workflow).toContain('run dist       npm run verify:dist:assert');
     expect(workflow).toContain('MAX_PARALLEL_GATES=2');
     expect(workflow).toContain('wait -n -p finished_pid');
@@ -102,8 +107,8 @@ describe('CLI packaging contract', () => {
     const prefixDir = await makeTempDir('postman-aws-spec-prefix-');
 
     const packResult = await execFileAsync(
-      'npm',
-      ['pack', '--json', '--pack-destination', packDir],
+      npmCommand,
+      [...npmCliArgs, 'pack', '--json', '--pack-destination', packDir],
       {
         cwd: repoRoot,
         encoding: 'utf8',
@@ -122,7 +127,7 @@ describe('CLI packaging contract', () => {
 
     const tarballPath = path.join(packDir, packed.filename);
     await mkdir(prefixDir, { recursive: true });
-    await execFileAsync('npm', ['install', '--prefix', prefixDir, tarballPath], {
+    await execFileAsync(npmCommand, [...npmCliArgs, 'install', '--prefix', prefixDir, tarballPath], {
       encoding: 'utf8',
       env: {
         NPM_CONFIG_CACHE: path.join(packDir, '.npm-cache'),
@@ -143,7 +148,15 @@ describe('CLI packaging contract', () => {
       expect(binStat.isSymbolicLink() || binStat.isFile()).toBe(true);
     }
 
-    const help = await execFileAsync(binPath, ['--help'], {
+    const installedCli = path.join(
+      prefixDir,
+      'node_modules',
+      '@postman-cse',
+      'onboarding-aws-spec-discovery',
+      'dist',
+      'cli.cjs'
+    );
+    const help = await execFileAsync(process.execPath, [installedCli, '--help'], {
       encoding: 'utf8',
       env: {
         PATH: process.env.PATH ?? '',
@@ -160,7 +173,7 @@ describe('CLI packaging contract', () => {
     expect(help.stderr).not.toMatch(/permission denied|exec format|syntax error|unexpected token|"use strict"/i);
     expect(help.stdout).not.toMatch(/"use strict"/);
 
-    const version = await execFileAsync(binPath, ['--version'], {
+    const version = await execFileAsync(process.execPath, [installedCli, '--version'], {
       encoding: 'utf8',
       env: { PATH: process.env.PATH ?? '' },
       maxBuffer: 1024 * 1024
@@ -173,14 +186,6 @@ describe('CLI packaging contract', () => {
     if (process.platform !== 'win32') {
       const symlinkDir = await makeTempDir('postman-aws-spec-symlink-');
       const symlinkPath = path.join(symlinkDir, 'postman-aws-spec-discovery');
-      const installedCli = path.join(
-        prefixDir,
-        'node_modules',
-        '@postman-cse',
-        'onboarding-aws-spec-discovery',
-        'dist',
-        'cli.cjs'
-      );
       await symlink(installedCli, symlinkPath);
       const symlinkHelp = spawnSync(symlinkPath, ['--help'], {
         encoding: 'utf8',
@@ -193,6 +198,7 @@ describe('CLI packaging contract', () => {
   }, 120000);
 
   it('runs the direct dist/cli.cjs artifact with a shebang path', async () => {
+    if (process.platform === 'win32') return;
     const cliPath = path.join(repoRoot, 'dist', 'cli.cjs');
     const help = await execFileAsync(cliPath, ['--help'], {
       encoding: 'utf8',
