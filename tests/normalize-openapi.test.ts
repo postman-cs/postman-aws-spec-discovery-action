@@ -153,7 +153,7 @@ describe('normalizeOpenApiYaml', () => {
     expect(ids.some((id) => /^update_v1_x_\d+$/.test(id))).toBe(true);
   });
 
-  it('preserves the canonical AWS export and dedupes the duplicate `update`', async () => {
+  it('preserves the canonical sample AWS export and dedupes the duplicate `update`', async () => {
     const fixture = await readFixture('aws-export-duplicate-operation-ids.yaml');
     const result = normalizeOpenApiYaml(fixture);
 

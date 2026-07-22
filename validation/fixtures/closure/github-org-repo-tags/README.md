@@ -6,4 +6,4 @@ Local/mock cases for exact repository tag correlation. Live proof requires a che
 
 - `canonical-postman-repo`: exact `postman:repo=owner/repo` match resolves one gateway.
 - `github-org-repo-split-tags`: exact `GithubOrg=owner` AND `GithubRepo=repo` match resolves one gateway.
-- `multi-environment`: two exact the customer matches with distinct Environment tags remain ambiguity-safe.
+- `multi-environment`: two exact split-tag matches with distinct Environment tags remain ambiguity-safe.

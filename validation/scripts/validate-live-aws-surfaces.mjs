@@ -2030,9 +2030,24 @@ const requiredBoundaryDefs = [
       const started = Date.now();
       const cases = [
         ['canonical', 'postman-cs/spec-discovery-validation-canonical', 'REST', 'postman:repo'],
-        ['github-org-repo-rest', 'postman-cs/spec-discovery-validation-github-org-repo-rest', 'REST', 'GithubOrg+GithubRepo'],
-        ['github-org-repo-http', 'postman-cs/spec-discovery-validation-github-org-repo-http', 'HTTP', 'GithubOrg+GithubRepo'],
-        ['github-org-repo-websocket', 'postman-cs/spec-discovery-validation-github-org-repo-websocket', 'WEBSOCKET', 'GithubOrg+GithubRepo']
+        [
+          'github-org-repo-rest',
+          'postman-cs/spec-discovery-validation-github-org-repo-rest',
+          'REST',
+          'GithubOrg+GithubRepo'
+        ],
+        [
+          'github-org-repo-http',
+          'postman-cs/spec-discovery-validation-github-org-repo-http',
+          'HTTP',
+          'GithubOrg+GithubRepo'
+        ],
+        [
+          'github-org-repo-websocket',
+          'postman-cs/spec-discovery-validation-github-org-repo-websocket',
+          'WEBSOCKET',
+          'GithubOrg+GithubRepo'
+        ]
       ];
       const receipts = [];
       const checks = [];
@@ -2046,7 +2061,7 @@ const requiredBoundaryDefs = [
   },
   {
     id: 'github-org-repo-multi-environment-ambiguity',
-    description: 'exact the customer duplicates remain unresolved manual review',
+    description: 'exact GithubOrg/GithubRepo duplicates remain unresolved manual review',
     async run(workspace) {
       const started = Date.now();
       const run = await runBuiltCli(await caseWorkspace(workspace, 'multi-env'), {
@@ -2059,7 +2074,10 @@ const requiredBoundaryDefs = [
         { name: 'resolution is unresolved', passed: resolution.status === 'unresolved' },
         { name: 'source type is manual-review', passed: resolution.sourceType === 'manual-review' },
         { name: 'at least two ranked candidates', passed: (resolution.rankedCandidates ?? []).length >= 2 },
-        { name: 'exact GithubOrg/GithubRepo tag contract is evidenced', passed: provenanceOrEvidence.includes('GithubOrg+GithubRepo') },
+        {
+          name: 'exact GithubOrg/GithubRepo tag contract is evidenced',
+          passed: provenanceOrEvidence.includes('GithubOrg+GithubRepo')
+        },
         { name: 'CLI exits successfully', passed: run.child.exitCode === 0 }
       ];
       return resultRecord(this.id, this.description, started, checks, resolution, run.result.outputs, childReceipt(run.child));

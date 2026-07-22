@@ -212,7 +212,7 @@ You only need permissions for the providers you use. Missing permissions produce
 **Exact repository correlation and progressive narrowing**: Exact tag correlation runs before heuristic selection at every account size:
 
 1. **Exact `postman:repo=<owner>/<repo>`** -- canonical single-tag match
-2. **Exact GithubOrg/GithubRepo split tags** -- `GithubOrg=<owner>` AND `GithubRepo=<repo>` conjunction
+2. **Exact split tags** -- `GithubOrg=<owner>` AND `GithubRepo=<repo>` conjunction
 3. **IaC fingerprinting** -- extract gateway IDs from static CloudFormation/SAM, Serverless, Terraform, and related files
 4. **CloudFormation stack correlation** -- strongly correlated stacks and physical API IDs
 5. **Naming heuristic / bounded enumeration** -- ranked candidates for review only; never silent first-wins

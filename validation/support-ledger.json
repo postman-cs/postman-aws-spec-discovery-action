@@ -421,7 +421,7 @@
     },
     {
       "id": "tag-github-org-repo-split",
-      "method": "Exact the customer GithubOrg+GithubRepo tag correlation",
+      "method": "Exact GithubOrg+GithubRepo tag correlation",
       "category": "aws-tag-correlation",
       "supportLevel": "full",
       "implementationSeam": [

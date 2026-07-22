@@ -75,7 +75,9 @@ function baseInputs(repoRoot: string, maxCandidates: number) {
   };
 }
 
-function githubOrgRepoTaggingClient(resources: Array<{ arn: string; tags: Record<string, string> }>): TaggingSpecClient {
+function githubOrgRepoTaggingClient(
+  resources: Array<{ arn: string; tags: Record<string, string> }>
+): TaggingSpecClient {
   return {
     getResourcesByTag: vi.fn().mockResolvedValue([]),
     getResourcesByTags: vi.fn().mockImplementation(async (filters) => {
@@ -181,7 +183,7 @@ describe('POS-392 tag correlation runtime + tagging client', () => {
     expect(send).toHaveBeenCalledTimes(MAX_TAGGING_PAGES);
   });
 
-  it('exact the customer match selects below max-candidates threshold', async () => {
+  it('exact GithubOrg+GithubRepo match selects below max-candidates threshold', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-tag-below-'));
     try {
       const aws = createAwsClientStub({
@@ -249,14 +251,14 @@ describe('POS-392 tag correlation runtime + tagging client', () => {
       expect(resolution.gatewayId).toBe('rest-pay');
       expect(resolution.status).toBe('resolved');
       expect(resolution.sourceType).toBe('gateway-export');
-      // Exact correlation runs once above cap; broad narrowing must not re-query GithubOrg/GithubRepo tags.
+      // Exact correlation runs once above cap; broad narrowing must not re-query split tags.
       expect(taggingClient.getResourcesByTags).toHaveBeenCalledTimes(1);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('emits sourceTagContract for the customer exact-tag gateway export', async () => {
+  it('emits sourceTagContract for GithubOrg+GithubRepo exact-tag gateway export', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-tag-github-org-repo-prov-'));
     try {
       const aws = createAwsClientStub({

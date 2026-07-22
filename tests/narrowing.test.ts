@@ -339,7 +339,7 @@ describe('POS-392 exact repo tag correlation', () => {
     expect(result?.gatewayIds).toEqual(['rest-1']);
   });
 
-  it('the customer GithubOrg+GithubRepo conjunction selects one HTTP API', async () => {
+  it('GithubOrg+GithubRepo conjunction selects one HTTP API', async () => {
     const taggingClient = createTaggingClientStub(async (key) => {
       if (key === 'postman:repo') return [];
       if (key === 'GithubOrg' || key === 'GithubRepo') {
@@ -362,7 +362,7 @@ describe('POS-392 exact repo tag correlation', () => {
     );
   });
 
-  it('GithubOrg/GithubRepo conjunction matches WebSocket /apis ARN and mixed-case identity values', async () => {
+  it('GithubOrg+GithubRepo conjunction matches WebSocket /apis ARN and mixed-case identity values', async () => {
     const taggingClient = createTaggingClientStub(async (key) => {
       if (key === 'postman:repo') return [];
       if (key === 'GithubOrg' || key === 'GithubRepo') {
@@ -384,13 +384,18 @@ describe('POS-392 exact repo tag correlation', () => {
     );
   });
 
-  it('canonical tier wins over the customer when both are present', async () => {
+  it('canonical tier wins over GithubOrg+GithubRepo when both are present', async () => {
     const taggingClient = createTaggingClientStub(async (key) => {
       if (key === 'postman:repo') {
         return [{ arn: 'arn:aws:apigateway:us-east-1::/restapis/canonical-1', tags: { 'postman:repo': 'org/payments' } }];
       }
       if (key === 'GithubOrg' || key === 'GithubRepo') {
-        return [{ arn: 'arn:aws:apigateway:us-east-1::/apis/github-org-repo-1', tags: { GithubOrg: 'org', GithubRepo: 'payments' } }];
+        return [
+          {
+            arn: 'arn:aws:apigateway:us-east-1::/apis/github-org-repo-1',
+            tags: { GithubOrg: 'org', GithubRepo: 'payments' }
+          }
+        ];
       }
       return [];
     });
@@ -399,7 +404,7 @@ describe('POS-392 exact repo tag correlation', () => {
     expect(result?.gatewayIds).toEqual(['canonical-1']);
   });
 
-  it('wrong org, wrong repo, or missing the customer half do not match', async () => {
+  it('wrong org, wrong repo, or missing split-tag half do not match', async () => {
     const cases: Array<{ label: string; byKey: (key: string) => TaggedResource[] }> = [
       {
         label: 'wrong org',
@@ -437,7 +442,7 @@ describe('POS-392 exact repo tag correlation', () => {
     }
   });
 
-  it('multiple exact the customer per-environment matches remain narrow and deterministically ordered', async () => {
+  it('multiple exact GithubOrg+GithubRepo per-environment matches remain narrow and deterministically ordered', async () => {
     const taggingClient = createTaggingClientStub(async (key) => {
       if (key === 'postman:repo') return [];
       if (key === 'GithubOrg' || key === 'GithubRepo') {
@@ -463,7 +468,7 @@ describe('POS-392 exact repo tag correlation', () => {
     await expect(correlateExactRepoTags({ repoSlug: 'org/payments', taggingClient })).resolves.toBeUndefined();
   });
 
-  it('pipeline the customer select and multi-match retain tagContract evidence', async () => {
+  it('pipeline GithubOrg+GithubRepo select and multi-match retain tagContract evidence', async () => {
     const one = createTaggingClientStub(async (key) => {
       if (key === 'postman:repo') return [];
       if (key === 'GithubOrg' || key === 'GithubRepo') {

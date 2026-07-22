@@ -87,7 +87,7 @@ export function extractGatewayIdFromArn(arn: string): string | undefined {
 
 /**
  * Select-grade repo tag contract on a tag bag: canonical postman:repo first, then
- * the customer GithubOrg+GithubRepo conjunction. Generic/fuzzy keys never match here.
+ * GithubOrg+GithubRepo conjunction. Generic/fuzzy keys never match here.
  */
 export function matchExactRepoTagContract(
   tags: Record<string, string> | undefined,
@@ -99,7 +99,10 @@ export function matchExactRepoTagContract(
   }
   const parsed = parseRepoSlug(repoSlug);
   if (!parsed) return undefined;
-  if (repoIdentityEquals(tags[GITHUB_ORG_TAG], parsed.owner) && repoIdentityEquals(tags[GITHUB_REPO_TAG], parsed.repo)) {
+  if (
+    repoIdentityEquals(tags[GITHUB_ORG_TAG], parsed.owner) &&
+    repoIdentityEquals(tags[GITHUB_REPO_TAG], parsed.repo)
+  ) {
     return 'GithubOrg+GithubRepo';
   }
   return undefined;
@@ -128,7 +131,7 @@ function toExactResult(ids: string[], tagContract: ExactRepoTagContract, evidenc
 }
 
 /**
- * Exact repository tag correlation (canonical postman:repo, then the customer GithubOrg+GithubRepo).
+ * Exact repository tag correlation (canonical postman:repo, then GithubOrg+GithubRepo).
  * Fail-soft on permission denial. One match may select; multiple exact matches stay ambiguity-safe.
  */
 export async function correlateExactRepoTags(
@@ -169,10 +172,10 @@ export async function correlateExactRepoTags(
       ]);
     }
   } catch {
-    // Permission denial or missing key: fail soft and try split-tag contract.
+    // Permission denial or missing key: fail soft and try the split-tag contract.
   }
 
-  // GithubOrg/GithubRepo conjunction: resources that have BOTH GithubOrg and GithubRepo keys (AND filters),
+  // Exact split-tag conjunction: resources that have BOTH GithubOrg and GithubRepo keys (AND filters),
   // then client-side identity normalize. Key-only filters preserve AWS key case while allowing
   // mixed-case owner/repo values. Covers REST (/restapis/) and HTTP/WebSocket (/apis/) ARNs.
   try {
