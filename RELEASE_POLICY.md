@@ -6,8 +6,9 @@ Git tags and GitHub releases are the public release identifiers for this action.
 
 ## Tag policy
 
-- Immutable releases use `vMAJOR.MINOR.PATCH` tags.
-- The rolling major alias (`vMAJOR`, e.g. `v2`) is force-moved by the release workflow's `advance-major-alias` job after a successful immutable publish.
+- Immutable releases use `vMAJOR.MINOR.PATCH` tags that equal `v` plus the `package.json` version.
+- When the package patch is `0`, `vMAJOR.MINOR` is also an accepted immutable publish tag and maps to package version `MAJOR.MINOR.0`.
+- The rolling major alias (`vMAJOR`, e.g. `v2`) is force-moved by the release workflow's `advance-major-alias` job after a successful immutable publish; a direct `vMAJOR` push is a no-op alias invocation and does not publish.
 - Existing immutable release tags are never force-pushed or rewritten.
 - `v0` tags stay frozen at the last `v0` release.
 - Every immutable release tag has a GitHub release with generated notes.
@@ -27,7 +28,7 @@ Run the package validators from this directory before pushing an immutable tag:
 
 ## npm package
 
-The CLI publishes as `@postman-cse/onboarding-aws-spec-discovery` with versions that match the GitHub release tag. The rolling major alias updates the action channel and skips npm publishing.
+The CLI publishes as `@postman-cse/onboarding-aws-spec-discovery` with versions that match exact immutable GitHub release tags; zero-patch minor immutable tags (`vMAJOR.MINOR`) map to package version `MAJOR.MINOR.0`. The rolling major alias updates the action channel and skips npm publishing.
 
 ## Compatibility
 

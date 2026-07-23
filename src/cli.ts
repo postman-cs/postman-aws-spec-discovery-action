@@ -277,7 +277,8 @@ export async function runCli(
   // present, resolve account_type once, best-effort, before either completion emit.
   const { accountType } = await prepareTelemetryCredentials({
     postmanApiKey: config.inputEnv.INPUT_POSTMAN_API_KEY ?? env.POSTMAN_API_KEY,
-    postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? env.POSTMAN_ACCESS_TOKEN
+    postmanAccessToken: config.inputEnv.INPUT_POSTMAN_ACCESS_TOKEN ?? env.POSTMAN_ACCESS_TOKEN,
+    onWarning: (message) => reporter.warning(message)
   });
   try {
     const result = await execute(inputs, {

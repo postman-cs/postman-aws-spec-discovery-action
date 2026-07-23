@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   gate:
     runs-on: ubuntu-latest
@@ -28,8 +32,12 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Install actionlint
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11 "$RUNNER_TEMP"
+          ACTIONLINT_BIN="$RUNNER_TEMP/actionlint"
+          "$ACTIONLINT_BIN" -version
+          echo "ACTIONLINT_BIN=$ACTIONLINT_BIN" >> "$GITHUB_ENV"
       # Bundle once before fan-out so pack tests and the dist assert only read
       # dist/. Typecheck stays in the fan-out so it runs exactly once.
       - run: npm run bundle
@@ -64,6 +72,7 @@ jobs:
           run typecheck  npm run typecheck
           run test       npm test
           run dist       npm run verify:dist:assert
+          run actionlint "$ACTIONLINT_BIN"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             run commitlint npx commitlint \
               --from "${{ github.event.pull_request.base.sha }}" \
@@ -97,10 +106,46 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm run lint
-      - run: npm test
-      - run: npm run typecheck
       - run: npm run bundle
-      - run: npm run verify:dist:assert
+      - name: Run gates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $maxParallelGates = 2
+          $checks = @(
+            @{ Name = 'lint'; Args = @('run', 'lint') },
+            @{ Name = 'test'; Args = @('test') },
+            @{ Name = 'typecheck'; Args = @('run', 'typecheck') },
+            @{ Name = 'dist'; Args = @('run', 'verify:dist:assert') }
+          )
+          $jobs = @()
+          $results = @{}
+          foreach ($check in $checks) {
+            while ($jobs.Count -ge $maxParallelGates) {
+              $finished = Wait-Job -Job $jobs -Any
+              Write-Output "::group::$($finished.Name)"
+              Receive-Job -Job $finished -ErrorAction Continue 2>&1 | Write-Output
+              Write-Output "::endgroup::"
+              $results[$finished.Name] = if ($finished.State -eq 'Completed') { 0 } else { 1 }
+              Remove-Job -Job $finished
+              $jobs = @($jobs | Where-Object Id -ne $finished.Id)
+            }
+            $jobs += Start-Job -Name $check.Name -ScriptBlock {
+              param($npmArgs)
+              & npm @npmArgs
+              if ($LASTEXITCODE -ne 0) { throw "gate failed with exit code $LASTEXITCODE" }
+            } -ArgumentList (,$check.Args)
+          }
+          foreach ($job in $jobs) {
+            Wait-Job -Job $job | Out-Null
+            Write-Output "::group::$($job.Name)"
+            Receive-Job -Job $job -ErrorAction Continue 2>&1 | Write-Output
+            Write-Output "::endgroup::"
+            $results[$job.Name] = if ($job.State -eq 'Completed') { 0 } else { 1 }
+            Remove-Job -Job $job
+          }
+          $failed = $false
+          foreach ($check in $checks) {
+            if ($results[$check.Name] -eq 0) { Write-Output "gate:$($check.Name)=pass" } else { Write-Output "gate:$($check.Name)=fail"; $failed = $true }
+          }
+          if ($failed) { exit 1 }

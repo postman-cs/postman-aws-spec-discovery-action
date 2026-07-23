@@ -6,6 +6,10 @@ import {
   resolveSessionIdentity,
   resolveTelemetryAccountType
 } from '../src/lib/postman/credential-identity.js';
+import {
+  __resetPmakDiagnosticMemo,
+  inspectPmakIdentity
+} from '../src/lib/postman/pmak-diagnostics.js';
 
 const IAPUB_BASE = 'https://iapub.postman.co';
 
@@ -34,6 +38,7 @@ function sessionSequence(steps: Array<() => Response>) {
 describe('event-based session retry (aws-spec-discovery)', () => {
   beforeEach(() => {
     __resetIdentityMemo();
+    __resetPmakDiagnosticMemo();
   });
 
   it('retries a transient 5xx and resolves later via full-jitter through the injected clock', async () => {
@@ -114,5 +119,21 @@ describe('event-based session retry (aws-spec-discovery)', () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => new Response('down', { status: 503 }));
     const accountType = await resolveTelemetryAccountType('tok', fetchImpl);
     expect(accountType).toBeUndefined();
+  });
+
+  it('shares one normalized-host PMAK diagnostic probe between concurrent callers', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      new Response(JSON.stringify({ user: { username: null, email: null } }), {
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
+
+    const results = await Promise.all([
+      inspectPmakIdentity({ apiBaseUrl: 'https://api.getpostman.com/', apiKey: 'PMAK-cache', fetchImpl }),
+      inspectPmakIdentity({ apiBaseUrl: 'https://api.getpostman.com', apiKey: 'PMAK-cache', fetchImpl })
+    ]);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(results).toEqual([{ kind: 'service-account', status: 200 }, { kind: 'service-account', status: 200 }]);
   });
 });
