@@ -1,7 +1,5 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
 
 import { describe, expect, it } from 'vitest';
 
@@ -29,24 +27,19 @@ function linuxQueuedGates(runGates: string): string[] {
   return [...runGates.matchAll(/^\s+run ([a-zA-Z0-9_-]+)\s+/gm)].map((m) => m[1]!);
 }
 
-/** Exact Windows `Run gates` PowerShell body under `run: |`, with YAML indent stripped. */
-function extractWindowsRunGatesBody(source: string): string {
-  const windows = jobText(source, 'windows');
-  const match = windows.match(/ {6}- name: Run gates\n {8}shell: pwsh\n {8}run: \|\n([\s\S]*)$/);
-  if (!match?.[1]) {
-    throw new Error('Windows Run gates pwsh body not found');
-  }
-  return match[1]
-    .replace(/\n$/, '')
-    .split('\n')
-    .map((line) => (line.startsWith('          ') ? line.slice(10) : line))
-    .join('\n');
-}
-
 const linux = jobText(workflow, 'gate');
 const windows = jobText(workflow, 'windows');
 
 describe('CI workflow contract', () => {
+  it('keeps independent Linux/Windows jobs with no needs edges', () => {
+    const jobsSection = workflow.slice(workflow.indexOf('\njobs:\n'));
+    const jobMatches = jobsSection.match(/^ {2}[a-zA-Z0-9_-]+:$/gm) ?? [];
+    expect(jobMatches).toEqual(['  gate:', '  windows:']);
+    expect(linux).not.toMatch(/^\s*needs:/m);
+    expect(windows).not.toMatch(/^\s*needs:/m);
+    expect(workflow).not.toMatch(/^\s*needs:/m);
+  });
+
   it('supersedes PRs only and bundles once before bounded Linux gates', () => {
     expect(workflow).toContain('group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}');
     expect(workflow).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
@@ -85,105 +78,93 @@ describe('CI workflow contract', () => {
   });
 
   it('pins actionlint 1.7.11 at $RUNNER_TEMP/actionlint with PR-only commitlint history', () => {
+    const ACTIONLINT_DOWNLOADER_COMMIT = '393031adb9afb225ee52ae2ccd7a5af5525e03e8';
     const install = namedStep(linux, 'Install actionlint');
+    expect(ACTIONLINT_DOWNLOADER_COMMIT).toHaveLength(40);
+    expect(install).toContain(
+      `https://raw.githubusercontent.com/rhysd/actionlint/${ACTIONLINT_DOWNLOADER_COMMIT}/scripts/download-actionlint.bash`,
+    );
+    expect(install.match(/393031adb9afb225ee52ae2ccd7a5af5525e03e8/)?.[0]).toHaveLength(40);
     expect(install).toContain('download-actionlint.bash) 1.7.11 "$RUNNER_TEMP"');
+    expect(install).not.toContain('/main/scripts');
+    expect(workflow).not.toContain('/main/scripts/download-actionlint.bash');
     expect(install).toContain('ACTIONLINT_BIN="$RUNNER_TEMP/actionlint"');
+    expect(install).toContain('"$ACTIONLINT_BIN" -version');
+    expect(install).toContain('echo "ACTIONLINT_BIN=$ACTIONLINT_BIN" >> "$GITHUB_ENV"');
     expect(workflow).not.toContain('actions/setup-go');
     expect(workflow).not.toContain('go install github.com/rhysd/actionlint');
 
     expect(linux).toContain('fetch-depth: 0');
     expect(windows).not.toMatch(/^\s*fetch-depth:\s*/m);
     expect(windows).not.toContain('commitlint');
+    expect(windows).not.toContain('actionlint');
   });
 
-  it('preserves Windows coverage with a bundle-once bounded queue and native exit propagation', () => {
+  it('preserves the current no-NPM-token policy on both jobs', () => {
+    expect(workflow).not.toMatch(/NODE_AUTH_TOKEN\s*:/);
+    expect(workflow).not.toContain('secrets.NPM_TOKEN');
+    expect(workflow).not.toContain('NPM_TOKEN');
+  });
+
+  it('caches Windows node_modules with pinned actions/cache and cache-miss-only install', () => {
+    expect(windows).toContain('name: Windows gate');
     expect(windows).toContain('runs-on: windows-latest');
-    expect(windows.match(/^\s*- run: npm run bundle\s*$/gm) ?? []).toHaveLength(1);
-    expect(windows.indexOf('- run: npm run bundle')).toBeLessThan(windows.indexOf('- name: Run gates'));
+    expect(windows).toContain("node-version: '24'");
+    expect(windows).not.toMatch(/^\s*cache:\s*npm\s*$/m);
 
-    const runGates = namedStep(windows, 'Run gates');
-    expect(runGates).toContain('shell: pwsh');
-    expect(runGates).toContain("$ErrorActionPreference = 'Stop'");
-    expect(runGates).toContain('$maxParallelGates = 2');
-    expect(runGates).toContain('while ($jobs.Count -ge $maxParallelGates)');
-    expect(runGates).toContain('Start-Job');
+    expect(windows).toContain('id: windows-node-modules');
+    expect(windows).toContain('uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0');
+    expect(windows).toContain('path: node_modules');
+    expect(windows).toContain("key: Windows/node-24/exact-${{ hashFiles('package-lock.json') }}");
+    expect(windows).not.toContain('restore-keys');
+    expect(windows).not.toContain('restore-key');
+    expect(windows).not.toContain('enableCrossOsArchive');
 
-    expect(runGates).toContain("@{ Name = 'lint'; Args = @('run', 'lint') }");
-    expect(runGates).toContain("@{ Name = 'test'; Args = @('test') }");
-    expect(runGates).toContain("@{ Name = 'typecheck'; Args = @('run', 'typecheck') }");
-    expect(runGates).toContain("@{ Name = 'dist'; Args = @('run', 'verify:dist:assert') }");
-    expect(runGates.match(/@\{ Name = '[^']+'; Args = @[^}]+\}/g) ?? []).toHaveLength(4);
-
-    expect(runGates).not.toContain('Invoke-Expression');
-    expect(runGates).toContain('& npm @npmArgs');
-    expect(runGates).toContain('if ($LASTEXITCODE -ne 0) { throw "gate failed with exit code $LASTEXITCODE" }');
-    expect(runGates).toContain('-ArgumentList (,$check.Args)');
-    expect(runGates.match(/Receive-Job -Job \$[^ ]+ -ErrorAction Continue 2>&1 \| Write-Output/g) ?? []).toHaveLength(2);
-    expect(runGates).toContain('Write-Output "::group::$($finished.Name)"');
-    expect(runGates).toContain('Write-Output "::group::$($job.Name)"');
-
-    expect(runGates).toContain('gate:$($check.Name)=pass');
-    expect(runGates).toContain('gate:$($check.Name)=fail');
-    expect(runGates).toContain('if ($failed) { exit 1 }');
-    expect(runGates).not.toContain('actionlint');
-    expect(runGates).not.toContain('commitlint');
+    expect(windows).toContain("if: steps.windows-node-modules.outputs.cache-hit != 'true'");
+    expect(windows).toContain('run: npm ci --prefer-offline --no-audit --no-fund');
+    expect(windows.match(/npm ci --prefer-offline --no-audit --no-fund/g) ?? []).toHaveLength(1);
+    expect(windows.match(/^\s*- run: npm ci\s*$/gm) ?? []).toHaveLength(0);
   });
 
-  it(
-    'drains Windows gate diagnostics before failing the process when npm test exits nonzero',
-    () => {
-      const script = extractWindowsRunGatesBody(workflow);
-      expect(script).toContain('& npm @npmArgs');
-      expect(script).not.toContain('Invoke-Expression');
+  it('runs direct unfiltered npm test unconditionally and skips only install on cache hit', () => {
+    expect(windows.match(/^\s*- run: npm test\s*$/gm) ?? []).toHaveLength(1);
+    expect(windows).not.toMatch(/npm test --/);
+    expect(windows).not.toMatch(/npm test -/);
 
-      const fixture = mkdtempSync(join(tmpdir(), 'aws-ci-windows-gates-'));
-      try {
-        writeFileSync(
-          join(fixture, 'package.json'),
-          `${JSON.stringify(
-            {
-              name: 'aws-ci-windows-gates-fixture',
-              private: true,
-              scripts: {
-                lint: 'node -e "console.error(\'benign stderr from passing lint\')"',
-                test: 'node -e "process.exit(1)"',
-                typecheck: 'node -e "process.exit(0)"',
-                'verify:dist:assert': 'node -e "process.exit(0)"',
-              },
-            },
-            null,
-            2,
-          )}\n`,
-        );
-        writeFileSync(join(fixture, 'run-gates.ps1'), `${script}\n`);
+    const stepsAfterCache = windows.slice(windows.indexOf('id: windows-node-modules'));
+    expect(stepsAfterCache).toContain('- run: npm test');
+    expect(stepsAfterCache).not.toMatch(/- run: npm test\n\s+if:/);
 
-        const result = spawnSync('pwsh', ['-NoProfile', '-File', 'run-gates.ps1'], {
-          cwd: fixture,
-          encoding: 'utf8',
-          timeout: 30_000,
-        });
-        const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+    const testIdx = windows.search(/^\s*- run: npm test\s*$/m);
+    const preceding = windows.slice(Math.max(0, testIdx - 80), testIdx);
+    expect(preceding).not.toMatch(/if:.*\n\s*- run: npm test/);
+  });
 
-        expect(result.error, output).toBeUndefined();
-        expect(result.signal, output).toBeNull();
-        expect(result.status, output).not.toBe(0);
-        expect(output).toContain('benign stderr from passing lint');
-        expect(output).toContain('::group::lint');
-        expect(output).toContain('::group::test');
-        expect(output).toContain('::group::typecheck');
-        expect(output).toContain('::group::dist');
-        expect(output).toContain('gate:lint=pass');
-        expect(output).toContain('gate:test=fail');
-        expect(output).toContain('gate:typecheck=pass');
-        expect(output).toContain('gate:dist=pass');
-        expect(output).toMatch(/gate:lint=(?:pass|fail)/);
-        expect(output).toMatch(/gate:test=(?:pass|fail)/);
-        expect(output).toMatch(/gate:typecheck=(?:pass|fail)/);
-        expect(output).toMatch(/gate:dist=(?:pass|fail)/);
-      } finally {
-        rmSync(fixture, { recursive: true, force: true });
-      }
-    },
-    60_000,
-  );
+  it('omits Windows build/bundle/lint/typecheck/dist/queue work', () => {
+    expect(windows).not.toContain('npm run bundle');
+    expect(windows).not.toContain('npm run build');
+    expect(windows).not.toContain('npm run lint');
+    expect(windows).not.toContain('npm run typecheck');
+    expect(windows).not.toContain('verify:dist');
+    expect(windows).not.toContain('MAX_PARALLEL_GATES');
+    expect(windows).not.toContain('$maxParallelGates');
+    expect(windows).not.toContain('Start-Job');
+    expect(windows).not.toContain('Wait-Job');
+    expect(windows).not.toContain('Receive-Job');
+    expect(windows).not.toContain('Run gates');
+    expect(windows).not.toContain('shell: pwsh');
+    expect(windows).not.toMatch(/@\{ Name = '/);
+
+    // Linux still owns the full gate set; Windows is test-only.
+    expect(linux).toContain('npm run bundle');
+    expect(linux).toContain('run lint       npm run lint');
+    expect(linux).toContain('run typecheck  npm run typecheck');
+    expect(linux).toContain('run dist       npm run verify:dist:assert');
+
+    const upload = namedStep(linux, 'Upload expected dist on mismatch');
+    expect(upload).toContain('if: failure()');
+    expect(upload).toContain('uses: actions/upload-artifact@v7');
+    expect(upload).toContain('name: expected-dist');
+    expect(upload).toContain('path: dist/');
+  });
 });

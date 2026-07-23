@@ -34,7 +34,7 @@ jobs:
       - run: npm ci
       - name: Install actionlint
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11 "$RUNNER_TEMP"
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/393031adb9afb225ee52ae2ccd7a5af5525e03e8/scripts/download-actionlint.bash) 1.7.11 "$RUNNER_TEMP"
           ACTIONLINT_BIN="$RUNNER_TEMP/actionlint"
           "$ACTIONLINT_BIN" -version
           echo "ACTIONLINT_BIN=$ACTIONLINT_BIN" >> "$GITHUB_ENV"
@@ -103,49 +103,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: npm
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm run bundle
-      - name: Run gates
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $maxParallelGates = 2
-          $checks = @(
-            @{ Name = 'lint'; Args = @('run', 'lint') },
-            @{ Name = 'test'; Args = @('test') },
-            @{ Name = 'typecheck'; Args = @('run', 'typecheck') },
-            @{ Name = 'dist'; Args = @('run', 'verify:dist:assert') }
-          )
-          $jobs = @()
-          $results = @{}
-          foreach ($check in $checks) {
-            while ($jobs.Count -ge $maxParallelGates) {
-              $finished = Wait-Job -Job $jobs -Any
-              Write-Output "::group::$($finished.Name)"
-              Receive-Job -Job $finished -ErrorAction Continue 2>&1 | Write-Output
-              Write-Output "::endgroup::"
-              $results[$finished.Name] = if ($finished.State -eq 'Completed') { 0 } else { 1 }
-              Remove-Job -Job $finished
-              $jobs = @($jobs | Where-Object Id -ne $finished.Id)
-            }
-            $jobs += Start-Job -Name $check.Name -ScriptBlock {
-              param($npmArgs)
-              & npm @npmArgs
-              if ($LASTEXITCODE -ne 0) { throw "gate failed with exit code $LASTEXITCODE" }
-            } -ArgumentList (,$check.Args)
-          }
-          foreach ($job in $jobs) {
-            Wait-Job -Job $job | Out-Null
-            Write-Output "::group::$($job.Name)"
-            Receive-Job -Job $job -ErrorAction Continue 2>&1 | Write-Output
-            Write-Output "::endgroup::"
-            $results[$job.Name] = if ($job.State -eq 'Completed') { 0 } else { 1 }
-            Remove-Job -Job $job
-          }
-          $failed = $false
-          foreach ($check in $checks) {
-            if ($results[$check.Name] -eq 0) { Write-Output "gate:$($check.Name)=pass" } else { Write-Output "gate:$($check.Name)=fail"; $failed = $true }
-          }
-          if ($failed) { exit 1 }
+      - id: windows-node-modules
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: node_modules
+          key: Windows/node-24/exact-${{ hashFiles('package-lock.json') }}
+      - if: steps.windows-node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - run: npm test
