@@ -103,6 +103,7 @@ describe('CI workflow contract', () => {
 
     const runGates = namedStep(windows, 'Run gates');
     expect(runGates).toContain('shell: pwsh');
+    expect(runGates).toContain("$ErrorActionPreference = 'Stop'");
     expect(runGates).toContain('$maxParallelGates = 2');
     expect(runGates).toContain('while ($jobs.Count -ge $maxParallelGates)');
     expect(runGates).toContain('Start-Job');
@@ -117,6 +118,9 @@ describe('CI workflow contract', () => {
     expect(runGates).toContain('& npm @npmArgs');
     expect(runGates).toContain('if ($LASTEXITCODE -ne 0) { throw "gate failed with exit code $LASTEXITCODE" }');
     expect(runGates).toContain('-ArgumentList (,$check.Args)');
+    expect(runGates.match(/Receive-Job -Job \$[^ ]+ -ErrorAction Continue 2>&1 \| Write-Output/g) ?? []).toHaveLength(2);
+    expect(runGates).toContain('Write-Output "::group::$($finished.Name)"');
+    expect(runGates).toContain('Write-Output "::group::$($job.Name)"');
 
     expect(runGates).toContain('gate:$($check.Name)=pass');
     expect(runGates).toContain('gate:$($check.Name)=fail');
@@ -126,7 +130,7 @@ describe('CI workflow contract', () => {
   });
 
   it(
-    'executes the Windows Run gates body and fails the process when npm test exits nonzero',
+    'drains Windows gate diagnostics before failing the process when npm test exits nonzero',
     () => {
       const script = extractWindowsRunGatesBody(workflow);
       expect(script).toContain('& npm @npmArgs');
@@ -141,7 +145,7 @@ describe('CI workflow contract', () => {
               name: 'aws-ci-windows-gates-fixture',
               private: true,
               scripts: {
-                lint: 'node -e "process.exit(0)"',
+                lint: 'node -e "console.error(\'benign stderr from passing lint\')"',
                 test: 'node -e "process.exit(1)"',
                 typecheck: 'node -e "process.exit(0)"',
                 'verify:dist:assert': 'node -e "process.exit(0)"',
@@ -163,6 +167,11 @@ describe('CI workflow contract', () => {
         expect(result.error, output).toBeUndefined();
         expect(result.signal, output).toBeNull();
         expect(result.status, output).not.toBe(0);
+        expect(output).toContain('benign stderr from passing lint');
+        expect(output).toContain('::group::lint');
+        expect(output).toContain('::group::test');
+        expect(output).toContain('::group::typecheck');
+        expect(output).toContain('::group::dist');
         expect(output).toContain('gate:lint=pass');
         expect(output).toContain('gate:test=fail');
         expect(output).toContain('gate:typecheck=pass');

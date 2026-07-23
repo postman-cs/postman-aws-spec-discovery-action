@@ -110,6 +110,7 @@ jobs:
       - name: Run gates
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $maxParallelGates = 2
           $checks = @(
             @{ Name = 'lint'; Args = @('run', 'lint') },
@@ -122,8 +123,9 @@ jobs:
           foreach ($check in $checks) {
             while ($jobs.Count -ge $maxParallelGates) {
               $finished = Wait-Job -Job $jobs -Any
-              $output = Receive-Job -Job $finished
-              $output | Write-Output
+              Write-Output "::group::$($finished.Name)"
+              Receive-Job -Job $finished -ErrorAction Continue 2>&1 | Write-Output
+              Write-Output "::endgroup::"
               $results[$finished.Name] = if ($finished.State -eq 'Completed') { 0 } else { 1 }
               Remove-Job -Job $finished
               $jobs = @($jobs | Where-Object Id -ne $finished.Id)
@@ -136,7 +138,9 @@ jobs:
           }
           foreach ($job in $jobs) {
             Wait-Job -Job $job | Out-Null
-            Receive-Job -Job $job | Write-Output
+            Write-Output "::group::$($job.Name)"
+            Receive-Job -Job $job -ErrorAction Continue 2>&1 | Write-Output
+            Write-Output "::endgroup::"
             $results[$job.Name] = if ($job.State -eq 'Completed') { 0 } else { 1 }
             Remove-Job -Job $job
           }
