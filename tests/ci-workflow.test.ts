@@ -126,18 +126,18 @@ describe('CI workflow contract', () => {
     expect(windows.match(/^\s*- run: npm ci\s*$/gm) ?? []).toHaveLength(0);
   });
 
-  it('runs direct unfiltered npm test unconditionally and skips only install on cache hit', () => {
-    expect(windows.match(/^\s*- run: npm test\s*$/gm) ?? []).toHaveLength(1);
+  it('runs direct unfiltered node --run test unconditionally and skips only install on cache hit', () => {
+    expect(windows.match(/^\s*- run: node --run test\s*$/gm) ?? []).toHaveLength(1);
     expect(windows).not.toMatch(/npm test --/);
     expect(windows).not.toMatch(/npm test -/);
 
     const stepsAfterCache = windows.slice(windows.indexOf('id: windows-node-modules'));
-    expect(stepsAfterCache).toContain('- run: npm test');
-    expect(stepsAfterCache).not.toMatch(/- run: npm test\n\s+if:/);
+    expect(stepsAfterCache).toContain('- run: node --run test');
+    expect(stepsAfterCache).not.toMatch(/- run: node --run test\n\s+if:/);
 
-    const testIdx = windows.search(/^\s*- run: npm test\s*$/m);
+    const testIdx = windows.search(/^\s*- run: node --run test\s*$/m);
     const preceding = windows.slice(Math.max(0, testIdx - 80), testIdx);
-    expect(preceding).not.toMatch(/if:.*\n\s*- run: npm test/);
+    expect(preceding).not.toMatch(/if:.*\n\s*- run: node --run test/);
   });
 
   it('omits Windows build/bundle/lint/typecheck/dist/queue work', () => {
