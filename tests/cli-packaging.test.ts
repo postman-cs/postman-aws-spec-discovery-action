@@ -21,8 +21,15 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
+const npmCliFallback = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+
+function resolveNpmCliArgs(platform: NodeJS.Platform, npmExecPath: string | undefined): readonly string[] {
+  if (platform !== 'win32') return [];
+  return [npmExecPath || npmCliFallback];
+}
+
 const npmCommand = process.platform === 'win32' ? process.execPath : 'npm';
-const npmCliArgs = process.platform === 'win32' ? [process.env.npm_execpath || ''] : [];
+const npmCliArgs = resolveNpmCliArgs(process.platform, process.env.npm_execpath);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempDirs: string[] = [];
 
@@ -431,6 +438,15 @@ async function runWin32NativeShimPackaging(options: { executeCmd: boolean }): Pr
 }
 
 describe('CLI packaging contract', () => {
+  it('keeps Windows npm CLI args non-empty under node --run', () => {
+    const underNodeRun = resolveNpmCliArgs('win32', undefined);
+    expect(underNodeRun).toEqual([npmCliFallback]);
+    expect(underNodeRun.every((arg) => arg.length > 0)).toBe(true);
+    expect(resolveNpmCliArgs('win32', '/custom/npm-cli.js')).toEqual(['/custom/npm-cli.js']);
+    expect(resolveNpmCliArgs('linux', undefined)).toEqual([]);
+    expect(npmCliArgs.every((arg) => arg.length > 0)).toBe(true);
+  });
+
   it('commits a Node shebang and git-index executable mode on dist/cli.cjs', async () => {
     const cliPath = path.join(repoRoot, 'dist', 'cli.cjs');
     const contents = await readFile(cliPath, 'utf8');
