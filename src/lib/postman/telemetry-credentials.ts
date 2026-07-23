@@ -1,12 +1,14 @@
 import { resolveTelemetryAccountType } from './credential-identity.js';
 import { AccessTokenProvider } from './token-provider.js';
 import { POSTMAN_ENDPOINT_PROFILES } from './base-urls.js';
+import { maskPmakDiagnostic } from './pmak-diagnostics.js';
 
 export interface PrepareTelemetryCredentialsOptions {
   postmanApiKey?: string;
   postmanAccessToken?: string;
   apiBaseUrl?: string;
   onToken?: (token: string) => void;
+  onWarning?: (message: string) => void;
   fetchImpl?: typeof fetch;
 }
 
@@ -45,8 +47,13 @@ export async function prepareTelemetryCredentials(
   if (!accessToken && apiKey && provider.canRefresh()) {
     try {
       await provider.refresh();
-    } catch {
+    } catch (error) {
       // Telemetry-only path: discovery continues without account_type enrichment.
+      const message = error instanceof Error ? error.message : String(error);
+      options.onWarning?.(
+        `postman: telemetry credential enrichment failed. ${maskPmakDiagnostic(message, [apiKey, accessToken])}`
+      );
+      return { provider };
     }
   }
 

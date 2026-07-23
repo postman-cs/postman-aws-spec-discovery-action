@@ -1,5 +1,6 @@
 import { retry } from '../retry.js';
 import { POSTMAN_ENDPOINT_PROFILES } from './base-urls.js';
+import { formatRejectedMint, inspectPmakIdentity, maskPmakDiagnostic } from './pmak-diagnostics.js';
 
 export interface AccessTokenProviderOptions {
   /** Current access token (from action input or a prior mint). May be empty. */
@@ -22,11 +23,13 @@ export interface AccessTokenProviderOptions {
 
 class MintError extends Error {
   readonly permanent: boolean;
+  readonly status?: number;
 
-  constructor(message: string, permanent: boolean) {
+  constructor(message: string, permanent: boolean, status?: number) {
     super(message);
     this.name = 'MintError';
     this.permanent = permanent;
+    this.status = status;
   }
 }
 
@@ -125,11 +128,17 @@ export class AccessTokenProvider {
     if (!response.ok) {
       const status = response.status;
       if (status === 401 || status === 403) {
-        throw new MintError(
+        const original = maskPmakDiagnostic(
           `postman: re-mint failed because the postman-api-key was rejected (PMAK rejected, HTTP ${status}); ` +
             'confirm it is a valid, enabled service-account PMAK for the intended team.',
-          true
+          [this.apiKey, this.token]
         );
+        const diagnosis = await inspectPmakIdentity({
+          apiBaseUrl: this.apiBaseUrl,
+          apiKey: this.apiKey,
+          fetchImpl: this.fetchImpl
+        });
+        throw new MintError(formatRejectedMint(original, diagnosis), true, status);
       }
       if (status === 400 && body.toLowerCase().includes('service accounts not enabled')) {
         throw new MintError(
@@ -138,7 +147,7 @@ export class AccessTokenProvider {
           true
         );
       }
-      throw new MintError(`postman: re-mint failed (service-account-tokens HTTP ${status}).`, false);
+      throw new MintError(`postman: re-mint failed (service-account-tokens HTTP ${status}).`, false, status);
     }
 
     let parsed: unknown;
