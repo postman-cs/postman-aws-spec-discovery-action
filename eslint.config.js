@@ -7,4 +7,12 @@ export default tseslint.config(
   {
     ignores: ['dist/', 'node_modules/'],
   },
+  {
+    files: ['scripts/release-cut.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
+  },
 );
