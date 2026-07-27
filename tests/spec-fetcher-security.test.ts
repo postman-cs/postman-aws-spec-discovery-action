@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { agentOptions, proxyOptions, lookupMock } = vi.hoisted(() => ({
+const { agentOptions, proxyOptions, lookupMock, undiciFetchMock } = vi.hoisted(() => ({
   agentOptions: [] as unknown[],
   proxyOptions: [] as unknown[],
-  lookupMock: vi.fn(async () => [{ address: '8.8.8.8', family: 4 as const }])
+  lookupMock: vi.fn(async () => [{ address: '8.8.8.8', family: 4 as const }]),
+  // The fetcher deliberately uses undici's fetch, not the global, so its dispatcher and
+  // its fetch come from one undici instance. Stub that same export here; the globalThis
+  // spy installed in beforeEach delegates to this mock so existing assertions still read
+  // the calls the fetcher actually made.
+  undiciFetchMock: vi.fn()
 }));
 
 vi.mock('node:dns/promises', () => ({ lookup: lookupMock }));
@@ -22,7 +27,8 @@ vi.mock('undici', async (importOriginal) => {
         proxyOptions.push(options);
         super(options);
       }
-    }
+    },
+    fetch: undiciFetchMock
   };
 });
 
@@ -56,9 +62,14 @@ beforeEach(() => {
   proxyOptions.length = 0;
   lookupMock.mockReset();
   lookupMock.mockResolvedValue([{ address: '8.8.8.8', family: 4 }]);
+  undiciFetchMock.mockReset();
+  // Bind the global to the very mock the fetcher calls, so `vi.spyOn(globalThis, 'fetch')`
+  // observes and controls the real request path rather than an unused global.
+  vi.stubGlobal('fetch', undiciFetchMock);
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   delete process.env.NO_PROXY;
   delete process.env.no_proxy;
   delete process.env.HTTPS_PROXY;

@@ -1,6 +1,6 @@
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
-import { Agent, Pool, ProxyAgent, type Dispatcher } from 'undici';
+import { Agent, fetch as undiciFetch, Pool, ProxyAgent, type Dispatcher } from 'undici';
 
 import {
   isBlockedAddress,
@@ -239,7 +239,12 @@ export async function fetchSpecFromUrl(url: string, options: FetchSpecOptions = 
   const policy = options.policy ?? DEFAULT_REMOTE_FETCH_POLICY;
   const budget = options.budget ?? { totalBytes: 0 };
   const lookupFn = options.lookup ?? defaultLookup;
-  const fetchImpl = options.fetchImpl ?? fetch;
+  // The dispatcher below is an undici Agent from this package's undici. Node's global
+  // fetch is backed by its own bundled undici, and a dispatcher cannot cross that
+  // boundary (undici 8 handlers reject the foreign instance with
+  // 'invalid onRequestStart method'). Default to this package's fetch so the
+  // dispatcher and the fetch implementation always come from one undici.
+  const fetchImpl = options.fetchImpl ?? (undiciFetch as unknown as typeof fetch);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

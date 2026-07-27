@@ -179508,7 +179508,7 @@ async function fetchSpecFromUrl(url, options = {}) {
   const policy = options.policy ?? DEFAULT_REMOTE_FETCH_POLICY;
   const budget = options.budget ?? { totalBytes: 0 };
   const lookupFn = options.lookup ?? defaultLookup;
-  const fetchImpl = options.fetchImpl ?? fetch;
+  const fetchImpl = options.fetchImpl ?? import_undici2.fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
