@@ -19,7 +19,7 @@ import {
   prepareTelemetryCredentials,
   resolveTelemetryTeamId
 } from './lib/postman/telemetry-credentials.js';
-import { createTelemetryContext } from '@postman-cse/automation-core';
+import { actionSink, createLogger, createTelemetryContext, type Logger } from '@postman-cse/automation-core';
 import { resolveActionVersion } from './action-version.js';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
@@ -32,16 +32,29 @@ export interface GitHubActionDependencies {
   createAwsClient?: (region: string) => AwsGatewayClient;
   writeSpecFile?: (outputPath: string, content: string) => Promise<void>;
   providerRegistry?: ProviderRegistry;
+  /** Injected by tests; otherwise built over `actionCore` when the run starts. */
+  logger?: Logger;
 }
 
 export async function runAction(
   actionCore: CoreLike = core,
   dependencies: GitHubActionDependencies = {}
 ): Promise<DiscoveredService[]> {
-  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', actionVersion: resolveActionVersion(), logger: actionCore });
+  const actionVersion = resolveActionVersion();
+  const logger =
+    dependencies.logger ??
+    createLogger({
+      sink: actionSink(actionCore),
+      fields: { action: 'postman-aws-spec-discovery-action', action_version: actionVersion }
+    });
+  const telemetry = createTelemetryContext({ action: 'postman-aws-spec-discovery-action', actionVersion, logger: actionCore });
   telemetry.setTeamId(resolveTelemetryTeamId(process.env));
   const postmanApiKey = getInput('postman-api-key');
   const postmanAccessToken = getInput('postman-access-token');
+  // Register before any phase can run: a credential that reaches the logger
+  // after the first line is a credential that already leaked once.
+  logger.addSecret(postmanApiKey);
+  logger.addSecret(postmanAccessToken);
   if (postmanApiKey) {
     actionCore.setSecret?.(postmanApiKey);
   }
@@ -50,14 +63,21 @@ export async function runAction(
   }
   // Optional telemetry enrichment (D1): mint/re-mint access token when PMAK is
   // present, resolve account_type once, best-effort, before either completion emit.
-  const { accountType } = await prepareTelemetryCredentials({
-    postmanApiKey,
-    postmanAccessToken,
-    onToken: (token) => actionCore.setSecret?.(token),
-    onWarning: (message) => actionCore.warning(message)
-  });
+  const { accountType } = await logger.phase('prepare-telemetry-credentials', async () =>
+    prepareTelemetryCredentials({
+      postmanApiKey,
+      postmanAccessToken,
+      onToken: (token) => {
+        logger.addSecret(token);
+        actionCore.setSecret?.(token);
+      },
+      onWarning: (message) => actionCore.warning(message)
+    })
+  );
   try {
-    const result = await runActionInner(actionCore, dependencies);
+    const result = await logger.phase('discover', async () =>
+      runActionInner(actionCore, dependencies, logger)
+    );
     telemetry.setAccountType(accountType);
     telemetry.emitCompletion('success');
     return result;
@@ -70,9 +90,18 @@ export async function runAction(
 
 async function runActionInner(
   actionCore: CoreLike = core,
-  dependencies: GitHubActionDependencies = {}
+  dependencies: GitHubActionDependencies = {},
+  logger?: Logger
 ): Promise<DiscoveredService[]> {
   const inputs = readActionInputs(actionCore);
+  logger?.debug('resolved inputs', {
+    mode: inputs.mode,
+    aws_region: inputs.awsRegion,
+    include_v2: inputs.includeV2,
+    dry_run: inputs.dryRun,
+    max_attempts: inputs.maxAttempts,
+    request_timeout_ms: inputs.requestTimeoutMs
+  });
   const awsClient =
     dependencies.createAwsClient?.(inputs.awsRegion) ??
     new AwsApiGatewaySdkClient(inputs.awsRegion, {

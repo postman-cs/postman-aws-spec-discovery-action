@@ -185731,6 +185731,186 @@ function createTelemetryContext(options) {
   };
 }
 
+// node_modules/@postman-cse/automation-core/dist/logger.js
+var LEVEL_ORDER = {
+  debug: 10,
+  info: 20,
+  warning: 30,
+  error: 40
+};
+function defaultCorrelationId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+function resolveLogLevel(env2 = process.env) {
+  const explicit = String(env2.POSTMAN_ACTIONS_LOG_LEVEL ?? "").trim().toLowerCase();
+  if (explicit === "debug" || explicit === "trace" || explicit === "verbose")
+    return "debug";
+  if (explicit === "info")
+    return "info";
+  if (explicit === "warn" || explicit === "warning")
+    return "warning";
+  if (explicit === "error" || explicit === "quiet")
+    return "error";
+  if (isTruthyFlag(env2.RUNNER_DEBUG) || isTruthyFlag(env2.ACTIONS_STEP_DEBUG))
+    return "debug";
+  if (isTruthyFlag(env2.POSTMAN_ACTIONS_DEBUG))
+    return "debug";
+  return "info";
+}
+function isTruthyFlag(value) {
+  if (!value)
+    return false;
+  const flag = value.trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes" || flag === "on";
+}
+function actionSink(core) {
+  return {
+    debug: (message) => core.debug?.(message),
+    info: (message) => core.info(message),
+    warning: (message) => (core.warning ?? core.info)(message),
+    error: (message) => (core.error ?? core.warning ?? core.info)(message),
+    startGroup: core.startGroup ? (name) => core.startGroup?.(name) : void 0,
+    endGroup: core.endGroup ? () => core.endGroup?.() : void 0,
+    isDebug: core.isDebug ? () => core.isDebug?.() ?? false : void 0
+  };
+}
+var MIN_SECRET_LENGTH = 4;
+function renderValue(value, maxLength = 512) {
+  if (value === void 0)
+    return "undefined";
+  if (value === null)
+    return "null";
+  if (typeof value === "string")
+    return truncate(value, maxLength);
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  if (value instanceof Error)
+    return truncate(describeError(value), maxLength);
+  if (Array.isArray(value)) {
+    return truncate(`[${value.map((entry) => renderValue(entry, 120)).join(", ")}]`, maxLength);
+  }
+  try {
+    return truncate(JSON.stringify(value) ?? String(value), maxLength);
+  } catch {
+    return "<unserializable>";
+  }
+}
+function truncate(text, maxLength) {
+  if (text.length <= maxLength)
+    return text;
+  return `${text.slice(0, maxLength)}\u2026 (+${text.length - maxLength} chars)`;
+}
+function describeError(error3, maxDepth = 5) {
+  const parts = [];
+  let current = error3;
+  let depth = 0;
+  while (current !== void 0 && current !== null && depth < maxDepth) {
+    if (current instanceof Error) {
+      const code = current.code;
+      parts.push(code ? `${current.name}[${code}]: ${current.message}` : `${current.name}: ${current.message}`);
+      current = current.cause;
+    } else if (typeof current === "object") {
+      try {
+        parts.push(JSON.stringify(current) ?? String(current));
+      } catch {
+        parts.push(String(current));
+      }
+      current = void 0;
+    } else {
+      parts.push(String(current));
+      current = void 0;
+    }
+    depth += 1;
+  }
+  if (parts.length === 0)
+    return "unknown error";
+  return parts.join(" <- caused by ");
+}
+function createLogger(options) {
+  const env2 = options.env ?? process.env;
+  const level = options.level ?? resolveLogLevel(env2);
+  const secrets = options.secrets ?? /* @__PURE__ */ new Set();
+  const correlationId = options.correlationId ?? defaultCorrelationId();
+  const now = options.now ?? (() => Date.now());
+  const threshold = LEVEL_ORDER[level];
+  function addSecret(value) {
+    if (typeof value !== "string")
+      return;
+    const trimmed = value.trim();
+    if (trimmed.length < MIN_SECRET_LENGTH)
+      return;
+    secrets.add(trimmed);
+  }
+  function redact(text) {
+    let output = typeof text === "string" ? text : renderValue(text, 4096);
+    for (const secret of secrets) {
+      if (!secret)
+        continue;
+      output = output.split(secret).join("***");
+      const encoded = encodeURIComponent(secret);
+      if (encoded !== secret)
+        output = output.split(encoded).join("***");
+    }
+    return output;
+  }
+  function build2(baseFields) {
+    function emit(target, message, fields) {
+      if (LEVEL_ORDER[target] < threshold)
+        return;
+      const merged = { ...baseFields, ...fields ?? {} };
+      const rendered = Object.entries(merged).filter(([, value]) => value !== void 0).map(([key, value]) => `${key}=${redact(renderValue(value))}`).join(" ");
+      const line = rendered ? `${redact(message)} | ${rendered}` : redact(message);
+      switch (target) {
+        case "debug":
+          options.sink.debug(line);
+          break;
+        case "info":
+          options.sink.info(line);
+          break;
+        case "warning":
+          options.sink.warning(line);
+          break;
+        case "error":
+          options.sink.error(line);
+          break;
+      }
+    }
+    const logger2 = {
+      level,
+      correlationId,
+      addSecret,
+      redact,
+      isDebug: () => threshold <= LEVEL_ORDER.debug,
+      debug: (message, fields) => emit("debug", message, fields),
+      info: (message, fields) => emit("info", message, fields),
+      warning: (message, fields) => emit("warning", message, fields),
+      error: (message, fields) => emit("error", message, fields),
+      failure: (message, error3, fields) => emit("error", message, { ...fields ?? {}, error: describeError(error3) }),
+      child: (fields) => build2({ ...baseFields, ...fields }),
+      async phase(name, fn, fields) {
+        const scoped = build2({ ...baseFields, ...fields ?? {}, phase: name });
+        const started = now();
+        scoped.debug("phase start");
+        options.sink.startGroup?.(name);
+        try {
+          const result = await fn();
+          scoped.debug("phase ok", { duration_ms: Math.round(now() - started) });
+          return result;
+        } catch (error3) {
+          scoped.failure("phase failed", error3, { duration_ms: Math.round(now() - started) });
+          throw error3;
+        } finally {
+          options.sink.endGroup?.();
+        }
+      }
+    };
+    return logger2;
+  }
+  const root5 = build2({ run: correlationId, ...options.fields ?? {} });
+  return root5;
+}
+
 // src/action-version.ts
 var import_node_fs4 = require("node:fs");
 var import_node_path25 = require("node:path");
@@ -185745,24 +185925,40 @@ function resolveActionVersion2() {
 
 // src/index.ts
 async function runAction(actionCore = core_exports, dependencies = {}) {
-  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion: resolveActionVersion2(), logger: actionCore });
+  const actionVersion = resolveActionVersion2();
+  const logger2 = dependencies.logger ?? createLogger({
+    sink: actionSink(actionCore),
+    fields: { action: "postman-aws-spec-discovery-action", action_version: actionVersion }
+  });
+  const telemetry = createTelemetryContext({ action: "postman-aws-spec-discovery-action", actionVersion, logger: actionCore });
   telemetry.setTeamId(resolveTelemetryTeamId(process.env));
   const postmanApiKey = getInput2("postman-api-key");
   const postmanAccessToken = getInput2("postman-access-token");
+  logger2.addSecret(postmanApiKey);
+  logger2.addSecret(postmanAccessToken);
   if (postmanApiKey) {
     actionCore.setSecret?.(postmanApiKey);
   }
   if (postmanAccessToken) {
     actionCore.setSecret?.(postmanAccessToken);
   }
-  const { accountType } = await prepareTelemetryCredentials({
-    postmanApiKey,
-    postmanAccessToken,
-    onToken: (token) => actionCore.setSecret?.(token),
-    onWarning: (message) => actionCore.warning(message)
-  });
+  const { accountType } = await logger2.phase(
+    "prepare-telemetry-credentials",
+    async () => prepareTelemetryCredentials({
+      postmanApiKey,
+      postmanAccessToken,
+      onToken: (token) => {
+        logger2.addSecret(token);
+        actionCore.setSecret?.(token);
+      },
+      onWarning: (message) => actionCore.warning(message)
+    })
+  );
   try {
-    const result = await runActionInner(actionCore, dependencies);
+    const result = await logger2.phase(
+      "discover",
+      async () => runActionInner(actionCore, dependencies, logger2)
+    );
     telemetry.setAccountType(accountType);
     telemetry.emitCompletion("success");
     return result;
@@ -185772,8 +185968,16 @@ async function runAction(actionCore = core_exports, dependencies = {}) {
     throw error3;
   }
 }
-async function runActionInner(actionCore = core_exports, dependencies = {}) {
+async function runActionInner(actionCore = core_exports, dependencies = {}, logger2) {
   const inputs = readActionInputs(actionCore);
+  logger2?.debug("resolved inputs", {
+    mode: inputs.mode,
+    aws_region: inputs.awsRegion,
+    include_v2: inputs.includeV2,
+    dry_run: inputs.dryRun,
+    max_attempts: inputs.maxAttempts,
+    request_timeout_ms: inputs.requestTimeoutMs
+  });
   const awsClient = dependencies.createAwsClient?.(inputs.awsRegion) ?? new AwsApiGatewaySdkClient(inputs.awsRegion, {
     requestTimeoutMs: inputs.requestTimeoutMs,
     maxAttempts: inputs.maxAttempts
