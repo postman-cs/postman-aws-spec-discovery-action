@@ -2,6 +2,7 @@ import {
   APIGatewayClient,
   GetExportCommand,
   GetBasePathMappingsCommand,
+  GetDocumentationPartsCommand,
   GetDomainNamesCommand as GetRestDomainNamesCommand,
   GetModelsCommand,
   GetResourcesCommand,
@@ -10,6 +11,7 @@ import {
   GetRequestValidatorsCommand,
   GetStagesCommand as GetRestStagesCommand,
   GetTagsCommand as GetRestTagsCommand,
+  type DocumentationPart,
   type Model,
   type RequestValidator,
   type Resource
@@ -44,6 +46,7 @@ import {
   type WebSocketRouteResponseSummary
 } from '../spec/websocket-openapi.js';
 import { mergeRestApiModelsAndValidators, synthesizeRestApiFallbackOpenApi } from '../spec/rest-api-fallback-openapi.js';
+import { mergeRestApiDocumentation } from '../spec/rest-api-documentation-merge.js';
 
 export interface RestApiSummary {
   id: string;
@@ -541,12 +544,13 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
     // W6: additively enrich the native export with Models and RequestValidators.
     // Fail-soft -- any enrichment error returns the exact native body.
     try {
-      const [resources, models, validators] = await Promise.all([
+      const [resources, models, validators, documentationParts] = await Promise.all([
         this.listRestResourcesWithMethods(apiId),
         this.listRestModels(apiId),
-        this.listRestRequestValidators(apiId)
+        this.listRestRequestValidators(apiId),
+        this.listRestDocumentationParts(apiId)
       ]);
-      return mergeRestApiModelsAndValidators({
+      const withModels = mergeRestApiModelsAndValidators({
         nativeExport,
         resources: resources.map((resource) => ({
           path: resource.path,
@@ -560,9 +564,39 @@ export class AwsApiGatewaySdkClient implements AwsGatewayClient {
           validateRequestParameters: validator.validateRequestParameters
         }))
       });
+      // GetExport drops operation summary/description/tags even when asked for
+      // extensions=documentation, so restore them from the documentation parts.
+      return mergeRestApiDocumentation({
+        nativeExport: withModels,
+        parts: documentationParts.map((part) => ({
+          type: part.location?.type,
+          path: part.location?.path,
+          method: part.location?.method,
+          statusCode: part.location?.statusCode,
+          name: part.location?.name,
+          properties: part.properties
+        }))
+      });
     } catch {
       return nativeExport;
     }
+  }
+
+  private async listRestDocumentationParts(apiId: string): Promise<DocumentationPart[]> {
+    const parts: DocumentationPart[] = [];
+    const guard = createApiGatewayPaginationGuard('GetDocumentationParts');
+    let position: string | undefined;
+    do {
+      guard.beginPage();
+      const response = await this.restClient.send(
+        new GetDocumentationPartsCommand({ restApiId: apiId, limit: 500, position })
+      );
+      for (const part of response.items ?? []) {
+        parts.push(part);
+      }
+      position = guard.takeNextToken(response.position);
+    } while (position);
+    return parts;
   }
 
   private async listRestRequestValidators(apiId: string): Promise<RequestValidator[]> {

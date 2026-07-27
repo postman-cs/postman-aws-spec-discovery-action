@@ -13173,8 +13173,8 @@ var init_createUserAgentStringParsingProvider = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js"() {
     createUserAgentStringParsingProvider = ({ serviceId, clientVersion }) => async (config) => {
       const module2 = await Promise.resolve().then(() => __toESM(require_es5()));
-      const parse11 = module2.parse ?? module2.default.parse ?? (() => "");
-      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse11(window.navigator.userAgent) : void 0;
+      const parse12 = module2.parse ?? module2.default.parse ?? (() => "");
+      const parsedUA = typeof window !== "undefined" && window?.navigator?.userAgent ? parse12(window.navigator.userAgent) : void 0;
       const sections = [
         ["aws-sdk-js", clientVersion],
         ["ua", "2.1"],
@@ -28554,7 +28554,7 @@ var require_dist_cjs17 = __commonJS({
     };
     var GetDocumentationPartCommand = class extends command5(_ep05, _mw05, "GetDocumentationPart", GetDocumentationPart$) {
     };
-    var GetDocumentationPartsCommand = class extends command5(_ep05, _mw05, "GetDocumentationParts", GetDocumentationParts$) {
+    var GetDocumentationPartsCommand2 = class extends command5(_ep05, _mw05, "GetDocumentationParts", GetDocumentationParts$) {
     };
     var GetDocumentationVersionCommand = class extends command5(_ep05, _mw05, "GetDocumentationVersion", GetDocumentationVersion$) {
     };
@@ -28762,7 +28762,7 @@ var require_dist_cjs17 = __commonJS({
       GetDeploymentCommand,
       GetDeploymentsCommand,
       GetDocumentationPartCommand,
-      GetDocumentationPartsCommand,
+      GetDocumentationPartsCommand: GetDocumentationPartsCommand2,
       GetDocumentationVersionCommand,
       GetDocumentationVersionsCommand,
       GetDomainNameCommand,
@@ -29233,7 +29233,7 @@ var require_dist_cjs17 = __commonJS({
     exports2.GetDocumentationPartCommand = GetDocumentationPartCommand;
     exports2.GetDocumentationPartRequest$ = GetDocumentationPartRequest$;
     exports2.GetDocumentationParts$ = GetDocumentationParts$;
-    exports2.GetDocumentationPartsCommand = GetDocumentationPartsCommand;
+    exports2.GetDocumentationPartsCommand = GetDocumentationPartsCommand2;
     exports2.GetDocumentationPartsRequest$ = GetDocumentationPartsRequest$;
     exports2.GetDocumentationVersion$ = GetDocumentationVersion$;
     exports2.GetDocumentationVersionCommand = GetDocumentationVersionCommand;
@@ -37672,7 +37672,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag2));
       return props.join(" ");
     }
-    function stringify5(item, ctx, onComment, onChompKeep) {
+    function stringify6(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -37701,7 +37701,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports2.createStringifyContext = createStringifyContext;
-    exports2.stringify = stringify5;
+    exports2.stringify = stringify6;
   }
 });
 
@@ -37711,7 +37711,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar = require_Scalar();
-    var stringify5 = require_stringify();
+    var stringify6 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -37733,7 +37733,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify5.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify6.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -37785,7 +37785,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify5.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify6.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -37926,7 +37926,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge2 = require_merge();
-    var stringify5 = require_stringify();
+    var stringify6 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map3, { key, value }) {
@@ -37962,7 +37962,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify5.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify6.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node of ctx.anchors.keys())
           strCtx.anchors.add(node.anchor);
@@ -38029,12 +38029,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify5 = require_stringify();
+    var stringify6 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify6 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify6(collection, ctx, options);
+      const stringify7 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify7(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -38059,7 +38059,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify5.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify6.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -38126,7 +38126,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify5.stringify(item, itemCtx, () => comment = null);
+        let str = stringify6.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i5 < items.length - 1) {
           str += ",";
@@ -39487,7 +39487,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports2) {
     "use strict";
     var identity = require_identity();
-    var stringify5 = require_stringify();
+    var stringify6 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -39502,7 +39502,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify5.createStringifyContext(doc, options);
+      const ctx = stringify6.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -39524,7 +39524,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify5.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify6.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -39532,7 +39532,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify5.stringify(doc.contents, ctx));
+        lines.push(stringify6.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -41667,7 +41667,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports2) {
     "use strict";
-    var stringify5 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify6 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -41720,7 +41720,7 @@ var require_cst_stringify = __commonJS({
         res += stringifyToken(value);
       return res;
     }
-    exports2.stringify = stringify5;
+    exports2.stringify = stringify6;
   }
 });
 
@@ -43431,7 +43431,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse11(src, reviver, options) {
+    function parse12(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -43450,7 +43450,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify5(value, replacer, options) {
+    function stringify6(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -43472,10 +43472,10 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports2.parse = parse11;
+    exports2.parse = parse12;
     exports2.parseAllDocuments = parseAllDocuments2;
     exports2.parseDocument = parseDocument2;
-    exports2.stringify = stringify5;
+    exports2.stringify = stringify6;
   }
 });
 
@@ -111273,7 +111273,7 @@ var require_util = __commonJS({
     var { IncomingMessage } = require("node:http");
     var stream = require("node:stream");
     var net = require("node:net");
-    var { stringify: stringify5 } = require("node:querystring");
+    var { stringify: stringify6 } = require("node:querystring");
     var { EventEmitter: EE, addAbortListener: addAbortListenerNative } = require("node:events");
     var timers = require_timers();
     var { InvalidArgumentError, ConnectTimeoutError } = require_errors2();
@@ -111329,7 +111329,7 @@ var require_util = __commonJS({
       if (pathHasQueryOrFragment(url)) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify5(queryParams);
+      const stringified = stringify6(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -133014,7 +133014,7 @@ var require_util4 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify5(cookie) {
+    function stringify6(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -133068,7 +133068,7 @@ var require_util4 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify: stringify5
+      stringify: stringify6
     };
   }
 });
@@ -133216,7 +133216,7 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify: stringify5 } = require_util4();
+    var { stringify: stringify6 } = require_util4();
     var { webidl } = require_webidl();
     var { Headers } = require_headers();
     var brandChecks = webidl.brandCheckMultiple([Headers, globalThis.Headers].filter(Boolean));
@@ -133264,7 +133264,7 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       brandChecks(headers);
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify5(cookie);
+      const str = stringify6(cookie);
       if (str) {
         headers.append("set-cookie", str, true);
       }
@@ -154616,11 +154616,11 @@ var init_throw_200_exceptions = __esm({
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js
-var validate, parse10;
+var validate, parse11;
 var init_arn = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/util/util-arn-parser/arn.js"() {
     validate = (str) => typeof str === "string" && str.indexOf("arn:") === 0 && str.split(":").length >= 6;
-    parse10 = (arn) => {
+    parse11 = (arn) => {
       const segments = arn.split(":");
       if (segments.length < 6 || segments[0] !== "arn")
         throw new Error("Malformed ARN");
@@ -155010,7 +155010,7 @@ var init_bucketEndpointMiddleware = __esm({
         if (options.bucketEndpoint) {
           request.hostname = bucketName;
         } else if (validate(bucketName)) {
-          const bucketArn = parse10(bucketName);
+          const bucketArn = parse11(bucketName);
           const clientRegion = await options.region();
           const useDualstackEndpoint = await options.useDualstackEndpoint();
           const useFipsEndpoint = await options.useFipsEndpoint();
@@ -166846,6 +166846,80 @@ function mergeRestApiModelsAndValidators(input) {
   return (0, import_yaml2.stringify)(document);
 }
 
+// src/lib/spec/rest-api-documentation-merge.ts
+var import_yaml3 = __toESM(require_dist(), 1);
+var METHOD_DOC_KEYS = ["summary", "description", "tags", "externalDocs"];
+function parseNativeExport2(nativeExport) {
+  try {
+    const parsed = nativeExport.trim().startsWith("{") ? JSON.parse(nativeExport) : (0, import_yaml3.parse)(nativeExport);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.paths) {
+      return parsed;
+    }
+  } catch {
+  }
+  return void 0;
+}
+function parseProperties(properties) {
+  if (!properties) return void 0;
+  try {
+    const parsed = JSON.parse(properties);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+  }
+  return void 0;
+}
+function asRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : void 0;
+}
+function addAbsentKeys(target, source, keys) {
+  for (const key of keys) {
+    const value = source[key];
+    if (value === void 0 || value === null) continue;
+    if (Object.prototype.hasOwnProperty.call(target, key)) continue;
+    target[key] = value;
+  }
+}
+function mergeRestApiDocumentation(input) {
+  const document = parseNativeExport2(input.nativeExport);
+  if (!document) {
+    return input.nativeExport;
+  }
+  if (input.parts.length === 0) {
+    return input.nativeExport;
+  }
+  const paths = asRecord(document.paths);
+  for (const part of input.parts) {
+    const properties = parseProperties(part.properties);
+    if (!properties) continue;
+    const type = (part.type ?? "").toUpperCase();
+    if (type === "API") {
+      const infoSource = asRecord(properties.info);
+      if (infoSource) {
+        const info = asRecord(document.info) ?? {};
+        addAbsentKeys(info, infoSource, ["description", "summary", "termsOfService", "contact", "license"]);
+        if (Object.keys(info).length > 0) document.info = info;
+      }
+      if (Array.isArray(properties.tags) && document.tags === void 0) {
+        document.tags = properties.tags;
+      }
+      continue;
+    }
+    if (type !== "METHOD" || !paths) continue;
+    if (!part.path || !part.method) continue;
+    const pathItem = asRecord(paths[part.path]);
+    if (!pathItem) continue;
+    const methodNames = part.method === "*" ? Object.keys(pathItem).filter((key) => key !== "parameters" && !key.startsWith("x-")) : [part.method.toLowerCase()];
+    for (const methodName of methodNames) {
+      const operation2 = asRecord(pathItem[methodName]);
+      if (!operation2) continue;
+      addAbsentKeys(operation2, properties, METHOD_DOC_KEYS);
+    }
+  }
+  return (0, import_yaml3.stringify)(document);
+}
+
 // src/lib/aws/client.ts
 function partitionFromArn(arn) {
   if (!arn) return void 0;
@@ -167229,12 +167303,13 @@ var AwsApiGatewaySdkClient = class {
     );
     const nativeExport = await readExportBody(response.body);
     try {
-      const [resources, models, validators] = await Promise.all([
+      const [resources, models, validators, documentationParts] = await Promise.all([
         this.listRestResourcesWithMethods(apiId),
         this.listRestModels(apiId),
-        this.listRestRequestValidators(apiId)
+        this.listRestRequestValidators(apiId),
+        this.listRestDocumentationParts(apiId)
       ]);
-      return mergeRestApiModelsAndValidators({
+      const withModels = mergeRestApiModelsAndValidators({
         nativeExport,
         resources: resources.map((resource) => ({
           path: resource.path,
@@ -167248,9 +167323,36 @@ var AwsApiGatewaySdkClient = class {
           validateRequestParameters: validator.validateRequestParameters
         }))
       });
+      return mergeRestApiDocumentation({
+        nativeExport: withModels,
+        parts: documentationParts.map((part) => ({
+          type: part.location?.type,
+          path: part.location?.path,
+          method: part.location?.method,
+          statusCode: part.location?.statusCode,
+          name: part.location?.name,
+          properties: part.properties
+        }))
+      });
     } catch {
       return nativeExport;
     }
+  }
+  async listRestDocumentationParts(apiId) {
+    const parts = [];
+    const guard = createApiGatewayPaginationGuard("GetDocumentationParts");
+    let position;
+    do {
+      guard.beginPage();
+      const response = await this.restClient.send(
+        new import_client_api_gateway.GetDocumentationPartsCommand({ restApiId: apiId, limit: 500, position })
+      );
+      for (const part of response.items ?? []) {
+        parts.push(part);
+      }
+      position = guard.takeNextToken(response.position);
+    } while (position);
+    return parts;
   }
   async listRestRequestValidators(apiId) {
     const validators = [];
@@ -167531,7 +167633,7 @@ function formatUserSafeError(error2, env2 = process.env) {
 var import_node_crypto8 = require("node:crypto");
 var import_promises20 = require("node:fs/promises");
 var import_node_path24 = __toESM(require("node:path"), 1);
-var import_yaml14 = __toESM(require_dist(), 1);
+var import_yaml15 = __toESM(require_dist(), 1);
 
 // src/contracts.ts
 var actionContract = {
@@ -169583,7 +169685,7 @@ function detectRepoContext(input, env2 = process.env) {
 // src/lib/repo/specs.ts
 var import_promises13 = require("node:fs/promises");
 var import_node_path18 = __toESM(require("node:path"), 1);
-var import_yaml7 = __toESM(require_dist(), 1);
+var import_yaml8 = __toESM(require_dist(), 1);
 
 // src/lib/iac/resolve.ts
 var import_promises11 = require("node:fs/promises");
@@ -169593,7 +169695,7 @@ var import_node_path14 = __toESM(require("node:path"), 1);
 var import_node_path10 = __toESM(require("node:path"), 1);
 
 // src/lib/providers/cloudformation.ts
-var import_yaml3 = __toESM(require_dist(), 1);
+var import_yaml4 = __toESM(require_dist(), 1);
 var import_promises5 = require("node:fs/promises");
 var CFN_CUSTOM_TAGS = [
   "!Ref",
@@ -169630,7 +169732,7 @@ function isCfnUnresolvedIntrinsic(value) {
 }
 function detectOpenApiContent(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml3.parse)(content, { customTags: CFN_CUSTOM_TAGS });
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml4.parse)(content, { customTags: CFN_CUSTOM_TAGS });
     return isOpenApiDocument(parsed);
   } catch {
     return false;
@@ -169699,7 +169801,7 @@ function parseCfnTemplateBody(templateBody) {
   process.emitWarning = (() => {
   });
   try {
-    return (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+    return (0, import_yaml4.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
   } finally {
     process.emitWarning = originalWarn;
   }
@@ -169764,7 +169866,7 @@ var CloudFormationProvider = class {
         process.emitWarning = (() => {
         });
         try {
-          template = (0, import_yaml3.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
+          template = (0, import_yaml4.parse)(templateBody, { customTags: CFN_CUSTOM_TAGS });
         } finally {
           process.emitWarning = originalWarn;
         }
@@ -170023,11 +170125,11 @@ function artifactClassRank(artifactClass) {
 }
 
 // src/lib/iac/openapi.ts
-var import_yaml4 = __toESM(require_dist(), 1);
+var import_yaml5 = __toESM(require_dist(), 1);
 function detectOpenApiContent2(content) {
   try {
     const trimmed = content.trim();
-    const parsed = trimmed.startsWith("{") ? JSON.parse(trimmed) : (0, import_yaml4.parse)(trimmed, { customTags: CFN_CUSTOM_TAGS });
+    const parsed = trimmed.startsWith("{") ? JSON.parse(trimmed) : (0, import_yaml5.parse)(trimmed, { customTags: CFN_CUSTOM_TAGS });
     return isOpenApiDocument(parsed);
   } catch {
     return false;
@@ -170686,7 +170788,7 @@ async function resolveCdkAssembly(repoRoot, budget, errors, options = {}) {
 // src/lib/iac/serverless.ts
 var import_promises9 = require("node:fs/promises");
 var import_node_path12 = __toESM(require("node:path"), 1);
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
 var STATIC_CONFIG_NAMES = ["serverless.yml", "serverless.yaml", "serverless.json"];
 function isJsTsConfig(filename) {
   return /\.serverless\.(ts|js|mjs|cjs)$/i.test(filename) || /^serverless\.(ts|js|mjs|cjs)$/i.test(filename);
@@ -170706,7 +170808,7 @@ async function loadStaticServerlessConfig(repoRoot, budget, errors) {
     });
     if (!loaded) continue;
     try {
-      const parsed = loaded.content.trim().startsWith("{") ? JSON.parse(loaded.content) : (0, import_yaml5.parse)(loaded.content);
+      const parsed = loaded.content.trim().startsWith("{") ? JSON.parse(loaded.content) : (0, import_yaml6.parse)(loaded.content);
       if (parsed && typeof parsed === "object") {
         results.push({ relativePath: loaded.relativePath, content: loaded.content, parsed });
       }
@@ -171566,7 +171668,7 @@ function contentBearingIacCandidates(resolution) {
 
 // src/lib/spec/classify-format.ts
 var import_node_path15 = __toESM(require("node:path"), 1);
-var import_yaml6 = __toESM(require_dist(), 1);
+var import_yaml7 = __toESM(require_dist(), 1);
 function classifySpecContent(content, options = {}) {
   const trimmed = content.trim();
   if (!trimmed) return void 0;
@@ -171619,7 +171721,7 @@ function classifySpecContent(content, options = {}) {
   }
   if (!trimmed.startsWith("<") && !trimmed.startsWith("{")) {
     try {
-      const parsed = (0, import_yaml6.parse)(trimmed);
+      const parsed = (0, import_yaml7.parse)(trimmed);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
         const record = parsed;
         if (typeof record.openapi === "string" || typeof record.swagger === "string") {
@@ -172535,7 +172637,7 @@ function scanTimedOut(budget) {
 }
 function isLikelyOpenApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -172550,7 +172652,7 @@ function isLikelyGraphqlSchema(content) {
 }
 function isLikelyAsyncApiDocument(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml7.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml8.parse)(content);
     if (!parsed || typeof parsed !== "object") {
       return false;
     }
@@ -174080,13 +174182,13 @@ function resolveServiceCandidate(gateways, signals, options) {
 }
 
 // src/lib/spec/normalize-openapi.ts
-var import_yaml8 = __toESM(require_dist(), 1);
+var import_yaml9 = __toESM(require_dist(), 1);
 var HTTP_METHODS = /* @__PURE__ */ new Set(["get", "put", "post", "delete", "options", "head", "patch", "trace"]);
-function asRecord(value) {
+function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : void 0;
 }
 function resolveLocalObject(root5, value) {
-  let current = asRecord(value);
+  let current = asRecord2(value);
   const seen = /* @__PURE__ */ new Set();
   while (current && typeof current.$ref === "string") {
     if (seen.has(current) || !current.$ref.startsWith("#/")) return void 0;
@@ -174094,9 +174196,9 @@ function resolveLocalObject(root5, value) {
     let resolved = root5;
     for (const rawSegment of current.$ref.slice(2).split("/")) {
       const segment = rawSegment.replace(/~1/g, "/").replace(/~0/g, "~");
-      resolved = asRecord(resolved)?.[segment];
+      resolved = asRecord2(resolved)?.[segment];
     }
-    current = asRecord(resolved);
+    current = asRecord2(resolved);
   }
   return current;
 }
@@ -174108,8 +174210,8 @@ function isResponseDeclarationKey(value) {
   return value.toLowerCase() === "default" || /^[1-5](?:[0-9]{2}|xx)$/i.test(value);
 }
 function auditOpenApiContractCoverage(value) {
-  const root5 = asRecord(value);
-  const paths = asRecord(root5?.paths);
+  const root5 = asRecord2(value);
+  const paths = asRecord2(root5?.paths);
   if (!root5 || typeof root5.openapi !== "string" || !/^3\./.test(root5.openapi) || !paths) return void 0;
   const audit = {
     schemaVersion: 1,
@@ -174132,13 +174234,13 @@ function auditOpenApiContractCoverage(value) {
       audit.operationCount += 1;
       const requestBody = operation2.requestBody === void 0 ? void 0 : resolveLocalObject(root5, operation2.requestBody);
       if (operation2.requestBody !== void 0 && !requestBody) return void 0;
-      const requestContent = asRecord(requestBody?.content);
+      const requestContent = asRecord2(requestBody?.content);
       for (const rawMedia of Object.values(requestContent ?? {})) {
-        const media = asRecord(rawMedia);
+        const media = asRecord2(rawMedia);
         if (!media) return void 0;
         if (media.schema === void 0) audit.requestMediaTypesWithoutSchema += 1;
       }
-      const responses = asRecord(operation2.responses);
+      const responses = asRecord2(operation2.responses);
       if (!responses) return void 0;
       const responseKeys = Object.keys(responses).filter(isResponseDeclarationKey);
       if (responseKeys.length === 0) return void 0;
@@ -174150,12 +174252,12 @@ function auditOpenApiContractCoverage(value) {
         audit.responseCount += 1;
         const response = resolveLocalObject(root5, rawResponse);
         if (!response) return void 0;
-        const content = asRecord(response?.content);
+        const content = asRecord2(response?.content);
         if ((!content || Object.keys(content).length === 0) && !responseIsStaticallyBodyless(method, status)) {
           audit.responsesWithoutContent += 1;
         }
         for (const rawMedia of Object.values(content ?? {})) {
-          const media = asRecord(rawMedia);
+          const media = asRecord2(rawMedia);
           if (!media) return void 0;
           if (media.schema === void 0) audit.responseMediaTypesWithoutSchema += 1;
         }
@@ -174181,30 +174283,30 @@ function normalizeOpenApiYaml(content, options = {}) {
   const passthrough = { content, renamed: [], normalized: false };
   let doc;
   try {
-    doc = (0, import_yaml8.parseDocument)(content, { prettyErrors: false });
+    doc = (0, import_yaml9.parseDocument)(content, { prettyErrors: false });
   } catch {
     return passthrough;
   }
   if (doc.errors.length > 0) return passthrough;
-  if (!(0, import_yaml8.isMap)(doc.contents)) return passthrough;
+  if (!(0, import_yaml9.isMap)(doc.contents)) return passthrough;
   const paths = doc.get("paths", true);
-  if (!(0, import_yaml8.isMap)(paths)) return passthrough;
+  if (!(0, import_yaml9.isMap)(paths)) return passthrough;
   const seen = /* @__PURE__ */ new Set();
   const renamed = [];
   for (const pathPair of paths.items) {
     const pathKey = scalarString(pathPair.key);
     if (pathKey === void 0) continue;
     const pathItem = pathPair.value;
-    if (!(0, import_yaml8.isMap)(pathItem)) continue;
+    if (!(0, import_yaml9.isMap)(pathItem)) continue;
     for (const methodPair of pathItem.items) {
       const method = scalarString(methodPair.key);
       if (method === void 0) continue;
       const methodLower = method.toLowerCase();
       if (!HTTP_METHODS.has(methodLower)) continue;
       const operation2 = methodPair.value;
-      if (!(0, import_yaml8.isMap)(operation2)) continue;
+      if (!(0, import_yaml9.isMap)(operation2)) continue;
       const opIdNode = operation2.get("operationId", true);
-      const originalId = (0, import_yaml8.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
+      const originalId = (0, import_yaml9.isScalar)(opIdNode) && typeof opIdNode.value === "string" ? opIdNode.value : null;
       const base = originalId && originalId.trim().length > 0 ? originalId : synthesizeOperationId(methodLower, pathKey);
       let finalId = base;
       if (seen.has(base)) {
@@ -174231,13 +174333,13 @@ function normalizeOpenApiYaml(content, options = {}) {
   return { content: String(doc), renamed, normalized: true, openapiContractAudit };
 }
 function scalarString(node) {
-  if ((0, import_yaml8.isScalar)(node) && typeof node.value === "string") return node.value;
+  if ((0, import_yaml9.isScalar)(node) && typeof node.value === "string") return node.value;
   if (typeof node === "string") return node;
   return void 0;
 }
 function setOperationId(operation2, value) {
   const existing = operation2.get("operationId", true);
-  if ((0, import_yaml8.isScalar)(existing)) {
+  if ((0, import_yaml9.isScalar)(existing)) {
     existing.value = value;
     return;
   }
@@ -174263,7 +174365,7 @@ function slugifyPath(pathKey) {
 }
 
 // src/lib/spec/oas-derivation.ts
-var import_yaml9 = __toESM(require_dist(), 1);
+var import_yaml10 = __toESM(require_dist(), 1);
 function deriveOpenApiDocument(input) {
   const title = input.title?.trim() || titleFromContent(input.content) || "Discovered API";
   if (input.content.trim().startsWith("swagger:") || input.content.trim().startsWith('{"swagger"')) {
@@ -175112,7 +175214,7 @@ function schemaFromExample(value) {
 }
 function parseStructured(content) {
   try {
-    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml9.parse)(content);
+    const parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml10.parse)(content);
     return recordValue2(parsed);
   } catch {
     return {};
@@ -176063,7 +176165,7 @@ function camel(value) {
 }
 
 // src/lib/providers/bedrock-action-groups.ts
-var import_yaml10 = __toESM(require_dist(), 1);
+var import_yaml11 = __toESM(require_dist(), 1);
 var BedrockActionGroupProvider = class {
   constructor(client, s3) {
     this.client = client;
@@ -176135,7 +176237,7 @@ var BedrockActionGroupProvider = class {
 function normalizeOpenApi(content, detail) {
   let parsed;
   try {
-    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml10.parse)(content);
+    parsed = content.trim().startsWith("{") ? JSON.parse(content) : (0, import_yaml11.parse)(content);
   } catch {
     parsed = {};
   }
@@ -177040,12 +177142,12 @@ var import_node_child_process = require("node:child_process");
 var import_node_fs3 = require("node:fs");
 var import_promises19 = require("node:fs/promises");
 var import_node_path23 = __toESM(require("node:path"), 1);
-var import_yaml13 = __toESM(require_dist(), 1);
+var import_yaml14 = __toESM(require_dist(), 1);
 
 // src/lib/repo/catalog.ts
 var import_promises17 = require("node:fs/promises");
 var import_node_path21 = __toESM(require("node:path"), 1);
-var import_yaml11 = __toESM(require_dist(), 1);
+var import_yaml12 = __toESM(require_dist(), 1);
 async function detectCatalogApis(repoRoot, options = {}) {
   const candidates = await catalogCandidates(repoRoot);
   const apis = [];
@@ -177062,7 +177164,7 @@ async function detectCatalogApis(repoRoot, options = {}) {
     }
     let docs;
     try {
-      docs = (0, import_yaml11.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
+      docs = (0, import_yaml12.parseAllDocuments)(content).map((document) => document.toJSON()).filter((document) => Boolean(document && typeof document === "object"));
     } catch {
       continue;
     }
@@ -177146,7 +177248,7 @@ function acquireDefinition(catalogPath, def) {
   }
   if (looksLikeInlineDocumentObject(def)) {
     try {
-      return { inlineContent: (0, import_yaml11.stringify)(def) };
+      return { inlineContent: (0, import_yaml12.stringify)(def) };
     } catch {
       return void 0;
     }
@@ -177195,7 +177297,7 @@ function resolveCatalogPath(catalogPath, reference) {
 // src/lib/providers/sns-code-derived.ts
 var import_promises18 = require("node:fs/promises");
 var import_node_path22 = __toESM(require("node:path"), 1);
-var import_yaml12 = __toESM(require_dist(), 1);
+var import_yaml13 = __toESM(require_dist(), 1);
 var CODE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"]);
 var JAVA_EXTENSIONS = /* @__PURE__ */ new Set([".java"]);
 var IGNORED_DIRS = /* @__PURE__ */ new Set([".git", "node_modules", "dist"]);
@@ -177328,7 +177430,7 @@ function parseStaticJavaSnsAnnotation(content, topicHints) {
 }
 function detectAsyncApiFormat(content, filePath) {
   try {
-    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml12.parse)(content);
+    const parsed = filePath.endsWith(".json") ? JSON.parse(content) : (0, import_yaml13.parse)(content);
     if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
       return void 0;
     }
@@ -177698,7 +177800,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
   }
   let parsed;
   try {
-    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml13.parse)(content);
+    parsed = format2 === "asyncapi-json" ? JSON.parse(content) : (0, import_yaml14.parse)(content);
   } catch {
     return content;
   }
@@ -177750,7 +177852,7 @@ function deriveAsyncApiHeaders(content, format2, messageAttributes) {
       }
     }
   }
-  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml13.stringify)(document);
+  return format2 === "asyncapi-json" ? JSON.stringify(document, null, 2) : (0, import_yaml14.stringify)(document);
 }
 var METADATA_SIDECAR_FILENAME = "sns-resolution-metadata.json";
 var SPEC_POINTER_FILENAME = "spec-pointer.json";
@@ -177902,7 +178004,7 @@ async function collectRegistryUrlCandidates(repoRoot, hints) {
     }
     let parsed;
     try {
-      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml13.parse)(content);
+      parsed = relativePath2.endsWith(".json") ? JSON.parse(content) : (0, import_yaml14.parse)(content);
     } catch {
       continue;
     }
@@ -177957,7 +178059,7 @@ function detectFormat(content, filenameHint) {
   } catch {
   }
   try {
-    const parsed = (0, import_yaml13.parse)(trimmed);
+    const parsed = (0, import_yaml14.parse)(trimmed);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.asyncapi) {
       return { format: "asyncapi-yaml", filename: "asyncapi.yaml" };
     }
@@ -177969,7 +178071,7 @@ function parseStructuredDocument(value) {
   try {
     return JSON.parse(value);
   } catch {
-    return (0, import_yaml13.parse)(value);
+    return (0, import_yaml14.parse)(value);
   }
 }
 function getSchemaByRef(document, ref) {
@@ -178195,7 +178297,7 @@ function canonicalPayloadSchema(canonical) {
   }
   if (canonical.format === "asyncapi-yaml") {
     try {
-      return extractAsyncApiPayloadSchema((0, import_yaml13.parse)(canonical.content));
+      return extractAsyncApiPayloadSchema((0, import_yaml14.parse)(canonical.content));
     } catch {
       return { payloadSchema: { type: "object" } };
     }
@@ -178582,7 +178684,7 @@ async function resolveAsyncApiContract(repoRoot, files, sourceLabel = "repo-loca
       continue;
     }
     try {
-      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml13.parse)(content);
+      const parsed = filePath.toLowerCase().endsWith(".json") ? JSON.parse(content) : (0, import_yaml14.parse)(content);
       if (!parsed || typeof parsed !== "object" || !("asyncapi" in parsed)) {
         evidence.push(`Skipped malformed AsyncAPI file ${relativePath2} (missing asyncapi key)`);
         continue;
@@ -179809,7 +179911,7 @@ function derivedOpenApiFilename(sidecars = []) {
 }
 function normalizeDerivedOpenApiJson(derivation) {
   try {
-    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml14.parse)(derivation.content) : JSON.parse(derivation.content);
+    const parsed = derivation.format === "openapi-yaml" ? (0, import_yaml15.parse)(derivation.content) : JSON.parse(derivation.content);
     if (!parsed || typeof parsed !== "object") {
       throw new Error("derived OpenAPI document did not parse to an object");
     }
@@ -182223,7 +182325,7 @@ function computeSessionRetryDelayMs(response, attempt, random) {
   const ceiling = Math.min(SESSION_RETRY_MAX_DELAY_MS, SESSION_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
   return Math.round(random() * ceiling);
 }
-function asRecord2(value) {
+function asRecord3(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return void 0;
   }
@@ -182278,17 +182380,17 @@ async function resolveTelemetryAccountType(accessToken, fetchImpl) {
 async function parseSessionResponse(response) {
   let payload2;
   try {
-    payload2 = asRecord2(await response.json());
+    payload2 = asRecord3(await response.json());
   } catch {
     return void 0;
   }
   if (!payload2) {
     return void 0;
   }
-  const root5 = asRecord2(payload2.session) ?? payload2;
-  const identity = asRecord2(root5.identity);
-  const data2 = asRecord2(root5.data);
-  const user = asRecord2(data2?.user);
+  const root5 = asRecord3(payload2.session) ?? payload2;
+  const identity = asRecord3(root5.identity);
+  const data2 = asRecord3(root5.data);
+  const user = asRecord3(data2?.user);
   const roleEntries = Array.isArray(user?.roles) ? user.roles.map((entry) => coerceText(entry) ?? coerceId(entry)).filter((entry) => Boolean(entry)) : [];
   const singleRole = coerceText(user?.role);
   const roles = roleEntries.length > 0 ? roleEntries : singleRole ? [singleRole] : void 0;

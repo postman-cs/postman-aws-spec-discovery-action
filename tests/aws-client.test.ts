@@ -211,6 +211,18 @@ describe('AwsApiGatewaySdkClient', () => {
           return command.input.position === undefined
             ? { items: [{ id: 'val1', name: 'body-only', validateRequestBody: true, validateRequestParameters: false }], position: 'page2' }
             : { items: [] };
+        case 'GetDocumentationPartsCommand':
+          return command.input.position === undefined
+            ? {
+                items: [
+                  {
+                    location: { type: 'METHOD', path: '/orders', method: 'POST' },
+                    properties: JSON.stringify({ summary: 'Create an order', tags: ['Orders'] })
+                  }
+                ],
+                position: 'page2'
+              }
+            : { items: [] };
         default:
           throw new Error(`Unexpected command ${command.constructor.name}`);
       }
@@ -231,8 +243,11 @@ describe('AwsApiGatewaySdkClient', () => {
     expect(
       parsed.paths?.['/orders']?.['post']?.['responses']?.['200']?.['content']?.['application/json']?.['schema']?.['$ref']
     ).toBe('#/components/schemas/OrderAck');
+    // Documentation parts restore the operation summary GetExport drops.
+    expect(parsed.paths?.['/orders']?.['post']?.['summary']).toBe('Create an order');
+    expect(parsed.paths?.['/orders']?.['post']?.['tags']).toEqual(['Orders']);
 
-    for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand']) {
+    for (const name of ['GetResourcesCommand', 'GetModelsCommand', 'GetRequestValidatorsCommand', 'GetDocumentationPartsCommand']) {
       const calls = commandInputs.filter((call) => call.name === name);
       expect(calls, name).toHaveLength(2);
       expect(calls[0]?.input.limit, name).toBe(500);
