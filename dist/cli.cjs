@@ -129521,7 +129521,7 @@ var require_headers = __commonJS({
         }
       }
     };
-    var Headers = class _Headers {
+    var Headers2 = class _Headers {
       #guard;
       /**
        * @type {HeadersList}
@@ -129662,13 +129662,13 @@ var require_headers = __commonJS({
         target.#headersList = list2;
       }
     };
-    var { getHeadersGuard, setHeadersGuard, getHeadersList, setHeadersList } = Headers;
-    Reflect.deleteProperty(Headers, "getHeadersGuard");
-    Reflect.deleteProperty(Headers, "setHeadersGuard");
-    Reflect.deleteProperty(Headers, "getHeadersList");
-    Reflect.deleteProperty(Headers, "setHeadersList");
-    iteratorMixin("Headers", Headers, headersListSortAndCombine, 0, 1);
-    Object.defineProperties(Headers.prototype, {
+    var { getHeadersGuard, setHeadersGuard, getHeadersList, setHeadersList } = Headers2;
+    Reflect.deleteProperty(Headers2, "getHeadersGuard");
+    Reflect.deleteProperty(Headers2, "setHeadersGuard");
+    Reflect.deleteProperty(Headers2, "getHeadersList");
+    Reflect.deleteProperty(Headers2, "setHeadersList");
+    iteratorMixin("Headers", Headers2, headersListSortAndCombine, 0, 1);
+    Object.defineProperties(Headers2.prototype, {
       append: kEnumerableProperty,
       delete: kEnumerableProperty,
       get: kEnumerableProperty,
@@ -129686,7 +129686,7 @@ var require_headers = __commonJS({
     webidl.converters.HeadersInit = function(V, prefix, argument) {
       if (webidl.util.Type(V) === webidl.util.Types.OBJECT) {
         const iterator = Reflect.get(V, Symbol.iterator);
-        if (!util.types.isProxy(V) && iterator === Headers.prototype.entries) {
+        if (!util.types.isProxy(V) && iterator === Headers2.prototype.entries) {
           try {
             return getHeadersList(V).entriesList;
           } catch {
@@ -129707,7 +129707,7 @@ var require_headers = __commonJS({
       fill,
       // for test.
       compareHeaderName,
-      Headers,
+      Headers: Headers2,
       HeadersList,
       getHeadersGuard,
       setHeadersGuard,
@@ -129721,7 +129721,7 @@ var require_headers = __commonJS({
 var require_response = __commonJS({
   "node_modules/undici/lib/web/fetch/response.js"(exports2, module2) {
     "use strict";
-    var { Headers, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = require_headers();
+    var { Headers: Headers2, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = require_headers();
     var { extractBody, cloneBody, mixinBody, streamRegistry, bodyUnusable } = require_body();
     var util = require_util();
     var nodeUtil = require("node:util");
@@ -129743,7 +129743,7 @@ var require_response = __commonJS({
     var assert = require("node:assert");
     var { isomorphicEncode, serializeJavascriptValueToJSONString } = require_infra();
     var textEncoder = new TextEncoder("utf-8");
-    var Response = class _Response {
+    var Response2 = class _Response {
       /** @type {Headers} */
       #headers;
       #state;
@@ -129795,7 +129795,7 @@ var require_response = __commonJS({
         }
         init = webidl.converters.ResponseInit(init);
         this.#state = makeResponse({});
-        this.#headers = new Headers(kConstruct);
+        this.#headers = new Headers2(kConstruct);
         setHeadersGuard(this.#headers, "response");
         setHeadersList(this.#headers, this.#state.headersList);
         let bodyWithType = null;
@@ -129913,13 +129913,13 @@ var require_response = __commonJS({
         response.#state = newState;
       }
     };
-    var { getResponseHeaders, setResponseHeaders, getResponseState, setResponseState } = Response;
-    Reflect.deleteProperty(Response, "getResponseHeaders");
-    Reflect.deleteProperty(Response, "setResponseHeaders");
-    Reflect.deleteProperty(Response, "getResponseState");
-    Reflect.deleteProperty(Response, "setResponseState");
-    mixinBody(Response, getResponseState);
-    Object.defineProperties(Response.prototype, {
+    var { getResponseHeaders, setResponseHeaders, getResponseState, setResponseState } = Response2;
+    Reflect.deleteProperty(Response2, "getResponseHeaders");
+    Reflect.deleteProperty(Response2, "setResponseHeaders");
+    Reflect.deleteProperty(Response2, "getResponseState");
+    Reflect.deleteProperty(Response2, "setResponseState");
+    mixinBody(Response2, getResponseState);
+    Object.defineProperties(Response2.prototype, {
       type: kEnumerableProperty,
       url: kEnumerableProperty,
       status: kEnumerableProperty,
@@ -129935,7 +129935,7 @@ var require_response = __commonJS({
         configurable: true
       }
     });
-    Object.defineProperties(Response, {
+    Object.defineProperties(Response2, {
       json: kEnumerableProperty,
       redirect: kEnumerableProperty,
       error: kEnumerableProperty
@@ -130068,9 +130068,9 @@ var require_response = __commonJS({
       }
     }
     function fromInnerResponse(innerResponse, guard) {
-      const response = new Response(kConstruct);
+      const response = new Response2(kConstruct);
       setResponseState(response, innerResponse);
-      const headers = new Headers(kConstruct);
+      const headers = new Headers2(kConstruct);
       setResponseHeaders(response, headers);
       setHeadersList(headers, innerResponse.headersList);
       setHeadersGuard(headers, guard);
@@ -130122,14 +130122,14 @@ var require_response = __commonJS({
         converter: webidl.converters.HeadersInit
       }
     ]);
-    webidl.is.Response = webidl.util.MakeTypeAssertion(Response);
+    webidl.is.Response = webidl.util.MakeTypeAssertion(Response2);
     module2.exports = {
       isNetworkError,
       makeNetworkError,
       makeResponse,
       makeAppropriateNetworkError,
       filterResponse,
-      Response,
+      Response: Response2,
       cloneResponse,
       fromInnerResponse,
       getResponseState
@@ -130142,7 +130142,7 @@ var require_request2 = __commonJS({
   "node_modules/undici/lib/web/fetch/request.js"(exports2, module2) {
     "use strict";
     var { extractBody, mixinBody, cloneBody, bodyUnusable } = require_body();
-    var { Headers, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = require_headers();
+    var { Headers: Headers2, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = require_headers();
     var util = require_util();
     var nodeUtil = require("node:util");
     var {
@@ -130422,7 +130422,7 @@ var require_request2 = __commonJS({
             };
           }
         }
-        this.#headers = new Headers(kConstruct);
+        this.#headers = new Headers2(kConstruct);
         setHeadersList(this.#headers, request.headersList);
         setHeadersGuard(this.#headers, "request");
         if (mode === "no-cors") {
@@ -130773,7 +130773,7 @@ var require_request2 = __commonJS({
       setRequestState(request, innerRequest);
       setRequestDispatcher(request, dispatcher);
       setRequestSignal(request, signal);
-      const headers = new Headers(kConstruct);
+      const headers = new Headers2(kConstruct);
       setRequestHeaders(request, headers);
       setHeadersList(headers, innerRequest.headersList);
       setHeadersGuard(headers, guard);
@@ -133218,8 +133218,8 @@ var require_cookies = __commonJS({
     var { parseSetCookie } = require_parse();
     var { stringify: stringify6 } = require_util4();
     var { webidl } = require_webidl();
-    var { Headers } = require_headers();
-    var brandChecks = webidl.brandCheckMultiple([Headers, globalThis.Headers].filter(Boolean));
+    var { Headers: Headers2 } = require_headers();
+    var brandChecks = webidl.brandCheckMultiple([Headers2, globalThis.Headers].filter(Boolean));
     function getCookies(headers) {
       webidl.argumentLengthCheck(arguments, 1, "getCookies");
       brandChecks(headers);
@@ -133955,7 +133955,7 @@ var require_connection = __commonJS({
     var { parseExtensions, isClosed, isClosing, isEstablished, isConnecting, validateCloseCodeAndReason } = require_util5();
     var { makeRequest } = require_request2();
     var { fetching } = require_fetch();
-    var { Headers, getHeadersList } = require_headers();
+    var { Headers: Headers2, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
     var assert = require("node:assert");
@@ -133977,7 +133977,7 @@ var require_connection = __commonJS({
         useURLCredentials: true
       });
       if (options.headers) {
-        const headersList = getHeadersList(new Headers(options.headers));
+        const headersList = getHeadersList(new Headers2(options.headers));
         request.headersList = headersList;
       }
       const keyValue = crypto2.randomBytes(16).toString("base64");
@@ -182451,307 +182451,6 @@ async function probeSessionIdentity(baseUrl, accessToken, fetchImpl, maxAttempts
   return void 0;
 }
 
-// src/lib/retry.ts
-function sleep2(delayMs) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delayMs);
-  });
-}
-function normalizeRetryOptions(options) {
-  return {
-    maxAttempts: Math.max(1, options.maxAttempts ?? 3),
-    delayMs: Math.max(0, options.delayMs ?? 2e3),
-    backoffMultiplier: Math.max(1, options.backoffMultiplier ?? 1),
-    maxDelayMs: options.maxDelayMs === void 0 ? Number.POSITIVE_INFINITY : Math.max(0, options.maxDelayMs),
-    onRetry: options.onRetry ?? (async () => void 0),
-    shouldRetry: options.shouldRetry ?? (() => true),
-    sleep: options.sleep ?? sleep2
-  };
-}
-async function retry(operation2, options = {}) {
-  const normalized = normalizeRetryOptions(options);
-  let nextDelayMs = normalized.delayMs;
-  for (let attempt = 1; attempt <= normalized.maxAttempts; attempt += 1) {
-    try {
-      return await operation2();
-    } catch (error2) {
-      const shouldRetry = attempt < normalized.maxAttempts && normalized.shouldRetry(error2, {
-        attempt,
-        maxAttempts: normalized.maxAttempts
-      });
-      if (!shouldRetry) {
-        throw error2;
-      }
-      await normalized.onRetry({
-        attempt,
-        maxAttempts: normalized.maxAttempts,
-        delayMs: nextDelayMs,
-        error: error2
-      });
-      await normalized.sleep(nextDelayMs);
-      nextDelayMs = Math.min(
-        normalized.maxDelayMs,
-        Math.round(nextDelayMs * normalized.backoffMultiplier)
-      );
-    }
-  }
-  throw new Error("Retry exhausted without returning or throwing");
-}
-
-// src/lib/postman/base-urls.ts
-var POSTMAN_ENDPOINT_PROFILES = {
-  prod: {
-    apiBaseUrl: "https://api.getpostman.com",
-    iapubBaseUrl: "https://iapub.postman.co"
-  }
-};
-
-// src/lib/postman/pmak-diagnostics.ts
-var memo = /* @__PURE__ */ new Map();
-function normalizeApiBaseUrl(apiBaseUrl) {
-  return new URL(apiBaseUrl.trim()).toString().replace(/\/+$/, "");
-}
-function abortable(promise, signal) {
-  if (signal.aborted) {
-    return Promise.reject(signal.reason);
-  }
-  return Promise.race([
-    promise,
-    new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }))
-  ]);
-}
-async function inspect(options, normalizedApiBase) {
-  const timeoutSignal = AbortSignal.timeout(options.timeoutMs ?? 2e3);
-  const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal;
-  try {
-    const response = await abortable(
-      (options.fetchImpl ?? fetch)(`${normalizedApiBase}/me`, {
-        method: "GET",
-        headers: { "x-api-key": options.apiKey },
-        signal
-      }),
-      signal
-    );
-    if (response.status === 401 || response.status === 403) {
-      return { kind: "invalid", status: response.status };
-    }
-    if (!response.ok) {
-      return { kind: "inconclusive", status: response.status };
-    }
-    const payload2 = await abortable(response.json(), signal);
-    if (!payload2 || typeof payload2 !== "object" || Array.isArray(payload2)) {
-      return { kind: "inconclusive", status: response.status };
-    }
-    const user = payload2.user;
-    if (!user || typeof user !== "object" || Array.isArray(user)) {
-      return { kind: "inconclusive", status: response.status };
-    }
-    const record = user;
-    const username = record.username;
-    const email = record.email;
-    if (typeof username === "string" && username.trim() || typeof email === "string" && email.trim()) {
-      return { kind: "personal", status: response.status };
-    }
-    if (Object.hasOwn(record, "username") && Object.hasOwn(record, "email") && (username === null || username === "") && (email === null || email === "")) {
-      return { kind: "service-account", status: response.status };
-    }
-    return { kind: "inconclusive", status: response.status };
-  } catch {
-    return { kind: "inconclusive" };
-  }
-}
-function inspectPmakIdentity(options) {
-  const normalizedApiBase = normalizeApiBaseUrl(options.apiBaseUrl);
-  const key = `${normalizedApiBase}\0${options.apiKey}`;
-  let pending = memo.get(key);
-  if (!pending) {
-    pending = inspect(options, normalizedApiBase);
-    memo.set(key, pending);
-    if (options.mode === "preflight") {
-      void pending.then((result) => {
-        if (result.kind === "inconclusive") memo.delete(key);
-      });
-    }
-  }
-  return pending;
-}
-function maskPmakDiagnostic(message, secrets) {
-  let masked = String(message);
-  for (const secret of secrets) {
-    if (secret) masked = masked.split(secret).join("***");
-  }
-  return Array.from(masked, (character) => {
-    const code = character.charCodeAt(0);
-    return code <= 31 || code >= 127 && code <= 159 ? " " : character;
-  }).join("").replace(/\s+/g, " ").trim();
-}
-function formatRejectedMint(originalMintError, result) {
-  switch (result.kind) {
-    case "personal":
-      return `${originalMintError} Personal API key detected, cannot mint a service-account access token.`;
-    case "service-account":
-      return `${originalMintError} postman-api-key authenticates (GET /me OK) but was rejected by POST /service-account-tokens and lacks permission to mint access tokens.`;
-    case "invalid":
-      return `${originalMintError} postman-api-key is invalid, disabled, or expired.`;
-    default:
-      return originalMintError;
-  }
-}
-
-// src/lib/postman/token-provider.ts
-var MintError = class extends Error {
-  permanent;
-  status;
-  constructor(message, permanent, status) {
-    super(message);
-    this.name = "MintError";
-    this.permanent = permanent;
-    this.status = status;
-  }
-};
-function extractAccessToken(payload2) {
-  if (!payload2 || typeof payload2 !== "object") return void 0;
-  const record = payload2;
-  const direct = record.access_token;
-  if (typeof direct === "string" && direct.trim()) return direct.trim();
-  const session = record.session;
-  if (session && typeof session === "object") {
-    const token = session.token;
-    if (typeof token === "string" && token.trim()) return token.trim();
-  }
-  return void 0;
-}
-var AccessTokenProvider = class {
-  token;
-  apiKey;
-  apiBaseUrl;
-  fetchImpl;
-  maxAttempts;
-  onToken;
-  sleep;
-  inflight;
-  constructor(options) {
-    this.token = String(options.accessToken || "").trim();
-    this.apiKey = String(options.apiKey || "").trim();
-    this.apiBaseUrl = String(
-      options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl
-    ).replace(/\/+$/, "");
-    this.fetchImpl = options.fetchImpl ?? fetch;
-    this.maxAttempts = Math.max(1, options.maxAttempts ?? 2);
-    this.onToken = options.onToken;
-    this.sleep = options.sleep;
-  }
-  current() {
-    return this.token;
-  }
-  /** True when a PMAK is present, so an expired token can be re-minted. */
-  canRefresh() {
-    return Boolean(this.apiKey);
-  }
-  refresh() {
-    this.inflight ??= this.mintWithRetry().finally(() => {
-      this.inflight = void 0;
-    });
-    return this.inflight;
-  }
-  async mintWithRetry() {
-    if (!this.apiKey) {
-      throw new Error(
-        "postman: the access token expired and cannot be refreshed because no postman-api-key is present. Service-account access tokens expire after about 1 to 1.5 hours. Re-mint a fresh token (postman-resolve-service-token-action) and re-run."
-      );
-    }
-    const token = await retry(() => this.mintOnce(), {
-      maxAttempts: this.maxAttempts,
-      delayMs: 1e3,
-      backoffMultiplier: 2,
-      ...this.sleep ? { sleep: this.sleep } : {},
-      shouldRetry: (error2) => !(error2 instanceof MintError && error2.permanent)
-    });
-    this.token = token;
-    this.onToken?.(token);
-    return token;
-  }
-  async mintOnce() {
-    const response = await this.fetchImpl(`${this.apiBaseUrl}/service-account-tokens`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": this.apiKey
-      },
-      body: JSON.stringify({ apiKey: this.apiKey })
-    });
-    const body = await response.text().catch(() => "");
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 401 || status === 403) {
-        const original = maskPmakDiagnostic(
-          `postman: re-mint failed because the postman-api-key was rejected (PMAK rejected, HTTP ${status}); confirm it is a valid, enabled service-account PMAK for the intended team.`,
-          [this.apiKey, this.token]
-        );
-        const diagnosis = await inspectPmakIdentity({
-          apiBaseUrl: this.apiBaseUrl,
-          apiKey: this.apiKey,
-          fetchImpl: this.fetchImpl
-        });
-        throw new MintError(formatRejectedMint(original, diagnosis), true, status);
-      }
-      if (status === 400 && body.toLowerCase().includes("service accounts not enabled")) {
-        throw new MintError(
-          "postman: re-mint failed because service accounts are not enabled for this team; enable them in Team Settings or use a team where they are.",
-          true
-        );
-      }
-      throw new MintError(`postman: re-mint failed (service-account-tokens HTTP ${status}).`, false, status);
-    }
-    let parsed;
-    try {
-      parsed = JSON.parse(body);
-    } catch {
-      parsed = void 0;
-    }
-    const token = extractAccessToken(parsed);
-    if (!token) {
-      throw new MintError("postman: re-mint succeeded but no access token was returned.", false);
-    }
-    return token;
-  }
-};
-
-// src/lib/postman/telemetry-credentials.ts
-function resolveTelemetryTeamId(env2) {
-  return String(env2.POSTMAN_TEAM_ID ?? "").trim() || void 0;
-}
-async function prepareTelemetryCredentials(options) {
-  const apiKey = String(options.postmanApiKey || "").trim();
-  const accessToken = String(options.postmanAccessToken || "").trim();
-  if (!apiKey && !accessToken) {
-    return {};
-  }
-  const provider = new AccessTokenProvider({
-    accessToken,
-    apiKey,
-    apiBaseUrl: options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl,
-    onToken: options.onToken,
-    ...options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}
-  });
-  if (!accessToken && apiKey && provider.canRefresh()) {
-    try {
-      await provider.refresh();
-    } catch (error2) {
-      const message = error2 instanceof Error ? error2.message : String(error2);
-      options.onWarning?.(
-        `postman: telemetry credential enrichment failed. ${maskPmakDiagnostic(message, [apiKey, accessToken])}`
-      );
-      return { provider };
-    }
-  }
-  const accountType = await resolveTelemetryAccountType(provider.current(), options.fetchImpl);
-  return {
-    provider,
-    ...accountType ? { accountType } : {}
-  };
-}
-
 // node_modules/@postman-cse/automation-core/dist/ci-context.js
 function norm(value) {
   const trimmed = (value ?? "").trim();
@@ -183310,6 +183009,303 @@ function createLogger(options) {
   }
   const root5 = build2({ run: correlationId, ...options.fields ?? {} });
   return root5;
+}
+
+// node_modules/@postman-cse/automation-core/dist/http/retry.js
+function sleep2(delayMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+function normalizeRetryOptions(options) {
+  return {
+    maxAttempts: Math.max(1, options.maxAttempts ?? 3),
+    delayMs: Math.max(0, options.delayMs ?? 2e3),
+    backoffMultiplier: Math.max(1, options.backoffMultiplier ?? 1),
+    maxDelayMs: options.maxDelayMs === void 0 ? Number.POSITIVE_INFINITY : Math.max(0, options.maxDelayMs),
+    onRetry: options.onRetry ?? (async () => void 0),
+    shouldRetry: options.shouldRetry ?? (() => true),
+    sleep: options.sleep ?? sleep2
+  };
+}
+async function retry(operation2, options = {}) {
+  const normalized = normalizeRetryOptions(options);
+  let nextDelayMs = normalized.delayMs;
+  for (let attempt = 1; attempt <= normalized.maxAttempts; attempt += 1) {
+    try {
+      return await operation2();
+    } catch (error2) {
+      const shouldRetry = attempt < normalized.maxAttempts && normalized.shouldRetry(error2, {
+        attempt,
+        maxAttempts: normalized.maxAttempts
+      });
+      if (!shouldRetry)
+        throw error2;
+      await normalized.onRetry({
+        attempt,
+        maxAttempts: normalized.maxAttempts,
+        delayMs: nextDelayMs,
+        error: error2
+      });
+      await normalized.sleep(nextDelayMs);
+      nextDelayMs = Math.min(normalized.maxDelayMs, Math.round(nextDelayMs * normalized.backoffMultiplier));
+    }
+  }
+  throw new Error("Retry exhausted without returning or throwing");
+}
+
+// src/lib/postman/base-urls.ts
+var POSTMAN_ENDPOINT_PROFILES = {
+  prod: {
+    apiBaseUrl: "https://api.getpostman.com",
+    iapubBaseUrl: "https://iapub.postman.co"
+  }
+};
+
+// src/lib/postman/pmak-diagnostics.ts
+var memo = /* @__PURE__ */ new Map();
+function normalizeApiBaseUrl(apiBaseUrl) {
+  return new URL(apiBaseUrl.trim()).toString().replace(/\/+$/, "");
+}
+function abortable(promise, signal) {
+  if (signal.aborted) {
+    return Promise.reject(signal.reason);
+  }
+  return Promise.race([
+    promise,
+    new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }))
+  ]);
+}
+async function inspect(options, normalizedApiBase) {
+  const timeoutSignal = AbortSignal.timeout(options.timeoutMs ?? 2e3);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal;
+  try {
+    const response = await abortable(
+      (options.fetchImpl ?? fetch)(`${normalizedApiBase}/me`, {
+        method: "GET",
+        headers: { "x-api-key": options.apiKey },
+        signal
+      }),
+      signal
+    );
+    if (response.status === 401 || response.status === 403) {
+      return { kind: "invalid", status: response.status };
+    }
+    if (!response.ok) {
+      return { kind: "inconclusive", status: response.status };
+    }
+    const payload2 = await abortable(response.json(), signal);
+    if (!payload2 || typeof payload2 !== "object" || Array.isArray(payload2)) {
+      return { kind: "inconclusive", status: response.status };
+    }
+    const user = payload2.user;
+    if (!user || typeof user !== "object" || Array.isArray(user)) {
+      return { kind: "inconclusive", status: response.status };
+    }
+    const record = user;
+    const username = record.username;
+    const email = record.email;
+    if (typeof username === "string" && username.trim() || typeof email === "string" && email.trim()) {
+      return { kind: "personal", status: response.status };
+    }
+    if (Object.hasOwn(record, "username") && Object.hasOwn(record, "email") && (username === null || username === "") && (email === null || email === "")) {
+      return { kind: "service-account", status: response.status };
+    }
+    return { kind: "inconclusive", status: response.status };
+  } catch {
+    return { kind: "inconclusive" };
+  }
+}
+function inspectPmakIdentity(options) {
+  const normalizedApiBase = normalizeApiBaseUrl(options.apiBaseUrl);
+  const key = `${normalizedApiBase}\0${options.apiKey}`;
+  let pending = memo.get(key);
+  if (!pending) {
+    pending = inspect(options, normalizedApiBase);
+    memo.set(key, pending);
+    if (options.mode === "preflight") {
+      void pending.then((result) => {
+        if (result.kind === "inconclusive") memo.delete(key);
+      });
+    }
+  }
+  return pending;
+}
+function maskPmakDiagnostic(message, secrets) {
+  let masked = String(message);
+  for (const secret of secrets) {
+    if (secret) masked = masked.split(secret).join("***");
+  }
+  return Array.from(masked, (character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code >= 127 && code <= 159 ? " " : character;
+  }).join("").replace(/\s+/g, " ").trim();
+}
+function formatRejectedMint(originalMintError, result) {
+  switch (result.kind) {
+    case "personal":
+      return `${originalMintError} Personal API key detected, cannot mint a service-account access token.`;
+    case "service-account":
+      return `${originalMintError} postman-api-key authenticates (GET /me OK) but was rejected by POST /service-account-tokens and lacks permission to mint access tokens.`;
+    case "invalid":
+      return `${originalMintError} postman-api-key is invalid, disabled, or expired.`;
+    default:
+      return originalMintError;
+  }
+}
+
+// src/lib/postman/token-provider.ts
+var MintError = class extends Error {
+  permanent;
+  status;
+  constructor(message, permanent, status) {
+    super(message);
+    this.name = "MintError";
+    this.permanent = permanent;
+    this.status = status;
+  }
+};
+function extractAccessToken(payload2) {
+  if (!payload2 || typeof payload2 !== "object") return void 0;
+  const record = payload2;
+  const direct = record.access_token;
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  const session = record.session;
+  if (session && typeof session === "object") {
+    const token = session.token;
+    if (typeof token === "string" && token.trim()) return token.trim();
+  }
+  return void 0;
+}
+var AccessTokenProvider = class {
+  token;
+  apiKey;
+  apiBaseUrl;
+  fetchImpl;
+  maxAttempts;
+  onToken;
+  sleep;
+  inflight;
+  constructor(options) {
+    this.token = String(options.accessToken || "").trim();
+    this.apiKey = String(options.apiKey || "").trim();
+    this.apiBaseUrl = String(
+      options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl
+    ).replace(/\/+$/, "");
+    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.maxAttempts = Math.max(1, options.maxAttempts ?? 2);
+    this.onToken = options.onToken;
+    this.sleep = options.sleep;
+  }
+  current() {
+    return this.token;
+  }
+  /** True when a PMAK is present, so an expired token can be re-minted. */
+  canRefresh() {
+    return Boolean(this.apiKey);
+  }
+  refresh() {
+    this.inflight ??= this.mintWithRetry().finally(() => {
+      this.inflight = void 0;
+    });
+    return this.inflight;
+  }
+  async mintWithRetry() {
+    if (!this.apiKey) {
+      throw new Error(
+        "postman: the access token expired and cannot be refreshed because no postman-api-key is present. Service-account access tokens expire after about 1 to 1.5 hours. Re-mint a fresh token (postman-resolve-service-token-action) and re-run."
+      );
+    }
+    const token = await retry(() => this.mintOnce(), {
+      maxAttempts: this.maxAttempts,
+      delayMs: 1e3,
+      backoffMultiplier: 2,
+      ...this.sleep ? { sleep: this.sleep } : {},
+      shouldRetry: (error2) => !(error2 instanceof MintError && error2.permanent)
+    });
+    this.token = token;
+    this.onToken?.(token);
+    return token;
+  }
+  async mintOnce() {
+    const response = await this.fetchImpl(`${this.apiBaseUrl}/service-account-tokens`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": this.apiKey
+      },
+      body: JSON.stringify({ apiKey: this.apiKey })
+    });
+    const body = await response.text().catch(() => "");
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 401 || status === 403) {
+        const original = maskPmakDiagnostic(
+          `postman: re-mint failed because the postman-api-key was rejected (PMAK rejected, HTTP ${status}); confirm it is a valid, enabled service-account PMAK for the intended team.`,
+          [this.apiKey, this.token]
+        );
+        const diagnosis = await inspectPmakIdentity({
+          apiBaseUrl: this.apiBaseUrl,
+          apiKey: this.apiKey,
+          fetchImpl: this.fetchImpl
+        });
+        throw new MintError(formatRejectedMint(original, diagnosis), true, status);
+      }
+      if (status === 400 && body.toLowerCase().includes("service accounts not enabled")) {
+        throw new MintError(
+          "postman: re-mint failed because service accounts are not enabled for this team; enable them in Team Settings or use a team where they are.",
+          true
+        );
+      }
+      throw new MintError(`postman: re-mint failed (service-account-tokens HTTP ${status}).`, false, status);
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      parsed = void 0;
+    }
+    const token = extractAccessToken(parsed);
+    if (!token) {
+      throw new MintError("postman: re-mint succeeded but no access token was returned.", false);
+    }
+    return token;
+  }
+};
+
+// src/lib/postman/telemetry-credentials.ts
+function resolveTelemetryTeamId(env2) {
+  return String(env2.POSTMAN_TEAM_ID ?? "").trim() || void 0;
+}
+async function prepareTelemetryCredentials(options) {
+  const apiKey = String(options.postmanApiKey || "").trim();
+  const accessToken = String(options.postmanAccessToken || "").trim();
+  if (!apiKey && !accessToken) {
+    return {};
+  }
+  const provider = new AccessTokenProvider({
+    accessToken,
+    apiKey,
+    apiBaseUrl: options.apiBaseUrl || POSTMAN_ENDPOINT_PROFILES.prod.apiBaseUrl,
+    onToken: options.onToken,
+    ...options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}
+  });
+  if (!accessToken && apiKey && provider.canRefresh()) {
+    try {
+      await provider.refresh();
+    } catch (error2) {
+      const message = error2 instanceof Error ? error2.message : String(error2);
+      options.onWarning?.(
+        `postman: telemetry credential enrichment failed. ${maskPmakDiagnostic(message, [apiKey, accessToken])}`
+      );
+      return { provider };
+    }
+  }
+  const accountType = await resolveTelemetryAccountType(provider.current(), options.fetchImpl);
+  return {
+    provider,
+    ...accountType ? { accountType } : {}
+  };
 }
 
 // src/action-version.ts
