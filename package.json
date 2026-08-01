@@ -27,6 +27,7 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:live:sns": "vitest run --config vitest.live.config.ts",
+    "test:emulator:aws": "vitest run --config vitest.emulator.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "validate:fixtures": "node validation/scripts/check-validation-fixtures.mjs",
     "validate:support-ledger": "node validation/scripts/validate-support-ledger.mjs",

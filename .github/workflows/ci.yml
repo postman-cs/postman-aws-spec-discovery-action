@@ -88,6 +88,30 @@ jobs:
             echo "::group::$n"; cat "$n.log"; echo "::endgroup::"
           done
           exit $fail
+      - name: AWS emulator transport lane
+        # Budgeted LocalStack lane (cap 47.3s measured wall-clock): proves the
+        # shipped dist/cli.cjs speaks real SDK wire protocol -- SigV4 signing,
+        # STS preflight, REST export, account-mismatch enforcement -- against
+        # an AWS-compatible endpoint via the SDK's own AWS_ENDPOINT_URL
+        # contract. Package-owned docker run, never a GHA services: block.
+        run: |
+          set -euo pipefail
+          start=$SECONDS
+          docker run -d --rm --name aws-emulator -p 4566:4566 \
+            -e SERVICES=apigateway,sts localstack/localstack:4.9
+          for _ in $(seq 1 60); do
+            curl -sf http://127.0.0.1:4566/_localstack/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:4566/_localstack/health >/dev/null
+          npm run test:emulator:aws
+          docker rm -f aws-emulator >/dev/null
+          elapsed=$((SECONDS - start))
+          echo "emulator lane wall-clock: ${elapsed}s (cap 47s)"
+          if [ "$elapsed" -gt 47 ]; then
+            echo "::error::AWS emulator lane exceeded its 47s budget (${elapsed}s)"
+            exit 1
+          fi
       - name: Upload expected dist on mismatch
         if: failure()
         uses: actions/upload-artifact@v7

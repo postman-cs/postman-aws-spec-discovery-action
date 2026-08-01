@@ -77,6 +77,25 @@ describe('CI workflow contract', () => {
     expect(runGates).toContain('exit $fail');
   });
 
+  it('runs the budgeted AWS emulator transport lane after the gate fan-out, Linux only', () => {
+    const lane = namedStep(linux, 'AWS emulator transport lane');
+    // Package-owned docker run against a pinned LocalStack tag -- never a GHA
+    // services: block, never a floating latest.
+    expect(lane).toContain('docker run -d --rm --name aws-emulator -p 4566:4566');
+    expect(lane).toContain('localstack/localstack:4.9');
+    expect(lane).not.toContain('localstack:latest');
+    expect(workflow).not.toMatch(/^\s*services:/m);
+    // Health-gated startup, the declared script, teardown, and the wall-clock cap.
+    expect(lane).toContain('curl -sf http://127.0.0.1:4566/_localstack/health');
+    expect(lane).toContain('npm run test:emulator:aws');
+    expect(lane).toContain('docker rm -f aws-emulator');
+    expect(lane).toContain('if [ "$elapsed" -gt 47 ]; then');
+    // The lane stays out of Windows and out of the default npm test surface.
+    expect(windows).not.toContain('emulator');
+    expect(lane.indexOf('docker run')).toBeGreaterThanOrEqual(0);
+    expect(linux.indexOf('- name: Run gates')).toBeLessThan(linux.indexOf('- name: AWS emulator transport lane'));
+  });
+
   it('pins actionlint 1.7.11 at $RUNNER_TEMP/actionlint with PR-only commitlint history', () => {
     const ACTIONLINT_DOWNLOADER_COMMIT = '393031adb9afb225ee52ae2ccd7a5af5525e03e8';
     const install = namedStep(linux, 'Install actionlint');

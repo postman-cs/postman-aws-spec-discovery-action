@@ -7,6 +7,6 @@ export default defineConfig({
     // ever attempts a network call. Enabled-path tests pass an explicit env.
     env: { POSTMAN_ACTIONS_TELEMETRY: 'off' },
     include: ['tests/**/*.test.ts'],
-    exclude: [...configDefaults.exclude, 'tests/live/**']
+    exclude: [...configDefaults.exclude, 'tests/live/**', 'tests/emulator/**']
   }
 });
