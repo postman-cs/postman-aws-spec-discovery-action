@@ -490,9 +490,9 @@ describe('CLI packaging contract', () => {
     expect(packageJson.scripts.bundle).toContain('--banner:js="#!/usr/bin/env node"');
     expect(packageJson.scripts.bundle).toContain("process.platform!=='win32'");
     expect(packageJson.scripts.build).toBe('npm run typecheck && npm run bundle');
-    expect(packageJson.scripts['verify:dist:assert']).toBe(
-      'git diff --ignore-space-at-eol --text --exit-code -- dist && node scripts/verify-dist-artifact.mjs'
-    );
+    expect(packageJson.scripts['verify:dist:shape']).toBe('node scripts/verify-dist-artifact.mjs');
+    expect(packageJson.scripts['verify:dist:parity']).toBe('git diff --ignore-space-at-eol --text --exit-code -- dist');
+    expect(packageJson.scripts['verify:dist:assert']).toBe('npm run verify:dist:shape && npm run verify:dist:parity');
     expect(packageJson.scripts['verify:dist']).toBe('npm run build && npm run verify:dist:assert');
   });
 
@@ -516,13 +516,18 @@ describe('CLI packaging contract', () => {
 
   it('bundles once before CI fan-out and runs only the read-only dist assertion in-gate', async () => {
     const workflow = await readFile(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
-    expect(workflow.match(/npm run bundle/g)).toHaveLength(1);
+    expect(workflow.match(/npm run bundle/g)).toHaveLength(2);
     expect(workflow).toContain('runs-on: windows-latest');
-    expect(workflow).toContain('run dist       npm run verify:dist:assert');
+    expect(workflow).toContain('run dist-shape npm run verify:dist:shape');
+    expect(workflow).toContain('npm run verify:dist:parity');
     expect(workflow).toContain('MAX_PARALLEL_GATES=2');
     expect(workflow).toContain('wait -n -p finished_pid');
+    expect(workflow).not.toContain('run dist       npm run verify:dist:assert');
     expect(workflow).not.toContain('run dist       npm run verify:dist\n');
     expect(workflow.indexOf('- run: npm run bundle')).toBeLessThan(workflow.indexOf('- name: Run gates'));
+    expect(workflow).toContain('candidate-dist');
+    expect(workflow).toContain('expected-dist');
+    expect(workflow).toContain('needs: [gate, dist-parity, windows]');
   });
 
   it('selects posix install off Windows and win32 native shim on Windows', () => {
