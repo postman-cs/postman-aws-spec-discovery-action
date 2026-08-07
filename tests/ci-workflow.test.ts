@@ -28,16 +28,20 @@ function linuxQueuedGates(runGates: string): string[] {
 }
 
 const linux = jobText(workflow, 'gate');
+const distParity = jobText(workflow, 'dist-parity');
+const ready = jobText(workflow, 'ready');
 const windows = jobText(workflow, 'windows');
 
 describe('CI workflow contract', () => {
-  it('keeps independent Linux/Windows jobs with no needs edges', () => {
+  it('keeps independent Linux/Windows jobs with no needs edges and adds dist-parity + ready aggregation', () => {
     const jobsSection = workflow.slice(workflow.indexOf('\njobs:\n'));
     const jobMatches = jobsSection.match(/^ {2}[a-zA-Z0-9_-]+:$/gm) ?? [];
-    expect(jobMatches).toEqual(['  gate:', '  windows:']);
+    expect(jobMatches).toEqual(['  gate:', '  dist-parity:', '  windows:', '  ready:']);
     expect(linux).not.toMatch(/^\s*needs:/m);
     expect(windows).not.toMatch(/^\s*needs:/m);
-    expect(workflow).not.toMatch(/^\s*needs:/m);
+    expect(distParity).toMatch(/^\s*needs:\s*gate\s*$/m);
+    expect(ready).toContain('needs: [gate, dist-parity, windows]');
+    expect(ready).toContain('if: always()');
   });
 
   it('supersedes PRs only and bundles once before bounded Linux gates', () => {
@@ -57,14 +61,14 @@ describe('CI workflow contract', () => {
       'lint',
       'typecheck',
       'test',
-      'dist',
+      'dist-shape',
       'actionlint',
       'commitlint',
     ]);
     expect(runGates).toContain('run lint       npm run lint');
     expect(runGates).toContain('run typecheck  npm run typecheck');
     expect(runGates).toContain('run test       npm test');
-    expect(runGates).toContain('run dist       npm run verify:dist:assert');
+    expect(runGates).toContain('run dist-shape npm run verify:dist:shape');
     expect(runGates).toContain('run actionlint "$ACTIONLINT_BIN"');
     expect(runGates).toContain('if [ "${{ github.event_name }}" = "pull_request" ]; then');
     expect(runGates).toContain('run commitlint npx commitlint \\');
@@ -75,22 +79,22 @@ describe('CI workflow contract', () => {
     expect(runGates).toContain('gate:$n=fail');
     expect(runGates).toContain('::group::$n');
     expect(runGates).toContain('exit $fail');
+
+    expect(runGates).not.toContain('verify:dist:assert');
+    expect(runGates).not.toContain('verify:dist:parity');
+    expect(runGates).not.toMatch(/npm run verify:dist(?:\s|$|"|')/);
   });
 
   it('runs the budgeted AWS emulator transport lane after the gate fan-out, Linux only', () => {
     const lane = namedStep(linux, 'AWS emulator transport lane');
-    // Package-owned docker run against a pinned LocalStack tag -- never a GHA
-    // services: block, never a floating latest.
     expect(lane).toContain('docker run -d --rm --name aws-emulator -p 4566:4566');
     expect(lane).toContain('localstack/localstack:4.9');
     expect(lane).not.toContain('localstack:latest');
     expect(workflow).not.toMatch(/^\s*services:/m);
-    // Health-gated startup, the declared script, teardown, and the wall-clock cap.
     expect(lane).toContain('curl -sf http://127.0.0.1:4566/_localstack/health');
     expect(lane).toContain('npm run test:emulator:aws');
     expect(lane).toContain('docker rm -f aws-emulator');
     expect(lane).toContain('if [ "$elapsed" -gt 47 ]; then');
-    // The lane stays out of Windows and out of the default npm test surface.
     expect(windows).not.toContain('emulator');
     expect(lane.indexOf('docker run')).toBeGreaterThanOrEqual(0);
     expect(linux.indexOf('- name: Run gates')).toBeLessThan(linux.indexOf('- name: AWS emulator transport lane'));
@@ -132,7 +136,14 @@ describe('CI workflow contract', () => {
     expect(windows).not.toMatch(/^\s*cache:\s*npm\s*$/m);
 
     expect(windows).toContain('id: windows-node-modules');
-    expect(windows).toContain('uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0');
+    // Semantic pin: any 40-char hex SHA, consistent across file, with semver comment
+    {
+      const cachePins = [...workflow.matchAll(/actions\/cache@([0-9a-f]{40})/g)].map((m) => m[1]!);
+      expect(cachePins.length).toBeGreaterThanOrEqual(1);
+      for (const sha of cachePins) expect(sha).toMatch(/^[0-9a-f]{40}$/);
+      expect(new Set(cachePins).size).toBe(1);
+      expect(windows).toMatch(/uses:\s*actions\/cache@[0-9a-f]{40}\s+#\s*v\d+\.\d+\.\d+/);
+    }
     expect(windows).toContain('path: node_modules');
     expect(windows).toContain("key: Windows/node-24/exact-${{ hashFiles('package-lock.json') }}");
     expect(windows).not.toContain('restore-keys');
@@ -178,12 +189,43 @@ describe('CI workflow contract', () => {
     expect(linux).toContain('npm run bundle');
     expect(linux).toContain('run lint       npm run lint');
     expect(linux).toContain('run typecheck  npm run typecheck');
-    expect(linux).toContain('run dist       npm run verify:dist:assert');
+    expect(linux).toContain('run dist-shape npm run verify:dist:shape');
 
-    const upload = namedStep(linux, 'Upload expected dist on mismatch');
+    const candidate = namedStep(linux, 'Upload candidate dist');
+    expect(candidate).toContain('uses: actions/upload-artifact@v7');
+    expect(candidate).toContain('name: candidate-dist');
+    expect(candidate).toContain('dist/');
+    expect(candidate).toContain('dist-manifest.json');
+  });
+
+  it('uploads candidate dist from gate and expected-dist from dist-parity on mismatch', () => {
+    const candidate = namedStep(linux, 'Upload candidate dist');
+    expect(candidate).toContain('uses: actions/upload-artifact@v7');
+    expect(candidate).toContain('name: candidate-dist');
+    expect(candidate).toContain('dist/');
+    expect(candidate).toContain('dist-manifest.json');
+    expect(namedStep(linux, 'Write dist manifest')).toContain('lock_hash');
+    expect(namedStep(linux, 'Ensure clean tracked tree outside dist')).toContain('git status --porcelain');
+    expect(linux).not.toContain('name: expected-dist');
+
+    const upload = namedStep(distParity, 'Upload expected dist on mismatch');
     expect(upload).toContain('if: failure()');
     expect(upload).toContain('uses: actions/upload-artifact@v7');
     expect(upload).toContain('name: expected-dist');
     expect(upload).toContain('path: dist/');
+    expect(distParity).toContain('npm run verify:dist:parity');
+    expect(distParity).not.toContain('verify:dist:shape');
+    expect(distParity).not.toContain('verify:dist:assert');
+    expect(distParity).toContain('fetch-depth: 0');
+    expect(distParity).toContain('npm run bundle');
+  });
+
+  it('aggregates gate, dist-parity, and windows in a required ready job', () => {
+    expect(ready).toContain('if: always()');
+    expect(ready).toContain('needs.gate.result');
+    expect(ready).toContain('needs.dist-parity.result');
+    expect(ready).toContain('needs.windows.result');
+    expect(ready).toContain('exit 1');
+    expect(ready).toContain('CI ready');
   });
 });

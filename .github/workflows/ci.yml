@@ -71,7 +71,7 @@ jobs:
           run lint       npm run lint
           run typecheck  npm run typecheck
           run test       npm test
-          run dist       npm run verify:dist:assert
+          run dist-shape npm run verify:dist:shape
           run actionlint "$ACTIONLINT_BIN"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             run commitlint npx commitlint \
@@ -112,6 +112,71 @@ jobs:
             echo "::error::AWS emulator lane exceeded its 47s budget (${elapsed}s)"
             exit 1
           fi
+      - name: Ensure clean tracked tree outside dist
+        run: |
+          set -euo pipefail
+          outside=()
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            file="${line:3}"
+            case "$file" in
+              dist/*) ;;
+              *) outside+=("$file") ;;
+            esac
+          done < <(git status --porcelain)
+          if [ "${#outside[@]}" -gt 0 ]; then
+            echo "Unexpected changes outside dist/:"
+            printf '%s\n' "${outside[@]}"
+            exit 1
+          fi
+      - name: Write dist manifest
+        run: |
+          node <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const lock = readFileSync('package-lock.json');
+          writeFileSync(
+            'dist-manifest.json',
+            `${JSON.stringify(
+              {
+                repository: process.env.GITHUB_REPOSITORY,
+                pull_request: Number(process.env.GITHUB_EVENT_PULL_REQUEST_NUMBER || 0),
+                head_sha: process.env.GITHUB_SHA,
+                lock_hash: createHash('sha256').update(lock).digest('hex'),
+              },
+              null,
+              2,
+            )}\n`,
+          );
+          NODE
+        env:
+          GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || '' }}
+      - name: Upload candidate dist
+        uses: actions/upload-artifact@v7
+        with:
+          name: candidate-dist
+          path: |
+            dist/
+            dist-manifest.json
+
+  dist-parity:
+    needs: gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run bundle
+      - run: npm run verify:dist:parity
       - name: Upload expected dist on mismatch
         if: failure()
         uses: actions/upload-artifact@v7
@@ -129,10 +194,28 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
       - id: windows-node-modules
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: node_modules
           key: Windows/node-24/exact-${{ hashFiles('package-lock.json') }}
       - if: steps.windows-node-modules.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline --no-audit --no-fund
       - run: node --run test
+
+  ready:
+    needs: [gate, dist-parity, windows]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all CI jobs succeeded
+        run: |
+          echo "gate=${{ needs.gate.result }}"
+          echo "dist-parity=${{ needs.dist-parity.result }}"
+          echo "windows=${{ needs.windows.result }}"
+          for result in "${{ needs.gate.result }}" "${{ needs.dist-parity.result }}" "${{ needs.windows.result }}"; do
+            if [ "$result" != "success" ]; then
+              echo "CI not ready: one or more required jobs did not succeed"
+              exit 1
+            fi
+          done
+          echo "CI ready"
