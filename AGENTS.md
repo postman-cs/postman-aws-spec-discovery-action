@@ -49,7 +49,10 @@ discovered-specs/        # Sample output from discovery runs
 ## Commands
 
 ```bash
-npm ci && npm test && npm run typecheck && npm run build
+npm ci
+npm test
+npm run typecheck
+npm run build
 npm run verify:dist:assert  # read-only artifact + git diff (CI after one bundle)
 npm run verify:dist         # rebuild + diff + assert (pre-push / release)
 ```
