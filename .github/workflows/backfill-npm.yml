@@ -28,7 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then sed -i '/_authToken/d' "${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"; fi
-          PACKAGE_NAME='@postman-cse/onboarding-aws-spec-discovery'
+          PACKAGE_NAME='@postman/onboarding-aws-spec-discovery'
           for TAG in $TAGS; do
             TEMP_DIR=$(mktemp -d)
             trap 'rm -rf "$TEMP_DIR"' EXIT

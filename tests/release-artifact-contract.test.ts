@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error JavaScript CLI module exposes its tested pure verifier.
 import { acceptedImmutableTags, validateReleaseArtifacts, verifyNpmIntegrity } from '../scripts/verify-release-artifacts.mjs';
 
-const PACKAGE_NAME = '@postman-cse/onboarding-aws-spec-discovery';
+const PACKAGE_NAME = '@postman/onboarding-aws-spec-discovery';
 const REPOSITORY = 'postman-cs/postman-aws-spec-discovery-action';
 const COMMIT_SHA = 'abc123';
 const TAG = 'v3.1.3';
@@ -131,7 +131,7 @@ describe('release artifact verifier', () => {
       { packageJson: { name: '@evil/arbitrary-package', version: VERSION } }
     );
     try {
-      expect(() => validate(directory)).toThrow(/package_name must be @postman-cse\/onboarding-aws-spec-discovery/);
+      expect(() => validate(directory)).toThrow(/package_name must be @postman\/onboarding-aws-spec-discovery/);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

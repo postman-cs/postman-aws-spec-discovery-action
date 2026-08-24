@@ -1,6 +1,6 @@
 # Postman Onboarding: AWS Spec Discovery
 
-[![CI](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml/badge.svg)](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/postman-cs/postman-aws-spec-discovery-action?sort=semver)](https://github.com/postman-cs/postman-aws-spec-discovery-action/releases) [![npm](https://img.shields.io/npm/v/%40postman-cse%2Fonboarding-aws-spec-discovery)](https://www.npmjs.com/package/@postman-cse/onboarding-aws-spec-discovery) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml/badge.svg)](https://github.com/postman-cs/postman-aws-spec-discovery-action/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/postman-cs/postman-aws-spec-discovery-action?sort=semver)](https://github.com/postman-cs/postman-aws-spec-discovery-action/releases) [![npm](https://img.shields.io/npm/v/%40postman%2Fonboarding-aws-spec-discovery)](https://www.npmjs.com/package/@postman/onboarding-aws-spec-discovery) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Zero-config discovery and export of API specs from AWS services using only your existing AWS credentials. Use it when a service already runs on AWS and you need a source-of-truth [Spec Hub](https://learning.postman.com/docs/design-apis/specifications/overview/) specification that Postman onboarding can turn into deterministic collections, OpenAPI-backed contract checks, smoke tests, mocks, monitors, repo artifacts, and CI runs.
 
@@ -296,7 +296,7 @@ SNS is handled as a contract resolver, since SNS has no native exportable spec. 
 ## Resources
 
 - Support: [SUPPORT.md](SUPPORT.md); security reporting and credential guidance: [SECURITY.md](SECURITY.md); release and tag policy: [RELEASE_POLICY.md](RELEASE_POLICY.md)
-- npm package: [@postman-cse/onboarding-aws-spec-discovery](https://www.npmjs.com/package/@postman-cse/onboarding-aws-spec-discovery)
+- npm package: [@postman/onboarding-aws-spec-discovery](https://www.npmjs.com/package/@postman/onboarding-aws-spec-discovery)
 - Docs in this repo: [provider deep dive](docs/providers.md), [SNS contract resolution](docs/sns-contract-resolution.md), [live testing runbook](docs/LIVE_TESTING_RUNBOOK.md), [validation suite](validation/README.md)
 - Postman Learning Center: [Spec Hub](https://learning.postman.com/docs/design-apis/specifications/overview/), [import a specification](https://learning.postman.com/docs/design-apis/specifications/import-a-specification/), [cloud connectors](https://learning.postman.com/docs/api-catalog/connect/cloud/)
 

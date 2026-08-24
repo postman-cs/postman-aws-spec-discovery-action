@@ -6,7 +6,7 @@ import console from 'node:console';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const EXPECTED_PACKAGE_NAME = '@postman-cse/onboarding-aws-spec-discovery';
+const EXPECTED_PACKAGE_NAME = '@postman/onboarding-aws-spec-discovery';
 const ALLOWED_ARTIFACT_PATHS = ['release.tgz', 'release-manifest.json'];
 const MAX_MANIFEST_BYTES = 64 * 1024;
 const MAX_TARBALL_BYTES = 50 * 1024 * 1024;
