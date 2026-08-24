@@ -87,6 +87,8 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    outputs:
+      published: ${{ steps.npm-publish.outputs.published }}
     steps:
       - uses: actions/setup-node@v7
         with:
@@ -171,24 +173,44 @@ jobs:
           if (packageJson.name !== manifest.package_name) throw new Error('tarball package name does not match manifest');
           if (packageJson.version !== manifest.package_version) throw new Error('tarball package version does not match manifest');
           NODE
-      - name: Publish or verify npm package
-        run: |
-          PACKAGE_NAME=$(node -p "require('./release-artifacts/release-manifest.json').package_name")
-          PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
-          LOCAL_INTEGRITY=$(node -e "const {createHash}=require('node:crypto');const {readFileSync}=require('node:fs');process.stdout.write('sha512-'+createHash('sha512').update(readFileSync('release-artifacts/release.tgz')).digest('base64'))")
-          if REMOTE_INTEGRITY=$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2>/dev/null); then
-            [ "$REMOTE_INTEGRITY" = "$LOCAL_INTEGRITY" ] || { echo "::error::Published npm integrity differs from staged tarball"; exit 1; }
-            echo "::notice::$PACKAGE_NAME@$PACKAGE_VERSION already has matching integrity."
-          else
-            npm publish ./release-artifacts/release.tgz --provenance --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Publish GitHub release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           generate_release_notes: true
           files: release-artifacts/release.tgz
+      - name: Publish or verify npm package
+        id: npm-publish
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then sed -i '/_authToken/d' "${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"; fi
+          echo "published=false" >> "$GITHUB_OUTPUT"
+          PACKAGE_NAME=$(node -p "require('./release-artifacts/release-manifest.json').package_name")
+          PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity >/dev/null 2>&1; then
+            echo "::notice::$PACKAGE_NAME@$PACKAGE_VERSION already has matching integrity."
+          else
+            npm publish ./release-artifacts/release.tgz --provenance --access public
+          fi
+          echo "published=true" >> "$GITHUB_OUTPUT"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Verify npm registry identity
+        if: steps.npm-publish.outputs.published == 'true'
+        run: |
+          PACKAGE_NAME=$(node -p "require('./release-artifacts/release-manifest.json').package_name")
+          PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
+          LOCAL_INTEGRITY=$(node -e "const {createHash}=require('node:crypto');const {readFileSync}=require('node:fs');process.stdout.write('sha512-'+createHash('sha512').update(readFileSync('release-artifacts/release.tgz')).digest('base64'))")
+          REMOTE_INTEGRITY=$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2>/dev/null)
+          [ "$REMOTE_INTEGRITY" = "$LOCAL_INTEGRITY" ] || { echo "::error::Published npm integrity differs from staged tarball"; exit 1; }
+          echo "::notice::$PACKAGE_NAME@$PACKAGE_VERSION already has matching integrity."
+      - name: Report npm publish skipped
+        if: steps.npm-publish.outputs.published != 'true'
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
+          MESSAGE="npm publish for @postman-cse/onboarding-aws-spec-discovery@$PACKAGE_VERSION did not complete (missing/invalid NPM_TOKEN or registry error); GitHub Release remains authoritative; recover via backfill-npm.yml once publish access exists"
+          echo "::warning::$MESSAGE"
+          echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"
 
   advance-major-alias:
     needs: [classify, publish]
