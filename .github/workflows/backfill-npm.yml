@@ -1,0 +1,51 @@
+name: Backfill npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: Ordered space-separated immutable tags, oldest first
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Publish immutable release artifacts to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          TAGS: ${{ inputs.tags }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then sed -i '/_authToken/d' "${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"; fi
+          PACKAGE_NAME='@postman/onboarding-aws-spec-discovery'
+          for TAG in $TAGS; do
+            TEMP_DIR=$(mktemp -d)
+            trap 'rm -rf "$TEMP_DIR"' EXIT
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'release.tgz' --dir "$TEMP_DIR"
+            TARBALL="$TEMP_DIR/release.tgz"
+            PACKAGE_JSON=$(tar -xOf "$TARBALL" package/package.json)
+            ACTUAL_NAME=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).name)' "$PACKAGE_JSON")
+            ACTUAL_VERSION=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).version)' "$PACKAGE_JSON")
+            [ "$ACTUAL_NAME" = "$PACKAGE_NAME" ] || { echo "::error::$TAG contains $ACTUAL_NAME, not $PACKAGE_NAME"; exit 1; }
+            [ "$ACTUAL_VERSION" = "${TAG#v}" ] || { echo "::error::$TAG version $ACTUAL_VERSION does not match ${TAG#v}"; exit 1; }
+            if npm view "$PACKAGE_NAME@$ACTUAL_VERSION" version >/dev/null 2>&1; then
+              echo "::notice::$PACKAGE_NAME@$ACTUAL_VERSION is already published; skipping"
+            else
+              npm publish "$TARBALL" --provenance --access public --tag backfill
+            fi
+            rm -rf "$TEMP_DIR"
+            trap - EXIT
+          done
+          HIGHEST_VERSION=$(npm view "$PACKAGE_NAME" versions --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s);const a=(Array.isArray(v)?v:[v]).filter(x=>/^\d+\.\d+\.\d+$/.test(x));a.sort((x,y)=>{const p=x.split(".").map(Number),q=y.split(".").map(Number);return p[0]-q[0]||p[1]-q[1]||p[2]-q[2]});if(!a.length)process.exit(1);process.stdout.write(a.at(-1))})')
+          npm dist-tag add "$PACKAGE_NAME@$HIGHEST_VERSION" latest

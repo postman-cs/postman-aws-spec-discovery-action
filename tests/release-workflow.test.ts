@@ -28,7 +28,7 @@ const parsed = parse(workflow) as {
   jobs: Record<string, Record<string, unknown>>;
 };
 
-const PACKAGE_NAME = '@postman-cse/onboarding-aws-spec-discovery';
+const PACKAGE_NAME = '@postman/onboarding-aws-spec-discovery';
 const REPOSITORY = 'postman-cs/postman-aws-spec-discovery-action';
 const COMMIT_SHA = 'abc123';
 const TAG = 'v3.1.3';
@@ -413,11 +413,21 @@ describe('release workflow contract', () => {
     expect(publish).not.toMatch(/\bcurl\b/);
     expect(publish).not.toContain('Download immutable artifact verifier');
     expect(publish).not.toContain('raw/$GITHUB_SHA/scripts/verify-release-artifacts.mjs');
-    expect(publish).toContain("const expectedPackageName = '@postman-cse/onboarding-aws-spec-discovery'");
+    expect(publish).toContain("const expectedPackageName = '@postman/onboarding-aws-spec-discovery'");
     expect(publish).toContain("new Set(['release.tgz', 'release-manifest.json'])");
     expect(publish).toContain("execFileSync('tar', ['-xOf', tarballPath, 'package/package.json']");
-    assertOrder('name: Verify release artifacts', 'name: Publish or verify npm package', publish);
-    assertOrder('name: Publish or verify npm package', 'name: Publish GitHub release', publish);
+    expect(publish).toContain('outputs:\n      published: ${{ steps.npm-publish.outputs.published }}');
+    expect(publish).toContain('id: npm-publish');
+    expect(publish).toContain('continue-on-error: true');
+    expect(publish).toContain("if [ -z \"${NODE_AUTH_TOKEN:-}\" ]; then sed -i '/_authToken/d'");
+    expect(publish).toContain('echo "published=false" >> "$GITHUB_OUTPUT"');
+    expect(publish).toContain('echo "published=true" >> "$GITHUB_OUTPUT"');
+    expect(publish).toContain("if: steps.npm-publish.outputs.published == 'true'");
+    expect(publish).toContain("if: steps.npm-publish.outputs.published != 'true'");
+    assertOrder('name: Verify release artifacts', 'name: Publish GitHub release', publish);
+    assertOrder('name: Publish GitHub release', 'name: Publish or verify npm package', publish);
+    assertOrder('name: Publish or verify npm package', 'name: Verify npm registry identity', publish);
+    assertOrder('name: Verify npm registry identity', 'name: Report npm publish skipped', publish);
   });
 
   it('executes the exact inline privileged verifier against accept and unexpected-artifact fixtures', () => {
@@ -480,7 +490,7 @@ describe('release workflow contract', () => {
     expect(discoverRealGit()).toBe(REAL_GIT);
   });
 
-  it('computes Node SHA-512 SRI, publishes npm before GitHub, then advances the major alias monotonically', () => {
+  it('computes Node SHA-512 SRI after soft npm publish while GitHub Release remains authoritative, then advances the major alias monotonically', () => {
     const publish = job('publish');
     const alias = job('advance-major-alias');
     expect(publish).toContain("createHash('sha512').update(readFileSync('release-artifacts/release.tgz')).digest('base64')");
@@ -488,7 +498,8 @@ describe('release workflow contract', () => {
     expect(publish).not.toContain('| base64');
     expect(publish).toContain('npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity');
     expect(publish).toContain('npm publish ./release-artifacts/release.tgz --provenance --access public');
-    assertOrder('npm publish ./release-artifacts/release.tgz --provenance --access public', 'softprops/action-gh-release', publish);
+    assertOrder('softprops/action-gh-release', 'id: npm-publish', publish);
+    assertOrder('npm publish ./release-artifacts/release.tgz --provenance --access public', 'name: Verify npm registry identity', publish);
     assertOrder('  publish:', '  advance-major-alias:');
     expect(alias).toContain('fetch-depth: 1');
     expect(alias).toContain('git fetch --tags --force');

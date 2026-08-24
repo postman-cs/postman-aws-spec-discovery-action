@@ -49,7 +49,7 @@ The same gates run locally before any push:
 
 ## npm package
 
-The CLI publishes as `@postman-cse/onboarding-aws-spec-discovery` with versions that match exact immutable GitHub release tags; zero-patch minor immutable tags (`vMAJOR.MINOR`) map to package version `MAJOR.MINOR.0`. The rolling major alias updates the action channel and skips npm publishing.
+The CLI publishes as `@postman/onboarding-aws-spec-discovery` with versions that match exact immutable GitHub release tags; zero-patch minor immutable tags (`vMAJOR.MINOR`) map to package version `MAJOR.MINOR.0`. The rolling major alias updates the action channel and skips npm publishing.
 
 ## Compatibility
 
