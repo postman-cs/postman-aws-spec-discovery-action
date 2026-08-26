@@ -419,7 +419,8 @@ describe('release workflow contract', () => {
     expect(publish).toContain('outputs:\n      published: ${{ steps.npm-publish.outputs.published }}');
     expect(publish).toContain('id: npm-publish');
     expect(publish).toContain('continue-on-error: true');
-    expect(publish).toContain("if [ -z \"${NODE_AUTH_TOKEN:-}\" ]; then sed -i '/_authToken/d'");
+    expect(publish).toContain("sed -i '/_authToken/d' \"${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}\"");
+    expect(publish).not.toContain('NODE_AUTH_TOKEN');
     expect(publish).toContain('echo "published=false" >> "$GITHUB_OUTPUT"');
     expect(publish).toContain('echo "published=true" >> "$GITHUB_OUTPUT"');
     expect(publish).toContain("if: steps.npm-publish.outputs.published == 'true'");
