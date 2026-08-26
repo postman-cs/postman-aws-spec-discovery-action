@@ -264,8 +264,7 @@
         "src/contracts.ts"
       ],
       "unitFixtureTests": [
-        "tests/repo-resolution-integration.test.ts",
-        "tests/discovery.test.ts"
+        "tests/repo-resolution-integration.test.ts"
       ],
       "localValidationCase": "validate-resolution-closure.mjs#explicit-spec-path",
       "liveRequirement": "not-required",
@@ -359,7 +358,7 @@
         "src/lib/fetch/remote-fetch-policy.ts"
       ],
       "unitFixtureTests": [
-        "tests/discovery.test.ts",
+        "tests/discovery-run.test.ts",
         "tests/spec-fetcher-security.test.ts"
       ],
       "localValidationCase": "validate-resolution-closure.mjs#remote-allowlist",
@@ -777,8 +776,7 @@
         "src/lib/providers/ssm.ts"
       ],
       "unitFixtureTests": [
-        "tests/providers.test.ts",
-        "tests/discovery.test.ts"
+        "tests/repo-resolution-integration.test.ts"
       ],
       "localValidationCase": "n/a",
       "liveRequirement": "required",
@@ -1070,8 +1068,7 @@
         "src/lib/fetch/spec-fetcher.ts"
       ],
       "unitFixtureTests": [
-        "tests/spec-fetcher-security.test.ts",
-        "tests/discovery.test.ts"
+        "tests/spec-fetcher-security.test.ts"
       ],
       "localValidationCase": "validate-resolution-closure.mjs#remote-denied",
       "liveRequirement": "not-required",

@@ -59,7 +59,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:repo-spec-matrix:start -->
 ## Repo Spec Matrix Evidence
 
-- Captured at: 2026-07-27T02:56:17.237Z
+- Captured at: 2026-08-26T03:51:35.782Z
 - Cases: 18
 - Passed: 18
 - Failed: 0
@@ -138,7 +138,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:iac-repo-signals-matrix:start -->
 ## IaC and Repo Signal Matrix Evidence
 
-- Captured at: 2026-07-27T02:56:17.694Z
+- Captured at: 2026-08-26T03:51:36.138Z
 - Cases: 8
 - Passed: 8
 - Failed: 0
@@ -158,7 +158,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:p3-surfaces:start -->
 ## P3 Surface Fixture Evidence
 
-- Captured at: 2026-07-27T02:56:18.105Z
+- Captured at: 2026-08-26T03:51:36.414Z
 - Cases: 9
 - Passed: 9
 - Failed: 0
@@ -180,7 +180,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:support-ledger:start -->
 ## Support Ledger Enforcement
 
-- Captured at: 2026-07-27T02:56:15.517Z
+- Captured at: 2026-08-26T03:51:34.347Z
 - Ledger rows: 58
 - Advertised labels checked: 36
 - Required live rows: 26
@@ -221,7 +221,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:live-required-matrix:start -->
 ## Live Required Cases (current-run gate)
 
-- Captured at: 2026-07-27T02:56:18.380Z
+- Captured at: 2026-08-26T03:51:36.547Z
 - Distinction: historical-preserved rows keep old sanitized receipts; not-executed rows still require a current live run.
 - Cases: 11
 - Current-run passed: 11
@@ -246,7 +246,7 @@ Raw live identifiers are stored only in `live-resource-manifest.local.json`.
 <!-- evidence:resolution-closure:start -->
 ## Resolution Closure Evidence
 
-- Captured at: 2026-07-27T02:56:16.376Z
+- Captured at: 2026-08-26T03:51:35.257Z
 - Fixture cases: 27
 - Fixture passed: 27
 - Vitest closure suites: pass
