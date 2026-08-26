@@ -15,7 +15,7 @@ interface RepoConfig {
   census: string[];
 }
 
-const CONFIG: RepoConfig = {"pkgName":"@postman/onboarding-aws-spec-discovery","binName":"postman-aws-spec-discovery","pkgMain":"dist/index.cjs","actionMain":"dist/index.cjs","census":["cli.cjs","index.cjs"]};
+const CONFIG: RepoConfig = {"pkgName":"@postman-cs/onboarding-aws-spec-discovery","binName":"postman-aws-spec-discovery","pkgMain":"dist/index.cjs","actionMain":"dist/index.cjs","census":["cli.cjs","index.cjs"]};
 
 const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

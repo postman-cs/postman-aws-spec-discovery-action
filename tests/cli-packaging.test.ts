@@ -33,7 +33,7 @@ const npmCliArgs = resolveNpmCliArgs(process.platform, process.env.npm_execpath)
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempDirs: string[] = [];
 
-const EXPECTED_PACKAGE_NAME = '@postman/onboarding-aws-spec-discovery';
+const EXPECTED_PACKAGE_NAME = '@postman-cs/onboarding-aws-spec-discovery';
 const EXPECTED_BIN_NAME = 'postman-aws-spec-discovery';
 const EXPECTED_PACK_CENSUS = [
   'action.yml',
@@ -358,7 +358,7 @@ async function runPosixInstallPackaging(): Promise<void> {
   const installedCli = path.join(
     prefixDir,
     'node_modules',
-    '@postman',
+    '@postman-cs',
     'onboarding-aws-spec-discovery',
     'dist',
     'cli.cjs'

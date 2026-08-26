@@ -28,7 +28,7 @@ const parsed = parse(workflow) as {
   jobs: Record<string, Record<string, unknown>>;
 };
 
-const PACKAGE_NAME = '@postman/onboarding-aws-spec-discovery';
+const PACKAGE_NAME = '@postman-cs/onboarding-aws-spec-discovery';
 const REPOSITORY = 'postman-cs/postman-aws-spec-discovery-action';
 const COMMIT_SHA = 'abc123';
 const TAG = 'v3.1.3';
@@ -413,7 +413,7 @@ describe('release workflow contract', () => {
     expect(publish).not.toMatch(/\bcurl\b/);
     expect(publish).not.toContain('Download immutable artifact verifier');
     expect(publish).not.toContain('raw/$GITHUB_SHA/scripts/verify-release-artifacts.mjs');
-    expect(publish).toContain("const expectedPackageName = '@postman/onboarding-aws-spec-discovery'");
+    expect(publish).toContain("const expectedPackageName = '@postman-cs/onboarding-aws-spec-discovery'");
     expect(publish).toContain("new Set(['release.tgz', 'release-manifest.json'])");
     expect(publish).toContain("execFileSync('tar', ['-xOf', tarballPath, 'package/package.json']");
     expect(publish).toContain('outputs:\n      published: ${{ steps.npm-publish.outputs.published }}');
