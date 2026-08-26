@@ -19,7 +19,7 @@ import {
   prepareTelemetryCredentials,
   resolveTelemetryTeamId
 } from './lib/postman/telemetry-credentials.js';
-import { actionSink, createLogger, createTelemetryContext, type Logger } from '@postman-cse/automation-core';
+import { actionSink, createLogger, createTelemetryContext, type Logger } from '@postman-cs/automation-core';
 import { resolveActionVersion } from './action-version.js';
 
 export interface CoreLike extends InputReaderLike, ReporterLike {
