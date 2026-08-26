@@ -196,10 +196,29 @@ jobs:
       - name: Verify npm registry identity
         if: steps.npm-publish.outputs.published == 'true'
         run: |
+          set -euo pipefail
           PACKAGE_NAME=$(node -p "require('./release-artifacts/release-manifest.json').package_name")
           PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
           LOCAL_INTEGRITY=$(node -e "const {createHash}=require('node:crypto');const {readFileSync}=require('node:fs');process.stdout.write('sha512-'+createHash('sha512').update(readFileSync('release-artifacts/release.tgz')).digest('base64'))")
-          REMOTE_INTEGRITY=$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity 2>/dev/null)
+          NPM_VIEW_STATUS=1
+          for attempt in $(seq 1 40); do
+            set +e
+            npm view "$PACKAGE_NAME@$PACKAGE_VERSION" dist.integrity >/tmp/npm-integrity 2>/tmp/npm-view.err
+            NPM_VIEW_STATUS=$?
+            set -e
+            [ "$NPM_VIEW_STATUS" -eq 0 ] && break
+            if ! grep -q 'npm error code E404' /tmp/npm-view.err; then
+              echo '::error::npm view failed with a non-E404 error; refusing to verify the published package'
+              cat /tmp/npm-view.err >&2
+              exit 1
+            fi
+            if [ "$attempt" -lt 40 ]; then
+              echo "::notice::registry read-back attempt $attempt/40 has not resolved yet"
+              sleep 15
+            fi
+          done
+          [ "$NPM_VIEW_STATUS" -eq 0 ] || { echo '::error::npm package is not visible after a successful publish'; exit 1; }
+          REMOTE_INTEGRITY=$(cat /tmp/npm-integrity)
           [ "$REMOTE_INTEGRITY" = "$LOCAL_INTEGRITY" ] || { echo "::error::Published npm integrity differs from staged tarball"; exit 1; }
           echo "::notice::$PACKAGE_NAME@$PACKAGE_VERSION already has matching integrity."
       - name: Report npm publish skipped
