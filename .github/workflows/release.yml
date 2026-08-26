@@ -206,7 +206,7 @@ jobs:
         if: steps.npm-publish.outputs.published != 'true'
         run: |
           PACKAGE_VERSION=$(node -p "require('./release-artifacts/release-manifest.json').package_version")
-          MESSAGE="npm publish for @postman-cs/onboarding-aws-spec-discovery@$PACKAGE_VERSION did not complete (OIDC trusted publisher or registry error); GitHub Release remains authoritative; recover via backfill-npm.yml if needed"
+          MESSAGE="npm publish for @postman-cs/onboarding-aws-spec-discovery@$PACKAGE_VERSION did not complete (OIDC trusted publisher or registry error); GitHub Release remains authoritative; rerun this release after trusted publishing is restored"
           echo "::warning::$MESSAGE"
           echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"
 
