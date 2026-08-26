@@ -112458,7 +112458,7 @@ var require_request = __commonJS({
         return this.#paused;
       }
     };
-    var Request = class {
+    var Request2 = class {
       constructor(origin, {
         path: path21,
         method,
@@ -112814,7 +112814,7 @@ var require_request = __commonJS({
         request.headers.push(key, val);
       }
     }
-    module2.exports = Request;
+    module2.exports = Request2;
   }
 });
 
@@ -119313,7 +119313,7 @@ var require_client = __commonJS({
     var util = require_util();
     var { ClientStats } = require_stats();
     var { channels } = require_diagnostics();
-    var Request = require_request();
+    var Request2 = require_request();
     var DispatcherBase = require_dispatcher_base();
     var {
       InvalidArgumentError,
@@ -119625,7 +119625,7 @@ var require_client = __commonJS({
         this.once("connect", cb);
       }
       [kDispatch](opts, handler) {
-        const request = new Request(this[kUrl].origin, opts, handler);
+        const request = new Request2(this[kUrl].origin, opts, handler);
         this[kQueue].push(request);
         if (this[kResuming]) {
         } else if (util.bodyLength(request.body) == null && util.isIterable(request.body)) {
@@ -130975,7 +130975,7 @@ var require_request2 = __commonJS({
       }
     }
     var patchMethodWarning = false;
-    var Request = class _Request {
+    var Request2 = class _Request {
       /** @type {AbortSignal} */
       #signal;
       /** @type {import('../../dispatcher/dispatcher')} */
@@ -131480,15 +131480,15 @@ var require_request2 = __commonJS({
         request.#abortCleanup?.();
       }
     };
-    var { setRequestSignal, getRequestDispatcher, setRequestDispatcher, setRequestHeaders, getRequestState, setRequestState, removeRequestAbortListener } = Request;
-    Reflect.deleteProperty(Request, "setRequestSignal");
-    Reflect.deleteProperty(Request, "getRequestDispatcher");
-    Reflect.deleteProperty(Request, "setRequestDispatcher");
-    Reflect.deleteProperty(Request, "setRequestHeaders");
-    Reflect.deleteProperty(Request, "getRequestState");
-    Reflect.deleteProperty(Request, "setRequestState");
-    Reflect.deleteProperty(Request, "removeRequestAbortListener");
-    mixinBody(Request, getRequestState);
+    var { setRequestSignal, getRequestDispatcher, setRequestDispatcher, setRequestHeaders, getRequestState, setRequestState, removeRequestAbortListener } = Request2;
+    Reflect.deleteProperty(Request2, "setRequestSignal");
+    Reflect.deleteProperty(Request2, "getRequestDispatcher");
+    Reflect.deleteProperty(Request2, "setRequestDispatcher");
+    Reflect.deleteProperty(Request2, "setRequestHeaders");
+    Reflect.deleteProperty(Request2, "getRequestState");
+    Reflect.deleteProperty(Request2, "setRequestState");
+    Reflect.deleteProperty(Request2, "removeRequestAbortListener");
+    mixinBody(Request2, getRequestState);
     function makeRequest(init) {
       return {
         method: init.method ?? "GET",
@@ -131542,7 +131542,7 @@ var require_request2 = __commonJS({
       return newRequest;
     }
     function fromInnerRequest(innerRequest, dispatcher, signal, guard) {
-      const request = new Request(kConstruct);
+      const request = new Request2(kConstruct);
       setRequestState(request, innerRequest);
       setRequestDispatcher(request, dispatcher);
       setRequestSignal(request, signal);
@@ -131552,7 +131552,7 @@ var require_request2 = __commonJS({
       setHeadersGuard(headers, guard);
       return request;
     }
-    Object.defineProperties(Request.prototype, {
+    Object.defineProperties(Request2.prototype, {
       method: kEnumerableProperty,
       url: kEnumerableProperty,
       headers: kEnumerableProperty,
@@ -131578,7 +131578,7 @@ var require_request2 = __commonJS({
         configurable: true
       }
     });
-    webidl.is.Request = webidl.util.MakeTypeAssertion(Request);
+    webidl.is.Request = webidl.util.MakeTypeAssertion(Request2);
     webidl.converters.RequestInfo = function(V) {
       if (typeof V === "string") {
         return webidl.converters.USVString(V);
@@ -131677,7 +131677,7 @@ var require_request2 = __commonJS({
       }
     ]);
     module2.exports = {
-      Request,
+      Request: Request2,
       makeRequest,
       fromInnerRequest,
       cloneRequest,
@@ -131840,7 +131840,7 @@ var require_fetch = __commonJS({
       getResponseState
     } = require_response();
     var { HeadersList } = require_headers();
-    var { Request, cloneRequest, getRequestDispatcher, getRequestState, removeRequestAbortListener } = require_request2();
+    var { Request: Request2, cloneRequest, getRequestDispatcher, getRequestState, removeRequestAbortListener } = require_request2();
     var zlib2 = require("node:zlib");
     var {
       makePolicyContainer,
@@ -131960,7 +131960,7 @@ var require_fetch = __commonJS({
       let p3 = Promise.withResolvers();
       let requestObject;
       try {
-        requestObject = new Request(input, init);
+        requestObject = new Request2(input, init);
       } catch (e5) {
         p3.reject(e5);
         return p3.promise;
@@ -133015,7 +133015,7 @@ var require_cache3 = __commonJS({
     var { kEnumerableProperty, isDisturbed } = require_util();
     var { webidl } = require_webidl();
     var { cloneResponse, fromInnerResponse, getResponseState } = require_response();
-    var { Request, fromInnerRequest, getRequestState } = require_request2();
+    var { Request: Request2, fromInnerRequest, getRequestState } = require_request2();
     var { fetching } = require_fetch();
     var { urlIsHttpHttpsScheme, readAllBytes } = require_util2();
     var Cache = class _Cache {
@@ -133087,7 +133087,7 @@ var require_cache3 = __commonJS({
         }
         const fetchControllers = [];
         for (const request of requests) {
-          const r5 = getRequestState(new Request(request));
+          const r5 = getRequestState(new Request2(request));
           if (!urlIsHttpHttpsScheme(r5.url)) {
             throw webidl.errors.exception({
               header: prefix,
@@ -133174,7 +133174,7 @@ var require_cache3 = __commonJS({
         if (webidl.is.Request(request)) {
           innerRequest = getRequestState(request);
         } else {
-          innerRequest = getRequestState(new Request(request));
+          innerRequest = getRequestState(new Request2(request));
         }
         if (!urlIsHttpHttpsScheme(innerRequest.url) || innerRequest.method !== "GET") {
           throw webidl.errors.exception({
@@ -133259,7 +133259,7 @@ var require_cache3 = __commonJS({
           }
         } else {
           assert(typeof request === "string");
-          r5 = getRequestState(new Request(request));
+          r5 = getRequestState(new Request2(request));
         }
         const operations = [];
         const operation2 = {
@@ -133304,7 +133304,7 @@ var require_cache3 = __commonJS({
               return [];
             }
           } else if (typeof request === "string") {
-            r5 = getRequestState(new Request(request));
+            r5 = getRequestState(new Request2(request));
           }
         }
         const promise = Promise.withResolvers();
@@ -133477,7 +133477,7 @@ var require_cache3 = __commonJS({
               return [];
             }
           } else if (typeof request === "string") {
-            r5 = getRequestState(new Request(request));
+            r5 = getRequestState(new Request2(request));
           }
         }
         const responses = [];
@@ -183278,7 +183278,7 @@ async function probeSessionIdentity(baseUrl, accessToken, fetchImpl, maxAttempts
   return void 0;
 }
 
-// node_modules/@postman-cse/automation-core/dist/ci-context.js
+// node_modules/@postman-cs/automation-core/dist/ci-context.js
 function norm(value) {
   const trimmed = (value ?? "").trim();
   return trimmed.length > 0 ? trimmed : void 0;
@@ -183429,7 +183429,7 @@ function detectCiProviderContext(env2 = process.env) {
   return { ciProvider: "unknown", runnerKind: "unknown" };
 }
 
-// node_modules/@postman-cse/automation-core/dist/repo-context.js
+// node_modules/@postman-cs/automation-core/dist/repo-context.js
 function normalize2(value) {
   const trimmed = (value ?? "").trim();
   return trimmed.length > 0 ? trimmed : void 0;
@@ -183518,7 +183518,7 @@ function detectRepoContext2(input, env2 = process.env) {
   };
 }
 
-// node_modules/@postman-cse/automation-core/dist/telemetry.js
+// node_modules/@postman-cs/automation-core/dist/telemetry.js
 var import_node_crypto9 = require("node:crypto");
 var import_undici2 = __toESM(require_undici(), 1);
 var SCHEMA_VERSION = 3;
@@ -183658,7 +183658,7 @@ function createTelemetryContext(options) {
   };
 }
 
-// node_modules/@postman-cse/automation-core/dist/logger.js
+// node_modules/@postman-cs/automation-core/dist/logger.js
 var LEVEL_ORDER = {
   debug: 10,
   info: 20,
@@ -183838,7 +183838,7 @@ function createLogger(options) {
   return root5;
 }
 
-// node_modules/@postman-cse/automation-core/dist/http/retry.js
+// node_modules/@postman-cs/automation-core/dist/http/retry.js
 function sleep2(delayMs) {
   return new Promise((resolve) => {
     setTimeout(resolve, delayMs);

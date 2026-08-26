@@ -7,7 +7,7 @@
  * session identity or x-entity-team-id.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTelemetryContext } from '@postman-cse/automation-core';
+import { createTelemetryContext } from '@postman-cs/automation-core';
 
 import { __resetIdentityMemo } from '../src/lib/postman/credential-identity.js';
 import {
