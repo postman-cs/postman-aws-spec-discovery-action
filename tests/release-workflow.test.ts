@@ -374,7 +374,11 @@ describe('release workflow contract', () => {
     expect(verify).toContain('ACTIONLINT_BIN="$RUNNER_TEMP/actionlint"');
     expect(verify).toContain('"$ACTIONLINT_BIN" -version');
     expect(verify).toContain('echo "ACTIONLINT_BIN=$ACTIONLINT_BIN" >> "$GITHUB_ENV"');
+    expect(verify).toContain(
+      'https://raw.githubusercontent.com/rhysd/actionlint/393031adb9afb225ee52ae2ccd7a5af5525e03e8/scripts/download-actionlint.bash'
+    );
     expect(verify).toContain('download-actionlint.bash) 1.7.11 "$RUNNER_TEMP"');
+    expect(workflow).not.toContain('/main/scripts/download-actionlint.bash');
     expect(verify).toContain('MAX_PARALLEL_GATES=2');
     expect(verify).toContain('run lint npm run lint');
     expect(verify).toContain('run typecheck npm run typecheck');
