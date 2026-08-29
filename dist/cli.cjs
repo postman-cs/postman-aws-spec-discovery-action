@@ -172615,7 +172615,11 @@ function classifySpecContent(content, options = {}) {
   if (/^\s*asyncapi\s*:/i.test(trimmed)) {
     return { format: "asyncapi-yaml", filename: filenameForFormat("asyncapi-yaml", pathHint) };
   }
-  if (!trimmed.startsWith("<") && !trimmed.startsWith("{")) {
+  const graphqlSdl = looksLikeGraphqlSdl(trimmed);
+  if (graphqlSdl) {
+    return { format: "graphql-sdl", filename: filenameForFormat("graphql-sdl", pathHint) };
+  }
+  if (!trimmed.startsWith("<") && !trimmed.startsWith("{") && !trimmed.startsWith('"""')) {
     try {
       const parsed = (0, import_yaml7.parse)(trimmed);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
@@ -172641,11 +172645,6 @@ function classifySpecContent(content, options = {}) {
   }
   if (basename.endsWith(".proto") || looksLikeProtobuf(trimmed)) {
     return { format: "protobuf", filename: filenameForFormat("protobuf", pathHint) };
-  }
-  if (basename.endsWith(".graphql") || basename.endsWith(".gql") || basename.endsWith(".graphqls") || looksLikeGraphqlSdl(trimmed)) {
-    if (looksLikeGraphqlSdl(trimmed)) {
-      return { format: "graphql-sdl", filename: filenameForFormat("graphql-sdl", pathHint) };
-    }
   }
   if (basename.endsWith(".smithy") || looksLikeSmithy(trimmed)) {
     if (looksLikeSmithy(trimmed)) {

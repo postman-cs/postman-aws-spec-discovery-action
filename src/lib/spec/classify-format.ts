@@ -70,8 +70,13 @@ export function classifySpecContent(
     return { format: 'asyncapi-yaml', filename: filenameForFormat('asyncapi-yaml', pathHint) };
   }
 
+  const graphqlSdl = looksLikeGraphqlSdl(trimmed);
+  if (graphqlSdl) {
+    return { format: 'graphql-sdl', filename: filenameForFormat('graphql-sdl', pathHint) };
+  }
+
   // YAML documents that parse as structured OpenAPI/AsyncAPI/MCP/etc.
-  if (!trimmed.startsWith('<') && !trimmed.startsWith('{')) {
+  if (!trimmed.startsWith('<') && !trimmed.startsWith('{') && !trimmed.startsWith('"""')) {
     try {
       const parsed = parse(trimmed) as unknown;
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -100,16 +105,7 @@ export function classifySpecContent(
   if (basename.endsWith('.proto') || looksLikeProtobuf(trimmed)) {
     return { format: 'protobuf', filename: filenameForFormat('protobuf', pathHint) };
   }
-  if (
-    basename.endsWith('.graphql')
-    || basename.endsWith('.gql')
-    || basename.endsWith('.graphqls')
-    || looksLikeGraphqlSdl(trimmed)
-  ) {
-    if (looksLikeGraphqlSdl(trimmed)) {
-      return { format: 'graphql-sdl', filename: filenameForFormat('graphql-sdl', pathHint) };
-    }
-  }
+  // GraphQL extensions are accepted only when their bytes matched the SDL probe above.
   if (basename.endsWith('.smithy') || looksLikeSmithy(trimmed)) {
     if (looksLikeSmithy(trimmed)) {
       return { format: 'smithy', filename: filenameForFormat('smithy', pathHint) };
