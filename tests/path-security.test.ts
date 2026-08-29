@@ -117,6 +117,11 @@ describe('resolveLocalReadWithinRoot (canonical)', () => {
       assertNoSymlinkComponentsWithinRoot(root, 'linked-dir/openapi.yaml', 'spec-path')
     ).rejects.toThrow(/must not traverse symbolic links/);
 
+    await symlink(path.join(root, 'real-dir', 'openapi.yaml'), path.join(root, 'linked-file.yaml'));
+    await expect(
+      assertNoSymlinkComponentsWithinRoot(root, 'linked-file.yaml', 'output-dir')
+    ).rejects.toThrow(/must not traverse symbolic links/);
+
     const nestedOk = await resolveLocalReadWithinRoot(root, 'real-dir/openapi.yaml', {
       fieldName: 'spec-path',
       countAsReference: false,

@@ -2,6 +2,8 @@ import { lstat, open, opendir, readFile } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 
+import { assertNoSymlinkComponentsWithinRoot } from '../utils/resolve-path-within-root.js';
+
 export type SmithyProjectErrorCode =
   | 'malformed-config'
   | 'missing-import'
@@ -86,6 +88,19 @@ export async function resolveSmithyProject(
         code: 'path-escape',
         path: buildRelative,
         message: `smithy-build.json path escapes repository root: ${buildRelative}`
+      }]
+    };
+  }
+
+  try {
+    await assertNoSymlinkComponentsWithinRoot(resolvedRoot, buildRelative, 'smithy-build.json');
+  } catch {
+    return {
+      ...empty,
+      errors: [{
+        code: 'path-escape',
+        path: buildRelative,
+        message: `Refusing to follow symlink components for smithy-build.json: ${buildRelative}`
       }]
     };
   }
@@ -324,6 +339,16 @@ async function collectPathEntry(state: ClosureState, entry: string, kind: string
   }
 
   const relative = toPosix(path.relative(state.repoRoot, absolute));
+  try {
+    await assertNoSymlinkComponentsWithinRoot(state.repoRoot, relative, `Smithy ${kind}`);
+  } catch {
+    state.errors.push({
+      code: 'path-escape',
+      path: relative,
+      message: `Refusing to follow symlink components for Smithy ${kind}: ${entry}`
+    });
+    return;
+  }
   const canonicalKey = path.resolve(absolute);
 
   if (state.visiting.has(canonicalKey)) {

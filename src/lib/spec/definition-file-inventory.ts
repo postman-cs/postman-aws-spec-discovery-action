@@ -3,7 +3,10 @@ import { copyFile, mkdir, open, readdir, readFile, rename, rm, stat, writeFile }
 import path from 'node:path';
 
 import type { SpecFormat } from '../../contracts.js';
-import { resolveLocalReadWithinRoot, resolvePathWithinRoot } from '../utils/resolve-path-within-root.js';
+import {
+  assertNoSymlinkComponentsWithinRoot,
+  resolveLocalReadWithinRoot
+} from '../utils/resolve-path-within-root.js';
 
 export type DefinitionFileRole = 'root' | 'dependency';
 export type DefinitionCompleteness = 'full' | 'partial';
@@ -78,20 +81,93 @@ export function extractProtobufImports(content: string): string[] {
 
 export function extractXmlSchemaDependencyRefs(content: string): string[] {
   const refs: string[] = [];
-  const patterns = [
-    /\b(?:schemaLocation|itemSchemaLocation)\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?import\b[^>]*\blocation\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?include\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?redefine\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi
-  ];
-  for (const pattern of patterns) {
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(content)) !== null) {
-      const value = match[1]?.trim();
-      if (value) refs.push(value);
+  let cursor = 0;
+  while (cursor < content.length) {
+    const start = content.indexOf('<', cursor);
+    if (start < 0) break;
+
+    let tagStart = start;
+    let quote = '';
+    let end = -1;
+    cursor = start + 1;
+    for (; cursor < content.length; cursor += 1) {
+      const character = content[cursor] ?? '';
+      if (quote) {
+        if (character === quote) quote = '';
+        continue;
+      }
+      if (character === '"' || character === "'") {
+        quote = character;
+      } else if (character === '<') {
+        // The prior start was malformed. Restart at this later start without rescanning bytes.
+        tagStart = cursor;
+      } else if (character === '>') {
+        end = cursor;
+        cursor += 1;
+        break;
+      }
+    }
+    if (end < 0) break;
+
+    const tag = parseXmlStartTag(content.slice(tagStart + 1, end));
+    if (!tag) continue;
+    const schemaLocation = tag.attributes.get('schemalocation')
+      ?? tag.attributes.get('itemschemalocation');
+    if (schemaLocation?.trim()) refs.push(schemaLocation.trim());
+    if (tag.localName === 'import') {
+      const location = tag.attributes.get('location');
+      if (location?.trim()) refs.push(location.trim());
     }
   }
   return [...new Set(refs)];
+}
+
+function isXmlNameCharacter(character: string): boolean {
+  return /[A-Za-z0-9_.:-]/.test(character);
+}
+
+function parseXmlStartTag(rawTag: string): {
+  localName: string;
+  attributes: Map<string, string>;
+} | undefined {
+  let cursor = 0;
+  while (/\s/.test(rawTag[cursor] ?? '')) cursor += 1;
+  if (!rawTag[cursor] || rawTag[cursor] === '/' || rawTag[cursor] === '!' || rawTag[cursor] === '?') {
+    return undefined;
+  }
+
+  const nameStart = cursor;
+  while (isXmlNameCharacter(rawTag[cursor] ?? '')) cursor += 1;
+  if (cursor === nameStart) return undefined;
+  const qualifiedName = rawTag.slice(nameStart, cursor).toLowerCase();
+  const localName = qualifiedName.split(':').pop() ?? qualifiedName;
+  const attributes = new Map<string, string>();
+
+  while (cursor < rawTag.length) {
+    while (/\s/.test(rawTag[cursor] ?? '') || rawTag[cursor] === '/') cursor += 1;
+    const attributeStart = cursor;
+    while (isXmlNameCharacter(rawTag[cursor] ?? '')) cursor += 1;
+    if (cursor === attributeStart) {
+      cursor += 1;
+      continue;
+    }
+    const qualifiedAttribute = rawTag.slice(attributeStart, cursor).toLowerCase();
+    const attributeName = qualifiedAttribute.split(':').pop() ?? qualifiedAttribute;
+    while (/\s/.test(rawTag[cursor] ?? '')) cursor += 1;
+    if (rawTag[cursor] !== '=') continue;
+    cursor += 1;
+    while (/\s/.test(rawTag[cursor] ?? '')) cursor += 1;
+    const delimiter = rawTag[cursor];
+    if (delimiter !== '"' && delimiter !== "'") continue;
+    cursor += 1;
+    const valueStart = cursor;
+    const valueEnd = rawTag.indexOf(delimiter, cursor);
+    if (valueEnd < 0) break;
+    attributes.set(attributeName, rawTag.slice(valueStart, valueEnd));
+    cursor = valueEnd + 1;
+  }
+
+  return { localName, attributes };
 }
 
 export function listDefinitionDependencyRefs(content: string, format: SpecFormat): string[] {
@@ -432,7 +508,11 @@ export async function stageDefinitionExportTree(input: StagedDefinitionWriteInpu
   ownedRelativePaths: string[];
 }> {
   const serviceDirRelative = assertSafeBundleRelativePath(input.serviceDirRelative.replace(/\\/g, '/'));
-  const canonicalAbsolute = resolvePathWithinRoot(input.repoRoot, serviceDirRelative, 'output-dir');
+  const canonicalAbsolute = await assertNoSymlinkComponentsWithinRoot(
+    input.repoRoot,
+    serviceDirRelative,
+    'output-dir'
+  );
   const runId = input.runId ?? randomBytes(8).toString('hex');
   const parentDir = path.dirname(canonicalAbsolute);
   const baseName = path.basename(canonicalAbsolute);
@@ -522,7 +602,11 @@ export async function stageDefinitionExportTree(input: StagedDefinitionWriteInpu
     // Verify owned members in the canonical tree, then drop backup.
     for (const member of input.members) {
       const memberPath = assertSafeBundleRelativePath(member.path.replace(/\\/g, '/'));
-      const absolute = resolvePathWithinRoot(input.repoRoot, memberPath, 'output-dir');
+      const absolute = await assertNoSymlinkComponentsWithinRoot(
+        input.repoRoot,
+        memberPath,
+        'output-dir'
+      );
       const written = await readFile(absolute);
       const expectedSha = sha256Utf8(member.content);
       const actualSha = createHash('sha256').update(written).digest('hex');

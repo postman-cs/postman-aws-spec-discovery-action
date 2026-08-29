@@ -11,6 +11,7 @@ import {
 } from './lib/postman/telemetry-credentials.js';
 import { actionSink, createLogger, createTelemetryContext } from '@postman-cs/automation-core';
 import { resolveActionVersion } from './action-version.js';
+import { assertNoSymlinkComponentsWithinRoot } from './lib/utils/resolve-path-within-root.js';
 
 interface CliConfig {
   inputEnv: NodeJS.ProcessEnv;
@@ -247,10 +248,11 @@ async function writeOptionalFile(filePath: string | undefined, content: string):
     return;
   }
   const workspaceRoot = path.resolve(process.cwd());
-  const resolved = path.resolve(workspaceRoot, filePath);
-  const relative = path.relative(workspaceRoot, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`Output path must stay within workspace: ${filePath}`);
+  let resolved: string;
+  try {
+    resolved = await assertNoSymlinkComponentsWithinRoot(workspaceRoot, filePath, 'Output path');
+  } catch (error) {
+    throw new Error(`Output path must stay within workspace: ${filePath}`, { cause: error });
   }
   await mkdir(path.dirname(resolved), { recursive: true });
   await writeFile(resolved, content, 'utf8');

@@ -233,16 +233,63 @@ export function looksLikeMcp(record: Record<string, unknown>): boolean {
     && (Array.isArray(record.remotes) || Array.isArray(record.packages));
 }
 
+function firstXmlElementStartTag(content: string): { qualifiedName: string; attributes: string } | undefined {
+  let cursor = 0;
+  while (cursor < content.length) {
+    const start = content.indexOf('<', cursor);
+    if (start < 0) return undefined;
+    if (content.startsWith('<!--', start)) {
+      const end = content.indexOf('-->', start + 4);
+      if (end < 0) return undefined;
+      cursor = end + 3;
+      continue;
+    }
+    if (content[start + 1] === '?') {
+      const end = content.indexOf('?>', start + 2);
+      if (end < 0) return undefined;
+      cursor = end + 2;
+      continue;
+    }
+
+    let quote = '';
+    let end = -1;
+    for (let index = start + 1; index < content.length; index += 1) {
+      const character = content[index] ?? '';
+      if (quote) {
+        if (character === quote) quote = '';
+      } else if (character === '"' || character === "'") {
+        quote = character;
+      } else if (character === '<') {
+        return undefined;
+      } else if (character === '>') {
+        end = index;
+        break;
+      }
+    }
+    if (end < 0) return undefined;
+
+    const rawTag = content.slice(start + 1, end);
+    if (/^\s*!/.test(rawTag)) {
+      cursor = end + 1;
+      continue;
+    }
+    if (/^\s*\//.test(rawTag)) return undefined;
+    const match = rawTag.match(/^\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([\s\S]*)$/);
+    if (!match) return undefined;
+    return { qualifiedName: match[1] ?? '', attributes: match[2] ?? '' };
+  }
+  return undefined;
+}
+
 export function looksLikeWsdl(content: string): boolean {
   const trimmed = content.trim();
   if (!trimmed.startsWith('<')) return false;
-  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, '').trim();
-  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
-  if (!rootMatch) return false;
-  const qualified = rootMatch[1] ?? '';
+  const root = firstXmlElementStartTag(trimmed);
+  if (!root) return false;
+  const qualified = root.qualifiedName;
   const localName = (qualified.includes(':') ? qualified.split(':').pop()! : qualified).toLowerCase();
   if (localName !== 'definitions' && localName !== 'description') return false;
-  const head = `${qualified} ${rootMatch[2] ?? ''}`;
+  const head = `${qualified} ${root.attributes}`;
   return /wsdl/i.test(head)
     || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
 }
@@ -277,15 +324,16 @@ function looksLikeJsonSchema(record: Record<string, unknown>): boolean {
 }
 
 function looksLikeProtobuf(content: string): boolean {
-  return /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content)
-    || /\bservice\s+\w+\s*\{[\s\S]*\brpc\b/.test(content);
+  if (/^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content)) return true;
+  const service = /\bservice\s+\w+\s*\{/.exec(content);
+  return service !== null && /\brpc\b/.test(content.slice(service.index + service[0].length));
 }
 
 function looksLikeGraphqlSdl(content: string): boolean {
   const trimmed = content.trim();
   if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('<')) return false;
   if (/^\s*(?:openapi|swagger|asyncapi)\s*:/m.test(trimmed)) return false;
-  return /^\s*(?:"""[\s\S]*?"""\s*)?(?:extend\s+)?(?:(?:type|interface|enum|union|scalar|input)\s+[A-Za-z_]|schema\s*\{|directive\s+@)/m.test(
+  return /^\s*(?:extend\s+)?(?:(?:type|interface|enum|union|scalar|input)\s+[A-Za-z_]|schema\s*\{|directive\s+@)/m.test(
     trimmed
   );
 }
