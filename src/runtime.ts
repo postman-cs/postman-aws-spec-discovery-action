@@ -818,19 +818,31 @@ async function writeResolvedArtifactWithDerivedOpenApi(input: ResolvedArtifactWr
   }
 
   if (input.native) {
-    const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, 'output-dir');
+    const absoluteSpecPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      input.native.relativePath,
+      'output-dir'
+    );
     await input.writeSpecFile(absoluteSpecPath, input.native.content);
   }
 
   for (const sidecar of input.sidecars ?? []) {
     const relativeSidecarPath = path.join(input.relativeDir, sidecar.filename).replace(/\\/g, '/');
-    const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, 'output-dir');
+    const absoluteSidecarPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      relativeSidecarPath,
+      'output-dir'
+    );
     await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
   }
 
   if (derivedSidecar) {
     const relativeDerivedPath = path.join(input.relativeDir, derivedSidecar.filename).replace(/\\/g, '/');
-    const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, 'output-dir');
+    const absoluteDerivedPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      relativeDerivedPath,
+      'output-dir'
+    );
     await input.writeSpecFile(absoluteDerivedPath, derivedSidecar.content);
   }
 
@@ -2377,7 +2389,11 @@ async function discoverRepoServiceGroups(
     const serviceName = serviceNameForRepoCandidate(inputs, selected);
     if (!inputs.dryRun && materialized.writeNative && materialized.content) {
       try {
-        const absolute = resolvePathWithinRoot(inputs.repoRoot, materialized.path, 'output-dir');
+        const absolute = await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          materialized.path,
+          'output-dir'
+        );
         await dependencies.writeSpecFile(absolute, materialized.content);
       } catch (error) {
         summary.failed += 1;
@@ -3106,11 +3122,19 @@ export async function runResolution(
     }
 
     if (snsManualReviewMetadata?.metadataContent) {
-      const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, 'output-dir');
+      const absoluteMetadataPath = await assertNoSymlinkComponentsWithinRoot(
+        inputs.repoRoot,
+        relativeMetadataPath,
+        'output-dir'
+      );
       await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
       for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
         const relativeSidecarPath = path.join(relativeProviderDir, sidecar.filename).replace(/\\/g, '/');
-        const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, 'output-dir');
+        const absoluteSidecarPath = await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          relativeSidecarPath,
+          'output-dir'
+        );
         await writeSpecFile(absoluteSidecarPath, sidecar.content);
       }
     }

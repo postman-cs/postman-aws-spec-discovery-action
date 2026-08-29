@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -307,6 +307,31 @@ describe('inventoryRepoSpecs', () => {
       expect(inventory.candidates.filter((candidate) => candidate.type === 'smithy')).toHaveLength(0);
       expect(inventory.errors.some((error) => (error.path ?? '').includes('passwd') || error.message.includes('passwd') || error.message.includes('escapes'))).toBe(true);
     });
+  });
+
+  it('rejects intermediate directory symlinks in Smithy imports', async () => {
+    const sandbox = await mkdtemp(path.join(os.tmpdir(), 'pm-smithy-parent-symlink-'));
+    try {
+      const repoRoot = path.join(sandbox, 'repo');
+      const outside = path.join(sandbox, 'outside');
+      await mkdir(repoRoot, { recursive: true });
+      await mkdir(outside, { recursive: true });
+      const marker = 'namespace stolen.outside';
+      await writeFile(path.join(outside, 'stolen.smithy'), `${marker}\n`, 'utf8');
+      await symlink(outside, path.join(repoRoot, 'linked-models'));
+      await writeFile(
+        path.join(repoRoot, 'smithy-build.json'),
+        JSON.stringify({ version: '1.0', imports: ['linked-models/stolen.smithy'] }),
+        'utf8'
+      );
+
+      const closure = await resolveSmithyProject(repoRoot, 'smithy-build.json');
+      expect(closure.errors.some((error) => error.code === 'path-escape')).toBe(true);
+      expect(closure.memberPaths).toEqual([]);
+      expect(closure.content).not.toContain(marker);
+    } finally {
+      await rm(sandbox, { recursive: true, force: true });
+    }
   });
 
   it('rejects oversized root smithy-build.json via closure bounds without model content', async () => {

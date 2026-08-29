@@ -135,6 +135,26 @@ describe('renderAmbiguityStepSummary', () => {
     });
     expect(rendered).toContain('| 1 | `evil name with breaks` | `id  newline` | `REST` | `10` |');
   });
+
+  it('keeps backticks and markdown links inside an unbreakable code span', () => {
+    const rendered = renderAmbiguityStepSummary({
+      status: 'unresolved',
+      sourceType: 'manual-review',
+      narrowingTier: 'none',
+      candidates: [{
+        rank: 1,
+        serviceName: 'a`[CLICK](https://evil.example)`b',
+        gatewayId: 'id``with-fence',
+        gatewayType: 'REST',
+        confidence: 10,
+        evidence: []
+      }],
+      probes: []
+    });
+
+    expect(rendered).toContain('``a`[CLICK](https://evil.example)`b``');
+    expect(rendered).toContain('```id``with-fence```');
+  });
 });
 
 describe('appendAmbiguityStepSummary', () => {

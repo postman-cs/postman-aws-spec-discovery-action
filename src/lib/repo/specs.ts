@@ -19,7 +19,7 @@ import {
   type ParsedTemplate,
   type TemplateResource
 } from '../providers/cloudformation.js';
-import { looksLikeIntrospection } from '../spec/classify-format.js';
+import { looksLikeIntrospection, looksLikeWsdl } from '../spec/classify-format.js';
 import { resolveLocalReadWithinRoot } from '../utils/resolve-path-within-root.js';
 import { groupGraphqlByServiceRoot, serviceRootFor } from './graphql-compose.js';
 import { resolveSmithyProject } from './smithy-project.js';
@@ -350,20 +350,6 @@ function isLikelyGraphqlIntrospection(content: string): boolean {
  * root element definitions|description plus a WSDL namespace or wsdl token.
  * Arbitrary XML without WSDL markers is rejected.
  */
-function isLikelyWsdlDocument(content: string): boolean {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith('<')) return false;
-  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, '').trim();
-  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
-  if (!rootMatch) return false;
-  const qualified = rootMatch[1] ?? '';
-  const localName = (qualified.includes(':') ? qualified.split(':').pop()! : qualified).toLowerCase();
-  if (localName !== 'definitions' && localName !== 'description') return false;
-  const head = `${qualified} ${rootMatch[2] ?? ''}`;
-  return /wsdl/i.test(head)
-    || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
-}
-
 /**
  * Conservative MCP detection matching bootstrap:
  * mcpServers object, modelcontextprotocol $schema, or registry name + remotes/packages.
@@ -477,7 +463,7 @@ function detectRepoSpec(candidate: string, content: string): Omit<RepoSpecMatch,
     // Inventory resolves project closure separately; never treat JSON config as model.
     return undefined;
   } else if (basename.endsWith('.wsdl')) {
-    if (isLikelyWsdlDocument(content)) type = 'wsdl';
+    if (looksLikeWsdl(content)) type = 'wsdl';
   } else if (isMcpConfigBasename(basename)) {
     // mcp.json / server.json only when content validates as MCP (no name-only acceptance).
     if (isLikelyMcpContent(content)) type = 'mcp';

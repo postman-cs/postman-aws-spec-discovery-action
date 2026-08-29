@@ -371,6 +371,45 @@ describe('repo definition closure', () => {
 });
 
 describe('staging and GC', () => {
+  it('rejects a symlinked output directory before staging any files', async () => {
+    const sandbox = await mkdtemp(path.join(os.tmpdir(), 'pm-stage-symlink-'));
+    try {
+      const repoRoot = path.join(sandbox, 'repo');
+      const outside = path.join(sandbox, 'outside');
+      await mkdir(repoRoot, { recursive: true });
+      await mkdir(outside, { recursive: true });
+      await symlink(outside, path.join(repoRoot, 'discovered-specs'));
+      const write = vi.fn(async (absolutePath: string, content: string) => {
+        await mkdir(path.dirname(absolutePath), { recursive: true });
+        await writeFile(absolutePath, content, 'utf8');
+      });
+
+      await expect(
+        stageDefinitionExportTree({
+          repoRoot,
+          serviceDirRelative: 'discovered-specs/orders',
+          members: [
+            {
+              path: 'discovered-specs/orders/service.proto',
+              role: 'root',
+              content: 'syntax = "proto3";\n'
+            },
+            {
+              path: 'discovered-specs/orders/types.proto',
+              role: 'dependency',
+              content: 'syntax = "proto3";\n'
+            }
+          ],
+          writeFile: write
+        })
+      ).rejects.toThrow(/must not traverse symbolic links/);
+      expect(write).not.toHaveBeenCalled();
+      await expect(readFile(path.join(outside, 'orders', 'service.proto'), 'utf8')).rejects.toThrow();
+    } finally {
+      await rm(sandbox, { recursive: true, force: true });
+    }
+  });
+
   it.skipIf(process.platform === 'win32')('staging failure preserves prior tree', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'pm-stage-fail-'));
     try {
@@ -443,6 +482,34 @@ describe('staging and GC', () => {
 });
 
 describe('output/CLI parity for spec-files-json', () => {
+  it('does not materialize a repo aggregate through a symlinked output directory', async () => {
+    const sandbox = await mkdtemp(path.join(os.tmpdir(), 'pm-native-output-symlink-'));
+    try {
+      const repoRoot = path.join(sandbox, 'repo');
+      const outside = path.join(sandbox, 'outside');
+      await cp(path.join(FIXTURES, 'smithy', 'sources'), repoRoot, { recursive: true });
+      await mkdir(outside, { recursive: true });
+      await symlink(outside, path.join(repoRoot, 'discovered-specs'));
+      const writeSpecFile = vi.fn(async (outputPath: string, content: string) => {
+        await mkdir(path.dirname(outputPath), { recursive: true });
+        await writeFile(outputPath, content, 'utf8');
+      });
+
+      const result = await runResolution(
+        baseInputs(repoRoot),
+        createAwsClientStub(),
+        createCoreStub(),
+        writeSpecFile
+      );
+
+      expect(result.status).toBe('unresolved');
+      expect(writeSpecFile).not.toHaveBeenCalled();
+      await expect(readFile(path.join(outside, 'orders', 'model.smithy'), 'utf8')).rejects.toThrow();
+    } finally {
+      await rm(sandbox, { recursive: true, force: true });
+    }
+  });
+
   it('inserts spec-files-json immediately after spec-path in the action contract', () => {
     const names = contractOutputNames;
     const specPathIndex = names.indexOf('spec-path');

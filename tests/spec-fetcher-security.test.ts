@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { agentOptions, proxyOptions, lookupMock, undiciFetchMock } = vi.hoisted(() => ({
   agentOptions: [] as unknown[],
   proxyOptions: [] as unknown[],
-  lookupMock: vi.fn(async () => [{ address: '8.8.8.8', family: 4 as const }]),
+  lookupMock: vi.fn(async (): Promise<Array<{ address: string; family: 4 | 6 }>> => [
+    { address: '8.8.8.8', family: 4 }
+  ]),
   // The fetcher deliberately uses undici's fetch, not the global, so its dispatcher and
   // its fetch come from one undici instance. Stub that same export here; the globalThis
   // spy installed in beforeEach delegates to this mock so existing assertions still read
@@ -243,6 +245,27 @@ describe('spec fetcher SSRF and redirect hardening', () => {
       await expect(fetchSpecFromUrl(`https://[${address}]/openapi.yaml`, { policy })).rejects.toThrow(
         /Private or local/
       );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    '64:ff9b::a9fe:a9fe',
+    '64:ff9b:1::a9fe:a9fe',
+    '2002:a9fe:a9fe::',
+    '::ffff:7f00:1'
+  ])('rejects IPv4 translation or mapped IPv6 address %s', (address) => {
+    expect(isBlockedAddress(address)).toBe(true);
+  });
+
+  it.each(['64:ff9b::a9fe:a9fe', '2002:a9fe:a9fe::'])(
+    'rejects translated DNS answer %s before fetch',
+    async (address) => {
+      lookupMock.mockResolvedValueOnce([{ address, family: 6 }]);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      await expect(
+        fetchSpecFromUrl('https://specs.example.com/v1/openapi.yaml', { policy: ALLOWED })
+      ).rejects.toThrow(/Private or local/);
       expect(fetchSpy).not.toHaveBeenCalled();
     }
   );

@@ -171140,15 +171140,26 @@ var import_promises3 = require("node:fs/promises");
 function tableCell(value) {
   return String(value).replace(/[|\r\n]/g, " ");
 }
+function inlineCodeCell(value) {
+  const content = tableCell(value);
+  if (!content) return "` `";
+  let longestRun = 0;
+  for (const match of content.matchAll(/`+/g)) {
+    longestRun = Math.max(longestRun, match[0].length);
+  }
+  const fence = "`".repeat(longestRun + 1);
+  const padding = content.startsWith("`") || content.endsWith("`") ? " " : "";
+  return `${fence}${padding}${content}${padding}${fence}`;
+}
 function renderAmbiguityStepSummary(input) {
   const lines = [
     "## Postman AWS spec discovery",
     "",
     "| Field | Value |",
     "| --- | --- |",
-    `| Status | \`${tableCell(input.status)}\` |`,
-    `| Source | \`${tableCell(input.sourceType)}\` |`,
-    `| Narrowing | \`${tableCell(input.narrowingTier)}\` |`,
+    `| Status | ${inlineCodeCell(input.status)} |`,
+    `| Source | ${inlineCodeCell(input.sourceType)} |`,
+    `| Narrowing | ${inlineCodeCell(input.narrowingTier)} |`,
     "",
     "### Ranked candidates",
     "",
@@ -171157,14 +171168,14 @@ function renderAmbiguityStepSummary(input) {
   ];
   for (const candidate of input.candidates) {
     lines.push(
-      `| ${tableCell(candidate.rank)} | \`${tableCell(candidate.serviceName)}\` | \`${tableCell(candidate.gatewayId)}\` | \`${tableCell(candidate.gatewayType)}\` | \`${tableCell(candidate.confidence)}\` |`
+      `| ${tableCell(candidate.rank)} | ${inlineCodeCell(candidate.serviceName)} | ${inlineCodeCell(candidate.gatewayId)} | ${inlineCodeCell(candidate.gatewayType)} | ${inlineCodeCell(candidate.confidence)} |`
     );
   }
   if (input.probes.length > 0) {
     lines.push("", "### Provider probes", "");
     for (const probe of input.probes) {
       const status = probe.status === "skipped" && probe.reason ? `skipped:${probe.reason}` : probe.status;
-      lines.push(`- \`${tableCell(probe.provider)}\`: \`${tableCell(status)}\``);
+      lines.push(`- ${inlineCodeCell(probe.provider)}: ${inlineCodeCell(status)}`);
     }
   }
   return `${sanitizeLogMessage(lines.join("\n"))}
@@ -171867,20 +171878,81 @@ function extractProtobufImports(content) {
 }
 function extractXmlSchemaDependencyRefs(content) {
   const refs = [];
-  const patterns = [
-    /\b(?:schemaLocation|itemSchemaLocation)\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?import\b[^>]*\blocation\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?include\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi,
-    /<(?:[\w.-]+:)?redefine\b[^>]*\bschemaLocation\s*=\s*["']([^"']+)["']/gi
-  ];
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      const value = match[1]?.trim();
-      if (value) refs.push(value);
+  let cursor2 = 0;
+  while (cursor2 < content.length) {
+    const start = content.indexOf("<", cursor2);
+    if (start < 0) break;
+    let tagStart = start;
+    let quote = "";
+    let end = -1;
+    cursor2 = start + 1;
+    for (; cursor2 < content.length; cursor2 += 1) {
+      const character = content[cursor2] ?? "";
+      if (quote) {
+        if (character === quote) quote = "";
+        continue;
+      }
+      if (character === '"' || character === "'") {
+        quote = character;
+      } else if (character === "<") {
+        tagStart = cursor2;
+      } else if (character === ">") {
+        end = cursor2;
+        cursor2 += 1;
+        break;
+      }
+    }
+    if (end < 0) break;
+    const tag2 = parseXmlStartTag(content.slice(tagStart + 1, end));
+    if (!tag2) continue;
+    const schemaLocation = tag2.attributes.get("schemalocation") ?? tag2.attributes.get("itemschemalocation");
+    if (schemaLocation?.trim()) refs.push(schemaLocation.trim());
+    if (tag2.localName === "import") {
+      const location = tag2.attributes.get("location");
+      if (location?.trim()) refs.push(location.trim());
     }
   }
   return [...new Set(refs)];
+}
+function isXmlNameCharacter(character) {
+  return /[A-Za-z0-9_.:-]/.test(character);
+}
+function parseXmlStartTag(rawTag) {
+  let cursor2 = 0;
+  while (/\s/.test(rawTag[cursor2] ?? "")) cursor2 += 1;
+  if (!rawTag[cursor2] || rawTag[cursor2] === "/" || rawTag[cursor2] === "!" || rawTag[cursor2] === "?") {
+    return void 0;
+  }
+  const nameStart = cursor2;
+  while (isXmlNameCharacter(rawTag[cursor2] ?? "")) cursor2 += 1;
+  if (cursor2 === nameStart) return void 0;
+  const qualifiedName = rawTag.slice(nameStart, cursor2).toLowerCase();
+  const localName = qualifiedName.split(":").pop() ?? qualifiedName;
+  const attributes = /* @__PURE__ */ new Map();
+  while (cursor2 < rawTag.length) {
+    while (/\s/.test(rawTag[cursor2] ?? "") || rawTag[cursor2] === "/") cursor2 += 1;
+    const attributeStart = cursor2;
+    while (isXmlNameCharacter(rawTag[cursor2] ?? "")) cursor2 += 1;
+    if (cursor2 === attributeStart) {
+      cursor2 += 1;
+      continue;
+    }
+    const qualifiedAttribute = rawTag.slice(attributeStart, cursor2).toLowerCase();
+    const attributeName = qualifiedAttribute.split(":").pop() ?? qualifiedAttribute;
+    while (/\s/.test(rawTag[cursor2] ?? "")) cursor2 += 1;
+    if (rawTag[cursor2] !== "=") continue;
+    cursor2 += 1;
+    while (/\s/.test(rawTag[cursor2] ?? "")) cursor2 += 1;
+    const delimiter3 = rawTag[cursor2];
+    if (delimiter3 !== '"' && delimiter3 !== "'") continue;
+    cursor2 += 1;
+    const valueStart = cursor2;
+    const valueEnd = rawTag.indexOf(delimiter3, cursor2);
+    if (valueEnd < 0) break;
+    attributes.set(attributeName, rawTag.slice(valueStart, valueEnd));
+    cursor2 = valueEnd + 1;
+  }
+  return { localName, attributes };
 }
 function listDefinitionDependencyRefs(content, format2) {
   if (format2 === "protobuf") return extractProtobufImports(content);
@@ -172136,7 +172208,11 @@ function isPreservedNonDefinitionSidecar(relativeInsideServiceDir) {
 }
 async function stageDefinitionExportTree(input) {
   const serviceDirRelative = assertSafeBundleRelativePath(input.serviceDirRelative.replace(/\\/g, "/"));
-  const canonicalAbsolute = resolvePathWithinRoot(input.repoRoot, serviceDirRelative, "output-dir");
+  const canonicalAbsolute = await assertNoSymlinkComponentsWithinRoot(
+    input.repoRoot,
+    serviceDirRelative,
+    "output-dir"
+  );
   const runId = input.runId ?? (0, import_node_crypto6.randomBytes)(8).toString("hex");
   const parentDir = import_node_path7.default.dirname(canonicalAbsolute);
   const baseName = import_node_path7.default.basename(canonicalAbsolute);
@@ -172216,7 +172292,11 @@ async function stageDefinitionExportTree(input) {
     }
     for (const member2 of input.members) {
       const memberPath = assertSafeBundleRelativePath(member2.path.replace(/\\/g, "/"));
-      const absolute = resolvePathWithinRoot(input.repoRoot, memberPath, "output-dir");
+      const absolute = await assertNoSymlinkComponentsWithinRoot(
+        input.repoRoot,
+        memberPath,
+        "output-dir"
+      );
       const written = await (0, import_promises5.readFile)(absolute);
       const expectedSha = sha256Utf8(member2.content);
       const actualSha = (0, import_node_crypto6.createHash)("sha256").update(written).digest("hex");
@@ -175528,7 +175608,11 @@ function classifySpecContent(content, options = {}) {
   if (/^\s*asyncapi\s*:/i.test(trimmed)) {
     return { format: "asyncapi-yaml", filename: filenameForFormat("asyncapi-yaml", pathHint) };
   }
-  if (!trimmed.startsWith("<") && !trimmed.startsWith("{")) {
+  const graphqlSdl = looksLikeGraphqlSdl(trimmed);
+  if (graphqlSdl) {
+    return { format: "graphql-sdl", filename: filenameForFormat("graphql-sdl", pathHint) };
+  }
+  if (!trimmed.startsWith("<") && !trimmed.startsWith("{") && !trimmed.startsWith('"""')) {
     try {
       const parsed = (0, import_yaml8.parse)(trimmed);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
@@ -175554,11 +175638,6 @@ function classifySpecContent(content, options = {}) {
   }
   if (basename3.endsWith(".proto") || looksLikeProtobuf(trimmed)) {
     return { format: "protobuf", filename: filenameForFormat("protobuf", pathHint) };
-  }
-  if (basename3.endsWith(".graphql") || basename3.endsWith(".gql") || basename3.endsWith(".graphqls") || looksLikeGraphqlSdl(trimmed)) {
-    if (looksLikeGraphqlSdl(trimmed)) {
-      return { format: "graphql-sdl", filename: filenameForFormat("graphql-sdl", pathHint) };
-    }
   }
   if (basename3.endsWith(".smithy") || looksLikeSmithy(trimmed)) {
     if (looksLikeSmithy(trimmed)) {
@@ -175666,16 +175745,60 @@ function looksLikeMcp(record) {
   }
   return typeof record.name === "string" && (Array.isArray(record.remotes) || Array.isArray(record.packages));
 }
+function firstXmlElementStartTag(content) {
+  let cursor2 = 0;
+  while (cursor2 < content.length) {
+    const start = content.indexOf("<", cursor2);
+    if (start < 0) return void 0;
+    if (content.startsWith("<!--", start)) {
+      const end2 = content.indexOf("-->", start + 4);
+      if (end2 < 0) return void 0;
+      cursor2 = end2 + 3;
+      continue;
+    }
+    if (content[start + 1] === "?") {
+      const end2 = content.indexOf("?>", start + 2);
+      if (end2 < 0) return void 0;
+      cursor2 = end2 + 2;
+      continue;
+    }
+    let quote = "";
+    let end = -1;
+    for (let index = start + 1; index < content.length; index += 1) {
+      const character = content[index] ?? "";
+      if (quote) {
+        if (character === quote) quote = "";
+      } else if (character === '"' || character === "'") {
+        quote = character;
+      } else if (character === "<") {
+        return void 0;
+      } else if (character === ">") {
+        end = index;
+        break;
+      }
+    }
+    if (end < 0) return void 0;
+    const rawTag = content.slice(start + 1, end);
+    if (/^\s*!/.test(rawTag)) {
+      cursor2 = end + 1;
+      continue;
+    }
+    if (/^\s*\//.test(rawTag)) return void 0;
+    const match = rawTag.match(/^\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([\s\S]*)$/);
+    if (!match) return void 0;
+    return { qualifiedName: match[1] ?? "", attributes: match[2] ?? "" };
+  }
+  return void 0;
+}
 function looksLikeWsdl(content) {
   const trimmed = content.trim();
   if (!trimmed.startsWith("<")) return false;
-  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, "").trim();
-  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
-  if (!rootMatch) return false;
-  const qualified = rootMatch[1] ?? "";
+  const root5 = firstXmlElementStartTag(trimmed);
+  if (!root5) return false;
+  const qualified = root5.qualifiedName;
   const localName = (qualified.includes(":") ? qualified.split(":").pop() : qualified).toLowerCase();
   if (localName !== "definitions" && localName !== "description") return false;
-  const head = `${qualified} ${rootMatch[2] ?? ""}`;
+  const head = `${qualified} ${root5.attributes}`;
   return /wsdl/i.test(head) || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
 }
 function looksLikePostmanCollection(record) {
@@ -175705,13 +175828,15 @@ function looksLikeJsonSchema(record) {
   return false;
 }
 function looksLikeProtobuf(content) {
-  return /^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content) || /\bservice\s+\w+\s*\{[\s\S]*\brpc\b/.test(content);
+  if (/^\s*syntax\s*=\s*["']proto[23]["']\s*;/m.test(content)) return true;
+  const service = /\bservice\s+\w+\s*\{/.exec(content);
+  return service !== null && /\brpc\b/.test(content.slice(service.index + service[0].length));
 }
 function looksLikeGraphqlSdl(content) {
   const trimmed = content.trim();
   if (!trimmed || trimmed.startsWith("{") || trimmed.startsWith("<")) return false;
   if (/^\s*(?:openapi|swagger|asyncapi)\s*:/m.test(trimmed)) return false;
-  return /^\s*(?:"""[\s\S]*?"""\s*)?(?:extend\s+)?(?:(?:type|interface|enum|union|scalar|input)\s+[A-Za-z_]|schema\s*\{|directive\s+@)/m.test(
+  return /^\s*(?:extend\s+)?(?:(?:type|interface|enum|union|scalar|input)\s+[A-Za-z_]|schema\s*\{|directive\s+@)/m.test(
     trimmed
   );
 }
@@ -175800,6 +175925,18 @@ async function resolveSmithyProject(repoRoot, buildRelativePath, options = {}) {
         code: "path-escape",
         path: buildRelative,
         message: `smithy-build.json path escapes repository root: ${buildRelative}`
+      }]
+    };
+  }
+  try {
+    await assertNoSymlinkComponentsWithinRoot(resolvedRoot, buildRelative, "smithy-build.json");
+  } catch {
+    return {
+      ...empty,
+      errors: [{
+        code: "path-escape",
+        path: buildRelative,
+        message: `Refusing to follow symlink components for smithy-build.json: ${buildRelative}`
       }]
     };
   }
@@ -176001,6 +176138,16 @@ async function collectPathEntry(state2, entry, kind) {
     return;
   }
   const relative2 = toPosix3(import_node_path17.default.relative(state2.repoRoot, absolute));
+  try {
+    await assertNoSymlinkComponentsWithinRoot(state2.repoRoot, relative2, `Smithy ${kind}`);
+  } catch {
+    state2.errors.push({
+      code: "path-escape",
+      path: relative2,
+      message: `Refusing to follow symlink components for Smithy ${kind}: ${entry}`
+    });
+    return;
+  }
   const canonicalKey = import_node_path17.default.resolve(absolute);
   if (state2.visiting.has(canonicalKey)) {
     state2.errors.push({
@@ -176508,18 +176655,6 @@ function isLikelyGraphqlIntrospection(content) {
     return false;
   }
 }
-function isLikelyWsdlDocument(content) {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith("<")) return false;
-  const body = trimmed.replace(/^<\?xml[\s\S]*?\?>/i, "").trim();
-  const rootMatch = body.match(/<\s*([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)\b([^>]*)>/);
-  if (!rootMatch) return false;
-  const qualified = rootMatch[1] ?? "";
-  const localName = (qualified.includes(":") ? qualified.split(":").pop() : qualified).toLowerCase();
-  if (localName !== "definitions" && localName !== "description") return false;
-  const head = `${qualified} ${rootMatch[2] ?? ""}`;
-  return /wsdl/i.test(head) || /schemas\.xmlsoap\.org\/wsdl|www\.w3\.org\/ns\/wsdl/i.test(trimmed);
-}
 function isLikelyMcpDocument(parsed) {
   if (parsed.mcpServers && typeof parsed.mcpServers === "object" && !Array.isArray(parsed.mcpServers)) {
     return true;
@@ -176617,7 +176752,7 @@ function detectRepoSpec(candidate, content) {
   } else if (basename3 === "smithy-build.json") {
     return void 0;
   } else if (basename3.endsWith(".wsdl")) {
-    if (isLikelyWsdlDocument(content)) type = "wsdl";
+    if (looksLikeWsdl(content)) type = "wsdl";
   } else if (isMcpConfigBasename(basename3)) {
     if (isLikelyMcpContent(content)) type = "mcp";
   } else if (basename3.endsWith(".avsc") || basename3.endsWith(".avro")) {
@@ -180083,9 +180218,12 @@ for (const [address, prefix] of [
 for (const [address, prefix] of [
   ["::", 128],
   ["::1", 128],
+  ["64:ff9b::", 96],
+  ["64:ff9b:1::", 48],
   ["100::", 64],
   ["2001:2::", 48],
   ["2001:db8::", 32],
+  ["2002::", 16],
   ["fc00::", 7],
   ["fe80::", 10],
   ["ff00::", 8]
@@ -183430,17 +183568,29 @@ async function writeResolvedArtifactWithDerivedOpenApi(input) {
     return { ...derivedMeta, specFilesJson };
   }
   if (input.native) {
-    const absoluteSpecPath = resolvePathWithinRoot(input.repoRoot, input.native.relativePath, "output-dir");
+    const absoluteSpecPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      input.native.relativePath,
+      "output-dir"
+    );
     await input.writeSpecFile(absoluteSpecPath, input.native.content);
   }
   for (const sidecar of input.sidecars ?? []) {
     const relativeSidecarPath = import_node_path24.default.join(input.relativeDir, sidecar.filename).replace(/\\/g, "/");
-    const absoluteSidecarPath = resolvePathWithinRoot(input.repoRoot, relativeSidecarPath, "output-dir");
+    const absoluteSidecarPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      relativeSidecarPath,
+      "output-dir"
+    );
     await input.writeSpecFile(absoluteSidecarPath, sidecar.content);
   }
   if (derivedSidecar) {
     const relativeDerivedPath = import_node_path24.default.join(input.relativeDir, derivedSidecar.filename).replace(/\\/g, "/");
-    const absoluteDerivedPath = resolvePathWithinRoot(input.repoRoot, relativeDerivedPath, "output-dir");
+    const absoluteDerivedPath = await assertNoSymlinkComponentsWithinRoot(
+      input.repoRoot,
+      relativeDerivedPath,
+      "output-dir"
+    );
     await input.writeSpecFile(absoluteDerivedPath, derivedSidecar.content);
   }
   return { ...derivedMeta, ...specFilesJson ? { specFilesJson } : {} };
@@ -184689,7 +184839,11 @@ async function discoverRepoServiceGroups(inputs, dependencies, staticIac) {
     const serviceName = serviceNameForRepoCandidate(inputs, selected);
     if (!inputs.dryRun && materialized.writeNative && materialized.content) {
       try {
-        const absolute = resolvePathWithinRoot(inputs.repoRoot, materialized.path, "output-dir");
+        const absolute = await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          materialized.path,
+          "output-dir"
+        );
         await dependencies.writeSpecFile(absolute, materialized.content);
       } catch (error3) {
         summary2.failed += 1;
@@ -185336,11 +185490,19 @@ async function runResolution(inputs, awsClient, actionCore, writeSpecFile, resol
       };
     }
     if (snsManualReviewMetadata?.metadataContent) {
-      const absoluteMetadataPath = resolvePathWithinRoot(inputs.repoRoot, relativeMetadataPath, "output-dir");
+      const absoluteMetadataPath = await assertNoSymlinkComponentsWithinRoot(
+        inputs.repoRoot,
+        relativeMetadataPath,
+        "output-dir"
+      );
       await writeSpecFile(absoluteMetadataPath, snsManualReviewMetadata.metadataContent);
       for (const sidecar of snsManualReviewMetadata.sidecars ?? []) {
         const relativeSidecarPath = import_node_path24.default.join(relativeProviderDir, sidecar.filename).replace(/\\/g, "/");
-        const absoluteSidecarPath = resolvePathWithinRoot(inputs.repoRoot, relativeSidecarPath, "output-dir");
+        const absoluteSidecarPath = await assertNoSymlinkComponentsWithinRoot(
+          inputs.repoRoot,
+          relativeSidecarPath,
+          "output-dir"
+        );
         await writeSpecFile(absoluteSidecarPath, sidecar.content);
       }
     }
