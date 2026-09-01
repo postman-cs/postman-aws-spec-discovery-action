@@ -50,7 +50,7 @@ jobs:
         with:
           aws-region: us-east-1
 
-      - uses: postman-cs/postman-api-onboarding-action@v2
+      - uses: postman-cs/postman-api-onboarding-action@v3
         if: steps.resolve.outputs.resolution-status == 'resolved'
         with:
           postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}
@@ -134,7 +134,7 @@ Feed the discovered spec straight into the [onboarding composite](https://github
   with:
     aws-region: us-east-1
 
-- uses: postman-cs/postman-api-onboarding-action@v2
+- uses: postman-cs/postman-api-onboarding-action@v3
   if: steps.resolve.outputs.resolution-status == 'resolved'
   with:
     postman-api-key: ${{ secrets.POSTMAN_SERVICE_ACCOUNT_API_KEY }}

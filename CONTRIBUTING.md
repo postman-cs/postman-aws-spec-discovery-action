@@ -1,96 +1,42 @@
 # Contributing to postman-aws-spec-discovery-action
 
-Thank you for your interest in contributing. This guide covers the workflow and standards for submitting changes.
+This repository is one independently released component of the Postman Enterprise Automation Suite. `AGENTS.md` is the single source of truth for its structure, exact gate commands, credential rules, and release contract; this page covers only the contribution workflow.
 
-## Getting Started
-
-1. Fork and clone the repository
-2. Install dependencies: `npm ci`
-3. Create a feature branch: `git checkout -b my-change`
-
-## Development Workflow
+## Setup
 
 ```bash
-npm ci              # Install dependencies
-npm test            # Run tests (vitest)
-npm run typecheck   # TypeScript type checking
-npm run lint        # ESLint
-npm run build       # Bundle to dist/ (esbuild)
+npm ci   # install from the committed lockfile
 ```
 
-## Before Submitting a PR
+Most repos wire `.githooks/` through the `prepare` script during `npm ci`; where `AGENTS.md` names `npm run setup:hooks` instead, run it once. Do not replace the lockfile or the package manager.
 
-- [ ] `npm test` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` has been run and `dist/` is updated
-- [ ] Changes are focused and address a single concern
-- [ ] New functionality includes tests
-- [ ] If changing SNS provider logic, signals, or runtime integration, run live integration tests: `npm run build && npm run test:live:sns`. See [docs/LIVE_TESTING_RUNBOOK.md](docs/LIVE_TESTING_RUNBOOK.md) for AWS setup.
+## Before you open a pull request
 
-### Rebuilding dist/
+Run the gate set named in `AGENTS.md` from the repository root. At minimum every repo declares `npm test`, `npm run typecheck`, and `npm run lint`; repos that ship a bundle also declare a dist gate that must pass with the rebuilt `dist/` staged in the same commit.
 
-This action ships bundled JavaScript in `dist/`. After any source change, run `npm run build` and include the updated `dist/` files in your commit. CI bundles once then runs read-only `npm run verify:dist:assert`; the pre-push hook uses `npm run verify:dist` (rebuild + diff + assert).
+- Keep each pull request to one concern.
+- New behavior ships with deterministic tests in `tests/`.
+- Never commit Postman API keys, access tokens, cloud credentials, or captured request bodies. Mask credentials before logging.
+- Do not add Newman, token-authenticated npm publishing, or cross-action TypeScript imports; shared code lives in `@postman-cs/automation-core`.
 
-## Release E2E Status
+## Pull requests and merges
 
-This repo is not directly blocked by the central live release e2e gate in Phase
-1. The current `postman-actions-e2e` pipeline exercises the lower-level
-`resolve-service-token`, `bootstrap`, `repo-sync`, and `smoke-flow` CLI actions;
-it does not yet run AWS spec discovery as the released artifact.
+Every change lands through a pull request against `main`; direct pushes to `main` are blocked by branch protection. CI runs one bounded `gate` job (plus a Windows job where the repo has one). Merge only after the required checks pass.
 
-Do not describe an AWS spec discovery release as live-e2e-gated until the
-harness includes real AWS discovery coverage and this repo's release workflow
-waits on that gate. Continue to run the live SNS integration tests when changing
-SNS provider logic, signals, or runtime integration.
+## Commit messages
 
-## Commit Messages
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits must follow this format:
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and are validated by commitlint on every pull request:
 
 ```
-<type>: <description>
-
-[optional body]
-
-[optional footer(s)]
+<type>(<optional scope>): <description>
 ```
 
-**Types:** `feat`, `fix`, `docs`, `chore`, `ci`, `refactor`, `test`, `perf`, `revert`
+`feat` cuts a minor release, `fix` / `perf` / `refactor` / `docs` cut a patch, and `chore` / `ci` / `build` / `test` / `style` cut nothing. Releases are tagged automatically from `main`; never push a release tag by hand.
 
-**Examples:**
+## Reporting problems
 
-```
-feat: add retry logic to spec upload
-fix: handle 429 rate limit in API client
-docs: update CLI usage examples
-ci: add ESLint to CI workflow
-```
-
-Commit messages are validated in CI via commitlint. Optionally install git hooks locally for faster feedback -- see [Local Git Hooks](#local-git-hooks).
-
-## Local Git Hooks (Optional)
-
-For commit message validation before push:
-
-```bash
-npx husky init
-echo 'npx --no-install commitlint --edit "$1"' > .husky/commit-msg
-```
-
-This is optional. CI validates commit messages on every pull request regardless.
-
-## Code Style
-
-- TypeScript strict mode
-- ESLint enforced (run `npm run lint` or `npm run lint:fix`)
-- Keep changes minimal and focused
-- Match existing patterns in the codebase
-
-## Reporting Issues
-
-Use the GitHub issue templates for bug reports and feature requests. For questions, open a Discussion thread.
+Open a GitHub issue for bugs, usage questions, or documentation gaps (see `SUPPORT.md`). Report vulnerabilities privately per `SECURITY.md`.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+Contributions are licensed under the repository's MIT License.
