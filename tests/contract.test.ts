@@ -191,7 +191,7 @@ describe('action contract', () => {
     expect(readmeSource).toContain('Postman API Onboarding suite');
     expect(readmeSource).toContain('## Region and Postman handoff');
     expect(readmeSource).toContain('postman-cs/postman-resolve-service-token-action@v2');
-    expect(readmeSource).toContain('postman-cs/postman-api-onboarding-action@v2');
+    expect(readmeSource).toContain('postman-cs/postman-api-onboarding-action@v3');
     expect(readmeSource).toContain('postman-cs/postman-bootstrap-action@v2');
     expect(readmeSource).toContain('postman-access-token: ${{ steps.postman_token.outputs.token }}');
     expect(readmeSource).toContain('postman-team-id: ${{ steps.postman_token.outputs.team-id }}');
