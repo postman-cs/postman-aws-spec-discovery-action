@@ -1,6 +1,6 @@
 # postman-aws-spec-discovery-action
 
-Zero-config AWS API spec discovery. Probes IAM permissions to auto-detect available providers, scans repo for IaC signals, resolves best spec source, and exports it. Supports 8 AWS providers. Dual entry: GitHub Action and CLI.
+Zero-config AWS API spec discovery. Probes IAM permissions to auto-detect available providers, scans repo for IaC signals, resolves best spec source, and exports it. Supports 15 AWS providers. Dual entry: GitHub Action and CLI.
 
 ## Structure
 
@@ -11,34 +11,20 @@ src/
   runtime.ts             # Core execution engine: readActionInputs(), execute(), resolveInputs()
   contracts.ts           # Output names, DiscoveredService type, input definitions
   lib/
-    providers/
-      registry.ts        # ProviderRegistry -- probes and collects all available providers
-      api-gateway.ts     # REST/HTTP/WebSocket API Gateway export (OpenAPI YAML)
-      appsync.ts         # AppSync GraphQL schema introspection (SDL)
-      eventbridge.ts     # EventBridge Schema Registry (JSON Schema/OpenAPI)
-      cloudformation.ts  # CloudFormation embedded spec extraction (OpenAPI JSON)
-      glue.ts            # Glue Schema Registry (Avro/JSON Schema/Protobuf)
-      sns.ts             # SNS contract resolver (9-level precedence, subscription enrichment, sidecars)
-      ssm.ts             # SSM Parameter Store spec registry (/postman/specs/*)
-      backstage.ts       # Backstage catalog-info.yaml resolution
-      base.ts            # BaseProvider interface
-    aws/
-      client.ts          # AWS SDK v3 wrapper (API Gateway, AppSync, CFN, etc.)
-      *.ts               # Per-service SDK client abstractions
-    repo/
-      scanner.ts         # IaC fingerprinting (template.yaml, serverless.yml, cdk.json)
-      context.ts         # Repo metadata from CI env vars
-      signals.ts         # Repo signal detection (file patterns -> provider hints)
-    resolve/
-      resolver.ts        # Candidate scoring and selection
-      candidates.ts      # Candidate data structures
-      confidence.ts      # Confidence scoring algorithms
-    fetch/
-      spec-fetcher.ts    # HTTP fetch for remote spec URLs (with safety checks)
-    logging/
-      sanitize.ts        # Log message sanitization for user-safe errors
-    process/
-      timeout.ts         # Bounded execution with configurable timeouts
+    providers/           # 15 providers + registry.ts + types.ts (api-gateway, appsync,
+                         # appsync-events, eventbridge-schemas, eventbridge-surfaces,
+                         # cloudformation, glue, sns, sns-code-derived, ssm,
+                         # bedrock-action-groups, alb-listener-rules, lambda-url,
+                         # lambda-event-source, verified-permissions, step-functions)
+    aws/                 # Per-service SDK v3 clients (api-gateway, appsync, sns, ssm, ...)
+    repo/                # Repo scanning, signals, catalog, spec inventory
+    resolve/             # Candidate narrowing, service resolution, source selection
+    spec/                # Format classification, OpenAPI derivation/normalization
+    iac/                 # IaC parsing (CloudFormation, Terraform, CDK, Serverless)
+    fetch/               # Remote spec fetch policy + safety checks
+    logging/             # Sanitizing + step-summary logging
+    postman/             # Telemetry credentials + PMAK diagnostics
+    utils/               # Path sandboxing
 tests/
   *.test.ts              # Unit tests
   live/                  # Live AWS integration tests (require credentials)
