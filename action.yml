@@ -1,5 +1,5 @@
-name: 'Postman Onboarding: AWS Spec Discovery'
-description: Discover AWS-hosted API specs and expose a spec path for Postman onboarding. Part of the Postman API Onboarding suite.
+name: 'Postman Enterprise Automation: AWS Spec Discovery'
+description: Discover AWS-hosted API specs and expose a spec path for Postman onboarding. Part of the Postman Enterprise Automation Suite.
 author: Postman
 branding:
   icon: cloud

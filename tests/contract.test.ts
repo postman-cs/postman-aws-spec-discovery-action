@@ -188,7 +188,7 @@ describe('action contract', () => {
     );
     expect(actionContract.inputs['aws-region']?.description).toContain('AppSync');
     expect(actionContract.inputs['aws-region']?.description).toContain('EventBridge');
-    expect(readmeSource).toContain('Postman API Onboarding suite');
+    expect(readmeSource).toContain('Postman Enterprise Automation Suite');
     expect(readmeSource).toContain('## Region and Postman handoff');
     expect(readmeSource).toContain('postman-cs/postman-resolve-service-token-action@v2');
     expect(readmeSource).toContain('postman-cs/postman-api-onboarding-action@v3');
