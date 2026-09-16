@@ -84,6 +84,11 @@ describe('action contract', () => {
     expect(Object.keys(actionManifest.outputs)).toEqual(contractOutputNames);
   });
 
+  it('keeps marketplace description within GitHub limits', () => {
+    expect(actionManifest.description.length).toBeGreaterThan(0);
+    expect(actionManifest.description.length).toBeLessThanOrEqual(125);
+  });
+
   it('keeps existing required inputs unchanged and introduces no new required inputs', () => {
     expect(Object.keys(actionContract.inputs)).toEqual(Object.keys(expectedExistingInputRequirements));
     for (const [inputName, isRequired] of Object.entries(expectedExistingInputRequirements)) {
@@ -188,7 +193,7 @@ describe('action contract', () => {
     );
     expect(actionContract.inputs['aws-region']?.description).toContain('AppSync');
     expect(actionContract.inputs['aws-region']?.description).toContain('EventBridge');
-    expect(readmeSource).toContain('Postman API Onboarding suite');
+    expect(readmeSource).toContain('Postman Enterprise Automation Suite');
     expect(readmeSource).toContain('## Region and Postman handoff');
     expect(readmeSource).toContain('postman-cs/postman-resolve-service-token-action@v2');
     expect(readmeSource).toContain('postman-cs/postman-api-onboarding-action@v3');
